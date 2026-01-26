@@ -111,7 +111,69 @@ class SwarmForagingEnv(ParallelEnv):
         return self._get_observations(), rewards, terminations, truncations, infos
 
     def _get_observations(self):
-        return {agent: np.zeros(20, dtype=np.float32) for agent in self.agents}
+        """
+        Calcula o que cada robô "vê".
+        Retorna um vetor fixo (tamanho 20) com:
+        - [0, 1]: Vetor relativo ao Ninho (dx, dy)
+        - [2, 3]: Vetor relativo ao Vizinho mais próximo 1
+        - [4, 5]: Vetor relativo ao Vizinho mais próximo 2
+        - ... etc
+        """
+        observations = {}
+        comm_radius = self.config["physics"]["communication_radius"]
+        nest_pos = np.array([0.0, 0.0])  # Ninho está sempre no centro
+
+        # Calcular matriz de distâncias de todos para todos (Broadcast NumPy)
+        # Isto é muito rápido: calcula distâncias de 10 robôs de uma vez
+        # diffs[i, j] = pos[i] - pos[j]
+        diffs = self.agent_positions[:, np.newaxis, :] - self.agent_positions[np.newaxis, :, :]
+        dists = np.linalg.norm(diffs, axis=2)
+
+        for idx, agent in enumerate(self.agents):
+            my_pos = self.agent_positions[idx]
+
+            # 1. Onde está o Ninho? (Vetor Relativo)
+            vec_to_nest = nest_pos - my_pos
+
+            # Preparar vetor de observação vazio (20 zeros)
+            # Vamos normalizar valores simples para ajudar a Rede Neuronal (dividir por 10 ou raio)
+            # Mas para já, usamos valores brutos (metros)
+            obs_vector = np.zeros(20, dtype=np.float32)
+
+            # Preencher Ninho (Slots 0 e 1)
+            obs_vector[0] = vec_to_nest[0]
+            obs_vector[1] = vec_to_nest[1]
+
+            # 2. Processar Vizinhos
+            # Filtrar quem está perto (dists[idx] < raio) e não sou eu (dists[idx] > 0)
+            neighbor_indices = np.where((dists[idx] <= comm_radius) & (dists[idx] > 0))[0]
+
+            # Buscar os vetores relativos desses vizinhos
+            # Queremos saber ONDE eles estão em relação a mim (dx, dy)
+            neighbor_rel_positions = []
+            for n_idx in neighbor_indices:
+                # diffs[n_idx, idx] dá a posição do vizinho relativa a mim
+                # Nota: diffs[i, j] = pos[i] - pos[j].
+                # Queremos Vizinho - Eu = pos[n_idx] - pos[idx]
+                rel_pos = self.agent_positions[n_idx] - self.agent_positions[idx]
+                dist = dists[idx, n_idx]
+                neighbor_rel_positions.append((dist, rel_pos))
+
+            # Ordenar vizinhos por distância (o mais perto é mais importante)
+            neighbor_rel_positions.sort(key=lambda x: x[0])
+
+            # 3. Preencher o vetor de observação
+            # Temos slots do índice 2 ao 19 (18 slots = 9 vizinhos max)
+            slot = 2
+            for dist, rel_pos in neighbor_rel_positions:
+                if slot >= 20: break  # Vetor cheio
+                obs_vector[slot] = rel_pos[0]  # dx do vizinho
+                obs_vector[slot + 1] = rel_pos[1]  # dy do vizinho
+                slot += 2
+
+            observations[agent] = obs_vector
+
+        return observations
 
     def observation_space(self, agent):
         return self.observation_spaces[agent]
