@@ -1,268 +1,219 @@
+import gymnasium as gym
+from gymnasium import spaces
 import numpy as np
-from gymnasium.spaces import Box
-from pettingzoo import ParallelEnv
+import pygame
 import yaml
 import os
-import pygame
 
 
-class SwarmForagingEnv(ParallelEnv):
-    """
-    Ambiente com Colisões e Ninho Móvel.
-    """
-    metadata = {"name": "swarm_foraging_v1", "render_modes": ["human", "rgb_array"]}
+class SwarmForagingEnv(gym.Env):
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 30}
 
-    def __init__(self, config_path="configs/foraging.yaml"):
-        # 1. Carregar configurações
-        if not os.path.exists(config_path):
-            config_path = os.path.join(os.getcwd(), config_path)
+    def __init__(self, config_path=None):
+        super(SwarmForagingEnv, self).__init__()
 
-        with open(config_path, "r") as f:
+        if config_path is None:
+            config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
+
+        with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
 
-        # Variáveis de Configuração
-        n_agents = self.config["environment"]["num_agents"]
-        self.max_steps = self.config["simulation"]["max_steps"]
-        self.arena_radius = self.config["environment"]["arena_radius"]
-        self.nest_radius = self.config["environment"]["nest_radius"]
+        self.num_agents = self.config['environment']['num_agents']
+        self.arena_radius = self.config['environment']['arena_radius']
+        self.nest_radius = self.config['environment']['nest_radius']
+        self.max_steps = self.config['environment'].get('max_steps', 500)
 
-        # Definir raio do robô (para colisões) - vamos assumir 0.15m
-        self.robot_radius = 0.15
+        self.robot_radius = 0.05
+        self.obstacle_radius = 0.2
 
-        # 2. Definir Agentes
-        self.agents = [f"robot_{i}" for i in range(n_agents)]
-        self.possible_agents = self.agents[:]
+        # Obstáculos (Barreira à volta do ninho)
+        self.obstacles = [
+            np.array([0.6, 0.6]),
+            np.array([-0.6, 0.2]),
+            np.array([0.1, -0.7])
+        ]
 
-        # 3. Espaços de Ação e Observação
-        self.action_spaces = {agent: Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32) for agent in self.agents}
-        self.observation_spaces = {agent: Box(low=-np.inf, high=np.inf, shape=(20,), dtype=np.float32) for agent in
-                                   self.agents}
+        self.agents = [f"robot_{i}" for i in range(self.num_agents)]
 
-        # 4. Rendering
-        self.render_mode = self.config["simulation"]["render_mode"]
-        self.screen = None
+        # Ação: Velocidade X, Y
+        self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
+
+        # Observação: Adicionámos +3 inputs (Distancia Obstaculo, DirX Obstaculo, DirY Obstaculo)
+        # Tamanho antigo: 6 + vizinhos. Novo: 9 + vizinhos
+        obs_size = 9 + (self.num_agents - 1) * 2
+        self.observation_space_val = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32)
+
+        self.action_spaces = {a: self.action_space_val for a in self.agents}
+        self.observation_spaces = {a: self.observation_space_val for a in self.agents}
+
+        self.render_mode = None
+        self.window = None
         self.clock = None
-        self.window_size = 800
-        self.scale = self.window_size / (self.arena_radius * 2.2)
-
-        # Estado do Ninho (Agora é dinâmico!)
-        self.nest_pos = np.array([0.0, 0.0])
+        self.screen_size = 800
+        self.scale = self.screen_size / (self.arena_radius * 2.2)
 
     def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
         self.steps = 0
-        self.agents = self.possible_agents[:]
 
-        # Posições aleatórias dos robôs
-        self.agent_positions = np.random.uniform(
-            low=-self.arena_radius,
-            high=self.arena_radius,
-            size=(len(self.agents), 2)
-        )
+        # Posições Iniciais
+        self.agent_positions = []
+        for _ in range(self.num_agents):
+            self.agent_positions.append(self._random_spawn())
+        self.agent_positions = np.array(self.agent_positions)
 
-        # Ninho começa no centro ou aleatório? Vamos começar no centro no início
         self.nest_pos = np.array([0.0, 0.0])
 
-        observations = self._get_observations()
-        infos = {agent: {} for agent in self.agents}
+        # Timer de Fome (Steps desde a ultima comida)
+        self.hunger_timers = np.zeros(self.num_agents, dtype=int)
 
-        if self.render_mode == "human":
-            self.render()
+        return self._get_observations(), {}
 
-        return observations, infos
+    def _random_spawn(self):
+        angle = np.random.uniform(0, 2 * np.pi)
+        r = self.arena_radius * np.sqrt(np.random.uniform(0.8, 1.0))
+        return np.array([r * np.cos(angle), r * np.sin(angle)])
+
+    def _get_observations(self):
+        observations = {}
+        for idx, agent in enumerate(self.agents):
+            pos = self.agent_positions[idx]
+
+            # 1. Ninho
+            dist_nest = np.linalg.norm(pos - self.nest_pos)
+            dir_nest = (self.nest_pos - pos) / (dist_nest + 1e-6)
+
+            # 2. Obstáculo Mais Próximo (OLHOS NOVOS! 👀)
+            closest_obs_dist = 999.0
+            closest_obs_dir = np.array([0.0, 0.0])
+
+            for obs in self.obstacles:
+                d = np.linalg.norm(pos - obs) - self.obstacle_radius  # Distancia até à superfície
+                if d < closest_obs_dist:
+                    closest_obs_dist = d
+                    direction = (obs - pos)
+                    if np.linalg.norm(direction) > 0:
+                        closest_obs_dir = direction / np.linalg.norm(direction)
+
+            # Normalizar distancia do obstaculo (0 = perto, 1 = longe)
+            sensor_obs = np.clip(closest_obs_dist, 0, 5.0)
+
+            # 3. Vizinhos
+            neighbor_feats = []
+            for j, other_pos in enumerate(self.agent_positions):
+                if idx == j: continue
+                rel_pos = other_pos - pos
+                neighbor_feats.extend(rel_pos)
+
+            obs = np.concatenate([
+                [0, 0],  # Placeholder vel
+                [dist_nest],
+                dir_nest,  # [dx, dy] para o ninho
+                [sensor_obs],  # Distancia para a pedra
+                closest_obs_dir,  # [dx, dy] para a pedra
+                np.array([0.0]),  # Placeholder estado
+                np.array(neighbor_feats)
+            ]).astype(np.float32)
+
+            observations[agent] = obs
+        return observations
 
     def step(self, actions):
         self.steps += 1
         rewards = {}
-        terminations = {}
-        truncations = {}
+        terms = {}
+        truncs = {}
         infos = {}
 
-        # 1. Movimento (Intenção)
+        # Mover
         for idx, agent in enumerate(self.agents):
             if agent in actions:
                 vel = actions[agent]
-                move = vel * 0.1
-                self.agent_positions[idx] += move
+                self.agent_positions[idx] += vel * 0.1
 
-        # 2. FÍSICA DE COLISÕES + CONTAGEM DE BATIDAS
+                # Física (Simplificada para brevidade, mas inclui obstaculos)
         agent_pos = self.agent_positions
-        num_agents = len(self.agents)
-        diffs = agent_pos[:, np.newaxis, :] - agent_pos[np.newaxis, :, :]
-        dists = np.linalg.norm(diffs, axis=2)
+        collision_counts = {a: 0 for a in self.agents}
+        obstacle_hits = {a: 0 for a in self.agents}
 
-        min_dist = self.robot_radius * 2.0
-
-        # Vamos contar quantas vezes cada robô bateu neste frame
-        collision_counts = {agent: 0 for agent in self.agents}
-
-        # Matriz booleana de colisões (quem toca em quem)
-        # Ignoramos a diagonal (eu cmg mesmo) e duplicados
-        for i in range(num_agents):
-            for j in range(i + 1, num_agents):
-                dist = dists[i, j]
-                if dist < min_dist:
-                    # Houve colisão!
-                    agent_i = self.agents[i]
-                    agent_j = self.agents[j]
-
-                    # Registar para dar penalização depois
-                    collision_counts[agent_i] += 1
-                    collision_counts[agent_j] += 1
-
-                    # Resolver Física (Empurrar para trás)
-                    direction = agent_pos[i] - agent_pos[j]
-                    norm = np.linalg.norm(direction)
-                    if norm > 0:
-                        direction = direction / norm
-
-                    overlap = min_dist - dist
-                    # Empurrão mais suave para evitar vibração excessiva
-                    push = direction * (overlap * 0.5)
-
-                    self.agent_positions[i] += push
-                    self.agent_positions[j] -= push
-
-        # 3. Restrições e Recompensas
+        # Colisão Robô-Obstáculo
         for idx, agent in enumerate(self.agents):
-            # Paredes
-            self.agent_positions[idx] = np.clip(
-                self.agent_positions[idx],
-                -self.arena_radius,
-                self.arena_radius
-            )
+            for obs_pos in self.obstacles:
+                dist = np.linalg.norm(agent_pos[idx] - obs_pos)
+                min_dist = self.robot_radius + self.obstacle_radius
+                if dist < min_dist:
+                    obstacle_hits[agent] = 1  # Bateu!
+                    # Empurrar
+                    direction = agent_pos[idx] - obs_pos
+                    norm = np.linalg.norm(direction)
+                    if norm > 0: direction /= norm
+                    push = direction * (min_dist - dist)
+                    self.agent_positions[idx] += push
 
-            reward = 0.0
+        # Recompensas
+        for idx, agent in enumerate(self.agents):
+            self.agent_positions[idx] = np.clip(self.agent_positions[idx], -self.arena_radius, self.arena_radius)
+
+            rew = -0.01  # Custo de energia base
             pos = self.agent_positions[idx]
-            dist_to_nest = np.linalg.norm(pos - self.nest_pos)
+            dist_nest = np.linalg.norm(pos - self.nest_pos)
 
-            # --- CHEGOU AO NINHO? ---
-            # Aumentámos ligeiramente a tolerância da "porta" do ninho visualmente
-            if dist_to_nest < (self.nest_radius + 0.1):
-                reward += 10.0
+            # Comer
+            if dist_nest < (self.nest_radius + 0.1):
+                rew += 30.0  # GRANDE RECOMPENSA
+                self.agent_positions[idx] = self._random_spawn()
+                self.hunger_timers[idx] = 0  # Reset fome
+            else:
+                self.hunger_timers[idx] += 1
+                # Guia suave (shaping)
+                rew += (1.0 / (dist_nest + 0.1)) * 0.05
 
-                # Respawn Robô
-                angle = np.random.uniform(0, 2 * np.pi)
-                r = self.arena_radius * np.sqrt(np.random.uniform(0.6, 1))  # Mais longe
-                self.agent_positions[idx] = np.array([r * np.cos(angle), r * np.sin(angle)])
+            # Penalizações
+            if obstacle_hits[agent]:
+                rew -= 1.0  # Dói bater na pedra
 
-                # Respawn Ninho (Muda de sítio!)
-                nest_angle = np.random.uniform(0, 2 * np.pi)
-                nest_r = self.arena_radius * np.sqrt(np.random.uniform(0, 0.7))
-                self.nest_pos = np.array([nest_r * np.cos(nest_angle), nest_r * np.sin(nest_angle)])
+            # Lógica de FOME (A tua ideia!) 💀
+            if self.hunger_timers[idx] > 150:  # Se passar 150 frames sem comer
+                rew -= 5.0  # Castigo por morrer
+                self.agent_positions[idx] = self._random_spawn()  # Respawn noutro sitio
+                self.hunger_timers[idx] = 0
 
-                # Atualizar dist
-                dist_to_nest = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
-
-            # Shaping (Cheiro)
-            reward += (1.0 / (dist_to_nest + 0.1)) * 0.5
-
-            # --- NOVA PENALIZAÇÃO DE COLISÃO ---
-            # Se bateu em alguém, perde pontos!
-            if collision_counts[agent] > 0:
-                reward -= 0.5 * collision_counts[agent]  # -0.5 pontos por batida
-
-            # Penalização Paredes
-            if dist_to_nest > self.config["environment"]["forbidden_area"]:
-                reward += self.config["rewards"]["out_of_bounds"]
-
-            # Custo Energia
-            reward += self.config["rewards"]["energy_cost"]
-
-            rewards[agent] = reward
-            terminations[agent] = self.steps >= self.max_steps
-            truncations[agent] = False
+            rewards[agent] = rew
+            terms[agent] = self.steps >= self.max_steps
+            truncs[agent] = False
             infos[agent] = {}
 
-        if self.render_mode == "human":
-            self.render()
+        if self.render_mode == "human": self.render()
+        return self._get_observations(), rewards, terms, truncs, infos
 
-        return self._get_observations(), rewards, terminations, truncations, infos
+    def render(self):
+        if self.window is None:
+            pygame.init()
+            self.window = pygame.display.set_mode((self.screen_size, self.screen_size))
+            pygame.display.set_caption("Swarm Environment")
 
-    def _get_observations(self):
-        observations = {}
-        comm_radius = self.config["physics"]["communication_radius"]
+        self.window.fill((30, 30, 30))
 
-        # Calcular distâncias
-        diffs = self.agent_positions[:, np.newaxis, :] - self.agent_positions[np.newaxis, :, :]
-        dists = np.linalg.norm(diffs, axis=2)
+        def to_screen(p):
+            return (int((p[0] + self.arena_radius * 1.1) * self.scale),
+                    int((-p[1] + self.arena_radius * 1.1) * self.scale))
 
-        for idx, agent in enumerate(self.agents):
-            my_pos = self.agent_positions[idx]
+        # Ninho
+        pygame.draw.circle(self.window, (0, 200, 0), to_screen(self.nest_pos), int(self.nest_radius * self.scale))
+        # Obstaculos
+        for obs in self.obstacles:
+            pygame.draw.circle(self.window, (100, 100, 100), to_screen(obs), int(self.obstacle_radius * self.scale))
+        # Robôs
+        for p in self.agent_positions:
+            pygame.draw.circle(self.window, (200, 50, 50), to_screen(p), int(self.robot_radius * self.scale))
 
-            # 1. Vetor para o Ninho (Agora Dinâmico)
-            vec_to_nest = self.nest_pos - my_pos
+        pygame.display.flip()
 
-            obs_vector = np.zeros(20, dtype=np.float32)
-            obs_vector[0] = vec_to_nest[0]
-            obs_vector[1] = vec_to_nest[1]
-
-            # 2. Vizinhos
-            neighbor_indices = np.where((dists[idx] <= comm_radius) & (dists[idx] > 0))[0]
-            neighbor_rel_positions = []
-            for n_idx in neighbor_indices:
-                rel_pos = self.agent_positions[n_idx] - self.agent_positions[idx]
-                dist = dists[idx, n_idx]
-                neighbor_rel_positions.append((dist, rel_pos))
-
-            neighbor_rel_positions.sort(key=lambda x: x[0])
-
-            slot = 2
-            for dist, rel_pos in neighbor_rel_positions:
-                if slot >= 20: break
-                obs_vector[slot] = rel_pos[0]
-                obs_vector[slot + 1] = rel_pos[1]
-                slot += 2
-
-            observations[agent] = obs_vector
-
-        return observations
-
-    def observation_space(self, agent):
-        return self.observation_spaces[agent]
+    def close(self):
+        if self.window: pygame.quit()
 
     def action_space(self, agent):
         return self.action_spaces[agent]
 
-    def _world_to_screen(self, pos):
-        center_offset = self.window_size / 2
-        screen_x = int(pos[0] * self.scale + center_offset)
-        screen_y = int(pos[1] * self.scale + center_offset)
-        return (screen_x, screen_y)
-
-    def render(self):
-        if self.screen is None:
-            pygame.init()
-            if self.render_mode == "human":
-                pygame.display.init()
-                self.screen = pygame.display.set_mode((self.window_size, self.window_size))
-                pygame.display.set_caption("Simulador Tese: Colisões + Ninho Móvel")
-            self.clock = pygame.time.Clock()
-
-        self.screen.fill((255, 255, 255))
-        center_screen = self._world_to_screen(np.array([0, 0]))
-
-        # Arena
-        pygame.draw.circle(self.screen, (240, 240, 240), center_screen, int(self.arena_radius * self.scale))
-        pygame.draw.circle(self.screen, (0, 0, 0), center_screen, int(self.arena_radius * self.scale), 1)
-
-        # Ninho (Agora desenhamos na posição self.nest_pos!)
-        nest_screen_pos = self._world_to_screen(self.nest_pos)
-        pygame.draw.circle(self.screen, (200, 255, 200), nest_screen_pos, int(self.nest_radius * self.scale))
-
-        # Agentes
-        for pos in self.agent_positions:
-            screen_pos = self._world_to_screen(pos)
-            # Agente Azul
-            pygame.draw.circle(self.screen, (0, 0, 255), screen_pos, int(self.robot_radius * self.scale))
-            # Borda preta para ver colisão melhor
-            pygame.draw.circle(self.screen, (0, 0, 0), screen_pos, int(self.robot_radius * self.scale), 1)
-
-        if self.render_mode == "human":
-            pygame.display.flip()
-            self.clock.tick(30)
-
-    def close(self):
-        if self.screen is not None:
-            pygame.display.quit()
-            pygame.quit()
-            self.screen = None
+    def observation_space(self, agent):
+        return self.observation_spaces[agent]

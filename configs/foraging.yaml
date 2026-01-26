@@ -4,10 +4,13 @@ simulation:
   render_mode: "human"        # "human" para ver, "rgb_array" para treino rápido
 
 environment:
-  num_agents: 10              # Quantidade de robôs (N)
-  arena_radius: 10.0          # Raio da arena
-  nest_radius: 1.0            # Raio do ninho (centro)
-  forbidden_area: 12.0        # Limite geográfico (penalização se passar)
+  num_agents: 10
+  arena_radius: 2.0
+  nest_radius: 0.5
+  max_steps: 500        # <--- A LINHA QUE FALTAVA (Duração do episódio)
+  forbidden_area: 4.0   # Limite de segurança
+
+
 
 physics:
   agent_radius: 0.15          # Tamanho do robô
@@ -16,5 +19,5 @@ physics:
 
 rewards:
   food_collected: 1.0         # Recompensa por levar comida ao ninho
-  out_of_bounds: -0.1         # Penalização por sair da área
+  out_of_bounds: -1.0   # Penalização por sair da arena
   energy_cost: -0.01          # Custo por movimento

@@ -1,99 +1,83 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .base_agent import Agent
+import numpy as np
 
 
-class GNNPolicy(nn.Module):
-    """
-    A Rede Neuronal (O Cérebro).
-    Usa uma arquitetura simples inspirada em GNNs/DeepSets:
-    1. Processa a informação do Ninho.
-    2. Processa cada Vizinho individualmente com a mesma rede (Encoder).
-    3. Soma tudo (Agregação).
-    4. Decide a ação (Decoder).
-    """
+class GNNAgent(nn.Module):
+    def __init__(self, name, action_space, hidden_dim=64):
+        super(GNNAgent, self).__init__()
+        self.name = name
 
-    def __init__(self, input_size=20, hidden_size=64, action_size=2):
-        super(GNNPolicy, self).__init__()
+        # --- A CORREÇÃO CRÍTICA ---
+        # Antes era 6 ou 2. Agora é 9 por causa dos sensores de obstáculos!
+        # (VelX, VelY, DistNinho, DirNinhoX, DirNinhoY, DistObs, DirObsX, DirObsY, State)
+        self.own_feat_dim = 9
+        # --------------------------
 
-        # 1. Encoder para o Ninho (Input: dx, dy)
-        self.nest_encoder = nn.Sequential(
-            nn.Linear(2, 32),
-            nn.ReLU()
-        )
+        self.neighbor_feat_dim = 2  # (Pos Relativa X, Pos Relativa Y)
+        self.action_dim = action_space.shape[0]
 
-        # 2. Encoder para Vizinhos (Input: dx, dy)
-        # Processa cada vizinho da mesma maneira (pesos partilhados)
-        self.neighbor_encoder = nn.Sequential(
-            nn.Linear(2, 32),
-            nn.ReLU()
-        )
-
-        # 3. Cabeça de Decisão (Recebe Ninho + Soma dos Vizinhos)
-        # 32 (ninho) + 32 (vizinhos agregados) = 64
-        self.head = nn.Sequential(
-            nn.Linear(64, hidden_size),
+        # 1. Processador de Vizinhos (Message Passing)
+        # Transforma a posição (x,y) do vizinho num vetor de 'hidden_dim'
+        self.neighbor_mlp = nn.Sequential(
+            nn.Linear(self.neighbor_feat_dim, hidden_dim),
             nn.ReLU(),
-            nn.Linear(hidden_size, action_size),
-            nn.Tanh()  # Força a saída a ficar entre -1 e 1 (velocidade motores)
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU()
         )
 
-    def forward(self, x):
-        # x shape: [batch_size, 20]
-        # O input x vem com [Ninho(2), Vizinho1(2), Vizinho2(2)...]
+        # 2. Cérebro Principal (Processa Tudo)
+        # Junta: (O que eu sinto) + (O que os vizinhos me dizem)
+        self.final_mlp = nn.Sequential(
+            nn.Linear(self.own_feat_dim + hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, self.action_dim),
+            nn.Tanh()  # Tanh mete a saida entre -1 e 1 (velocidade)
+        )
 
-        # Separar Ninho e Vizinhos
-        nest_input = x[:, 0:2]  # Primeiros 2 valores
-        neighbors_input = x[:, 2:]  # Resto (18 valores = 9 vizinhos)
+    def forward(self, obs):
+        # Garantir que é Tensor e tem Batch
+        if not isinstance(obs, torch.Tensor):
+            obs = torch.tensor(obs, dtype=torch.float32)
 
-        # Processar Ninho
-        nest_features = self.nest_encoder(nest_input)
+        if len(obs.shape) == 1:
+            obs = obs.unsqueeze(0)  # Adicionar batch dimension [1, N]
 
-        # Processar Vizinhos (GNN Agregation)
-        # Vamos remodelar para processar pares (dx, dy)
-        # De [Batch, 18] para [Batch, 9, 2]
-        batch_size = x.shape[0]
-        neighbors_reshaped = neighbors_input.view(batch_size, -1, 2)
+        batch_size = obs.shape[0]
 
-        # Aplicar encoder a cada vizinho
-        neighbor_features = self.neighbor_encoder(neighbors_reshaped)  # [Batch, 9, 32]
+        # 1. Separar os dados (Fatiar o bolo)
+        # Os primeiros 9 numeros sou eu. O resto são os vizinhos.
+        own_feats = obs[:, :self.own_feat_dim]  # Shape: [Batch, 9]
+        neighbors_flat = obs[:, self.own_feat_dim:]  # Shape: [Batch, Resto]
 
-        # AGREGAÇÃO (A magia das GNNs):
-        # Somamos as features de todos os vizinhos.
-        # Assim, não interessa se temos 1 ou 5 vizinhos, o tamanho final é igual.
-        total_neighbor_features = torch.sum(neighbor_features, dim=1)  # [Batch, 32]
+        # 2. Processar Vizinhos (GNN)
+        # Validar se temos vizinhos para processar
+        if neighbors_flat.shape[1] > 0:
+            # Reformata o vetor raso para [Batch, Num_Vizinhos, 2]
+            # O '-1' diz ao PyTorch: "Calcula tu quantos vizinhos são"
+            neighbors_reshaped = neighbors_flat.view(batch_size, -1, self.neighbor_feat_dim)
 
-        # Juntar Ninho + Vizinhos
-        combined = torch.cat([nest_features, total_neighbor_features], dim=1)  # [Batch, 64]
+            # Aplica a MLP a CADA vizinho individualmente
+            embeddings = self.neighbor_mlp(neighbors_reshaped)  # [Batch, N_Viz, Hidden]
 
-        # Decidir Ação
-        action = self.head(combined)
+            # Aggregation (Soma ou Max): Resume todos os vizinhos num só vetor
+            # "Qual é a 'vibe' geral à minha volta?"
+            neighbor_summary, _ = torch.max(embeddings, dim=1)  # [Batch, Hidden]
+        else:
+            # Se não houver vizinhos (caso raro ou teste), usa zeros
+            neighbor_summary = torch.zeros(batch_size, 64, device=obs.device)
+
+        # 3. Juntar e Decidir
+        combined = torch.cat([own_feats, neighbor_summary], dim=1)  # [Batch, 9 + 64]
+        action = self.final_mlp(combined)
+
         return action
 
-
-class GNNAgent(Agent):
-    def __init__(self, name, action_space, model_path=None):
-        super().__init__(name, action_space)
-        self.device = torch.device("cpu")  # Usamos CPU para inferência rápida no teste
-
-        # Inicializar a Rede
-        self.policy = GNNPolicy()
-        self.policy.to(self.device)
-
-        # Se tivermos um modelo treinado, carregamos (para o futuro)
-        if model_path:
-            self.policy.load_state_dict(torch.load(model_path))
-            self.policy.eval()
-
-    def get_action(self, observation):
-        # 1. Preparar dados (Numpy -> Tensor)
-        obs_tensor = torch.tensor(observation, dtype=torch.float32).unsqueeze(0).to(self.device)
-
-        # 2. Perguntar à rede (Forward pass)
+    def get_action(self, obs):
+        # Função auxiliar para usar sem pensar em tensores
         with torch.no_grad():
-            action_tensor = self.policy(obs_tensor)
-
-        # 3. Converter de volta (Tensor -> Numpy)
-        return action_tensor.cpu().numpy()[0]
+            action = self.forward(obs)
+            return action.cpu().numpy()[0]

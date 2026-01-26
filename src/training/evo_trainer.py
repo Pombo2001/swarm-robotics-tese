@@ -1,120 +1,109 @@
-import numpy as np
-import torch
-import copy
-import time
 import os
 import sys
-import csv  # <--- Nova biblioteca para guardar dados
+import torch
+import numpy as np
+import copy
+import time
+import csv
+import argparse  # <--- Para receber ordens do Dashboard
 
-# Ajustar caminhos
 sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
-
 from environment.swarm_env import SwarmForagingEnv
 from agents.gnn_agent import GNNAgent
 
 
 class GeneticTrainer:
-    def __init__(self, config_path="configs/foraging.yaml"):
-        # Configurações de Treino
-        self.pop_size = 20
-        self.mutation_rate = 0.05
-        self.generations = 50  # Podes ajustar conforme necessário
-        self.elite_size = 2
-
-        self.env = SwarmForagingEnv(config_path=config_path)
-        self.env.render_mode = None
-
+    def __init__(self, config_path, generations=100):
+        self.config_path = config_path
+        self.env = SwarmForagingEnv(config_path)
         self.template_agent = GNNAgent("template", self.env.action_space("robot_0"))
+
+        self.pop_size = 30
+        self.generations = generations  # Usa o valor que vem do Dashboard
+        self.mutation_rate = 0.05
+        self.sigma = 0.1
 
         self.population = []
         for _ in range(self.pop_size):
-            self.population.append(copy.deepcopy(self.template_agent.policy.state_dict()))
+            self.population.append(copy.deepcopy(self.template_agent.state_dict()))
 
-        # --- NOVO: Configurar Log CSV ---
-        self.results_path = os.path.join(os.path.dirname(__file__), '../../results')
-        self.log_dir = os.path.join(self.results_path, 'logs')
-        self.models_dir = os.path.join(self.results_path, 'models')
-
+        self.log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs')
+        self.model_dir = os.path.join(os.path.dirname(__file__), '../../results/models')
         os.makedirs(self.log_dir, exist_ok=True)
-        os.makedirs(self.models_dir, exist_ok=True)
+        os.makedirs(self.model_dir, exist_ok=True)
 
-        # Criar ficheiro CSV e escrever cabeçalho
-        self.log_file = os.path.join(self.log_dir, 'training_history.csv')
-        with open(self.log_file, 'w', newline='') as f:
+        self.history_file = os.path.join(self.log_dir, 'training_history.csv')
+        with open(self.history_file, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['generation', 'best_score', 'avg_score', 'time'])
 
-        print(f"🧬 Treinador Genético iniciado. Logs em: {self.log_file}")
-
     def evaluate(self, weights):
-        self.template_agent.policy.load_state_dict(weights)
-        observations, _ = self.env.reset()
+        self.template_agent.load_state_dict(weights)
+        obs_dict, _ = self.env.reset()
         total_reward = 0
+        done = False
 
-        for _ in range(500):
-            actions = {}
-            for agent_id in self.env.agents:
-                obs = observations[agent_id]
-                actions[agent_id] = self.template_agent.get_action(obs)
+        while not done:
+            obs_list = [obs_dict[a] for a in self.env.agents]
+            obs_tensor = torch.tensor(np.array(obs_list), dtype=torch.float32)
+            with torch.no_grad():
+                actions_tensor = self.template_agent(obs_tensor)
+                actions_np = actions_tensor.cpu().numpy()
+            actions = {id: act for id, act in zip(self.env.agents, actions_np)}
 
-            observations, rewards, _, _, _ = self.env.step(actions)
+            obs_dict, rewards, terms, truncs, _ = self.env.step(actions)
             total_reward += sum(rewards.values())
-
+            if any(terms.values()) or any(truncs.values()):
+                done = True
         return total_reward
 
-    def mutate(self, weights):
-        new_weights = copy.deepcopy(weights)
-        for key in new_weights.keys():
-            noise = torch.randn_like(new_weights[key]) * self.mutation_rate
-            new_weights[key] += noise
-        return new_weights
-
     def train(self):
-        print("🚀 A iniciar treino com registo de dados...")
+        print(f"🧬 Treino Genético Iniciado (Meta: {self.generations} Gerações)")
 
-        for generation in range(self.generations):
-            scores = []
+        for gen in range(1, self.generations + 1):
             start_time = time.time()
+            scores = []
 
-            for i, weights in enumerate(self.population):
-                score = self.evaluate(weights)
-                scores.append((score, weights))
+            for i in range(self.pop_size):
+                scores.append(self.evaluate(self.population[i]))
 
-            scores.sort(key=lambda x: x[0], reverse=True)
-            best_score = scores[0][0]
-            avg_score = sum(s[0] for s in scores) / self.pop_size
+            sorted_indices = np.argsort(scores)[::-1]
+            scores = np.array(scores)[sorted_indices]
+            population_sorted = [self.population[i] for i in sorted_indices]
 
-            duration = time.time() - start_time
-            print(f"Gen {generation + 1} | Melhor: {best_score:.2f} | Média: {avg_score:.2f}")
+            elite_count = int(self.pop_size * 0.1)
+            new_population = population_sorted[:elite_count]
 
-            # --- NOVO: Guardar no CSV ---
-            with open(self.log_file, 'a', newline='') as f:
-                writer = csv.writer(f)
-                writer.writerow([generation + 1, best_score, avg_score, duration])
-
-            # Seleção e Reprodução
-            new_population = []
-            for i in range(self.elite_size):
-                new_population.append(scores[i][1])
-
-            parents = [s[1] for s in scores[:self.pop_size // 2]]
             while len(new_population) < self.pop_size:
-                parent = parents[np.random.randint(len(parents))]
-                child = self.mutate(parent)
+                parent_idx = np.random.randint(0, elite_count)
+                child = copy.deepcopy(population_sorted[parent_idx])
+                for key in child.keys():
+                    if np.random.rand() < self.mutation_rate:
+                        child[key] += torch.randn_like(child[key]) * self.sigma
                 new_population.append(child)
 
             self.population = new_population
+            elapsed = time.time() - start_time
 
-            if (generation + 1) % 10 == 0:
-                self.save_model(scores[0][1], f"gen_{generation + 1}")
+            print(
+                f"Gen {gen}/{self.generations} | Melhor: {scores[0]:.2f} | Média: {np.mean(scores):.2f} | Tempo: {elapsed:.2f}s")
 
-    def save_model(self, weights, name):
-        filename = os.path.join(self.models_dir, f"gnn_{name}.pth")
-        torch.save(weights, filename)
-        print(f"💾 Modelo guardado: {filename}")
+            with open(self.history_file, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([gen, scores[0], np.mean(scores), elapsed])
+
+            # Guardar a cada 10 OU na última
+            if gen % 10 == 0 or gen == self.generations:
+                save_path = os.path.join(self.model_dir, f"gnn_gen_{gen}.pth")
+                self.template_agent.load_state_dict(population_sorted[0])
+                torch.save(self.template_agent.state_dict(), save_path)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--generations", type=int, default=100, help="Número de gerações")
+    args = parser.parse_args()
+
     config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
-    trainer = GeneticTrainer(config_path)
+    trainer = GeneticTrainer(config_path, generations=args.generations)
     trainer.train()

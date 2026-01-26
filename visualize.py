@@ -1,70 +1,83 @@
-import sys
-import os
-import torch
-import numpy as np
-import time
 import argparse
+import torch
+import time
+import os
+import sys
+import pygame
 
-# Configurar caminhos para encontrar o src
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.join(current_dir, 'src'))
-
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from environment.swarm_env import SwarmForagingEnv
 from agents.gnn_agent import GNNAgent
 
 
-def visualize(model_path):
-    print(f"🎥 A carregar modelo: {model_path}")
+def main():
+    pygame.init()  # Inicializar vídeo
 
-    config_file = os.path.join(current_dir, 'configs/foraging.yaml')
-    # Forçar render mode human
-    env = SwarmForagingEnv(config_path=config_file)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str, required=True, help="Caminho para o modelo .pth")
+    args = parser.parse_args()
+
+    print(f"🎥 A carregar modelo: {args.model}")
+
+    config_path = os.path.join(os.path.dirname(__file__), 'configs/foraging.yaml')
+    env = SwarmForagingEnv(config_path=config_path)
     env.render_mode = "human"
 
-    if not os.path.exists(model_path):
-        print(f"❌ Erro: Não encontro o ficheiro {model_path}")
-        return
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    template_agent = GNNAgent("template", env.action_space("robot_0"))
 
-    # Carregar pesos (CPU safe)
     try:
-        trained_weights = torch.load(model_path, map_location=torch.device('cpu'), weights_only=True)
-    except:
-        trained_weights = torch.load(model_path, map_location=torch.device('cpu'))
+        state_dict = torch.load(args.model, map_location=device, weights_only=True)
+        # CÓDIGO CORRIGIDO: Carregar diretamente no agente, sem .policy
+        template_agent.load_state_dict(state_dict)
+    except Exception as e:
+        print(f"Erro crítico ao carregar modelo: {e}")
+        # Se falhar, tenta carregar à moda antiga caso seja um modelo velho
+        try:
+            template_agent.policy.load_state_dict(state_dict)
+        except:
+            print("Não foi possível carregar o modelo de nenhuma forma.")
+            return
 
-    # Criar Agentes
-    agents_map = {}
-    for agent_id in env.agents:
-        agent = GNNAgent(agent_id, env.action_space(agent_id))
-        agent.policy.load_state_dict(trained_weights)
-        agent.policy.eval()
-        agents_map[agent_id] = agent
-
-    print("🚀 Simulação iniciada! (Ctrl+C para sair)")
+    print("🚀 Simulação GNN iniciada!")
 
     observations, infos = env.reset()
+    env.render()
 
+    model_name = os.path.basename(args.model)
+    pygame.display.set_caption(f"Visualizador GNN: {model_name}")
+
+    running = True
     try:
-        while True:
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            if not running: break
+
             actions = {}
             for agent_id in env.agents:
                 obs = observations[agent_id]
-                actions[agent_id] = agents_map[agent_id].get_action(obs)
+                action = template_agent.get_action(obs)
+                actions[agent_id] = action
 
             observations, rewards, terms, truncs, infos = env.step(actions)
 
-            # Debug de sucesso
-            for agent_id, reward in rewards.items():
-                if reward > 5.0:
-                    print(f"✨ {agent_id} entregou comida!")
+            if any(terms.values()) or any(truncs.values()):
+                observations, infos = env.reset()
+                env.render()
+                pygame.display.set_caption(f"Visualizador GNN: {model_name}")
+
+            time.sleep(0.05)
 
     except KeyboardInterrupt:
-        print("\n🛑 A fechar simulação...")
+        pass
     finally:
+        print("🛑 A fechar simulação...")
         env.close()
+        pygame.quit()
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, required=True, help="Caminho para o ficheiro .pth")
-    args = parser.parse_args()
-    visualize(args.model)
+    main()

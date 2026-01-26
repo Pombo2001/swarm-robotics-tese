@@ -2,68 +2,78 @@ import os
 import sys
 import argparse
 import numpy as np
+import pygame
 from stable_baselines3 import PPO
 
-# Ajustar caminhos para encontrar o src
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from environment.swarm_env import SwarmForagingEnv
 
 
 def visualize_ppo(model_path):
-    print(f"🎥 A carregar modelo PPO: {model_path}")
+    # 1. INICIALIZAR PYGAME
+    pygame.init()
 
-    # 1. Configurar Ambiente
+    print(f"🎥 A carregar PPO: {model_path}")
+
     config_path = os.path.join(os.path.dirname(__file__), 'configs/foraging.yaml')
     env = SwarmForagingEnv(config_path=config_path)
-    env.render_mode = "human"  # Forçar modo visual
+    env.render_mode = "human"
 
-    # 2. Carregar o Cérebro PPO
     if not os.path.exists(model_path + ".zip") and not os.path.exists(model_path):
-        print(f"❌ Erro: Não encontro o ficheiro {model_path}")
+        print(f"❌ Erro: Ficheiro não existe")
         return
 
     try:
         model = PPO.load(model_path)
     except Exception as e:
-        print(f"Erro ao carregar PPO: {e}")
+        print(f"Erro: {e}")
         return
 
-    print("🚀 Simulação PPO iniciada! (Ctrl+C para sair)")
-
+    print("🚀 Simulação PPO iniciada!")
     observations, infos = env.reset()
 
+    # 2. JANELA E RELÓGIO (O Travão)
+    env.render()
+    model_name = os.path.basename(model_path)
+    pygame.display.set_caption(f"Visualizador PPO: {model_name}")
+
+    clock = pygame.time.Clock()  # <--- O segredo para não ser "demasiado rápido"
+
+    running = True
     try:
-        while True:
+        while running:
+            # Eventos
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            if not running: break
+
+            # Ação
             actions = {}
-            # O PPO foi treinado para agir individualmente.
-            # Vamos pedir-lhe uma ação para cada robô.
             for agent_id in env.agents:
                 obs = observations[agent_id]
-
-                # deterministic=True faz o robô usar a melhor jogada que conhece (sem explorar)
                 action, _states = model.predict(obs, deterministic=True)
-
                 actions[agent_id] = action
 
             observations, rewards, terms, truncs, infos = env.step(actions)
 
-            # Debug de sucesso no terminal
-            for agent_id, reward in rewards.items():
-                # Nota: No PPO a reward pode vir escalada, mas se for alta avisamos
-                if reward > 5.0:
-                    print(f"✨ {agent_id} (PPO) entregou comida!")
-
-            # Verificar se precisamos de resetar (se o episódio acabar)
             if any(terms.values()) or any(truncs.values()):
                 observations, infos = env.reset()
+                env.render()
+                pygame.display.set_caption(f"Visualizador PPO: {model_name}")
+
+            # 3. CONTROLAR VELOCIDADE (30 FPS)
+            clock.tick(30)  # Espera o tempo necessário para manter 30 frames/seg
 
     except KeyboardInterrupt:
-        print("\n🛑 A fechar simulação...")
+        pass
     finally:
+        print("🛑 A fechar...")
         env.close()
+        pygame.quit()
 
 
 if __name__ == "__main__":
-    # Caminho por defeito para o modelo que acabaste de treinar
     default_model = os.path.join(os.path.dirname(__file__), 'results/models_ppo/ppo_final')
     visualize_ppo(default_model)
