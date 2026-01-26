@@ -3,6 +3,7 @@ import os
 import time
 import numpy as np
 
+
 # 1. Configurar caminhos de forma robusta
 # Pega na pasta onde ESTE ficheiro está (tests/)
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -14,8 +15,8 @@ sys.path.append(src_path)
 config_path = os.path.join(current_dir, '../configs/foraging.yaml')
 
 from environment.swarm_env import SwarmForagingEnv
-from agents.random_agent import RandomAgent
 
+from agents.gnn_agent import GNNAgent
 
 def test_visual():
     print(f"🎥 A iniciar teste visual...")
@@ -32,9 +33,11 @@ def test_visual():
     observations, infos = env.reset()
 
     # 3. Criar os "Cérebros" (Agentes)
+    # 3. Criar os "Cérebros" (Agentes)
     agents_map = {}
     for agent_id in env.agents:
-        agents_map[agent_id] = RandomAgent(agent_id, env.action_space(agent_id))
+        # AGORA USAMOS GNN!
+        agents_map[agent_id] = GNNAgent(agent_id, env.action_space(agent_id))
 
     print("Janela deve abrir agora. Pressiona Ctrl+C no terminal para parar.")
 
