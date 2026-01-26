@@ -76,9 +76,8 @@ class SwarmForagingEnv(ParallelEnv):
         for idx, agent in enumerate(self.agents):
             # 1. Movimento
             if agent in actions:
-                # Ação [-1, 1] convertida em velocidade
                 vel = actions[agent]
-                # Limitar velocidade máxima (física simples)
+                # Velocidade normal (0.1) é mais segura para a física não "saltar" paredes
                 move = vel * 0.1
                 self.agent_positions[idx] += move
 
@@ -91,8 +90,27 @@ class SwarmForagingEnv(ParallelEnv):
 
             # 2. Recompensas (Lógica da Tese)
             reward = 0.0
+
+            # --- CORREÇÃO 1: Calcular a posição e distância PRIMEIRO ---
             pos = self.agent_positions[idx]
             dist_to_nest = np.linalg.norm(pos - nest_pos)
+
+            # --- CORREÇÃO 2: Lógica de RESPAWN (A ideia do Orientador) ---
+            # Se chegar ao ninho (distância menor que o raio do ninho)
+            if dist_to_nest < self.nest_radius:
+                reward += 10.0  # Grande prémio!
+
+                # Teletransportar para sítio aleatório
+                angle = np.random.uniform(0, 2 * np.pi)
+                r = self.arena_radius * np.sqrt(np.random.uniform(0, 1))
+                self.agent_positions[idx] = np.array([r * np.cos(angle), r * np.sin(angle)])
+
+                # Recalcular distância após teletransporte (para o shaping não dar erro)
+                dist_to_nest = np.linalg.norm(self.agent_positions[idx] - nest_pos)
+
+            # --- CORREÇÃO 3: Incentivo de Distância (O "Cheiro" Forte) ---
+            # Agora sim, usamos o dist_to_nest calculado acima
+            reward += (1.0 / (dist_to_nest + 0.1)) * 0.5
 
             # Penalização por sair da área proibida
             if dist_to_nest > self.config["environment"]["forbidden_area"]:
