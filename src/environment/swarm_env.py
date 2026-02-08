@@ -25,13 +25,11 @@ class SwarmForagingEnv(gym.Env):
 
         self.robot_radius = 0.05
         self.obstacle_radius = 0.2
-        self.num_obstacles = 3  # Quantas pedras queremos?
+        self.num_obstacles = 3
 
         self.agents = [f"robot_{i}" for i in range(self.num_agents)]
 
-        # Ação: Velocidade X, Y
         self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
-
         # Observação: 9 inputs + vizinhos
         obs_size = 9 + (self.num_agents - 1) * 2
         self.observation_space_val = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32)
@@ -45,7 +43,6 @@ class SwarmForagingEnv(gym.Env):
         self.screen_size = 800
         self.scale = self.screen_size / (self.arena_radius * 2.2)
 
-        # Inicializar variaveis vazias
         self.nest_pos = np.array([0.0, 0.0])
         self.obstacles = []
 
@@ -53,28 +50,25 @@ class SwarmForagingEnv(gym.Env):
         super().reset(seed=seed)
         self.steps = 0
 
-        # --- 1. RANDOMIZAR NINHO (Dentro de um raio seguro) ---
-        # Não metemos o ninho muito na borda para não ser impossível
+        # 1. Randomizar Ninho
         nest_angle = np.random.uniform(0, 2 * np.pi)
         nest_dist = np.random.uniform(0, self.arena_radius * 0.5)
         self.nest_pos = np.array([nest_dist * np.cos(nest_angle), nest_dist * np.sin(nest_angle)])
 
-        # --- 2. RANDOMIZAR OBSTÁCULOS ---
+        # 2. Randomizar Obstáculos
         self.obstacles = []
         for _ in range(self.num_obstacles):
             valid = False
             while not valid:
-                # Gerar posição aleatória na arena
                 angle = np.random.uniform(0, 2 * np.pi)
                 dist = np.random.uniform(0.5, self.arena_radius * 0.8)
                 pos = np.array([dist * np.cos(angle), dist * np.sin(angle)])
-
                 # Verificar se não cai em cima do ninho
                 if np.linalg.norm(pos - self.nest_pos) > (self.nest_radius + self.obstacle_radius + 0.2):
                     self.obstacles.append(pos)
                     valid = True
 
-        # --- 3. RANDOMIZAR ROBÔS ---
+        # 3. Randomizar Robôs
         self.agent_positions = []
         for _ in range(self.num_agents):
             self.agent_positions.append(self._random_spawn())
@@ -85,9 +79,9 @@ class SwarmForagingEnv(gym.Env):
         return self._get_observations(), {}
 
     def _random_spawn(self):
-        # Spawn nas bordas (longe do centro para obrigar a procurar)
         angle = np.random.uniform(0, 2 * np.pi)
-        r = self.arena_radius * np.sqrt(np.random.uniform(0.9, 1.0))
+        # Spawn um pouco mais espalhado (0.0 a 0.8) para não nascerem todos na parede
+        r = self.arena_radius * np.sqrt(np.random.uniform(0.0, 0.8))
         return np.array([r * np.cos(angle), r * np.sin(angle)])
 
     def _get_observations(self):
@@ -95,14 +89,13 @@ class SwarmForagingEnv(gym.Env):
         for idx, agent in enumerate(self.agents):
             pos = self.agent_positions[idx]
 
-            # 1. Ninho (Vetor relativo muda porque o ninho mexe!)
+            # 1. Ninho
             dist_nest = np.linalg.norm(pos - self.nest_pos)
             dir_nest = (self.nest_pos - pos) / (dist_nest + 1e-6)
 
-            # 2. Obstáculo Mais Próximo
-            closest_obs_dist = 5.0  # Max range sensor
+            # 2. Obstáculos
+            closest_obs_dist = 5.0
             closest_obs_dir = np.array([0.0, 0.0])
-
             for obs in self.obstacles:
                 d = np.linalg.norm(pos - obs) - self.obstacle_radius
                 if d < closest_obs_dist:
@@ -110,7 +103,6 @@ class SwarmForagingEnv(gym.Env):
                     direction = (obs - pos)
                     if np.linalg.norm(direction) > 0:
                         closest_obs_dir = direction / np.linalg.norm(direction)
-
             sensor_obs = np.clip(closest_obs_dist, 0, 5.0)
 
             # 3. Vizinhos
@@ -120,8 +112,9 @@ class SwarmForagingEnv(gym.Env):
                 rel_pos = other_pos - pos
                 neighbor_feats.extend(rel_pos)
 
+            # VOLTAMOS AO INPUT ORIGINAL (Sem GPS) para estabilidade
             obs = np.concatenate([
-                [0, 0],
+                [0, 0],  # Placeholder [0,0] em vez de GPS
                 [dist_nest],
                 dir_nest,
                 [sensor_obs],
@@ -145,7 +138,7 @@ class SwarmForagingEnv(gym.Env):
             if agent in actions:
                 self.agent_positions[idx] += actions[agent] * 0.1
 
-                # Física (Colisões)
+                # Física (Obstáculos)
         obstacle_hits = {a: 0 for a in self.agents}
         for idx, agent in enumerate(self.agents):
             for obs_pos in self.obstacles:
@@ -161,23 +154,26 @@ class SwarmForagingEnv(gym.Env):
 
         # Recompensas
         for idx, agent in enumerate(self.agents):
-            self.agent_positions[idx] = np.clip(self.agent_positions[idx], -self.arena_radius, self.arena_radius)
+
+            # --- PAREDES (Versão Suave: Empurra e Castiga, NÃO MATA) ---
+            hit_wall = False
+            if np.linalg.norm(self.agent_positions[idx]) > self.arena_radius:
+                self.agent_positions[idx] = np.clip(self.agent_positions[idx], -self.arena_radius, self.arena_radius)
+                hit_wall = True
+            # -----------------------------------------------------------
 
             rew = -0.01
             pos = self.agent_positions[idx]
             dist_nest = np.linalg.norm(pos - self.nest_pos)
 
-            # --- NOVO: RECOMPENSA DE COESÃO (O Segredo) 👥 ---
+            # Coesão (Pequena mesada para andarem juntos)
             neighbors_count = 0
             for j, other_pos in enumerate(self.agent_positions):
-                if idx == j: continue  # Não conta consigo mesmo
+                if idx == j: continue
                 dist_friend = np.linalg.norm(pos - other_pos)
-                if dist_friend < 1.0:  # Se estiver a menos de 1 metro
+                if dist_friend < 1.0:
                     neighbors_count += 1
-
-            # Dá 0.02 pontos por cada amigo perto (incentiva a andar em grupo)
-            rew += neighbors_count * 0.02
-            # ------------------------------------------------
+            rew += neighbors_count * 0.005
 
             # Comer
             if dist_nest < (self.nest_radius + 0.1):
@@ -187,9 +183,8 @@ class SwarmForagingEnv(gym.Env):
 
                 # Ninho Fugitivo
                 new_angle = np.random.uniform(0, 2 * np.pi)
-                new_dist = np.random.uniform(0, self.arena_radius * 0.8)
+                new_dist = np.random.uniform(0, self.arena_radius * 0.7)
                 self.nest_pos = np.array([new_dist * np.cos(new_angle), new_dist * np.sin(new_angle)])
-
             else:
                 self.hunger_timers[idx] += 1
                 rew += (1.0 / (dist_nest + 0.1)) * 0.05
@@ -197,9 +192,13 @@ class SwarmForagingEnv(gym.Env):
             if obstacle_hits[agent]:
                 rew -= 1.0
 
+                # Castigo na Parede
+            if hit_wall:
+                rew -= 2.0
+
                 # Fome
             if self.hunger_timers[idx] > 150:
-                rew -= 5.0
+                rew -= 10.0
                 self.agent_positions[idx] = self._random_spawn()
                 self.hunger_timers[idx] = 0
 
@@ -216,7 +215,7 @@ class SwarmForagingEnv(gym.Env):
             pygame.init()
             pygame.font.init()
             self.window = pygame.display.set_mode((self.screen_size, self.screen_size))
-            pygame.display.set_caption("Swarm Environment (Neural Links)")
+            pygame.display.set_caption("Swarm Environment (Thesis Mode)")
             self.font = pygame.font.SysFont("Consolas", 18, bold=True)
 
         self.window.fill((30, 30, 30))
@@ -225,37 +224,29 @@ class SwarmForagingEnv(gym.Env):
             return (int((p[0] + self.arena_radius * 1.1) * self.scale),
                     int((-p[1] + self.arena_radius * 1.1) * self.scale))
 
-        # 1. Ninho e Obstáculos
+        # Desenhar Ninho e Obstáculos
         pygame.draw.circle(self.window, (0, 200, 0), to_screen(self.nest_pos), int(self.nest_radius * self.scale))
         for obs in self.obstacles:
             pygame.draw.circle(self.window, (100, 100, 100), to_screen(obs), int(self.obstacle_radius * self.scale))
 
-        # --- 2. NOVO: LINHAS DE VIZINHOS (NEURAL LINKS) 🔵 ---
-        # Verifica todos os pares de robôs para ver quem está perto
+        # Desenhar Linhas de Vizinhos (Azul)
         for i in range(len(self.agent_positions)):
             for j in range(i + 1, len(self.agent_positions)):
                 pos_i = self.agent_positions[i]
                 pos_j = self.agent_positions[j]
                 dist = np.linalg.norm(pos_i - pos_j)
-
-                # Se estiverem a menos de 1.5 metros, desenha linha azul
                 if dist < 1.5:
-                    # A espessura da linha diminui com a distância (mais perto = linha mais grossa)
                     thickness = max(1, int(4 - dist * 2))
                     start = to_screen(pos_i)
                     end = to_screen(pos_j)
                     pygame.draw.line(self.window, (50, 200, 255), start, end, thickness)
-        # -----------------------------------------------------
 
-        # 3. Robôs e Lasers Normais
+        # Desenhar Robôs e Lasers
         for idx, p in enumerate(self.agent_positions):
             screen_pos = to_screen(p)
-
-            # Laser Ninho (Verde subtil)
             nest_screen = to_screen(self.nest_pos)
             pygame.draw.line(self.window, (0, 100, 0), screen_pos, nest_screen, 1)
 
-            # Laser Obstáculo (Vermelho alerta)
             closest_obs_dist = 999.0
             closest_obs_pos = None
             for obs in self.obstacles:
@@ -268,10 +259,9 @@ class SwarmForagingEnv(gym.Env):
                 obs_screen = to_screen(closest_obs_pos)
                 pygame.draw.line(self.window, (255, 50, 50), screen_pos, obs_screen, 2)
 
-            # Desenhar Robô
             pygame.draw.circle(self.window, (200, 50, 50), screen_pos, int(self.robot_radius * self.scale))
 
-        # 4. HUD
+        # HUD
         overlay = pygame.Surface((250, 90))
         overlay.set_alpha(180)
         overlay.fill((0, 0, 0))
@@ -294,6 +284,7 @@ class SwarmForagingEnv(gym.Env):
     def close(self):
         if self.window: pygame.quit()
 
+    # ESTAS SÃO AS FUNÇÕES QUE ESTAVAM A DAR ERRO (Agora estão bem indentadas)
     def action_space(self, agent):
         return self.action_spaces[agent]
 
