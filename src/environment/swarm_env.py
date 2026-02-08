@@ -145,11 +145,9 @@ class SwarmForagingEnv(gym.Env):
             if agent in actions:
                 self.agent_positions[idx] += actions[agent] * 0.1
 
-                # Física (Simplificada)
+                # Física (Colisões)
         obstacle_hits = {a: 0 for a in self.agents}
-
         for idx, agent in enumerate(self.agents):
-            # Colisão com Obstáculos Dinâmicos
             for obs_pos in self.obstacles:
                 dist = np.linalg.norm(self.agent_positions[idx] - obs_pos)
                 min_dist = self.robot_radius + self.obstacle_radius
@@ -169,11 +167,29 @@ class SwarmForagingEnv(gym.Env):
             pos = self.agent_positions[idx]
             dist_nest = np.linalg.norm(pos - self.nest_pos)
 
+            # --- NOVO: RECOMPENSA DE COESÃO (O Segredo) 👥 ---
+            neighbors_count = 0
+            for j, other_pos in enumerate(self.agent_positions):
+                if idx == j: continue  # Não conta consigo mesmo
+                dist_friend = np.linalg.norm(pos - other_pos)
+                if dist_friend < 1.0:  # Se estiver a menos de 1 metro
+                    neighbors_count += 1
+
+            # Dá 0.02 pontos por cada amigo perto (incentiva a andar em grupo)
+            rew += neighbors_count * 0.02
+            # ------------------------------------------------
+
             # Comer
             if dist_nest < (self.nest_radius + 0.1):
                 rew += 30.0
                 self.agent_positions[idx] = self._random_spawn()
                 self.hunger_timers[idx] = 0
+
+                # Ninho Fugitivo
+                new_angle = np.random.uniform(0, 2 * np.pi)
+                new_dist = np.random.uniform(0, self.arena_radius * 0.8)
+                self.nest_pos = np.array([new_dist * np.cos(new_angle), new_dist * np.sin(new_angle)])
+
             else:
                 self.hunger_timers[idx] += 1
                 rew += (1.0 / (dist_nest + 0.1)) * 0.05
@@ -198,8 +214,10 @@ class SwarmForagingEnv(gym.Env):
     def render(self):
         if self.window is None:
             pygame.init()
+            pygame.font.init()
             self.window = pygame.display.set_mode((self.screen_size, self.screen_size))
-            pygame.display.set_caption("Swarm Environment (Dynamic)")
+            pygame.display.set_caption("Swarm Environment (Neural Links)")
+            self.font = pygame.font.SysFont("Consolas", 18, bold=True)
 
         self.window.fill((30, 30, 30))
 
@@ -207,16 +225,69 @@ class SwarmForagingEnv(gym.Env):
             return (int((p[0] + self.arena_radius * 1.1) * self.scale),
                     int((-p[1] + self.arena_radius * 1.1) * self.scale))
 
-        # Desenhar Ninho (Agora muda de sítio!)
+        # 1. Ninho e Obstáculos
         pygame.draw.circle(self.window, (0, 200, 0), to_screen(self.nest_pos), int(self.nest_radius * self.scale))
-
-        # Desenhar Obstaculos (Agora mudam de sítio!)
         for obs in self.obstacles:
             pygame.draw.circle(self.window, (100, 100, 100), to_screen(obs), int(self.obstacle_radius * self.scale))
 
-        # Robôs
-        for p in self.agent_positions:
-            pygame.draw.circle(self.window, (200, 50, 50), to_screen(p), int(self.robot_radius * self.scale))
+        # --- 2. NOVO: LINHAS DE VIZINHOS (NEURAL LINKS) 🔵 ---
+        # Verifica todos os pares de robôs para ver quem está perto
+        for i in range(len(self.agent_positions)):
+            for j in range(i + 1, len(self.agent_positions)):
+                pos_i = self.agent_positions[i]
+                pos_j = self.agent_positions[j]
+                dist = np.linalg.norm(pos_i - pos_j)
+
+                # Se estiverem a menos de 1.5 metros, desenha linha azul
+                if dist < 1.5:
+                    # A espessura da linha diminui com a distância (mais perto = linha mais grossa)
+                    thickness = max(1, int(4 - dist * 2))
+                    start = to_screen(pos_i)
+                    end = to_screen(pos_j)
+                    pygame.draw.line(self.window, (50, 200, 255), start, end, thickness)
+        # -----------------------------------------------------
+
+        # 3. Robôs e Lasers Normais
+        for idx, p in enumerate(self.agent_positions):
+            screen_pos = to_screen(p)
+
+            # Laser Ninho (Verde subtil)
+            nest_screen = to_screen(self.nest_pos)
+            pygame.draw.line(self.window, (0, 100, 0), screen_pos, nest_screen, 1)
+
+            # Laser Obstáculo (Vermelho alerta)
+            closest_obs_dist = 999.0
+            closest_obs_pos = None
+            for obs in self.obstacles:
+                dist = np.linalg.norm(p - obs)
+                if dist < closest_obs_dist:
+                    closest_obs_dist = dist
+                    closest_obs_pos = obs
+
+            if closest_obs_pos is not None and closest_obs_dist < 1.5:
+                obs_screen = to_screen(closest_obs_pos)
+                pygame.draw.line(self.window, (255, 50, 50), screen_pos, obs_screen, 2)
+
+            # Desenhar Robô
+            pygame.draw.circle(self.window, (200, 50, 50), screen_pos, int(self.robot_radius * self.scale))
+
+        # 4. HUD
+        overlay = pygame.Surface((250, 90))
+        overlay.set_alpha(180)
+        overlay.fill((0, 0, 0))
+        self.window.blit(overlay, (10, 10))
+
+        live_agents = sum([1 for t in self.hunger_timers if t < 150])
+        text_steps = self.font.render(f"Step: {self.steps}/{self.max_steps}", True, (255, 255, 255))
+        self.window.blit(text_steps, (20, 20))
+
+        color_live = (0, 255, 0) if live_agents > self.num_agents / 2 else (255, 0, 0)
+        text_agents = self.font.render(f"Alive: {live_agents}/{self.num_agents}", True, color_live)
+        self.window.blit(text_agents, (20, 45))
+
+        if self.clock:
+            text_fps = self.font.render(f"FPS: {int(self.clock.get_fps())}", True, (100, 100, 255))
+            self.window.blit(text_fps, (20, 70))
 
         pygame.display.flip()
 

@@ -6,7 +6,7 @@ simulation:
 environment:
   num_agents: 10
   arena_radius: 2.0
-  nest_radius: 0.5
+  nest_radius: 0.2
   max_steps: 500        # <--- A LINHA QUE FALTAVA (Duração do episódio)
   forbidden_area: 4.0   # Limite de segurança
 
