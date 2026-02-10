@@ -1,82 +1,109 @@
-import argparse
-import torch
-import time
 import os
 import sys
-import pygame
+import torch
+import numpy as np
+import glob
+import time
 
+# Adicionar a pasta 'src' ao caminho para conseguir importar os módulos
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+
 from environment.swarm_env import SwarmForagingEnv
 from agents.gnn_agent import GNNAgent
 
 
+def find_config_file():
+    """Procura o ficheiro foraging.yaml em vários locais possíveis"""
+    base_dir = os.path.dirname(__file__)
+
+    # Lista de sítios prováveis onde o ficheiro pode estar
+    possible_paths = [
+        os.path.join(base_dir, 'src', 'configs', 'foraging.yaml'),  # Dentro de src/configs
+        os.path.join(base_dir, 'configs', 'foraging.yaml'),  # Na raiz/configs
+        os.path.join(base_dir, 'src', 'config', 'foraging.yaml'),  # Singular
+        os.path.join(base_dir, 'config', 'foraging.yaml'),  # Singular raiz
+    ]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            print(f"✅ Configuração encontrada em: {path}")
+            return path
+
+    return None
+
+
 def main():
-    pygame.init()  # Inicializar vídeo
+    # 1. Encontrar ficheiros
+    project_root = os.path.dirname(__file__)
+    models_dir = os.path.join(project_root, 'results/models')
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, required=True, help="Caminho para o modelo .pth")
-    args = parser.parse_args()
+    # A. Encontrar Configuração
+    config_path = find_config_file()
+    if config_path is None:
+        print("❌ ERRO CRÍTICO: Não foi possível encontrar o ficheiro 'foraging.yaml'.")
+        print("Verifica se tens a pasta 'configs' criada.")
+        return
 
-    print(f"🎥 A carregar modelo: {args.model}")
+    # B. Encontrar Modelo
+    list_of_files = glob.glob(os.path.join(models_dir, '*.pth'))
+    if not list_of_files:
+        print("❌ Erro: Nenhum modelo encontrado na pasta results/models/")
+        return
 
-    config_path = os.path.join(os.path.dirname(__file__), 'configs/foraging.yaml')
-    env = SwarmForagingEnv(config_path=config_path)
-    env.render_mode = "human"
+    # Escolhe o último ficheiro modificado
+    latest_model = max(list_of_files, key=os.path.getctime)
+    print(f"🎥 A carregar modelo: {latest_model}")
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    template_agent = GNNAgent("template", env.action_space("robot_0"))
-
+    # 2. Inicializar Ambiente
     try:
-        state_dict = torch.load(args.model, map_location=device, weights_only=True)
-        # CÓDIGO CORRIGIDO: Carregar diretamente no agente, sem .policy
-        template_agent.load_state_dict(state_dict)
+        env = SwarmForagingEnv(config_path)
     except Exception as e:
-        print(f"Erro crítico ao carregar modelo: {e}")
-        # Se falhar, tenta carregar à moda antiga caso seja um modelo velho
-        try:
-            template_agent.policy.load_state_dict(state_dict)
-        except:
-            print("Não foi possível carregar o modelo de nenhuma forma.")
-            return
+        print(f"❌ Erro ao criar ambiente: {e}")
+        return
 
-    print("🚀 Simulação GNN iniciada!")
+    # 3. Inicializar Agente
+    agent = GNNAgent("vis_agent", env.action_space("robot_0"))
 
-    observations, infos = env.reset()
-    env.render()
-
-    model_name = os.path.basename(args.model)
-    pygame.display.set_caption(f"Visualizador GNN: {model_name}")
-
-    running = True
     try:
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+        agent.load_state_dict(torch.load(latest_model, map_location=torch.device('cpu')))
+        agent.eval()
+    except Exception as e:
+        print(f"❌ Erro ao carregar pesos: {e}")
+        return
 
-            if not running: break
+    # 4. Loop de Simulação
+    obs_dict, _ = env.reset()
+    done = False
 
-            actions = {}
-            for agent_id in env.agents:
-                obs = observations[agent_id]
-                action = template_agent.get_action(obs)
-                actions[agent_id] = action
+    print("🚀 Simulação Visual iniciada! (Prime Ctrl+C no terminal para parar)")
 
-            observations, rewards, terms, truncs, infos = env.step(actions)
+    try:
+        while not done:
+            # Preparar dados
+            obs_list = [obs_dict[agent_id] for agent_id in env.agents]
+            obs_tensor = torch.tensor(np.array(obs_list), dtype=torch.float32)
+
+            # Ação (CORREÇÃO DO GET_ACTION APLICADA AQUI)
+            with torch.no_grad():
+                actions_tensor = agent(obs_tensor)
+                actions_np = actions_tensor.numpy()
+
+            actions = {id: act for id, act in zip(env.agents, actions_np)}
+
+            # Passo
+            obs_dict, _, terms, truncs, _ = env.step(actions)
+
+            # Renderizar
+            env.render()
 
             if any(terms.values()) or any(truncs.values()):
-                observations, infos = env.reset()
-                env.render()
-                pygame.display.set_caption(f"Visualizador GNN: {model_name}")
+                obs_dict, _ = env.reset()
 
-            time.sleep(0.05)
+            time.sleep(1 / 30)  # 30 FPS
 
     except KeyboardInterrupt:
-        pass
-    finally:
-        print("🛑 A fechar simulação...")
+        print("\n🛑 A fechar simulação...")
         env.close()
-        pygame.quit()
 
 
 if __name__ == "__main__":
