@@ -16,14 +16,12 @@ class GeneticTrainer:
     def __init__(self, config_path, generations=100):
         self.config_path = config_path
         self.env = SwarmForagingEnv(config_path)
-
-        # Inicializa o agente
         self.template_agent = GNNAgent("template", self.env.action_space("robot_0"))
 
         self.pop_size = 30
         self.generations = generations
         self.mutation_rate = 0.05
-        self.sigma = 0.1  # Variação suave
+        self.sigma = 0.1
 
         self.population = []
         for _ in range(self.pop_size):
@@ -35,6 +33,7 @@ class GeneticTrainer:
         os.makedirs(self.model_dir, exist_ok=True)
 
         self.history_file = os.path.join(self.log_dir, 'training_history.csv')
+        # Reiniciar o CSV sempre que começa um treino novo do zero
         with open(self.history_file, 'w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['generation', 'best_score', 'avg_score', 'time'])
@@ -45,7 +44,6 @@ class GeneticTrainer:
         total_reward = 0
         done = False
 
-        # Loop de avaliação
         while not done:
             obs_list = [obs_dict[a] for a in self.env.agents]
             obs_tensor = torch.tensor(np.array(obs_list), dtype=torch.float32)
@@ -63,40 +61,61 @@ class GeneticTrainer:
 
         return total_reward
 
+    # --- PASSO 2: A FUNÇÃO DE CROSSOVER ---
+    def crossover(self, parent1_weights, parent2_weights):
+        """Mistura os pesos (genes) de dois pais para criar um filho"""
+        child_weights = copy.deepcopy(parent1_weights)
+
+        for key in child_weights.keys():
+            if 'weight' in key or 'bias' in key:
+                # Cria uma máscara 50/50 (Verdadeiro ou Falso)
+                mask = torch.rand_like(child_weights[key]) > 0.5
+                # Onde a máscara for Verdadeira, o filho recebe o gene do Pai 2
+                child_weights[key][mask] = parent2_weights[key][mask]
+
+        return child_weights
+
     def train(self):
         print(f"🧬 Treino Genético Iniciado (Meta: {self.generations} Gerações)")
+        print("🔧 Funcionalidades ativas: Elitismo + Crossover + Mutação")
 
         for gen in range(1, self.generations + 1):
             start_time = time.time()
             scores = []
 
-            # 1. Avaliar todos
+            # 1. Avaliar População
             for i in range(self.pop_size):
                 scores.append(self.evaluate(self.population[i]))
 
-            # 2. Ordenar (Melhor -> Pior)
+            # 2. Ordenar (Melhor para o Pior)
             sorted_indices = np.argsort(scores)[::-1]
             scores = np.array(scores)[sorted_indices]
             population_sorted = [self.population[i] for i in sorted_indices]
 
-            # 3. ELITISMO (Aparecerem os mesmos, os melhores)
-            elite_count = int(self.pop_size * 0.1)  # Top 10% (ex: 3 agentes)
+            # 3. ELITISMO (Top 10% passam intactos)
+            elite_count = max(2, int(self.pop_size * 0.1))
             new_population = []
 
-            # Copiar a Elite sem alterações!
             for i in range(elite_count):
                 new_population.append(copy.deepcopy(population_sorted[i]))
 
-            # 4. Criar o resto (Filhos da Elite com Mutação)
+            # 4. CROSSOVER + MUTAÇÃO (Para preencher o resto)
             while len(new_population) < self.pop_size:
-                # Escolhe um pai aleatório DENTRO da elite (para garantir bons genes)
-                parent_idx = np.random.randint(0, elite_count)
-                child = copy.deepcopy(population_sorted[parent_idx])
+                # Escolhe 2 pais aleatoriamente DE DENTRO DA ELITE (ou top 50%)
+                idx1 = np.random.randint(0, len(population_sorted) // 2)
+                idx2 = np.random.randint(0, len(population_sorted) // 2)
 
-                # Mutação Suave
+                parent1 = population_sorted[idx1]
+                parent2 = population_sorted[idx2]
+
+                # O Filho nasce do Crossover
+                child = self.crossover(parent1, parent2)
+
+                # O Filho sofre uma ligeira Mutação
                 for key in child.keys():
                     if np.random.rand() < self.mutation_rate:
                         child[key] += torch.randn_like(child[key]) * self.sigma
+
                 new_population.append(child)
 
             self.population = new_population
@@ -105,7 +124,7 @@ class GeneticTrainer:
             print(
                 f"Gen {gen}/{self.generations} | Melhor: {scores[0]:.2f} | Média: {np.mean(scores):.2f} | Tempo: {elapsed:.2f}s")
 
-            # Guardar Log
+            # Guardar Logs
             with open(self.history_file, 'a', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow([gen, scores[0], np.mean(scores), elapsed])
@@ -113,7 +132,7 @@ class GeneticTrainer:
             # Guardar Modelo
             if gen % 10 == 0 or gen == self.generations:
                 save_path = os.path.join(self.model_dir, f"gnn_gen_{gen}.pth")
-                self.template_agent.load_state_dict(population_sorted[0])  # Guarda o melhor da elite
+                self.template_agent.load_state_dict(population_sorted[0])
                 torch.save(self.template_agent.state_dict(), save_path)
 
 
