@@ -27,18 +27,13 @@ class SwarmForagingEnv(gym.Env):
         self.obstacle_radius = 0.2
         self.num_obstacles = 3
 
-        # --- REGRAS COOPERATIVAS (Nível Mestrado) ---
-        self.required_to_eat = 3  # Quantos robôs são precisos para o ninho?
-        self.deaths_count = 0  # Contador de falhas críticas
+        self.required_to_eat = 3
+        self.deaths_count = 0
         self.total_food_collected = 0
 
         self.agents = [f"robot_{i}" for i in range(self.num_agents)]
-
         self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
 
-        # --- NOVO INPUT DE COMUNICAÇÃO ---
-        # Próprio: 7 inputs (Posição(2), Ninho(2), Pedra(1), Dir_Pedra(2))
-        # Vizinhos: 3 inputs cada (Rel_X, Rel_Y, SINAL_DE_ALERTA)
         obs_size = 7 + (self.num_agents - 1) * 3
         self.observation_space_val = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32)
 
@@ -47,14 +42,12 @@ class SwarmForagingEnv(gym.Env):
 
         self.render_mode = None
         self.window = None
-        self.clock = None
-        self.screen_size = 800
-        self.scale = self.screen_size / (self.arena_radius * 2.2)
+        self.scale = 800 / (self.arena_radius * 2.2)
 
         self.nest_pos = np.array([0.0, 0.0])
         self.obstacles = []
         self.prev_dist_to_nest = np.zeros(self.num_agents)
-        self.signaling = np.zeros(self.num_agents)  # Quem está a gritar "Encontrei!"?
+        self.signaling = np.zeros(self.num_agents)
         self.current_nest_occupancy = 0
 
     def reset(self, seed=None, options=None):
@@ -93,14 +86,13 @@ class SwarmForagingEnv(gym.Env):
 
     def _random_spawn(self):
         angle = np.random.uniform(0, 2 * np.pi)
-        r = self.arena_radius * np.sqrt(np.random.uniform(0.0, 0.8))
+        r = self.arena_radius * np.sqrt(np.random.uniform(0.0, 0.7))  # Nasce mais perto do centro
         return np.array([r * np.cos(angle), r * np.sin(angle)])
 
     def _get_observations(self):
         observations = {}
         for idx, agent in enumerate(self.agents):
             pos = self.agent_positions[idx]
-
             norm_pos = pos / self.arena_radius
             dist_nest = np.linalg.norm(pos - self.nest_pos)
             dir_nest = (self.nest_pos - pos) / (dist_nest + 1e-6)
@@ -117,18 +109,14 @@ class SwarmForagingEnv(gym.Env):
 
             sensor_val = 1.0 - np.clip(closest_dist / 1.0, 0, 1.0)
 
-            # COMUNICAÇÃO (Ouvir os vizinhos)
             neighbor_feats = []
             for j, other_pos in enumerate(self.agent_positions):
                 if idx == j: continue
                 rel_pos = (other_pos - pos) / self.arena_radius
-                # Adicionamos o sinal do vizinho (1.0 se ele achou o ninho, 0.0 senão)
                 neighbor_feats.extend(list(rel_pos) + [self.signaling[j]])
 
-            obs = np.concatenate([
-                norm_pos, dir_nest, [sensor_val], closest_dir, np.array(neighbor_feats)
-            ]).astype(np.float32)
-
+            obs = np.concatenate([norm_pos, dir_nest, [sensor_val], closest_dir, np.array(neighbor_feats)]).astype(
+                np.float32)
             observations[agent] = obs
         return observations
 
@@ -139,21 +127,14 @@ class SwarmForagingEnv(gym.Env):
         truncs = {a: False for a in self.agents}
         infos = {a: {} for a in self.agents}
 
-        # Drift Obstáculos
-        if self.num_obstacles > 0:
-            for i in range(len(self.obstacles)):
-                drift = np.random.uniform(-0.02, 0.02, size=2)
-                new_pos = self.obstacles[i] + drift
-                if np.linalg.norm(new_pos) < self.arena_radius * 0.9:
-                    self.obstacles[i] = new_pos
-
-        # Mover Robôs
+        # Mover
         for idx, agent in enumerate(self.agents):
             if agent in actions:
+                if self.signaling[idx] == 1.0: continue  # Travão no ninho
                 move = np.clip(actions[agent], -1, 1) * 0.1
                 self.agent_positions[idx] += move
 
-        # Física e Colisões
+        # Obstáculos
         obstacle_hits = {a: 0 for a in self.agents}
         for idx, agent in enumerate(self.agents):
             for obs_pos in self.obstacles:
@@ -166,60 +147,55 @@ class SwarmForagingEnv(gym.Env):
                     if norm > 0: direction /= norm
                     self.agent_positions[idx] += direction * (min_dist - dist)
 
-        # --- LÓGICA COOPERATIVA DO NINHO ---
+        # Ninho
         robots_in_nest = []
         for idx in range(self.num_agents):
             if np.linalg.norm(self.agent_positions[idx] - self.nest_pos) < (self.nest_radius + 0.1):
                 robots_in_nest.append(idx)
-                self.signaling[idx] = 1.0  # Acende o alerta para os outros!
+                self.signaling[idx] = 1.0
+                self.agent_positions[idx] = self.nest_pos.copy()
             else:
                 self.signaling[idx] = 0.0
 
         self.current_nest_occupancy = len(robots_in_nest)
 
-        # Se houver robôs suficientes, o enxame come!
         if self.current_nest_occupancy >= self.required_to_eat:
             self.total_food_collected += 1
-            self._spawn_nest()  # Ninho foge
-
+            self._spawn_nest()
             for idx in range(self.num_agents):
                 if idx in robots_in_nest:
-                    rewards[self.agents[idx]] += 150.0  # Recompensa MASSIVA por cooperar
+                    rewards[self.agents[idx]] += 500.0  # RECOMPENSA MASSIVA
                     self.agent_positions[idx] = self._random_spawn()
                     self.hunger_timers[idx] = 0
-                else:
-                    # Prémio global pequeno para incentivar o espírito de equipa
-                    rewards[self.agents[idx]] += 10.0
-
                 self.prev_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
                 self.signaling[idx] = 0.0
 
-        # Recompensas Contínuas (Progresso e Sobrevivência)
+        # FÍSICA IMPLACÁVEL E RECOMPENSAS
         for idx, agent in enumerate(self.agents):
-            if np.linalg.norm(self.agent_positions[idx]) > self.arena_radius:
-                self.agent_positions[idx] = np.clip(self.agent_positions[idx], -self.arena_radius, self.arena_radius)
-
             dist_nest = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
 
-            # Se ele está no ninho a espera de ajuda, não perde energia nem é castigado
+            # TERAPIA DE CHOQUE: Bateu na parede? Morre logo.
+            if np.linalg.norm(self.agent_positions[idx]) > self.arena_radius:
+                rewards[agent] -= 100.0
+                self.deaths_count += 1
+                self.agent_positions[idx] = self._random_spawn()
+                self.hunger_timers[idx] = 0
+                self.prev_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
+                continue
+
             if self.signaling[idx] == 1.0:
-                rewards[agent] += 0.5  # Pequeno bónus por manter a posição
-                self.hunger_timers[idx] = max(0, self.hunger_timers[idx] - 1)  # Congela a fome
+                rewards[agent] += 1.0
             else:
-                # Progresso normal
                 progress = self.prev_dist_to_nest[idx] - dist_nest
-                rewards[agent] += progress * 100.0
-                rewards[agent] -= 0.05  # Custo de andar
+                rewards[agent] += progress * 50.0  # Bússola densa
                 self.hunger_timers[idx] += 1
 
             self.prev_dist_to_nest[idx] = dist_nest
 
-            if obstacle_hits[agent]:
-                rewards[agent] -= 0.5
+            if obstacle_hits[agent]: rewards[agent] -= 2.0
 
-                # Fome Extrema (Morte Simbólica)
             if self.hunger_timers[idx] > 300:
-                rewards[agent] -= 15.0
+                rewards[agent] -= 50.0
                 self.deaths_count += 1
                 self.agent_positions[idx] = self._random_spawn()
                 self.hunger_timers[idx] = 0
@@ -227,19 +203,24 @@ class SwarmForagingEnv(gym.Env):
 
             terms[agent] = self.steps >= self.max_steps
 
-        if self.render_mode == "human": self.render()
         return self._get_observations(), rewards, terms, truncs, infos
 
+    def action_space(self, agent):
+        return self.action_spaces[agent]
+
+    def observation_space(self, agent):
+        return self.observation_spaces[agent]
+
     def render(self):
+        if self.render_mode != "human": return
         if self.window is None:
             pygame.init()
             pygame.font.init()
-            self.window = pygame.display.set_mode((self.screen_size, self.screen_size))
-            pygame.display.set_caption("Swarm Robotics: Cooperative Multi-Agent Foraging")
+            self.window = pygame.display.set_mode((800, 800))
+            pygame.display.set_caption("Swarm Robotics: Terapia de Choque")
             self.font = pygame.font.SysFont("Consolas", 18, bold=True)
-            self.title_font = pygame.font.SysFont("Consolas", 22, bold=True)
 
-        self.window.fill((20, 25, 30))  # Fundo escuro académico
+        self.window.fill((20, 25, 30))
 
         def to_screen(p):
             return (int((p[0] + self.arena_radius * 1.1) * self.scale),
@@ -253,46 +234,19 @@ class SwarmForagingEnv(gym.Env):
         # Obstáculos
         for obs in self.obstacles:
             pygame.draw.circle(self.window, (100, 100, 110), to_screen(obs), int(self.obstacle_radius * self.scale))
-            pygame.draw.circle(self.window, (255, 80, 80), to_screen(obs), int(self.obstacle_radius * self.scale), 1)
 
         # Robôs
         for idx, p in enumerate(self.agent_positions):
             screen_pos = to_screen(p)
-
-            # Se encontrou o ninho, brilha a Dourado (Sinalizador)
             if self.signaling[idx] == 1.0:
-                # Efeito de Radar/Ondas de Rádio
-                pygame.draw.circle(self.window, (255, 215, 0), screen_pos, int(self.robot_radius * self.scale * 3), 1)
+                pygame.draw.circle(self.window, (255, 215, 0), screen_pos, int(self.robot_radius * self.scale * 2), 2)
                 pygame.draw.circle(self.window, (255, 215, 0), screen_pos, int(self.robot_radius * self.scale))
             else:
-                pygame.draw.line(self.window, (0, 100, 0), screen_pos, to_screen(self.nest_pos), 1)
                 pygame.draw.circle(self.window, (80, 150, 255), screen_pos, int(self.robot_radius * self.scale))
-
-        # --- HUD AVANÇADO ---
-        overlay = pygame.Surface((280, 150))
-        overlay.set_alpha(200)
-        overlay.fill((10, 10, 15))
-        self.window.blit(overlay, (10, 10))
-
-        texts = [
-            self.title_font.render("DASHBOARD DO ENXAME", True, (255, 215, 0)),
-            self.font.render(f"Tempo: {self.steps}/{self.max_steps} steps", True, (200, 200, 200)),
-            self.font.render(f"Robôs no Ninho: {self.current_nest_occupancy}/{self.required_to_eat}", True,
-                             (50, 255, 50) if self.current_nest_occupancy > 0 else (200, 200, 200)),
-            self.font.render(f"Comida Coletada: {self.total_food_collected}", True, (100, 200, 255)),
-            self.font.render(f"Mortes (Fome): {self.deaths_count}", True, (255, 100, 100))
-        ]
-
-        for i, txt in enumerate(texts):
-            self.window.blit(txt, (20, 20 + i * 25))
 
         pygame.display.flip()
 
     def close(self):
-        if self.window: pygame.quit()
-
-    def action_space(self, agent):
-        return self.action_spaces[agent]
-
-    def observation_space(self, agent):
-        return self.observation_spaces[agent]
+        if self.window is not None:
+            pygame.quit()
+            self.window = None

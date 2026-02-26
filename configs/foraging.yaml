@@ -1,23 +1,23 @@
 # Configurações do Cenário de Foraging
 simulation:
-  max_steps: 1000             # Duração do episódio
-  render_mode: "human"        # "human" para ver, "rgb_array" para treino rápido
+  max_steps: 500
+  render_mode: "rgb_array"    # MUDA ISTO PARA NÃO ABRIR A JANELA
 
 environment:
   num_agents: 10
-  arena_radius: 2.0
+  arena_radius: 2.0           # Onde acaba a arena
   nest_radius: 0.2
-  max_steps: 500        # <--- A LINHA QUE FALTAVA (Duração do episódio)
-  forbidden_area: 4.0   # Limite de segurança
-
-
+  max_steps: 500
+  forbidden_area: 2.2         # Se passarem disto, o castigo é máximo
 
 physics:
-  agent_radius: 0.15          # Tamanho do robô
-  communication_radius: 2.0   # Raio de comunicação (GNN)
-  collision_penalty: -0.5     # Penalização por colisão
+  agent_radius: 0.15
+  communication_radius: 1.0   # Reduzir para eles terem de se procurar
+  collision_penalty: -1.0     # Bater uns nos outros deve custar pontos
 
 rewards:
-  food_collected: 1.0         # Recompensa por levar comida ao ninho
-  out_of_bounds: -1.0   # Penalização por sair da arena
-  energy_cost: -0.01          # Custo por movimento
+  food_collected: 100.0       # A CENOURA: Muita pontuação por levar comida a casa!
+  out_of_bounds: -10.0        # O PAU: Sair do mapa destrói o fitness
+  wall_penalty: -5.0          # Bater na parede dói
+  energy_cost: -0.05          # Gastar energia a andar sem rumo custa pontos
+  exploration_bonus: 0.01     # Bónus mínimo só para não ficarem parados
