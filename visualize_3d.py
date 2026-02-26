@@ -3,6 +3,7 @@ from ursina import * # <-- Ursina numa linha
 import numpy as np      # <-- Numpy noutra linha
 import sys
 import os
+import os
 
 # Adicionar a pasta 'src' para os novos modelos
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
