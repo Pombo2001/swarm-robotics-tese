@@ -20,7 +20,7 @@ class ModernDashboardV4(ctk.CTk):
         self.geometry("1100x850")
 
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.mode = "2D"  # Modo inicial padrão
+        self.mode = "2D"  # Modo inicial padrãooooo
 
         self.gnn_process = None
         self.ppo_process = None
