@@ -1,12 +1,19 @@
-import os
-import sys
+import pygame
 import torch
 import numpy as np
-import time
+import sys
+import os
+import time  # <--- A LINHA MÁGICA QUE FALTAVA!
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-from environment.swarm_env import SwarmForagingEnv
-from agents.gnn_agent import GNNAgent
+# Forçar o Python a reconhecer a pasta RAIZ
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
+
+from src.environment.swarm_env import SwarmForagingEnv
+from src.agents.gnn_agent import GNNAgent
+
+CONFIG_PATH = os.path.join(PROJECT_ROOT, 'configs', 'foraging.yaml')
 
 
 def visualize_best_continuous():

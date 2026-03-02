@@ -1,16 +1,17 @@
 import os
 import sys
-import numpy as np
 import csv
-import time
+import numpy as np
 from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import VecEnv
 from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.vec_env import VecEnv
 
-# Ajustar caminhos
-sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
-from environment.swarm_env import SwarmForagingEnv
+# Forçar o Python a reconhecer a pasta RAIZ
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
+from src.environment.swarm_env import SwarmForagingEnv
 
 # --- 1. O ESPIÃO (Callback Melhorado) ---
 class DashboardCallback(BaseCallback):

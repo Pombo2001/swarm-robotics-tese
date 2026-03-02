@@ -1,13 +1,19 @@
-import os
-import sys
-import argparse
-import numpy as np
 import pygame
+import torch
+import numpy as np
+import sys
+import os
 from stable_baselines3 import PPO
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-from environment.swarm_env import SwarmForagingEnv
+# Forçar o Python a reconhecer a pasta RAIZ
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
+# A LINHA CORRIGIDA: Importar a versão 2D (sem o "3D" no fim)
+from src.environment.swarm_env import SwarmForagingEnv
+
+CONFIG_PATH = os.path.join(PROJECT_ROOT, 'configs', 'foraging.yaml')
 
 def visualize_ppo(model_path):
     # 1. INICIALIZAR PYGAME E AMBIENTE

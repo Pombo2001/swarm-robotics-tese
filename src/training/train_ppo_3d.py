@@ -2,14 +2,17 @@ import os
 import sys
 import csv
 import numpy as np
-import torch
-import gymnasium as gym
+import gymnasium as gym  # <--- Substitui o antigo 'gym' para tirar o aviso
 from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import BaseCallback
+from stable_baselines3.common.callbacks import BaseCallback  # <--- A LINHA QUE FALTAVA!
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
-from environment.swarm_env_3d import SwarmForagingEnv3D
+# Forçar o Python a reconhecer a pasta RAIZ
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
+from src.environment.swarm_env_3d import SwarmForagingEnv3D
+# ... resto do teu código (class PPOFriendlyWrapper, LoggingCallback, etc.)
 
 # --- WRAPPER PARA TORNAR O ENXAME COMPATÍVEL COM PPO ---
 class PPOFriendlyWrapper(gym.Wrapper):

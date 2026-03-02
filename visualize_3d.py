@@ -1,16 +1,19 @@
-import torch            # <-- PyTorch primeiro
-from ursina import * # <-- Ursina numa linha
-import numpy as np      # <-- Numpy noutra linha
+import torch
+from ursina import *
+import numpy as np
 import sys
 import os
-import os
 
-# Adicionar a pasta 'src' para os novos modelos
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-from environment.swarm_env_3d import SwarmForagingEnv3D
-from agents.gnn_agent_3d import GNNAgent3D
+# Forçar o Python a reconhecer a pasta RAIZ
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
-# Inicializar o Motor 3D
+# Agora importamos com o "src." atrás para ele encontrar a pasta correta!
+from src.environment.swarm_env_3d import SwarmForagingEnv3D
+from src.agents.gnn_agent_3d import GNNAgent3D
+
+CONFIG_PATH = os.path.join(PROJECT_ROOT, 'configs', 'foraging.yaml')
 app = Ursina()
 
 # --- CONFIGURAÇÃO DA CÂMARA E LUZ ---

@@ -7,9 +7,18 @@ import time
 import csv
 import argparse
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
-from environment.swarm_env_3d import SwarmForagingEnv3D
-from agents.gnn_agent_3d import GNNAgent3D
+# 1. Forçar o Python a reconhecer a pasta RAIZ do projeto (swarm-robotics-tese)
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
+
+# 2. Agora usamos "src." antes do nome das pastas. O teu editor já vai reconhecer!
+from src.environment.swarm_env_3d import SwarmForagingEnv3D
+from src.agents.gnn_agent_3d import GNNAgent3D
+
+# (O resto do teu código a partir do 'class GeneticTrainer3D:' fica exatamente igual)
+
+# (O resto do teu código a partir do 'class GeneticTrainer3D:' fica exatamente igual!)
 
 
 class GeneticTrainer3D:

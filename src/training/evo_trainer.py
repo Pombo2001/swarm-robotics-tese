@@ -1,15 +1,19 @@
 import os
 import sys
+import argparse  # <--- A LINHA QUE ESTÁ A FALTAR!
 import torch
 import numpy as np
 import copy
 import time
 import csv
-import argparse
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../'))
-from environment.swarm_env import SwarmForagingEnv
-from agents.gnn_agent import GNNAgent
+# Forçar o Python a reconhecer a pasta RAIZ
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
+
+from src.environment.swarm_env import SwarmForagingEnv
+from src.agents.gnn_agent import GNNAgent # <--- A LINHA QUE SUBSTITUI O COMENTÁRIO
 
 
 class GeneticTrainer:
