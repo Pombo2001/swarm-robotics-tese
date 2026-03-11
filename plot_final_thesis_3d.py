@@ -1,60 +1,90 @@
-import torch
-from ursina import *
-import numpy as np
-import sys
+import pandas as pd
+import matplotlib.pyplot as plt
 import os
-from stable_baselines3 import PPO
+import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
-from environment.swarm_env_3d import SwarmForagingEnv3D
+PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
-app = Ursina()
-window.color = color.black
-window.title = 'Swarm 3D - PPO Baseline'
-window.borderless = False
-window.exit_button.visible = False
-camera.position = (0, 15, -30)
-camera.rotation_x = 25
 
-DirectionalLight(y=2, z=3, shadows=True)
-AmbientLight(color=color.rgba(100, 100, 100, 1.0))
+def create_thesis_plots_3d():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    gnn_csv = os.path.join(base_dir, 'results', 'logs', 'gnn_3d_training.csv')
+    ppo_csv = os.path.join(base_dir, 'results', 'logs_ppo', 'training_history_ppo_3d.csv')
 
-config_path = os.path.join(os.path.dirname(__file__), 'configs/foraging.yaml')
-env = SwarmForagingEnv3D(config_path)
-env.render_mode = None
+    output_dir = os.path.join(base_dir, 'results', 'graficos_tese')
+    os.makedirs(output_dir, exist_ok=True)
 
-model_path = os.path.join(os.path.dirname(__file__), 'results/models_ppo/ppo_3d_final')
-if os.path.exists(model_path + ".zip"):
-    os.chmod(model_path + ".zip", 0o666) # [cite: 2026-02-23]
-    model = PPO.load(model_path)
-else:
-    sys.exit("❌ Modelo PPO não encontrado!")
+    # --- 1. GRÁFICO INDIVIDUAL: GNN 3D ---
+    if os.path.exists(gnn_csv):
+        df_gnn = pd.read_csv(gnn_csv)
+        df_gnn.columns = df_gnn.columns.str.strip()
 
-obs_dict, _ = env.reset()
+        plt.figure(figsize=(8, 5))
+        plt.plot(df_gnn['time'] / 60, df_gnn['best_fitness'], color='#4CAF50', alpha=0.3, label='GNN Bruto')
+        plt.plot(df_gnn['time'] / 60, df_gnn['best_fitness'].rolling(5, min_periods=1).mean(), color='#2E7D32',
+                 linewidth=2, label='GNN Suavizado')
 
-Grid(scale=env.arena_radius*4, color=color.dark_gray, rotation_x=90, y=-env.arena_radius)
-nest_view = Entity(model='sphere', color=color.rgba(0, 255, 0, 80), scale=env.nest_radius * 2)
-obs_views = [Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2) for _ in range(env.num_obstacles)]
-robot_views = [Entity(model='cube', color=color.orange, scale=env.robot_radius * 2) for _ in range(env.num_agents)]
+        plt.title('Evolução do GNN 3D', fontsize=14, fontweight='bold')
+        plt.xlabel('Tempo de Treino (Minutos)', fontsize=12)
+        plt.ylabel('Fitness Score', fontsize=12)
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, '1_gnn_3d_plot_tempo.png'), dpi=300)
+        plt.close()
 
-def update():
-    global obs_dict
-    actions = {a: model.predict(obs_dict[a], deterministic=True)[0] for a in env.agents}
-    obs_dict, rewards, terms, truncs, _ = env.step(actions)
+    # --- 2. GRÁFICO INDIVIDUAL: PPO 3D ---
+    if os.path.exists(ppo_csv):
+        df_ppo = pd.read_csv(ppo_csv)
+        df_ppo.columns = df_ppo.columns.str.strip()
 
-    nest_view.position = tuple(env.nest_pos)
-    for i, obs_pos in enumerate(env.obstacles):
-        obs_views[i].position = tuple(obs_pos)
-    for i, r_pos in enumerate(env.agent_positions):
-        robot_views[i].position = tuple(r_pos)
-        if env.signaling[i] == 1.0:
-            robot_views[i].color = color.gold
-            robot_views[i].scale = env.robot_radius * 4
-        else:
-            robot_views[i].color = color.orange
-            robot_views[i].scale = env.robot_radius * 2
+        plt.figure(figsize=(8, 5))
+        plt.plot(df_ppo['time'] / 60, df_ppo['ep_rew_mean'], color='#FFA726', alpha=0.3, label='PPO Bruto')
+        plt.plot(df_ppo['time'] / 60, df_ppo['ep_rew_mean'].rolling(10, min_periods=1).mean(), color='#E65100',
+                 linewidth=2, label='PPO Suavizado')
 
-    if any(terms.values()):
-        obs_dict, _ = env.reset()
+        plt.title('Aprendizagem do PPO 3D', fontsize=14, fontweight='bold')
+        plt.xlabel('Tempo de Treino (Minutos)', fontsize=12)
+        plt.ylabel('Recompensa Média', fontsize=12)
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, '2_ppo_3d_plot_tempo.png'), dpi=300)
+        plt.close()
 
-app.run()
+    # --- 3. GRÁFICO DE COMPARAÇÃO JUSTA ---
+    if os.path.exists(gnn_csv) and os.path.exists(ppo_csv):
+        fig, ax1 = plt.subplots(figsize=(10, 6))
+
+        # Eixo X é o TEMPO (Minutos)
+        ax1.set_xlabel('Tempo de Treino Simultâneo (Minutos)', fontsize=12)
+
+        color1 = '#2E7D32'
+        ax1.set_ylabel('Pontuação GNN (Fitness Bruto)', color=color1, fontsize=12, fontweight='bold')
+        line1 = ax1.plot(df_gnn['time'] / 60, df_gnn['best_fitness'].rolling(5, min_periods=1).mean(), color=color1,
+                         linewidth=2.5, label='GNN 3D')
+        ax1.tick_params(axis='y', labelcolor=color1)
+
+        ax2 = ax1.twinx()
+        color2 = '#E65100'
+        ax2.set_ylabel('Pontuação PPO (Recompensa Média)', color=color2, fontsize=12, fontweight='bold')
+        line2 = ax2.plot(df_ppo['time'] / 60, df_ppo['ep_rew_mean'].rolling(10, min_periods=1).mean(), color=color2,
+                         linewidth=2.5, label='PPO 3D')
+        ax2.tick_params(axis='y', labelcolor=color2)
+
+        plt.title('Comparação Justa por Tempo: GNN vs PPO (3D)', fontsize=16, fontweight='bold')
+
+        lines = line1 + line2
+        labels = [l.get_label() for l in lines]
+        ax1.legend(lines, labels, loc='lower right', fontsize=11)
+        ax1.grid(True, linestyle='--', alpha=0.5)
+
+        fig.tight_layout()
+        plt.savefig(os.path.join(output_dir, '3_comparacao_justa_tempo_3d.png'), dpi=300)
+        plt.show()
+
+
+if __name__ == "__main__":
+    create_thesis_plots_3d()
