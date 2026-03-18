@@ -14,15 +14,21 @@ from src.environment.swarm_env_3d import SwarmForagingEnv3D
 
 app = Ursina()
 
-# --- CONFIGURAÇÃO DA CÂMARA E LUZ (Cópia exata do teu GNN) ---
+# --- CONFIGURAÇÃO DA CÂMARA E LUZ ---
 window.title = 'Swarm 3D - PPO Baseline'
 window.borderless = False
 window.exit_button.visible = False
 window.fps_counter.enabled = True
-EditorCamera()
+EditorCamera()  # <--- Isto é tudo o que precisamos para navegar!
 
 DirectionalLight(y=2, z=3, shadows=True)
 AmbientLight(color=color.rgba(100, 100, 100, 1.0))
+
+# --- UI: SLIDER DE VELOCIDADE ---
+speed_slider = Slider(min=1, max=120, default=30, text='Velocidade', dynamic=True)
+speed_slider.position = (-0.85, 0.45)
+speed_slider.scale = 1.2
+time_accumulator = 0.0
 
 # --- CARREGAR O AMBIENTE E A IA ---
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -42,47 +48,54 @@ else:
     print(f"❌ Erro: {model_path}.zip não encontrado!")
     sys.exit()
 
-# --- CRIAR OS OBJETOS 3D (O Teu Estilo Original) ---
+# --- CRIAR OS OBJETOS 3D (Já na posição certa logo no início) ---
 Entity(model='cube', scale=env.arena_radius * 2, color=color.rgba(255, 255, 255, 30), double_sided=True)
 
-nest_view = Entity(model='sphere', color=color.green, scale=env.nest_radius * 2)
+nest_view = Entity(model='sphere', color=color.green, scale=env.nest_radius * 2, position=tuple(env.nest_pos))
 
 obs_views = []
-for i in range(env.num_obstacles):
-    obs_views.append(Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2))
+for i, obs_pos in enumerate(env.obstacles):
+    obs_views.append(Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2, position=tuple(obs_pos)))
 
 robot_views = []
-for i in range(env.num_agents):
-    robot_views.append(Entity(model='cube', color=color.orange, scale=env.robot_radius * 2))
+for i, r_pos in enumerate(env.agent_positions):
+    robot_views.append(Entity(model='cube', color=color.orange, scale=env.robot_radius * 2, position=tuple(r_pos)))
 
 
 # --- O LOOP DE SIMULAÇÃO ---
 def update():
-    global obs_dict
+    global obs_dict, time_accumulator
 
-    actions = {}
-    for agent_id in env.agents:
-        obs = np.array(obs_dict[agent_id], dtype=np.float32)
-        action, _ = model.predict(obs, deterministic=True)
-        actions[agent_id] = action
+    # Temporizador guiado pela barra
+    time_accumulator += time.dt
+    target_delay = 1.0 / speed_slider.value
 
-    obs_dict, rewards, terms, truncs, infos = env.step(actions)
+    if time_accumulator >= target_delay:
+        time_accumulator = 0.0
 
-    nest_view.position = tuple(env.nest_pos)
-    for i, obs_pos in enumerate(env.obstacles):
-        obs_views[i].position = tuple(obs_pos)
+        actions = {}
+        for agent_id in env.agents:
+            obs = np.array(obs_dict[agent_id], dtype=np.float32)
+            action, _ = model.predict(obs, deterministic=True)
+            actions[agent_id] = action
 
-    for i, r_pos in enumerate(env.agent_positions):
-        robot_views[i].position = tuple(r_pos)
-        if env.signaling[i] == 1.0:
-            robot_views[i].color = color.gold
-            robot_views[i].scale = env.robot_radius * 4
-        else:
-            robot_views[i].color = color.orange
-            robot_views[i].scale = env.robot_radius * 2
+        obs_dict, rewards, terms, truncs, infos = env.step(actions)
 
-    if any(terms.values()):
-        obs_dict, _ = env.reset()
+        nest_view.position = tuple(env.nest_pos)
+        for i, obs_pos in enumerate(env.obstacles):
+            obs_views[i].position = tuple(obs_pos)
+
+        for i, r_pos in enumerate(env.agent_positions):
+            robot_views[i].position = tuple(r_pos)
+            if env.signaling[i] == 1.0:
+                robot_views[i].color = color.gold
+                robot_views[i].scale = env.robot_radius * 4
+            else:
+                robot_views[i].color = color.orange
+                robot_views[i].scale = env.robot_radius * 2
+
+        if any(terms.values()):
+            obs_dict, _ = env.reset()
 
 
 app.run()

@@ -1,89 +1,69 @@
-import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
+
 
 class GNNAgent3D(nn.Module):
-    def __init__(self, name, action_space):
+    def __init__(self, agent_id, action_space):
         super(GNNAgent3D, self).__init__()
-        self.name = name
+        self.agent_id = agent_id
 
-        # --- CONFIGURAÇÃO 3D ---
-        self.input_dim = 10  # 3 Pos + 3 Ninho + 1 Sensor + 3 Dir_Pedra
-        self.neighbor_dim = 4  # Rel X, Rel Y, Rel Z, SINAL
+        # --- A NOVA BÚSSOLA INTERNA ---
+        # Ninho (4) + Obstáculo (4) = 8 features base do ambiente
+        # Vizinhos (5) = Frente, Direita, Cima, Distância, Sinalização
+        self.env_feats_dim = 8
+        self.neighbor_dim = 5
+
         self.hidden_dim = 64
-        self.output_dim = action_space.shape[0]  # Agora é 3 (X, Y, Z)
 
-        # 1. Processamento Próprio (Encoder)
-        self.fc_self = nn.Sequential(
-            nn.Linear(self.input_dim, self.hidden_dim),
+        # Encoder do Ambiente Local (O que o drone "vê")
+        self.encoder = nn.Sequential(
+            nn.Linear(self.env_feats_dim, self.hidden_dim),
             nn.ReLU(),
             nn.Linear(self.hidden_dim, self.hidden_dim)
         )
 
-        # 2. Processamento de Vizinhos (Encoder)
-        self.fc_neighbor = nn.Sequential(
+        # O "Comunicador" (O que o drone "ouve" dos vizinhos)
+        self.msg_net = nn.Sequential(
             nn.Linear(self.neighbor_dim, self.hidden_dim),
             nn.ReLU(),
             nn.Linear(self.hidden_dim, self.hidden_dim)
         )
 
-        # 3. MECANISMO DE ATENÇÃO (GAT)
-        self.attn_query = nn.Linear(self.hidden_dim, self.hidden_dim)
-        self.attn_key = nn.Linear(self.hidden_dim, self.hidden_dim)
-        self.attn_value = nn.Linear(self.hidden_dim, self.hidden_dim)
-
-        # 4. Decisão Final (Decoder)
-        self.fc_final = nn.Sequential(
+        # O "Cérebro" que junta a visão com a comunicação para decidir os 3 Motores
+        self.actor = nn.Sequential(
             nn.Linear(self.hidden_dim * 2, self.hidden_dim),
             nn.ReLU(),
-            nn.Linear(self.hidden_dim, self.output_dim),
-            nn.Tanh()  # Saída entre -1 e 1 para os 3 motores (X, Y, Z)
+            nn.Linear(self.hidden_dim, 3),  # 3 Eixos de movimento
+            nn.Tanh()
         )
 
-    def forward(self, x):
-        # x shape: [batch_size, obs_size]
-        # Cortamos no índice 10 porque agora temos 10 inputs próprios
-        self_data = x[:, :10]
-        neighbor_data = x[:, 10:]
+    def forward(self, obs):
+        batch_size = obs.shape[0] if len(obs.shape) > 1 else 1
 
-        batch_size = x.shape[0]
+        if len(obs.shape) == 1:
+            obs = obs.unsqueeze(0)
 
-        # A. Codificar Estado Próprio
-        h_self = self.fc_self(self_data)
+        env_data = obs[:, :self.env_feats_dim]
+        neighbor_data = obs[:, self.env_feats_dim:]
 
-        # B. Processar Vizinhos com ATENÇÃO
+        # Descobrir quantos vizinhos existem dinamicamente (19 vizinhos se num_agents for 20)
         num_neighbors = neighbor_data.shape[1] // self.neighbor_dim
 
+        h_env = self.encoder(env_data)
+
         if num_neighbors > 0:
-            # Reshape para [batch, num_vizinhos, 4]
+            # Aqui é onde o erro batia! Agora está preparado para receber (20, 19, 5)
             neighbors = neighbor_data.view(batch_size, num_neighbors, self.neighbor_dim)
-
-            # Codificar cada vizinho
-            h_neighbors = self.fc_neighbor(neighbors)
-
-            # Cálculo da Atenção
-            Q = self.attn_query(h_self).unsqueeze(1)
-            K = self.attn_key(h_neighbors)
-            V = self.attn_value(h_neighbors)
-
-            attn_scores = torch.matmul(Q, K.transpose(-2, -1)) / np.sqrt(self.hidden_dim)
-            attn_weights = F.softmax(attn_scores, dim=-1)
-
-            # Contexto Social
-            context = torch.matmul(attn_weights, V).squeeze(1)
+            msg = self.msg_net(neighbors)
+            msg_pool = msg.mean(dim=1)
         else:
-            context = torch.zeros_like(h_self)
+            msg_pool = torch.zeros((batch_size, self.hidden_dim), device=obs.device)
 
-        # C. Juntar Tudo e Decidir
-        combined = torch.cat([h_self, context], dim=1)
-        action = self.fc_final(combined)
+        combined = torch.cat([h_env, msg_pool], dim=1)
+        action = self.actor(combined)
+
+        if batch_size == 1:
+            return action.squeeze(0)
 
         return action
-
-# Assegurar as permissões read/write ao criar o módulo
-try:
-    os.chmod(__file__, 0o666)
-except Exception:
-    pass

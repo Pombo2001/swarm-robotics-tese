@@ -1,23 +1,22 @@
-# Configurações do Cenário de Foraging
-simulation:
-  max_steps: 500
-  render_mode: "rgb_array"    # MUDA ISTO PARA NÃO ABRIR A JANELA
-
 environment:
-  num_agents: 10
-  arena_radius: 2.0           # Onde acaba a arena
-  nest_radius: 0.2
+  arena_radius: 3.0
+  dynamic_nest: false
+  dynamic_obstacles: true
+  forbidden_area: 2.2
   max_steps: 500
-  forbidden_area: 2.2         # Se passarem disto, o castigo é máximo
-
+  nest_radius: 0.2
+  num_agents: 5
+  num_obstacles: 30
 physics:
   agent_radius: 0.15
-  communication_radius: 1.0   # Reduzir para eles terem de se procurar
-  collision_penalty: -1.0     # Bater uns nos outros deve custar pontos
-
+  collision_penalty: -1.0
+  communication_radius: 1.0
 rewards:
-  food_collected: 100.0       # A CENOURA: Muita pontuação por levar comida a casa!
-  out_of_bounds: -10.0        # O PAU: Sair do mapa destrói o fitness
-  wall_penalty: -5.0          # Bater na parede dói
-  energy_cost: -0.05          # Gastar energia a andar sem rumo custa pontos
-  exploration_bonus: 0.01     # Bónus mínimo só para não ficarem parados
+  energy_cost: -0.05
+  exploration_bonus: 0.01
+  food_collected: 100.0
+  out_of_bounds: -10.0
+  wall_penalty: -5.0
+simulation:
+  max_steps: 500
+  render_mode: rgb_array
