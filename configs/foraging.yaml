@@ -1,12 +1,13 @@
 environment:
-  arena_radius: 3.0
-  dynamic_nest: false
+  arena_radius: 15.0
+  classic_scenario: none
+  dynamic_nest: true
   dynamic_obstacles: true
   forbidden_area: 2.2
   max_steps: 500
   nest_radius: 0.2
-  num_agents: 5
-  num_obstacles: 30
+  num_agents: 20
+  num_obstacles: 50
 physics:
   agent_radius: 0.15
   collision_penalty: -1.0

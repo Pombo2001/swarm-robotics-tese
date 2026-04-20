@@ -5,10 +5,10 @@ import numpy as np
 import argparse
 import time
 import gymnasium as gym
-from stable_baselines3 import PPO
+from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.monitor import Monitor  # <--- 1. IMPORTAR O MONITOR!
+from stable_baselines3.common.monitor import Monitor
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if PROJECT_ROOT not in sys.path:
@@ -17,7 +17,7 @@ if PROJECT_ROOT not in sys.path:
 from src.environment.swarm_env_3d import SwarmForagingEnv3D
 
 
-class PPOFriendlyWrapper(gym.Wrapper):
+class SACFriendlyWrapper(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
         self.observation_space = env.observation_space_val
@@ -28,17 +28,17 @@ class PPOFriendlyWrapper(gym.Wrapper):
         return obs_dict["robot_0"], info
 
     def step(self, action):
-        # 1. O PPO controla APENAS o robot_0
+        # 1. O SAC controla APENAS o robot_0
         actions = {"robot_0": action}
 
-        # 2. Os outros 19 drones movem-se sozinhos para criar trânsito na arena
+        # 2. Os outros drones movem-se aleatoriamente para criar ruído no ambiente
         for agent in self.env.agents:
             if agent != "robot_0":
                 actions[agent] = self.env.action_space(agent).sample()
 
         obs_dict, rewards, terms, truncs, infos = self.env.step(actions)
 
-        # 3. O PPO é avaliado EXCLUSIVAMENTE pelo seu próprio desempenho
+        # 3. O SAC é avaliado EXCLUSIVAMENTE pelo seu próprio desempenho
         return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos["robot_0"]
 
 
@@ -72,16 +72,16 @@ class TimeLimitAndLoggingCallback(BaseCallback):
 def make_env(config_path):
     def _init():
         raw_env = SwarmForagingEnv3D(config_path)
-        wrapped_env = PPOFriendlyWrapper(raw_env)
-        return Monitor(wrapped_env)  # <--- 2. EMBRULHAR NO MONITOR!
+        wrapped_env = SACFriendlyWrapper(raw_env)
+        return Monitor(wrapped_env)
 
     return _init
 
 
-def train_ppo_3d(time_limit_minutes):
+def train_sac_3d(time_limit_minutes):
     time_limit_seconds = time_limit_minutes * 60
     num_cpu = 8
-    print(f"🤖 PPO 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
+    print(f"🤖 SAC 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
 
     config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
     env = SubprocVecEnv([make_env(config_path) for i in range(num_cpu)])
@@ -91,23 +91,25 @@ def train_ppo_3d(time_limit_minutes):
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(model_dir, exist_ok=True)
 
-    log_file = os.path.join(log_dir, 'training_history_ppo_3d.csv')
+    # Mudámos o nome do log para não se misturar com o PPO
+    log_file = os.path.join(log_dir, 'training_history_sac_3d.csv')
     with open(log_file, 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['timesteps', 'ep_rew_mean', 'time'])
 
     os.chmod(log_file, 0o666)
 
-    model = PPO("MlpPolicy", env, verbose=1, device="auto")
+    # Inicializar o Soft Actor-Critic
+    model = SAC("MlpPolicy", env, verbose=1, device="auto")
     callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds)
 
-    print(f"🚀 Simulação PPO a correr nos {num_cpu} clones da arena...")
+    print(f"🚀 Simulação SAC a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)
 
-    model_path = os.path.join(model_dir, "ppo_3d_final")
+    model_path = os.path.join(model_dir, "sac_3d_final")
     model.save(model_path)
     os.chmod(model_path + ".zip", 0o666)
-    print("✅ Treino PPO 3D Multi-Core concluído de forma segura!")
+    print("✅ Treino SAC 3D Multi-Core concluído de forma segura!")
 
 
 if __name__ == "__main__":
@@ -119,4 +121,4 @@ if __name__ == "__main__":
 
     freeze_support()
 
-    train_ppo_3d(time_limit_minutes=args.time_limit)
+    train_sac_3d(time_limit_minutes=args.time_limit)

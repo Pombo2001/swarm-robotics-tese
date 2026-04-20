@@ -3,7 +3,7 @@ from ursina import *
 import numpy as np
 import sys
 import os
-from stable_baselines3 import PPO
+from stable_baselines3 import SAC
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 if PROJECT_ROOT not in sys.path:
@@ -13,7 +13,7 @@ from src.environment.swarm_env_3d import SwarmForagingEnv3D
 
 app = Ursina()
 
-window.title = 'Swarm 3D - PPO Baseline'
+window.title = 'Swarm 3D - SAC (Soft Actor-Critic)'
 window.borderless = False
 window.exit_button.visible = False
 window.fps_counter.enabled = True
@@ -34,12 +34,13 @@ env = SwarmForagingEnv3D(config_path=config_path)
 env.render_mode = None
 obs_dict, _ = env.reset()
 
-model_path = os.path.join(base_dir, 'results', 'models_ppo', 'ppo_3d_final')
+# Caminho para o modelo SAC
+model_path = os.path.join(base_dir, 'results', 'models_ppo', 'sac_3d_final')
 
 if os.path.exists(model_path + ".zip"):
     os.chmod(model_path + ".zip", 0o666)
-    model = PPO.load(model_path, device='cpu')
-    print(f"✅ Modelo PPO 3D carregado: {model_path}")
+    model = SAC.load(model_path, device='cpu')
+    print(f"✅ Modelo SAC 3D carregado: {model_path}")
 else:
     print(f"❌ Erro: {model_path}.zip não encontrado!")
     sys.exit()
@@ -47,12 +48,10 @@ else:
 Entity(model='cube', scale=env.arena_radius * 2, color=color.rgba(255, 255, 255, 30), double_sided=True)
 nest_view = Entity(model='sphere', color=color.green, scale=env.nest_radius * 2, position=tuple(env.nest_pos))
 
-# --- DESENHAR BOLAS ---
 obs_views = []
 for obs_pos in env.obstacles:
     obs_views.append(Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2, position=tuple(obs_pos)))
 
-# --- NOVO: DESENHAR PAREDES (Cenários Clássicos) ---
 wall_views = []
 for wall in env.walls:
     wall_views.append(Entity(
@@ -79,6 +78,7 @@ def update():
         actions = {}
         for agent_id in env.agents:
             obs = np.array(obs_dict[agent_id], dtype=np.float32)
+            # SAC prevê a ação exatamente da mesma forma que o PPO
             action, _ = model.predict(obs, deterministic=True)
             actions[agent_id] = action
 
