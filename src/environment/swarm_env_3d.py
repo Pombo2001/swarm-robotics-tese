@@ -17,21 +17,28 @@ class SwarmForagingEnv3D(gym.Env):
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
 
-        self.num_agents = self.config['environment'].get('num_agents', 25)
-        self.num_obstacles = self.config['environment'].get('num_obstacles', 50)
-        self.dynamic_obstacles = self.config['environment'].get('dynamic_obstacles', True)
-        self.arena_radius = self.config['environment'].get('arena_radius', 15.0)
-        self.dynamic_nest = self.config['environment'].get('dynamic_nest', True)
+        env_config = self.config['environment']
+        self.num_agents = env_config.get('num_agents', 25)
+        self.num_obstacles = env_config.get('num_obstacles', 50)
+        self.dynamic_obstacles = env_config.get('dynamic_obstacles', True)
+        self.arena_radius = env_config.get('arena_radius', 15.0)
+        self.dynamic_nest = env_config.get('dynamic_nest', True)
+        self.nest_velocity_magnitude = env_config.get('nest_velocity', 0.015)
         self.nest_velocity = np.zeros(3)
 
-        self.nest_radius = self.config['environment']['nest_radius']
-        self.max_steps = self.config['environment'].get('max_steps', 500)
+        self.nest_radius = env_config.get('nest_radius', 0.2)
+        self.max_steps = env_config.get('max_steps', 500)
 
         self.robot_radius = self.config['physics'].get('agent_radius', 0.15)
-        self.obstacle_radius = 0.2
+        self.obstacle_radius = env_config.get('obstacle_radius', 0.2)
+        self.obstacle_velocity_magnitude = env_config.get('obstacle_velocity', 0.02)
         self.obstacle_velocities = []
 
-        self.required_to_eat = 3
+        self.required_to_eat = env_config.get('required_to_eat', 3)
+        self.hunger_timer_max = env_config.get('hunger_timer_max', 600)
+        self.progress_reward_factor = env_config.get('progress_reward_factor', 50.0)
+        self.obstacle_penalty = env_config.get('obstacle_penalty', -2.0)
+
         self.deaths_count = 0
         self.total_food_collected = 0
         self.current_nest_occupancy = 0
@@ -110,7 +117,7 @@ class SwarmForagingEnv3D(gym.Env):
         self.nest_pos = self._random_spawn(max_radius=0.5)
         if self.dynamic_nest:
             vel = np.random.uniform(-1, 1, 3)
-            self.nest_velocity = (vel / (np.linalg.norm(vel) + 1e-6)) * 0.015
+            self.nest_velocity = (vel / (np.linalg.norm(vel) + 1e-6)) * self.nest_velocity_magnitude
 
     def _spawn_obstacles(self):
         self.obstacles = []
@@ -123,18 +130,15 @@ class SwarmForagingEnv3D(gym.Env):
                     self.obstacles.append(pos)
                     vel = np.random.uniform(-1, 1, 3)
                     vel /= (np.linalg.norm(vel) + 1e-6)
-                    self.obstacle_velocities.append(vel * 0.02)
+                    self.obstacle_velocities.append(vel * self.obstacle_velocity_magnitude)
                     valid = True
 
     def _spawn_obstacles_bottleneck(self):
         self.obstacles = []
         self.obstacle_velocities = []
 
-        # O buraco no centro vai exatamente de X = -0.2 a X = 0.2 (Largura total = 0.4)
         self.walls = [
-            # Parede Esquerda (Tamanho 40, centro em -20.2 -> acaba em -0.2)
             {'pos': np.array([-20.2, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])},
-            # Parede Direita (Tamanho 40, centro em 20.2 -> começa em 0.2)
             {'pos': np.array([20.2, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])}
         ]
 
@@ -142,24 +146,12 @@ class SwarmForagingEnv3D(gym.Env):
         self.obstacles = []
         self.obstacle_velocities = []
 
-        # LABIRINTO COM PORTAS APERTADAS E AFASTADAS
-        # As portas (0.4 de largura) ficam encostadas aos limites da arena (perto do 14 e -14)
-
         self.walls = [
-            # EIXO HORIZONTAL (Y=0)
-            # Parede H Esquerda (X de -15 a -2.2)
             {'pos': np.array([-8.6, 0.0, 0.0]), 'size': np.array([12.8, 1.5, 30.0])},
-            # Parede H Meio (Bloqueia o centro, X de -1.8 a 13.8) -> Porta de 0.4 em X=-2.0
             {'pos': np.array([6.0, 0.0, 0.0]), 'size': np.array([15.6, 1.5, 30.0])},
-            # Parede H Direita (X de 14.2 a 15) -> Porta de 0.4 em X=14.0
             {'pos': np.array([14.6, 0.0, 0.0]), 'size': np.array([0.8, 1.5, 30.0])},
-
-            # EIXO VERTICAL (X=0)
-            # Parede V Fundo (Y de -15 a -14.2)
             {'pos': np.array([0.0, -14.6, 0.0]), 'size': np.array([1.5, 0.8, 30.0])},
-            # Parede V Meio (Bloqueia o centro, Y de -13.8 a 1.8) -> Porta de 0.4 em Y=-14.0
             {'pos': np.array([0.0, -6.0, 0.0]), 'size': np.array([1.5, 15.6, 30.0])},
-            # Parede V Topo (Y de 2.2 a 15) -> Porta de 0.4 em Y=2.0
             {'pos': np.array([0.0, 8.6, 0.0]), 'size': np.array([1.5, 12.8, 30.0])}
         ]
 
@@ -249,7 +241,7 @@ class SwarmForagingEnv3D(gym.Env):
                 dir_center = -self.nest_pos
                 noise = np.random.uniform(-0.2, 0.2, 3)
                 new_vel = dir_center + noise
-                self.nest_velocity = (new_vel / (np.linalg.norm(new_vel) + 1e-6)) * 0.015
+                self.nest_velocity = (new_vel / (np.linalg.norm(new_vel) + 1e-6)) * self.nest_velocity_magnitude
 
         if self.dynamic_obstacles and self.classic_scenario == "none":
             for i in range(len(self.obstacles)):
@@ -259,7 +251,7 @@ class SwarmForagingEnv3D(gym.Env):
                     dir_center /= (np.linalg.norm(dir_center) + 1e-6)
                     noise = np.random.uniform(-0.2, 0.2, 3)
                     new_vel = dir_center + noise
-                    self.obstacle_velocities[i] = (new_vel / (np.linalg.norm(new_vel) + 1e-6)) * 0.02
+                    self.obstacle_velocities[i] = (new_vel / (np.linalg.norm(new_vel) + 1e-6)) * self.obstacle_velocity_magnitude
 
         for idx, agent in enumerate(self.agents):
             if agent in actions:
@@ -283,7 +275,6 @@ class SwarmForagingEnv3D(gym.Env):
         obstacle_hits = {a: 0 for a in self.agents}
         for idx, agent in enumerate(self.agents):
 
-            # 1. Colisões com esferas normais
             for obs_pos in self.obstacles:
                 dist = np.linalg.norm(self.agent_positions[idx] - obs_pos)
                 min_dist = self.robot_radius + self.obstacle_radius
@@ -294,20 +285,16 @@ class SwarmForagingEnv3D(gym.Env):
                     if norm > 0: direction /= norm
                     self.agent_positions[idx] += direction * (min_dist - dist)
 
-            # 2. NOVA LÓGICA DE COLISÃO AABB ROBUSTA PARA PAREDES
             for wall in self.walls:
                 delta = self.agent_positions[idx] - wall['pos']
                 abs_delta = np.abs(delta)
                 half_size = wall['size'] / 2.0
 
-                # Calcular o nível de penetração em X, Y e Z
                 penetration = (half_size + self.robot_radius) - abs_delta
 
-                # Se penetrou positivamente nos 3 eixos, está a colidir ou a tentar atravessar!
                 if np.all(penetration > 0):
                     obstacle_hits[agent] = 1
 
-                    # Ejetar pelo caminho mais curto (eixo com menor penetração)
                     min_axis = np.argmin(penetration)
 
                     sign = np.sign(delta[min_axis])
@@ -353,14 +340,14 @@ class SwarmForagingEnv3D(gym.Env):
                 pass
             else:
                 progress = self.prev_dist_to_nest[idx] - dist_nest
-                rewards[agent] += progress * 50.0
+                rewards[agent] += progress * self.progress_reward_factor
                 self.hunger_timers[idx] += 1
 
             self.prev_dist_to_nest[idx] = dist_nest
 
-            if obstacle_hits[agent]: rewards[agent] -= 2.0
+            if obstacle_hits[agent]: rewards[agent] += self.obstacle_penalty
 
-            if self.hunger_timers[idx] > 600:
+            if self.hunger_timers[idx] > self.hunger_timer_max:
                 rewards[agent] -= 50.0
                 self.deaths_count += 1
                 self.agent_positions[idx] = self._get_scenario_spawn_pos()

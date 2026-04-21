@@ -3,6 +3,7 @@ from ursina import *
 import numpy as np
 import sys
 import os
+import yaml
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 if PROJECT_ROOT not in sys.path:
@@ -22,20 +23,27 @@ EditorCamera()
 DirectionalLight(y=2, z=3, shadows=True)
 AmbientLight(color=color.rgba(100, 100, 100, 1.0))
 
-speed_slider = Slider(min=1, max=120, default=30, text='Velocidade', dynamic=True)
+base_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(base_dir, 'configs', 'foraging.yaml')
+
+with open(config_path, 'r') as f:
+    config = yaml.safe_load(f)
+
+vis_config = config.get('visualization', {})
+speed_slider = Slider(min=vis_config.get('speed_slider_min', 1),
+                      max=vis_config.get('speed_slider_max', 120),
+                      default=vis_config.get('speed_slider_default', 30),
+                      text='Velocidade', dynamic=True)
 speed_slider.position = (-0.85, 0.45)
 speed_slider.scale = 1.2
 time_accumulator = 0.0
-
-base_dir = os.path.dirname(os.path.abspath(__file__))
-config_path = os.path.join(base_dir, 'configs', 'foraging.yaml')
 
 env = SwarmForagingEnv3D(config_path=config_path)
 env.render_mode = None
 obs_dict, _ = env.reset()
 
 model_path = os.path.join(base_dir, 'results', 'models', 'gnn_3d_best.pth')
-agent = GNNAgent3D("tester", env.action_space("robot_0"))
+agent = GNNAgent3D("tester", env.action_space("robot_0"), config_path)
 
 if os.path.exists(model_path):
     os.chmod(model_path, 0o666)
@@ -49,17 +57,15 @@ else:
 Entity(model='cube', scale=env.arena_radius * 2, color=color.rgba(255, 255, 255, 30), double_sided=True)
 nest_view = Entity(model='sphere', color=color.green, scale=env.nest_radius * 2, position=tuple(env.nest_pos))
 
-# --- DESENHAR BOLAS (Obstáculos normais) ---
 obs_views = []
 for obs_pos in env.obstacles:
     obs_views.append(Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2, position=tuple(obs_pos)))
 
-# --- NOVO: DESENHAR PAREDES (Cenários Clássicos) ---
 wall_views = []
 for wall in env.walls:
     wall_views.append(Entity(
         model='cube',
-        color=color.rgba(50, 50, 50, 180),  # Cinza escuro sólido com ligeira transparência
+        color=color.rgba(50, 50, 50, 180),
         scale=tuple(wall['size']),
         position=tuple(wall['pos'])
     ))
@@ -92,8 +98,6 @@ def update():
 
         for i, obs_pos in enumerate(env.obstacles):
             obs_views[i].position = tuple(obs_pos)
-
-        # As paredes sólidas não se movem, não precisamos de atualizar a posição delas no loop
 
         for i, r_pos in enumerate(env.agent_positions):
             robot_views[i].position = tuple(r_pos)

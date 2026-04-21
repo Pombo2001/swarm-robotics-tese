@@ -11,7 +11,7 @@ ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("dark-blue")
 
 
-class ModernDashboardV6_Pro(ctk.CTk):
+class ModernDashboardV6Pro(ctk.CTk):
     def __init__(self):
         super().__init__()
 
@@ -29,6 +29,10 @@ class ModernDashboardV6_Pro(ctk.CTk):
         self.gnn_start_time = None
         self.ppo_start_time = None
         self.sac_start_time = None
+
+        self.frame_gnn = self.lbl_gnn_status = self.lbl_gnn_timer = self.metrics_gnn = self.lbl_gnn_best = None
+        self.frame_ppo = self.lbl_ppo_status = self.lbl_ppo_timer = self.metrics_ppo = self.lbl_ppo_score = None
+        self.frame_sac = self.lbl_sac_status = self.lbl_sac_timer = self.metrics_sac = self.lbl_sac_score = None
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
@@ -112,12 +116,45 @@ class ModernDashboardV6_Pro(ctk.CTk):
                                            height=35)
         self.btn_start_all.pack(side="left", padx=20)
 
-        self.setup_gnn_ui()
-        self.setup_ppo_ui()
-        self.setup_sac_ui()
+        self._create_algo_frame("gnn", "🧬 GNN (Evolutivo)", "#4CAF50", self.start_gnn, self.stop_gnn, self.viz_gnn, 0)
+        self._create_algo_frame("ppo", "🤖 PPO (Actor-Critic)", "#2196F3", self.start_ppo, self.stop_ppo, self.viz_ppo, 1)
+        self._create_algo_frame("sac", "🔥 SAC (Soft Actor-Critic)", "#FF9800", self.start_sac, self.stop_sac,
+                                self.viz_sac, 2, text_color="black")
 
         self.update_metrics()
         self.load_current_config()
+
+    def _create_algo_frame(self, name, title, color, start_cmd, stop_cmd, viz_cmd, col, text_color=None):
+        frame = ctk.CTkFrame(self.main_area, corner_radius=10)
+        frame.grid(row=1, column=col, sticky="nsew", padx=5)
+        ctk.CTkLabel(frame, text=title, font=("Roboto", 20, "bold"), text_color=color).pack(pady=(20, 10))
+
+        status_label = ctk.CTkLabel(frame, text="Status: PARADO", font=("Consolas", 14))
+        status_label.pack(pady=5)
+        timer_label = ctk.CTkLabel(frame, text="Tempo: 00:00:00", font=("Consolas", 14))
+        timer_label.pack()
+
+        metrics_frame = ctk.CTkFrame(frame, fg_color="#2b2b2b", corner_radius=8)
+        metrics_frame.pack(fill="x", padx=20, pady=20)
+        metric_label = ctk.CTkLabel(metrics_frame, text="REWARD: ---", font=("Consolas", 18, "bold"), text_color=color)
+        metric_label.pack(pady=15)
+
+        ctk.CTkButton(frame, text=f"▶ Treinar Só {name.upper()}", command=start_cmd, fg_color=color,
+                      text_color=text_color, height=35).pack(pady=5, padx=20, fill="x")
+        ctk.CTkButton(frame, text="⏹ Parar", command=stop_cmd, fg_color="#F44336", height=35).pack(pady=5, padx=20,
+                                                                                                   fill="x")
+        ctk.CTkButton(frame, text="🎥 Visualizar", command=viz_cmd, fg_color="#1F6AA5", height=35).pack(pady=20,
+                                                                                                        padx=20,
+                                                                                                        fill="x")
+
+        setattr(self, f"frame_{name}", frame)
+        setattr(self, f"lbl_{name}_status", status_label)
+        setattr(self, f"lbl_{name}_timer", timer_label)
+        setattr(self, f"metrics_{name}", metrics_frame)
+        if name == "gnn":
+            setattr(self, f"lbl_{name}_best", metric_label)
+        else:
+            setattr(self, f"lbl_{name}_score", metric_label)
 
     def get_paths(self):
         return {
@@ -136,85 +173,9 @@ class ModernDashboardV6_Pro(ctk.CTk):
             "plot_script": "plot_final_thesis_3d.py"
         }
 
-    # --- UI GNN ---
-    def setup_gnn_ui(self):
-        self.frame_gnn = ctk.CTkFrame(self.main_area, corner_radius=10)
-        self.frame_gnn.grid(row=1, column=0, sticky="nsew", padx=5)
-        ctk.CTkLabel(self.frame_gnn, text="🧬 GNN (Evolutivo)", font=("Roboto", 20, "bold"), text_color="#4CAF50").pack(
-            pady=(20, 10))
-
-        self.lbl_gnn_status = ctk.CTkLabel(self.frame_gnn, text="Status: PARADO", font=("Consolas", 14))
-        self.lbl_gnn_status.pack(pady=5)
-        self.lbl_gnn_timer = ctk.CTkLabel(self.frame_gnn, text="Tempo: 00:00:00", font=("Consolas", 14))
-        self.lbl_gnn_timer.pack()
-
-        self.metrics_gnn = ctk.CTkFrame(self.frame_gnn, fg_color="#2b2b2b", corner_radius=8)
-        self.metrics_gnn.pack(fill="x", padx=20, pady=20)
-        self.lbl_gnn_best = ctk.CTkLabel(self.metrics_gnn, text="FITNESS: ---", font=("Consolas", 18, "bold"),
-                                         text_color="#4CAF50")
-        self.lbl_gnn_best.pack(pady=15)
-
-        ctk.CTkButton(self.frame_gnn, text="▶ Treinar Só GNN", command=self.start_gnn, fg_color="#4CAF50",
-                      height=35).pack(pady=5, padx=20, fill="x")
-        ctk.CTkButton(self.frame_gnn, text="⏹ Parar", command=self.stop_gnn, fg_color="#F44336", height=35).pack(pady=5,
-                                                                                                                 padx=20,
-                                                                                                                 fill="x")
-        ctk.CTkButton(self.frame_gnn, text="🎥 Visualizar", command=self.viz_gnn, fg_color="#1F6AA5", height=35).pack(
-            pady=20, padx=20, fill="x")
-
-    # --- UI PPO ---
-    def setup_ppo_ui(self):
-        self.frame_ppo = ctk.CTkFrame(self.main_area, corner_radius=10)
-        self.frame_ppo.grid(row=1, column=1, sticky="nsew", padx=5)
-        ctk.CTkLabel(self.frame_ppo, text="🤖 PPO (Actor-Critic)", font=("Roboto", 20, "bold"),
-                     text_color="#2196F3").pack(pady=(20, 10))
-
-        self.lbl_ppo_status = ctk.CTkLabel(self.frame_ppo, text="Status: PARADO", font=("Consolas", 14))
-        self.lbl_ppo_status.pack(pady=5)
-        self.lbl_ppo_timer = ctk.CTkLabel(self.frame_ppo, text="Tempo: 00:00:00", font=("Consolas", 14))
-        self.lbl_ppo_timer.pack()
-
-        self.metrics_ppo = ctk.CTkFrame(self.frame_ppo, fg_color="#2b2b2b", corner_radius=8)
-        self.metrics_ppo.pack(fill="x", padx=20, pady=20)
-        self.lbl_ppo_score = ctk.CTkLabel(self.metrics_ppo, text="REWARD: ---", font=("Consolas", 18, "bold"),
-                                          text_color="#2196F3")
-        self.lbl_ppo_score.pack(pady=15)
-
-        ctk.CTkButton(self.frame_ppo, text="▶ Treinar Só PPO", command=self.start_ppo, fg_color="#2196F3",
-                      height=35).pack(pady=5, padx=20, fill="x")
-        ctk.CTkButton(self.frame_ppo, text="⏹ Parar", command=self.stop_ppo, fg_color="#F44336", height=35).pack(pady=5,
-                                                                                                                 padx=20,
-                                                                                                                 fill="x")
-        ctk.CTkButton(self.frame_ppo, text="🎥 Visualizar", command=self.viz_ppo, fg_color="#1F6AA5", height=35).pack(
-            pady=20, padx=20, fill="x")
-
-    # --- UI SAC ---
-    def setup_sac_ui(self):
-        self.frame_sac = ctk.CTkFrame(self.main_area, corner_radius=10)
-        self.frame_sac.grid(row=1, column=2, sticky="nsew", padx=5)
-        ctk.CTkLabel(self.frame_sac, text="🔥 SAC (Soft Actor-Critic)", font=("Roboto", 20, "bold"),
-                     text_color="#FF9800").pack(pady=(20, 10))
-
-        self.lbl_sac_status = ctk.CTkLabel(self.frame_sac, text="Status: PARADO", font=("Consolas", 14))
-        self.lbl_sac_status.pack(pady=5)
-        self.lbl_sac_timer = ctk.CTkLabel(self.frame_sac, text="Tempo: 00:00:00", font=("Consolas", 14))
-        self.lbl_sac_timer.pack()
-
-        self.metrics_sac = ctk.CTkFrame(self.frame_sac, fg_color="#2b2b2b", corner_radius=8)
-        self.metrics_sac.pack(fill="x", padx=20, pady=20)
-        self.lbl_sac_score = ctk.CTkLabel(self.metrics_sac, text="REWARD: ---", font=("Consolas", 18, "bold"),
-                                          text_color="#FF9800")
-        self.lbl_sac_score.pack(pady=15)
-
-        ctk.CTkButton(self.frame_sac, text="▶ Treinar Só SAC", command=self.start_sac, fg_color="#FF9800",
-                      text_color="black", height=35).pack(pady=5, padx=20, fill="x")
-        ctk.CTkButton(self.frame_sac, text="⏹ Parar", command=self.stop_sac, fg_color="#F44336", height=35).pack(pady=5,
-                                                                                                                 padx=20,
-                                                                                                                 fill="x")
-        ctk.CTkButton(self.frame_sac, text="🎥 Visualizar", command=self.viz_sac, fg_color="#1F6AA5", height=35).pack(
-            pady=20, padx=20, fill="x")
-
-    def run_script(self, script, args=[]):
+    def run_script(self, script, args=None):
+        if args is None:
+            args = []
         full_path = os.path.join(self.base_dir, script)
         return subprocess.Popen([sys.executable, full_path] + args, creationflags=subprocess.CREATE_NEW_CONSOLE)
 
@@ -300,22 +261,22 @@ class ModernDashboardV6_Pro(ctk.CTk):
             try:
                 df = pd.read_csv(paths["gnn_log"]).dropna()
                 if not df.empty: self.lbl_gnn_best.configure(text=f"FITNESS: {df.iloc[-1]['best_fitness']:.1f}")
-            except:
-                pass
+            except (FileNotFoundError, pd.errors.EmptyDataError, KeyError) as e:
+                print(f"Error reading GNN log: {e}")
 
         if os.path.exists(paths["ppo_log"]):
             try:
                 df = pd.read_csv(paths["ppo_log"]).dropna()
                 if not df.empty: self.lbl_ppo_score.configure(text=f"REWARD: {df.iloc[-1]['ep_rew_mean']:.1f}")
-            except:
-                pass
+            except (FileNotFoundError, pd.errors.EmptyDataError, KeyError) as e:
+                print(f"Error reading PPO log: {e}")
 
         if os.path.exists(paths["sac_log"]):
             try:
                 df = pd.read_csv(paths["sac_log"]).dropna()
                 if not df.empty: self.lbl_sac_score.configure(text=f"REWARD: {df.iloc[-1]['ep_rew_mean']:.1f}")
-            except:
-                pass
+            except (FileNotFoundError, pd.errors.EmptyDataError, KeyError) as e:
+                print(f"Error reading SAC log: {e}")
 
         if self.gnn_start_time:
             self.lbl_gnn_timer.configure(
@@ -349,8 +310,8 @@ class ModernDashboardV6_Pro(ctk.CTk):
                     self.combo_scenario.set("Quatro Salas (Labirinto)")
                 else:
                     self.combo_scenario.set("Nenhum (Modo Sandbox)")
-        except:
-            pass
+        except (FileNotFoundError, yaml.YAMLError) as e:
+            print(f"Error loading config: {e}")
 
     def save_current_config(self):
         try:
@@ -372,10 +333,10 @@ class ModernDashboardV6_Pro(ctk.CTk):
 
             with open(self.config_path, 'w') as f:
                 yaml.dump(config, f)
-        except:
-            pass
+        except (FileNotFoundError, yaml.YAMLError, ValueError) as e:
+            print(f"Error saving config: {e}")
 
 
 if __name__ == "__main__":
-    app = ModernDashboardV6_Pro()
+    app = ModernDashboardV6Pro()
     app.mainloop()

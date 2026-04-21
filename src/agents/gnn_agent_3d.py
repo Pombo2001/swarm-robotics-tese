@@ -1,40 +1,43 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import yaml
+import os
 
 
 class GNNAgent3D(nn.Module):
-    def __init__(self, agent_id, action_space):
+    def __init__(self, agent_id, action_space, config_path=None):
         super(GNNAgent3D, self).__init__()
         self.agent_id = agent_id
 
-        # --- A NOVA BÚSSOLA INTERNA ---
-        # Ninho (4) + Obstáculo (4) = 8 features base do ambiente
-        # Vizinhos (5) = Frente, Direita, Cima, Distância, Sinalização
+        if config_path is None:
+            config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
+
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+
+        agent_config = config.get('gnn_agent', {})
+        self.hidden_dim = agent_config.get('hidden_dim', 64)
+
         self.env_feats_dim = 8
         self.neighbor_dim = 5
 
-        self.hidden_dim = 64
-
-        # Encoder do Ambiente Local (O que o drone "vê")
         self.encoder = nn.Sequential(
             nn.Linear(self.env_feats_dim, self.hidden_dim),
             nn.ReLU(),
             nn.Linear(self.hidden_dim, self.hidden_dim)
         )
 
-        # O "Comunicador" (O que o drone "ouve" dos vizinhos)
         self.msg_net = nn.Sequential(
             nn.Linear(self.neighbor_dim, self.hidden_dim),
             nn.ReLU(),
             nn.Linear(self.hidden_dim, self.hidden_dim)
         )
 
-        # O "Cérebro" que junta a visão com a comunicação para decidir os 3 Motores
         self.actor = nn.Sequential(
             nn.Linear(self.hidden_dim * 2, self.hidden_dim),
             nn.ReLU(),
-            nn.Linear(self.hidden_dim, 3),  # 3 Eixos de movimento
+            nn.Linear(self.hidden_dim, 3),
             nn.Tanh()
         )
 
@@ -47,13 +50,11 @@ class GNNAgent3D(nn.Module):
         env_data = obs[:, :self.env_feats_dim]
         neighbor_data = obs[:, self.env_feats_dim:]
 
-        # Descobrir quantos vizinhos existem dinamicamente (19 vizinhos se num_agents for 20)
         num_neighbors = neighbor_data.shape[1] // self.neighbor_dim
 
         h_env = self.encoder(env_data)
 
         if num_neighbors > 0:
-            # Aqui é onde o erro batia! Agora está preparado para receber (20, 19, 5)
             neighbors = neighbor_data.view(batch_size, num_neighbors, self.neighbor_dim)
             msg = self.msg_net(neighbors)
             msg_pool = msg.mean(dim=1)

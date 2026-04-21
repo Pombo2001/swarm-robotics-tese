@@ -4,6 +4,7 @@ import csv
 import numpy as np
 import argparse
 import time
+import yaml
 import gymnasium as gym
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback
@@ -28,25 +29,20 @@ class SACFriendlyWrapper(gym.Wrapper):
         return obs_dict["robot_0"], info
 
     def step(self, action):
-        # 1. O SAC controla APENAS o robot_0
         actions = {"robot_0": action}
-
-        # 2. Os outros drones movem-se aleatoriamente para criar ruído no ambiente
         for agent in self.env.agents:
             if agent != "robot_0":
                 actions[agent] = self.env.action_space(agent).sample()
-
         obs_dict, rewards, terms, truncs, infos = self.env.step(actions)
-
-        # 3. O SAC é avaliado EXCLUSIVAMENTE pelo seu próprio desempenho
-        return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos["robot_0"]
+        return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos.get("robot_0", {})
 
 
 class TimeLimitAndLoggingCallback(BaseCallback):
-    def __init__(self, log_file, time_limit_seconds, verbose=0):
+    def __init__(self, log_file, time_limit_seconds, log_interval, verbose=0):
         super().__init__(verbose)
         self.log_file = log_file
         self.time_limit = time_limit_seconds
+        self.log_interval = log_interval
         self.start_time = None
 
     def _on_training_start(self):
@@ -55,7 +51,7 @@ class TimeLimitAndLoggingCallback(BaseCallback):
     def _on_step(self):
         elapsed_time = time.time() - self.start_time
 
-        if self.n_calls % 2000 == 0:
+        if self.n_calls % self.log_interval == 0:
             if len(self.model.ep_info_buffer) > 0:
                 ep_rew_mean = np.mean([ep_info["r"] for ep_info in self.model.ep_info_buffer])
                 with open(self.log_file, 'a', newline='') as f:
@@ -79,11 +75,17 @@ def make_env(config_path):
 
 
 def train_sac_3d(time_limit_minutes):
+    config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    sac_config = config.get('sac', {})
+    num_cpu = sac_config.get('num_cpu', 8)
+    log_interval = sac_config.get('log_interval', 2000)
+
     time_limit_seconds = time_limit_minutes * 60
-    num_cpu = 8
     print(f"🤖 SAC 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
 
-    config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
     env = SubprocVecEnv([make_env(config_path) for i in range(num_cpu)])
 
     log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_ppo')
@@ -91,7 +93,6 @@ def train_sac_3d(time_limit_minutes):
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(model_dir, exist_ok=True)
 
-    # Mudámos o nome do log para não se misturar com o PPO
     log_file = os.path.join(log_dir, 'training_history_sac_3d.csv')
     with open(log_file, 'w', newline='') as f:
         writer = csv.writer(f)
@@ -99,9 +100,8 @@ def train_sac_3d(time_limit_minutes):
 
     os.chmod(log_file, 0o666)
 
-    # Inicializar o Soft Actor-Critic
     model = SAC("MlpPolicy", env, verbose=1, device="auto")
-    callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds)
+    callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds, log_interval)
 
     print(f"🚀 Simulação SAC a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)

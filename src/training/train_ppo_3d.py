@@ -4,11 +4,12 @@ import csv
 import numpy as np
 import argparse
 import time
+import yaml
 import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.monitor import Monitor  # <--- 1. IMPORTAR O MONITOR!
+from stable_baselines3.common.monitor import Monitor
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if PROJECT_ROOT not in sys.path:
@@ -28,25 +29,20 @@ class PPOFriendlyWrapper(gym.Wrapper):
         return obs_dict["robot_0"], info
 
     def step(self, action):
-        # 1. O PPO controla APENAS o robot_0
         actions = {"robot_0": action}
-
-        # 2. Os outros 19 drones movem-se sozinhos para criar trânsito na arena
         for agent in self.env.agents:
             if agent != "robot_0":
                 actions[agent] = self.env.action_space(agent).sample()
-
         obs_dict, rewards, terms, truncs, infos = self.env.step(actions)
-
-        # 3. O PPO é avaliado EXCLUSIVAMENTE pelo seu próprio desempenho
-        return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos["robot_0"]
+        return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos.get("robot_0", {})
 
 
 class TimeLimitAndLoggingCallback(BaseCallback):
-    def __init__(self, log_file, time_limit_seconds, verbose=0):
+    def __init__(self, log_file, time_limit_seconds, log_interval, verbose=0):
         super().__init__(verbose)
         self.log_file = log_file
         self.time_limit = time_limit_seconds
+        self.log_interval = log_interval
         self.start_time = None
 
     def _on_training_start(self):
@@ -55,7 +51,7 @@ class TimeLimitAndLoggingCallback(BaseCallback):
     def _on_step(self):
         elapsed_time = time.time() - self.start_time
 
-        if self.n_calls % 2000 == 0:
+        if self.n_calls % self.log_interval == 0:
             if len(self.model.ep_info_buffer) > 0:
                 ep_rew_mean = np.mean([ep_info["r"] for ep_info in self.model.ep_info_buffer])
                 with open(self.log_file, 'a', newline='') as f:
@@ -73,17 +69,23 @@ def make_env(config_path):
     def _init():
         raw_env = SwarmForagingEnv3D(config_path)
         wrapped_env = PPOFriendlyWrapper(raw_env)
-        return Monitor(wrapped_env)  # <--- 2. EMBRULHAR NO MONITOR!
+        return Monitor(wrapped_env)
 
     return _init
 
 
 def train_ppo_3d(time_limit_minutes):
+    config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    ppo_config = config.get('ppo', {})
+    num_cpu = ppo_config.get('num_cpu', 8)
+    log_interval = ppo_config.get('log_interval', 2000)
+
     time_limit_seconds = time_limit_minutes * 60
-    num_cpu = 8
     print(f"🤖 PPO 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
 
-    config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
     env = SubprocVecEnv([make_env(config_path) for i in range(num_cpu)])
 
     log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_ppo')
@@ -99,7 +101,7 @@ def train_ppo_3d(time_limit_minutes):
     os.chmod(log_file, 0o666)
 
     model = PPO("MlpPolicy", env, verbose=1, device="auto")
-    callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds)
+    callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds, log_interval)
 
     print(f"🚀 Simulação PPO a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)

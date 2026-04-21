@@ -3,6 +3,7 @@ from ursina import *
 import numpy as np
 import sys
 import os
+import yaml
 from stable_baselines3 import SAC
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -22,19 +23,25 @@ EditorCamera()
 DirectionalLight(y=2, z=3, shadows=True)
 AmbientLight(color=color.rgba(100, 100, 100, 1.0))
 
-speed_slider = Slider(min=1, max=120, default=30, text='Velocidade', dynamic=True)
+base_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(base_dir, 'configs', 'foraging.yaml')
+
+with open(config_path, 'r') as f:
+    config = yaml.safe_load(f)
+
+vis_config = config.get('visualization', {})
+speed_slider = Slider(min=vis_config.get('speed_slider_min', 1),
+                      max=vis_config.get('speed_slider_max', 120),
+                      default=vis_config.get('speed_slider_default', 30),
+                      text='Velocidade', dynamic=True)
 speed_slider.position = (-0.85, 0.45)
 speed_slider.scale = 1.2
 time_accumulator = 0.0
-
-base_dir = os.path.dirname(os.path.abspath(__file__))
-config_path = os.path.join(base_dir, 'configs', 'foraging.yaml')
 
 env = SwarmForagingEnv3D(config_path=config_path)
 env.render_mode = None
 obs_dict, _ = env.reset()
 
-# Caminho para o modelo SAC
 model_path = os.path.join(base_dir, 'results', 'models_ppo', 'sac_3d_final')
 
 if os.path.exists(model_path + ".zip"):
@@ -78,7 +85,6 @@ def update():
         actions = {}
         for agent_id in env.agents:
             obs = np.array(obs_dict[agent_id], dtype=np.float32)
-            # SAC prevê a ação exatamente da mesma forma que o PPO
             action, _ = model.predict(obs, deterministic=True)
             actions[agent_id] = action
 

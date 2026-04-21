@@ -6,7 +6,8 @@ import copy
 import time
 import csv
 import argparse
-from multiprocessing import Pool, cpu_count  # <--- MAGIA MULTI-CORE DO GNN
+import yaml
+from multiprocessing import Pool, cpu_count
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if PROJECT_ROOT not in sys.path:
@@ -16,20 +17,21 @@ from src.environment.swarm_env_3d import SwarmForagingEnv3D
 from src.agents.gnn_agent_3d import GNNAgent3D
 
 
-# --- FUNÇÃO ISOLADA PARA MULTIPROCESSAMENTO ---
-# Esta função corre de forma independente em cada núcleo do teu Ryzen 9800X3D!
 def evaluate_genome(args):
     weights, config_path = args
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
 
-    # Cada núcleo constrói a sua própria micro-arena e o seu próprio cérebro
     env = SwarmForagingEnv3D(config_path)
-    agent = GNNAgent3D("worker_agent", env.action_space("robot_0"))
+    agent = GNNAgent3D("worker_agent", env.action_space("robot_0"), config_path)
     agent.load_state_dict(weights)
 
     obs_dict, _ = env.reset()
     total_reward = 0
     steps = 0
     done = False
+
+    guillotine_threshold = config['simulation'].get('guillotine_threshold', -200)
 
     while not done:
         obs_list = [obs_dict[a] for a in env.agents]
@@ -45,7 +47,7 @@ def evaluate_genome(args):
         total_reward += sum(rewards.values())
         steps += 1
 
-        if steps == 150 and total_reward < -200:
+        if steps == 150 and total_reward < guillotine_threshold:
             total_reward -= 1000
             done = True
 
@@ -58,19 +60,22 @@ def evaluate_genome(args):
 class GeneticTrainer3D:
     def __init__(self, config_path, time_limit_minutes=120):
         self.config_path = config_path
+        with open(config_path, 'r') as f:
+            self.config = yaml.safe_load(f)
+
         self.time_limit_seconds = time_limit_minutes * 60
 
-        # Criamos o agente "molde" só para obter a estrutura da rede
         temp_env = SwarmForagingEnv3D(config_path)
-        self.template_agent = GNNAgent3D("template_3d", temp_env.action_space("robot_0"))
+        self.template_agent = GNNAgent3D("template_3d", temp_env.action_space("robot_0"), config_path)
 
-        self.pop_size = 30
-        self.mutation_rate = 0.10
-        self.sigma = 0.2
+        evo_config = self.config.get('evolution', {})
+        self.pop_size = evo_config.get('pop_size', 30)
+        self.mutation_rate = evo_config.get('mutation_rate', 0.10)
+        self.sigma = evo_config.get('sigma', 0.2)
 
         self.population = []
         for i in range(self.pop_size):
-            random_brain = GNNAgent3D(f"temp_{i}", temp_env.action_space("robot_0"))
+            random_brain = GNNAgent3D(f"temp_{i}", temp_env.action_space("robot_0"), config_path)
             self.population.append(copy.deepcopy(random_brain.state_dict()))
 
         self.log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs')
@@ -86,7 +91,6 @@ class GeneticTrainer3D:
         os.chmod(self.history_file, 0o666)
 
     def train(self):
-        # Vamos buscar até 8 núcleos do teu processador
         num_cores = min(8, cpu_count())
 
         print(f"🚁 Treino GNN 3D Iniciado (Meta: Orçamento de {self.time_limit_seconds / 60:.1f} minutos)")
@@ -97,7 +101,6 @@ class GeneticTrainer3D:
         overall_start_time = time.time()
         gen = 1
 
-        # O Pool é o "gestor" que distribui os cérebros pelos núcleos
         with Pool(processes=num_cores) as pool:
             while True:
                 cumulative_time = time.time() - overall_start_time
@@ -105,10 +108,7 @@ class GeneticTrainer3D:
                     print(f"\n⏱️ FIM DO TEMPO! O cronómetro atingiu o limite. A fechar e guardar o modelo...")
                     break
 
-                # Preparamos os dados para enviar para os núcleos
                 args_list = [(self.population[i], self.config_path) for i in range(self.pop_size)]
-
-                # AQUI ACONTECE A MAGIA: 8 cérebros avaliados ao mesmo tempo!
                 results = pool.map(evaluate_genome, args_list)
 
                 scores = [res[0] for res in results]
@@ -162,7 +162,6 @@ if __name__ == "__main__":
     parser.add_argument("--time_limit", type=float, default=120.0)
     args = parser.parse_args()
 
-    # OBRIGATÓRIO no Windows para usar múltiplos núcleos sem dar erro
     from multiprocessing import freeze_support
 
     freeze_support()
