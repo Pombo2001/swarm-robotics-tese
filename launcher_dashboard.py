@@ -60,7 +60,8 @@ class ModernDashboardV6Pro(ctk.CTk):
             "Nenhum (Modo Sandbox)",
             "Beco Sem Saída (Muro U)",
             "Gargalo (Porta Estreita)",
-            "Quatro Salas (Labirinto)"
+            "Quatro Salas (Labirinto)",
+            "Porta Cooperativa (3 Robôs)"
         ], fg_color="#6A1B9A", button_color="#4A148C")
         self.combo_scenario.pack(padx=15, pady=10, fill="x")
 
@@ -308,6 +309,8 @@ class ModernDashboardV6Pro(ctk.CTk):
                     self.combo_scenario.set("Gargalo (Porta Estreita)")
                 elif scenario == 'four_rooms':
                     self.combo_scenario.set("Quatro Salas (Labirinto)")
+                elif scenario == 'cooperative_door':
+                    self.combo_scenario.set("Porta Cooperativa (3 Robôs)")
                 else:
                     self.combo_scenario.set("Nenhum (Modo Sandbox)")
         except (FileNotFoundError, yaml.YAMLError) as e:
@@ -328,6 +331,8 @@ class ModernDashboardV6Pro(ctk.CTk):
                 config['environment']['classic_scenario'] = "bottleneck"
             elif combo_val == "Quatro Salas (Labirinto)":
                 config['environment']['classic_scenario'] = "four_rooms"
+            elif combo_val == "Porta Cooperativa (3 Robôs)":
+                config['environment']['classic_scenario'] = "cooperative_door"
             else:
                 config['environment']['classic_scenario'] = "none"
 

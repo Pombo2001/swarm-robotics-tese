@@ -67,6 +67,8 @@ class SwarmForagingEnv3D(gym.Env):
             return np.array([np.random.uniform(-8, 8), np.random.uniform(-12, -6), np.random.uniform(-0.5, 0.5)])
         elif self.classic_scenario == "four_rooms":
             return np.array([np.random.uniform(-12, -6), np.random.uniform(-12, -6), np.random.uniform(-0.5, 0.5)])
+        elif self.classic_scenario == "cooperative_door":
+            return np.array([-10 + np.random.uniform(-2, 2), np.random.uniform(-4, 4), np.random.uniform(-0.5, 0.5)])
         else:
             return self._random_spawn()
 
@@ -98,6 +100,12 @@ class SwarmForagingEnv3D(gym.Env):
             self.nest_velocity = np.zeros(3)
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
             self._spawn_obstacles_maze()
+
+        elif self.classic_scenario == "cooperative_door":
+            self.nest_pos = np.array([12.0, 0.0, 0.0])
+            self.nest_velocity = np.zeros(3)
+            self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
+            self._spawn_obstacles_cooperative_door()
 
         else:
             self._spawn_nest()
@@ -133,10 +141,19 @@ class SwarmForagingEnv3D(gym.Env):
                     self.obstacle_velocities.append(vel * self.obstacle_velocity_magnitude)
                     valid = True
 
+    # --- FUNÇÃO CORRIGIDA: MURO U ---
+    def _spawn_obstacles_u_wall(self):
+        self.obstacles = []
+        self.obstacle_velocities = []
+        self.walls = [
+            {'pos': np.array([0.0, 5.0, 0.0]), 'size': np.array([20.0, 2.0, 30.0])},
+            {'pos': np.array([-9.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, 30.0])},
+            {'pos': np.array([9.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, 30.0])}
+        ]
+
     def _spawn_obstacles_bottleneck(self):
         self.obstacles = []
         self.obstacle_velocities = []
-
         self.walls = [
             {'pos': np.array([-20.2, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])},
             {'pos': np.array([20.2, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])}
@@ -145,7 +162,6 @@ class SwarmForagingEnv3D(gym.Env):
     def _spawn_obstacles_maze(self):
         self.obstacles = []
         self.obstacle_velocities = []
-
         self.walls = [
             {'pos': np.array([-8.6, 0.0, 0.0]), 'size': np.array([12.8, 1.5, 30.0])},
             {'pos': np.array([6.0, 0.0, 0.0]), 'size': np.array([15.6, 1.5, 30.0])},
@@ -154,6 +170,24 @@ class SwarmForagingEnv3D(gym.Env):
             {'pos': np.array([0.0, -6.0, 0.0]), 'size': np.array([1.5, 15.6, 30.0])},
             {'pos': np.array([0.0, 8.6, 0.0]), 'size': np.array([1.5, 12.8, 30.0])}
         ]
+
+    # --- FUNÇÃO NOVA: PORTA COOPERATIVA ---
+    def _spawn_obstacles_cooperative_door(self):
+        self.obstacles = []
+        self.obstacle_velocities = []
+        # Parede a dividir o mapa com um buraco no meio
+        self.walls = [
+            {'pos': np.array([0.0, 8.0, 0.0]), 'size': np.array([2.0, 14.0, 30.0])},
+            {'pos': np.array([0.0, -8.0, 0.0]), 'size': np.array([2.0, 14.0, 30.0])}
+        ]
+
+        # O calhau gigante (A porta)
+        self.door_active = True
+        self.door_pos = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        self.door_radius = 2.0
+        self.obstacles.append(self.door_pos)
+        self.door_index = 0
+        self.obstacle_velocities.append(np.zeros(3))  # A porta não se mexe sozinha
 
     def _random_spawn(self, min_radius=0.0, max_radius=0.8):
         u = np.random.uniform(0, 1)
@@ -251,7 +285,8 @@ class SwarmForagingEnv3D(gym.Env):
                     dir_center /= (np.linalg.norm(dir_center) + 1e-6)
                     noise = np.random.uniform(-0.2, 0.2, 3)
                     new_vel = dir_center + noise
-                    self.obstacle_velocities[i] = (new_vel / (np.linalg.norm(new_vel) + 1e-6)) * self.obstacle_velocity_magnitude
+                    self.obstacle_velocities[i] = (new_vel / (
+                                np.linalg.norm(new_vel) + 1e-6)) * self.obstacle_velocity_magnitude
 
         for idx, agent in enumerate(self.agents):
             if agent in actions:
@@ -272,12 +307,35 @@ class SwarmForagingEnv3D(gym.Env):
 
                 self.agent_positions[idx] += move_global
 
+        # --- LÓGICA DA PORTA COOPERATIVA ---
+        if self.classic_scenario == "cooperative_door" and getattr(self, 'door_active', False):
+            pushing_robots = []
+            for i in range(self.num_agents):
+                dist_to_door = np.linalg.norm(self.agent_positions[i] - self.door_pos)
+                if dist_to_door < (self.robot_radius + self.door_radius + 0.3):
+                    pushing_robots.append(i)
+
+            if len(pushing_robots) >= 3:
+                self.door_active = False
+                print(f"\n🚪 ABRIRAM A PORTA! Robôs {pushing_robots} cooperaram em bloco!")
+                for idx in pushing_robots:
+                    rewards[self.agents[idx]] += 100.0
+                # Teleportar a porta para fora do mapa
+                self.door_pos = np.array([999.0, 999.0, 999.0], dtype=np.float32)
+                self.obstacles[self.door_index] = self.door_pos
+        # -----------------------------------
+
         obstacle_hits = {a: 0 for a in self.agents}
         for idx, agent in enumerate(self.agents):
 
             for obs_pos in self.obstacles:
                 dist = np.linalg.norm(self.agent_positions[idx] - obs_pos)
-                min_dist = self.robot_radius + self.obstacle_radius
+                # Usar raio da porta se for a porta, senão o raio normal
+                current_obs_radius = getattr(self, 'door_radius', 2.0) if np.array_equal(obs_pos,
+                                                                                         getattr(self, 'door_pos',
+                                                                                                 [])) else self.obstacle_radius
+
+                min_dist = self.robot_radius + current_obs_radius
                 if dist < min_dist:
                     obstacle_hits[agent] = 1
                     direction = self.agent_positions[idx] - obs_pos
