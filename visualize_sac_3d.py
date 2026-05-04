@@ -56,8 +56,14 @@ Entity(model='cube', scale=env.arena_radius * 2, color=color.rgba(255, 255, 255,
 nest_view = Entity(model='sphere', color=color.green, scale=env.nest_radius * 2, position=tuple(env.nest_pos))
 
 obs_views = []
-for obs_pos in env.obstacles:
-    obs_views.append(Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2, position=tuple(obs_pos)))
+for i, obs_pos in enumerate(env.obstacles):
+    # Verifica se estamos no cenário da porta e se este obstáculo é a porta
+    if getattr(env, 'classic_scenario', '') == "cooperative_door" and hasattr(env, 'door_index') and i == env.door_index:
+        # A PORTA GIGANTE: Desenhada com o raio certo e a vermelho para se destacar!
+        obs_views.append(Entity(model='sphere', color=color.red, scale=env.door_radius * 2, position=tuple(obs_pos)))
+    else:
+        # OBSTÁCULOS NORMAIS: Desenhados a cinzento e com tamanho normal
+        obs_views.append(Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2, position=tuple(obs_pos)))
 
 wall_views = []
 for wall in env.walls:

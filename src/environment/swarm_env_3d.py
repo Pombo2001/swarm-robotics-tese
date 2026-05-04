@@ -69,6 +69,9 @@ class SwarmForagingEnv3D(gym.Env):
             return np.array([np.random.uniform(-12, -6), np.random.uniform(-12, -6), np.random.uniform(-0.5, 0.5)])
         elif self.classic_scenario == "cooperative_door":
             return np.array([-10 + np.random.uniform(-2, 2), np.random.uniform(-4, 4), np.random.uniform(-0.5, 0.5)])
+        elif self.classic_scenario == "cooperative_perception":
+            # Espalhados pela arena toda
+            return self._random_spawn()
         else:
             return self._random_spawn()
 
@@ -107,6 +110,16 @@ class SwarmForagingEnv3D(gym.Env):
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
             self._spawn_obstacles_cooperative_door()
 
+        elif self.classic_scenario == "cooperative_perception":
+            # O "ninho" é o Alvo Móvel neste cenário
+            self.nest_pos = self._random_spawn(max_radius=0.7)
+            vel = np.random.uniform(-1, 1, 3)
+            vel[2] = 0.0
+            self.nest_velocity = (vel / (np.linalg.norm(vel) + 1e-6)) * self.nest_velocity_magnitude * 2.0
+            self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
+            self.obstacles = []
+            self.obstacle_velocities = []
+
         else:
             self._spawn_nest()
             self._spawn_obstacles()
@@ -141,7 +154,6 @@ class SwarmForagingEnv3D(gym.Env):
                     self.obstacle_velocities.append(vel * self.obstacle_velocity_magnitude)
                     valid = True
 
-    # --- FUNÇÃO CORRIGIDA: MURO U ---
     def _spawn_obstacles_u_wall(self):
         self.obstacles = []
         self.obstacle_velocities = []
@@ -154,40 +166,44 @@ class SwarmForagingEnv3D(gym.Env):
     def _spawn_obstacles_bottleneck(self):
         self.obstacles = []
         self.obstacle_velocities = []
+        # PORTAS À JUSTA: Para um diâmetro de robot de 0.3m, a porta tem exatamente 0.35m de largura.
         self.walls = [
-            {'pos': np.array([-20.2, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])},
-            {'pos': np.array([20.2, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])}
+            {'pos': np.array([-20.175, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])},
+            {'pos': np.array([20.175, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])}
         ]
 
     def _spawn_obstacles_maze(self):
         self.obstacles = []
         self.obstacle_velocities = []
+        # LABIRINTO À JUSTA: Passagens estreitas de 0.35m encostadas às paredes exteriores.
         self.walls = [
-            {'pos': np.array([-8.6, 0.0, 0.0]), 'size': np.array([12.8, 1.5, 30.0])},
-            {'pos': np.array([6.0, 0.0, 0.0]), 'size': np.array([15.6, 1.5, 30.0])},
-            {'pos': np.array([14.6, 0.0, 0.0]), 'size': np.array([0.8, 1.5, 30.0])},
-            {'pos': np.array([0.0, -14.6, 0.0]), 'size': np.array([1.5, 0.8, 30.0])},
-            {'pos': np.array([0.0, -6.0, 0.0]), 'size': np.array([1.5, 15.6, 30.0])},
-            {'pos': np.array([0.0, 8.6, 0.0]), 'size': np.array([1.5, 12.8, 30.0])}
+            # Eixo Horizontal Y=0
+            {'pos': np.array([-12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
+            {'pos': np.array([0.0, 0.0, 0.0]), 'size': np.array([19.65, 1.5, 30.0])},
+            {'pos': np.array([12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
+            
+            # Eixo Vertical X=0
+            {'pos': np.array([0.0, -12.5875, 0.0]), 'size': np.array([1.5, 4.825, 30.0])},
+            {'pos': np.array([0.0, -5.2875, 0.0]), 'size': np.array([1.5, 9.075, 30.0])},
+            {'pos': np.array([0.0, 5.2875, 0.0]), 'size': np.array([1.5, 9.075, 30.0])},
+            {'pos': np.array([0.0, 12.5875, 0.0]), 'size': np.array([1.5, 4.825, 30.0])}
         ]
 
-    # --- FUNÇÃO NOVA: PORTA COOPERATIVA ---
     def _spawn_obstacles_cooperative_door(self):
         self.obstacles = []
         self.obstacle_velocities = []
-        # Parede a dividir o mapa com um buraco no meio
+
         self.walls = [
-            {'pos': np.array([0.0, 8.0, 0.0]), 'size': np.array([2.0, 14.0, 30.0])},
-            {'pos': np.array([0.0, -8.0, 0.0]), 'size': np.array([2.0, 14.0, 30.0])}
+            {'pos': np.array([0.0, 8.0, 0.0]), 'size': np.array([2.0, 12.0, 30.0])},
+            {'pos': np.array([0.0, -8.0, 0.0]), 'size': np.array([2.0, 12.0, 30.0])}
         ]
 
-        # O calhau gigante (A porta)
         self.door_active = True
         self.door_pos = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.door_radius = 2.0
-        self.obstacles.append(self.door_pos)
-        self.door_index = 0
-        self.obstacle_velocities.append(np.zeros(3))  # A porta não se mexe sozinha
+        self.door_size = np.array([2.0, 4.0, 30.0])
+
+        self.door_wall_index = len(self.walls)
+        self.walls.append({'pos': self.door_pos, 'size': self.door_size})
 
     def _random_spawn(self, min_radius=0.0, max_radius=0.8):
         u = np.random.uniform(0, 1)
@@ -199,6 +215,15 @@ class SwarmForagingEnv3D(gym.Env):
         y = r * np.sin(phi) * np.sin(theta)
         z = r * np.cos(phi)
         return np.array([x, y, z])
+
+    def _has_line_of_sight(self, p1, p2):
+        for t in np.linspace(0.1, 0.9, 10):
+            point = p1 + t * (p2 - p1)
+            for wall in self.walls:
+                half_size = wall['size'] / 2.0
+                if np.all(np.abs(point - wall['pos']) < half_size):
+                    return False
+        return True
 
     def _get_observations(self):
         observations = {}
@@ -224,6 +249,10 @@ class SwarmForagingEnv3D(gym.Env):
 
             local_dir_nest, dist_nest = to_egocentric(self.nest_pos)
             norm_dist_nest = dist_nest / (self.arena_radius * 2)
+
+            if not self._has_line_of_sight(pos, self.nest_pos):
+                local_dir_nest = np.array([0.0, 0.0, 0.0])
+                norm_dist_nest = 1.0
 
             closest_dist = 5.0
             local_dir_obs = np.array([0.0, 0.0, 0.0])
@@ -288,6 +317,51 @@ class SwarmForagingEnv3D(gym.Env):
                     self.obstacle_velocities[i] = (new_vel / (
                                 np.linalg.norm(new_vel) + 1e-6)) * self.obstacle_velocity_magnitude
 
+        # --- LÓGICA DE PERCEÇÃO COOPERATIVA ---
+        if self.classic_scenario == "cooperative_perception":
+            # Move o Alvo Móvel (identificado pelo código como o nest)
+            self.nest_pos += self.nest_velocity
+            if np.linalg.norm(self.nest_pos) > (self.arena_radius - 2.0):
+                dir_center = -self.nest_pos
+                noise = np.random.uniform(-0.2, 0.2, 3)
+                new_vel = dir_center + noise
+                new_vel[2] = 0
+                self.nest_velocity = (new_vel / (np.linalg.norm(new_vel) + 1e-6)) * self.nest_velocity_magnitude * 2.0
+            
+            observing_robots = []
+            angles = []
+            for i in range(self.num_agents):
+                vec = self.agent_positions[i] - self.nest_pos
+                dist = np.linalg.norm(vec)
+                # Só contam robôs a menos de 4 metros que o estejam a rodear
+                if dist < 4.0:
+                    angle = np.arctan2(vec[1], vec[0])
+                    observing_robots.append(i)
+                    angles.append(angle)
+            
+            if len(observing_robots) >= 3:
+                angles.sort()
+                max_diff = 0
+                for j in range(len(angles)):
+                    diff = angles[(j+1)%len(angles)] - angles[j]
+                    if diff < 0: diff += 2 * np.pi
+                    if diff > max_diff:
+                        max_diff = diff
+                
+                # Se a maior diferença de ângulo for <= 180º, o alvo está completamente rodeado/filmado!
+                if max_diff <= np.pi:
+                    self.total_food_collected += 1
+                    for idx in observing_robots:
+                        rewards[self.agents[idx]] += 300.0
+                        self.hunger_timers[idx] = 0
+                    
+                    # O alvo móvel "foge" ou respawna numa nova localização para identificarem outro
+                    self.nest_pos = self._random_spawn(max_radius=0.7)
+                    vel = np.random.uniform(-1, 1, 3)
+                    vel[2] = 0.0
+                    self.nest_velocity = (vel / (np.linalg.norm(vel) + 1e-6)) * self.nest_velocity_magnitude * 2.0
+        # --------------------------------------
+
         for idx, agent in enumerate(self.agents):
             if agent in actions:
                 if self.signaling[idx] == 1.0: continue
@@ -307,35 +381,25 @@ class SwarmForagingEnv3D(gym.Env):
 
                 self.agent_positions[idx] += move_global
 
-        # --- LÓGICA DA PORTA COOPERATIVA ---
         if self.classic_scenario == "cooperative_door" and getattr(self, 'door_active', False):
             pushing_robots = []
             for i in range(self.num_agents):
-                dist_to_door = np.linalg.norm(self.agent_positions[i] - self.door_pos)
-                if dist_to_door < (self.robot_radius + self.door_radius + 0.3):
+                pos = self.agent_positions[i]
+                if -1.5 < pos[0] < 0.0 and -2.0 < pos[1] < 2.0:
                     pushing_robots.append(i)
 
             if len(pushing_robots) >= 3:
                 self.door_active = False
-                print(f"\n🚪 ABRIRAM A PORTA! Robôs {pushing_robots} cooperaram em bloco!")
                 for idx in pushing_robots:
                     rewards[self.agents[idx]] += 100.0
-                # Teleportar a porta para fora do mapa
-                self.door_pos = np.array([999.0, 999.0, 999.0], dtype=np.float32)
-                self.obstacles[self.door_index] = self.door_pos
-        # -----------------------------------
+                self.walls[self.door_wall_index]['pos'] = np.array([999.0, 999.0, 999.0], dtype=np.float32)
 
         obstacle_hits = {a: 0 for a in self.agents}
         for idx, agent in enumerate(self.agents):
 
             for obs_pos in self.obstacles:
                 dist = np.linalg.norm(self.agent_positions[idx] - obs_pos)
-                # Usar raio da porta se for a porta, senão o raio normal
-                current_obs_radius = getattr(self, 'door_radius', 2.0) if np.array_equal(obs_pos,
-                                                                                         getattr(self, 'door_pos',
-                                                                                                 [])) else self.obstacle_radius
-
-                min_dist = self.robot_radius + current_obs_radius
+                min_dist = self.robot_radius + self.obstacle_radius
                 if dist < min_dist:
                     obstacle_hits[agent] = 1
                     direction = self.agent_positions[idx] - obs_pos
@@ -352,36 +416,36 @@ class SwarmForagingEnv3D(gym.Env):
 
                 if np.all(penetration > 0):
                     obstacle_hits[agent] = 1
-
                     min_axis = np.argmin(penetration)
-
                     sign = np.sign(delta[min_axis])
                     if sign == 0: sign = 1.0
-
                     self.agent_positions[idx][min_axis] += penetration[min_axis] * sign
 
         robots_in_nest = []
         for idx in range(self.num_agents):
             if np.linalg.norm(self.agent_positions[idx] - self.nest_pos) < (self.nest_radius + 0.1):
                 robots_in_nest.append(idx)
-                self.signaling[idx] = 1.0
-                self.agent_positions[idx] = self.nest_pos.copy()
+                # No cenário de perceção cooperativa, não há o conceito físico de "entrar" no ninho e repousar
+                if self.classic_scenario != "cooperative_perception":
+                    self.signaling[idx] = 1.0
+                    self.agent_positions[idx] = self.nest_pos.copy()
             else:
                 self.signaling[idx] = 0.0
 
         self.current_nest_occupancy = len(robots_in_nest)
 
-        if self.current_nest_occupancy >= self.required_to_eat:
-            self.total_food_collected += 1
-            if self.classic_scenario == "none":
-                self._spawn_nest()
-            for idx in range(self.num_agents):
-                if idx in robots_in_nest:
-                    rewards[self.agents[idx]] += 500.0
-                    self.agent_positions[idx] = self._get_scenario_spawn_pos()
-                    self.hunger_timers[idx] = 0
-                self.prev_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
-                self.signaling[idx] = 0.0
+        if self.classic_scenario != "cooperative_perception":
+            if self.current_nest_occupancy >= self.required_to_eat:
+                self.total_food_collected += 1
+                if self.classic_scenario == "none":
+                    self._spawn_nest()
+                for idx in range(self.num_agents):
+                    if idx in robots_in_nest:
+                        rewards[self.agents[idx]] += 500.0
+                        self.agent_positions[idx] = self._get_scenario_spawn_pos()
+                        self.hunger_timers[idx] = 0
+                    self.prev_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
+                    self.signaling[idx] = 0.0
 
         for idx, agent in enumerate(self.agents):
             dist_nest = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)

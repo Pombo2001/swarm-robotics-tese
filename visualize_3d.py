@@ -61,11 +61,18 @@ obs_views = []
 for obs_pos in env.obstacles:
     obs_views.append(Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2, position=tuple(obs_pos)))
 
+# --- NOVO SISTEMA DE PAREDES (Com a Porta a Vermelho) ---
 wall_views = []
-for wall in env.walls:
+for i, wall in enumerate(env.walls):
+    # Se estivermos no cenário da porta E este for o muro que serve de porta (o último)
+    is_door = getattr(env, 'classic_scenario', '') == "cooperative_door" and hasattr(env,
+                                                                                     'door_wall_index') and i == env.door_wall_index
+
+    wall_color = color.red if is_door else color.rgba(50, 50, 50, 180)
+
     wall_views.append(Entity(
         model='cube',
-        color=color.rgba(50, 50, 50, 180),
+        color=wall_color,
         scale=tuple(wall['size']),
         position=tuple(wall['pos'])
     ))
@@ -98,6 +105,10 @@ def update():
 
         for i, obs_pos in enumerate(env.obstacles):
             obs_views[i].position = tuple(obs_pos)
+
+        # Atualiza a posição da Porta (para ela desaparecer visualmente quando abrir)
+        for i, wall in enumerate(env.walls):
+            wall_views[i].position = tuple(wall['pos'])
 
         for i, r_pos in enumerate(env.agent_positions):
             robot_views[i].position = tuple(r_pos)

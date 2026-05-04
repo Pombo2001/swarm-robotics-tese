@@ -7,3 +7,4 @@ pygame
 matplotlib
 customtkinter
 pandas
+seaborn
