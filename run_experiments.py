@@ -6,6 +6,7 @@ import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import datetime
 
 # ==============================================================================
 # CONFIGURAÇÕES BASE DO SCRIPT
@@ -122,7 +123,12 @@ def run_experiments(num_runs, time_limit):
 
 def generate_plots(df_curves, df_best):
     print("\n--- A GERAR GRÁFICOS AVANÇADOS ---")
-    out_dir = os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas')
+    
+    # Adicionar o carimbo de tempo à diretoria para ser única por cada vez que se corre os testes
+    now = datetime.now()
+    date_time_str = now.strftime("%d-%m-%Y_%Hh%Mm")
+    
+    out_dir = os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas', date_time_str)
     os.makedirs(out_dir, exist_ok=True)
 
     sns.set_theme(style="whitegrid")
@@ -159,8 +165,13 @@ def generate_plots(df_curves, df_best):
     # Guarda raw data
     if not df_curves.empty:
         df_curves.to_csv(os.path.join(out_dir, 'all_curves_data.csv'), index=False)
+        # Substitui os dados "antigos" na root de estatisticas, para o dashboard poder gerar os globais a qualquer altura
+        df_curves.to_csv(os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas', 'all_curves_data.csv'), index=False)
+        
     if not df_best.empty:
         df_best.to_csv(os.path.join(out_dir, 'all_best_scores.csv'), index=False)
+        # Substitui os dados "antigos" na root de estatisticas
+        df_best.to_csv(os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas', 'all_best_scores.csv'), index=False)
         
     print(f"[*] Gráficos e CSVs finais guardados com sucesso em: {out_dir}")
 

@@ -1,3 +1,31 @@
+"""
+=======================================================================================
+CÁBULA PARA A TESE: Soft Actor-Critic (SAC)
+=======================================================================================
+Tipo de Algoritmo: Reinforcement Learning (RL) -> Off-Policy -> Actor-Critic com Entropia Máxima
+Biblioteca: Stable-Baselines3 (SB3)
+
+Como funciona na teoria:
+1. Exploração baseada em Entropia: O principal diferencial do SAC. Enquanto o PPO (e outros algoritmos)
+   tentam maximizar apenas a recompensa esperada, o SAC tenta maximizar a recompensa E a aleatoriedade
+   das ações (entropia). Isto força o agente a explorar continuamente o ambiente de forma estruturada.
+2. Equação de Maximização: Objetivo = E[Recompensa + Alpha * Entropia]. Onde 'Alpha' é a "temperatura" que dita 
+   o quão aleatórias as ações devem ser. No Stable-Baselines3, este parâmetro pode ser auto-ajustado 
+   automaticamente, diminuindo a aleatoriedade à medida que o agente ganha confiança.
+3. Off-Policy (A grande diferença para o PPO): O SAC tem um 'Replay Buffer' enorme na memória. 
+   Ao contrário do PPO, ele guarda TODAS as experiências antigas, mesmo aquelas executadas quando o 
+   robô ainda era "parvo". Durante o treino, o SAC retira pacotes aleatórios (mini-batches) desta memória e 
+   aprende com eles. Por isso mesmo, costuma ser mais "Sample-Efficient" (aprende mais depressa com menos steps).
+
+Implementação no nosso código (Dissertação):
+- Setup idêntico ao PPO (Single-Agent Multi-Agent). O SAC controla o robô 0, os outros geram ruído.
+- Vantagens esperadas no contexto da Tese: Por ser mais forte a explorar (devido à entropia máxima),
+  esperamos que o SAC não fique tão "preso" nos obstáculos como o PPO quando o cenário se complica (ex: Bottleneck).
+- Política: MlpPolicy (Rede Neural). As saídas não são apenas os comandos motores, mas também o desvio padrão 
+  das ações, gerando comportamentos estocásticos que resultam em robôs com trajetórias mais suaves.
+=======================================================================================
+"""
+
 import os
 import sys
 import csv

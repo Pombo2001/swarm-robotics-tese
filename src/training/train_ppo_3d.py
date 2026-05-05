@@ -1,3 +1,32 @@
+"""
+=======================================================================================
+CÁBULA PARA A TESE: Proximal Policy Optimization (PPO)
+=======================================================================================
+Tipo de Algoritmo: Reinforcement Learning (RL) -> Policy Gradient -> On-Policy
+Biblioteca: Stable-Baselines3 (SB3)
+
+Como funciona na teoria:
+1. Actor-Critic: O PPO usa duas redes neurais. O 'Actor' decide a ação a tomar com base
+   na observação atual (política). O 'Critic' estima o valor (Value Function) desse estado 
+   (quantas recompensas futuras se esperam se estivermos naquele estado).
+2. On-Policy: O PPO aprende "fazendo". Ele recolhe um batch de experiências na arena usando 
+   a política atual, usa essas experiências para atualizar os pesos da rede, e depois descarta-as.
+   Não há "memória de longo prazo" de experiências muito antigas (Replay Buffer).
+3. Clipping (A grande inovação): Para evitar que o algoritmo "esqueça" o que aprendeu
+   com atualizações demasiado drásticas (Catastrophic Forgetting), o PPO "corta" (clips) 
+   a probabilidade de mudar a política de forma extrema. A função de perda (Surrogate Loss) 
+   garante que a nova política não se afasta muito da política antiga (Trust Region).
+
+Implementação no nosso código (Dissertação):
+- Setup: O PPO controla APENAS o 'robot_0'. Os outros robôs movem-se aleatoriamente para 
+  gerar ruído e dinamismo (Tratados como parte do ambiente). Isto simplifica o espaço de 
+  estado (Single-Agent RL num ambiente Multi-Agent).
+- Vetorização: O ambiente é clonado (SubprocVecEnv) para correr em N núcleos em simultâneo, 
+  permitindo recolher experiências N vezes mais depressa.
+- Política: Usamos 'MlpPolicy' (Multi-Layer Perceptron), uma rede neural feedforward padrão.
+=======================================================================================
+"""
+
 import os
 import sys
 import csv

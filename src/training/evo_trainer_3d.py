@@ -1,3 +1,39 @@
+"""
+=======================================================================================
+CÁBULA PARA A TESE: Evolução Neuro-Evolutiva (Genetic Algorithm + GNN)
+=======================================================================================
+Tipo de Algoritmo: Neuro-Evolução / Algoritmo Genético Puro (Pure GA)
+Biblioteca: Nenhuma / PyTorch nativo para a rede neural. Todo o algoritmo genético foi
+            implementado de raiz nesta dissertação, usando a biblioteca nativa 
+            'multiprocessing' para paralelizar a avaliação das populações.
+
+Como funciona na teoria:
+1. Natureza Darwiniana (Seleção Natural): Ao invés de usar o gradiente (backpropagation)
+   para ajustar os pesos, este algoritmo cria uma população inteira (ex: 30 robôs). Cada
+   robô tem uma rede neural com pesos totalmente diferentes (mutações iniciais aleatórias).
+2. Avaliação Paralela: O algoritmo larga os 30 robôs numa simulação (fitness evaluation).
+   Com os N núcleos do processador (Pool), a avaliação é corrida ao mesmo tempo. 
+   O tempo, e o facto de tocarem no ninho ou nos obstáculos, gera o 'Score Final' de cada um.
+3. Elitismo: Os robôs são ordenados pelo seu score do melhor para o pior. O algoritmo
+   seleciona o Top X (os 'Elites') da população e copia-os intatos para a geração seguinte.
+4. Mutação Gaussiana: O resto da população é descartada. Para preencher as vagas (os outros 80%),
+   clonamos um dos Elites ao calhas, e depois introduzimos uma ligeira mutação gaussiana (ruído)
+   nos pesos da rede neural desse clone. Esta mutação é governada por dois fatores: a Taxa de Mutação
+   (percentagem de pesos que sofrem mutação) e o Sigma (força dessa mutação).
+5. Guilhotina Genética (Early Stopping): Uma grande inovação implementada: se durante os primeiros 
+   150 steps um clone atingir uma pontuação miserável (limite negativo), a avaliação aborta 
+   imediatamente. Isto poupa um tempo formidável de processamento à CPU, rejeitando comportamentos
+   idiotas logo à cabeça.
+
+Implementação no nosso código (Dissertação):
+- População: Configurável via 'foraging.yaml'. Tipicamente 30 agentes.
+- Mutação: 10% dos pesos da rede sofrem uma mutação (Sigma de 0.2).
+- Vantagem Exclusiva: Multi-Agent Nativo. Enquanto o PPO/SAC controlam um único agente na arena, 
+  o GNN partilha os mesmos pesos em todos os N robôs ao mesmo tempo durante a simulação (Homogeneous Swarm),
+  o que reflete a verdadeira essência da inteligência de enxame.
+=======================================================================================
+"""
+
 import os
 import sys
 import torch

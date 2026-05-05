@@ -61,7 +61,8 @@ class ModernDashboardV6Pro(ctk.CTk):
             "Beco Sem Saída (Muro U)",
             "Gargalo (Porta Estreita)",
             "Quatro Salas (Labirinto)",
-            "Porta Cooperativa (3 Robôs)"
+            "Porta Cooperativa (3 Robôs)",
+            "Perceção Cooperativa (Alvo Móvel)"
         ], fg_color="#6A1B9A", button_color="#4A148C")
         self.combo_scenario.pack(padx=15, pady=10, fill="x")
 
@@ -118,7 +119,7 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.entry_night_runs.bind("<KeyRelease>", self.update_calculated_time)
         # ==================================
 
-        self.btn_plot_thesis = ctk.CTkButton(self.sidebar_frame, text="📊 Gerar Gráfico de Tese",
+        self.btn_plot_thesis = ctk.CTkButton(self.sidebar_frame, text="📊 Gerar Gráficos Pós-Treino",
                                              command=self.plot_thesis, fg_color="#8E24AA", hover_color="#6A1B9A",
                                              font=("Roboto", 14, "bold"), height=40)
         self.btn_plot_thesis.grid(row=7, column=0, padx=20, pady=20, sticky="sew")
@@ -200,9 +201,9 @@ class ModernDashboardV6Pro(ctk.CTk):
             "ppo_script": "src/training/train_ppo_3d.py",
             "sac_script": "src/training/train_sac_3d.py",
 
-            "viz_gnn": "visualize_3d.py",
-            "viz_ppo": "visualize_ppo_3d.py",
-            "viz_sac": "visualize_sac_3d.py",
+            "viz_gnn": "visualization/visualize_3d.py",
+            "viz_ppo": "visualization/visualize_ppo_3d.py",
+            "viz_sac": "visualization/visualize_sac_3d.py",
 
             "plot_script": "plot_final_thesis_3d.py",
             "run_experiments": "run_experiments.py"
@@ -332,7 +333,11 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.run_script(self.get_paths()["viz_sac"])
 
     def plot_thesis(self):
-        self.run_script(self.get_paths()["plot_script"])
+        try:
+            horas = self.entry_night_hours.get()
+        except:
+            horas = "N"
+        self.run_script(self.get_paths()["plot_script"], [horas])
 
     def update_metrics(self):
         paths = self.get_paths()
