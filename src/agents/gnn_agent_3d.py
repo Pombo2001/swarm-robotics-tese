@@ -19,7 +19,8 @@ class GNNAgent3D(nn.Module):
         agent_config = config.get('gnn_agent', {})
         self.hidden_dim = agent_config.get('hidden_dim', 64)
 
-        self.env_feats_dim = 8
+        # AGORA CORRIGIDO: 4 (Ninho) + 8 (Sensores) + 4 (Porta) = 16
+        self.env_feats_dim = 16
         self.neighbor_dim = 5
 
         self.encoder = nn.Sequential(

@@ -6,6 +6,7 @@ import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 from datetime import datetime
 
 # ==============================================================================
@@ -119,61 +120,97 @@ def run_experiments(num_runs, time_limit):
     df_curves = pd.DataFrame(curves_data)
     df_best = pd.DataFrame(best_scores_data)
     
-    generate_plots(df_curves, df_best)
+    generate_plots(df_curves, df_best, num_runs, time_limit)
 
-def generate_plots(df_curves, df_best):
+def generate_plots(df_curves, df_best, num_runs, time_limit):
     print("\n--- A GERAR GRÁFICOS AVANÇADOS ---")
     
-    # Adicionar o carimbo de tempo à diretoria para ser única por cada vez que se corre os testes
+    # 1. Cálculos de Tempo para a Pasta e o TXT
+    total_runs = len(SCENARIOS) * len(ALGORITHMS) * num_runs
+    minutos_totais = total_runs * time_limit
+    horas_totais = round(minutos_totais / 60, 2)
+    
     now = datetime.now()
     date_time_str = now.strftime("%d-%m-%Y_%Hh%Mm")
     
-    out_dir = os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas', date_time_str)
+    # Formato que pediste: DATA_ATUAL_HORAS_MINUTOS_XhT
+    folder_name = f"{date_time_str}_{horas_totais}hT"
+    out_dir = os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas', folder_name)
     os.makedirs(out_dir, exist_ok=True)
 
-    sns.set_theme(style="whitegrid")
+    sns.set_theme(style="whitegrid", context="paper", font_scale=1.1)
+    cores = {'GNN': '#2ca02c', 'PPO': '#ff7f0e', 'SAC': '#1f77b4'}
 
+    # 2. Curvas de Aprendizagem (Agrupadas e Suavizadas)
     if not df_curves.empty:
+        # Média Móvel para não parecerem rabiscos difíceis de ler
+        df_curves['Score_Suavizado'] = df_curves.groupby(['Scenario', 'Algorithm', 'Run'])['Score'].transform(lambda x: x.rolling(window=15, min_periods=1).mean())
+        
         for scenario in df_curves['Scenario'].unique():
             plt.figure(figsize=(10, 6))
             data_scen = df_curves[df_curves['Scenario'] == scenario]
-            sns.lineplot(data=data_scen, x='Step', y='Score', hue='Algorithm', errorbar='sd')
-            plt.title(f'Curva de Aprendizagem - Cenário: {scenario.upper()}', fontweight='bold')
+            sns.lineplot(data=data_scen, x='Step', y='Score_Suavizado', hue='Algorithm', palette=cores, errorbar='sd')
+            plt.title(f'Curva de Aprendizagem Suavizada - Cenário: {scenario.upper()}', fontweight='bold')
             plt.tight_layout()
             plt.savefig(os.path.join(out_dir, f'curva_aprendizagem_{scenario}.png'), dpi=300)
             plt.close()
 
+    # 3. Boxplots (Normais e Limpos)
     if not df_best.empty:
         for scenario in df_best['Scenario'].unique():
             plt.figure(figsize=(8, 6))
             data_scen = df_best[df_best['Scenario'] == scenario]
-            sns.boxplot(data=data_scen, x='Algorithm', y='BestScore', palette='Set2')
-            plt.title(f'Distribuição de Melhores Scores - Cenário: {scenario.upper()}', fontweight='bold')
+            sns.boxplot(data=data_scen, x='Algorithm', y='BestScore', hue='Algorithm', palette=cores, width=0.5, fliersize=5)
+            plt.title(f'Distribuição de Melhores Scores das {num_runs} Runs - Cenário: {scenario.upper()}', fontweight='bold')
             plt.tight_layout()
             plt.savefig(os.path.join(out_dir, f'boxplot_{scenario}.png'), dpi=300)
             plt.close()
 
-        plt.figure(figsize=(12, 6))
-        sns.barplot(data=df_best, x='Scenario', y='BestScore', hue='Algorithm', errorbar='sd', palette='Set2')
-        plt.title('Comparação Geral de Desempenho por Cenário', fontweight='bold')
-        plt.ylabel('Recompensa Média Final (Max Score)')
-        plt.xlabel('Cenário')
+        # 4. Gráfico Geral de Barras (Escala Logarítmica para se ler tudo)
+        plt.figure(figsize=(14, 7))
+        df_best_log = df_best.copy()
+        df_best_log['BestScore_Log'] = np.maximum(df_best_log['BestScore'], 1)  # Impede valores <= 0 de quebrar o log
+        
+        ax = sns.barplot(data=df_best_log, x='Scenario', y='BestScore_Log', hue='Algorithm', errorbar='sd', palette=cores)
+        ax.set_yscale("log")
+        plt.title('Comparação Geral de Desempenho (Escala Logarítmica)', fontweight='bold', fontsize=16)
+        plt.ylabel('Score Máximo (Escala Log)')
+        plt.xlabel('Cenários')
+        plt.legend(title='Algoritmo')
         plt.tight_layout()
-        plt.savefig(os.path.join(out_dir, 'comparacao_barras_geral.png'), dpi=300)
+        plt.savefig(os.path.join(out_dir, 'comparacao_barras_geral_log.png'), dpi=300)
         plt.close()
 
     # Guarda raw data
     if not df_curves.empty:
         df_curves.to_csv(os.path.join(out_dir, 'all_curves_data.csv'), index=False)
-        # Substitui os dados "antigos" na root de estatisticas, para o dashboard poder gerar os globais a qualquer altura
         df_curves.to_csv(os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas', 'all_curves_data.csv'), index=False)
         
     if not df_best.empty:
         df_best.to_csv(os.path.join(out_dir, 'all_best_scores.csv'), index=False)
-        # Substitui os dados "antigos" na root de estatisticas
         df_best.to_csv(os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas', 'all_best_scores.csv'), index=False)
         
-    print(f"[*] Gráficos e CSVs finais guardados com sucesso em: {out_dir}")
+    # 5. GERAR O FICHEIRO TXT COM AS INFORMAÇÕES DO TREINO
+    info_txt_path = os.path.join(out_dir, "info_treino.txt")
+    with open(info_txt_path, 'w', encoding='utf-8') as f:
+        f.write("=========================================\n")
+        f.write("      RELATÓRIO DE TREINO AUTOMÁTICO     \n")
+        f.write("=========================================\n")
+        f.write(f"Data de Geração      : {now.strftime('%d/%m/%Y %H:%M:%S')}\n")
+        f.write(f"Tempo Total de Treino: {horas_totais} horas\n")
+        f.write(f"Tempo por Run        : {time_limit} minutos\n")
+        f.write(f"Nº de Runs           : {num_runs} por cenário e algoritmo\n")
+        f.write(f"Total de Execuções   : {total_runs}\n\n")
+        
+        f.write(f"--- CENÁRIOS AVALIADOS ({len(SCENARIOS)}) ---\n")
+        for s in SCENARIOS:
+            f.write(f" - {s}\n")
+            
+        f.write(f"\n--- ALGORITMOS TESTADOS ({len(ALGORITHMS)}) ---\n")
+        for a in ALGORITHMS.keys():
+            f.write(f" - {a}\n")
+            
+    print(f"[*] Gráficos legíveis, CSVs e Relatório TXT guardados com sucesso em:\n    {out_dir}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Automação de Experiências para a Tese")
