@@ -10,34 +10,54 @@ PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-def create_thesis_plots_3d(total_hours=None):
-    print("A analisar e gerar gráficos finais de alta qualidade para a tese...")
+def parse_folder_date(folder_name):
+    # Formato: 07-05-2026_09h55m_...
+    try:
+        date_str = folder_name[:17]
+        return datetime.strptime(date_str, "%d-%m-%Y_%Hh%Mm")
+    except:
+        # Se falhar o parse, devolve uma data muito antiga para não ser escolhida
+        return datetime.min
+
+def update_latest_thesis_plots():
+    print("A procurar o último treino realizado...")
     base_dir = os.path.dirname(os.path.abspath(__file__))
     stats_dir = os.path.join(base_dir, 'results', 'graficos_tese', 'estatisticas')
     
-    # Criar string com data/hora
-    now = datetime.now()
-    date_time_str = now.strftime("%d-%m-%Y_%Hh%Mm")
-    
-    # Formatar o nome da pasta com as horas (ex: 05-05-2026_11h00_8hT)
-    if total_hours and str(total_hours).strip() != "N":
-        folder_name = f"{date_time_str}_{total_hours}hT"
-    else:
-        folder_name = f"{date_time_str}_Treino"
-        
-    # Pasta final com carimbo de tempo
-    final_dir = os.path.join(base_dir, 'results', 'graficos_tese', 'finais_pdf', folder_name)
-    os.makedirs(final_dir, exist_ok=True)
-    
-    csv_scores = os.path.join(stats_dir, 'all_best_scores.csv')
-    csv_curves = os.path.join(stats_dir, 'all_curves_data.csv')
-    
-    if not os.path.exists(csv_scores) or not os.path.exists(csv_curves):
-        print(f"Erro: Não foram encontrados os ficheiros CSV agregados na pasta {stats_dir}")
-        print("Tens a certeza que correste o treino primeiro?")
+    if not os.path.exists(stats_dir):
+        print(f"Erro: A pasta {stats_dir} não existe.")
         input("\nPressione ENTER para sair...")
         return
+        
+    # Encontrar todas as subpastas em estatisticas
+    dirs = [d for d in os.listdir(stats_dir) if os.path.isdir(os.path.join(stats_dir, d))]
+    
+    if not dirs:
+        print("Erro: Ainda não existem treinos gerados.")
+        input("\nPressione ENTER para sair...")
+        return
+        
+    # Lógica CORRIGIDA: Usa a data escrita no nome da pasta para encontrar a mais recente
+    # Isto garante que abre SEMPRE a última, independentemente de quando o Windows modificou os ficheiros
+    latest_folder_name = max(dirs, key=parse_folder_date)
+    latest_dir = os.path.join(stats_dir, latest_folder_name)
+    
+    print(f"Último treino encontrado: {latest_folder_name}")
+    
+    csv_scores = os.path.join(latest_dir, 'all_best_scores.csv')
+    csv_curves = os.path.join(latest_dir, 'all_curves_data.csv')
+    
+    # --- DESTINO CORRETO (finais_pdf) ---
+    final_dir = os.path.join(base_dir, 'results', 'graficos_tese', 'finais_pdf', latest_folder_name)
+    os.makedirs(final_dir, exist_ok=True)
+    
+    if not os.path.exists(csv_scores) or not os.path.exists(csv_curves):
+        print("Os ficheiros CSV não foram encontrados nesta pasta. A abrir a pasta de qualquer forma...")
+        if os.name == 'nt':
+            os.startfile(final_dir)
+        return
 
+    print("A re-gerar os gráficos limpos com base nos dados deste treino...")
     df_best = pd.read_csv(csv_scores)
     df_curves = pd.read_csv(csv_curves)
 
@@ -46,34 +66,8 @@ def create_thesis_plots_3d(total_hours=None):
 
     scenarios = df_best['Scenario'].unique()
     algorithms = df_best['Algorithm'].unique()
-    num_runs_detected = df_best['Run'].nunique()
 
-    # --- GERAR FICHEIRO DE TEXTO (.txt) ---
-    info_txt_path = os.path.join(final_dir, "info_treino.txt")
-    with open(info_txt_path, 'w', encoding='utf-8') as f:
-        f.write("=========================================\n")
-        f.write("      RELATÓRIO DE TREINO (PÓS-ANÁLISE)  \n")
-        f.write("=========================================\n")
-        f.write(f"Data de Geração de Gráficos: {now.strftime('%d/%m/%Y %H:%M:%S')}\n")
-        if total_hours and str(total_hours).strip() != "N":
-            f.write(f"Tempo Total de Treino Input: {total_hours} horas\n")
-        f.write(f"Nº de Runs Detetadas       : {num_runs_detected} por cenário\n\n")
-        
-        f.write(f"--- CENÁRIOS ANALISADOS ({len(scenarios)}) ---\n")
-        for s in scenarios:
-            f.write(f" - {s}\n")
-            
-        f.write(f"\n--- ALGORITMOS TESTADOS ({len(algorithms)}) ---\n")
-        for a in algorithms:
-            f.write(f" - {a}\n")
-            
-        f.write("\n=========================================\n")
-        f.write("MÉDIAS FINAIS DE SCORE OBTIDAS:\n")
-        resumo = df_best.groupby(['Scenario', 'Algorithm'])['BestScore'].mean().round(2)
-        f.write(resumo.to_string())
-
-    print("A gerar Gráfico Global...")
-    # 1. GRÁFICO GLOBAL (Com escala logarítmica para se conseguir ver PPO e SAC)
+    print(" -> Gráfico Global...")
     plt.figure(figsize=(14, 7))
     df_best_log = df_best.copy()
     df_best_log['BestScore_Log'] = np.maximum(df_best_log['BestScore'], 1)
@@ -85,29 +79,27 @@ def create_thesis_plots_3d(total_hours=None):
     plt.xticks(rotation=15)
     plt.legend(title='Algoritmo', fontsize=12)
     plt.tight_layout()
-    plt.savefig(os.path.join(final_dir, '1_Comparacao_Global_Barras_LOG.png'), dpi=300)
+    plt.savefig(os.path.join(final_dir, 'comparacao_barras_geral_log.png'), dpi=300)
     plt.close()
 
-    print("A gerar Boxplots por cenário...")
-    # 2. GRÁFICOS INDIVIDUAIS POR MAPA (Boxplots rigorosos)
+    print(" -> Boxplots por cenário...")
     for scenario in scenarios:
         plt.figure(figsize=(8, 6))
         data_scen = df_best[df_best['Scenario'] == scenario]
         sns.boxplot(data=data_scen, x='Algorithm', y='BestScore', hue='Algorithm', palette=cores, width=0.5, fliersize=5)
-        plt.title(f'Distribuição de Scores\nCenário: {scenario.upper()}', fontweight='bold', fontsize=14)
+        plt.title(f'Distribuição de Melhores Scores\nCenário: {scenario.upper()}', fontweight='bold', fontsize=14)
         plt.ylabel('Score Máximo', fontsize=12)
         plt.xlabel('Algoritmo', fontsize=12)
         plt.tight_layout()
-        plt.savefig(os.path.join(final_dir, f'2_Boxplot_{scenario}.png'), dpi=300)
+        plt.savefig(os.path.join(final_dir, f'boxplot_{scenario}.png'), dpi=300)
         plt.close()
 
-    print("A gerar Curvas de Aprendizagem...")
-    # 3. CURVAS DE APRENDIZAGEM POR ALGORITMO EM CADA MAPA
+    print(" -> Curvas de Aprendizagem Globais...")
     for scenario in scenarios:
         plt.figure(figsize=(10, 6))
-        data_scen = df_curves[df_curves['Scenario'] == scenario].copy() # cópia para evitar warnings
+        data_scen = df_curves[df_curves['Scenario'] == scenario].copy()
         
-        # Suavizar as curvas com Média Móvel (Rolling Mean)
+        # Suavizar as curvas
         data_scen['Score_Suavizado'] = data_scen.groupby(['Algorithm', 'Run'])['Score'].transform(lambda x: x.rolling(window=15, min_periods=1).mean())
         
         sns.lineplot(data=data_scen, x='Step', y='Score_Suavizado', hue='Algorithm', palette=cores, errorbar='ci', n_boot=1000)
@@ -117,16 +109,48 @@ def create_thesis_plots_3d(total_hours=None):
         plt.xlabel('Timesteps Simulação', fontsize=12)
         plt.legend(title='Algoritmo')
         plt.tight_layout()
-        plt.savefig(os.path.join(final_dir, f'3_Curva_Suavizada_{scenario}.png'), dpi=300)
+        plt.savefig(os.path.join(final_dir, f'curva_aprendizagem_suavizada_{scenario}.png'), dpi=300)
         plt.close()
 
-    print(f"\n✅ Concluído! Relatório TXT e Gráficos guardados em:\n{final_dir}")
+    print(" -> Gráficos INDIVIDUAIS por Algoritmo (Bruto vs Média)...")
+    indiv_dir = os.path.join(final_dir, 'individuais')
+    os.makedirs(indiv_dir, exist_ok=True)
+    
+    for scenario in scenarios:
+        for algo in algorithms:
+            plt.figure(figsize=(8, 5))
+            data_scen_algo = df_curves[(df_curves['Scenario'] == scenario) & (df_curves['Algorithm'] == algo)].copy()
+            
+            if data_scen_algo.empty:
+                continue
+                
+            # Desenha as runs brutas em pano de fundo (cinzento/claro)
+            sns.lineplot(data=data_scen_algo, x='Step', y='Score', hue='Run', palette='Greys', alpha=0.3, legend=False)
+            
+            # Calcula a média suavizada
+            data_scen_algo['Score_Suavizado'] = data_scen_algo.groupby('Run')['Score'].transform(lambda x: x.rolling(window=15, min_periods=1).mean())
+            mean_data = data_scen_algo.groupby('Step')['Score_Suavizado'].mean().reset_index()
+            
+            # Desenha a linha média destacada
+            sns.lineplot(data=mean_data, x='Step', y='Score_Suavizado', color=cores.get(algo, 'black'), linewidth=2.5, label=f'Média ({algo})')
+            
+            plt.title(f'Desempenho Individual: {algo}\nCenário: {scenario.upper()}', fontweight='bold', fontsize=14)
+            plt.ylabel('Score Absoluto', fontsize=12)
+            plt.xlabel('Timesteps Simulação', fontsize=12)
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(os.path.join(indiv_dir, f'{scenario}_{algo}_individual.png'), dpi=300)
+            plt.close()
+
+    print(f"\n✅ Concluído! A abrir a pasta:\n{final_dir}")
     
     if os.name == 'nt':
         os.startfile(final_dir)
 
 if __name__ == '__main__':
-    total_hours = None
-    if len(sys.argv) > 1:
-        total_hours = sys.argv[1]
-    create_thesis_plots_3d(total_hours)
+    try:
+        update_latest_thesis_plots()
+    except Exception as e:
+        print(f"\n[!] Ocorreu um erro ao gerar os gráficos: {e}")
+        
+    input("\nPressione ENTER para fechar esta janela...")

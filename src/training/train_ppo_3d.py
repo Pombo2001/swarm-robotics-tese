@@ -66,9 +66,10 @@ class PPOFriendlyWrapper(gym.Wrapper):
         return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos.get("robot_0", {})
 
 
-class TimeLimitAndLoggingCallback(BaseCallback):
-    def __init__(self, log_file, time_limit_seconds, log_interval, verbose=0):
+class SwarmEvalAndLoggingCallback(BaseCallback):
+    def __init__(self, eval_env, log_file, time_limit_seconds, log_interval, verbose=0):
         super().__init__(verbose)
+        self.eval_env = eval_env
         self.log_file = log_file
         self.time_limit = time_limit_seconds
         self.log_interval = log_interval
@@ -81,11 +82,30 @@ class TimeLimitAndLoggingCallback(BaseCallback):
         elapsed_time = time.time() - self.start_time
 
         if self.n_calls % self.log_interval == 0:
-            if len(self.model.ep_info_buffer) > 0:
-                ep_rew_mean = np.mean([ep_info["r"] for ep_info in self.model.ep_info_buffer])
-                with open(self.log_file, 'a', newline='') as f:
-                    writer = csv.writer(f)
-                    writer.writerow([self.num_timesteps, ep_rew_mean, elapsed_time])
+            # AVALIAÇÃO REAL DO ENXAME (Como no Visualizer)
+            obs_dict, _ = self.eval_env.reset()
+            done = False
+            total_reward = 0.0
+            
+            while not done:
+                actions = {}
+                for agent_id in self.eval_env.agents:
+                    obs = np.array(obs_dict[agent_id], dtype=np.float32)
+                    action, _ = self.model.predict(obs, deterministic=True)
+                    actions[agent_id] = action
+                
+                obs_dict, rewards, terms, truncs, infos = self.eval_env.step(actions)
+                total_reward += sum(rewards.values())
+                
+                if any(terms.values()) or any(truncs.values()):
+                    done = True
+            
+            # Média por agente para ser matematicamente comparável ao GNN
+            ep_rew_mean = total_reward / self.eval_env.num_agents
+
+            with open(self.log_file, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([self.num_timesteps, ep_rew_mean, elapsed_time])
 
         if elapsed_time >= self.time_limit:
             print(f"\n⏱️ FIM DO TEMPO! ({self.time_limit / 60:.1f} minutos). A gravar modelo...")
@@ -116,6 +136,7 @@ def train_ppo_3d(time_limit_minutes):
     print(f"🤖 PPO 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
 
     env = SubprocVecEnv([make_env(config_path) for i in range(num_cpu)])
+    eval_env = SwarmForagingEnv3D(config_path) # Ambiente Real para Avaliação
 
     log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_ppo')
     model_dir = os.path.join(os.path.dirname(__file__), '../../results/models_ppo')
@@ -130,7 +151,7 @@ def train_ppo_3d(time_limit_minutes):
     os.chmod(log_file, 0o666)
 
     model = PPO("MlpPolicy", env, verbose=1, device="auto")
-    callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds, log_interval)
+    callback = SwarmEvalAndLoggingCallback(eval_env, log_file, time_limit_seconds, log_interval)
 
     print(f"🚀 Simulação PPO a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)

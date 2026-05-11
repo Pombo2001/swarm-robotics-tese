@@ -47,8 +47,18 @@ class SwarmForagingEnv3D(gym.Env):
         self.agents = [f"robot_{i}" for i in range(self.num_agents)]
         self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
 
+        # --- SISTEMA DE FEROMONAS ---
+        phero_config = self.config.get('pheromones', {})
+        self.pheromone_res = phero_config.get('grid_resolution', 0.5)
+        self.evaporation_rate = phero_config.get('evaporation_rate', 0.99)
+        self.deposit_amount = phero_config.get('deposit_amount', 1.0)
+        self.grid_size = int((self.arena_radius * 2) / self.pheromone_res) + 1
+        self.pheromone_grid = np.zeros((self.grid_size, self.grid_size), dtype=np.float32)
+
+        # --- NOVO VETOR DE OBSERVAÇÃO ---
+        # 4 (Ninho) + 8 (Sensores Obj) + 4 (Porta) + 8 (Sensores Feromonas) = 24 Features de Ambiente
         self.sensor_directions = self._get_sensor_directions()
-        env_feats_dim = 4 + len(self.sensor_directions) + 4
+        env_feats_dim = 4 + len(self.sensor_directions) + 4 + len(self.sensor_directions)
         obs_size = env_feats_dim + (self.num_agents - 1) * 5
         
         self.observation_space_val = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32)
@@ -70,15 +80,28 @@ class SwarmForagingEnv3D(gym.Env):
             [0.707, 0.707, 0], [0.707, -0.707, 0], [-0.707, 0.707, 0], [-0.707, -0.707, 0]
         ])
 
+    def _pos_to_grid(self, pos):
+        # Converte coordenadas 3D para índices da Grelha 2D de Feromonas
+        x, y = pos[0], pos[1]
+        shift_x = x + self.arena_radius
+        shift_y = y + self.arena_radius
+        
+        i = int(shift_x / self.pheromone_res)
+        j = int(shift_y / self.pheromone_res)
+        
+        i = np.clip(i, 0, self.grid_size - 1)
+        j = np.clip(j, 0, self.grid_size - 1)
+        return i, j
+
     def _get_scenario_spawn_pos(self):
         if self.classic_scenario == "u_wall":
-            return np.array([np.random.uniform(-2, 2), np.random.uniform(-2, 1), np.random.uniform(-0.5, 0.5)])
+            return np.array([np.random.uniform(-5, 5), np.random.uniform(-4, 0), np.random.uniform(-0.5, 0.5)])
         elif self.classic_scenario == "bottleneck":
-            return np.array([np.random.uniform(-8, 8), np.random.uniform(-12, -6), np.random.uniform(-0.5, 0.5)])
+            return np.array([np.random.uniform(-12, 12), np.random.uniform(-14, -4), np.random.uniform(-0.5, 0.5)])
         elif self.classic_scenario == "four_rooms":
-            return np.array([np.random.uniform(-12, -6), np.random.uniform(-12, -6), np.random.uniform(-0.5, 0.5)])
+            return np.array([np.random.uniform(-14, -2), np.random.uniform(-14, -2), np.random.uniform(-0.5, 0.5)])
         elif self.classic_scenario == "cooperative_door":
-            return np.array([-10 + np.random.uniform(-2, 2), np.random.uniform(-4, 4), np.random.uniform(-0.5, 0.5)])
+            return np.array([np.random.uniform(-14, 14), np.random.uniform(-14, -2), np.random.uniform(-0.5, 0.5)])
         elif self.classic_scenario == "cooperative_perception":
             return self._random_spawn()
         else:
@@ -92,6 +115,9 @@ class SwarmForagingEnv3D(gym.Env):
         self.current_nest_occupancy = 0
         self.signaling = np.zeros(self.num_agents)
         self.walls = []
+        
+        # Limpar o chão (Evaporar as feromonas antigas)
+        self.pheromone_grid.fill(0.0)
 
         self.classic_scenario = self.config['environment'].get('classic_scenario', 'none')
 
@@ -132,7 +158,6 @@ class SwarmForagingEnv3D(gym.Env):
             self._spawn_obstacles()
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
 
-        # INOVAÇÃO: Usar a distância MÍNIMA histórica para impedir a penalização de recuo (Local Optimum Trap)
         self.min_dist_to_nest = np.array([np.linalg.norm(p - self.nest_pos) for p in self.agent_positions])
         
         self.min_dist_to_door = np.zeros(self.num_agents)
@@ -259,9 +284,19 @@ class SwarmForagingEnv3D(gym.Env):
             sensor_range = 5.0
             sensor_values = np.full(len(self.sensor_directions), sensor_range)
             
+            # --- NOVOS SENSORES DE FEROMONAS (Olfato Virtual) ---
+            pheromone_values = np.zeros(len(self.sensor_directions), dtype=np.float32)
+            look_ahead_dist = 1.0 # O robô "cheira" 1 metro à sua frente em cada direção
+            
             for i, sensor_dir_local in enumerate(self.sensor_directions):
                 sensor_dir_global = sensor_dir_local[0] * F + sensor_dir_local[1] * R + sensor_dir_local[2] * U
                 
+                # Sentir as Feromonas no chão
+                target_pos = pos + sensor_dir_global * look_ahead_dist
+                grid_i, grid_j = self._pos_to_grid(target_pos)
+                pheromone_values[i] = self.pheromone_grid[grid_i, grid_j]
+                
+                # Cálculo de Distância a Obstáculos (AABB)
                 for obs_pos in self.obstacles:
                     vec_to_obs = obs_pos - pos
                     dist_to_obs_center = np.linalg.norm(vec_to_obs)
@@ -306,6 +341,7 @@ class SwarmForagingEnv3D(gym.Env):
                 local_dir_nest, [norm_dist_nest],
                 normalized_sensors,
                 local_dir_door, [norm_dist_door],
+                pheromone_values, # AS FEROMONAS ENTRAM AQUI NO VETOR (8 valores)
                 np.array(neighbor_feats)
             ]).astype(np.float32)
 
@@ -318,6 +354,9 @@ class SwarmForagingEnv3D(gym.Env):
         terms = {a: False for a in self.agents}
         truncs = {a: False for a in self.agents}
         infos = {a: {} for a in self.agents}
+
+        # --- FÍSICA DO AMBIENTE: Evaporação de Feromonas ---
+        self.pheromone_grid *= self.evaporation_rate
 
         if self.dynamic_nest and self.classic_scenario == "none":
             self.nest_pos += self.nest_velocity
@@ -384,6 +423,10 @@ class SwarmForagingEnv3D(gym.Env):
                 if np.linalg.norm(move_global) > 1e-5:
                     self.agent_headings[idx] = move_global / np.linalg.norm(move_global)
                 self.agent_positions[idx] += move_global
+                
+                # --- O ROBÔ DEPOSITA FEROMONAS NO CHÃO ---
+                grid_i, grid_j = self._pos_to_grid(self.agent_positions[idx])
+                self.pheromone_grid[grid_i, grid_j] = min(1.0, self.pheromone_grid[grid_i, grid_j] + self.deposit_amount)
 
         if self.classic_scenario == "cooperative_door" and getattr(self, 'door_active', False):
             pushing_robots = [i for i in range(self.num_agents) if -1.5 < self.agent_positions[i][0] < 0.0 and -2.0 < self.agent_positions[i][1] < 2.0]
@@ -402,6 +445,7 @@ class SwarmForagingEnv3D(gym.Env):
                     norm = np.linalg.norm(direction)
                     if norm > 0: direction /= norm
                     self.agent_positions[idx] += direction * (min_dist - dist)
+            
             for wall in self.walls:
                 delta = self.agent_positions[idx] - wall['pos']; abs_delta = np.abs(delta)
                 half_size = wall['size'] / 2.0; penetration = (half_size + self.robot_radius) - abs_delta
@@ -410,6 +454,12 @@ class SwarmForagingEnv3D(gym.Env):
                     sign = np.sign(delta[min_axis])
                     if sign == 0: sign = 1.0
                     self.agent_positions[idx][min_axis] += penetration[min_axis] * sign
+            
+            dist_from_center = np.linalg.norm(self.agent_positions[idx])
+            if dist_from_center + self.robot_radius > self.arena_radius:
+                obstacle_hits[agent] = 1
+                direction = self.agent_positions[idx] / (dist_from_center + 1e-6)
+                self.agent_positions[idx] = direction * (self.arena_radius - self.robot_radius)
 
         robots_in_nest = []
         for idx in range(self.num_agents):
@@ -427,21 +477,13 @@ class SwarmForagingEnv3D(gym.Env):
             for idx in range(self.num_agents):
                 if idx in robots_in_nest:
                     rewards[self.agents[idx]] += 500.0; self.agent_positions[idx] = self._get_scenario_spawn_pos(); self.hunger_timers[idx] = 0
-                    self.min_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
-                self.signaling[idx] = 0.0
+                self.min_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos); self.signaling[idx] = 0.0
 
         for idx, agent in enumerate(self.agents):
             dist_nest = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
-            if np.linalg.norm(self.agent_positions[idx]) > self.arena_radius:
-                rewards[agent] -= 100.0; self.deaths_count += 1; self.agent_positions[idx] = self._get_scenario_spawn_pos()
-                self.hunger_timers[idx] = 0; self.min_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
-                continue
             
             if self.signaling[idx] == 1.0: pass
             else:
-                # --- SOLUÇÃO DO LOCAL MINIMUM (MURO U) ---
-                # Os robôs só recebem recompensa se quebrarem o seu próprio recorde de aproximação ao alvo.
-                # Se recuarem para tentar dar a volta ao muro, não sofrem pontuação negativa brutal!
                 if self.classic_scenario == "cooperative_door" and getattr(self, 'door_active', False):
                     dist_door = np.linalg.norm(self.agent_positions[idx] - self.door_pos)
                     if dist_door < self.min_dist_to_door[idx]:
@@ -454,7 +496,6 @@ class SwarmForagingEnv3D(gym.Env):
                         rewards[agent] += progress * self.progress_reward_factor
                         self.min_dist_to_nest[idx] = dist_nest
                 
-                # Custo contínuo para evitar que decidam ficar parados para sempre
                 rewards[agent] += self.energy_cost
                 self.hunger_timers[idx] += 1
             

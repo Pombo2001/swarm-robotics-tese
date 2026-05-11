@@ -1,6 +1,6 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: cooperative_door
+  classic_scenario: none
   dynamic_nest: true
   dynamic_obstacles: true
   forbidden_area: 2.2
@@ -21,6 +21,10 @@ evolution:
   sigma: 0.2
 gnn_agent:
   hidden_dim: 64
+pheromones:
+  deposit_amount: 1.0
+  evaporation_rate: 0.99
+  grid_resolution: 0.5
 physics:
   agent_radius: 0.15
   collision_penalty: -1.0

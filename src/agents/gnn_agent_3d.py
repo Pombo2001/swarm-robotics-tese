@@ -1,9 +1,7 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import yaml
 import os
-
 
 class GNNAgent3D(nn.Module):
     def __init__(self, agent_id, action_space, config_path=None):
@@ -19,8 +17,8 @@ class GNNAgent3D(nn.Module):
         agent_config = config.get('gnn_agent', {})
         self.hidden_dim = agent_config.get('hidden_dim', 64)
 
-        # AGORA CORRIGIDO: 4 (Ninho) + 8 (Sensores) + 4 (Porta) = 16
-        self.env_feats_dim = 16
+        # 4 (Ninho) + 8 (Sensores Obstáculos) + 4 (Porta) + 8 (Sensores Feromonas) = 24
+        self.env_feats_dim = 24
         self.neighbor_dim = 5
 
         self.encoder = nn.Sequential(

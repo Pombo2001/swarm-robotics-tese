@@ -6,6 +6,7 @@ import pandas as pd
 import time
 import yaml
 from datetime import timedelta
+from functools import partial
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("dark-blue")
@@ -40,7 +41,7 @@ class ModernDashboardV6Pro(ctk.CTk):
         # === SIDEBAR ===
         self.sidebar_frame = ctk.CTkFrame(self, width=320, corner_radius=0, fg_color="#1a1a1a")
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(7, weight=1)  # Ajustado para acomodar nova secção
+        self.sidebar_frame.grid_rowconfigure(7, weight=1)
 
         self.lbl_title = ctk.CTkLabel(self.sidebar_frame, text="SWARM\nCONTROLLER", font=("Roboto", 28, "bold"),
                                       text_color="#E0E0E0")
@@ -114,11 +115,9 @@ class ModernDashboardV6Pro(ctk.CTk):
                                              text_color="black", font=("Roboto", 12, "bold"), height=35)
         self.btn_start_night_train.pack(pady=(5, 15), padx=15, fill="x")
 
-        # Atualizar a label quando os valores mudam
         self.entry_night_hours.bind("<KeyRelease>", self.update_calculated_time)
         self.entry_night_runs.bind("<KeyRelease>", self.update_calculated_time)
-        # ==================================
-
+        
         self.btn_plot_thesis = ctk.CTkButton(self.sidebar_frame, text="📊 Gerar Gráficos Pós-Treino",
                                              command=self.plot_thesis, fg_color="#8E24AA", hover_color="#6A1B9A",
                                              font=("Roboto", 14, "bold"), height=40)
@@ -150,16 +149,15 @@ class ModernDashboardV6Pro(ctk.CTk):
                                            height=35)
         self.btn_start_all.pack(side="left", padx=20)
 
-        self._create_algo_frame("gnn", "🧬 GNN (Evolutivo)", "#4CAF50", self.start_gnn, self.stop_gnn, self.viz_gnn, 0)
-        self._create_algo_frame("ppo", "🤖 PPO (Actor-Critic)", "#2196F3", self.start_ppo, self.stop_ppo, self.viz_ppo, 1)
-        self._create_algo_frame("sac", "🔥 SAC (Soft Actor-Critic)", "#FF9800", self.start_sac, self.stop_sac,
-                                self.viz_sac, 2, text_color="black")
+        self._create_algo_frame("gnn", "🧬 GNN (Evolutivo)", "#4CAF50", self.start_gnn, self.stop_gnn, 0)
+        self._create_algo_frame("ppo", "🤖 PPO (Actor-Critic)", "#2196F3", self.start_ppo, self.stop_ppo, 1)
+        self._create_algo_frame("sac", "🔥 SAC (Soft Actor-Critic)", "#FF9800", self.start_sac, self.stop_sac, 2, text_color="black")
 
         self.update_metrics()
         self.load_current_config()
-        self.update_calculated_time() # Run once at startup
+        self.update_calculated_time()
 
-    def _create_algo_frame(self, name, title, color, start_cmd, stop_cmd, viz_cmd, col, text_color=None):
+    def _create_algo_frame(self, name, title, color, start_cmd, stop_cmd, col, text_color=None):
         frame = ctk.CTkFrame(self.main_area, corner_radius=10)
         frame.grid(row=1, column=col, sticky="nsew", padx=5)
         ctk.CTkLabel(frame, text=title, font=("Roboto", 20, "bold"), text_color=color).pack(pady=(20, 10))
@@ -178,7 +176,8 @@ class ModernDashboardV6Pro(ctk.CTk):
                       text_color=text_color, height=35).pack(pady=5, padx=20, fill="x")
         ctk.CTkButton(frame, text="⏹ Parar", command=stop_cmd, fg_color="#F44336", height=35).pack(pady=5, padx=20,
                                                                                                    fill="x")
-        ctk.CTkButton(frame, text="🎥 Visualizar", command=viz_cmd, fg_color="#1F6AA5", height=35).pack(pady=20,
+        
+        ctk.CTkButton(frame, text="🎥 Visualizar com Gráficos", command=partial(self.visualize_algo, name), fg_color="#1F6AA5", height=35).pack(pady=20,
                                                                                                         padx=20,
                                                                                                         fill="x")
 
@@ -201,26 +200,40 @@ class ModernDashboardV6Pro(ctk.CTk):
             "ppo_script": "src/training/train_ppo_3d.py",
             "sac_script": "src/training/train_sac_3d.py",
 
-            "viz_gnn": "visualization/visualize_3d.py",
-            "viz_ppo": "visualization/visualize_ppo_3d.py",
-            "viz_sac": "visualization/visualize_sac_3d.py",
+            "gnn_visualizer": "visualization/visualize_3d.py",
+            "ppo_visualizer": "visualization/visualize_ppo_3d.py",
+            "sac_visualizer": "visualization/visualize_sac_3d.py",
+            
+            "metrics_plotter": "visualization/plot_live_metrics.py",
 
             "plot_script": "plot_final_thesis_3d.py",
             "run_experiments": "run_experiments.py"
         }
 
-    def run_script(self, script, args=None):
+    def run_script(self, script, args=None, keep_console_open=False, new_window=True):
         if args is None:
             args = []
         full_path = os.path.join(self.base_dir, script)
-        return subprocess.Popen([sys.executable, full_path] + args, creationflags=subprocess.CREATE_NEW_CONSOLE)
+        
+        # A flag 'new_window' controla se o script corre numa nova janela ou em background
+        if new_window:
+            if keep_console_open:
+                # Lança uma nova janela de terminal que se mantém aberta (para Ursina)
+                cmd = ['cmd', '/c', 'start', 'cmd', '/k', sys.executable, full_path] + args
+                return subprocess.Popen(cmd, shell=True)
+            else:
+                # Lança uma nova janela de terminal que fecha no fim (para gráficos Matplotlib)
+                cmd = ['cmd', '/c', 'start', sys.executable, full_path] + args
+                return subprocess.Popen(cmd, shell=True)
+        else:
+            # Corre o script em background (para treino)
+            return subprocess.Popen([sys.executable, full_path] + args, creationflags=subprocess.CREATE_NEW_CONSOLE)
 
     def update_calculated_time(self, event=None):
         try:
             horas = float(self.entry_night_hours.get())
             runs = int(self.entry_night_runs.get())
             
-            # 6 cenários x 3 algoritmos x runs
             total_runs = 6 * 3 * runs
             minutos_totais = horas * 60
             
@@ -237,23 +250,17 @@ class ModernDashboardV6Pro(ctk.CTk):
             horas = float(self.entry_night_hours.get())
             runs = int(self.entry_night_runs.get())
             
-            # Conta: (Horas * 60 minutos) / (6 cenários * 3 algoritmos * n runs)
             total_runs = 6 * 3 * runs
             minutos_totais = horas * 60
-            time_limit_por_run = max(1, int(minutos_totais / total_runs)) # Pelo menos 1 minuto
+            time_limit_por_run = max(1, int(minutos_totais / total_runs))
             
             paths = self.get_paths()
             print(f"[*] Iniciando Treino Noturno: {horas} horas totais")
             print(f"[*] Dividido de forma justa: {runs} runs por cenario ({total_runs} testes no total)")
             print(f"[*] Tempo atribuído: {time_limit_por_run} min/run")
             
-            # Muda a cor do botão para dar feedback visual que iniciou
             self.btn_start_night_train.configure(text="Executando Testes...", fg_color="#388E3C", hover_color="#2E7D32")
-            
-            # Lança o processo em background
-            self.run_script(paths["run_experiments"], ["--runs", str(runs), "--time", str(time_limit_por_run)])
-            
-            # Após 3 segundos, volta ao normal
+            self.run_script(paths["run_experiments"], ["--runs", str(runs), "--time", str(time_limit_por_run)], new_window=False)
             self.after(3000, lambda: self.btn_start_night_train.configure(
                 text="🚀 Iniciar Rotina de Testes", fg_color="#FF8F00", hover_color="#FF6F00"))
                 
@@ -269,15 +276,15 @@ class ModernDashboardV6Pro(ctk.CTk):
         if os.path.exists(paths["ppo_log"]): os.remove(paths["ppo_log"])
         if os.path.exists(paths["sac_log"]): os.remove(paths["sac_log"])
 
-        self.gnn_process = self.run_script(paths["gnn_script"], ["--time_limit", target])
+        self.gnn_process = self.run_script(paths["gnn_script"], ["--time_limit", target], new_window=False)
         self.gnn_start_time = time.time()
         self.lbl_gnn_status.configure(text="Status: A TREINAR...", text_color="#4CAF50")
 
-        self.ppo_process = self.run_script(paths["ppo_script"], ["--time_limit", target])
+        self.ppo_process = self.run_script(paths["ppo_script"], ["--time_limit", target], new_window=False)
         self.ppo_start_time = time.time()
         self.lbl_ppo_status.configure(text="Status: A TREINAR...", text_color="#2196F3")
 
-        self.sac_process = self.run_script(paths["sac_script"], ["--time_limit", target])
+        self.sac_process = self.run_script(paths["sac_script"], ["--time_limit", target], new_window=False)
         self.sac_start_time = time.time()
         self.lbl_sac_status.configure(text="Status: A TREINAR...", text_color="#FF9800")
 
@@ -285,7 +292,7 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.save_current_config()
         paths = self.get_paths()
         if os.path.exists(paths["gnn_log"]): os.remove(paths["gnn_log"])
-        self.gnn_process = self.run_script(paths["gnn_script"], ["--time_limit", self.entry_master_time.get()])
+        self.gnn_process = self.run_script(paths["gnn_script"], ["--time_limit", self.entry_master_time.get()], new_window=False)
         self.gnn_start_time = time.time()
         self.lbl_gnn_status.configure(text="Status: A TREINAR...", text_color="#4CAF50")
 
@@ -293,7 +300,7 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.save_current_config()
         paths = self.get_paths()
         if os.path.exists(paths["ppo_log"]): os.remove(paths["ppo_log"])
-        self.ppo_process = self.run_script(paths["ppo_script"], ["--time_limit", self.entry_master_time.get()])
+        self.ppo_process = self.run_script(paths["ppo_script"], ["--time_limit", self.entry_master_time.get()], new_window=False)
         self.ppo_start_time = time.time()
         self.lbl_ppo_status.configure(text="Status: A TREINAR...", text_color="#2196F3")
 
@@ -301,7 +308,7 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.save_current_config()
         paths = self.get_paths()
         if os.path.exists(paths["sac_log"]): os.remove(paths["sac_log"])
-        self.sac_process = self.run_script(paths["sac_script"], ["--time_limit", self.entry_master_time.get()])
+        self.sac_process = self.run_script(paths["sac_script"], ["--time_limit", self.entry_master_time.get()], new_window=False)
         self.sac_start_time = time.time()
         self.lbl_sac_status.configure(text="Status: A TREINAR...", text_color="#FF9800")
 
@@ -320,17 +327,26 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.sac_start_time = None
         self.lbl_sac_status.configure(text="Status: PARADO", text_color="white")
 
-    def viz_gnn(self):
+    def visualize_algo(self, algo_name):
         self.save_current_config()
-        self.run_script(self.get_paths()["viz_gnn"])
+        paths = self.get_paths()
+        
+        # Lançar o visualizador 3D
+        visualizer_script = paths.get(f"{algo_name}_visualizer")
+        if visualizer_script:
+            print(f"INFO: Lançando visualizador 3D '{visualizer_script}' para '{algo_name}'.")
+            self.run_script(visualizer_script, keep_console_open=True)
+        else:
+            print(f"ERRO: Script de visualização 3D para '{algo_name}' não encontrado!")
 
-    def viz_ppo(self):
-        self.save_current_config()
-        self.run_script(self.get_paths()["viz_ppo"])
-
-    def viz_sac(self):
-        self.save_current_config()
-        self.run_script(self.get_paths()["viz_sac"])
+        # Lançar o plotter de métricas
+        plotter_script = paths.get("metrics_plotter")
+        if plotter_script:
+            # O script `plot_live_metrics` agora lê o cenário do config, então só precisa do algo
+            print(f"INFO: Lançando gráfico de métricas para '{algo_name}'.")
+            self.run_script(plotter_script, args=["--algo", algo_name], keep_console_open=False)
+        else:
+            print(f"ERRO: Script de plotagem de métricas não encontrado!")
 
     def plot_thesis(self):
         try:

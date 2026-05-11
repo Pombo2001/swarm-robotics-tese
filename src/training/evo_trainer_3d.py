@@ -8,29 +8,31 @@ Biblioteca: Nenhuma / PyTorch nativo para a rede neural. Todo o algoritmo genét
             'multiprocessing' para paralelizar a avaliação das populações.
 
 Como funciona na teoria:
-1. Natureza Darwiniana (Seleção Natural): Ao invés de usar o gradiente (backpropagation)
-   para ajustar os pesos, este algoritmo cria uma população inteira (ex: 30 robôs). Cada
-   robô tem uma rede neural com pesos totalmente diferentes (mutações iniciais aleatórias).
-2. Avaliação Paralela: O algoritmo larga os 30 robôs numa simulação (fitness evaluation).
-   Com os N núcleos do processador (Pool), a avaliação é corrida ao mesmo tempo. 
-   O tempo, e o facto de tocarem no ninho ou nos obstáculos, gera o 'Score Final' de cada um.
-3. Elitismo: Os robôs são ordenados pelo seu score do melhor para o pior. O algoritmo
-   seleciona o Top X (os 'Elites') da população e copia-os intatos para a geração seguinte.
-4. Mutação Gaussiana: O resto da população é descartada. Para preencher as vagas (os outros 80%),
-   clonamos um dos Elites ao calhas, e depois introduzimos uma ligeira mutação gaussiana (ruído)
-   nos pesos da rede neural desse clone. Esta mutação é governada por dois fatores: a Taxa de Mutação
-   (percentagem de pesos que sofrem mutação) e o Sigma (força dessa mutação).
-5. Guilhotina Genética (Early Stopping): Uma grande inovação implementada: se durante os primeiros 
-   150 steps um clone atingir uma pontuação miserável (limite negativo), a avaliação aborta 
-   imediatamente. Isto poupa um tempo formidável de processamento à CPU, rejeitando comportamentos
-   idiotas logo à cabeça.
+1. Representação do Genoma: Cada "indivíduo" na nossa população é representado
+   inteiramente pelos pesos e biases ('State Dictionary') da sua rede neural em PyTorch.
+   Não há descodificação intermédia; a política de navegação é a genética direta do robô.
+2. Homogeneous Swarm: O algoritmo não treina um indivíduo isolado no mapa. Avalia-se 
+   o enxame como um todo. Uma única política (rede neural) é copiada para todos os N robôs
+   na mesma simulação. O fitness desse "genoma" é a média das recompensas de todos os robôs
+   após um episódio completo (ou até acionarem a guilhotina temporal).
+3. Seleção Fortemente Elitista: O algoritmo ordena toda a população do melhor para o 
+   pior score. O top 20% (Elite) passa diretamente, sem qualquer alteração, para a próxima
+   geração, assegurando que o ótimo local encontrado nunca regride.
+4. Reprodução e Mutação Gaussiana: Os restantes 80% da população são criados através 
+   da seleção aleatória de um 'pai' do grupo de Elite. Não aplicamos Crossover (cruzamento) 
+   para evitar a destruição de representações neurais coesas. Em vez disso, aplicamos uma
+   Mutação Gaussiana: iteramos por todos os tensores da rede e adicionamos ruído aleatório
+   com uma probabilidade de 'mutation_rate' e intensidade ditada pelo desvio padrão 'sigma'.
+5. Guilhotina Genética (Early Stopping): Para otimizar massivamente o tempo computacional,
+   se uma nova mutação resultar numa política que obtenha um score terrivelmente baixo logo 
+   nos primeiros passos da simulação (ex: andar em círculos contra a parede), a avaliação
+   deste indivíduo é abortada e recebe uma penalização massiva.
 
-Implementação no nosso código (Dissertação):
-- População: Configurável via 'foraging.yaml'. Tipicamente 30 agentes.
-- Mutação: 10% dos pesos da rede sofrem uma mutação (Sigma de 0.2).
-- Vantagem Exclusiva: Multi-Agent Nativo. Enquanto o PPO/SAC controlam um único agente na arena, 
-  o GNN partilha os mesmos pesos em todos os N robôs ao mesmo tempo durante a simulação (Homogeneous Swarm),
-  o que reflete a verdadeira essência da inteligência de enxame.
+Justificação e Parâmetros (Configurados no YAML):
+- População: Tipicamente 30 indivíduos avaliados em paralelo em 8 cores (multiprocessing).
+- O Elite-size estrito, aliado ao ruído gaussiano, encoraja uma navegação "cautelosa", o que 
+  explica o seu enorme sucesso na evitação de obstáculos em relação aos algoritmos clássicos
+  de RL (PPO/SAC) que dependem de descida de gradiente contínua.
 =======================================================================================
 """
 
@@ -51,7 +53,6 @@ if PROJECT_ROOT not in sys.path:
 
 from src.environment.swarm_env_3d import SwarmForagingEnv3D
 from src.agents.gnn_agent_3d import GNNAgent3D
-
 
 def evaluate_genome(args):
     weights, config_path = args
@@ -90,8 +91,9 @@ def evaluate_genome(args):
         if any(terms.values()) or any(truncs.values()):
             done = True
 
-    return total_reward, steps
-
+    # CORREÇÃO DA AVALIAÇÃO DO PROFESSOR:
+    # A média da recompensa dividida pelo número de agentes, para estar em pé de igualdade com RL
+    return total_reward / env.num_agents, steps
 
 class GeneticTrainer3D:
     def __init__(self, config_path, time_limit_minutes=120):
@@ -192,14 +194,12 @@ class GeneticTrainer3D:
         torch.save(self.template_agent.state_dict(), save_path)
         os.chmod(save_path, 0o666)
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--time_limit", type=float, default=120.0)
     args = parser.parse_args()
 
     from multiprocessing import freeze_support
-
     freeze_support()
 
     config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
