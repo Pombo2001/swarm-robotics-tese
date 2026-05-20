@@ -17,10 +17,11 @@ class GNNAgent3D(nn.Module):
         agent_config = config.get('gnn_agent', {})
         self.hidden_dim = agent_config.get('hidden_dim', 64)
 
-        # 4 (Ninho) + 8 (Sensores Obstáculos) + 4 (Porta) + 8 (Sensores Feromonas) = 24
-        self.env_feats_dim = 24
+        # 4 (Ninho) + 8 (Sensores Obstáculos) + 4 (Porta) + 8 (Sensores Feromonas) + 1 (Estado da Porta) = 25
+        self.env_feats_dim = 25
         self.neighbor_dim = 5
 
+        # Arquitetura Original Revertida: Mais simples, mais fácil de treinar com Neuroevolução
         self.encoder = nn.Sequential(
             nn.Linear(self.env_feats_dim, self.hidden_dim),
             nn.ReLU(),
@@ -33,6 +34,7 @@ class GNNAgent3D(nn.Module):
             nn.Linear(self.hidden_dim, self.hidden_dim)
         )
 
+        # Apenas uma camada escondida no Actor
         self.actor = nn.Sequential(
             nn.Linear(self.hidden_dim * 2, self.hidden_dim),
             nn.ReLU(),

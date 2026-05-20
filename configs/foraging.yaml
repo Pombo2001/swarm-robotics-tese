@@ -1,6 +1,6 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: cooperative_perception
+  classic_scenario: u_wall
   dynamic_nest: true
   dynamic_obstacles: true
   forbidden_area: 2.2
@@ -10,7 +10,7 @@ environment:
   nest_velocity: 0.015
   num_agents: 20
   num_obstacles: 50
-  obstacle_penalty: -2.0
+  obstacle_penalty: -1.0
   obstacle_radius: 0.2
   obstacle_velocity: 0.02
   progress_reward_factor: 50.0
@@ -35,8 +35,8 @@ ppo:
   log_interval: 2000
   num_cpu: 8
 rewards:
-  energy_cost: -0.05
-  exploration_bonus: 0.01
+  energy_cost: -0.01
+  exploration_bonus: 0.05
   food_collected: 100.0
   out_of_bounds: -10.0
   wall_penalty: -5.0
