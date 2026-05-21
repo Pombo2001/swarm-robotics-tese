@@ -60,7 +60,7 @@ class PPOFriendlyWrapper(gym.Wrapper):
             if agent != "robot_0":
                 actions[agent] = self.env.action_space(agent).sample()
         obs_dict, rewards, terms, truncs, infos = self.env.step(actions)
-        return obs_dict["robot_0"], rewards.get("robot_0", 0), terms.get("robot_0", False), truncs.get("robot_0", False), infos.get("robot_0", {})
+        return obs_dict.get("robot_0", {}), rewards.get("robot_0", 0), terms.get("robot_0", False), truncs.get("robot_0", False), infos.get("robot_0", {})
 
 
 class SwarmEvalAndLoggingCallback(BaseCallback):
