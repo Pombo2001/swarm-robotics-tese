@@ -134,6 +134,7 @@ class SwarmForagingEnv3D(gym.Env):
         return observations
 
     def step(self, actions):
+        self.steps += 1
         rewards = {a: 0.0 for a in self.agents}
         
         for idx, agent in enumerate(self.agents):
