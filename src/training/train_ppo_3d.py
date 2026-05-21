@@ -60,7 +60,7 @@ class PPOFriendlyWrapper(gym.Wrapper):
             if agent != "robot_0":
                 actions[agent] = self.env.action_space(agent).sample()
         obs_dict, rewards, terms, truncs, infos = self.env.step(actions)
-        return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos.get("robot_0", {})
+        return obs_dict["robot_0"], rewards.get("robot_0", 0), terms.get("robot_0", False), truncs.get("robot_0", False), infos.get("robot_0", {})
 
 
 class SwarmEvalAndLoggingCallback(BaseCallback):
@@ -109,7 +109,7 @@ class SwarmEvalAndLoggingCallback(BaseCallback):
 
 def make_env(config_path):
     def _init():
-        raw_env = SwarmForagingEnv3D(config_path)
+        raw_env = SwarmForagingEnv3D(config_path=config_path)
         wrapped_env = PPOFriendlyWrapper(raw_env)
         return Monitor(wrapped_env)
     return _init
@@ -128,7 +128,7 @@ def train_ppo_3d(time_limit_minutes):
     print(f"🤖 PPO 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
 
     env = SubprocVecEnv([make_env(config_path) for i in range(num_cpu)])
-    eval_env = SwarmForagingEnv3D(config_path) # Ambiente Real para Avaliação
+    eval_env = SwarmForagingEnv3D(config_path=config_path) # Ambiente Real para Avaliação
 
     log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_ppo')
     model_dir = os.path.join(os.path.dirname(__file__), '../../results/models_ppo')
