@@ -83,8 +83,10 @@ def run_experiments(num_runs, time_limit, selected_algorithms):
                 cmd = [sys.executable, script_path, '--time_limit', str(time_limit)]
                 
                 try:
-                    subprocess.run(cmd, check=True)
-                except subprocess.CalledProcessError as e:
+                    # ALTERAÇÃO CRÍTICA: Usar Popen em vez de run para evitar deadlocks com multiprocessing
+                    proc = subprocess.Popen(cmd)
+                    proc.wait() # Esperar explicitamente que o processo termine
+                except Exception as e:
                     print(f"[!] Run {run} do {algo_name} falhou: {e}")
                 
                 # Extracao de Dados
@@ -199,11 +201,10 @@ def generate_plots(df_curves, df_best, num_runs, time_limit, selected_algorithms
             
     print(f"[*] Gráficos legíveis, CSVs e Relatório TXT guardados com sucesso em:\n    {out_dir}")
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description="Automação de Experiências para a Tese")
     parser.add_argument("--runs", type=int, default=5, help="Nº de Runs por Cenário")
     parser.add_argument("--time", type=int, default=60, help="Minutos por Run")
-    # Adicionar argumentos para selecionar algoritmos
     parser.add_argument("--gnn", action='store_true', help="Incluir GNN no treino.")
     parser.add_argument("--ppo", action='store_true', help="Incluir PPO no treino.")
     parser.add_argument("--sac", action='store_true', help="Incluir SAC no treino.")
@@ -214,8 +215,10 @@ if __name__ == '__main__':
     if args.ppo: selected_algorithms['PPO'] = ALL_ALGORITHMS['PPO']
     if args.sac: selected_algorithms['SAC'] = ALL_ALGORITHMS['SAC']
 
-    # Se nenhum for selecionado, usar todos como default
     if not selected_algorithms:
         selected_algorithms = ALL_ALGORITHMS
     
     run_experiments(num_runs=args.runs, time_limit=args.time, selected_algorithms=selected_algorithms)
+
+if __name__ == '__main__':
+    main()

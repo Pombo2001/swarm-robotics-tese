@@ -17,51 +17,36 @@ class SwarmForagingEnv3D(gym.Env):
             self.config = yaml.safe_load(f)
 
         env_config = self.config['environment']
-        self.num_agents = env_config.get('num_agents', 25)
-        self.num_obstacles = env_config.get('num_obstacles', 50)
+        self.num_agents = env_config.get('num_agents', 20)
         self.arena_radius = env_config.get('arena_radius', 15.0)
-        self.nest_radius = env_config.get('nest_radius', 0.2)
-        self.max_steps = env_config.get('max_steps', 500)
-
-        self.robot_radius = self.config['physics'].get('agent_radius', 0.15)
-        self.obstacle_radius = env_config.get('obstacle_radius', 0.2)
-
-        rewards_config = self.config.get('rewards', {})
-        self.progress_reward_factor = env_config.get('progress_reward_factor', 50.0)
+        self.max_steps = env_config.get('max_steps', 1000)
+        self.robot_radius = env_config.get('robot_radius', 0.25)
+        
+        self.stagnation_threshold = 50
+        self.stagnation_penalty = -1.0
+        self.stagnation_area = 0.1
         self.obstacle_penalty = env_config.get('obstacle_penalty', -1.0)
-        self.energy_cost = rewards_config.get('energy_cost', -0.01)
-        self.exploration_bonus = rewards_config.get('exploration_bonus', 0.05)
-        self.stagnation_penalty = rewards_config.get('stagnation_penalty', -0.1)
-        self.stagnation_threshold = self.config['physics'].get('stagnation_threshold', 20)
-        self.stagnation_area = self.config['physics'].get('stagnation_area', 0.5)
 
         self.agents = [f"robot_{i}" for i in range(self.num_agents)]
-        self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
-        
-        self.sensor_directions = self._get_sensor_directions()
-        env_feats_dim = 4 + len(self.sensor_directions) + 4 + len(self.sensor_directions) + 1
-        obs_size = env_feats_dim + (self.num_agents - 1) * 5
-        
+        self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
+
+        # Simplified observation for now
+        self.sensor_directions = self._generate_sensor_directions(8)
+        obs_size = 3 + 1 + len(self.sensor_directions) + 3 + 1 + 8 + 1 + (self.num_agents - 1) * 5
         self.observation_space_val = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32)
+
         self.action_spaces = {a: self.action_space_val for a in self.agents}
         self.observation_spaces = {a: self.observation_space_val for a in self.agents}
 
-    def _get_sensor_directions(self):
-        return np.array([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0.707,0.707,0],[0.707,-0.707,0],[-0.707,0.707,0],[-0.707,-0.707,0]])
-
-    def _pos_to_grid(self, pos):
-        i = int((pos[0] + self.arena_radius) / 0.5)
-        j = int((pos[1] + self.arena_radius) / 0.5)
-        return np.clip(i, 0, int(self.arena_radius*2/0.5)), np.clip(j, 0, int(self.arena_radius*2/0.5))
+    def _generate_sensor_directions(self, num_sensors):
+        angles = np.linspace(0, 2 * np.pi, num_sensors, endpoint=False)
+        return np.array([[np.cos(a), np.sin(a), 0] for a in angles])
 
     def _is_colliding(self, pos, return_normal=False):
-        # Arena bounds
-        if np.linalg.norm(pos) + self.robot_radius > self.arena_radius:
-            return (True, -pos / np.linalg.norm(pos)) if return_normal else True
-        # Obstacles
-        for obs_pos in self.obstacles:
-            if np.linalg.norm(pos - obs_pos) < self.robot_radius + self.obstacle_radius:
-                return (True, (pos - obs_pos) / np.linalg.norm(pos - obs_pos)) if return_normal else True
+        # Arena boundary
+        if np.linalg.norm(pos) > self.arena_radius - self.robot_radius:
+            normal = -pos / (np.linalg.norm(pos) + 1e-6)
+            return (True, normal) if return_normal else True
         # Walls
         for wall in self.walls:
             closest_point = np.clip(pos, wall['pos'] - wall['size'] / 2.0, wall['pos'] + wall['size'] / 2.0)

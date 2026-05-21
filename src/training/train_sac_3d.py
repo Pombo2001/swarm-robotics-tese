@@ -1,3 +1,31 @@
+"""
+=======================================================================================
+CÁBULA PARA A TESE: Soft Actor-Critic (SAC)
+=======================================================================================
+Tipo de Algoritmo: Reinforcement Learning (RL) -> Off-Policy -> Actor-Critic com Entropia Máxima
+Biblioteca: Stable-Baselines3 (SB3)
+
+Como funciona na teoria:
+1. Exploração baseada em Entropia: O principal diferencial do SAC. Enquanto o PPO (e outros algoritmos)
+   tentam maximizar apenas a recompensa esperada, o SAC tenta maximizar a recompensa E a aleatoriedade
+   das ações (entropia). Isto força o agente a explorar continuamente o ambiente de forma estruturada.
+2. Equação de Maximização: Objetivo = E[Recompensa + Alpha * Entropia]. Onde 'Alpha' é a "temperatura" que dita 
+   o quão aleatórias as ações devem ser. No Stable-Baselines3, este parâmetro pode ser auto-ajustado 
+   automaticamente, diminuindo a aleatoriedade à medida que o agente ganha confiança.
+3. Off-Policy (A grande diferença para o PPO): O SAC tem um 'Replay Buffer' enorme na memória. 
+   Ao contrário do PPO, ele guarda TODAS as experiências antigas, mesmo aquelas executadas quando o 
+   robô ainda era "parvo". Durante o treino, o SAC retira pacotes aleatórios (mini-batches) desta memória e 
+   aprende com eles. Por isso mesmo, costuma ser mais "Sample-Efficient" (aprende mais depressa com menos steps).
+
+Implementação no nosso código (Dissertação):
+- Setup idêntico ao PPO (Single-Agent Multi-Agent). O SAC controla o robô 0, os outros geram ruído.
+- Vantagens esperadas no contexto da Tese: Por ser mais forte a explorar (devido à entropia máxima),
+  esperamos que o SAC não fique tão "preso" nos obstáculos como o PPO quando o cenário se complica (ex: Bottleneck).
+- Política: MlpPolicy (Rede Neural). As saídas não são apenas os comandos motores, mas também o desvio padrão 
+  das ações, gerando comportamentos estocásticos que resultam em robôs com trajetórias mais suaves.
+=======================================================================================
+"""
+
 import os
 import sys
 import csv
@@ -5,56 +33,17 @@ import numpy as np
 import argparse
 import time
 import yaml
-import torch
-import torch.nn.functional as F
 import gymnasium as gym
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.buffers import ReplayBuffer
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from src.environment.swarm_env_3d import SwarmForagingEnv3D
-from src.agents.icm_module import ICM
-
-class SACWithICM(SAC):
-    def __init__(self, policy, env, icm_learning_rate=1e-4, icm_beta=0.2, intrinsic_reward_weight=0.01, **kwargs):
-        super(SACWithICM, self).__init__(policy, env, **kwargs)
-        obs_space = self.observation_space
-        action_space = self.action_space
-        self.icm = ICM(obs_space.shape[0], action_space.shape[0]).to(self.device)
-        self.icm_optimizer = torch.optim.Adam(self.icm.parameters(), lr=icm_learning_rate)
-        self.beta = icm_beta
-        self.intrinsic_reward_weight = intrinsic_reward_weight
-
-    def train(self, gradient_steps: int, batch_size: int = 64) -> None:
-        super().train(gradient_steps, batch_size)
-        for _ in range(gradient_steps):
-            replay_data = self.replay_buffer.sample(batch_size, env=self._vec_normalize_env)
-            with torch.no_grad():
-                states = replay_data.observations
-                next_states = replay_data.next_observations
-                actions = replay_data.actions
-            forward_loss, inverse_loss = self.icm(states, next_states, actions)
-            icm_loss = (1 - self.beta) * inverse_loss + self.beta * forward_loss.mean()
-            self.icm_optimizer.zero_grad()
-            icm_loss.backward()
-            self.icm_optimizer.step()
-
-    def _store_transition(self, replay_buffer: ReplayBuffer, buffer_action, new_obs, reward, done, infos):
-        obs = self._last_obs
-        action = buffer_action
-        obs_tensor = torch.tensor(obs, dtype=torch.float32).to(self.device)
-        next_obs_tensor = torch.tensor(new_obs, dtype=torch.float32).to(self.device)
-        action_tensor = torch.tensor(action, dtype=torch.float32).to(self.device)
-        intrinsic_reward = self.icm.get_intrinsic_reward(obs_tensor, next_obs_tensor, action_tensor)
-        intrinsic_reward = intrinsic_reward.cpu().numpy() * self.intrinsic_reward_weight
-        reward += intrinsic_reward
-        super()._store_transition(replay_buffer, buffer_action, new_obs, reward, done, infos)
 
 class SACFriendlyWrapper(gym.Wrapper):
     def __init__(self, env):
@@ -72,6 +61,7 @@ class SACFriendlyWrapper(gym.Wrapper):
         obs_dict, rewards, terms, truncs, infos = self.env.step(actions)
         return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos.get("robot_0", {})
 
+
 class SwarmEvalAndLoggingCallback(BaseCallback):
     def __init__(self, eval_env, log_file, time_limit_seconds, log_interval, verbose=0):
         super().__init__(verbose)
@@ -85,26 +75,36 @@ class SwarmEvalAndLoggingCallback(BaseCallback):
     def _on_step(self):
         elapsed_time = time.time() - self.start_time
         if self.n_calls % self.log_interval == 0:
+            # AVALIAÇÃO REAL DO ENXAME (Como no Visualizer)
             obs_dict, _ = self.eval_env.reset()
             done = False
             total_reward = 0.0
+            
             while not done:
                 actions = {}
                 for agent_id in self.eval_env.agents:
                     obs = np.array(obs_dict[agent_id], dtype=np.float32)
                     action, _ = self.model.predict(obs, deterministic=True)
                     actions[agent_id] = action
+                
                 obs_dict, rewards, terms, truncs, infos = self.eval_env.step(actions)
                 total_reward += sum(rewards.values())
+                
                 if any(terms.values()) or any(truncs.values()):
                     done = True
+            
+            # Média por agente para ser matematicamente comparável ao GNN
             ep_rew_mean = total_reward / self.eval_env.num_agents
+
             with open(self.log_file, 'a', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow([self.num_timesteps, ep_rew_mean, elapsed_time])
+
         if elapsed_time >= self.time_limit:
+            print(f"\n⏱️ FIM DO TEMPO! ({self.time_limit / 60:.1f} minutos). A gravar modelo...")
             return False
         return True
+
 
 def make_env(config_path):
     def _init():
@@ -113,11 +113,22 @@ def make_env(config_path):
         return Monitor(wrapped_env)
     return _init
 
-def train_sac_3d(args):
+
+def train_sac_3d(time_limit_minutes):
     config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
-    env = make_env(config_path)()
-    time_limit_seconds = args.time_limit * 60
-    
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    sac_config = config.get('sac', {})
+    num_cpu = sac_config.get('num_cpu', 8)
+    log_interval = sac_config.get('log_interval', 2000)
+
+    time_limit_seconds = time_limit_minutes * 60
+    print(f"🤖 SAC 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
+
+    env = SubprocVecEnv([make_env(config_path) for i in range(num_cpu)])
+    eval_env = SwarmForagingEnv3D(config_path) # Ambiente Real para Avaliação
+
     log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_ppo')
     model_dir = os.path.join(os.path.dirname(__file__), '../../results/models_ppo')
     os.makedirs(log_dir, exist_ok=True)
@@ -128,34 +139,21 @@ def train_sac_3d(args):
         writer.writerow(['timesteps', 'ep_rew_mean', 'time'])
     os.chmod(log_file, 0o666)
 
-    model = SACWithICM("MlpPolicy", env, verbose=0, device="auto",
-                       learning_rate=args.learning_rate,
-                       gamma=args.gamma,
-                       buffer_size=args.buffer_size,
-                       tau=args.tau,
-                       train_freq=args.train_freq,
-                       gradient_steps=args.gradient_steps,
-                       icm_learning_rate=args.icm_learning_rate,
-                       icm_beta=args.icm_beta,
-                       intrinsic_reward_weight=args.intrinsic_reward_weight)
-    
-    callback = SwarmEvalAndLoggingCallback(env, log_file, time_limit_seconds, 2000)
+    model = SAC("MlpPolicy", env, verbose=1, device="auto")
+    callback = SwarmEvalAndLoggingCallback(eval_env, log_file, time_limit_seconds, log_interval)
+
+    print(f"🚀 Simulação SAC a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)
-    model.save(os.path.join(model_dir, "sac_3d_final"))
+
+    model_path = os.path.join(model_dir, "sac_3d_final")
+    model.save(model_path)
+    os.chmod(model_path + ".zip", 0o666)
+    print("✅ Treino SAC 3D Multi-Core concluído de forma segura!")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--time_limit", type=float, default=120.0)
-    parser.add_argument("--learning_rate", type=float, default=3e-4)
-    parser.add_argument("--gamma", type=float, default=0.99)
-    parser.add_argument("--buffer_size", type=int, default=1000000)
-    parser.add_argument("--tau", type=float, default=0.005)
-    parser.add_argument("--train_freq", type=int, default=1)
-    parser.add_argument("--gradient_steps", type=int, default=1)
-    parser.add_argument("--icm_learning_rate", type=float, default=1e-4)
-    parser.add_argument("--icm_beta", type=float, default=0.2)
-    parser.add_argument("--intrinsic_reward_weight", type=float, default=0.01)
     args = parser.parse_args()
     from multiprocessing import freeze_support
     freeze_support()
-    train_sac_3d(args)
+    train_sac_3d(time_limit_minutes=args.time_limit)

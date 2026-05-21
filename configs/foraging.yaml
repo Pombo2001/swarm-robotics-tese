@@ -1,42 +1,32 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: u_wall
+  classic_scenario: cooperative_perception
   dynamic_nest: true
   dynamic_obstacles: true
   forbidden_area: 2.2
-  hunger_timer_max: 600
-  max_steps: 500
-  nest_radius: 0.2
+  hunger_timer_max: 1000
+  max_steps: 1000
+  nest_radius: 0.5
   nest_velocity: 0.015
   num_agents: 20
   num_obstacles: 50
-  obstacle_penalty: -1.0
+  obstacle_penalty: -2.0
   obstacle_radius: 0.2
   obstacle_velocity: 0.02
   progress_reward_factor: 50.0
+  render_mode: rgb_array
   required_to_eat: 3
+  robot_radius: 0.25
 evolution:
   mutation_rate: 0.1
   pop_size: 30
   sigma: 0.2
-gnn_agent:
-  hidden_dim: 64
-pheromones:
-  deposit_amount: 1.0
-  evaporation_rate: 0.99
-  grid_resolution: 0.5
-physics:
-  agent_radius: 0.15
-  collision_penalty: -1.0
-  communication_radius: 1.0
-plotting:
-  smoothing_window: 10
 ppo:
   log_interval: 2000
   num_cpu: 8
 rewards:
-  energy_cost: -0.01
-  exploration_bonus: 0.05
+  energy_cost: -0.05
+  exploration_bonus: 0.01
   food_collected: 100.0
   out_of_bounds: -10.0
   wall_penalty: -5.0
@@ -44,10 +34,8 @@ sac:
   log_interval: 2000
   num_cpu: 8
 simulation:
+  evaporation_rate: 0.995
   guillotine_threshold: -200
-  max_steps: 500
+  max_steps: 1000
   render_mode: rgb_array
-visualization:
-  speed_slider_default: 30
-  speed_slider_max: 120
-  speed_slider_min: 1
+  deposit_amount: 0.1

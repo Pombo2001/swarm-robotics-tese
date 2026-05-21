@@ -45,7 +45,7 @@ import time
 import csv
 import argparse
 import yaml
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count, freeze_support
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if PROJECT_ROOT not in sys.path:
@@ -194,14 +194,15 @@ class GeneticTrainer3D:
         torch.save(self.template_agent.state_dict(), save_path)
         os.chmod(save_path, 0o666)
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--time_limit", type=float, default=120.0)
     args = parser.parse_args()
 
-    from multiprocessing import freeze_support
-    freeze_support()
-
     config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
     trainer = GeneticTrainer3D(config_path, time_limit_minutes=args.time_limit)
     trainer.train()
+
+if __name__ == "__main__":
+    freeze_support()
+    main()
