@@ -7,14 +7,16 @@ import os
 class SwarmForagingEnv3D(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 30}
 
-    def __init__(self, config_path=None):
+    def __init__(self, config_path=None, config=None):
         super(SwarmForagingEnv3D, self).__init__()
 
-        if config_path is None:
-            config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
-
-        with open(config_path, 'r') as f:
-            self.config = yaml.safe_load(f)
+        if config is not None:
+            self.config = config
+        else:
+            if config_path is None:
+                config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
+            with open(config_path, 'r') as f:
+                self.config = yaml.safe_load(f)
 
         env_config = self.config['environment']
         self.num_agents = env_config.get('num_agents', 20)
