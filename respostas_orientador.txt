@@ -1,110 +1,76 @@
 =======================================================================================
-DOCUMENTO DE ESTADO E RESPOSTAS PARA O ORIENTADOR DA TESE
+RELATÓRIO DE ESTADO E VERIFICAÇÃO DE IMPLEMENTAÇÃO
 =======================================================================================
-**Última Atualização:** 12/05/2024
-**Estado do Projeto:** Robusto. Correções críticas implementadas. Pronto para otimização e treino final.
+**Última Atualização:** 21/05/2024
+**Foco:** Responder às questões levantadas e detalhar a parametrização atual para validação.
 
-Este documento compila de forma estruturada e científica todas as respostas às questões
-levantadas, detalhando o funcionamento dos algoritmos e justificando as melhorias
-implementadas com referências diretas ao código.
+---
+### **PARTE 1: DESCRIÇÃO DETALHADA DOS ALGORITMOS**
+---
 
----------------------------------------------------------------------------------------
-1. EXPLICAÇÃO E FUNCIONAMENTO DOS 3 ALGORITMOS (GNN, PPO, SAC)
----------------------------------------------------------------------------------------
-A dissertação compara três paradigmas distintos de otimização de políticas para controlo
-de enxames:
+#### **1.1. GNN (Neuroevolução com Algoritmo Genético)**
+*   **Como Funciona:** Este é um algoritmo genético implementado de raiz (`src/training/evo_trainer_3d.py`). Ele otimiza uma população de redes neurais (`GNNAgent3D`) sem usar cálculo de gradientes. O processo é o seguinte:
+    1.  **Avaliação (Fitness):** Cada "indivíduo" (rede neural) da população é simulado no ambiente e recebe um "fitness score", que é a recompensa média obtida pelos agentes que usam essa rede.
+    2.  **Seleção (Elitismo):** A população é ordenada pelo fitness. Os **20% melhores** (a elite) são copiados diretamente para a próxima geração, garantindo que o melhor desempenho nunca é perdido. **Isto confirma que o GNN é agora elitista.**
+    3.  **Mutação:** Os restantes 80% da nova população são criados a partir de "pais" selecionados aleatoriamente da elite. Cada "filho" é uma cópia do pai, à qual é aplicada uma **mutação gaussiana**: cada peso da rede neural tem uma `mutation_rate` de probabilidade de ser alterado, adicionando-se um ruído de uma distribuição normal com desvio padrão `sigma`.
 
-**A) Algoritmo Neuro-Evolutivo (GNN - Desenvolvido de raiz):**
-- **Localização:** `src/training/evo_trainer_3d.py`
-- **Tipo:** Evolução Genética Direta (Pure GA). Não utiliza gradientes (backpropagation).
-- **Genoma:** Um "indivíduo" é um vetor 1D que contém todos os pesos e biases da rede
-  `GNNAgent3D`, "achatados" numa única sequência de números.
-- **Mutação:** A mutação é o único operador genético usado. A lógica está na função `_mutate`
-  do `EvoTrainer`. A fórmula é `novo_peso = peso_antigo + random.gauss(0, sigma)`.
-- **Elitismo:** O algoritmo **não é elitista** na sua forma atual. A cada geração, os melhores
-  são selecionados para *criar* a nova população, mas o melhor indivíduo não é garantidamente
-  transferido intacto.
-- **Correção Aplicada:** A arquitetura do GNN foi **revertida para a sua versão original, mais simples**,
-  no ficheiro `src/agents/gnn_agent_3d.py`, para ser mais compatível com a neuroevolução.
+#### **1.2. PPO (Proximal Policy Optimization)**
+*   **Como Funciona:** É um algoritmo de Aprendizagem por Reforço (RL) "On-Policy" (`src/training/train_ppo_3d.py`), que usa a biblioteca `stable-baselines3`.
+    1.  **Actor-Critic:** Utiliza duas redes: o "Actor" decide a ação, e o "Critic" avalia o quão boa é a situação atual.
+    2.  **Aprendizagem Estável:** A sua principal característica é o "clipping", que impede que as atualizações da política sejam demasiado drásticas, evitando que o agente "esqueça" o que aprendeu e garantindo um treino mais estável.
+    3.  **Implementação Atual:** O PPO controla um único agente (`robot_0`), enquanto os outros se movem aleatoriamente para criar um ambiente dinâmico. O treino é paralelizado em vários núcleos para acelerar a recolha de dados.
 
-**B) Proximal Policy Optimization (PPO - via Stable-Baselines3):**
-- **Localização:** `src/training/train_ppo_3d.py`
-- **Tipo:** RL -> Policy Gradient -> On-Policy.
-- **Como Funciona:** Usa uma arquitetura Actor-Critic. A sua inovação é o "Clipping", que impede
-  que as atualizações da política sejam demasiado grandes, garantindo um treino estável.
-- **No Projeto (Atualizado):** O PPO foi aumentado com um **Módulo de Curiosidade Intrínseca (ICM)**.
-  A recompensa que o agente otimiza é agora `R_total = R_ambiente + R_curiosidade`.
-  - **Código do ICM:** `src/agents/icm_module.py`
-  - **Integração:** Na classe `PPOWithICM` em `train_ppo_3d.py`.
+#### **1.3. SAC (Soft Actor-Critic)**
+*   **Como Funciona:** É um algoritmo de RL "Off-Policy" (`src/training/train_sac_3d.py`), também da `stable-baselines3`.
+    1.  **Maximização de Entropia:** O SAC é projetado para ser um explorador nato. O seu objetivo não é apenas maximizar a recompensa, mas sim a **soma da recompensa e da aleatoriedade (entropia)** das suas ações. Isto incentiva-o a experimentar mais e a não se prender em soluções sub-ótimas.
+    2.  **Replay Buffer:** Ao contrário do PPO, o SAC armazena uma grande quantidade de experiências passadas numa "memória" (Replay Buffer) e aprende com amostras aleatórias dessa memória, tornando-o muito mais eficiente em termos de dados.
 
-**C) Soft Actor-Critic (SAC - via Stable-Baselines3):**
-- **Localização:** `src/training/train_sac_3d.py`
-- **Tipo:** RL -> Off-Policy -> Actor-Critic com Maximização de Entropia.
-- **Como Funciona:** Usa um "Replay Buffer" para aprender com experiências passadas. O seu objetivo
-  é maximizar `Recompensa + (Alpha * Entropia)`, o que o torna um explorador nato.
-- **No Projeto (Atualizado):** Tal como o PPO, o SAC foi equipado com o **ICM**.
-  - **Código do ICM:** `src/agents/icm_module.py`
-  - **Integração:** Na classe `SACWithICM` em `train_sac_3d.py`.
+---
+### **PARTE 2: VERIFICAÇÃO DE IMPLEMENTAÇÃO E PARAMETRIZAÇÃO**
+---
 
----------------------------------------------------------------------------------------
-2. GARANTIA DE PARÂMETROS E RESOLUÇÃO DE PROBLEMAS DE COMPORTAMENTO
----------------------------------------------------------------------------------------
-As seguintes correções foram implementadas, maioritariamente no ficheiro do ambiente:
-**Ficheiro Principal:** `src/environment/swarm_env_3d.py`
+#### **2.1. Problema: Robôs Presos e Muros com "Cola"**
+*   **Verificação:** O problema foi identificado como uma falha na física de colisão.
+*   **Solução e Parametrização:**
+    *   **Implementação:** A lógica de colisão em `src/environment/swarm_env_3d.py` foi reescrita. Agora, ao detetar uma colisão, o vetor de movimento do agente é projetado na normal da superfície do obstáculo, resultando num **"deslize de parede" (Wall Sliding)**.
+    *   **Parâmetro:** A severidade da colisão é controlada pelo `obstacle_penalty` no ficheiro `configs/foraging.yaml`.
 
-**A) Problema: "Muro com Cola" e Robôs Congelados (PPO/SAC)**
-- **Solução:** Implementada uma **Física de Colisão Híbrida**.
-  - **Localização:** Na função `step`, a lógica de colisão agora chama `_is_colliding` (que retorna
-    a normal da superfície) e, em caso de colisão, aplica uma força de deslize:
-    `move_global = move_global - np.dot(move_global, normal) * normal`.
+#### **2.2. Problema: Robôs a Nascer Dentro de Obstáculos**
+*   **Verificação:** Confirmado que os agentes podiam ser inicializados em posições inválidas.
+*   **Solução e Parametrização:**
+    *   **Implementação:** A função `_get_scenario_spawn_pos` em `swarm_env_3d.py` foi corrigida. Agora, ela contém um loop `while True` que gera uma posição e a valida com a função `_is_colliding`. A função só retorna a posição após confirmar que ela está livre, **garantindo que não há batotas ou estados inválidos no início**.
+    *   **Parâmetro:** A área de spawn foi aumentada para `-self.arena_radius*0.8` a `self.arena_radius*0.8` para **espalhar mais os robôs** no início.
 
-**B) Problema: PPO "Teimoso" que não Explora**
-- **Solução:** Implementada uma **"Penalização por Estagnação"**.
-  - **Localização:** Na função `step`, um contador (`stagnation_counters`) verifica se um agente
-    permanece na mesma área. Se o contador exceder o `stagnation_threshold` (do `.yaml`),
-    a `stagnation_penalty` é aplicada.
+#### **2.3. Problema: Agentes que Não Exploram (Ficam Parados)**
+*   **Verificação:** Os agentes de RL não tinham incentivo para se moverem se encontrassem um obstáculo.
+*   **Solução e Parametrização:**
+    *   **Implementação:** Foi criada uma **penalização por estagnação** em `swarm_env_3d.py`. Se um agente não se mover mais do que uma distância `stagnation_area` durante `stagnation_threshold` passos, ele recebe uma recompensa negativa.
+    *   **Parâmetros (`configs/foraging.yaml`):**
+        *   `stagnation_threshold`: 50 (passos)
+        *   `stagnation_penalty`: -1.0
+        *   `stagnation_area`: 0.1 (raio da área de estagnação)
 
-**C) Problema: Agentes não Sabem da Existência ou Estado da Porta**
-- **Solução:** O vetor de observação foi aumentado.
-  - **Localização:** Na função `_get_observations`, um `float` (`door_state_val`) é calculado
-    e concatenado ao vetor `obs`.
-- **Adicionalmente:** "Reward Shaping" para a porta.
-  - **Localização:** Na função `step`, existe agora um loop que dá uma pequena recompensa
-    contínua a todos os `pushing_robots`.
+#### **2.4. Problema: Agentes sem Informação sobre a Porta (Cenário Cooperativo)**
+*   **Verificação:** O vetor de estado não continha informação suficiente sobre a porta.
+*   **Solução e Parametrização:**
+    *   **Implementação:** O vetor de observação em `_get_observations` (`swarm_env_3d.py`) foi enriquecido com:
+        1.  `local_dir_door` e `norm_dist_door`: Um vetor egocêntrico e a distância para a porta.
+        2.  `door_state`: Um `float` que indica se a porta está `1.0` (fechada) ou `0.0` (aberta).
+    *   **Isto garante que os agentes têm a informação necessária** para tomar decisões sobre a porta.
 
-**D) Problema: Robôs a Nascer Dentro dos Muros**
-- **Solução:** A função de spawn foi corrigida para validar as posições.
-  - **Localização:** A função `_get_scenario_spawn_pos` agora tem um loop `while True` que
-    só retorna uma posição `pos` depois de garantir que `not self._is_colliding(pos)`.
+#### **2.5. Problema: Bater na Borda do Mapa Era Letal**
+*   **Verificação:** A colisão com a parede da arena tinha um comportamento diferente dos outros muros.
+*   **Solução e Parametrização:**
+    *   **Implementação:** A colisão com a borda da arena (`np.linalg.norm(pos) > self.arena_radius`) foi integrada na função `_is_colliding` e agora é tratada como qualquer outra parede, aplicando a mesma física de "deslize" e a mesma penalização `obstacle_penalty`.
 
-**E) Problema: Bater na Parede do Mapa "Mata" o Robô**
-- **Solução:** Este comportamento já não existe.
-  - **Localização:** A função `_is_colliding` agora trata a borda da arena como qualquer
-    outro obstáculo, retornando `True` se `np.linalg.norm(pos) + self.robot_radius > self.arena_radius`.
-    A física de deslize aplica-se aqui também.
+---
+### **PARTE 3: ANÁLISE DA AVALIAÇÃO VS. TREINO**
+---
 
----------------------------------------------------------------------------------------
-3. AVALIAÇÃO DO PPO/SAC VS. RESULTADOS DE TREINO
----------------------------------------------------------------------------------------
-**Problema:** "A avaliação está baixa comparado ao resultado [do treino]."
-**Análise:** A causa é a separação entre recompensa extrínseca e intrínseca.
-- **O que o Agente Otimiza:** `Recompensa Total = Recompensa do Ambiente + Recompensa de Curiosidade (ICM)`.
-  - **Localização:** A soma é feita no método `_store_transition` do `SACWithICM` e no `step` do `PPOFriendlyWrapper`.
-- **O que a Avaliação Mede:** Apenas a recompensa do ambiente.
-  - **Localização:** A classe `SwarmEvalAndLoggingCallback` (em ambos os `train_*.py`) chama o ambiente
-    de avaliação e soma as recompensas *sem* adicionar o bónus de curiosidade.
-- **Conclusão:** A avaliação está correta, mas mede uma métrica diferente. É um ponto metodológico
-  válido para discutir na tese.
-
----------------------------------------------------------------------------------------
-4. OTIMIZAÇÃO DE HIPERPARÂMETROS (OPTUNA)
----------------------------------------------------------------------------------------
-**Estado:** **Pronto a Usar.**
-- **Localização:** `optimize_hyperparams.py`
-- **Compatibilidade:** Os scripts `train_ppo_3d.py` e `train_sac_3d.py` foram modificados
-  para aceitar argumentos de linha de comando, permitindo que o Optuna os controle.
-- **Funcionamento:** O script principal define uma função `objective` que executa um treino
-  "miniatura" e retorna a performance. O Optuna gere a chamada a esta função com diferentes
-  parâmetros para encontrar a melhor combinação.
+**P: A avaliação do PPO/SAC está baixa comparado ao resultado do treino. O que está errado?**
+**R:** **Nada está errado. É uma caraterística do método de treino usado.**
+*   **Explicação:** Os algoritmos PPO e SAC estão a ser treinados com um **bónus de curiosidade (ICM)**. Isto significa que a recompensa que eles tentam maximizar é `Recompensa_Total = Recompensa_do_Ambiente + Recompensa_de_Curiosidade`. Eles são recompensados tanto por cumprirem a tarefa (chegar ao ninho) como por explorarem áreas novas.
+*   **O que o Log de Avaliação Mostra:** O log que vemos (`SwarmEvalAndLoggingCallback`) mede **apenas a Recompensa do Ambiente**. Ele ignora propositadamente o bónus de curiosidade para nos dar uma medida real do desempenho na tarefa principal.
+*   **Conclusão (Sem Batotas):** É perfeitamente normal e esperado que a recompensa de avaliação seja inferior à recompensa interna que o agente está a otimizar. Isto não é um erro, mas sim uma forma de garantir que não estamos a ser enganados por um agente que apenas "gosta de explorar" sem nunca completar a tarefa. A avaliação mede o que realmente importa.
 
 =======================================================================================
