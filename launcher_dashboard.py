@@ -64,7 +64,7 @@ class ModernDashboardV6Pro(ctk.CTk):
             "Quatro Salas (Labirinto)",
             "Porta Cooperativa (3 Robôs)",
             "Perceção Cooperativa (Alvo Móvel)"
-        ], fg_color="#6A1B9A", button_color="#4A148C")
+        ], fg_color="#6A1B9A", button_color="#4A148C", command=self.on_scenario_change)
         self.combo_scenario.pack(padx=15, pady=10, fill="x")
 
         # Config Sandbox
@@ -215,18 +215,14 @@ class ModernDashboardV6Pro(ctk.CTk):
             args = []
         full_path = os.path.join(self.base_dir, script)
         
-        # A flag 'new_window' controla se o script corre numa nova janela ou em background
         if new_window:
             if keep_console_open:
-                # Lança uma nova janela de terminal que se mantém aberta (para Ursina)
                 cmd = ['cmd', '/c', 'start', 'cmd', '/k', sys.executable, full_path] + args
                 return subprocess.Popen(cmd, shell=True)
             else:
-                # Lança uma nova janela de terminal que fecha no fim (para gráficos Matplotlib)
                 cmd = ['cmd', '/c', 'start', sys.executable, full_path] + args
                 return subprocess.Popen(cmd, shell=True)
         else:
-            # Corre o script em background (para treino)
             return subprocess.Popen([sys.executable, full_path] + args, creationflags=subprocess.CREATE_NEW_CONSOLE)
 
     def update_calculated_time(self, event=None):
@@ -331,7 +327,6 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.save_current_config()
         paths = self.get_paths()
         
-        # Lançar o visualizador 3D
         visualizer_script = paths.get(f"{algo_name}_visualizer")
         if visualizer_script:
             print(f"INFO: Lançando visualizador 3D '{visualizer_script}' para '{algo_name}'.")
@@ -339,10 +334,8 @@ class ModernDashboardV6Pro(ctk.CTk):
         else:
             print(f"ERRO: Script de visualização 3D para '{algo_name}' não encontrado!")
 
-        # Lançar o plotter de métricas
         plotter_script = paths.get("metrics_plotter")
         if plotter_script:
-            # O script `plot_live_metrics` agora lê o cenário do config, então só precisa do algo
             print(f"INFO: Lançando gráfico de métricas para '{algo_name}'.")
             self.run_script(plotter_script, args=["--algo", algo_name], keep_console_open=False)
         else:
@@ -391,30 +384,34 @@ class ModernDashboardV6Pro(ctk.CTk):
 
         self.after(1000, self.update_metrics)
 
+    def map_scenario_name(self, name, to_config=False):
+        mapping = {
+            "Nenhum (Modo Sandbox)": "none",
+            "Beco Sem Saída (Muro U)": "u_wall",
+            "Gargalo (Porta Estreita)": "bottleneck",
+            "Quatro Salas (Labirinto)": "four_rooms",
+            "Porta Cooperativa (3 Robôs)": "cooperative_door",
+            "Perceção Cooperativa (Alvo Móvel)": "cooperative_perception"
+        }
+        if to_config:
+            return mapping.get(name, "none")
+        else:
+            reverse_mapping = {v: k for k, v in mapping.items()}
+            return reverse_mapping.get(name, "Nenhum (Modo Sandbox)")
+
     def load_current_config(self):
         try:
             with open(self.config_path, 'r') as f:
                 config = yaml.safe_load(f)
-                self.entry_num_drones.delete(0, ctk.END)
-                self.entry_num_drones.insert(0, str(config['environment'].get('num_agents', 20)))
-                self.entry_num_obs.delete(0, ctk.END)
-                self.entry_num_obs.insert(0, str(config['environment'].get('num_obstacles', 10)))
-                self.entry_arena_radius.delete(0, ctk.END)
-                self.entry_arena_radius.insert(0, str(config['environment'].get('arena_radius', 15.0)))
-
-                scenario = config['environment'].get('classic_scenario', 'none')
-                if scenario == 'u_wall':
-                    self.combo_scenario.set("Beco Sem Saída (Muro U)")
-                elif scenario == 'bottleneck':
-                    self.combo_scenario.set("Gargalo (Porta Estreita)")
-                elif scenario == 'four_rooms':
-                    self.combo_scenario.set("Quatro Salas (Labirinto)")
-                elif scenario == 'cooperative_door':
-                    self.combo_scenario.set("Porta Cooperativa (3 Robôs)")
-                elif scenario == 'cooperative_perception':
-                    self.combo_scenario.set("Perceção Cooperativa (Alvo Móvel)")
-                else:
-                    self.combo_scenario.set("Nenhum (Modo Sandbox)")
+            env_conf = config.get('environment', {})
+            self.entry_num_drones.delete(0, ctk.END)
+            self.entry_num_drones.insert(0, str(env_conf.get('num_agents', 20)))
+            self.entry_num_obs.delete(0, ctk.END)
+            self.entry_num_obs.insert(0, str(env_conf.get('num_obstacles', 10)))
+            self.entry_arena_radius.delete(0, ctk.END)
+            self.entry_arena_radius.insert(0, str(env_conf.get('arena_radius', 15.0)))
+            scenario = env_conf.get('classic_scenario', 'none')
+            self.combo_scenario.set(self.map_scenario_name(scenario))
         except (FileNotFoundError, yaml.YAMLError) as e:
             print(f"Error loading config: {e}")
 
@@ -422,29 +419,19 @@ class ModernDashboardV6Pro(ctk.CTk):
         try:
             with open(self.config_path, 'r') as f:
                 config = yaml.safe_load(f)
+            
             config['environment']['num_agents'] = int(self.entry_num_drones.get())
             config['environment']['num_obstacles'] = int(self.entry_num_obs.get())
             config['environment']['arena_radius'] = float(self.entry_arena_radius.get())
-
-            combo_val = self.combo_scenario.get()
-            if combo_val == "Beco Sem Saída (Muro U)":
-                config['environment']['classic_scenario'] = "u_wall"
-            elif combo_val == "Gargalo (Porta Estreita)":
-                config['environment']['classic_scenario'] = "bottleneck"
-            elif combo_val == "Quatro Salas (Labirinto)":
-                config['environment']['classic_scenario'] = "four_rooms"
-            elif combo_val == "Porta Cooperativa (3 Robôs)":
-                config['environment']['classic_scenario'] = "cooperative_door"
-            elif combo_val == "Perceção Cooperativa (Alvo Móvel)":
-                config['environment']['classic_scenario'] = "cooperative_perception"
-            else:
-                config['environment']['classic_scenario'] = "none"
-
+            config['environment']['classic_scenario'] = self.map_scenario_name(self.combo_scenario.get(), to_config=True)
+            
             with open(self.config_path, 'w') as f:
                 yaml.dump(config, f)
         except (FileNotFoundError, yaml.YAMLError, ValueError) as e:
             print(f"Error saving config: {e}")
 
+    def on_scenario_change(self, choice):
+        self.save_current_config()
 
 if __name__ == "__main__":
     app = ModernDashboardV6Pro()

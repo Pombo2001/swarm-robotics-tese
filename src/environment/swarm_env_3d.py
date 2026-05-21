@@ -30,7 +30,6 @@ class SwarmForagingEnv3D(gym.Env):
         self.agents = [f"robot_{i}" for i in range(self.num_agents)]
         self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
 
-        # Simplified observation for now
         self.sensor_directions = self._generate_sensor_directions(8)
         obs_size = 3 + 1 + len(self.sensor_directions) + 3 + 1 + 8 + 1 + (self.num_agents - 1) * 5
         self.observation_space_val = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32)
@@ -43,16 +42,16 @@ class SwarmForagingEnv3D(gym.Env):
         return np.array([[np.cos(a), np.sin(a), 0] for a in angles])
 
     def _is_colliding(self, pos, return_normal=False):
-        # Arena boundary
         if np.linalg.norm(pos) > self.arena_radius - self.robot_radius:
             normal = -pos / (np.linalg.norm(pos) + 1e-6)
             return (True, normal) if return_normal else True
-        # Walls
         for wall in self.walls:
             closest_point = np.clip(pos, wall['pos'] - wall['size'] / 2.0, wall['pos'] + wall['size'] / 2.0)
             if np.linalg.norm(pos - closest_point) < self.robot_radius:
                 normal = pos - closest_point
-                return (True, normal / np.linalg.norm(normal)) if return_normal else True
+                if np.linalg.norm(normal) > 1e-6:
+                    normal /= np.linalg.norm(normal)
+                return (True, normal) if return_normal else True
         return (False, np.zeros(3)) if return_normal else False
 
     def _get_scenario_spawn_pos(self):
@@ -61,7 +60,7 @@ class SwarmForagingEnv3D(gym.Env):
                 pos = np.array([np.random.uniform(-3.5, 3.5), np.random.uniform(-4, 0), 0.0])
             elif self.classic_scenario == "cooperative_door":
                 pos = np.array([np.random.uniform(-14, -2), np.random.uniform(-14, 14), 0.0])
-            else: # Default spawn for other scenarios
+            else:
                 pos = np.array([np.random.uniform(-self.arena_radius*0.8, self.arena_radius*0.8), np.random.uniform(-self.arena_radius*0.8, self.arena_radius*0.8), 0.0])
             
             if not self._is_colliding(pos):
@@ -117,19 +116,17 @@ class SwarmForagingEnv3D(gym.Env):
 
             sensor_vals = np.ones(len(self.sensor_directions))
             for i, s_dir in enumerate(self.sensor_directions):
-                # Simplified sensor logic for brevity
                 pass
 
             neighbor_feats = []
             for j, other_pos in enumerate(self.agent_positions):
                 if idx == j: continue
                 _, norm_dist = to_egocentric(other_pos)
-                if norm_dist < 0.2: # Communication radius
+                if norm_dist < 0.2:
                     local_dir, _ = to_egocentric(other_pos)
-                    neighbor_feats.extend(list(local_dir) + [norm_dist, 0.0]) # Placeholder for signaling
+                    neighbor_feats.extend(list(local_dir) + [norm_dist, 0.0])
 
             obs = np.concatenate([local_dir_nest, [norm_dist_nest], sensor_vals, local_dir_door, [norm_dist_door], np.zeros(8), [door_state], np.array(neighbor_feats).flatten()])
-            # Ensure obs is of correct size, padding if necessary
             obs = np.pad(obs, (0, self.observation_space(agent).shape[0] - len(obs)), 'constant')
             observations[agent] = obs.astype(np.float32)
         return observations
@@ -141,21 +138,18 @@ class SwarmForagingEnv3D(gym.Env):
             move_local = np.clip(actions[agent], -1, 1) * 0.2
             F = self.agent_headings[idx]
             R = np.cross(F, np.array([0,0,1])); R /= np.linalg.norm(R) + 1e-6
-            U = np.cross(R, F)
             move_global = move_local[0] * F + move_local[1] * R
             
             is_colliding, normal = self._is_colliding(self.agent_positions[idx] + move_global, return_normal=True)
             
             if is_colliding:
                 rewards[agent] += self.obstacle_penalty
-                # Slide along the wall
                 move_global = move_global - np.dot(move_global, normal) * normal
             
             self.agent_positions[idx] += move_global
             if np.linalg.norm(move_global) > 1e-5:
                 self.agent_headings[idx] = move_global / np.linalg.norm(move_global)
 
-            # Stagnation Penalty
             if np.linalg.norm(self.agent_positions[idx] - self.last_positions[idx]) < self.stagnation_area:
                 self.stagnation_counters[idx] += 1
             else:
@@ -164,8 +158,8 @@ class SwarmForagingEnv3D(gym.Env):
 
             if self.stagnation_counters[idx] > self.stagnation_threshold:
                 rewards[agent] += self.stagnation_penalty
+                self.stagnation_counters[idx] = 0
 
-        # Cooperative Door Logic
         if self.classic_scenario == "cooperative_door" and self.door_active:
             pushing_robots = [i for i, pos in enumerate(self.agent_positions) if -1.5 < pos[0] < 0.0 and -2.0 < pos[1] < 2.0]
             for r_idx in pushing_robots: rewards[self.agents[r_idx]] += 0.5
