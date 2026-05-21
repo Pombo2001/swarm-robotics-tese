@@ -1,3 +1,32 @@
+"""
+=======================================================================================
+CÁBULA PARA A TESE: Proximal Policy Optimization (PPO)
+=======================================================================================
+Tipo de Algoritmo: Reinforcement Learning (RL) -> Policy Gradient -> On-Policy
+Biblioteca: Stable-Baselines3 (SB3)
+
+Como funciona na teoria:
+1. Actor-Critic: O PPO usa duas redes neurais. O 'Actor' decide a ação a tomar com base
+   na observação atual (política). O 'Critic' estima o valor (Value Function) desse estado 
+   (quantas recompensas futuras se esperam se estivermos naquele estado).
+2. On-Policy: O PPO aprende "fazendo". Ele recolhe um batch de experiências na arena usando 
+   a política atual, usa essas experiências para atualizar os pesos da rede, e depois descarta-as.
+   Não há "memória de longo prazo" de experiências muito antigas (Replay Buffer).
+3. Clipping (A grande inovação): Para evitar que o algoritmo "esqueça" o que aprendeu
+   com atualizações demasiado drásticas (Catastrophic Forgetting), o PPO "corta" (clips) 
+   a probabilidade de mudar a política de forma extrema. A função de perda (Surrogate Loss) 
+   garante que a nova política não se afasta muito da política antiga (Trust Region).
+
+Implementação no nosso código (Dissertação):
+- Setup: O PPO controla APENAS o 'robot_0'. Os outros robôs movem-se aleatoriamente para 
+  gerar ruído e dinamismo (Tratados como parte do ambiente). Isto simplifica o espaço de 
+  estado (Single-Agent RL num ambiente Multi-Agent).
+- Vetorização: O ambiente é clonado (SubprocVecEnv) para correr em N núcleos em simultâneo, 
+  permitindo recolher experiências N vezes mais depressa.
+- Política: Usamos 'MlpPolicy' (Multi-Layer Perceptron), uma rede neural feedforward padrão.
+=======================================================================================
+"""
+
 import os
 import sys
 import csv
@@ -5,8 +34,6 @@ import numpy as np
 import argparse
 import time
 import yaml
-import torch
-import torch.nn.functional as F
 import gymnasium as gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import BaseCallback
@@ -18,42 +45,6 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from src.environment.swarm_env_3d import SwarmForagingEnv3D
-from src.agents.icm_module import ICM
-
-class PPOWithICM(PPO):
-    def __init__(self, policy, env, icm_learning_rate=1e-4, icm_beta=0.2, intrinsic_reward_weight=0.01, **kwargs):
-        super(PPOWithICM, self).__init__(policy, env, **kwargs)
-        obs_space = self.observation_space
-        action_space = self.action_space
-        self.icm = ICM(obs_space.shape[0], action_space.shape[0]).to(self.device)
-        self.icm_optimizer = torch.optim.Adam(self.icm.parameters(), lr=icm_learning_rate)
-        self.beta = icm_beta
-        self.intrinsic_reward_weight = intrinsic_reward_weight
-
-    def train(self) -> None:
-        super().train()
-        rollout_data = self.rollout_buffer.get(batch_size=None)
-        states = rollout_data.observations
-        next_states = self.rollout_buffer.next_observations
-        actions = rollout_data.actions
-        if isinstance(self.action_space, gym.spaces.Discrete):
-            actions = F.one_hot(actions.long(), self.action_space.n).float()
-        forward_loss, inverse_loss = self.icm(states, next_states, actions)
-        icm_loss = (1 - self.beta) * inverse_loss + self.beta * forward_loss.mean()
-        self.icm_optimizer.zero_grad()
-        icm_loss.backward()
-        self.icm_optimizer.step()
-
-    def _store_transition(self, replay_buffer, buffer_action, new_obs, reward, done, infos):
-        obs = self._last_obs
-        action = buffer_action
-        obs_tensor = torch.tensor(obs, dtype=torch.float32).to(self.device)
-        next_obs_tensor = torch.tensor(new_obs, dtype=torch.float32).to(self.device)
-        action_tensor = torch.tensor(action, dtype=torch.float32).to(self.device)
-        intrinsic_reward = self.icm.get_intrinsic_reward(obs_tensor, next_obs_tensor, action_tensor)
-        intrinsic_reward = intrinsic_reward.cpu().numpy() * self.intrinsic_reward_weight
-        reward += intrinsic_reward
-        super()._store_transition(replay_buffer, buffer_action, new_obs, reward, done, infos)
 
 class PPOFriendlyWrapper(gym.Wrapper):
     def __init__(self, env):
@@ -69,7 +60,8 @@ class PPOFriendlyWrapper(gym.Wrapper):
             if agent != "robot_0":
                 actions[agent] = self.env.action_space(agent).sample()
         obs_dict, rewards, terms, truncs, infos = self.env.step(actions)
-        return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos.get("robot_0", {})
+        return obs_dict["robot_0"], rewards.get("robot_0", 0), terms.get("robot_0", False), truncs.get("robot_0", False), infos.get("robot_0", {})
+
 
 class SwarmEvalAndLoggingCallback(BaseCallback):
     def __init__(self, eval_env, log_file, time_limit_seconds, log_interval, verbose=0):
@@ -84,45 +76,59 @@ class SwarmEvalAndLoggingCallback(BaseCallback):
     def _on_step(self):
         elapsed_time = time.time() - self.start_time
         if self.n_calls % self.log_interval == 0:
+            # AVALIAÇÃO REAL DO ENXAME (Como no Visualizer)
             obs_dict, _ = self.eval_env.reset()
             done = False
             total_reward = 0.0
+            
             while not done:
                 actions = {}
                 for agent_id in self.eval_env.agents:
                     obs = np.array(obs_dict[agent_id], dtype=np.float32)
                     action, _ = self.model.predict(obs, deterministic=True)
                     actions[agent_id] = action
+                
                 obs_dict, rewards, terms, truncs, infos = self.eval_env.step(actions)
                 total_reward += sum(rewards.values())
+                
                 if any(terms.values()) or any(truncs.values()):
                     done = True
+            
+            # Média por agente para ser matematicamente comparável ao GNN
             ep_rew_mean = total_reward / self.eval_env.num_agents
+
             with open(self.log_file, 'a', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow([self.num_timesteps, ep_rew_mean, elapsed_time])
+
         if elapsed_time >= self.time_limit:
+            print(f"\n⏱️ FIM DO TEMPO! ({self.time_limit / 60:.1f} minutos). A gravar modelo...")
             return False
         return True
 
+
 def make_env(config_path):
     def _init():
-        raw_env = SwarmForagingEnv3D(config_path)
+        raw_env = SwarmForagingEnv3D(config_path=config_path)
         wrapped_env = PPOFriendlyWrapper(raw_env)
         return Monitor(wrapped_env)
     return _init
 
-def train_ppo_3d(args):
+
+def train_ppo_3d(time_limit_minutes):
     config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
+
     ppo_config = config.get('ppo', {})
     num_cpu = ppo_config.get('num_cpu', 8)
     log_interval = ppo_config.get('log_interval', 2000)
-    time_limit_seconds = args.time_limit * 60
-    
+
+    time_limit_seconds = time_limit_minutes * 60
+    print(f"🤖 PPO 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
+
     env = SubprocVecEnv([make_env(config_path) for i in range(num_cpu)])
-    eval_env = SwarmForagingEnv3D(config_path)
+    eval_env = SwarmForagingEnv3D(config_path=config_path) # Ambiente Real para Avaliação
 
     log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_ppo')
     model_dir = os.path.join(os.path.dirname(__file__), '../../results/models_ppo')
@@ -134,32 +140,21 @@ def train_ppo_3d(args):
         writer.writerow(['timesteps', 'ep_rew_mean', 'time'])
     os.chmod(log_file, 0o666)
 
-    model = PPOWithICM("MlpPolicy", env, verbose=0, device="auto",
-                       learning_rate=args.learning_rate,
-                       gamma=args.gamma,
-                       gae_lambda=args.gae_lambda,
-                       clip_range=args.clip_range,
-                       n_steps=args.n_steps,
-                       icm_learning_rate=args.icm_learning_rate,
-                       icm_beta=args.icm_beta,
-                       intrinsic_reward_weight=args.intrinsic_reward_weight)
-    
+    model = PPO("MlpPolicy", env, verbose=1, device="auto")
     callback = SwarmEvalAndLoggingCallback(eval_env, log_file, time_limit_seconds, log_interval)
+
+    print(f"🚀 Simulação PPO a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)
-    model.save(os.path.join(model_dir, "ppo_3d_final"))
+
+    model_path = os.path.join(model_dir, "ppo_3d_final")
+    model.save(model_path)
+    os.chmod(model_path + ".zip", 0o666)
+    print("✅ Treino PPO 3D Multi-Core concluído de forma segura!")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--time_limit", type=float, default=120.0)
-    parser.add_argument("--learning_rate", type=float, default=3e-4)
-    parser.add_argument("--gamma", type=float, default=0.99)
-    parser.add_argument("--gae_lambda", type=float, default=0.95)
-    parser.add_argument("--clip_range", type=float, default=0.2)
-    parser.add_argument("--n_steps", type=int, default=2048)
-    parser.add_argument("--icm_learning_rate", type=float, default=1e-4)
-    parser.add_argument("--icm_beta", type=float, default=0.2)
-    parser.add_argument("--intrinsic_reward_weight", type=float, default=0.01)
     args = parser.parse_args()
     from multiprocessing import freeze_support
     freeze_support()
-    train_ppo_3d(args)
+    train_ppo_3d(time_limit_minutes=args.time_limit)
