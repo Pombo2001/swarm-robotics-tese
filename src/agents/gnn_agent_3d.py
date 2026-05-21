@@ -4,15 +4,9 @@ import yaml
 import os
 
 class GNNAgent3D(nn.Module):
-    def __init__(self, agent_id, action_space, config_path=None):
+    def __init__(self, agent_id, action_space, config):
         super(GNNAgent3D, self).__init__()
         self.agent_id = agent_id
-
-        if config_path is None:
-            config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
-
-        with open(config_path, 'r') as f:
-            config = yaml.safe_load(f)
 
         agent_config = config.get('gnn_agent', {})
         self.hidden_dim = agent_config.get('hidden_dim', 64)
@@ -21,7 +15,6 @@ class GNNAgent3D(nn.Module):
         self.env_feats_dim = 25
         self.neighbor_dim = 5
 
-        # Arquitetura Original Revertida: Mais simples, mais fácil de treinar com Neuroevolução
         self.encoder = nn.Sequential(
             nn.Linear(self.env_feats_dim, self.hidden_dim),
             nn.ReLU(),
@@ -34,7 +27,6 @@ class GNNAgent3D(nn.Module):
             nn.Linear(self.hidden_dim, self.hidden_dim)
         )
 
-        # Apenas uma camada escondida no Actor
         self.actor = nn.Sequential(
             nn.Linear(self.hidden_dim * 2, self.hidden_dim),
             nn.ReLU(),

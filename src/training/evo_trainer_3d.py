@@ -55,12 +55,10 @@ from src.environment.swarm_env_3d import SwarmForagingEnv3D
 from src.agents.gnn_agent_3d import GNNAgent3D
 
 def evaluate_genome(args):
-    weights, config_path = args
-    with open(config_path, 'r') as f:
-        config = yaml.safe_load(f)
+    weights, config = args
 
-    env = SwarmForagingEnv3D(config_path)
-    agent = GNNAgent3D("worker_agent", env.action_space("robot_0"), config_path)
+    env = SwarmForagingEnv3D(config=config)
+    agent = GNNAgent3D("worker_agent", env.action_space("robot_0"), config=config)
     agent.load_state_dict(weights)
 
     obs_dict, _ = env.reset()
@@ -91,8 +89,6 @@ def evaluate_genome(args):
         if any(terms.values()) or any(truncs.values()):
             done = True
 
-    # CORREÇÃO DA AVALIAÇÃO DO PROFESSOR:
-    # A média da recompensa dividida pelo número de agentes, para estar em pé de igualdade com RL
     return total_reward / env.num_agents, steps
 
 class GeneticTrainer3D:
@@ -103,8 +99,8 @@ class GeneticTrainer3D:
 
         self.time_limit_seconds = time_limit_minutes * 60
 
-        temp_env = SwarmForagingEnv3D(config_path)
-        self.template_agent = GNNAgent3D("template_3d", temp_env.action_space("robot_0"), config_path)
+        temp_env = SwarmForagingEnv3D(config=self.config)
+        self.template_agent = GNNAgent3D("template_3d", temp_env.action_space("robot_0"), config=self.config)
 
         evo_config = self.config.get('evolution', {})
         self.pop_size = evo_config.get('pop_size', 30)
@@ -113,7 +109,7 @@ class GeneticTrainer3D:
 
         self.population = []
         for i in range(self.pop_size):
-            random_brain = GNNAgent3D(f"temp_{i}", temp_env.action_space("robot_0"), config_path)
+            random_brain = GNNAgent3D(f"temp_{i}", temp_env.action_space("robot_0"), config=self.config)
             self.population.append(copy.deepcopy(random_brain.state_dict()))
 
         self.log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs')
@@ -146,7 +142,7 @@ class GeneticTrainer3D:
                     print(f"\n⏱️ FIM DO TEMPO! O cronómetro atingiu o limite. A fechar e guardar o modelo...")
                     break
 
-                args_list = [(self.population[i], self.config_path) for i in range(self.pop_size)]
+                args_list = [(self.population[i], self.config) for i in range(self.pop_size)]
                 results = pool.map(evaluate_genome, args_list)
 
                 scores = [res[0] for res in results]
