@@ -45,9 +45,9 @@ def set_scenario(scenario_name):
     try:
         with open(CONFIG_PATH, 'r') as f:
             config = yaml.safe_load(f)
-        
+
         config['environment']['classic_scenario'] = scenario_name
-        
+
         with open(CONFIG_PATH, 'w') as f:
             yaml.dump(config, f)
         print(f"[*] Cenário configurado para: {scenario_name}")
@@ -64,47 +64,47 @@ def run_experiments(num_runs, time_limit, selected_algorithms):
 
     for scenario in SCENARIOS:
         set_scenario(scenario)
-        
+
         for algo_name, algo_script in selected_algorithms.items():
             script_path = os.path.join(BASE_DIR, algo_script)
             log_path = LOG_PATHS[algo_name]
             score_col = SCORE_COLS[algo_name]
             step_col = STEP_COLS[algo_name]
-            
+
             for run in range(1, num_runs + 1):
                 print(f"\n--- A EXECUTAR | Cenário: {scenario} | Algoritmo: {algo_name} | Run: {run}/{num_runs} ---")
-                
+
                 if os.path.exists(log_path):
                     try:
                         os.remove(log_path)
                     except Exception as e:
                         print(f"[!] Aviso: Nao foi possivel apagar o log antigo ({e})")
-                
+
                 cmd = [sys.executable, script_path, '--time_limit', str(time_limit)]
-                
+
                 try:
                     # ALTERAÇÃO CRÍTICA: Usar Popen em vez de run para evitar deadlocks com multiprocessing
                     proc = subprocess.Popen(cmd)
                     proc.wait() # Esperar explicitamente que o processo termine
                 except Exception as e:
                     print(f"[!] Run {run} do {algo_name} falhou: {e}")
-                
+
                 # Extracao de Dados
                 if os.path.exists(log_path):
                     try:
                         df = pd.read_csv(log_path)
                         df.columns = df.columns.str.strip()
-                        
+
                         if not df.empty and score_col in df.columns and step_col in df.columns:
                             max_score = df[score_col].max()
-                            
+
                             best_scores_data.append({
                                 'Scenario': scenario,
                                 'Algorithm': algo_name,
                                 'Run': run,
                                 'BestScore': max_score
                             })
-                            
+
                             for _, row in df.iterrows():
                                 curves_data.append({
                                     'Scenario': scenario,
@@ -122,16 +122,16 @@ def run_experiments(num_runs, time_limit, selected_algorithms):
 
     df_curves = pd.DataFrame(curves_data)
     df_best = pd.DataFrame(best_scores_data)
-    
+
     generate_plots(df_curves, df_best, num_runs, time_limit, selected_algorithms)
 
 def generate_plots(df_curves, df_best, num_runs, time_limit, selected_algorithms):
     print("\n--- A GERAR GRÁFICOS AVANÇADOS ---")
-    
+
     total_runs = len(SCENARIOS) * len(selected_algorithms) * num_runs
     minutos_totais = total_runs * time_limit
     horas_totais = round(minutos_totais / 60, 2)
-    
+
     now = datetime.now()
     date_time_str = now.strftime("%d-%m-%Y_%Hh%Mm")
     
@@ -179,11 +179,11 @@ def generate_plots(df_curves, df_best, num_runs, time_limit, selected_algorithms
     if not df_curves.empty:
         df_curves.to_csv(os.path.join(out_dir, 'all_curves_data.csv'), index=False)
         df_curves.to_csv(os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas', 'all_curves_data.csv'), index=False)
-        
+
     if not df_best.empty:
         df_best.to_csv(os.path.join(out_dir, 'all_best_scores.csv'), index=False)
         df_best.to_csv(os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas', 'all_best_scores.csv'), index=False)
-        
+
     info_txt_path = os.path.join(out_dir, "info_treino.txt")
     with open(info_txt_path, 'w', encoding='utf-8') as f:
         f.write("=========================================\n")
@@ -198,7 +198,7 @@ def generate_plots(df_curves, df_best, num_runs, time_limit, selected_algorithms
         for s in SCENARIOS: f.write(f" - {s}\n")
         f.write(f"\n--- ALGORITMOS TESTADOS ({len(selected_algorithms)}) ---\n")
         for a in selected_algorithms.keys(): f.write(f" - {a}\n")
-            
+
     print(f"[*] Gráficos legíveis, CSVs e Relatório TXT guardados com sucesso em:\n    {out_dir}")
 
 def main():

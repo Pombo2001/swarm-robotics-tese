@@ -4,33 +4,33 @@ CÁBULA PARA A TESE: Evolução Neuro-Evolutiva (Genetic Algorithm + GNN)
 =======================================================================================
 Tipo de Algoritmo: Neuro-Evolução / Algoritmo Genético Puro (Pure GA)
 Biblioteca: Nenhuma / PyTorch nativo para a rede neural. Todo o algoritmo genético foi
-            implementado de raiz nesta dissertação, usando a biblioteca nativa 
+            implementado de raiz nesta dissertação, usando a biblioteca nativa
             'multiprocessing' para paralelizar a avaliação das populações.
 
 Como funciona na teoria:
 1. Representação do Genoma: Cada "indivíduo" na nossa população é representado
    inteiramente pelos pesos e biases ('State Dictionary') da sua rede neural em PyTorch.
    Não há descodificação intermédia; a política de navegação é a genética direta do robô.
-2. Homogeneous Swarm: O algoritmo não treina um indivíduo isolado no mapa. Avalia-se 
+2. Homogeneous Swarm: O algoritmo não treina um indivíduo isolado no mapa. Avalia-se
    o enxame como um todo. Uma única política (rede neural) é copiada para todos os N robôs
    na mesma simulação. O fitness desse "genoma" é a média das recompensas de todos os robôs
    após um episódio completo (ou até acionarem a guilhotina temporal).
-3. Seleção Fortemente Elitista: O algoritmo ordena toda a população do melhor para o 
+3. Seleção Fortemente Elitista: O algoritmo ordena toda a população do melhor para o
    pior score. O top 20% (Elite) passa diretamente, sem qualquer alteração, para a próxima
    geração, assegurando que o ótimo local encontrado nunca regride.
-4. Reprodução e Mutação Gaussiana: Os restantes 80% da população são criados através 
-   da seleção aleatória de um 'pai' do grupo de Elite. Não aplicamos Crossover (cruzamento) 
+4. Reprodução e Mutação Gaussiana: Os restantes 80% da população são criados através
+   da seleção aleatória de um 'pai' do grupo de Elite. Não aplicamos Crossover (cruzamento)
    para evitar a destruição de representações neurais coesas. Em vez disso, aplicamos uma
    Mutação Gaussiana: iteramos por todos os tensores da rede e adicionamos ruído aleatório
    com uma probabilidade de 'mutation_rate' e intensidade ditada pelo desvio padrão 'sigma'.
 5. Guilhotina Genética (Early Stopping): Para otimizar massivamente o tempo computacional,
-   se uma nova mutação resultar numa política que obtenha um score terrivelmente baixo logo 
+   se uma nova mutação resultar numa política que obtenha um score terrivelmente baixo logo
    nos primeiros passos da simulação (ex: andar em círculos contra a parede), a avaliação
    deste indivíduo é abortada e recebe uma penalização massiva.
 
 Justificação e Parâmetros (Configurados no YAML):
 - População: Tipicamente 30 indivíduos avaliados em paralelo em 8 cores (multiprocessing).
-- O Elite-size estrito, aliado ao ruído gaussiano, encoraja uma navegação "cautelosa", o que 
+- O Elite-size estrito, aliado ao ruído gaussiano, encoraja uma navegação "cautelosa", o que
   explica o seu enorme sucesso na evitação de obstáculos em relação aos algoritmos clássicos
   de RL (PPO/SAC) que dependem de descida de gradiente contínua.
 =======================================================================================

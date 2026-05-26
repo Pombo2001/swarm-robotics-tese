@@ -1,6 +1,6 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: bottleneck
+  classic_scenario: cooperative_door
   dynamic_nest: true
   dynamic_obstacles: true
   forbidden_area: 2.2

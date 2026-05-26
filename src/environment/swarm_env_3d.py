@@ -10,7 +10,7 @@ class SwarmForagingEnv3D(gym.Env):
     def __init__(self, config_path=None, config=None):
         super(SwarmForagingEnv3D, self).__init__()
 
-        if config is not None:
+        if config:
             self.config = config
         else:
             if config_path is None:
@@ -18,22 +18,34 @@ class SwarmForagingEnv3D(gym.Env):
             with open(config_path, 'r') as f:
                 self.config = yaml.safe_load(f)
 
+        # Carregar todas as configurações do YAML para atributos da classe
         env_config = self.config['environment']
+        rewards_config = self.config.get('rewards', {})
+        physics_config = self.config.get('physics', {})
+        phero_config = self.config.get('pheromones', {})
+
         self.num_agents = env_config.get('num_agents', 20)
         self.arena_radius = env_config.get('arena_radius', 15.0)
         self.max_steps = env_config.get('max_steps', 1000)
-        self.robot_radius = env_config.get('robot_radius', 0.25)
+        self.nest_radius = env_config.get('nest_radius', 0.2)
         
-        self.stagnation_threshold = 50
-        self.stagnation_penalty = -1.0
-        self.stagnation_area = 0.1
+        self.robot_radius = physics_config.get('agent_radius', 0.25)
+        self.obstacle_radius = env_config.get('obstacle_radius', 0.2)
+        
         self.obstacle_penalty = env_config.get('obstacle_penalty', -1.0)
+        self.energy_cost = rewards_config.get('energy_cost', -0.01)
+        self.exploration_bonus = rewards_config.get('exploration_bonus', 0.05)
+        self.stagnation_penalty = rewards_config.get('stagnation_penalty', -0.1)
+        
+        self.stagnation_threshold = physics_config.get('stagnation_threshold', 50)
+        self.stagnation_area = physics_config.get('stagnation_area', 0.1)
 
         self.agents = [f"robot_{i}" for i in range(self.num_agents)]
         self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
 
         self.sensor_directions = self._generate_sensor_directions(8)
-        obs_size = 3 + 1 + len(self.sensor_directions) + 3 + 1 + 8 + 1 + (self.num_agents - 1) * 5
+        env_feats_dim = 3 + 1 + len(self.sensor_directions) + 3 + 1 + 8 + 1
+        obs_size = env_feats_dim + (self.num_agents - 1) * 5
         self.observation_space_val = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32)
 
         self.action_spaces = {a: self.action_space_val for a in self.agents}
@@ -113,7 +125,7 @@ class SwarmForagingEnv3D(gym.Env):
 
             local_dir_nest, norm_dist_nest = to_egocentric(self.nest_pos)
             
-            door_state = 1.0 if self.classic_scenario == "cooperative_door" and self.door_active else 0.0
+            door_state = 1.0 if self.classic_scenario == "cooperative_door" and getattr(self, 'door_active', False) else 0.0
             local_dir_door, norm_dist_door = to_egocentric(self.door_pos) if door_state > 0 else (np.zeros(3), 1.0)
 
             sensor_vals = np.ones(len(self.sensor_directions))
@@ -163,7 +175,7 @@ class SwarmForagingEnv3D(gym.Env):
                 rewards[agent] += self.stagnation_penalty
                 self.stagnation_counters[idx] = 0
 
-        if self.classic_scenario == "cooperative_door" and self.door_active:
+        if self.classic_scenario == "cooperative_door" and getattr(self, 'door_active', False):
             pushing_robots = [i for i, pos in enumerate(self.agent_positions) if -1.5 < pos[0] < 0.0 and -2.0 < pos[1] < 2.0]
             for r_idx in pushing_robots: rewards[self.agents[r_idx]] += 0.5
             if len(pushing_robots) >= 3:
