@@ -76,7 +76,10 @@ for wall in env.walls:
 
 robot_views = []
 for r_pos in env.agent_positions:
-    robot_views.append(Entity(model='cube', color=color.orange, scale=env.robot_radius * 2, position=tuple(r_pos)))
+    robot = Entity(model='cube', color=color.orange, scale=env.robot_radius * 2, position=tuple(r_pos))
+    # Visor ("Óculos/Seta") acoplado na parte da frente (Z+ em local space do Ursina)
+    Entity(parent=robot, model='cube', color=color.black, scale=(0.8, 0.3, 0.4), position=(0, 0, 0.5))
+    robot_views.append(robot)
 
 
 def update():
@@ -103,6 +106,11 @@ def update():
 
         for i, r_pos in enumerate(env.agent_positions):
             robot_views[i].position = tuple(r_pos)
+            
+            # Rotação para apontar na direção do movimento (heading)
+            heading = env.agent_headings[i]
+            robot_views[i].look_at(robot_views[i].position + Vec3(*heading))
+            
             if env.signaling[i] == 1.0:
                 robot_views[i].color = color.gold
                 robot_views[i].scale = env.robot_radius * 4

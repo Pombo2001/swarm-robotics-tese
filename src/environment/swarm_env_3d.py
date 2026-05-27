@@ -61,19 +61,32 @@ class SwarmForagingEnv3D(gym.Env):
         self.agent_headings = np.zeros((self.num_agents, 3))
 
     def _get_scenario_spawn_pos(self):
-        if self.classic_scenario == "u_wall":
-            return np.array([np.random.uniform(-3, 3), np.random.uniform(-4, 2), np.random.uniform(-0.5, 0.5)])
-        elif self.classic_scenario == "bottleneck":
-            return np.array([np.random.uniform(-8, 8), np.random.uniform(-12, -6), np.random.uniform(-0.5, 0.5)])
-        elif self.classic_scenario == "four_rooms":
-            return np.array([np.random.uniform(-12, -6), np.random.uniform(-12, -6), np.random.uniform(-0.5, 0.5)])
-        elif self.classic_scenario == "cooperative_door":
-            return np.array([-10 + np.random.uniform(-2, 2), np.random.uniform(-4, 4), np.random.uniform(-0.5, 0.5)])
-        elif self.classic_scenario == "cooperative_perception":
-            # Espalhados pela arena toda
-            return self._random_spawn()
-        else:
-            return self._random_spawn()
+        max_attempts = 50
+        for _ in range(max_attempts):
+            if self.classic_scenario == "u_wall":
+                pos = np.array([np.random.uniform(-6, 6), np.random.uniform(-8, 2), 0.0])
+            elif self.classic_scenario == "bottleneck":
+                pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -4), 0.0])
+            elif self.classic_scenario == "four_rooms":
+                pos = np.array([np.random.uniform(-13, -3), np.random.uniform(-13, -3), 0.0])
+            elif self.classic_scenario == "cooperative_door":
+                pos = np.array([-10 + np.random.uniform(-3, 3), np.random.uniform(-6, 6), 0.0])
+            else:
+                pos = self._random_spawn()
+                pos[2] = 0.0
+            
+            colisao = False
+            for wall in self.walls:
+                half_size = wall['size'] / 2.0
+                delta = pos - wall['pos']
+                if np.all(np.abs(delta) < (half_size + self.robot_radius + 0.1)):
+                    colisao = True
+                    break
+            if not colisao:
+                return pos
+        pos = self._random_spawn()
+        pos[2] = 0.0
+        return pos
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -298,13 +311,7 @@ class SwarmForagingEnv3D(gym.Env):
         truncs = {a: False for a in self.agents}
         infos = {a: {} for a in self.agents}
 
-        if self.dynamic_nest and self.classic_scenario == "none":
-            self.nest_pos += self.nest_velocity
-            if np.linalg.norm(self.nest_pos) > (self.arena_radius - self.nest_radius):
-                dir_center = -self.nest_pos
-                noise = np.random.uniform(-0.2, 0.2, 3)
-                new_vel = dir_center + noise
-                self.nest_velocity = (new_vel / (np.linalg.norm(new_vel) + 1e-6)) * self.nest_velocity_magnitude
+        # O Sandbox já não tem ninho dinâmico. Foi movido apenas para Perceção Cooperativa.
 
         if self.dynamic_obstacles and self.classic_scenario == "none":
             for i in range(len(self.obstacles)):
@@ -375,7 +382,24 @@ class SwarmForagingEnv3D(gym.Env):
                 U = np.cross(R, F)
 
                 move_global = move_local[0] * F + move_local[1] * R + move_local[2] * U
+                move_global[2] = 0.0  # Forçar movimento no plano 2D
 
+                # Projeção Vetorial para Deslizar nos Muros (Sliding Physics)
+                for wall in self.walls:
+                    next_pos = self.agent_positions[idx] + move_global
+                    delta = next_pos - wall['pos']
+                    abs_delta = np.abs(delta)
+                    half_size = wall['size'] / 2.0
+                    penetration = (half_size + self.robot_radius) - abs_delta
+                    
+                    if np.all(penetration > 0):
+                        # Bateu no muro, descobrir a normal da face atingida
+                        min_axis = np.argmin(penetration)
+                        normal = np.zeros(3)
+                        normal[min_axis] = np.sign(delta[min_axis]) if delta[min_axis] != 0 else 1.0
+                        # Remover a componente do movimento que vai contra a normal (deslizar)
+                        move_global = move_global - np.dot(move_global, normal) * normal
+                        
                 if np.linalg.norm(move_global) > 1e-5:
                     self.agent_headings[idx] = move_global / np.linalg.norm(move_global)
 
@@ -450,12 +474,12 @@ class SwarmForagingEnv3D(gym.Env):
         for idx, agent in enumerate(self.agents):
             dist_nest = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
 
-            if np.linalg.norm(self.agent_positions[idx]) > self.arena_radius:
-                rewards[agent] -= 100.0
-                self.deaths_count += 1
-                self.agent_positions[idx] = self._get_scenario_spawn_pos()
-                self.hunger_timers[idx] = 0
-                self.prev_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
+            if np.linalg.norm(self.agent_positions[idx]) > (self.arena_radius - self.robot_radius):
+                # Comporta-se como um muro circular em vez de matar o robô
+                direction = -self.agent_positions[idx]
+                direction /= (np.linalg.norm(direction) + 1e-6)
+                self.agent_positions[idx] += direction * 0.5  # Empurra para dentro
+                obstacle_hits[agent] = 1
                 continue
 
             if self.signaling[idx] == 1.0:

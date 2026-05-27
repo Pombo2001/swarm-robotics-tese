@@ -7,9 +7,8 @@ import time
 import yaml
 from datetime import timedelta
 
-ctk.set_appearance_mode("Dark")
+ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
-
 
 class ModernDashboardV6Pro(ctk.CTk):
     def __init__(self):
@@ -38,39 +37,40 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
 
         # === SIDEBAR ===
-        self.sidebar_frame = ctk.CTkFrame(self, width=320, corner_radius=0, fg_color="#1a1a1a")
+        self.sidebar_frame = ctk.CTkFrame(self, width=320, corner_radius=0, fg_color="#121417")
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(7, weight=1)  # Ajustado para acomodar nova secção
+        self.sidebar_frame.grid_rowconfigure(7, weight=1)
 
-        self.lbl_title = ctk.CTkLabel(self.sidebar_frame, text="SWARM\nCONTROLLER", font=("Roboto", 28, "bold"),
-                                      text_color="#E0E0E0")
+        self.lbl_title = ctk.CTkLabel(self.sidebar_frame, text="SWARM\nCONTROLLER", font=("Roboto Black", 28),
+                                      text_color="#FFFFFF")
         self.lbl_title.grid(row=0, column=0, padx=20, pady=(30, 10))
 
-        self.lbl_mode_status = ctk.CTkLabel(self.sidebar_frame, text="ARENA DE DRONES (3D)", text_color="#F06292",
-                                            font=("Consolas", 14, "bold"))
+        self.lbl_mode_status = ctk.CTkLabel(self.sidebar_frame, text="● ARENA DE DRONES (3D)", text_color="#00E676",
+                                            font=("Consolas", 13, "bold"))
         self.lbl_mode_status.grid(row=1, column=0, pady=(0, 20))
 
         # Cenários
-        self.scenario_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#311b3b", corner_radius=10)
+        self.scenario_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#1B1E23", corner_radius=10)
         self.scenario_frame.grid(row=2, column=0, padx=15, pady=(0, 10), sticky="ew")
-        ctk.CTkLabel(self.scenario_frame, text="📚 CENÁRIOS DE LITERATURA", font=("Roboto", 12, "bold"),
-                     text_color="#CE93D8").pack(pady=(10, 0))
+        ctk.CTkLabel(self.scenario_frame, text="📚 CENÁRIOS DE ESTUDO", font=("Roboto", 12, "bold"),
+                     text_color="#A0AAB2").pack(pady=(10, 0))
 
         self.combo_scenario = ctk.CTkOptionMenu(self.scenario_frame, values=[
             "Nenhum (Modo Sandbox)",
             "Beco Sem Saída (Muro U)",
             "Gargalo (Porta Estreita)",
             "Quatro Salas (Labirinto)",
-            "Porta Cooperativa (3 Robôs)"
-        ], fg_color="#6A1B9A", button_color="#4A148C")
+            "Porta Cooperativa (3 Robôs)",
+            "Perceção Cooperativa (Alvo Móvel)"
+        ], fg_color="#2A2D35", button_color="#363A45", button_hover_color="#454A59", font=("Roboto", 12))
         self.combo_scenario.pack(padx=15, pady=10, fill="x")
 
         # Config Sandbox
-        self.config_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#1b3a20", corner_radius=10)
+        self.config_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#1B1E23", corner_radius=10)
         self.config_frame.grid(row=3, column=0, padx=15, pady=10, sticky="ew")
 
-        ctk.CTkLabel(self.config_frame, text="⚙️ CONFIGURAÇÃO SANDBOX", font=("Roboto", 14, "bold"),
-                     text_color="#A5D6A7").pack(pady=(10, 5))
+        ctk.CTkLabel(self.config_frame, text="⚙️ CONFIGURAÇÃO SANDBOX", font=("Roboto", 12, "bold"),
+                     text_color="#A0AAB2").pack(pady=(10, 5))
         cfg_grid = ctk.CTkFrame(self.config_frame, fg_color="transparent")
         cfg_grid.pack(padx=10, pady=10, fill="x")
 
@@ -87,11 +87,11 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.entry_arena_radius.grid(row=2, column=1, sticky="e", pady=5)
 
         # === NOVA SECÇÃO: TREINO NOTURNO ===
-        self.night_train_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#4b2c00", corner_radius=10)
+        self.night_train_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#1B1E23", corner_radius=10)
         self.night_train_frame.grid(row=4, column=0, padx=15, pady=10, sticky="ew")
 
-        ctk.CTkLabel(self.night_train_frame, text="🌙 TREINO NOTURNO (TESE)", font=("Roboto", 14, "bold"),
-                     text_color="#FFB300").pack(pady=(10, 5))
+        ctk.CTkLabel(self.night_train_frame, text="🌙 TREINO NOTURNO (TESE)", font=("Roboto", 12, "bold"),
+                     text_color="#A0AAB2").pack(pady=(10, 5))
         night_grid = ctk.CTkFrame(self.night_train_frame, fg_color="transparent")
         night_grid.pack(padx=10, pady=10, fill="x")
 
@@ -105,12 +105,12 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.entry_night_runs.insert(0, "5")
         self.entry_night_runs.grid(row=1, column=1, sticky="e", pady=5)
 
-        self.lbl_calculated_time = ctk.CTkLabel(self.night_train_frame, text="Ex: ~6.4 min por run", font=("Roboto", 11, "italic"), text_color="#A1A1A1")
+        self.lbl_calculated_time = ctk.CTkLabel(self.night_train_frame, text="Ex: ~6.4 min por run", font=("Roboto", 11, "italic"), text_color="#758290")
         self.lbl_calculated_time.pack(pady=(0, 10))
 
-        self.btn_start_night_train = ctk.CTkButton(self.night_train_frame, text="🚀 Iniciar Rotina de Testes",
-                                             command=self.start_night_training, fg_color="#FF8F00", hover_color="#FF6F00",
-                                             text_color="black", font=("Roboto", 12, "bold"), height=35)
+        self.btn_start_night_train = ctk.CTkButton(self.night_train_frame, text="🚀 INICIAR ROTINA",
+                                             command=self.start_night_training, fg_color="#2962FF", hover_color="#1565C0",
+                                             text_color="#FFFFFF", font=("Roboto", 13, "bold"), height=35)
         self.btn_start_night_train.pack(pady=(5, 15), padx=15, fill="x")
 
         # Atualizar a label quando os valores mudam
@@ -118,9 +118,9 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.entry_night_runs.bind("<KeyRelease>", self.update_calculated_time)
         # ==================================
 
-        self.btn_plot_thesis = ctk.CTkButton(self.sidebar_frame, text="📊 Gerar Gráfico de Tese",
-                                             command=self.plot_thesis, fg_color="#8E24AA", hover_color="#6A1B9A",
-                                             font=("Roboto", 14, "bold"), height=40)
+        self.btn_plot_thesis = ctk.CTkButton(self.sidebar_frame, text="📊 GERAR GRÁFICOS",
+                                             command=self.plot_thesis, fg_color="#00BFA5", hover_color="#00897B",
+                                             text_color="#FFFFFF", font=("Roboto", 14, "bold"), height=45)
         self.btn_plot_thesis.grid(row=7, column=0, padx=20, pady=20, sticky="sew")
 
         # === MAIN AREA ===
@@ -129,12 +129,12 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.main_area.grid_rowconfigure(1, weight=1)
         self.main_area.grid_columnconfigure((0, 1, 2), weight=1)
 
-        self.master_frame = ctk.CTkFrame(self.main_area, fg_color="#1e1e1e", border_width=1, border_color="#D32F2F",
+        self.master_frame = ctk.CTkFrame(self.main_area, fg_color="#121417", border_width=1, border_color="#3A3F4C",
                                          corner_radius=10)
         self.master_frame.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(0, 20))
 
         ctk.CTkLabel(self.master_frame, text="⏱️ TREINO MÚLTIPLO SIMULTÂNEO (BATALHA DE ALGORITMOS)",
-                     font=("Roboto", 16, "bold"), text_color="#E0E0E0").pack(pady=(15, 5))
+                     font=("Roboto", 14, "bold"), text_color="#FFFFFF").pack(pady=(15, 5))
 
         time_panel = ctk.CTkFrame(self.master_frame, fg_color="transparent")
         time_panel.pack(pady=(0, 15))
@@ -145,41 +145,40 @@ class ModernDashboardV6Pro(ctk.CTk):
         self.entry_master_time.pack(side="left", padx=10)
 
         self.btn_start_all = ctk.CTkButton(time_panel, text="🚀 INICIAR OS 3 ALGORITMOS", command=self.start_all,
-                                           fg_color="#D32F2F", hover_color="#B71C1C", font=("Roboto", 14, "bold"),
+                                           fg_color="#D50000", hover_color="#B71C1C", text_color="#FFFFFF", font=("Roboto", 13, "bold"),
                                            height=35)
         self.btn_start_all.pack(side="left", padx=20)
 
-        self._create_algo_frame("gnn", "🧬 GNN (Evolutivo)", "#4CAF50", self.start_gnn, self.stop_gnn, self.viz_gnn, 0)
-        self._create_algo_frame("ppo", "🤖 PPO (Actor-Critic)", "#2196F3", self.start_ppo, self.stop_ppo, self.viz_ppo, 1)
-        self._create_algo_frame("sac", "🔥 SAC (Soft Actor-Critic)", "#FF9800", self.start_sac, self.stop_sac,
-                                self.viz_sac, 2, text_color="black")
+        self._create_algo_frame("gnn", "🧬 GNN (Evolutivo)", "#00E676", self.start_gnn, self.stop_gnn, self.viz_gnn, 0)
+        self._create_algo_frame("ppo", "🤖 PPO (Actor-Critic)", "#2979FF", self.start_ppo, self.stop_ppo, self.viz_ppo, 1)
+        self._create_algo_frame("sac", "🔥 SAC (Soft Actor-Critic)", "#FF3D00", self.start_sac, self.stop_sac,
+                                self.viz_sac, 2)
 
         self.update_metrics()
         self.load_current_config()
         self.update_calculated_time() # Run once at startup
 
-    def _create_algo_frame(self, name, title, color, start_cmd, stop_cmd, viz_cmd, col, text_color=None):
-        frame = ctk.CTkFrame(self.main_area, corner_radius=10)
-        frame.grid(row=1, column=col, sticky="nsew", padx=5)
-        ctk.CTkLabel(frame, text=title, font=("Roboto", 20, "bold"), text_color=color).pack(pady=(20, 10))
+    def _create_algo_frame(self, name, title, color, start_cmd, stop_cmd, viz_cmd, col, text_color="black"):
+        frame = ctk.CTkFrame(self.main_area, corner_radius=10, fg_color="#1B1E23", border_width=1, border_color="#3A3F4C")
+        frame.grid(row=1, column=col, sticky="nsew", padx=10)
+        ctk.CTkLabel(frame, text=title, font=("Roboto", 18, "bold"), text_color=color).pack(pady=(20, 10))
 
-        status_label = ctk.CTkLabel(frame, text="Status: PARADO", font=("Consolas", 14))
+        status_label = ctk.CTkLabel(frame, text="Status: PARADO", font=("Consolas", 14), text_color="#A0AAB2")
         status_label.pack(pady=5)
-        timer_label = ctk.CTkLabel(frame, text="Tempo: 00:00:00", font=("Consolas", 14))
+        timer_label = ctk.CTkLabel(frame, text="Tempo: 00:00:00", font=("Consolas", 14), text_color="#A0AAB2")
         timer_label.pack()
 
-        metrics_frame = ctk.CTkFrame(frame, fg_color="#2b2b2b", corner_radius=8)
+        metrics_frame = ctk.CTkFrame(frame, fg_color="#121417", corner_radius=8)
         metrics_frame.pack(fill="x", padx=20, pady=20)
-        metric_label = ctk.CTkLabel(metrics_frame, text="REWARD: ---", font=("Consolas", 18, "bold"), text_color=color)
-        metric_label.pack(pady=15)
+        metric_label = ctk.CTkLabel(metrics_frame, text="REWARD: ---", font=("Consolas", 20, "bold"), text_color=color)
+        metric_label.pack(pady=20)
 
-        ctk.CTkButton(frame, text=f"▶ Treinar Só {name.upper()}", command=start_cmd, fg_color=color,
-                      text_color=text_color, height=35).pack(pady=5, padx=20, fill="x")
-        ctk.CTkButton(frame, text="⏹ Parar", command=stop_cmd, fg_color="#F44336", height=35).pack(pady=5, padx=20,
-                                                                                                   fill="x")
-        ctk.CTkButton(frame, text="🎥 Visualizar", command=viz_cmd, fg_color="#1F6AA5", height=35).pack(pady=20,
-                                                                                                        padx=20,
-                                                                                                        fill="x")
+        ctk.CTkButton(frame, text=f"▶ Treinar Só {name.upper()}", command=start_cmd, fg_color=color, hover_color=color,
+                      text_color=text_color, font=("Roboto", 13, "bold"), height=40).pack(pady=10, padx=25, fill="x")
+        ctk.CTkButton(frame, text="⏹ Parar", command=stop_cmd, fg_color="transparent", border_width=1, border_color="#F44336",
+                      text_color="#F44336", hover_color="#F44336", font=("Roboto", 13, "bold"), height=35).pack(pady=5, padx=25, fill="x")
+        ctk.CTkButton(frame, text="🎥 Visualizar", command=viz_cmd, fg_color="#3A3F4C", hover_color="#454A59",
+                      text_color="#FFFFFF", font=("Roboto", 13, "bold"), height=35).pack(pady=(15, 20), padx=25, fill="x")
 
         setattr(self, f"frame_{name}", frame)
         setattr(self, f"lbl_{name}_status", status_label)
@@ -232,6 +231,7 @@ class ModernDashboardV6Pro(ctk.CTk):
             self.lbl_calculated_time.configure(text="Valores inválidos")
 
     def start_night_training(self):
+        self.save_current_config()
         try:
             horas = float(self.entry_night_hours.get())
             runs = int(self.entry_night_runs.get())
