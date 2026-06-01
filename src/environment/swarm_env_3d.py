@@ -73,7 +73,6 @@ class SwarmForagingEnv3D(gym.Env):
                 pos = np.array([-10 + np.random.uniform(-3, 3), np.random.uniform(-6, 6), 0.0])
             else:
                 pos = self._random_spawn()
-                pos[2] = 0.0
             
             colisao = False
             for wall in self.walls:
@@ -85,7 +84,6 @@ class SwarmForagingEnv3D(gym.Env):
             if not colisao:
                 return pos
         pos = self._random_spawn()
-        pos[2] = 0.0
         return pos
 
     def reset(self, seed=None, options=None):
@@ -127,7 +125,6 @@ class SwarmForagingEnv3D(gym.Env):
             # O "ninho" é o Alvo Móvel neste cenário
             self.nest_pos = self._random_spawn(max_radius=0.7)
             vel = np.random.uniform(-1, 1, 3)
-            vel[2] = 0.0
             self.nest_velocity = (vel / (np.linalg.norm(vel) + 1e-6)) * self.nest_velocity_magnitude * 2.0
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
             self.obstacles = []
@@ -332,7 +329,6 @@ class SwarmForagingEnv3D(gym.Env):
                 dir_center = -self.nest_pos
                 noise = np.random.uniform(-0.2, 0.2, 3)
                 new_vel = dir_center + noise
-                new_vel[2] = 0
                 self.nest_velocity = (new_vel / (np.linalg.norm(new_vel) + 1e-6)) * self.nest_velocity_magnitude * 2.0
             
             observing_robots = []
@@ -365,7 +361,6 @@ class SwarmForagingEnv3D(gym.Env):
                     # O alvo móvel "foge" ou respawna numa nova localização para identificarem outro
                     self.nest_pos = self._random_spawn(max_radius=0.7)
                     vel = np.random.uniform(-1, 1, 3)
-                    vel[2] = 0.0
                     self.nest_velocity = (vel / (np.linalg.norm(vel) + 1e-6)) * self.nest_velocity_magnitude * 2.0
         # --------------------------------------
 
@@ -382,7 +377,6 @@ class SwarmForagingEnv3D(gym.Env):
                 U = np.cross(R, F)
 
                 move_global = move_local[0] * F + move_local[1] * R + move_local[2] * U
-                move_global[2] = 0.0  # Forçar movimento no plano 2D
 
                 # Projeção Vetorial para Deslizar nos Muros (Sliding Physics)
                 for wall in self.walls:

@@ -8,8 +8,7 @@ import yaml
 import gymnasium as gym
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecEnvWrapper, VecMonitor
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
 if PROJECT_ROOT not in sys.path:
@@ -18,23 +17,58 @@ if PROJECT_ROOT not in sys.path:
 from src.environment.swarm_env_3d import SwarmForagingEnv3D
 
 
-class SACFriendlyWrapper(gym.Wrapper):
+class MultiAgentArenaWrapper(gym.Env):
     def __init__(self, env):
-        super().__init__(env)
+        super().__init__()
+        self.env = env
+        self.num_agents = env.num_agents
         self.observation_space = env.observation_space_val
         self.action_space = env.action_space_val
 
     def reset(self, seed=None, options=None):
         obs_dict, info = self.env.reset(seed=seed, options=options)
-        return obs_dict["robot_0"], info
+        obs_array = np.array([obs_dict[a] for a in self.env.agents], dtype=np.float32)
+        return obs_array, info
 
-    def step(self, action):
-        actions = {"robot_0": action}
-        for agent in self.env.agents:
-            if agent != "robot_0":
-                actions[agent] = self.env.action_space(agent).sample()
+    def step(self, action_array):
+        actions = {a: action_array[i] for i, a in enumerate(self.env.agents)}
         obs_dict, rewards, terms, truncs, infos = self.env.step(actions)
-        return obs_dict["robot_0"], rewards["robot_0"], terms["robot_0"], truncs["robot_0"], infos.get("robot_0", {})
+        
+        obs_array = np.array([obs_dict[a] for a in self.env.agents], dtype=np.float32)
+        reward_array = np.array([rewards[a] for a in self.env.agents], dtype=np.float32)
+        
+        done = any(terms.values())
+        trunc = any(truncs.values())
+        
+        return obs_array, reward_array, done, trunc, infos.get("robot_0", {})
+
+class FlattenMultiAgentVecEnv(VecEnvWrapper):
+    def __init__(self, venv, num_agents):
+        self.num_agents = num_agents
+        self.num_arenas = venv.num_envs
+        super().__init__(venv, observation_space=venv.observation_space, action_space=venv.action_space)
+        self.num_envs = self.num_arenas * self.num_agents
+
+    def reset(self):
+        obs = self.venv.reset()
+        return obs.reshape(self.num_envs, -1)
+
+    def step_async(self, actions):
+        actions = actions.reshape(self.num_arenas, self.num_agents, -1)
+        self.venv.step_async(actions)
+
+    def step_wait(self):
+        obs, rewards, dones, infos = self.venv.step_wait()
+        obs = obs.reshape(self.num_envs, -1)
+        rewards = rewards.flatten()
+        dones = np.repeat(dones, self.num_agents)
+        
+        expanded_infos = []
+        for info in infos:
+            for _ in range(self.num_agents):
+                expanded_infos.append(info.copy() if isinstance(info, dict) else info)
+                
+        return obs, rewards, dones, expanded_infos
 
 
 class TimeLimitAndLoggingCallback(BaseCallback):
@@ -59,7 +93,7 @@ class TimeLimitAndLoggingCallback(BaseCallback):
                     writer.writerow([self.num_timesteps, ep_rew_mean, elapsed_time])
 
         if elapsed_time >= self.time_limit:
-            print(f"\n⏱️ FIM DO TEMPO! ({self.time_limit / 60:.1f} minutos). A gravar modelo...")
+            print(f"\n[FIM DO TEMPO] ({self.time_limit / 60:.1f} minutos). A gravar modelo...")
             return False
 
         return True
@@ -68,9 +102,8 @@ class TimeLimitAndLoggingCallback(BaseCallback):
 def make_env(config_path):
     def _init():
         raw_env = SwarmForagingEnv3D(config_path)
-        wrapped_env = SACFriendlyWrapper(raw_env)
-        return Monitor(wrapped_env)
-
+        wrapped_env = MultiAgentArenaWrapper(raw_env)
+        return wrapped_env
     return _init
 
 
@@ -84,9 +117,11 @@ def train_sac_3d(time_limit_minutes):
     log_interval = sac_config.get('log_interval', 2000)
 
     time_limit_seconds = time_limit_minutes * 60
-    print(f"🤖 SAC 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
+    print(f"[START] SAC 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
 
     env = SubprocVecEnv([make_env(config_path) for i in range(num_cpu)])
+    env = FlattenMultiAgentVecEnv(env, config['environment'].get('num_agents', 25))
+    env = VecMonitor(env)
 
     log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_ppo')
     model_dir = os.path.join(os.path.dirname(__file__), '../../results/models_ppo')
@@ -103,13 +138,13 @@ def train_sac_3d(time_limit_minutes):
     model = SAC("MlpPolicy", env, verbose=1, device="auto")
     callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds, log_interval)
 
-    print(f"🚀 Simulação SAC a correr nos {num_cpu} clones da arena...")
+    print(f"[RUNNING] Simulação SAC a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)
 
     model_path = os.path.join(model_dir, "sac_3d_final")
     model.save(model_path)
     os.chmod(model_path + ".zip", 0o666)
-    print("✅ Treino SAC 3D Multi-Core concluído de forma segura!")
+    print("[DONE] Treino SAC 3D Multi-Core concluído de forma segura!")
 
 
 if __name__ == "__main__":

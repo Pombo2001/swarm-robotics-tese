@@ -8,3 +8,5 @@ matplotlib
 customtkinter
 pandas
 seaborn
+stable-baselines3
+ursina
