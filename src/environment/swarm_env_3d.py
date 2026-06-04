@@ -72,8 +72,9 @@ class SwarmForagingEnv3D(gym.Env):
                 # Agents approach from below, enter the bowl, hit the top bar, must find bypass.
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -6), 0.0])
             elif self.classic_scenario == "bottleneck":
-                # South of the horizontal barrier (barrier covers y -1 to 1)
-                pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
+                # OESTE do muro vertical (x=0, gap a y=2..6)
+                # x de -12 a -3 (oeste), y de -7 a 7 (cobre a altura do gap)
+                pos = np.array([np.random.uniform(-12, -3), np.random.uniform(-7, 7), 0.0])
             elif self.classic_scenario == "four_rooms":
                 # SW quadrant, bounded to stay inside circular arena (r≤15)
                 # Original (-13,-13) corner had distance ≈18 > 15 → out of bounds
@@ -114,16 +115,18 @@ class SwarmForagingEnv3D(gym.Env):
             self._spawn_obstacles_u_wall()
 
         elif self.classic_scenario == "bottleneck":
-            self.nest_pos = np.array([0.0, 10.0, 0.0])
+            # Ninho a ESTE do muro vertical (x=0), perto do gap (y=2..6)
+            self.nest_pos = np.array([10.0, 4.0, 0.0])
             self.nest_velocity = np.zeros(3)
+            self._spawn_obstacles_bottleneck()  # spawna as paredes antes do spawn dos agentes
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
-            self._spawn_obstacles_bottleneck()
 
         elif self.classic_scenario == "four_rooms":
-            self.nest_pos = np.array([10.0, 10.0, 0.0])
+            # Ninho na sala NE (x>0, y>0), longe das paredes
+            self.nest_pos = np.array([9.0, 9.0, 0.0])
             self.nest_velocity = np.zeros(3)
+            self._spawn_obstacles_maze()  # paredes antes do spawn dos agentes
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
-            self._spawn_obstacles_maze()
 
         elif self.classic_scenario == "cooperative_door":
             # Nest is north of the horizontal barrier (barrier at y=0, nest at y=12)
@@ -196,27 +199,43 @@ class SwarmForagingEnv3D(gym.Env):
     def _spawn_obstacles_bottleneck(self):
         self.obstacles = []
         self.obstacle_velocities = []
-        # PORTAS ALARGADAS: Passagem central de 1.5 metros de largura.
+        # Barreira VERTICAL (N-S) em x=0. Passagem de 4m deslocada para norte.
+        # Antes: dois muros horizontais enormes (x=±20) com gap de 1.5m ao centro
+        #        → layout idêntico à porta cooperativa. Sem distinção visual.
+        # Agora: muro vertical com gap a y=2..6 (norte do centro).
+        #   Agentes spawn a OESTE (x<0), ninho a ESTE (x=10, y=4).
+        #   Todos devem encontrar o gap offset e passar sem colisão mútua.
         self.walls = [
-            {'pos': np.array([-20.75, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])},
-            {'pos': np.array([20.75, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])}
+            # Segmento sul do muro vertical: y=-15 a y=2
+            {'pos': np.array([0.0, -6.5, 0.0]), 'size': np.array([2.0, 17.0, 30.0])},
+            # Segmento norte do muro vertical: y=6 a y=15
+            {'pos': np.array([0.0, 10.5, 0.0]), 'size': np.array([2.0,  9.0, 30.0])},
         ]
+        # Gap: y=2 a y=6 (4m, deslocado para norte)
 
     def _spawn_obstacles_maze(self):
         self.obstacles = []
         self.obstacle_velocities = []
-        # LABIRINTO ALARGADO: Passagens de 1.5 metros encostadas às paredes exteriores.
+        # Quatro Salas (Sutton & Barto, 1999) adaptado para arena de raio 15m.
+        # Cruz de paredes com 4 passagens — uma por par de salas adjacentes:
+        #
+        #   Parede H (y=0): gap em x=-6..-3  (sala SW↔NW, esquerda do centro)
+        #                   gap em x= 3.. 6  (sala SE↔NE, direita do centro)
+        #   Parede V (x=0): gap em y=-6..-3  (sala SW↔SE, abaixo do centro)
+        #                   gap em y= 3.. 6  (sala NW↔NE, acima do centro)
+        #
+        # Ninho em NE (10, 10), spawn em SW (-10..-4, -10..-4).
+        # Caminho óptimo: SW → SE (gap V, y≈-4.5) → NE (gap H, x≈4.5).
+        #             ou: SW → NW (gap H, x≈-4.5) → NE (gap V, y≈4.5).
         self.walls = [
-            # Eixo Horizontal Y=0
-            {'pos': np.array([-12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
-            {'pos': np.array([0.0, 0.0, 0.0]), 'size': np.array([17.35, 1.5, 30.0])},
-            {'pos': np.array([12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
-            
-            # Eixo Vertical X=0 (dividido para não sobrepor o centro horizontal)
-            {'pos': np.array([0.0, -12.5875, 0.0]), 'size': np.array([1.5, 4.825, 30.0])},
-            {'pos': np.array([0.0, -4.7125, 0.0]), 'size': np.array([1.5, 7.925, 30.0])},
-            {'pos': np.array([0.0, 4.7125, 0.0]), 'size': np.array([1.5, 7.925, 30.0])},
-            {'pos': np.array([0.0, 12.5875, 0.0]), 'size': np.array([1.5, 4.825, 30.0])}
+            # Parede H (y=0) — 3 segmentos, 2 gaps
+            {'pos': np.array([-10.5,  0.0, 0.0]), 'size': np.array([ 9.0, 2.0, 30.0])},  # x=-15..-6
+            {'pos': np.array([  0.0,  0.0, 0.0]), 'size': np.array([ 6.0, 2.0, 30.0])},  # x= -3..3
+            {'pos': np.array([ 10.5,  0.0, 0.0]), 'size': np.array([ 9.0, 2.0, 30.0])},  # x=  6..15
+            # Parede V (x=0) — 3 segmentos, 2 gaps
+            {'pos': np.array([0.0, -10.5, 0.0]), 'size': np.array([2.0,  9.0, 30.0])},   # y=-15..-6
+            {'pos': np.array([0.0,   0.0, 0.0]), 'size': np.array([2.0,  6.0, 30.0])},   # y= -3..3
+            {'pos': np.array([0.0,  10.5, 0.0]), 'size': np.array([2.0,  9.0, 30.0])},   # y=  6..15
         ]
 
     def _spawn_obstacles_cooperative_door(self):
