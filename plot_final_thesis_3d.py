@@ -1,10 +1,16 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
 import seaborn as sns
 import os
 import sys
 from datetime import datetime
 import shutil
+
+# Force a Unicode-capable font on Windows to avoid encoding errors with
+# accented characters (ó, é, etc.) and math symbols (±, ×, →).
+matplotlib.rcParams['font.family'] = 'DejaVu Sans'
+matplotlib.rcParams['axes.unicode_minus'] = False
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 if PROJECT_ROOT not in sys.path:
@@ -146,6 +152,8 @@ def create_thesis_plots_3d():
         shutil.copy(curves_csv, os.path.join(output_dir, 'dados_historicos.csv'))
     else:
         print("[!] Ficheiro 'all_curves_data.csv' nao encontrado!")
+        print("[!] Para gerar graficos completos usa a Rotina Noturna (run_experiments.py).")
+        print("[i] A tentar fallback com logs individuais...")
 
     # ==============================================================
     # 3. BOXPLOTS e 4. BARRAS AGREGADORAS (Melhores Scores)
@@ -215,29 +223,56 @@ def create_thesis_plots_3d():
         shutil.copy(best_csv, os.path.join(output_dir, 'dados_melhores_scores.csv'))
     else:
         print("[!] Ficheiro 'all_best_scores.csv' nao encontrado para fazer Boxplots!")
-        # Fallback original
+        # Fallback: plot individual training logs if available
         gnn_csv = os.path.join(base_dir, 'results', 'logs', 'gnn_3d_training.csv')
         ppo_csv = os.path.join(base_dir, 'results', 'logs_ppo', 'training_history_ppo_3d.csv')
         sac_csv = os.path.join(base_dir, 'results', 'logs_ppo', 'training_history_sac_3d.csv')
-        
-        plt.figure(figsize=(10, 6))
-        for p, label, col in [(gnn_csv, 'GNN', '#2E7D32'), (ppo_csv, 'PPO', '#E65100'), (sac_csv, 'SAC', '#0277BD')]:
-            if os.path.exists(p):
-                df = pd.read_csv(p)
+
+        # Map: (path, display_label, line_color, y_column)
+        ALGO_LOGS = [
+            (gnn_csv, 'GNN', '#2E7D32', 'best_fitness'),
+            (ppo_csv, 'PPO', '#E65100', 'ep_rew_mean'),
+            (sac_csv, 'SAC', '#0277BD', 'ep_rew_mean'),
+        ]
+
+        fig, ax = plt.subplots(figsize=(11, 6))
+        plotted = 0
+        for path_log, label, col, y_col in ALGO_LOGS:
+            if not os.path.exists(path_log):
+                continue
+            try:
+                df = pd.read_csv(path_log)
                 df.columns = df.columns.str.strip()
-                y_col = 'best_fitness' if 'best' in df.columns[1] else df.columns[1]
-                if len(df) > 1 and y_col in df.columns:
-                    x_col = df.columns[0]
-                    plt.plot(df[x_col], df[y_col].rolling(10, min_periods=1).mean(), color=col, linewidth=2.5, label=label)
-        
-        plt.title('Batalha de Algoritmos (Fallback Ultima Run)', fontsize=16, fontweight='bold')
-        plt.xlabel('Timesteps', fontsize=12)
-        plt.ylabel('Score (Suavizado)', fontsize=12)
-        plt.legend(loc='lower right')
-        plt.grid(True, linestyle='--', alpha=0.5)
-        plt.tight_layout()
+                x_col = df.columns[0]
+                if y_col not in df.columns or len(df) < 2:
+                    continue
+                smoothed = df[y_col].rolling(10, min_periods=1).mean()
+                ax.plot(df[x_col], smoothed, color=col, linewidth=2.5, label=label)
+                plotted += 1
+                print(f"[i] Adicionado log: {label} ({len(df)} pontos)")
+            except Exception as e:
+                print(f"[!] Erro ao ler {path_log}: {e}")
+
+        if plotted == 0:
+            ax.text(0.5, 0.5, "Sem dados de treino disponíveis.\nCorre pelo menos um algoritmo primeiro.",
+                    ha='center', va='center', transform=ax.transAxes,
+                    fontsize=14, color='#6B7280')
+        else:
+            ax.legend(loc='lower right', fontsize=11)
+
+        ax.set_title('Comparação de Algoritmos — Última Run Individual', fontsize=14, fontweight='bold')
+        ax.set_xlabel('Timesteps / Geração × Passos', fontsize=11)
+        ax.set_ylabel('Recompensa (suavizada 10pt)', fontsize=11)
+        ax.grid(True, linestyle='--', alpha=0.5)
+        fig.text(0.5, 0.01,
+                 "Fallback: dados de runs individuais (não da Rotina Noturna). "
+                 "Para comparação multi-run, usa run_experiments.py.",
+                 ha='center', va='bottom', fontsize=8.5, color='#6B7280', style='italic')
+        fig.subplots_adjust(bottom=0.10)
+        plt.tight_layout(rect=[0, 0.07, 1, 1])
         plt.savefig(os.path.join(output_dir, 'fallback_comparacao.png'), dpi=300)
         plt.close()
+        print(f"[i] Grafico fallback guardado ({plotted} algoritmo(s) com dados)")
         
     print(f"\n[*] Concluido! Graficos guardados em: {output_dir}")
     

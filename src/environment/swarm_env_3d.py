@@ -68,8 +68,9 @@ class SwarmForagingEnv3D(gym.Env):
         max_attempts = 50
         for _ in range(max_attempts):
             if self.classic_scenario == "u_wall":
-                # Inside the U bowl: x stays within the legs (±9), y below the top bar (y<3)
-                pos = np.array([np.random.uniform(-9, 9), np.random.uniform(-9, 2), 0.0])
+                # Spawn SOUTH of the U legs (legs start at y=-5).
+                # Agents approach from below, enter the bowl, hit the top bar, must find bypass.
+                pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -6), 0.0])
             elif self.classic_scenario == "bottleneck":
                 # South of the horizontal barrier (barrier covers y -1 to 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
@@ -179,14 +180,17 @@ class SwarmForagingEnv3D(gym.Env):
     def _spawn_obstacles_u_wall(self):
         self.obstacles = []
         self.obstacle_velocities = []
-        # Redesigned: wider U (x -12 to 12) with tall legs to prevent trivial bypass.
-        # Previous design only covered x -6 to 6 — agents at x=7 bypassed with no effort.
-        # Top bar: x -12 to 12, y 3 to 5
-        # Legs: x ±11 to ±13, y -10 to 5  (legs reach arena boundary, no easy detour)
+        # Classic U-wall trap: opening faces SOUTH (toward agents).
+        # Agents approach from y=-12, walk north into the open bowl, hit the top bar at y=3,
+        # and must discover the detour around the legs at |x| > 8 (7m of free space per side).
+        # Top bar : x -7 to +7, y 3 to 5
+        # Left leg: x -8 to -6, y -5 to 5  (leg bottom at y=-5, leaving open entry from south)
+        # Right leg: x 6 to 8,  y -5 to 5
+        # Bypass space at |x| > 8 is ≈7m wide — discoverable but not trivial.
         self.walls = [
-            {'pos': np.array([0.0,   4.0, 0.0]), 'size': np.array([24.0,  2.0, 30.0])},  # top bar
-            {'pos': np.array([-12.0, -2.5, 0.0]), 'size': np.array([2.0, 15.0, 30.0])},  # left leg
-            {'pos': np.array([12.0,  -2.5, 0.0]), 'size': np.array([2.0, 15.0, 30.0])},  # right leg
+            {'pos': np.array([0.0,  4.0, 0.0]), 'size': np.array([14.0, 2.0, 30.0])},  # top bar
+            {'pos': np.array([-7.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, 30.0])},  # left leg
+            {'pos': np.array([ 7.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, 30.0])},  # right leg
         ]
 
     def _spawn_obstacles_bottleneck(self):
