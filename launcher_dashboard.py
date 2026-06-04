@@ -61,6 +61,77 @@ GRAPH_CATEGORIES = [
     ]),
 ]
 
+# Descrição de cada gráfico: (título curto, explicação detalhada)
+GRAPH_DESCRIPTIONS = {
+    "comparacao_mapa_none.png": (
+        "Sandbox — Arena Aberta",
+        "Curva de aprendizagem dos 3 algoritmos no cenário base, sem obstáculos fixos e ninho estático. "
+        "Mostra a capacidade de forrageamento pura. Valores mais altos = melhor desempenho. "
+        "A sombra representa o desvio padrão entre as 5 runs independentes.",
+    ),
+    "comparacao_mapa_u_wall.png": (
+        "Beco Sem Saída — Muro U",
+        "Um muro em forma de U bloqueia o caminho direto ao ninho. "
+        "Os agentes têm de aprender a explorar lateralmente em vez de avançar em linha reta. "
+        "Mede adaptação a obstáculos estruturados simples.",
+    ),
+    "comparacao_mapa_bottleneck.png": (
+        "Gargalo — Porta Estreita",
+        "Duas paredes paralelas criam uma passagem de apenas 1,5m no centro da arena. "
+        "Testa gestão de congestionamento: os agentes têm de se organizar para passar em fila. "
+        "Cenário que favorece comportamento emergente de fila.",
+    ),
+    "comparacao_mapa_four_rooms.png": (
+        "Quatro Salas — Labirinto",
+        "A arena está dividida em 4 quadrantes com passagens estreitas nas paredes. "
+        "Exige navegação estruturada e memória do caminho percorrido. "
+        "O cenário mais complexo em termos de planeamento espacial.",
+    ),
+    "comparacao_mapa_cooperative_door.png": (
+        "Porta Cooperativa — 3 Robôs",
+        "Uma porta bloqueia o acesso ao ninho e só abre quando 3 robôs a empurram em simultâneo. "
+        "Testa coordenação emergente: os agentes têm de convergir para o mesmo ponto ao mesmo tempo, "
+        "sem comunicação explícita sobre intenções.",
+    ),
+    "comparacao_mapa_cooperative_perception.png": (
+        "Perceção Cooperativa — Alvo Móvel",
+        "Um alvo em movimento só é 'capturado' quando pelo menos 3 robôs o rodeiam a 360°. "
+        "Avalia perseguição dinâmica e encirclement cooperativo. "
+        "O algoritmo precisa de aprender a distribuir os agentes espacialmente em torno do alvo.",
+    ),
+    "desempenho_global_gnn.png": (
+        "GNN — Curva em Todos os Mapas",
+        "Desempenho do algoritmo GNN (evolutivo) em cada um dos 6 cenários ao longo do treino. "
+        "O GNN usa uma rede neuronal de grafos com self-attention sobre vizinhos. "
+        "Fitness = média de 2 episódios; cada geração avalia 30 genomas em paralelo.",
+    ),
+    "desempenho_global_ppo.png": (
+        "PPO — Curva em Todos os Mapas",
+        "Desempenho do PPO (Proximal Policy Optimization) em cada cenário. "
+        "Método on-policy Actor-Critic com parameter sharing entre todos os agentes. "
+        "Aprende por atualização periódica de uma policy partilhada.",
+    ),
+    "desempenho_global_sac.png": (
+        "SAC — Curva em Todos os Mapas",
+        "Desempenho do SAC (Soft Actor-Critic) em cada cenário. "
+        "Método off-policy com entropia regularizada — tende a convergir mais rápido mas pode regredir "
+        "se a entropia subir demasiado (problema conhecido no treino de longa duração).",
+    ),
+    "boxplot_none.png":                    ("Boxplot Sandbox",          "Distribuição dos melhores scores em 5 runs independentes — Sandbox."),
+    "boxplot_u_wall.png":                  ("Boxplot Muro U",           "Distribuição dos melhores scores em 5 runs independentes — Beco Sem Saída."),
+    "boxplot_bottleneck.png":              ("Boxplot Gargalo",          "Distribuição dos melhores scores em 5 runs independentes — Gargalo."),
+    "boxplot_four_rooms.png":              ("Boxplot Quatro Salas",     "Distribuição dos melhores scores em 5 runs independentes — Labirinto."),
+    "boxplot_cooperative_door.png":        ("Boxplot Porta Coop.",      "Distribuição dos melhores scores em 5 runs independentes — Porta Cooperativa."),
+    "boxplot_cooperative_perception.png":  ("Boxplot Perceção Coop.",   "Distribuição dos melhores scores em 5 runs independentes — Perceção Cooperativa."),
+    "comparacao_barras_geral.png": (
+        "Comparação Geral — Resumo Final",
+        "Visão geral de todos os algoritmos em todos os mapas. "
+        "Cada barra é a média do melhor score alcançado (N=5 runs). "
+        "Barras de erro = desvio padrão entre runs. "
+        "NOTA: GNN usa fitness evolutiva (escala diferente de PPO/SAC).",
+    ),
+}
+
 # Nomes alternativos (formatos antigos) para fallback
 GRAPH_FALLBACKS = {
     "comparacao_mapa_none.png":                    ["comparacao_none.png"],
@@ -587,11 +658,31 @@ class SwarmController(ctk.CTk):
         self._img_label = ctk.CTkLabel(self._img_frame, text="", image=None)
         self._img_label.place(relx=0.5, rely=0.46, anchor="center")
 
-        # Caption below image
+        # Description panel (bottom strip)
+        self._desc_panel = ctk.CTkFrame(
+            self._img_frame, fg_color="#13151A", corner_radius=8, height=72)
+        self._desc_panel.place(relx=0.01, rely=0.97, anchor="sw",
+                               relwidth=0.98)
+        self._desc_panel.grid_propagate(False)
+        self._desc_panel.grid_columnconfigure(0, weight=1)
+
+        self._desc_title = ctk.CTkLabel(
+            self._desc_panel, text="",
+            font=("Roboto", 12, "bold"), text_color="#D1D5DB",
+            anchor="w", justify="left")
+        self._desc_title.grid(row=0, column=0, sticky="ew", padx=12, pady=(6, 0))
+
+        self._desc_body = ctk.CTkLabel(
+            self._desc_panel, text="",
+            font=("Roboto", 10), text_color="#6B7280",
+            anchor="w", justify="left", wraplength=860)
+        self._desc_body.grid(row=1, column=0, sticky="ew", padx=12, pady=(2, 6))
+
+        # Caption (filename)
         self._img_caption = ctk.CTkLabel(
             self._img_frame, text="",
-            font=("Roboto", 10, "italic"), text_color="#4B5563")
-        self._img_caption.place(relx=0.5, rely=0.97, anchor="s")
+            font=("Roboto", 9, "italic"), text_color="#374151")
+        self._img_caption.place(relx=0.99, rely=0.005, anchor="ne")
 
         # Auto-load most recent session
         sessions = self._discover_sessions()
@@ -734,6 +825,23 @@ class SwarmController(ctk.CTk):
             self._img_caption.configure(text="")
             return
 
+        # Show description
+        desc_info = GRAPH_DESCRIPTIONS.get(filename)
+        if not desc_info:
+            # Try to match via fallback names
+            for fn, alts in GRAPH_FALLBACKS.items():
+                if filename in alts:
+                    desc_info = GRAPH_DESCRIPTIONS.get(fn)
+                    break
+        if desc_info:
+            self._desc_title.configure(text=desc_info[0])
+            self._desc_body.configure(text=desc_info[1])
+            self._desc_panel.configure(height=72)
+        else:
+            self._desc_title.configure(text="")
+            self._desc_body.configure(text="")
+            self._desc_panel.configure(height=0)
+
         if not PIL_AVAILABLE:
             self._img_placeholder.configure(
                 text="⚠️  Pillow não instalado.\n\nInstala com:  pip install pillow",
@@ -745,9 +853,11 @@ class SwarmController(ctk.CTk):
             pil_img = Image.open(path).convert("RGBA")
 
             fw = self._img_frame.winfo_width()  - 40
-            fh = self._img_frame.winfo_height() - 60
-            if fw < 200: fw = 900
-            if fh < 200: fh = 580
+            # Reserve space for description panel (~80px) and caption
+            desc_h  = 80 if desc_info else 20
+            fh = self._img_frame.winfo_height() - desc_h - 40
+            if fw < 200: fw = 880
+            if fh < 200: fh = 500
 
             iw, ih = pil_img.size
             scale   = min(fw / iw, fh / ih, 1.0)
@@ -760,6 +870,9 @@ class SwarmController(ctk.CTk):
             self._current_img_ref = ctk_img  # prevent GC
 
             self._img_placeholder.lower()
+            # Position image above the description panel
+            rely = 0.44 if desc_info else 0.5
+            self._img_label.place(relx=0.5, rely=rely, anchor="center")
             self._img_label.configure(image=ctk_img, text="")
             self._img_caption.configure(text=os.path.basename(path))
         except Exception as e:

@@ -1,12 +1,12 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: u_wall
+  classic_scenario: none
   dynamic_nest: true
   dynamic_obstacles: true
   forbidden_area: 2.2
   hunger_timer_max: 600
   max_steps: 500
-  nest_radius: 0.2
+  nest_radius: 1.5        # Era 0.2 — zona de deteccao era 0.3m, impossivel para 3 robos
   nest_velocity: 0.015
   num_agents: 20
   num_obstacles: 50
@@ -15,34 +15,50 @@ environment:
   obstacle_velocity: 0.02
   progress_reward_factor: 50.0
   required_to_eat: 3
+
 evolution:
-  mutation_rate: 0.1
   pop_size: 30
-  sigma: 0.2
+  mutation_rate: 0.1
+  sigma: 0.1
+  eval_episodes: 2        # Avaliar cada genoma em 2 episodios para reduzir variancia
+
 gnn_agent:
   hidden_dim: 64
+
 physics:
   agent_radius: 0.15
   collision_penalty: -1.0
   communication_radius: 1.0
+
 plotting:
   smoothing_window: 10
+
 ppo:
-  log_interval: 2000
   num_cpu: 8
+  log_interval: 2000
+  learning_rate: 0.0001   # Era 0.0003 — mais estavel para envs complexos
+  net_arch: [256, 256]    # Era [64,64] implicito — mais capacidade de aprendizagem
+
 rewards:
   energy_cost: -0.05
   exploration_bonus: 0.01
   food_collected: 100.0
   out_of_bounds: -10.0
   wall_penalty: -5.0
+
 sac:
-  log_interval: 2000
   num_cpu: 8
+  log_interval: 2000
+  learning_rate: 0.0001   # Era 0.0003
+  ent_coef: 0.1           # Era "auto" — causava regressao ao aumentar entropia
+  buffer_size: 500000     # Foco em experiencias recentes
+  net_arch: [256, 256]
+
 simulation:
   guillotine_threshold: -200
   max_steps: 500
   render_mode: rgb_array
+
 visualization:
   speed_slider_default: 30
   speed_slider_max: 120

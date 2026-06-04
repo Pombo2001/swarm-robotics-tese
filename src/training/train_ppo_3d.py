@@ -142,7 +142,13 @@ def train_ppo_3d(time_limit_minutes):
 
     os.chmod(log_file, 0o666)
 
-    model = PPO("MlpPolicy", env, verbose=1, device="auto")
+    model = PPO(
+        "MlpPolicy", env,
+        learning_rate=ppo_config.get("learning_rate", 1e-4),
+        policy_kwargs=dict(net_arch=ppo_config.get("net_arch", [256, 256])),
+        verbose=1,
+        device="auto",
+    )
     callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds, log_interval)
 
     print(f"[RUNNING] Simulação PPO a correr nos {num_cpu} clones da arena...")

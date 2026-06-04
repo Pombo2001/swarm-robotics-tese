@@ -22,39 +22,47 @@ def evaluate_genome(args):
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
+    guillotine_threshold = config['simulation'].get('guillotine_threshold', -200)
+    eval_episodes = config.get('evolution', {}).get('eval_episodes', 2)
+
     env = SwarmForagingEnv3D(config_path)
     agent = GNNAgent3D("worker_agent", env.action_space("robot_0"), config_path)
     agent.load_state_dict(weights)
 
-    obs_dict, _ = env.reset()
-    total_reward = 0
-    steps = 0
-    done = False
+    episode_rewards = []
+    total_steps = 0
 
-    guillotine_threshold = config['simulation'].get('guillotine_threshold', -200)
+    for _ in range(eval_episodes):
+        obs_dict, _ = env.reset()
+        episode_reward = 0
+        steps = 0
+        done = False
 
-    while not done:
-        obs_list = [obs_dict[a] for a in env.agents]
-        obs_tensor = torch.tensor(np.array(obs_list), dtype=torch.float32)
+        while not done:
+            obs_list = [obs_dict[a] for a in env.agents]
+            obs_tensor = torch.tensor(np.array(obs_list), dtype=torch.float32)
 
-        with torch.no_grad():
-            actions_tensor = agent(obs_tensor)
-            actions_np = actions_tensor.cpu().numpy()
+            with torch.no_grad():
+                actions_tensor = agent(obs_tensor)
+                actions_np = actions_tensor.cpu().numpy()
 
-        actions = {id: act for id, act in zip(env.agents, actions_np)}
-        obs_dict, rewards, terms, truncs, _ = env.step(actions)
+            actions = {id: act for id, act in zip(env.agents, actions_np)}
+            obs_dict, rewards, terms, truncs, _ = env.step(actions)
 
-        total_reward += sum(rewards.values())
-        steps += 1
+            episode_reward += sum(rewards.values())
+            steps += 1
 
-        if steps == 150 and total_reward < guillotine_threshold:
-            total_reward -= 1000
-            done = True
+            if steps == 150 and episode_reward < guillotine_threshold:
+                episode_reward -= 1000
+                done = True
 
-        if any(terms.values()) or any(truncs.values()):
-            done = True
+            if any(terms.values()) or any(truncs.values()):
+                done = True
 
-    return total_reward, steps
+        episode_rewards.append(episode_reward)
+        total_steps += steps
+
+    return float(np.mean(episode_rewards)), total_steps
 
 
 class GeneticTrainer3D:

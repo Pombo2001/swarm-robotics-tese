@@ -142,7 +142,15 @@ def train_sac_3d(time_limit_minutes):
 
     os.chmod(log_file, 0o666)
 
-    model = SAC("MlpPolicy", env, verbose=1, device="auto")
+    model = SAC(
+        "MlpPolicy", env,
+        learning_rate=sac_config.get("learning_rate", 1e-4),
+        buffer_size=sac_config.get("buffer_size", 500_000),
+        ent_coef=sac_config.get("ent_coef", 0.1),
+        policy_kwargs=dict(net_arch=sac_config.get("net_arch", [256, 256])),
+        verbose=1,
+        device="auto",
+    )
     callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds, log_interval)
 
     print(f"[RUNNING] Simulação SAC a correr nos {num_cpu} clones da arena...")
