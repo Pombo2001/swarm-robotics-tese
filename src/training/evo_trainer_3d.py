@@ -93,7 +93,9 @@ def evaluate_genome(args):
         episode_rewards.append(episode_reward)
         total_steps += steps
 
-    return float(np.mean(episode_rewards)), total_steps
+    avg_fitness  = float(np.mean(episode_rewards))
+    food_count   = int(env.total_food_collected)   # recolhas sem shaping (tarefa pura)
+    return avg_fitness, total_steps, food_count
 
 
 class GeneticTrainer3D:
@@ -127,7 +129,8 @@ class GeneticTrainer3D:
         self.history_file = os.path.join(self.log_dir, 'gnn_3d_training.csv')
         with open(self.history_file, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['timestep', 'best_fitness', 'avg_fitness', 'time'])
+            writer.writerow(['timestep', 'best_fitness', 'avg_fitness',
+                             'best_task_food', 'time'])
 
         os.chmod(self.history_file, 0o666)
 
@@ -152,7 +155,8 @@ class GeneticTrainer3D:
                 args_list = [(self.population[i], self.config_path) for i in range(self.pop_size)]
                 results = pool.map(evaluate_genome, args_list)
 
-                scores = [res[0] for res in results]
+                scores       = [res[0] for res in results]
+                food_counts  = [res[2] for res in results]
                 total_steps_this_gen = sum(res[1] for res in results)
                 global_timestep += total_steps_this_gen
 
@@ -178,15 +182,20 @@ class GeneticTrainer3D:
 
                 self.population = new_population
 
+                best_food = food_counts[sorted_indices[0]]
                 print(
-                    f"Gen {gen} | Timesteps: {global_timestep} | Melhor: {scores[0]:.2f} | Média: {np.mean(scores):.2f} | Sigma: {self.sigma:.4f} | Tempo: {cumulative_time:.2f}s")
-                
+                    f"Gen {gen} | Steps: {global_timestep} | "
+                    f"Fitness: {scores[0]:.1f} | Média: {np.mean(scores):.1f} | "
+                    f"Comida (melhor): {best_food} | Sigma: {self.sigma:.4f} | "
+                    f"Tempo: {cumulative_time:.1f}s")
+
                 # Apply Adaptive Mutation (Decay)
                 self.sigma = max(self.sigma_min, self.sigma * self.sigma_decay)
 
                 with open(self.history_file, 'a', newline='') as f:
                     writer = csv.writer(f)
-                    writer.writerow([global_timestep, scores[0], np.mean(scores), cumulative_time])
+                    writer.writerow([global_timestep, scores[0], np.mean(scores),
+                                     best_food, cumulative_time])
 
                 if gen % 10 == 0:
                     save_path = os.path.join(self.model_dir, "gnn_3d_best.pth")

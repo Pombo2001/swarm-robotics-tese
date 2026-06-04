@@ -1,6 +1,6 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: none
+  classic_scenario: cooperative_perception
   dynamic_nest: true
   dynamic_obstacles: true
   forbidden_area: 2.2
@@ -31,13 +31,18 @@ plotting:
 ppo:
   learning_rate: 0.0001
   log_interval: 2000
-  net_arch:
-  - 256
-  - 256
+  net_arch: [256, 256]
   num_cpu: 8
+  # n_steps × num_envs = buffer por ciclo de update
+  # Com 160 envs virtuais (8 arenas × 20 agentes):
+  #   64 × 160 = 10240 amostras; 10240/512×4 = 80 gradient steps por ciclo
+  #   (default seria 2048×160/64×10 = 51200 — demasiado, causava overfitting)
+  n_steps: 64
+  batch_size: 512
+  n_epochs: 4
+  checkpoint_interval_min: 30  # guardar checkpoint a cada 30 min
 rewards:
   energy_cost: -0.05
-  exploration_bonus: 0.01
   food_collected: 100.0
   out_of_bounds: -10.0
   wall_penalty: -5.0
@@ -46,10 +51,9 @@ sac:
   ent_coef: 0.1
   learning_rate: 0.0001
   log_interval: 2000
-  net_arch:
-  - 256
-  - 256
+  net_arch: [256, 256]
   num_cpu: 8
+  checkpoint_interval_min: 30
 simulation:
   guillotine_threshold: -200
   max_steps: 500

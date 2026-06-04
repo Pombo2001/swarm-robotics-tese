@@ -57,14 +57,19 @@ class MultiAgentArenaWrapper(gym.Env):
     def step(self, action_array):
         actions = {a: action_array[i] for i, a in enumerate(self.env.agents)}
         obs_dict, rewards, terms, truncs, infos = self.env.step(actions)
-        
+
         obs_array = np.array([obs_dict[a] for a in self.env.agents], dtype=np.float32)
         reward_array = np.array([rewards[a] for a in self.env.agents], dtype=np.float32)
-        
-        done = any(terms.values())
+
+        done  = any(terms.values())
         trunc = any(truncs.values())
-        
-        return obs_array, reward_array, done, trunc, infos.get("robot_0", {})
+
+        info = dict(infos.get("robot_0", {}))
+        if done or trunc:
+            info["task_reward"] = float(
+                self.env.total_food_collected * self.env.food_collected_reward)
+
+        return obs_array, reward_array, done, trunc, info
 
 class FlattenMultiAgentVecEnv(VecEnvWrapper):
     def __init__(self, venv, num_agents):
@@ -103,12 +108,17 @@ class FlattenMultiAgentVecEnv(VecEnvWrapper):
 
 
 class TimeLimitAndLoggingCallback(BaseCallback):
-    def __init__(self, log_file, time_limit_seconds, log_interval, verbose=0):
+    def __init__(self, log_file, time_limit_seconds, log_interval,
+                 checkpoint_dir=None, checkpoint_interval_sec=1800, verbose=0):
         super().__init__(verbose)
-        self.log_file = log_file
-        self.time_limit = time_limit_seconds
-        self.log_interval = log_interval
-        self.start_time = None
+        self.log_file                = log_file
+        self.time_limit              = time_limit_seconds
+        self.log_interval            = log_interval
+        self.checkpoint_dir          = checkpoint_dir
+        self.checkpoint_interval_sec = checkpoint_interval_sec
+        self.start_time              = None
+        self._last_checkpoint_time   = 0.0
+        self._task_ep_buf            = []
 
     def _on_training_start(self):
         self.start_time = time.time()
@@ -116,12 +126,28 @@ class TimeLimitAndLoggingCallback(BaseCallback):
     def _on_step(self):
         elapsed_time = time.time() - self.start_time
 
+        for info in self.locals.get("infos", []):
+            if "episode" in info and "task_reward" in info:
+                self._task_ep_buf.append(info["task_reward"])
+
         if self.n_calls % self.log_interval == 0:
             if len(self.model.ep_info_buffer) > 0:
-                ep_rew_mean = np.mean([ep_info["r"] for ep_info in self.model.ep_info_buffer])
+                ep_rew_mean   = np.mean([ep["r"] for ep in self.model.ep_info_buffer])
+                task_rew_mean = (np.mean(self._task_ep_buf)
+                                 if self._task_ep_buf else 0.0)
+                self._task_ep_buf.clear()
                 with open(self.log_file, 'a', newline='') as f:
                     writer = csv.writer(f)
-                    writer.writerow([self.num_timesteps, ep_rew_mean, elapsed_time])
+                    writer.writerow([self.num_timesteps, ep_rew_mean,
+                                     task_rew_mean, elapsed_time])
+
+        if (self.checkpoint_dir and
+                elapsed_time - self._last_checkpoint_time >= self.checkpoint_interval_sec):
+            ckpt = os.path.join(self.checkpoint_dir,
+                                f"sac_ckpt_{int(elapsed_time // 60):04d}min")
+            self.model.save(ckpt)
+            print(f"[CKPT] Checkpoint guardado: {ckpt}.zip")
+            self._last_checkpoint_time = elapsed_time
 
         if elapsed_time >= self.time_limit:
             print(f"\n[FIM DO TEMPO] ({self.time_limit / 60:.1f} minutos). A gravar modelo...")
@@ -162,9 +188,11 @@ def train_sac_3d(time_limit_minutes):
     log_file = os.path.join(log_dir, 'training_history_sac_3d.csv')
     with open(log_file, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['timesteps', 'ep_rew_mean', 'time'])
+        writer.writerow(['timesteps', 'ep_rew_mean', 'ep_task_mean', 'time'])
 
     os.chmod(log_file, 0o666)
+
+    ckpt_interval = int(sac_config.get('checkpoint_interval_min', 30) * 60)
 
     model = SAC(
         "MlpPolicy", env,
@@ -175,7 +203,9 @@ def train_sac_3d(time_limit_minutes):
         verbose=1,
         device="auto",
     )
-    callback = TimeLimitAndLoggingCallback(log_file, time_limit_seconds, log_interval)
+    callback = TimeLimitAndLoggingCallback(
+        log_file, time_limit_seconds, log_interval,
+        checkpoint_dir=model_dir, checkpoint_interval_sec=ckpt_interval)
 
     print(f"[RUNNING] Simulação SAC a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)
