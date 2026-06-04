@@ -1,3 +1,34 @@
+# =============================================================================
+# GNN — Algoritmo Neuro-Evolutivo com Rede Neuronal de Grafos
+# Desenvolvido de raiz (sem bibliotecas de RL externas)
+#
+# Paradigma: ALGORITMO GENÉTICO / EVOLUTION STRATEGIES
+#   Baseado em: Salimans et al. (2017) "Evolution Strategies as a Scalable
+#   Alternative to Reinforcement Learning" — mutação Gaussiana element-wise.
+#
+# Genoma: vector 1D contendo TODOS os pesos e biases da GNNAgent3D.
+#   A política é o mapeamento directo do genoma → acções.
+#   Topologia da rede é FIXA — não evolui estrutura, apenas pesos.
+#
+# Estratégia de mutação (Element-wise Gaussian Mutation com máscara):
+#   Para cada peso w_i do filho:
+#     com probabilidade mutation_rate (10%): w_i += N(0, sigma)
+#     caso contrário: w_i permanece igual ao pai
+#   Isto é equivalente a (1+λ)-ES com mask esparsa — não muta todos os pesos
+#   em simultâneo (reduziria demasiado a diversidade com redes grandes).
+#
+# Elitismo: os 20% melhores (elite_count=6 de 30) são preservados sem mutação.
+#   O restante da população é gerado a partir de cópias mutadas dos elites.
+#
+# Sigma decay: sigma começa em 0.1 e decai 0.5%/geração até mín. 0.01.
+#   Exploração agressiva no início → refinamento gradual.
+#
+# Exploração: NÃO há reward shaping durante a evolução. A fitness é a
+#   recompensa bruta do episódio (média de 2 episódios para reduzir variância).
+#   A "exploração" vem da estocasticidade da mutação Gaussiana.
+#
+# Paralelismo: cada genoma é avaliado num processo separado (multiprocessing).
+# =============================================================================
 import os
 import sys
 import torch

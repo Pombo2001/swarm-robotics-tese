@@ -1,3 +1,28 @@
+# =============================================================================
+# PPO — Proximal Policy Optimization  (Schulman et al., 2017)
+# Biblioteca: stable-baselines3
+#
+# Paradigma: ON-POLICY  — aprende diretamente da trajectória actual, descarta
+#   as experiências após cada actualização (sem replay buffer).
+#
+# Mecanismo de estabilidade: CLIPPING do ratio de políticas (epsilon=0.2) que
+#   impede que uma única actualização altere demasiado a política — evita
+#   colapso de performance que o gradiente de política simples (REINFORCE)
+#   sofre frequentemente.
+#
+# Parameter sharing: todos os 20 agentes partilham UMA rede via
+#   FlattenMultiAgentVecEnv, que aplatana 8 arenas × 20 agentes → 160
+#   "agentes virtuais" vistos pelo PPO como ambientes independentes.
+#   A diversidade de perspectivas entre agentes funciona como regularizador.
+#
+# Exploração: feita APENAS por reward shaping — não há ICM nem módulo de
+#   curiosidade externo. O incentivo de exploração é:
+#     1. progress_reward = factor * (dist_anterior − dist_actual)  [shaping]
+#     2. energy_cost     = −0.05 por passo                        [pressão temporal]
+#   Estes sinais guiam o agente para o ninho sem exploração intrínseca.
+#
+# Rede: MLP [obs→256→256→actions] (net_arch configurável em foraging.yaml)
+# =============================================================================
 import os
 import sys
 import csv

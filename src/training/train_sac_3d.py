@@ -1,3 +1,27 @@
+# =============================================================================
+# SAC — Soft Actor-Critic  (Haarnoja et al., 2018)
+# Biblioteca: stable-baselines3
+#
+# Paradigma: OFF-POLICY — mantém um replay buffer e aprende de experiências
+#   passadas. Mais eficiente em termos de amostras do que o PPO.
+#
+# Mecanismo de estabilidade: ENTROPIA REGULARIZADA — o objectivo inclui um
+#   termo de maximização de entropia da política (H[π]), que incentiva
+#   comportamento estocástico e previne convergência prematura.
+#   Com ent_coef="auto" (default), o SAC ajusta dinamicamente o coeficiente
+#   de entropia, o que pode causar REGRESSÃO em treinos longos (o SAC aumenta
+#   entropia para "explorar mais" e desfaz o que aprendeu). Por isso usamos
+#   ent_coef=0.1 fixo (configurável em foraging.yaml).
+#
+# Parameter sharing: mesma estratégia do PPO — FlattenMultiAgentVecEnv com
+#   160 agentes virtuais partilhando uma política.
+#
+# Exploração: igual ao PPO — APENAS reward shaping (progress + energy cost).
+#   NÃO há ICM (Intrinsic Curiosity Module) nem exploração intrínseca.
+#   O SAC explora naturalmente pela estocasticidade da política (entropia).
+#
+# Rede: MLP [obs→256→256→actions] (net_arch configurável em foraging.yaml)
+# =============================================================================
 import os
 import sys
 import csv

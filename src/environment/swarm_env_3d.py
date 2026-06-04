@@ -534,16 +534,32 @@ class SwarmForagingEnv3D(gym.Env):
             dist_nest = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
 
             if np.linalg.norm(self.agent_positions[idx]) > (self.arena_radius - self.robot_radius):
-                # Comporta-se como um muro circular em vez de matar o robô
                 direction = -self.agent_positions[idx]
                 direction /= (np.linalg.norm(direction) + 1e-6)
-                self.agent_positions[idx] += direction * 0.5  # Empurra para dentro
+                self.agent_positions[idx] += direction * 0.5
                 obstacle_hits[agent] = 1
                 continue
 
             if self.signaling[idx] == 1.0:
                 pass
             else:
+                # ── Reward Structure ─────────────────────────────────────────
+                # NOTA: NÃO há ICM (Intrinsic Curiosity Module).
+                # A exploração é incentivada exclusivamente por reward shaping:
+                #
+                #   progress_reward = factor × (dist_t-1 − dist_t)
+                #     → positivo se o agente se aproximou do ninho
+                #     → negativo se se afastou (desincentiva desvios)
+                #     → funciona como "Potential-Based Reward Shaping"
+                #        (Ng et al., 1999) — não altera a política óptima
+                #
+                #   energy_cost = −0.05/passo
+                #     → pressão temporal para resolver a tarefa depressa
+                #
+                # Recompensa de tarefa pura (sem shaping):
+                #   food_collected_reward = +100 (quando required_to_eat
+                #   agentes chegam simultaneamente ao ninho)
+                # ─────────────────────────────────────────────────────────────
                 progress = self.prev_dist_to_nest[idx] - dist_nest
                 rewards[agent] += (progress * self.progress_reward_factor) + self.energy_cost
                 self.hunger_timers[idx] += 1
