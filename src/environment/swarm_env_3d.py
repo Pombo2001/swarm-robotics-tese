@@ -68,16 +68,21 @@ class SwarmForagingEnv3D(gym.Env):
         max_attempts = 50
         for _ in range(max_attempts):
             if self.classic_scenario == "u_wall":
-                pos = np.array([np.random.uniform(-6, 6), np.random.uniform(-8, 2), 0.0])
+                # Inside the U bowl: x stays within the legs (±9), y below the top bar (y<3)
+                pos = np.array([np.random.uniform(-9, 9), np.random.uniform(-9, 2), 0.0])
             elif self.classic_scenario == "bottleneck":
-                pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -4), 0.0])
+                # South of the horizontal barrier (barrier covers y -1 to 1)
+                pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
             elif self.classic_scenario == "four_rooms":
-                pos = np.array([np.random.uniform(-13, -3), np.random.uniform(-13, -3), 0.0])
+                # SW quadrant, bounded to stay inside circular arena (r≤15)
+                # Original (-13,-13) corner had distance ≈18 > 15 → out of bounds
+                pos = np.array([np.random.uniform(-10, -2), np.random.uniform(-10, -2), 0.0])
             elif self.classic_scenario == "cooperative_door":
-                pos = np.array([-10 + np.random.uniform(-3, 3), np.random.uniform(-6, 6), 0.0])
+                # South of the horizontal barrier (barrier covers y -1 to 1)
+                pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
             else:
                 pos = self._random_spawn()
-            
+
             colisao = False
             for wall in self.walls:
                 half_size = wall['size'] / 2.0
@@ -120,7 +125,8 @@ class SwarmForagingEnv3D(gym.Env):
             self._spawn_obstacles_maze()
 
         elif self.classic_scenario == "cooperative_door":
-            self.nest_pos = np.array([12.0, 0.0, 0.0])
+            # Nest is north of the horizontal barrier (barrier at y=0, nest at y=12)
+            self.nest_pos = np.array([0.0, 12.0, 0.0])
             self.nest_velocity = np.zeros(3)
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
             self._spawn_obstacles_cooperative_door()
@@ -149,7 +155,8 @@ class SwarmForagingEnv3D(gym.Env):
         return self._get_observations(), {}
 
     def _spawn_nest(self):
-        self.nest_pos = self._random_spawn(max_radius=0.5)
+        # Nest within 30% of arena_radius (~4.5m) for easier discoverability
+        self.nest_pos = self._random_spawn(max_radius=0.3)
         if self.dynamic_nest:
             vel = np.random.uniform(-1, 1, 3)
             self.nest_velocity = (vel / (np.linalg.norm(vel) + 1e-6)) * self.nest_velocity_magnitude
@@ -160,8 +167,9 @@ class SwarmForagingEnv3D(gym.Env):
         for _ in range(self.num_obstacles):
             valid = False
             while not valid:
-                pos = self._random_spawn(min_radius=0.5, max_radius=0.8)
-                if np.linalg.norm(pos - self.nest_pos) > (self.nest_radius + self.obstacle_radius + 0.4):
+                # Uniform spread across arena (was 50-80% ring — too restrictive)
+                pos = self._random_spawn(min_radius=0.05, max_radius=0.90)
+                if np.linalg.norm(pos - self.nest_pos) > (self.nest_radius + self.obstacle_radius + 0.5):
                     self.obstacles.append(pos)
                     vel = np.random.uniform(-1, 1, 3)
                     vel /= (np.linalg.norm(vel) + 1e-6)
@@ -171,10 +179,14 @@ class SwarmForagingEnv3D(gym.Env):
     def _spawn_obstacles_u_wall(self):
         self.obstacles = []
         self.obstacle_velocities = []
+        # Redesigned: wider U (x -12 to 12) with tall legs to prevent trivial bypass.
+        # Previous design only covered x -6 to 6 — agents at x=7 bypassed with no effort.
+        # Top bar: x -12 to 12, y 3 to 5
+        # Legs: x ±11 to ±13, y -10 to 5  (legs reach arena boundary, no easy detour)
         self.walls = [
-            {'pos': np.array([0.0, 3.0, 0.0]), 'size': np.array([12.0, 2.0, 30.0])},
-            {'pos': np.array([-5.0, 0.0, 0.0]), 'size': np.array([2.0, 6.0, 30.0])},
-            {'pos': np.array([5.0, 0.0, 0.0]), 'size': np.array([2.0, 6.0, 30.0])}
+            {'pos': np.array([0.0,   4.0, 0.0]), 'size': np.array([24.0,  2.0, 30.0])},  # top bar
+            {'pos': np.array([-12.0, -2.5, 0.0]), 'size': np.array([2.0, 15.0, 30.0])},  # left leg
+            {'pos': np.array([12.0,  -2.5, 0.0]), 'size': np.array([2.0, 15.0, 30.0])},  # right leg
         ]
 
     def _spawn_obstacles_bottleneck(self):
@@ -206,18 +218,20 @@ class SwarmForagingEnv3D(gym.Env):
     def _spawn_obstacles_cooperative_door(self):
         self.obstacles = []
         self.obstacle_velocities = []
-
+        # Redesigned as HORIZONTAL (east-west) barrier at y=0.
+        # Previous design was a vertical wall (N-S) that could be bypassed at y≈±14
+        # (arena boundary left a gap). A horizontal wall spanning x=-15 to x=15
+        # truly blocks all south-to-north passage — the ends are at the arena boundary.
+        # Door: 3m gap at x=0 center. Push zone: directly south of the door (y -2 to 0).
         self.walls = [
-            {'pos': np.array([0.0, 8.0, 0.0]), 'size': np.array([2.0, 12.0, 30.0])},
-            {'pos': np.array([0.0, -8.0, 0.0]), 'size': np.array([2.0, 12.0, 30.0])}
+            {'pos': np.array([-8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, 30.0])},  # x -15 to -1.5
+            {'pos': np.array([ 8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, 30.0])},  # x  1.5 to  15
         ]
-
         self.door_active = True
-        self.door_pos = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.door_size = np.array([2.0, 4.0, 30.0])
-
+        self.door_pos  = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        self.door_size = np.array([3.0, 2.0, 30.0])   # 3m wide door at center
         self.door_wall_index = len(self.walls)
-        self.walls.append({'pos': self.door_pos, 'size': self.door_size})
+        self.walls.append({'pos': self.door_pos.copy(), 'size': self.door_size})
 
     def _random_spawn(self, min_radius=0.0, max_radius=0.8):
         u = np.random.uniform(0, 1)
@@ -449,7 +463,8 @@ class SwarmForagingEnv3D(gym.Env):
             pushing_robots = []
             for i in range(self.num_agents):
                 pos = self.agent_positions[i]
-                if -1.5 < pos[0] < 0.0 and -2.0 < pos[1] < 2.0:
+                # Push zone: directly south of the door (x -1.5 to 1.5, y -2 to 0)
+                if -1.5 < pos[0] < 1.5 and -2.0 < pos[1] < 0.0:
                     pushing_robots.append(i)
 
             if len(pushing_robots) >= 3:
