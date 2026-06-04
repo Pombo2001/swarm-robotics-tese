@@ -52,17 +52,22 @@ def set_scenario(scenario_name):
     except Exception as e:
         print(f"[!] Erro ao configurar cenário: {e}")
 
-def run_experiments(num_runs, time_limit):
+def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None):
+    if algorithms is None:
+        algorithms = ALGORITHMS
+    if scenarios is None:
+        scenarios = SCENARIOS
+
     curves_data = []
     best_scores_data = []
 
     print(f"Iniciando Automacao de Experiencias:")
-    print(f"Runs: {num_runs} | Tempo Limite: {time_limit}m | Cenários: {len(SCENARIOS)}")
+    print(f"Runs: {num_runs} | Tempo Limite: {time_limit}m | Cenários: {len(scenarios)} | Algoritmos: {list(algorithms.keys())}")
 
-    for scenario in SCENARIOS:
+    for scenario in scenarios:
         set_scenario(scenario)
-        
-        for algo_name, algo_script in ALGORITHMS.items():
+
+        for algo_name, algo_script in algorithms.items():
             script_path = os.path.join(BASE_DIR, algo_script)
             log_path = LOG_PATHS[algo_name]
             score_col = SCORE_COLS[algo_name]
@@ -166,8 +171,32 @@ def generate_plots(df_curves, df_best):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Automação de Experiências para a Tese")
-    parser.add_argument("--runs", type=int, default=5, help="Nº de Runs por Cenário")
-    parser.add_argument("--time", type=int, default=60, help="Minutos por Run")
+    parser.add_argument("--runs",      type=int,   default=5,   help="Nº de Runs por Cenário")
+    parser.add_argument("--time",      type=int,   default=60,  help="Minutos por Run")
+    parser.add_argument("--algo",      type=str,   default=None,
+                        help="Algoritmo único a correr (GNN, PPO ou SAC). Omitir = todos.")
+    parser.add_argument("--scenarios", type=str,   default=None,
+                        help="Cenários separados por vírgula. Omitir = todos.")
     args = parser.parse_args()
-    
-    run_experiments(num_runs=args.runs, time_limit=args.time)
+
+    # Filter algorithms
+    algos = ALGORITHMS
+    if args.algo:
+        key = args.algo.upper()
+        if key in ALGORITHMS:
+            algos = {key: ALGORITHMS[key]}
+        else:
+            print(f"[!] Algoritmo desconhecido: {args.algo}. Opções: {list(ALGORITHMS.keys())}")
+            sys.exit(1)
+
+    # Filter scenarios
+    scenarios = SCENARIOS
+    if args.scenarios:
+        requested = [s.strip() for s in args.scenarios.split(",")]
+        scenarios = [s for s in SCENARIOS if s in requested]
+        unknown = [s for s in requested if s not in SCENARIOS]
+        if unknown:
+            print(f"[!] Cenários desconhecidos ignorados: {unknown}")
+
+    run_experiments(num_runs=args.runs, time_limit=args.time,
+                    algorithms=algos, scenarios=scenarios)
