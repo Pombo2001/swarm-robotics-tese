@@ -65,8 +65,15 @@ class FlattenMultiAgentVecEnv(VecEnvWrapper):
         
         expanded_infos = []
         for info in infos:
-            for _ in range(self.num_agents):
-                expanded_infos.append(info.copy() if isinstance(info, dict) else info)
+            if "terminal_observation" in info:
+                term_obs = info["terminal_observation"]
+                for j in range(self.num_agents):
+                    inf = info.copy()
+                    inf["terminal_observation"] = term_obs[j]
+                    expanded_infos.append(inf)
+            else:
+                for _ in range(self.num_agents):
+                    expanded_infos.append(info.copy() if isinstance(info, dict) else info)
                 
         return obs, rewards, dones, expanded_infos
 

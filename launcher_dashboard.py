@@ -207,11 +207,11 @@ class ModernDashboardV6Pro(ctk.CTk):
             "run_experiments": "run_experiments.py"
         }
 
-    def run_script(self, script, args=None):
-        if args is None:
-            args = []
+    def run_script(self, script, args=None, no_console=False):
+        if args is None: args = []
         full_path = os.path.join(self.base_dir, script)
-        return subprocess.Popen([sys.executable, full_path] + args, creationflags=subprocess.CREATE_NEW_CONSOLE)
+        flags = subprocess.CREATE_NO_WINDOW if no_console else subprocess.CREATE_NEW_CONSOLE
+        return subprocess.Popen([sys.executable, full_path] + args, creationflags=flags)
 
     def update_calculated_time(self, event=None):
         try:
@@ -321,15 +321,15 @@ class ModernDashboardV6Pro(ctk.CTk):
 
     def viz_gnn(self):
         self.save_current_config()
-        self.run_script(self.get_paths()["viz_gnn"])
+        self.run_script(self.get_paths()["viz_gnn"], no_console=True)
 
     def viz_ppo(self):
         self.save_current_config()
-        self.run_script(self.get_paths()["viz_ppo"])
+        self.run_script(self.get_paths()["viz_ppo"], no_console=True)
 
     def viz_sac(self):
         self.save_current_config()
-        self.run_script(self.get_paths()["viz_sac"])
+        self.run_script(self.get_paths()["viz_sac"], no_console=True)
 
     def plot_thesis(self):
         self.run_script(self.get_paths()["plot_script"])

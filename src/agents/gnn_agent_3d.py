@@ -19,7 +19,7 @@ class GNNAgent3D(nn.Module):
         agent_config = config.get('gnn_agent', {})
         self.hidden_dim = agent_config.get('hidden_dim', 64)
 
-        self.env_feats_dim = 8
+        self.env_feats_dim = 12
         self.neighbor_dim = 5
 
         self.encoder = nn.Sequential(
@@ -28,11 +28,15 @@ class GNNAgent3D(nn.Module):
             nn.Linear(self.hidden_dim, self.hidden_dim)
         )
 
-        self.msg_net = nn.Sequential(
+        self.neighbor_embed = nn.Sequential(
             nn.Linear(self.neighbor_dim, self.hidden_dim),
             nn.ReLU(),
             nn.Linear(self.hidden_dim, self.hidden_dim)
         )
+
+        self.query_proj = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.key_proj = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.value_proj = nn.Linear(self.hidden_dim, self.hidden_dim)
 
         self.actor = nn.Sequential(
             nn.Linear(self.hidden_dim * 2, self.hidden_dim),
@@ -56,10 +60,29 @@ class GNNAgent3D(nn.Module):
 
         if num_neighbors > 0:
             neighbors = neighbor_data.view(batch_size, num_neighbors, self.neighbor_dim)
-            msg = self.msg_net(neighbors)
-            msg_pool = msg.mean(dim=1)
+            h_neighbors = self.neighbor_embed(neighbors)
+            
+            # Combine ego node and neighbor nodes to allow self-attention
+            h_env_expanded = h_env.unsqueeze(1)
+            h_all = torch.cat([h_env_expanded, h_neighbors], dim=1)
+            
+            # QKV Projections
+            Q = self.query_proj(h_env_expanded)
+            K = self.key_proj(h_all)
+            V = self.value_proj(h_all)
+            
+            # Scaled Dot Product Attention
+            scores = torch.bmm(Q, K.transpose(1, 2)) / (self.hidden_dim ** 0.5)
+            alpha = F.softmax(scores, dim=-1)
+            
+            msg_pool = torch.bmm(alpha, V).squeeze(1)
         else:
-            msg_pool = torch.zeros((batch_size, self.hidden_dim), device=obs.device)
+            Q = self.query_proj(h_env.unsqueeze(1))
+            K = self.key_proj(h_env.unsqueeze(1))
+            V = self.value_proj(h_env.unsqueeze(1))
+            scores = torch.bmm(Q, K.transpose(1, 2)) / (self.hidden_dim ** 0.5)
+            alpha = F.softmax(scores, dim=-1)
+            msg_pool = torch.bmm(alpha, V).squeeze(1)
 
         combined = torch.cat([h_env, msg_pool], dim=1)
         action = self.actor(combined)

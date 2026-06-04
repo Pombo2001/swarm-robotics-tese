@@ -47,9 +47,9 @@ model_path = os.path.join(base_dir, 'results', 'models_ppo', 'ppo_3d_final')
 if os.path.exists(model_path + ".zip"):
     os.chmod(model_path + ".zip", 0o666)
     model = PPO.load(model_path, device='cpu')
-    print(f"✅ Modelo PPO 3D carregado: {model_path}")
+    print(f"[OK] Modelo PPO 3D carregado: {model_path}")
 else:
-    print(f"❌ Erro: {model_path}.zip não encontrado!")
+    print(f"[ERRO] {model_path}.zip não encontrado!")
     sys.exit()
 
 Entity(model='cube', scale=env.arena_radius * 2, color=color.rgba(255, 255, 255, 30), double_sided=True)

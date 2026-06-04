@@ -39,6 +39,10 @@ class SwarmForagingEnv3D(gym.Env):
         self.progress_reward_factor = env_config.get('progress_reward_factor', 50.0)
         self.obstacle_penalty = env_config.get('obstacle_penalty', -2.0)
 
+        rewards_config = self.config.get('rewards', {})
+        self.energy_cost = rewards_config.get('energy_cost', -0.05)
+        self.food_collected_reward = rewards_config.get('food_collected', 100.0)
+
         self.deaths_count = 0
         self.total_food_collected = 0
         self.current_nest_occupancy = 0
@@ -47,7 +51,7 @@ class SwarmForagingEnv3D(gym.Env):
 
         self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
 
-        obs_size = 8 + (self.num_agents - 1) * 5
+        obs_size = 12 + (self.num_agents - 1) * 5
         self.observation_space_val = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32)
 
         self.action_spaces = {a: self.action_space_val for a in self.agents}
@@ -168,34 +172,34 @@ class SwarmForagingEnv3D(gym.Env):
         self.obstacles = []
         self.obstacle_velocities = []
         self.walls = [
-            {'pos': np.array([0.0, 5.0, 0.0]), 'size': np.array([20.0, 2.0, 30.0])},
-            {'pos': np.array([-9.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, 30.0])},
-            {'pos': np.array([9.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, 30.0])}
+            {'pos': np.array([0.0, 3.0, 0.0]), 'size': np.array([12.0, 2.0, 30.0])},
+            {'pos': np.array([-5.0, 0.0, 0.0]), 'size': np.array([2.0, 6.0, 30.0])},
+            {'pos': np.array([5.0, 0.0, 0.0]), 'size': np.array([2.0, 6.0, 30.0])}
         ]
 
     def _spawn_obstacles_bottleneck(self):
         self.obstacles = []
         self.obstacle_velocities = []
-        # PORTAS À JUSTA: Para um diâmetro de robot de 0.3m, a porta tem exatamente 0.35m de largura.
+        # PORTAS ALARGADAS: Passagem central de 1.5 metros de largura.
         self.walls = [
-            {'pos': np.array([-20.175, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])},
-            {'pos': np.array([20.175, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])}
+            {'pos': np.array([-20.75, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])},
+            {'pos': np.array([20.75, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])}
         ]
 
     def _spawn_obstacles_maze(self):
         self.obstacles = []
         self.obstacle_velocities = []
-        # LABIRINTO À JUSTA: Passagens estreitas de 0.35m encostadas às paredes exteriores.
+        # LABIRINTO ALARGADO: Passagens de 1.5 metros encostadas às paredes exteriores.
         self.walls = [
             # Eixo Horizontal Y=0
             {'pos': np.array([-12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
-            {'pos': np.array([0.0, 0.0, 0.0]), 'size': np.array([19.65, 1.5, 30.0])},
+            {'pos': np.array([0.0, 0.0, 0.0]), 'size': np.array([17.35, 1.5, 30.0])},
             {'pos': np.array([12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
             
-            # Eixo Vertical X=0
+            # Eixo Vertical X=0 (dividido para não sobrepor o centro horizontal)
             {'pos': np.array([0.0, -12.5875, 0.0]), 'size': np.array([1.5, 4.825, 30.0])},
-            {'pos': np.array([0.0, -5.2875, 0.0]), 'size': np.array([1.5, 9.075, 30.0])},
-            {'pos': np.array([0.0, 5.2875, 0.0]), 'size': np.array([1.5, 9.075, 30.0])},
+            {'pos': np.array([0.0, -4.7125, 0.0]), 'size': np.array([1.5, 7.925, 30.0])},
+            {'pos': np.array([0.0, 4.7125, 0.0]), 'size': np.array([1.5, 7.925, 30.0])},
             {'pos': np.array([0.0, 12.5875, 0.0]), 'size': np.array([1.5, 4.825, 30.0])}
         ]
 
@@ -264,26 +268,68 @@ class SwarmForagingEnv3D(gym.Env):
                 local_dir_nest = np.array([0.0, 0.0, 0.0])
                 norm_dist_nest = 1.0
 
-            closest_dist = 5.0
-            local_dir_obs = np.array([0.0, 0.0, 0.0])
+            # ---------------- LiDAR RAYCASTING (8 Rays) ----------------
+            num_rays = 8
+            ray_angles = np.linspace(0, 2 * np.pi, num_rays, endpoint=False)
+            max_ray_dist = 5.0
+            lidar_sensor_vals = np.zeros(num_rays, dtype=np.float32)
 
-            for obs in self.obstacles:
-                local_dir, dist = to_egocentric(obs)
-                d = dist - self.obstacle_radius - self.robot_radius
-                if d < closest_dist:
-                    closest_dist = d
-                    local_dir_obs = local_dir
+            # Project heading to horizontal plane for LiDAR to ensure robust wall detection even if pitching
+            F_horiz = np.array([F[0], F[1], 0.0])
+            if np.linalg.norm(F_horiz) < 1e-6:
+                F_horiz = np.array([1.0, 0.0, 0.0])
+            else:
+                F_horiz /= np.linalg.norm(F_horiz)
+            R_horiz = np.array([-F_horiz[1], F_horiz[0], 0.0])
 
-            for wall in self.walls:
-                half_size = wall['size'] / 2.0
-                closest_point = np.clip(pos, wall['pos'] - half_size, wall['pos'] + half_size)
-                local_dir, dist = to_egocentric(closest_point)
-                d = dist - self.robot_radius
-                if d < closest_dist:
-                    closest_dist = d
-                    local_dir_obs = local_dir
+            for i, angle in enumerate(ray_angles):
+                # Calculate global direction of the ray based on robot's horizontal heading
+                ray_dir = np.cos(angle) * F_horiz + np.sin(angle) * R_horiz
+                ray_end = pos + ray_dir * max_ray_dist
+                
+                closest_dist = max_ray_dist
+                
+                # Check intersection with walls (AABB)
+                for wall in self.walls:
+                    half_size = wall['size'] / 2.0
+                    w_min = wall['pos'] - half_size
+                    w_max = wall['pos'] + half_size
+                    
+                    t_min = 0.0
+                    t_max = 1.0
+                    
+                    for axis in range(2): # Only X and Y
+                        d = ray_end[axis] - pos[axis]
+                        if abs(d) < 1e-6:
+                            if pos[axis] < w_min[axis] or pos[axis] > w_max[axis]:
+                                t_max = -1.0
+                                break
+                        else:
+                            t1 = (w_min[axis] - pos[axis]) / d
+                            t2 = (w_max[axis] - pos[axis]) / d
+                            if t1 > t2:
+                                t1, t2 = t2, t1
+                            t_min = max(t_min, t1)
+                            t_max = min(t_max, t2)
+                            
+                    if t_max >= t_min and t_max >= 0.0 and t_min <= 1.0:
+                        hit_dist = t_min * max_ray_dist
+                        if hit_dist < closest_dist:
+                            closest_dist = hit_dist
+                            
+                # Check intersection with moving obstacles
+                for obs in self.obstacles:
+                    vec = obs - pos
+                    proj = np.dot(vec, ray_dir)
+                    if proj > 0:
+                        perp_dist = np.linalg.norm(vec - proj * ray_dir)
+                        if perp_dist <= self.obstacle_radius:
+                            hit_dist = proj - np.sqrt(self.obstacle_radius**2 - perp_dist**2)
+                            if hit_dist > 0 and hit_dist < closest_dist:
+                                closest_dist = hit_dist
 
-            sensor_val = 1.0 - np.clip(closest_dist / 1.0, 0, 1.0)
+                # Normalize lidar: 1.0 means crash, 0.0 means free path
+                lidar_sensor_vals[i] = 1.0 - (closest_dist / max_ray_dist)
 
             neighbor_feats = []
             for j, other_pos in enumerate(self.agent_positions):
@@ -294,7 +340,7 @@ class SwarmForagingEnv3D(gym.Env):
 
             obs = np.concatenate([
                 local_dir_nest, [norm_dist_nest],
-                local_dir_obs, [sensor_val],
+                lidar_sensor_vals,
                 np.array(neighbor_feats)
             ]).astype(np.float32)
 
@@ -459,7 +505,7 @@ class SwarmForagingEnv3D(gym.Env):
                     self._spawn_nest()
                 for idx in range(self.num_agents):
                     if idx in robots_in_nest:
-                        rewards[self.agents[idx]] += 500.0
+                        rewards[self.agents[idx]] += self.food_collected_reward
                         self.agent_positions[idx] = self._get_scenario_spawn_pos()
                         self.hunger_timers[idx] = 0
                     self.prev_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
@@ -480,7 +526,7 @@ class SwarmForagingEnv3D(gym.Env):
                 pass
             else:
                 progress = self.prev_dist_to_nest[idx] - dist_nest
-                rewards[agent] += progress * self.progress_reward_factor
+                rewards[agent] += (progress * self.progress_reward_factor) + self.energy_cost
                 self.hunger_timers[idx] += 1
 
             self.prev_dist_to_nest[idx] = dist_nest

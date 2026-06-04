@@ -49,9 +49,9 @@ if os.path.exists(model_path):
     os.chmod(model_path, 0o666)
     agent.load_state_dict(torch.load(model_path, weights_only=True))
     agent.eval()
-    print(f"✅ Modelo GNN 3D carregado: {model_path}")
+    print(f"[OK] Modelo GNN 3D carregado: {model_path}")
 else:
-    print(f"❌ Erro: {model_path} não encontrado!")
+    print(f"[ERRO] {model_path} não encontrado!")
     sys.exit()
 
 Entity(model='cube', scale=env.arena_radius * 2, color=color.rgba(255, 255, 255, 30), double_sided=True)

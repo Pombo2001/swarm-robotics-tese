@@ -71,7 +71,9 @@ class GeneticTrainer3D:
         evo_config = self.config.get('evolution', {})
         self.pop_size = evo_config.get('pop_size', 30)
         self.mutation_rate = evo_config.get('mutation_rate', 0.10)
-        self.sigma = evo_config.get('sigma', 0.2)
+        self.sigma = 0.1  # Override yaml's aggressive 0.2
+        self.sigma_min = 0.01
+        self.sigma_decay = 0.995
 
         self.population = []
         for i in range(self.pop_size):
@@ -93,9 +95,9 @@ class GeneticTrainer3D:
     def train(self):
         num_cores = min(8, cpu_count())
 
-        print(f"🚁 Treino GNN 3D Iniciado (Meta: Orçamento de {self.time_limit_seconds / 60:.1f} minutos)")
-        print(f"⚡ ACELERAÇÃO ATIVA: {num_cores} NÚCLEOS DO RYZEN A AVALIAR EM PARALELO!")
-        print("🔧 Funcionalidades: Pure Evolution + Guilhotina")
+        print(f"[START] Treino GNN 3D Iniciado (Meta: Orcamento de {self.time_limit_seconds / 60:.1f} minutos)")
+        print(f"[ACELERACAO] {num_cores} NUCLEOS DO RYZEN A AVALIAR EM PARALELO!")
+        print("[INFO] Funcionalidades: Pure Evolution + Guilhotina")
 
         global_timestep = 0
         overall_start_time = time.time()
@@ -105,7 +107,7 @@ class GeneticTrainer3D:
             while True:
                 cumulative_time = time.time() - overall_start_time
                 if cumulative_time >= self.time_limit_seconds:
-                    print(f"\n⏱️ FIM DO TEMPO! O cronómetro atingiu o limite. A fechar e guardar o modelo...")
+                    print(f"\n[FIM DO TEMPO] O cronometro atingiu o limite. A fechar e guardar o modelo...")
                     break
 
                 args_list = [(self.population[i], self.config_path) for i in range(self.pop_size)]
@@ -129,15 +131,19 @@ class GeneticTrainer3D:
                     child = copy.deepcopy(population_sorted[parent_idx])
 
                     for key in child.keys():
-                        if np.random.rand() < self.mutation_rate:
-                            child[key] += torch.randn_like(child[key]) * self.sigma
+                        # Element-wise mutation
+                        mask = (torch.rand_like(child[key]) < self.mutation_rate).float()
+                        child[key] += mask * torch.randn_like(child[key]) * self.sigma
 
                     new_population.append(child)
 
                 self.population = new_population
 
                 print(
-                    f"Gen {gen} | Timesteps: {global_timestep} | Melhor: {scores[0]:.2f} | Média: {np.mean(scores):.2f} | Tempo: {cumulative_time:.2f}s")
+                    f"Gen {gen} | Timesteps: {global_timestep} | Melhor: {scores[0]:.2f} | Média: {np.mean(scores):.2f} | Sigma: {self.sigma:.4f} | Tempo: {cumulative_time:.2f}s")
+                
+                # Apply Adaptive Mutation (Decay)
+                self.sigma = max(self.sigma_min, self.sigma * self.sigma_decay)
 
                 with open(self.history_file, 'a', newline='') as f:
                     writer = csv.writer(f)
