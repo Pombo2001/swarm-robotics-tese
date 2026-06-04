@@ -1022,7 +1022,8 @@ class SwarmController(ctk.CTk):
 
     def _viz(self, algo):
         self._save_config()
-        self._run_script(self._get_paths()[f"viz_{algo}"], console=False)
+        self._run_script("visualization/main_visualizer.py",
+                         args=["--algo", algo.lower()], console=False)
 
     def _plot_thesis(self):
         self._run_script(self._get_paths()["plot"])
