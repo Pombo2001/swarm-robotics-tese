@@ -7,16 +7,22 @@ import time
 import yaml
 from datetime import timedelta
 
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
 
 SCENARIOS = [
-    ("Nenhum (Sandbox)",                "none"),
-    ("Beco Sem Saída (Muro U)",          "u_wall"),
-    ("Gargalo (Porta Estreita)",         "bottleneck"),
-    ("Quatro Salas (Labirinto)",         "four_rooms"),
-    ("Porta Cooperativa (3 Robôs)",      "cooperative_door"),
-    ("Perceção Cooperativa (Alvo Móvel)","cooperative_perception"),
+    ("Nenhum (Sandbox)",                 "none"),
+    ("Beco Sem Saída (Muro U)",           "u_wall"),
+    ("Gargalo (Porta Estreita)",          "bottleneck"),
+    ("Quatro Salas (Labirinto)",          "four_rooms"),
+    ("Porta Cooperativa (3 Robôs)",       "cooperative_door"),
+    ("Perceção Cooperativa (Alvo Móvel)", "cooperative_perception"),
 ]
 SCENARIO_LABELS = [s[0] for s in SCENARIOS]
 SCENARIO_KEYS   = {s[0]: s[1] for s in SCENARIOS}
@@ -27,20 +33,60 @@ ALGO_META = {
     "SAC": {"color": "#FF6B6B", "icon": "🔥", "label": "SAC (Soft Actor-Critic)"},
 }
 
+# Gráficos disponíveis por categoria
+GRAPH_CATEGORIES = [
+    ("🗺  Por Mapa", [
+        ("Sandbox",           "comparacao_mapa_none.png"),
+        ("Muro U",            "comparacao_mapa_u_wall.png"),
+        ("Gargalo",           "comparacao_mapa_bottleneck.png"),
+        ("Quatro Salas",      "comparacao_mapa_four_rooms.png"),
+        ("Porta Cooperativa", "comparacao_mapa_cooperative_door.png"),
+        ("Perceção Coop.",    "comparacao_mapa_cooperative_perception.png"),
+    ]),
+    ("📈  Por Algoritmo", [
+        ("GNN – Curva Global", "desempenho_global_gnn.png"),
+        ("PPO – Curva Global", "desempenho_global_ppo.png"),
+        ("SAC – Curva Global", "desempenho_global_sac.png"),
+    ]),
+    ("📦  Boxplots", [
+        ("Sandbox",           "boxplot_none.png"),
+        ("Muro U",            "boxplot_u_wall.png"),
+        ("Gargalo",           "boxplot_bottleneck.png"),
+        ("Quatro Salas",      "boxplot_four_rooms.png"),
+        ("Porta Cooperativa", "boxplot_cooperative_door.png"),
+        ("Perceção Coop.",    "boxplot_cooperative_perception.png"),
+    ]),
+    ("🏆  Geral", [
+        ("Comparação Barras", "comparacao_barras_geral.png"),
+    ]),
+]
+
+# Nomes alternativos (formatos antigos) para fallback
+GRAPH_FALLBACKS = {
+    "comparacao_mapa_none.png":                    ["comparacao_none.png"],
+    "comparacao_mapa_u_wall.png":                  ["comparacao_u_wall.png"],
+    "comparacao_mapa_bottleneck.png":              ["comparacao_bottleneck.png"],
+    "comparacao_mapa_four_rooms.png":              ["comparacao_four_rooms.png"],
+    "comparacao_mapa_cooperative_door.png":        ["comparacao_cooperative_door.png"],
+    "comparacao_mapa_cooperative_perception.png":  ["comparacao_cooperative_perception.png"],
+}
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper widgets
 # ─────────────────────────────────────────────────────────────────────────────
 
 def section(parent, title, **kwargs):
     f = ctk.CTkFrame(parent, fg_color="#1E2128", corner_radius=10, **kwargs)
-    ctk.CTkLabel(f, text=title, font=("Roboto", 11, "bold"), text_color="#6B7280").pack(
-        anchor="w", padx=14, pady=(10, 4))
+    ctk.CTkLabel(f, text=title, font=("Roboto", 11, "bold"),
+                 text_color="#6B7280").pack(anchor="w", padx=14, pady=(10, 4))
     return f
 
 def labeled_entry(parent, label, default, width=70):
     row = ctk.CTkFrame(parent, fg_color="transparent")
     row.pack(fill="x", padx=14, pady=3)
-    ctk.CTkLabel(row, text=label, font=("Roboto", 12), text_color="#D1D5DB").pack(side="left")
+    ctk.CTkLabel(row, text=label, font=("Roboto", 12),
+                 text_color="#D1D5DB").pack(side="left")
     e = ctk.CTkEntry(row, width=width, height=28, font=("Roboto", 12),
                      fg_color="#2A2D35", border_color="#3A3F4C")
     e.insert(0, str(default))
@@ -75,17 +121,23 @@ class SwarmController(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Swarm Robotics Controller")
-        self.geometry("1480x820")
+        self.geometry("1500x860")
         self.minsize(1200, 700)
 
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.config_path = os.path.join(self.base_dir, "configs", "foraging.yaml")
 
-        # Process handles & timers
         self.procs   = {"GNN": None, "PPO": None, "SAC": None}
         self.t_start = {"GNN": None, "PPO": None, "SAC": None}
         self.tour_process = None
         self.tour_start   = None
+
+        self._current_session_path = None
+        self._current_img_ref      = None
+        self._active_graph_btn     = None
+        self._session_btns         = {}
+        self._session_dir_map      = {}
+        self._graph_btns           = {}
 
         self._build_layout()
         self._load_config()
@@ -97,14 +149,12 @@ class SwarmController(ctk.CTk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # Sidebar
         sb = ctk.CTkFrame(self, width=270, corner_radius=0, fg_color="#13151A")
         sb.grid(row=0, column=0, sticky="nsew")
         sb.grid_propagate(False)
         sb.grid_rowconfigure(10, weight=1)
         self._build_sidebar(sb)
 
-        # Main (tabbed)
         main = ctk.CTkFrame(self, fg_color="#0F1117", corner_radius=0)
         main.grid(row=0, column=1, sticky="nsew")
         main.grid_rowconfigure(1, weight=1)
@@ -112,7 +162,6 @@ class SwarmController(ctk.CTk):
         self._build_main(main)
 
     def _build_sidebar(self, sb):
-        # Title
         ctk.CTkLabel(sb, text="SWARM\nCONTROLLER",
                      font=("Roboto Black", 24, "bold"), text_color="#FFFFFF"
                      ).grid(row=0, column=0, padx=20, pady=(28, 4))
@@ -120,7 +169,6 @@ class SwarmController(ctk.CTk):
                      font=("Consolas", 11, "bold"), text_color="#00C896"
                      ).grid(row=1, column=0, pady=(0, 20))
 
-        # Cenário
         f_scen = section(sb, "CENÁRIO ATIVO")
         f_scen.grid(row=2, column=0, padx=12, pady=(0, 8), sticky="ew")
         self.combo_scenario = ctk.CTkOptionMenu(
@@ -130,28 +178,22 @@ class SwarmController(ctk.CTk):
             command=self._on_scenario_change)
         self.combo_scenario.pack(padx=12, pady=(0, 12), fill="x")
 
-        # Config
         f_cfg = section(sb, "CONFIGURAÇÃO DA ARENA")
         f_cfg.grid(row=3, column=0, padx=12, pady=(0, 8), sticky="ew")
-        self.e_drones  = labeled_entry(f_cfg, "Drones:",    20)
-        self.e_obs     = labeled_entry(f_cfg, "Obstáculos:", 50)
-        self.e_radius  = labeled_entry(f_cfg, "Raio Arena:", 15.0)
+        self.e_drones = labeled_entry(f_cfg, "Drones:",     20)
+        self.e_obs    = labeled_entry(f_cfg, "Obstáculos:", 50)
+        self.e_radius = labeled_entry(f_cfg, "Raio Arena:", 15.0)
         ctk.CTkFrame(f_cfg, height=8, fg_color="transparent").pack()
-
-        # Botão guardar config
         primary_btn(f_cfg, "💾  Guardar Config", self._save_config,
                     color="#374151", height=32).pack(padx=12, pady=(0, 12), fill="x")
 
-        # Separador
         ctk.CTkFrame(sb, height=1, fg_color="#2A2D35").grid(
             row=4, column=0, padx=12, pady=8, sticky="ew")
 
-        # Plot
         primary_btn(sb, "📊  Gerar Gráficos da Tese",
                     self._plot_thesis, color="#0D7377", height=40
                     ).grid(row=9, column=0, padx=12, pady=6, sticky="ew")
 
-        # Viz buttons
         f_viz = section(sb, "VISUALIZAÇÃO 3D")
         f_viz.grid(row=10, column=0, padx=12, pady=(0, 12), sticky="sew")
         for algo, meta in ALGO_META.items():
@@ -162,19 +204,19 @@ class SwarmController(ctk.CTk):
         ctk.CTkFrame(f_viz, height=8, fg_color="transparent").pack()
 
     def _build_main(self, main):
-        # Tab bar
         tab_bar = ctk.CTkFrame(main, fg_color="#13151A", height=50, corner_radius=0)
         tab_bar.grid(row=0, column=0, sticky="ew")
-        self._tab_btns = {}
+        self._tab_btns   = {}
         self._active_tab = ctk.StringVar(value="rapido")
         tabs = [
-            ("rapido",   "⚡  Treino Rápido"),
-            ("tour",     "🗺  Tour de Mapas"),
-            ("noturno",  "🌙  Rotina Noturna"),
+            ("rapido",     "⚡  Treino Rápido"),
+            ("tour",       "🗺  Tour de Mapas"),
+            ("noturno",    "🌙  Rotina Noturna"),
+            ("resultados", "📈  Resultados"),
         ]
         for key, label in tabs:
             b = ctk.CTkButton(
-                tab_bar, text=label, width=200, height=50,
+                tab_bar, text=label, width=190, height=50,
                 fg_color="transparent", hover_color="#1E2128",
                 text_color="#9CA3AF", font=("Roboto", 13, "bold"),
                 corner_radius=0,
@@ -182,16 +224,16 @@ class SwarmController(ctk.CTk):
             b.pack(side="left")
             self._tab_btns[key] = b
 
-        # Content area
         self._content = ctk.CTkFrame(main, fg_color="transparent")
         self._content.grid(row=1, column=0, sticky="nsew", padx=16, pady=16)
         self._content.grid_rowconfigure(0, weight=1)
         self._content.grid_columnconfigure(0, weight=1)
 
         self._pages = {}
-        self._pages["rapido"]  = self._build_page_rapido(self._content)
-        self._pages["tour"]    = self._build_page_tour(self._content)
-        self._pages["noturno"] = self._build_page_noturno(self._content)
+        self._pages["rapido"]     = self._build_page_rapido(self._content)
+        self._pages["tour"]       = self._build_page_tour(self._content)
+        self._pages["noturno"]    = self._build_page_noturno(self._content)
+        self._pages["resultados"] = self._build_page_resultados(self._content)
 
         self._switch_tab("rapido")
 
@@ -200,10 +242,9 @@ class SwarmController(ctk.CTk):
             p.grid_remove()
         self._pages[key].grid(row=0, column=0, sticky="nsew")
         for k, b in self._tab_btns.items():
-            if k == key:
-                b.configure(text_color="#FFFFFF", fg_color="#1E2128")
-            else:
-                b.configure(text_color="#9CA3AF", fg_color="transparent")
+            b.configure(
+                text_color="#FFFFFF" if k == key else "#9CA3AF",
+                fg_color="#1E2128"   if k == key else "transparent")
         self._active_tab.set(key)
 
     # ── Page: Treino Rápido ─────────────────────────────────────────────────
@@ -213,10 +254,8 @@ class SwarmController(ctk.CTk):
         page.grid_rowconfigure(1, weight=1)
         page.grid_columnconfigure((0, 1, 2), weight=1)
 
-        # Top bar: Start All
         top = ctk.CTkFrame(page, fg_color="#1E2128", corner_radius=10)
         top.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(0, 14))
-
         inner = ctk.CTkFrame(top, fg_color="transparent")
         inner.pack(pady=14, padx=20)
 
@@ -226,12 +265,9 @@ class SwarmController(ctk.CTk):
                                    fg_color="#2A2D35", border_color="#3A3F4C")
         self.e_time.insert(0, "480")
         self.e_time.pack(side="left", padx=(0, 20))
-
         primary_btn(inner, "🚀  INICIAR OS 3 ALGORITMOS",
-                    self._start_all, color="#DC2626", height=40
-                    ).pack(side="left")
+                    self._start_all, color="#DC2626", height=40).pack(side="left")
 
-        # Algo cards
         for col, (algo, meta) in enumerate(ALGO_META.items()):
             self._build_algo_card(page, algo, meta, col)
 
@@ -244,16 +280,13 @@ class SwarmController(ctk.CTk):
         card.grid_rowconfigure(2, weight=1)
         card.grid_columnconfigure(0, weight=1)
 
-        # Header
-        hdr = ctk.CTkFrame(card, fg_color="#13151A", corner_radius=10,
-                           height=60)
+        hdr = ctk.CTkFrame(card, fg_color="#13151A", corner_radius=10, height=60)
         hdr.grid(row=0, column=0, sticky="ew", padx=12, pady=(12, 0))
         hdr.grid_propagate(False)
         ctk.CTkLabel(hdr, text=f"{meta['icon']}  {meta['label']}",
                      font=("Roboto", 16, "bold"), text_color=meta["color"]
                      ).place(relx=0.5, rely=0.5, anchor="center")
 
-        # Status / timer
         info = ctk.CTkFrame(card, fg_color="transparent")
         info.grid(row=1, column=0, sticky="ew", padx=12, pady=8)
         lbl_st = ctk.CTkLabel(info, text="● PARADO",
@@ -263,7 +296,6 @@ class SwarmController(ctk.CTk):
                                font=("Consolas", 20, "bold"), text_color="#D1D5DB")
         lbl_tm.pack()
 
-        # Metric box
         metric_box = ctk.CTkFrame(card, fg_color="#13151A", corner_radius=8)
         metric_box.grid(row=2, column=0, sticky="nsew", padx=12, pady=4)
         lbl_metric = ctk.CTkLabel(metric_box, text="—",
@@ -273,10 +305,8 @@ class SwarmController(ctk.CTk):
                      font=("Roboto", 10), text_color="#4B5563"
                      ).place(relx=0.5, rely=0.72, anchor="center")
 
-        # Buttons
         btns = ctk.CTkFrame(card, fg_color="transparent")
         btns.grid(row=3, column=0, sticky="ew", padx=12, pady=(4, 14))
-
         primary_btn(btns, f"▶  Treinar só {algo}",
                     lambda a=algo: self._start_one(a),
                     color=meta["color"], height=38).pack(fill="x", pady=3)
@@ -284,7 +314,6 @@ class SwarmController(ctk.CTk):
                   lambda a=algo: self._stop_one(a),
                   color="#F44336", height=32).pack(fill="x", pady=2)
 
-        # Store refs
         setattr(self, f"lbl_{algo}_status", lbl_st)
         setattr(self, f"lbl_{algo}_timer",  lbl_tm)
         setattr(self, f"lbl_{algo}_metric", lbl_metric)
@@ -296,27 +325,21 @@ class SwarmController(ctk.CTk):
         page.grid_columnconfigure(0, weight=1)
         page.grid_rowconfigure(1, weight=1)
 
-        # Header card
         hdr = ctk.CTkFrame(page, fg_color="#1E2128", corner_radius=10)
         hdr.grid(row=0, column=0, sticky="ew", pady=(0, 14))
-
-        ctk.CTkLabel(hdr,
-                     text="🗺  Tour de Mapas — Treinar um Algoritmo em Todos os Cenários",
+        ctk.CTkLabel(hdr, text="🗺  Tour de Mapas — Treinar um Algoritmo em Todos os Cenários",
                      font=("Roboto", 15, "bold"), text_color="#FFFFFF"
                      ).pack(pady=(16, 4), padx=20, anchor="w")
-        ctk.CTkLabel(hdr,
-                     text="Corre o algoritmo escolhido sequencialmente em cada um dos 6 cenários.",
+        ctk.CTkLabel(hdr, text="Corre o algoritmo escolhido sequencialmente em cada um dos 6 cenários.",
                      font=("Roboto", 12), text_color="#6B7280"
                      ).pack(pady=(0, 14), padx=20, anchor="w")
 
-        # Body: 2 columns
         body = ctk.CTkFrame(page, fg_color="transparent")
         body.grid(row=1, column=0, sticky="nsew")
         body.grid_columnconfigure(0, weight=1)
         body.grid_columnconfigure(1, weight=2)
         body.grid_rowconfigure(0, weight=1)
 
-        # Left: config
         left = ctk.CTkFrame(body, fg_color="#1E2128", corner_radius=10)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
         left.grid_columnconfigure(0, weight=1)
@@ -325,7 +348,6 @@ class SwarmController(ctk.CTk):
                      font=("Roboto", 11, "bold"), text_color="#6B7280"
                      ).pack(anchor="w", padx=16, pady=(16, 8))
 
-        # Algorithm selector
         ctk.CTkLabel(left, text="Algoritmo a treinar:",
                      font=("Roboto", 13), text_color="#D1D5DB"
                      ).pack(anchor="w", padx=16, pady=(8, 2))
@@ -340,19 +362,16 @@ class SwarmController(ctk.CTk):
                 fg_color=meta["color"] if algo == "GNN" else "#2A2D35",
                 hover_color=meta["color"],
                 text_color="#FFFFFF" if algo == "GNN" else "#9CA3AF",
-                font=("Roboto", 12, "bold"),
-                corner_radius=8,
+                font=("Roboto", 12, "bold"), corner_radius=8,
                 command=lambda a=algo: self._select_tour_algo(a))
             b.pack(side="left", padx=3)
             self._tour_algo_btns[algo] = b
 
-        # Params
         params = ctk.CTkFrame(left, fg_color="transparent")
         params.pack(fill="x", padx=16)
         self.e_tour_runs = labeled_entry(params, "Runs por cenário:", 3)
         self.e_tour_time = labeled_entry(params, "Minutos por run:", 20)
 
-        # Estimated time label
         self.lbl_tour_est = ctk.CTkLabel(
             left, text="", font=("Roboto", 11, "italic"), text_color="#6B7280")
         self.lbl_tour_est.pack(padx=16, pady=(8, 0))
@@ -360,8 +379,6 @@ class SwarmController(ctk.CTk):
         self.e_tour_time.bind("<KeyRelease>", self._update_tour_est)
 
         ctk.CTkFrame(left, height=1, fg_color="#2A2D35").pack(fill="x", padx=16, pady=16)
-
-        # Start / Stop tour
         primary_btn(left, "🚀  INICIAR TOUR",
                     self._start_tour, color="#7C3AED", height=44
                     ).pack(padx=16, pady=4, fill="x")
@@ -369,7 +386,6 @@ class SwarmController(ctk.CTk):
                   self._stop_tour, color="#F44336", height=36
                   ).pack(padx=16, pady=(4, 16), fill="x")
 
-        # Right: status / progress
         right = ctk.CTkFrame(body, fg_color="#1E2128", corner_radius=10)
         right.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
         right.grid_rowconfigure(1, weight=1)
@@ -379,7 +395,6 @@ class SwarmController(ctk.CTk):
                      font=("Roboto", 11, "bold"), text_color="#6B7280"
                      ).pack(anchor="w", padx=16, pady=(16, 8))
 
-        # Status row
         sr = ctk.CTkFrame(right, fg_color="#13151A", corner_radius=8)
         sr.pack(fill="x", padx=16, pady=(0, 12))
         self.lbl_tour_status = ctk.CTkLabel(
@@ -389,7 +404,6 @@ class SwarmController(ctk.CTk):
             sr, text="00:00:00", font=("Consolas", 18, "bold"), text_color="#D1D5DB")
         self.lbl_tour_timer.pack(side="right", padx=16, pady=10)
 
-        # Scenario checklist
         ctk.CTkLabel(right, text="Cenários incluídos:",
                      font=("Roboto", 12), text_color="#9CA3AF"
                      ).pack(anchor="w", padx=16, pady=(4, 6))
@@ -399,18 +413,15 @@ class SwarmController(ctk.CTk):
         for label, key in SCENARIOS:
             row = ctk.CTkFrame(right, fg_color="#13151A", corner_radius=6)
             row.pack(fill="x", padx=16, pady=2)
-
             var = ctk.BooleanVar(value=True)
-            cb = ctk.CTkCheckBox(row, text="", variable=var, width=24,
-                                 checkbox_width=18, checkbox_height=18,
-                                 fg_color="#7C3AED", hover_color="#6D28D9")
-            cb.pack(side="left", padx=(8, 4), pady=8)
+            ctk.CTkCheckBox(row, text="", variable=var, width=24,
+                            checkbox_width=18, checkbox_height=18,
+                            fg_color="#7C3AED", hover_color="#6D28D9"
+                            ).pack(side="left", padx=(8, 4), pady=8)
             ctk.CTkLabel(row, text=label, font=("Roboto", 12),
                          text_color="#D1D5DB").pack(side="left", pady=8)
-            lbl_s = ctk.CTkLabel(row, text="", font=("Consolas", 11),
-                                  text_color="#6B7280")
+            lbl_s = ctk.CTkLabel(row, text="", font=("Consolas", 11), text_color="#6B7280")
             lbl_s.pack(side="right", padx=12, pady=8)
-
             self.tour_scenario_checks[key] = var
             self.tour_scenario_status[key] = lbl_s
 
@@ -421,24 +432,22 @@ class SwarmController(ctk.CTk):
         self.tour_algo_var.set(algo)
         for a, b in self._tour_algo_btns.items():
             meta = ALGO_META[a]
-            if a == algo:
-                b.configure(fg_color=meta["color"], text_color="#FFFFFF")
-            else:
-                b.configure(fg_color="#2A2D35", text_color="#9CA3AF")
+            b.configure(
+                fg_color=meta["color"] if a == algo else "#2A2D35",
+                text_color="#FFFFFF"   if a == algo else "#9CA3AF")
         self._update_tour_est()
 
     def _update_tour_est(self, event=None):
         try:
-            runs = int(self.e_tour_runs.get())
-            mins = int(self.e_tour_time.get())
+            runs     = int(self.e_tour_runs.get())
+            mins     = int(self.e_tour_time.get())
             selected = sum(1 for v in self.tour_scenario_checks.values() if v.get())
             total_mins = runs * mins * selected
             h, m = divmod(total_mins, 60)
             self.lbl_tour_est.configure(
                 text=f"Duração estimada: {h}h {m}m  ({runs * selected} runs no total)")
         except (ValueError, AttributeError):
-            if hasattr(self, "lbl_tour_est"):
-                self.lbl_tour_est.configure(text="")
+            pass
 
     # ── Page: Rotina Noturna ────────────────────────────────────────────────
 
@@ -463,7 +472,6 @@ class SwarmController(ctk.CTk):
         body.grid_columnconfigure(1, weight=1)
         body.grid_rowconfigure(0, weight=1)
 
-        # Config
         left = ctk.CTkFrame(body, fg_color="#1E2128", corner_radius=10)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
 
@@ -494,14 +502,11 @@ class SwarmController(ctk.CTk):
                      font=("Roboto", 11, "italic"), text_color="#6B7280",
                      justify="left").pack(padx=16, pady=(12, 0), anchor="w")
 
-        # Info panel
         right = ctk.CTkFrame(body, fg_color="#1E2128", corner_radius=10)
         right.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
-
         ctk.CTkLabel(right, text="O QUE SERÁ EXECUTADO",
                      font=("Roboto", 11, "bold"), text_color="#6B7280"
                      ).pack(anchor="w", padx=16, pady=(16, 8))
-
         for label, _ in SCENARIOS:
             row = ctk.CTkFrame(right, fg_color="#13151A", corner_radius=6)
             row.pack(fill="x", padx=16, pady=2)
@@ -518,14 +523,249 @@ class SwarmController(ctk.CTk):
     def _update_night_est(self, event=None):
         try:
             horas = float(self.e_night_hours.get())
-            runs = int(self.e_night_runs.get())
+            runs  = int(self.e_night_runs.get())
             total = 6 * 3 * runs
             min_per_run = max(1, int(horas * 60 / total))
             self.lbl_night_est.configure(
                 text=f"~{min_per_run} min/run  ·  {total} runs no total  ·  {horas}h distribuídas")
         except (ValueError, AttributeError):
-            if hasattr(self, "lbl_night_est"):
-                self.lbl_night_est.configure(text="")
+            pass
+
+    # ── Page: Resultados ────────────────────────────────────────────────────
+
+    def _build_page_resultados(self, parent):
+        page = ctk.CTkFrame(parent, fg_color="transparent")
+        page.grid_rowconfigure(1, weight=1)
+        page.grid_columnconfigure(1, weight=1)
+
+        # ── Top action bar ──────────────────────────────────────────────────
+        top = ctk.CTkFrame(page, fg_color="#1E2128", corner_radius=10)
+        top.grid(row=0, column=0, columnspan=2, sticky="ew", pady=(0, 12))
+        inner = ctk.CTkFrame(top, fg_color="transparent")
+        inner.pack(pady=10, padx=16, fill="x")
+
+        ctk.CTkLabel(inner, text="VISUALIZAÇÃO 3D:",
+                     font=("Roboto", 11, "bold"), text_color="#6B7280"
+                     ).pack(side="left", padx=(0, 8))
+        for algo, meta in ALGO_META.items():
+            primary_btn(inner, f"{meta['icon']} {algo}",
+                        lambda a=algo: self._viz(a),
+                        color=meta["color"], height=34
+                        ).pack(side="left", padx=3)
+
+        ctk.CTkFrame(inner, width=1, height=36, fg_color="#3A3F4C").pack(side="left", padx=14)
+        primary_btn(inner, "📊  Gerar Gráficos",
+                    self._plot_thesis, color="#0D7377", height=34
+                    ).pack(side="left", padx=3)
+        primary_btn(inner, "🔄  Recarregar Sessões",
+                    self._refresh_sessions, color="#374151", height=34
+                    ).pack(side="left", padx=3)
+
+        # ── Left: session list + graph selector ────────────────────────────
+        self._left_scroll = ctk.CTkScrollableFrame(
+            page, width=268, fg_color="#1E2128", corner_radius=10,
+            scrollbar_button_color="#2A2D35", scrollbar_button_hover_color="#3A3F4C")
+        self._left_scroll.grid(row=1, column=0, sticky="nsew", padx=(0, 10))
+
+        self._populate_session_list()
+        self._populate_graph_list()
+
+        # ── Right: image viewer ─────────────────────────────────────────────
+        self._img_frame = ctk.CTkFrame(page, fg_color="#1E2128", corner_radius=10)
+        self._img_frame.grid(row=1, column=1, sticky="nsew")
+        self._img_frame.grid_rowconfigure(0, weight=1)
+        self._img_frame.grid_columnconfigure(0, weight=1)
+
+        # Placeholder
+        self._img_placeholder = ctk.CTkLabel(
+            self._img_frame,
+            text="📈\n\nSeleciona uma sessão e um gráfico.",
+            font=("Roboto", 16), text_color="#374151")
+        self._img_placeholder.place(relx=0.5, rely=0.5, anchor="center")
+
+        # Image label (hidden until used)
+        self._img_label = ctk.CTkLabel(self._img_frame, text="", image=None)
+        self._img_label.place(relx=0.5, rely=0.46, anchor="center")
+
+        # Caption below image
+        self._img_caption = ctk.CTkLabel(
+            self._img_frame, text="",
+            font=("Roboto", 10, "italic"), text_color="#4B5563")
+        self._img_caption.place(relx=0.5, rely=0.97, anchor="s")
+
+        # Auto-load most recent session
+        sessions = self._discover_sessions()
+        if sessions:
+            first_label, first_path = sessions[0]
+            self._select_session(first_label, first_path, update_list=False)
+            self.after(300, lambda: self._show_graph("comparacao_barras_geral.png"))
+
+        return page
+
+    def _populate_session_list(self):
+        scroll = self._left_scroll
+
+        # Header + refresh label
+        hdr_row = ctk.CTkFrame(scroll, fg_color="transparent")
+        hdr_row.pack(fill="x", padx=4, pady=(12, 4))
+        ctk.CTkLabel(hdr_row, text="SESSÃO DE TREINO",
+                     font=("Roboto", 11, "bold"), text_color="#6B7280"
+                     ).pack(side="left", padx=8)
+
+        sessions = self._discover_sessions()
+        self._session_btns.clear()
+        self._session_dir_map.clear()
+
+        if not sessions:
+            ctk.CTkLabel(scroll, text="Nenhuma sessão encontrada.\nGera gráficos primeiro.",
+                         font=("Roboto", 11, "italic"), text_color="#4B5563",
+                         justify="center").pack(pady=12)
+            return
+
+        for sess_label, sess_path in sessions:
+            is_first = (sess_label == sessions[0][0])
+            b = ctk.CTkButton(
+                scroll, text=f"  {sess_label}",
+                anchor="w", height=32,
+                fg_color="#374151" if is_first else "#2A2D35",
+                hover_color="#374151",
+                text_color="#FFFFFF" if is_first else "#9CA3AF",
+                font=("Consolas", 10), corner_radius=6,
+                command=lambda sl=sess_label, sp=sess_path: self._select_session(sl, sp))
+            b.pack(fill="x", padx=6, pady=1)
+            self._session_btns[sess_label] = b
+            self._session_dir_map[sess_label] = sess_path
+
+    def _populate_graph_list(self):
+        scroll = self._left_scroll
+        ctk.CTkFrame(scroll, height=1, fg_color="#2A2D35").pack(fill="x", padx=8, pady=(12, 6))
+        ctk.CTkLabel(scroll, text="TIPO DE GRÁFICO",
+                     font=("Roboto", 11, "bold"), text_color="#6B7280"
+                     ).pack(anchor="w", padx=12, pady=(0, 4))
+
+        self._graph_btns.clear()
+        for cat_label, items in GRAPH_CATEGORIES:
+            ctk.CTkLabel(scroll, text=cat_label,
+                         font=("Roboto", 10, "bold"), text_color="#4B5563"
+                         ).pack(anchor="w", padx=12, pady=(10, 2))
+            for item_label, filename in items:
+                b = ctk.CTkButton(
+                    scroll, text=f"   {item_label}",
+                    anchor="w", height=28,
+                    fg_color="transparent", hover_color="#2A2D35",
+                    text_color="#9CA3AF", font=("Roboto", 11),
+                    corner_radius=6,
+                    command=lambda fn=filename: self._show_graph(fn))
+                b.pack(fill="x", padx=6, pady=1)
+                self._graph_btns[filename] = b
+
+        ctk.CTkFrame(scroll, height=16, fg_color="transparent").pack()
+
+    def _discover_sessions(self):
+        base = os.path.join(self.base_dir, "results", "graficos_tese")
+        sessions = []
+        if not os.path.exists(base):
+            return sessions
+
+        for d in sorted(os.listdir(base), reverse=True):
+            if d == "estatisticas":
+                continue
+            path = os.path.join(base, d)
+            if os.path.isdir(path):
+                pngs = [f for f in os.listdir(path) if f.endswith(".png")]
+                if pngs:
+                    sessions.append((d, path))
+
+        est_dir = os.path.join(base, "estatisticas")
+        if os.path.exists(est_dir):
+            for d in sorted(os.listdir(est_dir), reverse=True):
+                path = os.path.join(est_dir, d)
+                if os.path.isdir(path):
+                    pngs = [f for f in os.listdir(path) if f.endswith(".png")]
+                    if pngs:
+                        sessions.append((f"[stats] {d}", path))
+
+        return sessions
+
+    def _refresh_sessions(self):
+        for widget in self._left_scroll.winfo_children():
+            widget.destroy()
+        self._populate_session_list()
+        self._populate_graph_list()
+
+    def _select_session(self, label, path, update_list=True):
+        self._current_session_path = path
+        if update_list:
+            for lbl, btn in self._session_btns.items():
+                btn.configure(
+                    fg_color="#374151" if lbl == label else "#2A2D35",
+                    text_color="#FFFFFF" if lbl == label else "#9CA3AF")
+        # Re-show current graph in new session if one was active
+        if self._active_graph_btn and self._active_graph_btn in self._graph_btns:
+            self._show_graph(self._active_graph_btn)
+
+    def _show_graph(self, filename):
+        self._active_graph_btn = filename
+
+        # Highlight active graph button
+        for fn, btn in self._graph_btns.items():
+            btn.configure(
+                fg_color="#2A2D35"   if fn == filename else "transparent",
+                text_color="#FFFFFF" if fn == filename else "#9CA3AF")
+
+        if not self._current_session_path:
+            return
+
+        # Try primary filename then fallbacks
+        candidates = [filename] + GRAPH_FALLBACKS.get(filename, [])
+        path = None
+        for c in candidates:
+            p = os.path.join(self._current_session_path, c)
+            if os.path.exists(p):
+                path = p
+                break
+
+        if path is None:
+            self._img_placeholder.configure(
+                text=f"📭\n\nGráfico não disponível nesta sessão:\n{filename}",
+                text_color="#4B5563")
+            self._img_placeholder.lift()
+            self._img_label.configure(image=None, text="")
+            self._img_caption.configure(text="")
+            return
+
+        if not PIL_AVAILABLE:
+            self._img_placeholder.configure(
+                text="⚠️  Pillow não instalado.\n\nInstala com:  pip install pillow",
+                text_color="#F59E0B")
+            self._img_placeholder.lift()
+            return
+
+        try:
+            pil_img = Image.open(path).convert("RGBA")
+
+            fw = self._img_frame.winfo_width()  - 40
+            fh = self._img_frame.winfo_height() - 60
+            if fw < 200: fw = 900
+            if fh < 200: fh = 580
+
+            iw, ih = pil_img.size
+            scale   = min(fw / iw, fh / ih, 1.0)
+            new_w   = max(1, int(iw * scale))
+            new_h   = max(1, int(ih * scale))
+            pil_img = pil_img.resize((new_w, new_h), Image.LANCZOS)
+
+            ctk_img = ctk.CTkImage(
+                light_image=pil_img, dark_image=pil_img, size=(new_w, new_h))
+            self._current_img_ref = ctk_img  # prevent GC
+
+            self._img_placeholder.lower()
+            self._img_label.configure(image=ctk_img, text="")
+            self._img_caption.configure(text=os.path.basename(path))
+        except Exception as e:
+            self._img_placeholder.configure(
+                text=f"⚠️  Erro ao carregar imagem:\n{e}", text_color="#F59E0B")
+            self._img_placeholder.lift()
 
     # ── Config helpers ───────────────────────────────────────────────────────
 
@@ -535,9 +775,9 @@ class SwarmController(ctk.CTk):
             "gnn_log": os.path.join(b, "results/logs/gnn_3d_training.csv"),
             "ppo_log": os.path.join(b, "results/logs_ppo/training_history_ppo_3d.csv"),
             "sac_log": os.path.join(b, "results/logs_ppo/training_history_sac_3d.csv"),
-            "GNN": "src/training/evo_trainer_3d.py",
-            "PPO": "src/training/train_ppo_3d.py",
-            "SAC": "src/training/train_sac_3d.py",
+            "GNN":     "src/training/evo_trainer_3d.py",
+            "PPO":     "src/training/train_ppo_3d.py",
+            "SAC":     "src/training/train_sac_3d.py",
             "viz_GNN": "visualize_3d.py",
             "viz_PPO": "visualize_ppo_3d.py",
             "viz_SAC": "visualize_sac_3d.py",
@@ -546,11 +786,11 @@ class SwarmController(ctk.CTk):
         }
 
     def _run_script(self, script, args=None, console=True):
-        full = os.path.join(self.base_dir, script)
-        flags = 0 if console else subprocess.CREATE_NO_WINDOW
+        full  = os.path.join(self.base_dir, script)
+        flags = (subprocess.CREATE_NEW_CONSOLE if console
+                 else subprocess.CREATE_NO_WINDOW)
         return subprocess.Popen(
-            [sys.executable, full] + (args or []),
-            creationflags=flags | subprocess.CREATE_NEW_CONSOLE if console else flags)
+            [sys.executable, full] + (args or []), creationflags=flags)
 
     def _load_config(self):
         try:
@@ -560,7 +800,7 @@ class SwarmController(ctk.CTk):
             self.e_drones.delete(0, "end"); self.e_drones.insert(0, str(env.get("num_agents", 20)))
             self.e_obs.delete(0, "end");    self.e_obs.insert(0, str(env.get("num_obstacles", 50)))
             self.e_radius.delete(0, "end"); self.e_radius.insert(0, str(env.get("arena_radius", 15.0)))
-            sc = env.get("classic_scenario", "none")
+            sc    = env.get("classic_scenario", "none")
             label = next((s[0] for s in SCENARIOS if s[1] == sc), SCENARIO_LABELS[0])
             self.combo_scenario.set(label)
         except Exception:
@@ -570,9 +810,9 @@ class SwarmController(ctk.CTk):
         try:
             with open(self.config_path) as f:
                 cfg = yaml.safe_load(f)
-            cfg["environment"]["num_agents"]      = int(self.e_drones.get())
-            cfg["environment"]["num_obstacles"]   = int(self.e_obs.get())
-            cfg["environment"]["arena_radius"]    = float(self.e_radius.get())
+            cfg["environment"]["num_agents"]       = int(self.e_drones.get())
+            cfg["environment"]["num_obstacles"]    = int(self.e_obs.get())
+            cfg["environment"]["arena_radius"]     = float(self.e_radius.get())
             cfg["environment"]["classic_scenario"] = SCENARIO_KEYS[self.combo_scenario.get()]
             with open(self.config_path, "w") as f:
                 yaml.dump(cfg, f)
@@ -602,9 +842,9 @@ class SwarmController(ctk.CTk):
             except: pass
         self.procs[algo]   = self._run_script(p[algo], ["--time_limit", str(time_limit)])
         self.t_start[algo] = time.time()
-        meta = ALGO_META[algo]
+        ALGO_META[algo]  # just reference
         getattr(self, f"lbl_{algo}_status").configure(
-            text=f"● A TREINAR...", text_color=meta["color"])
+            text="● A TREINAR...", text_color=ALGO_META[algo]["color"])
 
     def _stop_one(self, algo):
         if self.procs[algo]:
@@ -622,31 +862,25 @@ class SwarmController(ctk.CTk):
             mins = int(self.e_tour_time.get())
         except ValueError:
             return
-
-        selected = [key for key, var in self.tour_scenario_checks.items() if var.get()]
+        selected = [k for k, v in self.tour_scenario_checks.items() if v.get()]
         if not selected:
             return
-
-        # Reset status labels
-        for key, lbl in self.tour_scenario_status.items():
-            lbl.configure(text="⏳ pendente" if key in selected else "", text_color="#6B7280")
-
-        # Build a small inline runner script via run_experiments with algo filter
-        # We create a temp script that only runs the chosen algorithm
+        for k, lbl in self.tour_scenario_status.items():
+            lbl.configure(text="⏳" if k in selected else "", text_color="#6B7280")
         self.tour_process = self._run_tour_process(algo, selected, runs, mins)
         self.tour_start   = time.time()
-        self.lbl_tour_status.configure(text=f"● A CORRER — {algo}", text_color=ALGO_META[algo]["color"])
+        self.lbl_tour_status.configure(
+            text=f"● A CORRER — {algo}", text_color=ALGO_META[algo]["color"])
 
     def _run_tour_process(self, algo, scenarios, runs, time_limit):
-        script = os.path.join(self.base_dir, "run_experiments.py")
-        args = [
-            sys.executable, script,
-            "--runs", str(runs),
-            "--time", str(time_limit),
-            "--algo", algo,
-            "--scenarios", ",".join(scenarios),
-        ]
-        return subprocess.Popen(args, creationflags=subprocess.CREATE_NEW_CONSOLE)
+        return subprocess.Popen(
+            [sys.executable,
+             os.path.join(self.base_dir, "run_experiments.py"),
+             "--runs", str(runs),
+             "--time", str(time_limit),
+             "--algo", algo,
+             "--scenarios", ",".join(scenarios)],
+            creationflags=subprocess.CREATE_NEW_CONSOLE)
 
     def _stop_tour(self):
         if self.tour_process:
@@ -671,7 +905,7 @@ class SwarmController(ctk.CTk):
         self.after(4000, lambda: self.btn_night.configure(
             text="🚀  INICIAR ROTINA NOTURNA", fg_color="#D97706"))
 
-    # ── Visualization / Plot ─────────────────────────────────────────────────
+    # ── Viz / Plot ───────────────────────────────────────────────────────────
 
     def _viz(self, algo):
         self._save_config()
@@ -680,7 +914,7 @@ class SwarmController(ctk.CTk):
     def _plot_thesis(self):
         self._run_script(self._get_paths()["plot"])
 
-    # ── Tick / Metrics ───────────────────────────────────────────────────────
+    # ── Tick ─────────────────────────────────────────────────────────────────
 
     def _tick(self):
         self._update_algo_metrics()
@@ -689,29 +923,27 @@ class SwarmController(ctk.CTk):
 
     def _update_algo_metrics(self):
         p = self._get_paths()
-        pairs = [
+        for algo, log, col in [
             ("GNN", p["gnn_log"], "best_fitness"),
             ("PPO", p["ppo_log"], "ep_rew_mean"),
             ("SAC", p["sac_log"], "ep_rew_mean"),
-        ]
-        for algo, log, col in pairs:
+        ]:
             if not os.path.exists(log):
                 continue
             try:
                 df = pd.read_csv(log).dropna()
                 if not df.empty and col in df.columns:
-                    val = df.iloc[-1][col]
-                    getattr(self, f"lbl_{algo}_metric").configure(text=f"{val:.1f}")
+                    getattr(self, f"lbl_{algo}_metric").configure(
+                        text=f"{df.iloc[-1][col]:.1f}")
             except Exception:
                 pass
 
     def _update_timers(self):
         for algo in ("GNN", "PPO", "SAC"):
-            t0 = self.t_start[algo]
+            t0   = self.t_start[algo]
             proc = self.procs[algo]
             if t0 and proc:
                 if proc.poll() is not None:
-                    # finished
                     self.procs[algo]   = None
                     self.t_start[algo] = None
                     getattr(self, f"lbl_{algo}_status").configure(
@@ -722,12 +954,9 @@ class SwarmController(ctk.CTk):
 
         if self.tour_start and self.tour_process:
             if self.tour_process.poll() is not None:
-                self.tour_process  = None
-                self.tour_start    = None
+                self.tour_process = None
+                self.tour_start   = None
                 self.lbl_tour_status.configure(text="● CONCLUÍDO", text_color="#00C896")
-                for lbl in self.tour_scenario_status.values():
-                    if lbl.cget("text") == "⏳ pendente":
-                        lbl.configure(text="")
             else:
                 elapsed = str(timedelta(seconds=int(time.time() - self.tour_start)))
                 self.lbl_tour_timer.configure(text=elapsed)
