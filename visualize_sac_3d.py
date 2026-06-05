@@ -74,11 +74,30 @@ for wall in env.walls:
         position=tuple(wall['pos'])
     ))
 
+def wall_min_dist(pos, walls, arena_radius):
+    min_d = arena_radius - float(np.linalg.norm(pos[:2]))
+    for wall in walls:
+        half  = wall['size'][:2] / 2.0
+        delta = np.abs(pos[:2] - wall['pos'][:2]) - half
+        d = float(np.linalg.norm(np.maximum(delta, 0.0)))
+        if d < min_d:
+            min_d = d
+    return min_d
+
+def robot_min_dist(pos, all_positions, idx):
+    min_d = 999.0
+    for j, other in enumerate(all_positions):
+        if j == idx:
+            continue
+        d = float(np.linalg.norm(pos[:2] - other[:2]))
+        if d < min_d:
+            min_d = d
+    return min_d
+
 robot_views = []
 for r_pos in env.agent_positions:
     robot = Entity(model='cube', color=color.orange, scale=env.robot_radius * 2, position=tuple(r_pos))
-    # Visor ("Óculos/Seta") acoplado na parte da frente (Z+ em local space do Ursina)
-    Entity(parent=robot, model='cube', color=color.black, scale=(0.8, 0.3, 0.4), position=(0, 0, 0.5))
+    Entity(parent=robot, model='cube', color=color.white, scale=(0.8, 0.3, 0.4), position=(0, 0, 0.5))
     robot_views.append(robot)
 
 
@@ -106,14 +125,22 @@ def update():
 
         for i, r_pos in enumerate(env.agent_positions):
             robot_views[i].position = tuple(r_pos)
-            
-            # Rotação para apontar na direção do movimento (heading)
+
             heading = env.agent_headings[i]
             robot_views[i].look_at(robot_views[i].position + Vec3(*heading))
-            
+
+            w_dist = wall_min_dist(r_pos, env.walls, env.arena_radius)
+            r_dist = robot_min_dist(r_pos, env.agent_positions, i)
+
             if env.signaling[i] == 1.0:
                 robot_views[i].color = color.gold
                 robot_views[i].scale = env.robot_radius * 4
+            elif w_dist < 0.8:
+                robot_views[i].color = color.red
+                robot_views[i].scale = env.robot_radius * 2
+            elif r_dist < 1.0:
+                robot_views[i].color = color.cyan
+                robot_views[i].scale = env.robot_radius * 2
             else:
                 robot_views[i].color = color.orange
                 robot_views[i].scale = env.robot_radius * 2
