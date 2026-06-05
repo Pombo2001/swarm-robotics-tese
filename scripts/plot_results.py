@@ -12,7 +12,7 @@ import shutil
 matplotlib.rcParams['font.family'] = 'DejaVu Sans'
 matplotlib.rcParams['axes.unicode_minus'] = False
 
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
@@ -49,7 +49,7 @@ MAP_DESCRIPTIONS = {
 def create_thesis_plots_3d():
     print("\n A gerar os Graficos de Tese Avancados...")
     
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     stats_dir = os.path.join(base_dir, 'results', 'graficos_tese', 'estatisticas')
     
     now = datetime.now().strftime("%d-%m-%Y_%Hh%Mm")

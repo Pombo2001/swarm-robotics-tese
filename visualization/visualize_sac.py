@@ -4,9 +4,9 @@ import numpy as np
 import sys
 import os
 import yaml
-from stable_baselines3 import PPO
+from stable_baselines3 import SAC
 
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
@@ -14,7 +14,7 @@ from src.environment.swarm_env_3d import SwarmForagingEnv3D
 
 app = Ursina()
 
-window.title = 'Swarm 3D - PPO Baseline'
+window.title = 'Swarm 3D - SAC (Soft Actor-Critic)'
 window.borderless = False
 window.exit_button.visible = False
 window.fps_counter.enabled = True
@@ -23,7 +23,7 @@ EditorCamera()
 DirectionalLight(y=2, z=3, shadows=True)
 AmbientLight(color=color.rgba(100, 100, 100, 1.0))
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 config_path = os.path.join(base_dir, 'configs', 'foraging.yaml')
 
 with open(config_path, 'r') as f:
@@ -42,12 +42,12 @@ env = SwarmForagingEnv3D(config_path=config_path)
 env.render_mode = None
 obs_dict, _ = env.reset()
 
-model_path = os.path.join(base_dir, 'results', 'models_ppo', 'ppo_3d_final')
+model_path = os.path.join(base_dir, 'results', 'models_ppo', 'sac_3d_final')
 
 if os.path.exists(model_path + ".zip"):
     os.chmod(model_path + ".zip", 0o666)
-    model = PPO.load(model_path, device='cpu')
-    print(f"[OK] Modelo PPO 3D carregado: {model_path}")
+    model = SAC.load(model_path, device='cpu')
+    print(f"[OK] Modelo SAC 3D carregado: {model_path}")
 else:
     print(f"[ERRO] {model_path}.zip não encontrado!")
     sys.exit()

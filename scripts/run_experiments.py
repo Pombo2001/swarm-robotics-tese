@@ -18,7 +18,7 @@ ALGORITHMS = {
     'SAC': 'src/training/train_sac_3d.py'
 }
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'foraging.yaml')
 
 LOG_PATHS = {

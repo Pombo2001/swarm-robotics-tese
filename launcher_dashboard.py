@@ -272,7 +272,11 @@ class SwarmController(ctk.CTk):
                         lambda a=algo: self._viz(a),
                         color=meta["color"], height=32
                         ).pack(padx=12, pady=3, fill="x")
-        ctk.CTkFrame(f_viz, height=8, fg_color="transparent").pack()
+        ctk.CTkFrame(f_viz, height=4, fg_color="transparent").pack()
+        primary_btn(f_viz, "📊  Avaliar Modelo",
+                    self._eval_model, color="#6B4FA0", height=32
+                    ).pack(padx=12, pady=(0, 6), fill="x")
+        ctk.CTkFrame(f_viz, height=4, fg_color="transparent").pack()
 
     def _build_main(self, main):
         tab_bar = ctk.CTkFrame(main, fg_color="#13151A", height=50, corner_radius=0)
@@ -891,11 +895,12 @@ class SwarmController(ctk.CTk):
             "GNN":     "src/training/evo_trainer_3d.py",
             "PPO":     "src/training/train_ppo_3d.py",
             "SAC":     "src/training/train_sac_3d.py",
-            "viz_GNN": "visualize_3d.py",
-            "viz_PPO": "visualize_ppo_3d.py",
-            "viz_SAC": "visualize_sac_3d.py",
-            "plot":    "plot_final_thesis_3d.py",
-            "run_exp": "run_experiments.py",
+            "viz_GNN": "visualization/visualize_gnn.py",
+            "viz_PPO": "visualization/visualize_ppo.py",
+            "viz_SAC": "visualization/visualize_sac.py",
+            "plot":    "scripts/plot_results.py",
+            "run_exp": "scripts/run_experiments.py",
+            "eval":    "scripts/run_eval.py",
         }
 
     def _run_script(self, script, args=None, console=True):
@@ -1018,7 +1023,7 @@ class SwarmController(ctk.CTk):
         self.after(4000, lambda: self.btn_night.configure(
             text="🚀  INICIAR ROTINA NOTURNA", fg_color="#D97706"))
 
-    # ── Viz / Plot ───────────────────────────────────────────────────────────
+    # ── Viz / Plot / Eval ────────────────────────────────────────────────────
 
     def _viz(self, algo):
         self._save_config()
@@ -1026,6 +1031,19 @@ class SwarmController(ctk.CTk):
 
     def _plot_thesis(self):
         self._run_script(self._get_paths()["plot"])
+
+    def _eval_model(self):
+        self._save_config()
+        try:
+            with open(self.config_path) as f:
+                cfg = yaml.safe_load(f)
+            algo     = cfg.get("last_algo",    "ppo")
+            scenario = cfg["environment"].get("classic_scenario", "none")
+        except Exception:
+            algo, scenario = "ppo", "none"
+        self._run_script(self._get_paths()["eval"],
+                         ["--algo", algo, "--episodes", "20",
+                          "--scenario", scenario])
 
     # ── Tick ─────────────────────────────────────────────────────────────────
 

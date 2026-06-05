@@ -5,7 +5,7 @@ import sys
 import os
 import yaml
 
-PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
@@ -23,7 +23,7 @@ EditorCamera()
 DirectionalLight(y=2, z=3, shadows=True)
 AmbientLight(color=color.rgba(100, 100, 100, 1.0))
 
-base_dir = os.path.dirname(os.path.abspath(__file__))
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 config_path = os.path.join(base_dir, 'configs', 'foraging.yaml')
 
 with open(config_path, 'r') as f:
