@@ -757,28 +757,38 @@ class SwarmController(ctk.CTk):
         ctk.CTkFrame(scroll, height=16, fg_color="transparent").pack()
 
     def _discover_sessions(self):
+        from datetime import datetime
+
+        def _parse_date(d):
+            for fmt in ("%d-%m-%Y_%Hh%Mm", "%Y-%m-%d_%H%M%S"):
+                try:
+                    return datetime.strptime(d, fmt)
+                except ValueError:
+                    continue
+            return datetime.min   # pastas sem data vão para o fundo
+
         base = os.path.join(self.base_dir, "results", "graficos_tese")
         sessions = []
         if not os.path.exists(base):
             return sessions
 
-        for d in sorted(os.listdir(base), reverse=True):
-            if d == "estatisticas":
-                continue
+        dirs = [d for d in os.listdir(base)
+                if d != "estatisticas"
+                and os.path.isdir(os.path.join(base, d))]
+        # Ordena por data real (mais recente primeiro)
+        for d in sorted(dirs, key=_parse_date, reverse=True):
             path = os.path.join(base, d)
-            if os.path.isdir(path):
-                pngs = [f for f in os.listdir(path) if f.endswith(".png")]
-                if pngs:
-                    sessions.append((d, path))
+            if [f for f in os.listdir(path) if f.endswith(".png")]:
+                sessions.append((d, path))
 
         est_dir = os.path.join(base, "estatisticas")
         if os.path.exists(est_dir):
-            for d in sorted(os.listdir(est_dir), reverse=True):
+            est_dirs = [d for d in os.listdir(est_dir)
+                        if os.path.isdir(os.path.join(est_dir, d))]
+            for d in sorted(est_dirs, key=_parse_date, reverse=True):
                 path = os.path.join(est_dir, d)
-                if os.path.isdir(path):
-                    pngs = [f for f in os.listdir(path) if f.endswith(".png")]
-                    if pngs:
-                        sessions.append((f"[stats] {d}", path))
+                if [f for f in os.listdir(path) if f.endswith(".png")]:
+                    sessions.append((f"[stats] {d}", path))
 
         return sessions
 

@@ -163,7 +163,9 @@ def create_thesis_plots_3d():
         sns.set_theme(style="whitegrid")
         palette_models = {'GNN': '#2E7D32', 'PPO': '#E65100', 'SAC': '#0277BD'}
         
-        # 3. Boxplots por Mapa
+        # 3a. Boxplots por Mapa (um por cenário, algoritmos lado a lado)
+        # NOTA: GNN usa fitness evolutiva; PPO/SAC usam recompensa episódica.
+        # São métricas diferentes — as escalas não são directamente comparáveis.
         for scenario in df_best['Scenario'].unique():
             df_scen = df_best[df_best['Scenario'] == scenario].copy()
             label_pt = SCENARIO_LABELS_PT.get(scenario, scenario.upper())
@@ -174,22 +176,65 @@ def create_thesis_plots_3d():
                         palette=palette_models, ax=ax)
             ax.set_title(f'Fiabilidade — {label_pt}',
                          fontsize=14, fontweight='bold', pad=12)
-            ax.set_ylabel('Melhor Recompensa Obtida (por run)', fontsize=11)
+            ax.set_ylabel('Melhor Score por Run (escala varia por algoritmo)', fontsize=10)
             ax.set_xlabel('Algoritmo', fontsize=11)
             ax.grid(True, linestyle='--', alpha=0.4, axis='y')
 
-            caption = ("Cada caixa representa 5 runs independentes. "
-                       "A linha central é a mediana; a caixa cobre IQR 25–75%.")
+            caption = ("ATENCAO: GNN usa fitness evolutiva; PPO/SAC usam recompensa episodica "
+                       "(escalas diferentes). Cada caixa = 5 runs independentes, mediana + IQR 25-75%.")
             if desc:
                 caption = desc.replace('\n', ' ') + "  |  " + caption
             fig.text(0.5, 0.01, caption, ha='center', va='bottom',
-                     fontsize=8.5, color='#555555', style='italic')
-            fig.subplots_adjust(bottom=0.12)
-
-            plt.tight_layout(rect=[0, 0.08, 1, 1])
+                     fontsize=8, color='#AA5500', style='italic')
+            fig.subplots_adjust(bottom=0.13)
+            plt.tight_layout(rect=[0, 0.09, 1, 1])
             plt.savefig(os.path.join(output_dir, f'boxplot_{scenario}.png'), dpi=300)
             plt.close()
-            print(f"[*] Gerado Boxplot para o mapa: {scenario}")
+            print(f"[*] Boxplot por mapa: {scenario}")
+
+        # 3b. Boxplots por Algoritmo (um por algo, cenários lado a lado)
+        # Comparação intra-algoritmo: qual cenário é mais difícil para cada modelo?
+        scenario_order = [s for s in
+            ['none','u_wall','bottleneck','four_rooms','cooperative_door','cooperative_perception']
+            if s in df_best['Scenario'].unique()]
+        scenario_labels_short = {
+            'none': 'Sandbox', 'u_wall': 'U-Wall', 'bottleneck': 'Gargalo',
+            'four_rooms': '4 Salas', 'cooperative_door': 'Porta Coop.',
+            'cooperative_perception': 'Percepcao',
+        }
+        algo_ylabels = {
+            'GNN': 'Fitness Evolutiva (melhor genoma)',
+            'PPO': 'Recompensa Episodica (melhor run)',
+            'SAC': 'Recompensa Episodica (melhor run)',
+        }
+        for algo in ['GNN', 'PPO', 'SAC']:
+            df_algo = df_best[df_best['Algorithm'] == algo].copy()
+            if df_algo.empty:
+                continue
+            df_algo['ScenLabel'] = df_algo['Scenario'].map(
+                lambda s: scenario_labels_short.get(s, s))
+            ordered = [scenario_labels_short.get(s, s) for s in scenario_order
+                       if s in df_algo['Scenario'].values]
+
+            fig, ax = plt.subplots(figsize=(11, 6))
+            sns.boxplot(data=df_algo, x='ScenLabel', y='BestScore',
+                        order=ordered,
+                        color=palette_models.get(algo, '#888888'), ax=ax)
+            ax.set_title(f'{algo} — Desempenho por Cenario (5 runs cada)',
+                         fontsize=14, fontweight='bold', pad=12)
+            ax.set_ylabel(algo_ylabels.get(algo, 'Score'), fontsize=11)
+            ax.set_xlabel('Cenario', fontsize=11)
+            ax.grid(True, linestyle='--', alpha=0.4, axis='y')
+            plt.xticks(rotation=15, ha='right')
+            fig.text(0.5, 0.01,
+                     "Comparacao intra-algoritmo: mostra qual cenario e mais dificil para "
+                     f"o {algo}. Escala consistente dentro do algoritmo.",
+                     ha='center', va='bottom', fontsize=8.5, color='#555555', style='italic')
+            fig.subplots_adjust(bottom=0.14)
+            plt.tight_layout(rect=[0, 0.09, 1, 1])
+            plt.savefig(os.path.join(output_dir, f'boxplot_por_algo_{algo.lower()}.png'), dpi=300)
+            plt.close()
+            print(f"[*] Boxplot por algoritmo: {algo}")
 
         # 4. Gráfico de Barras Agregador
         df_best_labeled = df_best.copy()
