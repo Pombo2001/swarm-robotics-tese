@@ -1,10 +1,10 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: cooperative_perception
+  classic_scenario: cooperative_door
   dynamic_nest: true
   dynamic_obstacles: true
   forbidden_area: 2.2
-  hunger_timer_max: 600
+  hunger_timer_max: 250  # < max_steps (500) para que a fome possa disparar
   max_steps: 500
   nest_radius: 1.5
   nest_velocity: 0.015
@@ -25,22 +25,19 @@ gnn_agent:
 physics:
   agent_radius: 0.15
   collision_penalty: -1.0
-  communication_radius: 1.0
 plotting:
   smoothing_window: 10
 ppo:
+  batch_size: 512
+  checkpoint_interval_min: 30
   learning_rate: 0.0001
   log_interval: 2000
-  net_arch: [256, 256]
-  num_cpu: 8
-  # n_steps × num_envs = buffer por ciclo de update
-  # Com 160 envs virtuais (8 arenas × 20 agentes):
-  #   64 × 160 = 10240 amostras; 10240/512×4 = 80 gradient steps por ciclo
-  #   (default seria 2048×160/64×10 = 51200 — demasiado, causava overfitting)
-  n_steps: 64
-  batch_size: 512
   n_epochs: 4
-  checkpoint_interval_min: 30  # guardar checkpoint a cada 30 min
+  n_steps: 64
+  net_arch:
+  - 256
+  - 256
+  num_cpu: 8
 rewards:
   energy_cost: -0.05
   food_collected: 100.0
@@ -48,12 +45,14 @@ rewards:
   wall_penalty: -5.0
 sac:
   buffer_size: 500000
+  checkpoint_interval_min: 30
   ent_coef: 0.1
   learning_rate: 0.0001
   log_interval: 2000
-  net_arch: [256, 256]
+  net_arch:
+  - 256
+  - 256
   num_cpu: 8
-  checkpoint_interval_min: 30
 simulation:
   guillotine_threshold: -200
   max_steps: 500

@@ -228,51 +228,123 @@ def create_thesis_plots_3d():
         ppo_csv = os.path.join(base_dir, 'results', 'logs_ppo', 'training_history_ppo_3d.csv')
         sac_csv = os.path.join(base_dir, 'results', 'logs_ppo', 'training_history_sac_3d.csv')
 
-        # Map: (path, display_label, line_color, y_column)
+        # (path, label, cor, coluna_y, coluna_task)
         ALGO_LOGS = [
-            (gnn_csv, 'GNN', '#2E7D32', 'best_fitness'),
-            (ppo_csv, 'PPO', '#E65100', 'ep_rew_mean'),
-            (sac_csv, 'SAC', '#0277BD', 'ep_rew_mean'),
+            (gnn_csv, 'GNN', '#2E7D32', 'best_fitness',  None),
+            (ppo_csv, 'PPO', '#E65100', 'ep_rew_mean',   'ep_task_mean'),
+            (sac_csv, 'SAC', '#0277BD', 'ep_rew_mean',   'ep_task_mean'),
         ]
 
+        # ── Gráfico 1: por TIMESTEPS (eixo X = amostras) ─────────────────────
         fig, ax = plt.subplots(figsize=(11, 6))
         plotted = 0
-        for path_log, label, col, y_col in ALGO_LOGS:
+        for path_log, label, col, y_col, _ in ALGO_LOGS:
             if not os.path.exists(path_log):
                 continue
             try:
                 df = pd.read_csv(path_log)
                 df.columns = df.columns.str.strip()
-                x_col = df.columns[0]
+                x_col = df.columns[0]   # primeira coluna = timesteps/timestep
                 if y_col not in df.columns or len(df) < 2:
                     continue
                 smoothed = df[y_col].rolling(10, min_periods=1).mean()
                 ax.plot(df[x_col], smoothed, color=col, linewidth=2.5, label=label)
                 plotted += 1
-                print(f"[i] Adicionado log: {label} ({len(df)} pontos)")
             except Exception as e:
                 print(f"[!] Erro ao ler {path_log}: {e}")
 
         if plotted == 0:
-            ax.text(0.5, 0.5, "Sem dados de treino disponíveis.\nCorre pelo menos um algoritmo primeiro.",
+            ax.text(0.5, 0.5, "Sem dados de treino.\nCorre pelo menos um algoritmo primeiro.",
                     ha='center', va='center', transform=ax.transAxes,
                     fontsize=14, color='#6B7280')
         else:
             ax.legend(loc='lower right', fontsize=11)
 
-        ax.set_title('Comparação de Algoritmos — Última Run Individual', fontsize=14, fontweight='bold')
-        ax.set_xlabel('Timesteps / Geração × Passos', fontsize=11)
-        ax.set_ylabel('Recompensa (suavizada 10pt)', fontsize=11)
+        ax.set_title('Comparacao de Algoritmos — Recompensa por Timestep', fontsize=14, fontweight='bold')
+        ax.set_xlabel('Timesteps / Geracoes x Passos (GNN)', fontsize=11)
+        ax.set_ylabel('Recompensa total (suavizada 10pt)', fontsize=11)
         ax.grid(True, linestyle='--', alpha=0.5)
         fig.text(0.5, 0.01,
-                 "Fallback: dados de runs individuais (não da Rotina Noturna). "
-                 "Para comparação multi-run, usa run_experiments.py.",
+                 "NOTA: eixos X nao sao directamente comparaveis entre GNN (passos de simulacao) "
+                 "e PPO/SAC (passos de politica).",
                  ha='center', va='bottom', fontsize=8.5, color='#6B7280', style='italic')
         fig.subplots_adjust(bottom=0.10)
         plt.tight_layout(rect=[0, 0.07, 1, 1])
-        plt.savefig(os.path.join(output_dir, 'fallback_comparacao.png'), dpi=300)
+        plt.savefig(os.path.join(output_dir, 'fallback_comparacao_timesteps.png'), dpi=300)
         plt.close()
-        print(f"[i] Grafico fallback guardado ({plotted} algoritmo(s) com dados)")
+        print(f"[i] Grafico por timesteps guardado ({plotted} algo(s))")
+
+        # ── Gráfico 2: por TEMPO REAL (eixo X = minutos) ─────────────────────
+        # Comparacao justa: todos correm no mesmo hardware e o eixo e tempo de parede.
+        fig, ax = plt.subplots(figsize=(11, 6))
+        plotted_time = 0
+        for path_log, label, col, y_col, _ in ALGO_LOGS:
+            if not os.path.exists(path_log):
+                continue
+            try:
+                df = pd.read_csv(path_log)
+                df.columns = df.columns.str.strip()
+                if 'time' not in df.columns or y_col not in df.columns or len(df) < 2:
+                    continue
+                minutes  = df['time'] / 60.0
+                smoothed = df[y_col].rolling(10, min_periods=1).mean()
+                ax.plot(minutes, smoothed, color=col, linewidth=2.5, label=label)
+                plotted_time += 1
+            except Exception as e:
+                print(f"[!] Erro ao ler (time) {path_log}: {e}")
+
+        if plotted_time > 0:
+            ax.legend(loc='lower right', fontsize=11)
+            ax.set_title('Comparacao de Algoritmos — Recompensa por Tempo Real',
+                         fontsize=14, fontweight='bold')
+            ax.set_xlabel('Tempo de treino (minutos)', fontsize=11)
+            ax.set_ylabel('Recompensa total (suavizada 10pt)', fontsize=11)
+            ax.grid(True, linestyle='--', alpha=0.5)
+            fig.text(0.5, 0.01,
+                     "Comparacao por tempo de parede (wall-clock): eixo X identico para todos os algoritmos. "
+                     "Mais justo para a tese do que comparar por timesteps.",
+                     ha='center', va='bottom', fontsize=8.5, color='#6B7280', style='italic')
+            fig.subplots_adjust(bottom=0.10)
+            plt.tight_layout(rect=[0, 0.07, 1, 1])
+            plt.savefig(os.path.join(output_dir, 'fallback_comparacao_tempo.png'), dpi=300)
+            print(f"[i] Grafico por tempo real guardado ({plotted_time} algo(s))")
+        plt.close()
+
+        # ── Gráfico 3: TASK REWARD (recolhas puras, sem shaping) ─────────────
+        fig, ax = plt.subplots(figsize=(11, 6))
+        plotted_task = 0
+        for path_log, label, col, _, task_col in ALGO_LOGS:
+            if task_col is None or not os.path.exists(path_log):
+                continue
+            try:
+                df = pd.read_csv(path_log)
+                df.columns = df.columns.str.strip()
+                if task_col not in df.columns or 'time' not in df.columns or len(df) < 2:
+                    continue
+                minutes  = df['time'] / 60.0
+                smoothed = df[task_col].rolling(10, min_periods=1).mean()
+                ax.plot(minutes, smoothed, color=col, linewidth=2.5, label=label)
+                plotted_task += 1
+            except Exception as e:
+                print(f"[!] Erro ao ler (task) {path_log}: {e}")
+
+        if plotted_task > 0:
+            ax.legend(loc='lower right', fontsize=11)
+            ax.set_title('Task Reward — Recompensa de Tarefa Pura (sem shaping)',
+                         fontsize=14, fontweight='bold')
+            ax.set_xlabel('Tempo de treino (minutos)', fontsize=11)
+            ax.set_ylabel('Recompensa de tarefa (food x 100)', fontsize=11)
+            ax.grid(True, linestyle='--', alpha=0.5)
+            fig.text(0.5, 0.01,
+                     "Apenas a recompensa de recolha (food_collected x 100), sem bónus de progresso. "
+                     "Pedido pelo orientador para comparar com avaliacao de teste.",
+                     ha='center', va='bottom', fontsize=8.5, color='#6B7280', style='italic')
+            fig.subplots_adjust(bottom=0.10)
+            plt.tight_layout(rect=[0, 0.07, 1, 1])
+            plt.savefig(os.path.join(output_dir, 'fallback_task_reward.png'), dpi=300)
+            print(f"[i] Grafico task reward guardado ({plotted_task} algo(s))")
+        plt.close()
+        print(f"[i] Total: {max(plotted, plotted_time, plotted_task)} algoritmo(s) com dados")
         
     print(f"\n[*] Concluido! Graficos guardados em: {output_dir}")
     
