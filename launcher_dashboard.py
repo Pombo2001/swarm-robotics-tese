@@ -900,7 +900,7 @@ class SwarmController(ctk.CTk):
             "viz_SAC": "visualization/visualize_sac.py",
             "plot":    "scripts/plot_results.py",
             "run_exp": "scripts/run_experiments.py",
-            "eval":    "scripts/run_eval.py",
+            "eval":    "scripts/eval_all.py",
         }
 
     def _run_script(self, script, args=None, console=True):
@@ -1037,13 +1037,11 @@ class SwarmController(ctk.CTk):
         try:
             with open(self.config_path) as f:
                 cfg = yaml.safe_load(f)
-            algo     = cfg.get("last_algo",    "ppo")
             scenario = cfg["environment"].get("classic_scenario", "none")
         except Exception:
-            algo, scenario = "ppo", "none"
+            scenario = "none"
         self._run_script(self._get_paths()["eval"],
-                         ["--algo", algo, "--episodes", "20",
-                          "--scenario", scenario])
+                         ["--episodes", "20", "--scenario", scenario])
 
     # ── Tick ─────────────────────────────────────────────────────────────────
 
