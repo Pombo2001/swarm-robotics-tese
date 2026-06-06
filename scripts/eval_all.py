@@ -58,8 +58,8 @@ def load_model(algo, scenario, config_path):
         return None, None
 
 
-def run_episode(env, algo, model):
-    obs_dict, _ = env.reset()
+def run_episode(env, algo, model, seed=None):
+    obs_dict, _ = env.reset(seed=seed)
     total_reward = 0.0
     steps = 0
     while True:
@@ -90,7 +90,7 @@ def run_episode(env, algo, model):
     }
 
 
-def eval_algo(algo, scenario, config_path, n_episodes):
+def eval_algo(algo, scenario, config_path, n_episodes, seed_base=1000):
     model, path = load_model(algo, scenario, config_path)
     if model is None:
         print(f"  [{algo.upper()}] ERRO: modelo nao encontrado — a saltar")
@@ -103,7 +103,9 @@ def eval_algo(algo, scenario, config_path, n_episodes):
 
     results = []
     for ep in range(n_episodes):
-        r = run_episode(env, algo, model)
+        # Mesma seed_base para todos os algoritmos => avaliacao emparelhada
+        # (mesmos episodios), permitindo testes estatisticos pareados.
+        r = run_episode(env, algo, model, seed=seed_base + ep)
         results.append(r)
         mark = "v" if r["success"] else "-"
         print(f"    ep {ep+1:2d} [{mark}] recolhas={r['food_collected']}  "
@@ -116,6 +118,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--scenario", type=str, default=None)
+    parser.add_argument("--seed-base", type=int, default=1000,
+                        help="Base das seeds (igual p/ os 3 algos = avaliacao emparelhada)")
     parser.add_argument("--no-pause", action="store_true",
                         help="Nao espera ENTER no fim (para correr em background/CI)")
     args = parser.parse_args()
@@ -143,7 +147,7 @@ def main():
 
     for algo in ["gnn", "ppo", "sac"]:
         print(f"\n--- {algo.upper()} ---")
-        df, path = eval_algo(algo, scenario, config_path, args.episodes)
+        df, path = eval_algo(algo, scenario, config_path, args.episodes, args.seed_base)
         if df is None:
             continue
         summary[algo.upper()] = {

@@ -88,7 +88,9 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
                     except Exception as e:
                         print(f"[!] Aviso: Nao foi possivel apagar o log antigo ({e})")
 
-                cmd = [sys.executable, script_path, '--time_limit', str(algo_time)]
+                # Seed = nº do run → runs reproduzíveis e distintos entre si.
+                cmd = [sys.executable, script_path, '--time_limit', str(algo_time),
+                       '--seed', str(run)]
                 
                 try:
                     subprocess.run(cmd, check=True)

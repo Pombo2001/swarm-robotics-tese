@@ -72,29 +72,47 @@ def load_evaluations(metric):
     return data
 
 
-def rank_biserial(a, b, u_stat):
-    """Tamanho de efeito a partir do U de Mann-Whitney: r = 1 - 2U/(n1*n2).
-    Sinal positivo => 'a' tende a ser maior que 'b'."""
-    n1, n2 = len(a), len(b)
-    if n1 == 0 or n2 == 0:
+def cliffs_delta(a, b):
+    """Tamanho de efeito não-paramétrico (Cliff's delta), em [-1, 1].
+    Positivo => 'a' tende a ser maior que 'b'. Válido pareado ou não."""
+    a, b = np.asarray(a), np.asarray(b)
+    n = len(a) * len(b)
+    if n == 0:
         return float("nan")
-    return 1.0 - (2.0 * u_stat) / (n1 * n2)
+    gt = sum((x > b).sum() for x in a)
+    lt = sum((x < b).sum() for x in a)
+    return float(gt - lt) / n
 
 
 def compare_pair(a, b):
-    """Compara duas amostras. Devolve dict com estatísticas, ou None se inviável."""
+    """Compara duas amostras. Usa Wilcoxon signed-rank (PAREADO) quando têm o
+    mesmo tamanho --- caso da avaliação emparelhada (mesmos episódios/seeds) ---,
+    mais poderoso com n pequeno; caso contrário, Mann-Whitney U (não-pareado).
+    Devolve dict com estatísticas, ou None se inviável."""
     if len(a) < 2 or len(b) < 2:
         return None
+    a, b = np.asarray(a, dtype=float), np.asarray(b, dtype=float)
     mean_a, mean_b = float(np.mean(a)), float(np.mean(b))
-    # Se ambas as amostras forem constantes e iguais, não há nada a testar.
-    degenerate = np.ptp(a) == 0 and np.ptp(b) == 0 and mean_a == mean_b
 
-    if degenerate:
-        u_stat, p_mw = float("nan"), 1.0
+    paired = (len(a) == len(b))
+    if paired:
+        test = "wilcoxon"
+        diffs = a - b
+        if np.all(diffs == 0):           # sem diferenças => nada a testar
+            stat, p = float("nan"), 1.0
+        else:
+            try:
+                stat, p = stats.wilcoxon(a, b)
+            except ValueError:
+                stat, p = float("nan"), 1.0
     else:
-        u_stat, p_mw = stats.mannwhitneyu(a, b, alternative="two-sided")
+        test = "mannwhitney"
+        if np.ptp(a) == 0 and np.ptp(b) == 0 and mean_a == mean_b:
+            stat, p = float("nan"), 1.0
+        else:
+            stat, p = stats.mannwhitneyu(a, b, alternative="two-sided")
 
-    # t de Welch (pode dar nan se variância total nula)
+    # t de Welch (complementar; pode dar nan se variância total nula)
     try:
         t_stat, p_t = stats.ttest_ind(a, b, equal_var=False)
         if np.isnan(p_t):
@@ -104,9 +122,9 @@ def compare_pair(a, b):
 
     return {
         "mean_a": mean_a, "mean_b": mean_b,
-        "U": float(u_stat), "p_mannwhitney": float(p_mw),
+        "test": test, "stat": float(stat), "p_value": float(p),
         "t": float(t_stat), "p_welch": float(p_t),
-        "effect_rank_biserial": rank_biserial(a, b, u_stat),
+        "effect_cliffs_delta": cliffs_delta(a, b),
     }
 
 
@@ -133,7 +151,8 @@ def main():
 
     print(f"\n{'='*78}")
     print(f"  TESTES DE SIGNIFICANCIA  |  metrica: {args.metric}  |  alpha = {args.alpha}")
-    print(f"  Teste: Mann-Whitney U (bilateral)  +  t de Welch (complementar)")
+    print(f"  Wilcoxon signed-rank (PAREADO, n iguais) ou Mann-Whitney U (nao-pareado)")
+    print(f"  + t de Welch (complementar) | efeito: Cliff's delta")
     print(f"{'='*78}")
 
     for scenario in scenarios:
@@ -155,25 +174,26 @@ def main():
                     print(f"    {a_name} vs {b_name}: amostras insuficientes")
                     continue
 
-                sig = res["p_mannwhitney"] < args.alpha
+                sig = res["p_value"] < args.alpha
                 if res["mean_a"] == res["mean_b"]:
                     winner = "empate"
                 else:
                     winner = a_name if res["mean_a"] > res["mean_b"] else b_name
                 mark = "***" if sig else "ns "
-                print(f"    {a_name} vs {b_name}: "
+                print(f"    {a_name} vs {b_name} [{res['test']}]: "
                       f"medias {res['mean_a']:.2f} / {res['mean_b']:.2f}  |  "
-                      f"U={res['U']:.1f}  p={res['p_mannwhitney']:.4f} [{mark}]  |  "
+                      f"p={res['p_value']:.4f} [{mark}]  delta={res['effect_cliffs_delta']:+.2f}  |  "
                       f"melhor: {winner if sig else '(sem dif. significativa)'}")
 
                 rows.append({
                     "Scenario": scenario, "Label": label,
                     "A": a_name, "B": b_name,
                     "mean_A": round(res["mean_a"], 3), "mean_B": round(res["mean_b"], 3),
-                    "U": round(res["U"], 2),
-                    "p_mannwhitney": round(res["p_mannwhitney"], 5),
+                    "test": res["test"],
+                    "statistic": round(res["stat"], 2),
+                    "p_value": round(res["p_value"], 5),
                     "p_welch": round(res["p_welch"], 5),
-                    "effect_rank_biserial": round(res["effect_rank_biserial"], 3),
+                    "cliffs_delta": round(res["effect_cliffs_delta"], 3),
                     "significant": sig,
                     "winner": winner if sig else "ns",
                 })
@@ -191,11 +211,11 @@ def main():
     with open(tex_path, "w", encoding="utf-8") as f:
         f.write("% Gerado por scripts/statistical_tests.py\n")
         f.write("\\begin{tabular}{llrrrl}\n\\hline\n")
-        f.write("Cenário & Par & média A & média B & $p$ (MW) & Significativo \\\\\n\\hline\n")
+        f.write("Cenário & Par & média A & média B & $p$ & Significativo \\\\\n\\hline\n")
         for r in rows:
             star = "Sim" if r["significant"] else "não"
             f.write(f"{r['Label']} & {r['A']} vs {r['B']} & {r['mean_A']:.2f} & "
-                    f"{r['mean_B']:.2f} & {r['p_mannwhitney']:.4f} & {star} \\\\\n")
+                    f"{r['mean_B']:.2f} & {r['p_value']:.4f} & {star} \\\\\n")
         f.write("\\hline\n\\end{tabular}\n")
 
     print(f"\n{'='*78}")

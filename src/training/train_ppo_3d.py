@@ -161,15 +161,19 @@ class TimeLimitAndLoggingCallback(BaseCallback):
         return True
 
 
-def make_env(config_path):
+def make_env(config_path, seed=None, rank=0):
     def _init():
+        # Cada subprocesso semeia o seu np.random para arenas distintas mas
+        # reproduzíveis (seed=None mantém o comportamento aleatório anterior).
+        if seed is not None:
+            np.random.seed(seed + rank)
         raw_env = SwarmForagingEnv3D(config_path)
         wrapped_env = MultiAgentArenaWrapper(raw_env)
         return wrapped_env
     return _init
 
 
-def train_ppo_3d(time_limit_minutes):
+def train_ppo_3d(time_limit_minutes, seed=None):
     config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
@@ -185,7 +189,7 @@ def train_ppo_3d(time_limit_minutes):
     time_limit_seconds = time_limit_minutes * 60
     print(f"[START] PPO 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
 
-    env = SubprocVecEnv([make_env(config_path) for i in range(num_cpu)])
+    env = SubprocVecEnv([make_env(config_path, seed, i) for i in range(num_cpu)])
     env = FlattenMultiAgentVecEnv(env, config['environment'].get('num_agents', 25))
     env = VecMonitor(env)
 
@@ -212,6 +216,7 @@ def train_ppo_3d(time_limit_minutes):
         policy_kwargs=dict(net_arch=ppo_config.get("net_arch", [256, 256])),
         verbose=1,
         device="auto",
+        seed=seed,
     )
     callback = TimeLimitAndLoggingCallback(
         log_file, time_limit_seconds, log_interval,
@@ -229,10 +234,12 @@ def train_ppo_3d(time_limit_minutes):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--time_limit", type=float, default=120.0)
+    parser.add_argument("--seed", type=int, default=None,
+                        help="Semente de reprodutibilidade (omitir = aleatorio)")
     args = parser.parse_args()
 
     from multiprocessing import freeze_support
 
     freeze_support()
 
-    train_ppo_3d(time_limit_minutes=args.time_limit)
+    train_ppo_3d(time_limit_minutes=args.time_limit, seed=args.seed)

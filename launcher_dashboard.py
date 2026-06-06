@@ -103,7 +103,7 @@ GRAPH_DESCRIPTIONS = {
         "GNN — Curva em Todos os Mapas",
         "Desempenho do algoritmo GNN (evolutivo) em cada um dos 6 cenários ao longo do treino. "
         "O GNN usa uma rede neuronal de grafos com self-attention sobre vizinhos. "
-        "Fitness = média de 2 episódios; cada geração avalia 30 genomas em paralelo.",
+        "Fitness = média de 3 episódios; cada geração avalia 30 genomas em paralelo.",
     ),
     "desempenho_global_ppo.png": (
         "PPO — Curva em Todos os Mapas",
@@ -855,7 +855,7 @@ class SwarmController(ctk.CTk):
             self._img_caption.configure(text="")
             return
 
-        # Show description
+        # Show descriptiono que
         desc_info = GRAPH_DESCRIPTIONS.get(filename)
         if not desc_info:
             # Try to match via fallback names

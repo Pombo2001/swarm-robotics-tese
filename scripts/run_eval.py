@@ -74,8 +74,8 @@ def load_model(algo, scenario, config_path):
         raise FileNotFoundError("Modelo SAC nao encontrado em results/models_sac/")
 
 
-def run_episode(env, algo, model):
-    obs_dict, _ = env.reset()
+def run_episode(env, algo, model, seed=None):
+    obs_dict, _ = env.reset(seed=seed)
     total_reward = 0.0
     steps = 0
 
@@ -123,6 +123,9 @@ def main():
     parser.add_argument("--fail-frac", type=float, default=0.0,
                         help="Rrobust: fracao de agentes que falha a meio do episodio "
                              "(ex: 0.1 = 10%%). Compara com 0.0 para medir resiliencia.")
+    parser.add_argument("--seed-base", type=int, default=1000,
+                        help="Base das seeds dos episodios. Episodio e usa seed base+e. "
+                             "Manter igual entre algoritmos garante avaliacao emparelhada.")
     args = parser.parse_args()
 
     config_path = os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")
@@ -148,7 +151,7 @@ def main():
 
     results = []
     for ep in range(args.episodes):
-        r = run_episode(env, args.algo, model)
+        r = run_episode(env, args.algo, model, seed=args.seed_base + ep)
         results.append(r)
         status = "OK" if r["success"] else "--"
         print(f"  [{status}] ep {ep+1:2d}: "

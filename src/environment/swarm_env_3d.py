@@ -112,6 +112,12 @@ class SwarmForagingEnv3D(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
+        # Reprodutibilidade: o ambiente usa np.random global (spawns, obstáculos,
+        # falhas). Quando recebe uma seed explícita, fixa-a — essencial para
+        # avaliação emparelhada (mesmos episódios para todos os algoritmos) e
+        # para runs de treino reproduzíveis. seed=None mantém a cadeia aleatória.
+        if seed is not None:
+            np.random.seed(seed)
         self.steps = 0
         self.deaths_count = 0
         self.total_food_collected = 0

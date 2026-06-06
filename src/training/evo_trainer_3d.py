@@ -50,7 +50,7 @@ from src.agents.gnn_agent_3d import GNNAgent3D
 
 
 def evaluate_genome(args):
-    weights, config_path = args
+    weights, config_path, eval_seed = args
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
@@ -64,8 +64,11 @@ def evaluate_genome(args):
     episode_rewards = []
     total_steps = 0
 
-    for _ in range(eval_episodes):
-        obs_dict, _ = env.reset()
+    for ep in range(eval_episodes):
+        # Todos os genomas da mesma geração enfrentam os mesmos episódios
+        # (seed por geração) — seleção menos ruidosa e reproduzível.
+        ep_seed = (eval_seed + ep) if eval_seed is not None else None
+        obs_dict, _ = env.reset(seed=ep_seed)
         episode_reward = 0
         steps = 0
         done = False
@@ -100,12 +103,17 @@ def evaluate_genome(args):
 
 
 class GeneticTrainer3D:
-    def __init__(self, config_path, time_limit_minutes=120):
+    def __init__(self, config_path, time_limit_minutes=120, seed=None):
         self.config_path = config_path
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
 
         self.time_limit_seconds = time_limit_minutes * 60
+        # Reprodutibilidade: semeia a população inicial e as mutações.
+        self.seed = seed
+        if seed is not None:
+            np.random.seed(seed)
+            torch.manual_seed(seed)
 
         temp_env = SwarmForagingEnv3D(config_path)
         self.template_agent = GNNAgent3D("template_3d", temp_env.action_space("robot_0"), config_path)
@@ -161,7 +169,9 @@ class GeneticTrainer3D:
                     print(f"\n[FIM DO TEMPO] O cronometro atingiu o limite. A fechar e guardar o modelo...")
                     break
 
-                args_list = [(self.population[i], self.config_path) for i in range(self.pop_size)]
+                gen_seed = (self.seed + gen) if self.seed is not None else None
+                args_list = [(self.population[i], self.config_path, gen_seed)
+                             for i in range(self.pop_size)]
                 results = pool.map(evaluate_genome, args_list)
 
                 scores       = [res[0] for res in results]
@@ -223,6 +233,8 @@ class GeneticTrainer3D:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--time_limit", type=float, default=120.0)
+    parser.add_argument("--seed", type=int, default=None,
+                        help="Semente de reprodutibilidade (omitir = aleatorio)")
     args = parser.parse_args()
 
     from multiprocessing import freeze_support
@@ -230,5 +242,5 @@ if __name__ == "__main__":
     freeze_support()
 
     config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
-    trainer = GeneticTrainer3D(config_path, time_limit_minutes=args.time_limit)
+    trainer = GeneticTrainer3D(config_path, time_limit_minutes=args.time_limit, seed=args.seed)
     trainer.train()
