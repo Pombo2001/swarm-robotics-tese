@@ -1,12 +1,21 @@
-numpy
-pettingzoo
-gymnasium
-torch
-pyyaml
-pygame
-matplotlib
-customtkinter
-pandas
-seaborn
-stable-baselines3
-ursina
+# Dependências do projeto (versões fixadas para reprodutibilidade da tese).
+# Instalar com:  pip install -r requirements.txt
+
+# Núcleo numérico / dados
+numpy==2.4.2
+pandas==3.0.0
+scipy==1.17.1            # testes estatísticos (Mann-Whitney, t de Welch)
+pyyaml==6.0.3
+
+# Ambiente / RL
+gymnasium==1.2.3
+pettingzoo==1.24.3
+stable-baselines3==2.7.1
+torch==2.10.0
+
+# Visualização e dashboard
+matplotlib==3.10.8
+seaborn==0.13.2
+customtkinter==5.2.2
+pillow==12.1.0           # carregamento de imagens no dashboard
+ursina==8.3.0            # visualizador 3D

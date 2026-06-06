@@ -116,7 +116,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--scenario", type=str, default=None)
+    parser.add_argument("--no-pause", action="store_true",
+                        help="Nao espera ENTER no fim (para correr em background/CI)")
     args = parser.parse_args()
+
+    def _pause():
+        # Nao bloquear se nao for interativo (sem TTY) ou se --no-pause.
+        if args.no_pause or not sys.stdin.isatty():
+            return
+        input("\nPressiona ENTER para fechar...")
 
     config_path = os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")
     with open(config_path) as f:
@@ -150,7 +158,7 @@ def main():
 
     if not summary:
         print("\nNenhum modelo encontrado. Treina primeiro.")
-        input("\nPressiona ENTER para fechar...")
+        _pause()
         return
 
     # ── Tabela de comparação ─────────────────────────────────────────────────
@@ -173,7 +181,7 @@ def main():
     print(f"[OK] Comparacao guardada: {out_all}")
     print(f"[OK] CSVs individuais em: {out_dir}")
 
-    input("\nPressiona ENTER para fechar...")
+    _pause()
 
 
 if __name__ == "__main__":

@@ -150,6 +150,9 @@ class GeneticTrainer3D:
         global_timestep = 0
         overall_start_time = time.time()
         gen = 1
+        # Fallback: se o tempo esgotar antes da 1ª geração terminar, ainda há algo
+        # para guardar (evita NameError no save final).
+        population_sorted = self.population
 
         with Pool(processes=num_cores) as pool:
             while True:

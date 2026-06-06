@@ -48,6 +48,11 @@ class SwarmForagingEnv3D(gym.Env):
         if 'max_steps_cooperative_door' in env_config:
             self.max_steps_override['cooperative_door'] = env_config['max_steps_cooperative_door']
 
+        # Rrobust (resiliência): fração de agentes que "falha" a meio do episódio.
+        # 0.0 = desligado (treino normal); 0.1 = 10% dos agentes ficam inertes
+        # a partir de metade do episódio. Avalia a degradação face à falha de agentes.
+        self.agent_failure_fraction = env_config.get('agent_failure_fraction', 0.0)
+
         rewards_config = self.config.get('rewards', {})
         self.energy_cost = rewards_config.get('energy_cost', -0.05)
         self.food_collected_reward = rewards_config.get('food_collected', 100.0)
@@ -163,6 +168,10 @@ class SwarmForagingEnv3D(gym.Env):
 
         # Grelha de células visitadas por agente (reward de exploração count-based)
         self.visited_cells = [set() for _ in range(self.num_agents)]
+
+        # Rrobust: nenhum agente falhou ainda no início do episódio.
+        self.failed = np.zeros(self.num_agents, dtype=bool)
+        self._failure_injected = False
 
         self.agent_headings = np.zeros((self.num_agents, 3))
         for i in range(self.num_agents):
@@ -386,6 +395,16 @@ class SwarmForagingEnv3D(gym.Env):
 
     def step(self, actions):
         self.steps += 1
+
+        # Rrobust: a meio do episódio, uma fração dos agentes "falha" (fica inerte).
+        if (self.agent_failure_fraction > 0 and not self._failure_injected
+                and self.steps >= self.max_steps // 2):
+            n_fail = int(self.num_agents * self.agent_failure_fraction)
+            if n_fail > 0:
+                idxs = np.random.choice(self.num_agents, n_fail, replace=False)
+                self.failed[idxs] = True
+            self._failure_injected = True
+
         rewards = {a: 0.0 for a in self.agents}
         terms = {a: False for a in self.agents}
         truncs = {a: False for a in self.agents}
@@ -417,6 +436,8 @@ class SwarmForagingEnv3D(gym.Env):
             observing_robots = []
             angles = []
             for i in range(self.num_agents):
+                if self.failed[i]:
+                    continue  # Rrobust: agente falhado não observa o alvo
                 vec = self.agent_positions[i] - self.nest_pos
                 dist = np.linalg.norm(vec)
                 # Só contam robôs a menos de 4 metros que o estejam a rodear
@@ -450,6 +471,7 @@ class SwarmForagingEnv3D(gym.Env):
         for idx, agent in enumerate(self.agents):
             if agent in actions:
                 if self.signaling[idx] == 1.0: continue
+                if self.failed[idx]: continue  # Rrobust: agente falhado fica inerte
                 move_local = np.clip(actions[agent], -1, 1) * 0.2
 
                 F = self.agent_headings[idx]
@@ -485,6 +507,8 @@ class SwarmForagingEnv3D(gym.Env):
         if self.classic_scenario == "cooperative_door" and getattr(self, 'door_active', False):
             pushing_robots = []
             for i in range(self.num_agents):
+                if self.failed[i]:
+                    continue  # Rrobust: agente falhado não empurra a porta
                 pos = self.agent_positions[i]
                 # Push zone: directly south of the door (x -1.5 to 1.5, y -2 to 0)
                 if -1.5 < pos[0] < 1.5 and -2.0 < pos[1] < 0.0:
@@ -567,6 +591,8 @@ class SwarmForagingEnv3D(gym.Env):
 
         robots_in_nest = []
         for idx in range(self.num_agents):
+            if self.failed[idx]:
+                continue  # Rrobust: agente falhado não conta para a tarefa
             if np.linalg.norm(self.agent_positions[idx] - self.nest_pos) < (self.nest_radius + 0.1):
                 robots_in_nest.append(idx)
                 # No cenário de perceção cooperativa, não há o conceito físico de "entrar" no ninho e repousar

@@ -120,6 +120,9 @@ def main():
                         help="Numero de episodios de teste (default: 20)")
     parser.add_argument("--scenario", type=str, default=None,
                         help="Forccar cenario (sobrepoe o config)")
+    parser.add_argument("--fail-frac", type=float, default=0.0,
+                        help="Rrobust: fracao de agentes que falha a meio do episodio "
+                             "(ex: 0.1 = 10%%). Compara com 0.0 para medir resiliencia.")
     args = parser.parse_args()
 
     config_path = os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")
@@ -139,6 +142,9 @@ def main():
     env = SwarmForagingEnv3D(config_path=config_path)
     if args.scenario:
         env.config["environment"]["classic_scenario"] = args.scenario
+    env.agent_failure_fraction = args.fail_frac
+    if args.fail_frac > 0:
+        print(f"  [Rrobust] {args.fail_frac*100:.0f}% dos agentes falham a meio do episodio\n")
 
     results = []
     for ep in range(args.episodes):
@@ -168,7 +174,8 @@ def main():
 
     out_dir  = os.path.join(PROJECT_ROOT, "results", "evaluation")
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, f"eval_{args.algo}_{scenario}.csv")
+    fail_tag = f"_fail{int(args.fail_frac*100)}" if args.fail_frac > 0 else ""
+    out_path = os.path.join(out_dir, f"eval_{args.algo}_{scenario}{fail_tag}.csv")
     df.to_csv(out_path, index=False)
     print(f"[OK] Resultados guardados: {out_path}")
 

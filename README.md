@@ -46,8 +46,10 @@ src/
   training/                    evo_trainer_3d / train_ppo_3d / train_sac_3d
 scripts/
   run_experiments.py           Automação de baterias de treino (Rotina Noturna / Tour)
-  run_eval.py                  Avaliação determinística de 1 algoritmo
+  run_eval.py                  Avaliação determinística de 1 algoritmo (+ Rrobust via --fail-frac)
   eval_all.py                  Avaliação comparativa dos 3 algoritmos
+  eval_scalability.py          Sscale: transferência Zero-Shot para N variável
+  statistical_tests.py         Testes de significância (Mann-Whitney / t de Welch)
   plot_results.py              Geração dos gráficos da tese
 visualization/
   visualize_{gnn,ppo,sac}.py   Visualizadores 3D Ursina (usados pelo launcher)
@@ -112,6 +114,52 @@ python tests/test_simulation.py
 
 O cenário ativo é o `classic_scenario` em `configs/foraging.yaml` (alterável pelo
 dashboard ou por `--scenario` nos scripts de avaliação).
+
+---
+
+## Análise para a tese (métricas Ptask, Rrobust, Sscale)
+
+As três métricas definidas na proposta têm suporte direto:
+
+| Métrica | O que mede | Como obter |
+|---------|-----------|------------|
+| **Ptask** | Taxa de conclusão da missão | `eval_all.py` → `success` / `food_collected` por episódio |
+| **Rrobust** | Resiliência à falha de 10% dos agentes a meio do episódio | `run_eval.py --fail-frac 0.1` (comparar com `--fail-frac 0.0`) |
+| **Sscale** | Transferência Zero-Shot para N∈{10,20,50,100} sem retreino | `eval_scalability.py` |
+
+A **significância estatística** entre algoritmos obtém-se com `statistical_tests.py`,
+que opera sobre a métrica de tarefa da avaliação (comparável entre algoritmos, ao
+contrário da recompensa de treino) e gera tabela CSV + LaTeX.
+
+### Reproduzir os resultados da tese
+
+```powershell
+# 1. Treinar (30 runs por cenário, via dashboard "Rotina Noturna" ou CLI)
+python scripts/run_experiments.py --runs 30 --time 60
+
+# 2. Avaliar cada cenário (>=30 episódios para os testes terem poder estatístico)
+foreach ($s in "none","u_wall","bottleneck","four_rooms","cooperative_door","cooperative_perception") {
+    python scripts/eval_all.py --episodes 30 --scenario $s --no-pause
+}
+
+# 3. Testes de significância (Mann-Whitney / t de Welch)
+python scripts/statistical_tests.py --metric food_collected
+
+# 4. Resiliência (Rrobust): baseline vs 10% de falhas
+python scripts/run_eval.py --algo sac --scenario none --episodes 30
+python scripts/run_eval.py --algo sac --scenario none --episodes 30 --fail-frac 0.1
+
+# 5. Escalabilidade Zero-Shot (Sscale)
+python scripts/eval_scalability.py --scenario none --sizes 10,20,50,100 --episodes 30
+
+# 6. Gráficos finais
+python scripts/plot_results.py
+```
+
+> **Nota arquitetural (Sscale):** só a **GNN** é invariante ao número de agentes
+> (agrega vizinhos por atenção). O PPO e o SAC usam uma MLP de entrada fixa, pelo que
+> são incompatíveis com N≠20 — o `eval_scalability.py` deteta e regista isto como
+> evidência empírica da vantagem de escalabilidade da GNN.
 
 ---
 
