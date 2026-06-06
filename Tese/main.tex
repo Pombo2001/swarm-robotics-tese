@@ -326,7 +326,7 @@ Esta dissertação propõe um estudo comparativo rigoroso entre a Aprendizagem p
 \chapter{Introdução}
 
 \section{Enquadramento e Motivação}
-A robótica de enxame (\textit{Swarm Robotics}), enquanto subcampo da inteligência artificial e dos sistemas multiagente, representa uma mudança de paradigma fundamental na engenharia contemporânea, transitando de arquiteturas monolíticas e robôs complexos para a coordenação de grandes grupos de agentes simples \cite{huttenrauch2019deep}. Esta transição fundamenta-se na premissa de que a inteligência não reside na complexidade individual de cada membro, mas sim na sofisticação das interações locais entre eles. Desde as primeiras conceptualizações em meados da década de 1990 até às aplicações de ponta em 2025, a motivação central deste campo permanece constante: a emulação da inteligência coletiva observada na natureza — como em colónias de formigas ou cardumes — para atingir robustez, flexibilidade e escalabilidade superiores através de comportamento emergente \cite{dorigo1992optimization, kennedy1995pso}.
+A robótica de enxame (\textit{Swarm Robotics}), enquanto subcampo da inteligência artificial e dos sistemas multiagente, representa uma mudança de paradigma fundamental na engenharia contemporânea, transitando de arquiteturas monolíticas e robôs complexos para a coordenação de grandes grupos de agentes simples \cite{huttenrauch2019deep}. Esta transição fundamenta-se na premissa de que a inteligência não reside na complexidade individual de cada membro, mas sim na sofisticação das interações locais entre eles. Esta premissa ecoa a perspetiva de que a inteligência é, na sua essência, um fenómeno de processamento e organização de informação, em larga medida independente do substrato físico que a concretiza \cite{tegmark2017life}. Desde as primeiras conceptualizações em meados da década de 1990 até às aplicações de ponta em 2025, a motivação central deste campo permanece constante: a emulação da inteligência coletiva observada na natureza — como em colónias de formigas ou cardumes — para atingir robustez, flexibilidade e escalabilidade superiores através de comportamento emergente \cite{dorigo1992optimization, kennedy1995pso}.
 
 A urgência no desenvolvimento destes sistemas é impulsionada por aplicações críticas em ambientes de elevada incerteza e perigosidade, tais como a vigilância persistente de infraestruturas, a exploração espacial e a resposta a desastres naturais \cite{lin2025survey}. Nestes cenários, a redundância intrínseca do enxame é a sua maior vantagem: o sistema é desenhado para ser resiliente a falhas individuais, garantindo que a perda de um único agente não comprometa a integridade da missão global \cite{he2024self}.
 
@@ -493,7 +493,7 @@ A política ótima verifica a \textbf{Equação de Bellman de Optimalidade}:
 \end{equation}
 
 \paragraph{Extensão para Dec-POMDP em Enxames:}
-Em sistemas multiagente, o estado global $s \in \mathcal{S}$ é inacessível a qualquer robô individual. O problema estende-se para o \textbf{Processo de Decisão de Markov Parcialmente Observável Descentralizado (Dec-POMDP)}, definido pela tupla $\langle \mathcal{N}, \mathcal{S}, \{\mathcal{A}_i\}_{i \in \mathcal{N}}, \mathcal{P}, \mathcal{R}, \Omega, \{\mathcal{O}_i\}_{i \in \mathcal{N}}, \gamma \rangle$, onde $\mathcal{N} = \{1,\ldots,N\}$ é o conjunto de agentes, $\Omega$ é o espaço de observações conjuntas, e $\mathcal{O}_i(s) \in \mathbb{R}^{107}$ é a observação local e parcial do agente $i$ \cite{sutton2018reinforcement, huh2023marl}. Cada robô mantém uma política descentralizada $\pi_i(a_i \mid o_i)$ e o objetivo coletivo é maximizar o retorno conjunto:
+Em sistemas multiagente, o estado global $s \in \mathcal{S}$ é inacessível a qualquer robô individual. O problema estende-se para o \textbf{Processo de Decisão de Markov Parcialmente Observável Descentralizado (Dec-POMDP)}, definido pela tupla $\langle \mathcal{N}, \mathcal{S}, \{\mathcal{A}_i\}_{i \in \mathcal{N}}, \mathcal{P}, \mathcal{R}, \Omega, \{\mathcal{O}_i\}_{i \in \mathcal{N}}, \gamma \rangle$, onde $\mathcal{N} = \{1,\ldots,N\}$ é o conjunto de agentes, $\Omega$ é o espaço de observações conjuntas, e $\mathcal{O}_i(s) \in \mathbb{R}^{107}$ é a observação local e parcial do agente $i$ \cite{oliehoek2016concise, sutton2018reinforcement, huh2023marl}. Cada robô mantém uma política descentralizada $\pi_i(a_i \mid o_i)$ e o objetivo coletivo é maximizar o retorno conjunto:
 \begin{equation}
     J(\pi_1, \ldots, \pi_N) = \mathbb{E}\!\left[\sum_{t=0}^{\infty} \gamma^t \mathcal{R}(s_t, \mathbf{a}_t)\right], \quad \mathbf{a}_t = (a_1^t, \ldots, a_N^t)
     \label{eq:dec_pomdp_obj}
@@ -508,7 +508,7 @@ Tanto o PPO como o SAC assentam na arquitetura \textbf{Actor-Critic}, onde duas 
 \end{itemize}
 
 \paragraph{PPO --- \textit{Clipped Surrogate Objective}:}
-O PPO (\textit{Proximal Policy Optimization}) é um algoritmo \textit{on-policy}: recolhe \textit{rollouts} com a política atual e atualiza os parâmetros através de um objetivo \textit{clipped} que previne passos de gradiente destabilizadores. Seja a \textbf{razão de importância}:
+O PPO (\textit{Proximal Policy Optimization}) \cite{schulman2017ppo} é um algoritmo \textit{on-policy}: recolhe \textit{rollouts} com a política atual e atualiza os parâmetros através de um objetivo \textit{clipped} que previne passos de gradiente destabilizadores. Seja a \textbf{razão de importância}:
 \begin{equation}
     r_t(\theta) = \frac{\pi_\theta(a_t \mid o_t)}{\pi_{\theta_{\text{old}}}(a_t \mid o_t)}
     \label{eq:importance_ratio}
@@ -519,7 +519,7 @@ O \textbf{objetivo PPO \textit{clipped}} é:
     L^{\text{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\!\left(r_t(\theta)\,\hat{A}_t,\;\operatorname{clip}\!\left(r_t(\theta),\, 1{-}\varepsilon,\, 1{+}\varepsilon\right)\hat{A}_t\right)\right]
     \label{eq:ppo_clip}
 \end{equation}
-com $\varepsilon = 0.2$. A estimativa da vantagem $\hat{A}_t$ é calculada via \textbf{Estimação de Vantagem Generalizada (GAE)}:
+com $\varepsilon = 0.2$. A estimativa da vantagem $\hat{A}_t$ é calculada via \textbf{Estimação de Vantagem Generalizada (GAE)} \cite{schulman2016gae}:
 \begin{equation}
     \hat{A}_t = \sum_{l=0}^{T-t-1} (\gamma\lambda)^l \,\delta_{t+l}, \qquad \delta_t = r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)
     \label{eq:gae}
@@ -531,7 +531,7 @@ O objetivo final inclui ainda um erro de regressão do crítico e um bónus de e
 \end{equation}
 
 \paragraph{SAC --- Maximização de Entropia:}
-O SAC (\textit{Soft Actor-Critic}) é um algoritmo \textit{off-policy} que augmenta o objetivo de RL com o termo de entropia de Shannon $H(\pi) = -\mathbb{E}[\log \pi(a\mid s)]$, promovendo a \textbf{exploração máxima} consistente com o desempenho na tarefa:
+O SAC (\textit{Soft Actor-Critic}) \cite{haarnoja2018sac} é um algoritmo \textit{off-policy} que augmenta o objetivo de RL com o termo de entropia de Shannon $H(\pi) = -\mathbb{E}[\log \pi(a\mid s)]$, promovendo a \textbf{exploração máxima} consistente com o desempenho na tarefa:
 \begin{equation}
     J(\pi) = \mathbb{E}_{\rho_\pi}\!\left[\sum_{t=0}^{\infty} \gamma^t \Big(r_t + \alpha\, H(\pi(\cdot\mid s_t))\Big)\right]
     \label{eq:sac_objective}
@@ -550,7 +550,7 @@ O SAC mantém dois críticos $Q_{\psi_1}, Q_{\psi_2}$ cujo mínimo é usado no a
 
 \paragraph{O Desafio da Não-Estacionaridade:} A principal barreira teórica na aplicação de MARL a enxames é a não-estacionaridade do ambiente. Num sistema multiagente, as transições de estado para um agente $i$ dependem das ações de todos os outros agentes. Como todos os robôs estão a aprender e a alterar as suas políticas simultaneamente, a dinâmica do ambiente é instável, o que viola a propriedade fundamental de Markov e dificulta a convergência dos algoritmos tradicionais de agente único.
 
-\paragraph{Arquitetura CTDE e Escalabilidade com GNNs:} Para mitigar a instabilidade, utiliza-se a arquitetura de \textbf{Treinamento Centralizado com Execução Descentralizada} (CTDE). Nesta abordagem, um componente ``Crítico'' tem acesso ao estado global durante a fase de treino para estabilizar os sinais de recompensa, enquanto o ``Ator'' (controlador do robô) utiliza apenas observações locais durante a fase de execução \cite{sun2024graph}.
+\paragraph{Arquitetura CTDE e Escalabilidade com GNNs:} Para mitigar a instabilidade, utiliza-se a arquitetura de \textbf{Treinamento Centralizado com Execução Descentralizada} (CTDE) \cite{lowe2017maddpg}. Nesta abordagem, um componente ``Crítico'' tem acesso ao estado global durante a fase de treino para estabilizar os sinais de recompensa, enquanto o ``Ator'' (controlador do robô) utiliza apenas observações locais durante a fase de execução \cite{sun2024graph}.
 
 Contudo, para garantir que o enxame é verdadeiramente escalável, a investigação moderna tem integrado \textbf{Graph Neural Networks (GNNs)} e mecanismos de atenção espacial.
 
@@ -567,7 +567,7 @@ O paradigma geral das GNNs é o framework MPNN (\textit{Message Passing Neural N
 onde $\mathbf{m}_{j \to i}^{(l)} = \text{MSG}(\mathbf{h}_i^{(l)}, \mathbf{h}_j^{(l)})$ é a mensagem do vizinho $j$, e $\text{AGG}(\cdot)$ é uma função invariante à permutação (soma, média ou máximo). Esta invariância é fundamental: a operação é independente da ordem dos vizinhos, garantindo que o enxame é tratado como um conjunto não-ordenado.
 
 \paragraph{Mecanismo de Atenção Escalada:}
-A arquitetura implementada (\texttt{GNNAgent3D}) usa o mecanismo de \textbf{atenção de produto interno escalado}. Para o agente $i$, codificam-se as suas características locais $\mathbf{h}_i^{env} = f_{enc}(\mathbf{o}_i^{env}) \in \mathbb{R}^d$ e as dos $N-1$ vizinhos $\mathbf{h}_j^{nbr} = f_{nbr}(\mathbf{n}_{j,i}) \in \mathbb{R}^d$, formando a matriz de contexto:
+A arquitetura implementada (\texttt{GNNAgent3D}) usa o mecanismo de \textbf{atenção de produto interno escalado} \cite{vaswani2017attention}, distinto da formulação aditiva original das \textit{Graph Attention Networks} \cite{velickovic2018gat}. Para o agente $i$, codificam-se as suas características locais $\mathbf{h}_i^{env} = f_{enc}(\mathbf{o}_i^{env}) \in \mathbb{R}^d$ e as dos $N-1$ vizinhos $\mathbf{h}_j^{nbr} = f_{nbr}(\mathbf{n}_{j,i}) \in \mathbb{R}^d$, formando a matriz de contexto:
 \begin{equation}
     \mathbf{H} = \bigl[\mathbf{h}_i^{env};\, \mathbf{h}_1^{nbr};\, \ldots;\, \mathbf{h}_{N-1}^{nbr}\bigr] \in \mathbb{R}^{N \times d}
 \end{equation}
@@ -989,7 +989,7 @@ A cada passo de simulação, o vetor de observação de cada agente é construí
 
 \section{Algoritmo 2: Otimização Bio-inspirada (Benchmark)}
 \label{sec:algo_evolutivo}
-A \textit{baseline} adotada assenta num processo de \textbf{Neuroevolução}, utilizando um Algoritmo Evolutivo clássico com elitismo (preservação dos 20\% melhores) e mutações Gaussianas independentes nos pesos ($p_{mut} = 0.1$, com atenuação \textit{sigma decay}). É neste controlador que se instancia a \textbf{rede de grafos com atenção} (\texttt{GNNAgent3D}) formalizada no Capítulo~\ref{ch:fundamentos}: é precisamente esta arquitetura, invariante ao número de agentes, que habilita o \textit{Zero-Shot Transfer}. A otimização evolutiva \textit{offline} ajusta os seus pesos sobre $30$ genomas candidatos, sem recurso a gradientes nem a um sinal de recompensa denso por passo.
+A \textit{baseline} adotada assenta num processo de \textbf{Neuroevolução} \cite{salimans2017es}, utilizando um Algoritmo Evolutivo clássico com elitismo (preservação dos 20\% melhores) e mutações Gaussianas independentes nos pesos ($p_{mut} = 0.1$, com atenuação \textit{sigma decay}). É neste controlador que se instancia a \textbf{rede de grafos com atenção} (\texttt{GNNAgent3D}) formalizada no Capítulo~\ref{ch:fundamentos}: é precisamente esta arquitetura, invariante ao número de agentes, que habilita o \textit{Zero-Shot Transfer}. A otimização evolutiva \textit{offline} ajusta os seus pesos sobre $30$ genomas candidatos, sem recurso a gradientes nem a um sinal de recompensa denso por passo.
 
 \subsection{Ciclo de Treino Evolutivo}
 
