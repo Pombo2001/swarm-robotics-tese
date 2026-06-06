@@ -1,11 +1,15 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: cooperative_door
+  classic_scenario: cooperative_perception
   dynamic_nest: true
   dynamic_obstacles: true
+  exploration_bonus: 2.0
+  exploration_cell_size: 2.0
   forbidden_area: 2.2
-  hunger_timer_max: 250  # < max_steps (500) para que a fome possa disparar
+  hunger_timer_max: 250
   max_steps: 500
+  max_steps_cooperative_door: 800
+  min_spread_distance: 1.0
   nest_radius: 1.5
   nest_velocity: 0.015
   num_agents: 20
@@ -15,8 +19,9 @@ environment:
   obstacle_velocity: 0.02
   progress_reward_factor: 50.0
   required_to_eat: 3
+  spreading_penalty_factor: 1.5
 evolution:
-  eval_episodes: 2
+  eval_episodes: 3
   mutation_rate: 0.1
   pop_size: 30
   sigma: 0.1

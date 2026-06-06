@@ -8,14 +8,16 @@ import os
 class SwarmForagingEnv3D(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 30}
 
-    def __init__(self, config_path=None):
+    def __init__(self, config_path=None, config=None):
         super(SwarmForagingEnv3D, self).__init__()
 
-        if config_path is None:
-            config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
-
-        with open(config_path, 'r') as f:
-            self.config = yaml.safe_load(f)
+        if config is not None:
+            self.config = config
+        else:
+            if config_path is None:
+                config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
+            with open(config_path, 'r') as f:
+                self.config = yaml.safe_load(f)
 
         env_config = self.config['environment']
         self.num_agents = env_config.get('num_agents', 25)
@@ -38,6 +40,13 @@ class SwarmForagingEnv3D(gym.Env):
         self.hunger_timer_max = env_config.get('hunger_timer_max', 600)
         self.progress_reward_factor = env_config.get('progress_reward_factor', 50.0)
         self.obstacle_penalty = env_config.get('obstacle_penalty', -2.0)
+        self.spreading_penalty_factor = env_config.get('spreading_penalty_factor', 1.5)
+        self.min_spread_distance = env_config.get('min_spread_distance', 1.0)
+        self.exploration_bonus = env_config.get('exploration_bonus', 2.0)
+        self.exploration_cell_size = env_config.get('exploration_cell_size', 2.0)
+        self.max_steps_override = {}
+        if 'max_steps_cooperative_door' in env_config:
+            self.max_steps_override['cooperative_door'] = env_config['max_steps_cooperative_door']
 
         rewards_config = self.config.get('rewards', {})
         self.energy_cost = rewards_config.get('energy_cost', -0.05)
@@ -107,6 +116,9 @@ class SwarmForagingEnv3D(gym.Env):
 
         self.classic_scenario = self.config['environment'].get('classic_scenario', 'none')
 
+        base_max_steps = self.config['environment'].get('max_steps', 500)
+        self.max_steps = self.max_steps_override.get(self.classic_scenario, base_max_steps)
+
         if self.classic_scenario == "u_wall":
             self.nest_pos = np.array([0.0, 10.0, 0.0])
             self.nest_velocity = np.zeros(3)
@@ -148,6 +160,9 @@ class SwarmForagingEnv3D(gym.Env):
 
         self.prev_dist_to_nest = np.array([np.linalg.norm(p - self.nest_pos) for p in self.agent_positions])
         self.hunger_timers = np.zeros(self.num_agents, dtype=int)
+
+        # Grelha de células visitadas por agente (reward de exploração count-based)
+        self.visited_cells = [set() for _ in range(self.num_agents)]
 
         self.agent_headings = np.zeros((self.num_agents, 3))
         for i in range(self.num_agents):
@@ -279,12 +294,16 @@ class SwarmForagingEnv3D(gym.Env):
                 dir_w = vec / dist
                 return np.array([np.dot(dir_w, F), np.dot(dir_w, R), np.dot(dir_w, U)]), dist
 
+            # BÚSSOLA DE HOMING: a direção+distância (euclidiana) para o ninho está
+            # SEMPRE disponível, mesmo sem linha de visão. Justificação: em swarm
+            # robotics assume-se homing global para a base (bússola/GPS/beacon —
+            # cf. formigas/sol, pombos/campo magnético, drones/GPS), mas NÃO um mapa
+            # dos obstáculos. Os obstáculos continuam invisíveis até serem detetados
+            # localmente pelo LiDAR (5m) — observabilidade parcial genuína mantida.
+            # Antes zerava-se a direção sem line-of-sight, o que cegava os agentes em
+            # todos os cenários com paredes (u_wall, bottleneck, four_rooms, door).
             local_dir_nest, dist_nest = to_egocentric(self.nest_pos)
             norm_dist_nest = dist_nest / (self.arena_radius * 2)
-
-            if not self._has_line_of_sight(pos, self.nest_pos):
-                local_dir_nest = np.array([0.0, 0.0, 0.0])
-                norm_dist_nest = 1.0
 
             # ---------------- LiDAR RAYCASTING (8 Rays) ----------------
             num_rays = 8
@@ -458,7 +477,7 @@ class SwarmForagingEnv3D(gym.Env):
                         # Remover a componente do movimento que vai contra a normal (deslizar)
                         move_global = move_global - np.dot(move_global, normal) * normal
                         
-                if np.linalg.norm(move_global) > 1e-5:
+                if np.linalg.norm(move_global) > 0.02:
                     self.agent_headings[idx] = move_global / np.linalg.norm(move_global)
 
                 self.agent_positions[idx] += move_global
@@ -503,6 +522,48 @@ class SwarmForagingEnv3D(gym.Env):
                     sign = np.sign(delta[min_axis])
                     if sign == 0: sign = 1.0
                     self.agent_positions[idx][min_axis] += penetration[min_axis] * sign
+
+        # --- Separação física inter-agente + penalidade de spreading ---
+        # A separação física (anti-sobreposição) aplica-se SEMPRE.
+        # A penalidade de spreading (reward) só durante a navegação — é ISENTA
+        # em zonas de cooperação onde a tarefa exige proximidade (junto ao ninho,
+        # ao alvo móvel, ou à push zone da porta), senão sabotava required_to_eat.
+        self._spreading_penalties = np.zeros(self.num_agents)
+        min_sep = self.robot_radius * 2
+        spread_dist = self.min_spread_distance
+
+        coop_points = [self.nest_pos]
+        if self.classic_scenario == "cooperative_door":
+            coop_points.append(np.array([0.0, -1.0, 0.0]))  # centro da push zone
+        coop_zone = 4.0
+        in_coop_zone = np.zeros(self.num_agents, dtype=bool)
+        for idx in range(self.num_agents):
+            for cp in coop_points:
+                if np.linalg.norm(self.agent_positions[idx] - cp) < coop_zone:
+                    in_coop_zone[idx] = True
+                    break
+
+        for i in range(self.num_agents):
+            if self.signaling[i] == 1.0:
+                continue
+            for j in range(i + 1, self.num_agents):
+                if self.signaling[j] == 1.0:
+                    continue
+                diff = self.agent_positions[i] - self.agent_positions[j]
+                dist = np.linalg.norm(diff)
+                if dist < 1e-6:
+                    diff = np.array([np.random.uniform(-0.05, 0.05),
+                                     np.random.uniform(-0.05, 0.05), 0.0])
+                    dist = np.linalg.norm(diff) + 1e-6
+                if dist < min_sep:
+                    push = (diff / dist) * (min_sep - dist) * 0.5
+                    self.agent_positions[i] += push
+                    self.agent_positions[j] -= push
+                if dist < spread_dist and not (in_coop_zone[i] or in_coop_zone[j]):
+                    pen = self.spreading_penalty_factor * (1.0 - dist / spread_dist)
+                    self._spreading_penalties[i] += pen
+                    self._spreading_penalties[j] += pen
+        # ---------------------------------------------------------------
 
         robots_in_nest = []
         for idx in range(self.num_agents):
@@ -564,9 +625,23 @@ class SwarmForagingEnv3D(gym.Env):
                 rewards[agent] += (progress * self.progress_reward_factor) + self.energy_cost
                 self.hunger_timers[idx] += 1
 
+                # ── Reward de Exploração (count-based) ───────────────────────
+                # Bónus por visitar pela primeira vez uma célula da grelha.
+                # Tira os agentes dos mínimos locais nas paredes (onde o progress
+                # euclidiano os prende) ao premiar a cobertura de zonas novas —
+                # essencial para descobrir desvios em u_wall/four_rooms/bottleneck.
+                cell = (int(self.agent_positions[idx][0] // self.exploration_cell_size),
+                        int(self.agent_positions[idx][1] // self.exploration_cell_size))
+                if cell not in self.visited_cells[idx]:
+                    self.visited_cells[idx].add(cell)
+                    rewards[agent] += self.exploration_bonus
+                # ─────────────────────────────────────────────────────────────
+
             self.prev_dist_to_nest[idx] = dist_nest
 
             if obstacle_hits[agent]: rewards[agent] += self.obstacle_penalty
+            if self._spreading_penalties[idx] > 0:
+                rewards[agent] -= self._spreading_penalties[idx]
 
             if self.hunger_timers[idx] > self.hunger_timer_max:
                 rewards[agent] -= 50.0

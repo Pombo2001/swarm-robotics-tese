@@ -42,7 +42,13 @@ env = SwarmForagingEnv3D(config_path=config_path)
 env.render_mode = None
 obs_dict, _ = env.reset()
 
-model_path = os.path.join(base_dir, 'results', 'models', 'gnn_3d_best.pth')
+# Convenção de nomes: Sandbox ("none") sem sufixo; restantes com "_{scenario}".
+# Fallback para o modelo sem sufixo se o do cenário ainda não tiver sido treinado.
+scenario = config['environment'].get('classic_scenario', 'none')
+suffix = f"_{scenario}" if scenario and scenario != "none" else ""
+model_path = os.path.join(base_dir, 'results', 'models', f'gnn_3d_best{suffix}.pth')
+if not os.path.exists(model_path):
+    model_path = os.path.join(base_dir, 'results', 'models', 'gnn_3d_best.pth')
 agent = GNNAgent3D("tester", env.action_space("robot_0"), config_path)
 
 if os.path.exists(model_path):

@@ -65,13 +65,13 @@ def load_model(algo, scenario, config_path):
     elif algo == "sac":
         from stable_baselines3 import SAC
         for path in [
-            os.path.join(PROJECT_ROOT, "results", "models_ppo", f"sac_3d_final{suffix}.zip"),
-            os.path.join(PROJECT_ROOT, "results", "models_ppo", "sac_3d_final.zip"),
+            os.path.join(PROJECT_ROOT, "results", "models_sac", f"sac_3d_final{suffix}.zip"),
+            os.path.join(PROJECT_ROOT, "results", "models_sac", "sac_3d_final.zip"),
         ]:
             if os.path.exists(path):
                 print(f"[OK] SAC carregado: {path}")
                 return SAC.load(path)
-        raise FileNotFoundError("Modelo SAC nao encontrado em results/models_ppo/")
+        raise FileNotFoundError("Modelo SAC nao encontrado em results/models_sac/")
 
 
 def run_episode(env, algo, model):

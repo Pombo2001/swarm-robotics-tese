@@ -24,7 +24,8 @@
 #   Exploração agressiva no início → refinamento gradual.
 #
 # Exploração: NÃO há reward shaping durante a evolução. A fitness é a
-#   recompensa bruta do episódio (média de 2 episódios para reduzir variância).
+#   recompensa bruta do episódio (média de eval_episodes episódios — ver
+#   foraging.yaml, atualmente 3 — para reduzir variância).
 #   A "exploração" vem da estocasticidade da mutação Gaussiana.
 #
 # Paralelismo: cada genoma é avaliado num processo separado (multiprocessing).
@@ -112,7 +113,7 @@ class GeneticTrainer3D:
         evo_config = self.config.get('evolution', {})
         self.pop_size = evo_config.get('pop_size', 30)
         self.mutation_rate = evo_config.get('mutation_rate', 0.10)
-        self.sigma = 0.1  # Override yaml's aggressive 0.2
+        self.sigma = evo_config.get('sigma', 0.1)  # desvio da mutação Gaussiana (foraging.yaml)
         self.sigma_min = 0.01
         self.sigma_decay = 0.995
 
@@ -125,6 +126,11 @@ class GeneticTrainer3D:
         self.model_dir = os.path.join(os.path.dirname(__file__), '../../results/models')
         os.makedirs(self.log_dir, exist_ok=True)
         os.makedirs(self.model_dir, exist_ok=True)
+
+        # Sufixo do cenário para não sobrescrever modelos entre cenários.
+        # Convenção: none → sem sufixo; outros → _{scenario}
+        scenario = self.config['environment'].get('classic_scenario', 'none')
+        self.model_suffix = f"_{scenario}" if scenario and scenario != "none" else ""
 
         self.history_file = os.path.join(self.log_dir, 'gnn_3d_training.csv')
         with open(self.history_file, 'w', newline='') as f:
@@ -198,14 +204,14 @@ class GeneticTrainer3D:
                                      best_food, cumulative_time])
 
                 if gen % 10 == 0:
-                    save_path = os.path.join(self.model_dir, "gnn_3d_best.pth")
+                    save_path = os.path.join(self.model_dir, f"gnn_3d_best{self.model_suffix}.pth")
                     self.template_agent.load_state_dict(population_sorted[0])
                     torch.save(self.template_agent.state_dict(), save_path)
                     os.chmod(save_path, 0o666)
 
                 gen += 1
 
-        save_path = os.path.join(self.model_dir, "gnn_3d_best.pth")
+        save_path = os.path.join(self.model_dir, f"gnn_3d_best{self.model_suffix}.pth")
         self.template_agent.load_state_dict(population_sorted[0])
         torch.save(self.template_agent.state_dict(), save_path)
         os.chmod(save_path, 0o666)

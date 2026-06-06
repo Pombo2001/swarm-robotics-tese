@@ -50,8 +50,8 @@ def load_model(algo, scenario, config_path):
         return None, None
     elif algo == "sac":
         from stable_baselines3 import SAC
-        for p in [f"results/models_ppo/sac_3d_final{suffix}.zip",
-                  "results/models_ppo/sac_3d_final.zip"]:
+        for p in [f"results/models_sac/sac_3d_final{suffix}.zip",
+                  "results/models_sac/sac_3d_final.zip"]:
             fp = os.path.join(PROJECT_ROOT, p)
             if os.path.exists(fp):
                 return SAC.load(fp), fp

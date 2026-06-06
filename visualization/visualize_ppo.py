@@ -42,7 +42,13 @@ env = SwarmForagingEnv3D(config_path=config_path)
 env.render_mode = None
 obs_dict, _ = env.reset()
 
-model_path = os.path.join(base_dir, 'results', 'models_ppo', 'ppo_3d_final')
+# Convenção de nomes: Sandbox ("none") sem sufixo; restantes com "_{scenario}".
+# Fallback para o modelo sem sufixo se o do cenário ainda não tiver sido treinado.
+scenario = config['environment'].get('classic_scenario', 'none')
+suffix = f"_{scenario}" if scenario and scenario != "none" else ""
+model_path = os.path.join(base_dir, 'results', 'models_ppo', f'ppo_3d_final{suffix}')
+if not os.path.exists(model_path + ".zip"):
+    model_path = os.path.join(base_dir, 'results', 'models_ppo', 'ppo_3d_final')
 
 if os.path.exists(model_path + ".zip"):
     os.chmod(model_path + ".zip", 0o666)
@@ -56,20 +62,18 @@ Entity(model='cube', scale=env.arena_radius * 2, color=color.rgba(255, 255, 255,
 nest_view = Entity(model='sphere', color=color.green, scale=env.nest_radius * 2, position=tuple(env.nest_pos))
 
 obs_views = []
-for i, obs_pos in enumerate(env.obstacles):
-    # Verifica se estamos no cenário da porta e se este obstáculo é a porta
-    if getattr(env, 'classic_scenario', '') == "cooperative_door" and hasattr(env, 'door_index') and i == env.door_index:
-        # A PORTA GIGANTE: Desenhada com o raio certo e a vermelho para se destacar!
-        obs_views.append(Entity(model='sphere', color=color.red, scale=env.door_radius * 2, position=tuple(obs_pos)))
-    else:
-        # OBSTÁCULOS NORMAIS: Desenhados a cinzento e com tamanho normal
-        obs_views.append(Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2, position=tuple(obs_pos)))
+for obs_pos in env.obstacles:
+    obs_views.append(Entity(model='sphere', color=color.gray, scale=env.obstacle_radius * 2, position=tuple(obs_pos)))
 
+# A porta cooperativa é uma parede (door_wall_index), tratada no loop das paredes.
 wall_views = []
-for wall in env.walls:
+for i, wall in enumerate(env.walls):
+    is_door = (getattr(env, 'classic_scenario', '') == "cooperative_door"
+               and hasattr(env, 'door_wall_index') and i == env.door_wall_index)
+    wall_color = color.red if is_door else color.rgba(50, 50, 50, 180)
     wall_views.append(Entity(
         model='cube',
-        color=color.rgba(50, 50, 50, 180),
+        color=wall_color,
         scale=tuple(wall['size']),
         position=tuple(wall['pos'])
     ))

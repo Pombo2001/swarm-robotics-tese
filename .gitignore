@@ -201,6 +201,23 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
+# LaTeX ficheiros temporários
+Tese/*.aux
+Tese/*.log
+Tese/*.out
+Tese/*.toc
+Tese/*.lof
+Tese/*.lot
+Tese/*.bbl
+Tese/*.blg
+Tese/*.synctex.gz
+Tese/*.fls
+Tese/*.fdb_latexmk
+Tese/*.nav
+Tese/*.snm
+Tese/*.vrb
+Tese/out/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/

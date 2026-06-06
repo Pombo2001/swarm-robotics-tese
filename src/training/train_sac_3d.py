@@ -173,6 +173,10 @@ def train_sac_3d(time_limit_minutes):
     num_cpu = sac_config.get('num_cpu', 8)
     log_interval = sac_config.get('log_interval', 2000)
 
+    # Sufixo do cenário para não sobrescrever modelos entre cenários.
+    scenario = config['environment'].get('classic_scenario', 'none')
+    model_suffix = f"_{scenario}" if scenario and scenario != "none" else ""
+
     time_limit_seconds = time_limit_minutes * 60
     print(f"[START] SAC 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
 
@@ -180,8 +184,8 @@ def train_sac_3d(time_limit_minutes):
     env = FlattenMultiAgentVecEnv(env, config['environment'].get('num_agents', 25))
     env = VecMonitor(env)
 
-    log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_ppo')
-    model_dir = os.path.join(os.path.dirname(__file__), '../../results/models_ppo')
+    log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_sac')
+    model_dir = os.path.join(os.path.dirname(__file__), '../../results/models_sac')
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(model_dir, exist_ok=True)
 
@@ -210,10 +214,10 @@ def train_sac_3d(time_limit_minutes):
     print(f"[RUNNING] Simulação SAC a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)
 
-    model_path = os.path.join(model_dir, "sac_3d_final")
+    model_path = os.path.join(model_dir, f"sac_3d_final{model_suffix}")
     model.save(model_path)
     os.chmod(model_path + ".zip", 0o666)
-    print("[DONE] Treino SAC 3D Multi-Core concluído de forma segura!")
+    print(f"[DONE] Treino SAC 3D Multi-Core concluído! Modelo: {os.path.basename(model_path)}.zip")
 
 
 if __name__ == "__main__":

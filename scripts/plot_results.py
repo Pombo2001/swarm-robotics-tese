@@ -64,33 +64,49 @@ def create_thesis_plots_3d():
         sns.set_theme(style="whitegrid")
         
         # ==============================================================
-        # 1. Gráficos "1 MAPA, 3 MODELOS" (Curvas de Aprendizagem)
+        # 1. Gráficos "1 MAPA, 3 MODELOS" — eixo X normalizado [0→100%]
+        #    Cada algoritmo tem unidades diferentes (GNN: passos evolutivos;
+        #    PPO/SAC: timesteps de política). Normalizar para progresso relativo
+        #    permite comparação justa na mesma figura.
         # ==============================================================
         palette_models = {'GNN': '#2E7D32', 'PPO': '#E65100', 'SAC': '#0277BD'}
         scenarios = df_curves['Scenario'].unique()
         print(f"[*] Encontrados dados de {len(scenarios)} cenários no Treino Noturno.")
-        
+
+        # Normalizar Step → TrainingProgress [0, 100] por (Scenario, Algorithm, Run)
+        df_curves = df_curves.copy()
+        step_stats = df_curves.groupby(['Scenario', 'Algorithm', 'Run'])['Step'].agg(['min', 'max'])
+        step_stats.columns = ['step_min', 'step_max']
+        df_curves = df_curves.join(step_stats, on=['Scenario', 'Algorithm', 'Run'])
+        rng = df_curves['step_max'] - df_curves['step_min']
+        df_curves['TrainingProgress'] = (df_curves['Step'] - df_curves['step_min']) / rng.clip(lower=1) * 100
+        df_curves = df_curves.drop(columns=['step_min', 'step_max'])
+
         for scenario in scenarios:
             df_scen = df_curves[df_curves['Scenario'] == scenario].copy()
             label_pt = SCENARIO_LABELS_PT.get(scenario, scenario.upper())
             desc     = MAP_DESCRIPTIONS.get(scenario, "")
 
             fig, ax = plt.subplots(figsize=(11, 7))
-            sns.lineplot(data=df_scen, x='Step', y='Score', hue='Algorithm',
+            sns.lineplot(data=df_scen, x='TrainingProgress', y='Score', hue='Algorithm',
                          palette=palette_models, linewidth=2.5, errorbar='sd', ax=ax)
 
             ax.set_title(f'Comparação de Desempenho — {label_pt}',
                          fontsize=15, fontweight='bold', pad=14)
-            ax.set_xlabel('Timesteps (PPO/SAC)  /  Gerações × Passos (GNN)', fontsize=11)
+            ax.set_xlabel('Progresso do Treino (%)', fontsize=11)
             ax.set_ylabel('Recompensa Média por Episódio', fontsize=11)
+            ax.set_xlim(0, 100)
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0f}%'))
             ax.legend(title="Algoritmo", loc='lower right', fontsize=11)
             ax.grid(True, linestyle='--', alpha=0.5)
 
+            caption = ("Eixo X normalizado (0%→100% do treino de cada algoritmo) para comparação justa. "
+                       "GNN: fitness evolutiva; PPO/SAC: recompensa episódica.")
             if desc:
-                fig.text(0.5, 0.01, desc, ha='center', va='bottom',
-                         fontsize=9, color='#555555',
-                         style='italic', wrap=True)
-                fig.subplots_adjust(bottom=0.14)
+                caption = desc.replace('\n', ' ') + "  |  " + caption
+            fig.text(0.5, 0.01, caption, ha='center', va='bottom',
+                     fontsize=8.5, color='#555555', style='italic')
+            fig.subplots_adjust(bottom=0.14)
 
             plt.tight_layout(rect=[0, 0.10, 1, 1])
             out_path = os.path.join(output_dir, f'comparacao_mapa_{scenario}.png')
@@ -107,7 +123,7 @@ def create_thesis_plots_3d():
         
         algo_descs = {
             "GNN": "Algoritmo Evolutivo com Rede Neuronal de Grafos e atenção sobre vizinhos.\n"
-                   "A fitness é a média de 2 episódios; cada geração avalia 30 genomas em paralelo.",
+                   "A fitness é a média de 3 episódios; cada geração avalia 30 genomas em paralelo.",
             "PPO": "Proximal Policy Optimization — método on-policy Actor-Critic com parameter sharing.\n"
                    "Todos os 20 agentes partilham a mesma rede, atualizada com PPO clipped objective.",
             "SAC": "Soft Actor-Critic — método off-policy com entropia regularizada.\n"
@@ -116,19 +132,20 @@ def create_thesis_plots_3d():
 
         for algo in algorithms:
             df_algo = df_curves[df_curves['Algorithm'] == algo].copy()
-            # Rename scenarios for readability in legend
-            df_algo = df_algo.copy()
             df_algo['Scenario'] = df_algo['Scenario'].map(
                 lambda s: SCENARIO_LABELS_PT.get(s, s))
 
             fig, ax = plt.subplots(figsize=(12, 7))
-            sns.lineplot(data=df_algo, x='Step', y='Score', hue='Scenario',
+            # Para gráficos intra-algoritmo usar TrainingProgress (já calculado acima)
+            sns.lineplot(data=df_algo, x='TrainingProgress', y='Score', hue='Scenario',
                          palette=palette_scenarios, linewidth=2.5, errorbar='sd', ax=ax)
 
             ax.set_title(f'Desempenho Global — {algo.upper()}',
                          fontsize=15, fontweight='bold', pad=14)
-            ax.set_xlabel('Timesteps (PPO/SAC)  /  Gerações × Passos (GNN)', fontsize=11)
+            ax.set_xlabel('Progresso do Treino (%)', fontsize=11)
             ax.set_ylabel('Recompensa Média por Episódio', fontsize=11)
+            ax.set_xlim(0, 100)
+            ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0f}%'))
             ax.legend(title="Cenário", loc='lower right', fontsize=10,
                       bbox_to_anchor=(1.02, 0.0), borderaxespad=0)
             ax.grid(True, linestyle='--', alpha=0.5)
@@ -271,7 +288,7 @@ def create_thesis_plots_3d():
         # Fallback: plot individual training logs if available
         gnn_csv = os.path.join(base_dir, 'results', 'logs', 'gnn_3d_training.csv')
         ppo_csv = os.path.join(base_dir, 'results', 'logs_ppo', 'training_history_ppo_3d.csv')
-        sac_csv = os.path.join(base_dir, 'results', 'logs_ppo', 'training_history_sac_3d.csv')
+        sac_csv = os.path.join(base_dir, 'results', 'logs_sac', 'training_history_sac_3d.csv')
 
         # (path, label, cor, coluna_y, coluna_task)
         ALGO_LOGS = [

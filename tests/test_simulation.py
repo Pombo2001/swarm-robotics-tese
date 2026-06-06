@@ -1,71 +1,109 @@
-import sys
+"""
+Smoke test funcional do simulador 3D + agente GNN.
+
+Valida, sem abrir janela gráfica, que:
+  - o ambiente reseta e produz observações com a dimensão esperada;
+  - um passo (step) devolve a estrutura correta (obs, rewards, terms, truncs, infos);
+  - o GNNAgent3D produz ações com a forma certa a partir das observações;
+  - vários passos correm sem exceções em todos os cenários.
+
+Pode correr-se diretamente (`python tests/test_simulation.py`) ou via pytest.
+"""
 import os
-import time
+import sys
+
 import numpy as np
+import torch
+
+# Tornar o pacote `src` importável independentemente de onde se corre o teste.
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
+
+from src.environment.swarm_env_3d import SwarmForagingEnv3D
+from src.agents.gnn_agent_3d import GNNAgent3D
+
+CONFIG_PATH = os.path.join(PROJECT_ROOT, 'configs', 'foraging.yaml')
+SCENARIOS = ['none', 'u_wall', 'bottleneck', 'four_rooms',
+             'cooperative_door', 'cooperative_perception']
 
 
-# 1. Configurar caminhos de forma robusta
-# Pega na pasta onde ESTE ficheiro está (tests/)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# Define o caminho para a pasta src (uma acima, depois src)
-src_path = os.path.join(current_dir, '../src')
-sys.path.append(src_path)
+def _make_env(scenario='none'):
+    env = SwarmForagingEnv3D(config_path=CONFIG_PATH)
+    env.config['environment']['classic_scenario'] = scenario
+    return env
 
-# Define o caminho ABSOLUTO para o ficheiro de config
-config_path = os.path.join(current_dir, '../configs/foraging.yaml')
 
-from environment.swarm_env import SwarmForagingEnv
+def test_reset_observation_shape():
+    """O reset devolve uma observação por agente com a dimensão correta."""
+    env = _make_env('none')
+    obs_dict, info = env.reset()
 
-from agents.gnn_agent import GNNAgent
+    assert isinstance(obs_dict, dict)
+    assert len(obs_dict) == env.num_agents
 
-def test_visual():
-    print(f"🎥 A iniciar teste visual...")
-    print(f"   Config file: {os.path.abspath(config_path)}")
-
-    # 2. Criar Ambiente (usando o caminho absoluto)
-    if not os.path.exists(config_path):
-        print(f"❌ ERRO CRÍTICO: Não encontro o ficheiro em: {config_path}")
-        return
-
-    env = SwarmForagingEnv(config_path=config_path)
-
-    # Guardar as primeiras observações
-    observations, infos = env.reset()
-
-    # 3. Criar os "Cérebros" (Agentes)
-    # 3. Criar os "Cérebros" (Agentes)
-    agents_map = {}
+    expected_dim = 12 + (env.num_agents - 1) * 5
     for agent_id in env.agents:
-        # AGORA USAMOS GNN!
-        agents_map[agent_id] = GNNAgent(agent_id, env.action_space(agent_id))
+        assert obs_dict[agent_id].shape == (expected_dim,), (
+            f"{agent_id}: esperado {expected_dim}, obtido {obs_dict[agent_id].shape}")
+    # Tem de bater certo com o espaço de observação declarado.
+    assert env.observation_space_val.shape == (expected_dim,)
 
-    print("Janela deve abrir agora. Pressiona Ctrl+C no terminal para parar.")
 
-    try:
-        for i in range(1000):  # Loop da simulação
-            actions = {}
+def test_step_contract():
+    """Um step devolve as 5 estruturas do Gymnasium com as chaves dos agentes."""
+    env = _make_env('none')
+    obs_dict, _ = env.reset()
 
-            for agent_id in env.agents:
-                obs = observations[agent_id]
-                actions[agent_id] = agents_map[agent_id].get_action(obs)
+    actions = {a: env.action_space_val.sample() for a in env.agents}
+    obs_dict, rewards, terms, truncs, infos = env.step(actions)
 
-                # --- DEBUG TEMPORÁRIO ---
-                if agent_id == "robot_0" and i % 50 == 0:
-                    dist_ninho = np.linalg.norm(obs[0:2])
-                    vizinho_x = obs[2]
-                    vizinho_y = obs[3]
-                    print(
-                        f"🤖 Robot_0 vê -> Ninho a {dist_ninho:.2f}m | Vizinho +próximo: ({vizinho_x:.1f}, {vizinho_y:.1f})")
-                # ------------------------
+    for d in (obs_dict, rewards, terms, truncs, infos):
+        assert set(d.keys()) == set(env.agents)
+    assert all(np.isfinite(r) for r in rewards.values())
 
-            observations, rewards, terms, truncs, infos = env.step(actions)
 
-    except KeyboardInterrupt:
-        print("A fechar...")
-    finally:
-        env.close()
-        print("Fechado.")
+def test_gnn_agent_action_shape():
+    """O GNNAgent3D produz ações em [-1, 1] com forma (num_agents, 3)."""
+    env = _make_env('none')
+    obs_dict, _ = env.reset()
+    agent = GNNAgent3D("tester", env.action_space("robot_0"), CONFIG_PATH)
+
+    obs_batch = torch.tensor(
+        np.array([obs_dict[a] for a in env.agents]), dtype=torch.float32)
+    with torch.no_grad():
+        actions = agent(obs_batch).cpu().numpy()
+
+    assert actions.shape == (env.num_agents, 3)
+    assert np.all(actions >= -1.0) and np.all(actions <= 1.0)
+
+
+def test_all_scenarios_run():
+    """Cada cenário reseta e corre alguns passos sem exceções."""
+    for scenario in SCENARIOS:
+        env = _make_env(scenario)
+        obs_dict, _ = env.reset()
+        for _ in range(20):
+            actions = {a: env.action_space_val.sample() for a in env.agents}
+            obs_dict, rewards, terms, truncs, infos = env.step(actions)
+            if any(terms.values()) or any(truncs.values()):
+                break
 
 
 if __name__ == "__main__":
-    test_visual()
+    tests = [
+        test_reset_observation_shape,
+        test_step_contract,
+        test_gnn_agent_action_shape,
+        test_all_scenarios_run,
+    ]
+    falhas = 0
+    for t in tests:
+        try:
+            t()
+            print(f"[OK]  {t.__name__}")
+        except Exception as e:
+            falhas += 1
+            print(f"[FALHOU] {t.__name__}: {e}")
+    print(f"\n{len(tests) - falhas}/{len(tests)} testes passaram.")
+    sys.exit(1 if falhas else 0)

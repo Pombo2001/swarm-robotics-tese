@@ -24,7 +24,7 @@ CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'foraging.yaml')
 LOG_PATHS = {
     'GNN': os.path.join(BASE_DIR, 'results', 'logs', 'gnn_3d_training.csv'),
     'PPO': os.path.join(BASE_DIR, 'results', 'logs_ppo', 'training_history_ppo_3d.csv'),
-    'SAC': os.path.join(BASE_DIR, 'results', 'logs_ppo', 'training_history_sac_3d.csv')
+    'SAC': os.path.join(BASE_DIR, 'results', 'logs_sac', 'training_history_sac_3d.csv')
 }
 
 SCORE_COLS = {
@@ -52,17 +52,22 @@ def set_scenario(scenario_name):
     except Exception as e:
         print(f"[!] Erro ao configurar cenário: {e}")
 
-def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None):
+def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
+                    time_overrides=None):
     if algorithms is None:
         algorithms = ALGORITHMS
     if scenarios is None:
         scenarios = SCENARIOS
+    if time_overrides is None:
+        time_overrides = {}
 
     curves_data = []
     best_scores_data = []
 
     print(f"Iniciando Automacao de Experiencias:")
-    print(f"Runs: {num_runs} | Tempo Limite: {time_limit}m | Cenários: {len(scenarios)} | Algoritmos: {list(algorithms.keys())}")
+    print(f"Runs: {num_runs} | Tempo base: {time_limit}m | Cenários: {len(scenarios)} | Algoritmos: {list(algorithms.keys())}")
+    if time_overrides:
+        print(f"Tempos especificos por algoritmo: {time_overrides}")
 
     for scenario in scenarios:
         set_scenario(scenario)
@@ -72,17 +77,18 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None):
             log_path = LOG_PATHS[algo_name]
             score_col = SCORE_COLS[algo_name]
             step_col = STEP_COLS[algo_name]
-            
+            algo_time = time_overrides.get(algo_name, time_limit)
+
             for run in range(1, num_runs + 1):
-                print(f"\n--- A EXECUTAR | Cenário: {scenario} | Algoritmo: {algo_name} | Run: {run}/{num_runs} ---")
-                
+                print(f"\n--- A EXECUTAR | Cenário: {scenario} | Algoritmo: {algo_name} | Run: {run}/{num_runs} | {algo_time}m ---")
+
                 if os.path.exists(log_path):
                     try:
                         os.remove(log_path)
                     except Exception as e:
                         print(f"[!] Aviso: Nao foi possivel apagar o log antigo ({e})")
-                
-                cmd = [sys.executable, script_path, '--time_limit', str(time_limit)]
+
+                cmd = [sys.executable, script_path, '--time_limit', str(algo_time)]
                 
                 try:
                     subprocess.run(cmd, check=True)
@@ -161,18 +167,44 @@ def generate_plots(df_curves, df_best):
         plt.savefig(os.path.join(out_dir, 'comparacao_barras_geral.png'), dpi=300)
         plt.close()
 
-    # Guarda raw data
-    if not df_curves.empty:
-        df_curves.to_csv(os.path.join(out_dir, 'all_curves_data.csv'), index=False)
-    if not df_best.empty:
-        df_best.to_csv(os.path.join(out_dir, 'all_best_scores.csv'), index=False)
-        
+    # Guarda raw data com MERGE inteligente: preserva resultados de
+    # algoritmos/cenários NÃO re-treinados nesta sessão. Permite treinar por
+    # partes (ex: PPO hoje, SAC amanhã) sem perder dados anteriores.
+    _merge_save(df_curves, os.path.join(out_dir, 'all_curves_data.csv'))
+    _merge_save(df_best,   os.path.join(out_dir, 'all_best_scores.csv'))
+
     print(f"[*] Gráficos e CSVs finais guardados com sucesso em: {out_dir}")
+
+
+def _merge_save(df_new, path):
+    """Substitui no CSV existente apenas as combinações (Scenario, Algorithm)
+    presentes em df_new; mantém todas as outras intactas."""
+    if df_new.empty:
+        return
+    if os.path.exists(path):
+        try:
+            df_old = pd.read_csv(path)
+            # Chaves (cenário, algoritmo) que foram re-treinadas agora
+            new_keys = set(zip(df_new['Scenario'], df_new['Algorithm']))
+            mask = df_old.apply(
+                lambda r: (r['Scenario'], r['Algorithm']) not in new_keys, axis=1)
+            df_old_kept = df_old[mask]
+            df_merged = pd.concat([df_old_kept, df_new], ignore_index=True)
+        except Exception as e:
+            print(f"[!] Falha no merge de {path} ({e}); a escrever só dados novos.")
+            df_merged = df_new
+    else:
+        df_merged = df_new
+    df_merged.to_csv(path, index=False)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Automação de Experiências para a Tese")
     parser.add_argument("--runs",      type=int,   default=5,   help="Nº de Runs por Cenário")
-    parser.add_argument("--time",      type=int,   default=60,  help="Minutos por Run")
+    parser.add_argument("--time",      type=int,   default=60,  help="Minutos por Run (base)")
+    parser.add_argument("--time-gnn",  type=int,   default=None,
+                        help="Minutos por Run só para o GNN (override; evolutivo precisa de mais)")
+    parser.add_argument("--time-ppo",  type=int,   default=None,
+                        help="Minutos por Run só para o PPO (override; on-policy precisa de mais)")
     parser.add_argument("--algo",      type=str,   default=None,
                         help="Algoritmo único a correr (GNN, PPO ou SAC). Omitir = todos.")
     parser.add_argument("--scenarios", type=str,   default=None,
@@ -198,5 +230,12 @@ if __name__ == '__main__':
         if unknown:
             print(f"[!] Cenários desconhecidos ignorados: {unknown}")
 
+    overrides = {}
+    if args.time_gnn is not None:
+        overrides["GNN"] = args.time_gnn
+    if args.time_ppo is not None:
+        overrides["PPO"] = args.time_ppo
+
     run_experiments(num_runs=args.runs, time_limit=args.time,
-                    algorithms=algos, scenarios=scenarios)
+                    algorithms=algos, scenarios=scenarios,
+                    time_overrides=overrides)

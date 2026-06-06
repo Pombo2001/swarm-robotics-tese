@@ -178,6 +178,10 @@ def train_ppo_3d(time_limit_minutes):
     num_cpu = ppo_config.get('num_cpu', 8)
     log_interval = ppo_config.get('log_interval', 2000)
 
+    # Sufixo do cenário para não sobrescrever modelos entre cenários.
+    scenario = config['environment'].get('classic_scenario', 'none')
+    model_suffix = f"_{scenario}" if scenario and scenario != "none" else ""
+
     time_limit_seconds = time_limit_minutes * 60
     print(f"[START] PPO 3D a iniciar com {num_cpu} NÚCLEOS EM PARALELO! Orçamento: {time_limit_minutes} min.")
 
@@ -216,10 +220,10 @@ def train_ppo_3d(time_limit_minutes):
     print(f"[RUNNING] Simulação PPO a correr nos {num_cpu} clones da arena...")
     model.learn(total_timesteps=100000000, callback=callback)
 
-    model_path = os.path.join(model_dir, "ppo_3d_final")
+    model_path = os.path.join(model_dir, f"ppo_3d_final{model_suffix}")
     model.save(model_path)
     os.chmod(model_path + ".zip", 0o666)
-    print("[DONE] Treino PPO 3D Multi-Core concluído de forma segura!")
+    print(f"[DONE] Treino PPO 3D Multi-Core concluído! Modelo: {os.path.basename(model_path)}.zip")
 
 
 if __name__ == "__main__":

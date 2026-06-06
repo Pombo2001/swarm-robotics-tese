@@ -573,7 +573,10 @@ class SwarmController(ctk.CTk):
         self.btn_night.pack(padx=16, pady=4, fill="x")
 
         ctk.CTkLabel(left,
-                     text="Nota: este processo corre em background.\nO terminal mostra o progresso.",
+                     text="Nota: corre em background; o terminal mostra o progresso.\n"
+                          "O GNN (evolutivo) recebe ~1.4× mais tempo por run que\n"
+                          "o PPO/SAC. Os dados fazem merge — podes interromper e\n"
+                          "retomar sem perder os algoritmos já treinados.",
                      font=("Roboto", 11, "italic"), text_color="#6B7280",
                      justify="left").pack(padx=16, pady=(12, 0), anchor="w")
 
@@ -595,14 +598,27 @@ class SwarmController(ctk.CTk):
         self._update_night_est()
         return page
 
+    # Pesos de tempo por algoritmo. O SAC (off-policy) converge rápido; o PPO
+    # (on-policy) e o GNN (evolutivo) precisam de mais tempo por run.
+    PPO_TIME_WEIGHT = 1.4
+    GNN_TIME_WEIGHT = 1.4
+    SAC_TIME_WEIGHT = 1.0
+
     def _update_night_est(self, event=None):
         try:
             horas = float(self.e_night_hours.get())
             runs  = int(self.e_night_runs.get())
             total = 6 * 3 * runs
-            min_per_run = max(1, int(horas * 60 / total))
+            # Distribuição ponderada por cada 6 cenários × runs
+            w_sum = self.PPO_TIME_WEIGHT + self.SAC_TIME_WEIGHT + self.GNN_TIME_WEIGHT
+            weighted_slots = 6 * runs * w_sum
+            min_base = max(1, int(horas * 60 / weighted_slots))
+            min_sac  = max(1, int(min_base * self.SAC_TIME_WEIGHT))
+            min_ppo  = max(1, int(min_base * self.PPO_TIME_WEIGHT))
+            min_gnn  = max(1, int(min_base * self.GNN_TIME_WEIGHT))
             self.lbl_night_est.configure(
-                text=f"~{min_per_run} min/run  ·  {total} runs no total  ·  {horas}h distribuídas")
+                text=f"SAC ~{min_sac} min  ·  PPO ~{min_ppo} min  ·  GNN ~{min_gnn} min  ·  "
+                     f"{total} runs  ·  {horas}h")
         except (ValueError, AttributeError):
             pass
 
@@ -901,7 +917,7 @@ class SwarmController(ctk.CTk):
         return {
             "gnn_log": os.path.join(b, "results/logs/gnn_3d_training.csv"),
             "ppo_log": os.path.join(b, "results/logs_ppo/training_history_ppo_3d.csv"),
-            "sac_log": os.path.join(b, "results/logs_ppo/training_history_sac_3d.csv"),
+            "sac_log": os.path.join(b, "results/logs_sac/training_history_sac_3d.csv"),
             "GNN":     "src/training/evo_trainer_3d.py",
             "PPO":     "src/training/train_ppo_3d.py",
             "SAC":     "src/training/train_sac_3d.py",
@@ -1003,7 +1019,7 @@ class SwarmController(ctk.CTk):
     def _run_tour_process(self, algo, scenarios, runs, time_limit):
         return subprocess.Popen(
             [sys.executable,
-             os.path.join(self.base_dir, "run_experiments.py"),
+             os.path.join(self.base_dir, self._get_paths()["run_exp"]),
              "--runs", str(runs),
              "--time", str(time_limit),
              "--algo", algo,
@@ -1023,12 +1039,17 @@ class SwarmController(ctk.CTk):
         try:
             horas = float(self.e_night_hours.get())
             runs  = int(self.e_night_runs.get())
-            total = 6 * 3 * runs
-            mins_per_run = max(1, int(horas * 60 / total))
+            w_sum = self.PPO_TIME_WEIGHT + self.SAC_TIME_WEIGHT + self.GNN_TIME_WEIGHT
+            weighted_slots = 6 * runs * w_sum
+            min_base = max(1, int(horas * 60 / weighted_slots))
+            min_sac  = max(1, int(min_base * self.SAC_TIME_WEIGHT))
+            min_ppo  = max(1, int(min_base * self.PPO_TIME_WEIGHT))
+            min_gnn  = max(1, int(min_base * self.GNN_TIME_WEIGHT))
         except ValueError:
             return
         self._run_script(self._get_paths()["run_exp"],
-                         ["--runs", str(runs), "--time", str(mins_per_run)])
+                         ["--runs", str(runs), "--time", str(min_sac),
+                          "--time-ppo", str(min_ppo), "--time-gnn", str(min_gnn)])
         self.btn_night.configure(text="✔  Rotina Iniciada (background)", fg_color="#065F46")
         self.after(4000, lambda: self.btn_night.configure(
             text="🚀  INICIAR ROTINA NOTURNA", fg_color="#D97706"))
