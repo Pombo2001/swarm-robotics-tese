@@ -1,0 +1,1388 @@
+
+\documentclass[12pt,reqno, twoside]{amsbook}
+%
+\usepackage{eurosym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage[onehalfspacing]{setspace}
+\usepackage{chngcntr}
+\usepackage{graphicx}
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[portuguese]{babel} % Língua Portuguesa
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{etoolbox}
+\usepackage{csquotes}
+\usepackage{url}
+\usepackage[printonlyused]{acronym}
+\usepackage{float} % Para posicionamento de figuras [H]
+\usepackage{tikz} % Para o gráfico PRISMA
+\usepackage{listings} % Excertos de código (apêndices)
+\usepackage{xcolor}
+
+% Estilo de listagem para Python
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codegray}{rgb}{0.45,0.45,0.45}
+\definecolor{codeblue}{rgb}{0.1,0.1,0.6}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\lstdefinestyle{python}{
+    backgroundcolor=\color{codebg}, basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codeblue}\bfseries, commentstyle=\color{codegreen}\itshape,
+    stringstyle=\color{codegray}, language=Python, showstringspaces=false,
+    breaklines=true, frame=single, rulecolor=\color{codegray!40},
+    numbers=left, numberstyle=\tiny\color{codegray}, captionpos=b, tabsize=4,
+    literate={á}{{\'a}}1 {ã}{{\~a}}1 {é}{{\'e}}1 {ó}{{\'o}}1 {ç}{{\c c}}1 {í}{{\'i}}1
+}
+
+% --- Placeholder para imagens ainda não capturadas ---
+% Usar \imgplaceholder{largura}{nome_ficheiro}{instrucao}
+\newcommand{\imgplaceholder}[3]{%
+  \fbox{\begin{minipage}{#1\textwidth}%
+    \centering\vspace{1.2cm}%
+    {\small\texttt{[#2]}}\\[0.4em]%
+    {\footnotesize\textit{#3}}%
+    \vspace{1.2cm}%
+  \end{minipage}}%
+}
+
+% --- Figura automática de resultados ---
+% \figresultado{largura}{caminho/com_underscores.png}{descrição SEM underscores}
+% Se o ficheiro existir, insere-o; caso contrário mostra um placeholder.
+% Basta copiar os PNGs para images/resultados/ — não é preciso editar este .tex.
+\newcommand{\figresultado}[3]{%
+  \IfFileExists{#2}{%
+    \includegraphics[width=#1\textwidth]{#2}%
+  }{%
+    \fbox{\begin{minipage}{#1\textwidth}%
+      \centering\vspace{1.4cm}%
+      {\footnotesize\itshape [figura por inserir]}\\[0.5em]%
+      {\footnotesize #3}%
+      \vspace{1.4cm}%
+    \end{minipage}}%
+  }%
+}
+\usetikzlibrary{shapes.geometric, arrows, positioning}
+
+% --- Configuração da Bibliografia (BibLaTeX) ---
+\usepackage[
+    backend=biber,
+    style=ieee,
+    mincitenames=1,
+    maxcitenames=3,
+    minbibnames=3,
+    maxbibnames=99,
+    uniquename=false,
+    uniquelist=false
+  ]{biblatex}
+\addbibresource{references.bib}
+
+% --- Fernando Batista Stuff (Do teu template) ---
+\usepackage{hyperref}
+\usepackage{xcolor}
+\hypersetup{
+    pdftitle={Reinforcement Learning para Controlo de Enxames},
+    pdfauthor={Gonçalo Santos},
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=blue,
+    urlcolor=blue
+}
+
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{\thesubsubsection}{0.5em}{}
+\titlespacing*{\subsubsection}
+{0pt}{2.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\makeatletter
+\def\l@subsection{\@tocline{2}{0pt}{2.5pc}{5pc}{}}
+\makeatother
+
+\makeatletter
+\def\subsubsection{\@startsection{subsubsection}{3}%
+  \z@{.5\linespacing\@plus.7\linespacing}{.1\linespacing}%
+  {\normalfont\itshape}}
+\makeatother
+
+\makeatletter
+    \def\section{\@startsection{section}{1}%
+      \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
+      {\normalfont\bfseries\flushleft}}
+    \def\subsection{\@startsection{subsection}{2}%
+      \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
+      {\normalfont\bfseries\flushleft}}
+\makeatother
+\setcounter{MaxMatrixCols}{10}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\numberwithin{equation}{chapter}
+
+\makeatletter
+\newcommand\frontFont{\@setfontsize\frontFont{14.4}{14.4}}
+\newcommand\numberprefix{}
+\def\numberline#1{\hb@xt@\@tempdima{\numberprefix #1\hfil}}
+\def\l@figure#1#2{\@tocline{0}{3pt plus2pt}{0pt}{6pc}{}%
+  {\renewcommand\numberprefix{Figura~}#1}{#2}}
+\def\l@table#1#2{\@tocline{0}{3pt plus2pt}{0pt}{6pc}{}%
+  {\renewcommand\numberprefix{Tabela~}#1}{#2}}
+\makeatother
+
+% --- Configuração Dedicatória ---
+\newenvironment{dedication}
+  {\thispagestyle{empty}
+   \vspace*{\stretch{1}}
+   \itshape
+   \raggedleft
+  }
+  {\par
+   \vspace{\stretch{3}}
+  }
+  \numberwithin{section}{chapter}
+\fancyhead{}
+\fancyfoot{}
+\pagestyle{fancy}
+\fancyfoot[LE,RO]{\thepage}
+
+\makeatletter
+\def\ps@plain{\ps@empty
+ \def\@evenfoot{%
+   \normalfont\scriptsize
+   \rlap{\thepage}\hfil
+   }%
+ \def\@oddfoot{%
+   \normalfont\scriptsize \hfil
+   \llap{\thepage}}%
+}
+\makeatother
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\usepackage{montserrat}
+\usepackage[T1]{fontenc}
+\renewcommand*\oldstylenums[1]{{\fontfamily{Montserrat-TOsF}\selectfont #1}}
+
+\numberwithin{table}{chapter}
+\numberwithin{figure}{chapter}
+
+% Traduções manuais
+\addto\captionsportuguese{\renewcommand{\contentsname}{Índice}}
+\addto\captionsportuguese{\renewcommand{\listfigurename}{Lista de Figuras}}
+\addto\captionsportuguese{\renewcommand{\listtablename}{Lista de Tabelas}}
+
+% Página em branco
+\makeatletter
+\def\cleardoublepage{\clearpage\if@twoside%
+  \ifodd\c@page\else
+  \vspace*{\fill}
+  \hfill
+  \begin{center}
+  {\fontfamily{Montserrat-TOsF}\selectfont\small [ Página intencionalmente deixada em branco. ]}
+  \end{center}
+  \vspace{\fill}
+  \thispagestyle{empty}
+  \newpage
+ \if@twocolumn\hbox{}\newpage\fi\fi\fi
+}
+\makeatother
+
+\makeatletter
+\let\@afterindenttrue\@afterindentfalse
+\makeatother
+
+\setlength{\footskip}{30pt}
+
+% --- INÍCIO DO DOCUMENTO ---
+\begin{document}
+
+\sffamily
+\frontFont
+\begin{flushleft}
+\includegraphics[width=6.03cm]{images/iscte}\\[3.3mm] % DESCOMENTA SE TIVERES IMAGEM
+%\textbf{[LOGO ISCTE]}\\[3.3mm]
+
+\hrulefill
+~\\
+~\\
+~\\
+\textbf{Aprendizagem por Reforço para Controlo de Enxames}\\
+~\\
+~\\
+~\\
+~\\
+Gonçalo Santos\\
+~\\
+~\\
+~\\
+Mestrado em Inteligência Artificial\\
+~\\
+~\\
+~\\
+Orientador:\\
+Doutor Luís Nunes, Professor do Departamento de Ciências e Tecnologias da Informação,\\
+Iscte -- Instituto Universitário de Lisboa\\
+~\\
+~\\
+~\\
+%Co-Orientador:\\
+%Doutor [Nome], Professor [Categoria],\\
+%[Instituição]\\
+~\\
+~\\
+~\\
+~\\
+2025
+\end{flushleft}
+\thispagestyle{empty}
+
+\cleardoublepage
+
+\begin{flushleft}
+\includegraphics[width=6.03cm]{images/ista}\\[7mm] % DESCOMENTA SE TIVERES IMAGEM
+%\textbf{[LOGO ISTA]}\\[7mm]
+\hrulefill
+~\\
+~\\
+~\\
+Departamento de Ciências e Tecnologias da Informação\\
+~\\
+~\\
+\textbf{Reinforcement Learning para Controlo de Enxames}\\
+~\\
+~\\
+~\\
+~\\
+Gonçalo Santos\\
+~\\
+~\\
+~\\
+Mestrado em Inteligência Artificial\\
+~\\
+~\\
+~\\
+Orientador:\\
+Doutor Luís Nunes, Professor do Departamento de Ciências e Tecnologias da Informação,\\
+Iscte -- Instituto Universitário de Lisboa\\
+~\\
+~\\
+~\\
+%Co-Orientador:\\
+%Doutor [Nome], Professor [Categoria],\\
+%[Instituição]\\
+~\\
+~\\
+~\\
+~\\
+2025
+  \end{flushleft}
+  \thispagestyle{empty}
+\rmfamily
+\normalsize
+\frontmatter
+\thispagestyle{empty}
+
+\begin{dedication}
+\begin{flushright}
+\textit{Aos meus pais e a todos que apoiaram este percurso.}
+\end{flushright}
+\end{dedication}
+
+\setcounter{page}{1}
+\pagenumbering{roman}
+
+\chapter*{Agradecimentos}
+Gostaria de expressar a minha gratidão aos meus familiares, por me terem apoiado ao longo desta jornada académica, e à minha namorada, por ter estado sempre ao meu lado nos bons e nos maus momentos. Agradeço também aos colegas e amigos que fiz ao longo do tempo, bem como aos professores, por terem dado o seu melhor para nos ensinar. Por fim, agradeço à TAISCTE por ter feito parte deste meu percurso de mestrado.
+
+\chapter*{Resumo}
+Esta dissertação propõe um estudo comparativo rigoroso entre a Aprendizagem por Reforço Multiagente (MARL) e a Otimização Bio-inspirada para o controlo de enxames robóticos. Através de um simulador de alta fidelidade e da implementação do algoritmo RS2C (baseado em \textit{Graph Neural Networks} ou Redes Neuronais em Grafo), pretende-se validar a hipótese de que a inteligência adaptativa supera a robustez estática em cenários de stress dinâmico.
+
+\vspace{3ex}
+\textsc{Palavras Chave:} Robótica de Enxame, MARL, Otimização Bio-inspirada, GNNs.
+
+%\chapter*{Abstract}
+%This thesis proposes a rigorous comparative study... (Se precisares do abstract em inglês, descomenta)
+
+\tableofcontents
+\listoffigures
+% \listoftables
+\cleardoublepage
+
+\chapter*{Lista de Acrónimos}
+\begin{acronym}
+ \acro{AI}{Artificial Intelligence}
+ \acro{ML}{Machine Learning}
+ \acro{MARL}{Multi-Agent Reinforcement Learning}
+ \acro{PSO}{Particle Swarm Optimization}
+ \acro{GNN}{Graph Neural Network}
+ \acro{CTDE}{Centralized Training with Decentralized Execution}
+ \acro{Dec-POMDP}{Decentralized Partially Observable Markov Decision Process}
+\end{acronym}
+
+\mainmatter
+\setcounter{page}{1} \pagenumbering{arabic}
+\acresetall
+
+% --- CAPÍTULO 1 ---
+\chapter{Introdução}
+
+\section{Enquadramento e Motivação}
+A robótica de enxame (\textit{Swarm Robotics}), enquanto subcampo da inteligência artificial e dos sistemas multiagente, representa uma mudança de paradigma fundamental na engenharia contemporânea, transitando de arquiteturas monolíticas e robôs complexos para a coordenação de grandes grupos de agentes simples \cite{riviere2020deep}. Esta transição fundamenta-se na premissa de que a inteligência não reside na complexidade individual de cada membro, mas sim na sofisticação das interações locais entre eles. Desde as primeiras conceptualizações em meados da década de 1990 até às aplicações de ponta em 2025, a motivação central deste campo permanece constante: a emulação da inteligência coletiva observada na natureza — como em colónias de formigas ou cardumes — para atingir robustez, flexibilidade e escalabilidade superiores através de comportamento emergente \cite{dorigo1992optimization, kennedy1995pso}.
+
+A urgência no desenvolvimento destes sistemas é impulsionada por aplicações críticas em ambientes de elevada incerteza e perigosidade, tais como a vigilância persistente de infraestruturas, a exploração espacial e a resposta a desastres naturais \cite{lin2025survey}. Nestes cenários, a redundância intrínseca do enxame é a sua maior vantagem: o sistema é desenhado para ser resiliente a falhas individuais, garantindo que a perda de um único agente não comprometa a integridade da missão global \cite{he2024self}.
+
+No entanto, a implementação prática desta visão descentralizada enfrenta barreiras técnicas significativas no que toca ao controlo. Métodos tradicionais, frequentemente dependentes de uma unidade central de processamento ou de modelos matemáticos globais, falham invariavelmente ao escalar o número de agentes ($N$). Este fenómeno, conhecido como a ``explosão da complexidade de interações'', ocorre porque o espaço de estados e ações cresce exponencialmente com o aumento da população do enxame, tornando impossível a programação explícita de todas as contingências operacionais \cite{majid2023deep}. Conforme discutido por Riviere et al. (2020), a verdadeira escalabilidade exige que as políticas de controlo sejam independentes do número total de agentes, um desafio que as abordagens convencionais ainda têm dificuldade em endereçar de forma eficiente \cite{riviere2020deep}.
+
+Neste contexto, a comunidade científica dividiu-se historicamente em duas abordagens principais para o desenho destes controladores descentralizados:
+
+\begin{enumerate}
+    \item \textbf{Otimização Bio-inspirada:} Métodos como o \textit{Particle Swarm Optimization} (PSO) e Algoritmos Evolutivos (AE) focam-se na robustez \textit{offline} \cite{kennedy1995pso}. Tratam o desenho do controlador como um problema de otimização estocástica, procurando os pesos ótimos de uma rede neural ou parâmetros de regras heurísticas antes da implantação real \cite{hassen2025hybrid, wang2022comparative}. Embora robustos, estes métodos tendem a ser estáticos, podendo carecer de adaptabilidade perante mudanças dinâmicas e imprevistas no ambiente \cite{gupta2025influx}.
+    \item \textbf{Multi-Agent Reinforcement Learning (MARL):} Focado na adaptabilidade \textit{online}, o MARL utiliza o paradigma de aprendizagem sequencial para que os agentes descubram políticas cooperativas através da interação direta com o ambiente \cite{sutton2018reinforcement}. A grande promessa do MARL reside na sua capacidade de ajuste em tempo real e na aprendizagem de políticas complexas formalizadas como um \textit{Decentralized Partially Observable Markov Decision Process} (Dec-POMDP) \cite{huh2023marl}.
+\end{enumerate}
+
+A pertinência desta investigação sustenta-se na lacuna identificada por autores como Iskandar et al. (2024), que sublinham a escassez de estudos que comparem diretamente a eficiência e a robustez destas duas escolas em cenários operacionais dinâmicos \cite{iskandar2024comparative}. Esta tese surge da necessidade urgente de validar qual destas estruturas melhor responde aos desafios de escalabilidade e adaptação exigidos pelas aplicações robóticas de 2025, propondo uma avaliação comparativa rigorosa entre a inteligência adaptativa do MARL e a robustez consolidada da otimização bio-inspirada \cite{bettini2024benchmarl}.
+
+\section{Definição do Problema e Justificação da Tese}
+Apesar do crescimento exponencial no interesse por sistemas autónomos descentralizados, existe uma lacuna crítica na literatura científica: a escassez de uma comparação direta (\textit{benchmarking}) e rigorosa do desempenho de paradigmas concorrentes em cenários de controlo de enxames que sejam, simultaneamente, complexos e dinâmicos \cite{iskandar2024comparative, bettini2024benchmarl}. O estado da arte atual revela que, embora existam múltiplos \textit{frameworks} de controlo, a maioria das investigações foca-se no refinamento de um algoritmo isolado, negligenciando a validação cruzada necessária para determinar a aplicabilidade industrial de cada método \cite{li2023race}.
+
+O \textit{Multi-Agent Reinforcement Learning} (MARL), embora promissor devido à sua capacidade de aprender comportamentos emergentes complexos, enfrenta desafios teóricos profundos. Entre estes, destaca-se a \textbf{não-estacionaridade} do ambiente: como todos os agentes aprendem e alteram as suas políticas simultaneamente, a dinâmica do sistema do ponto de vista de um agente individual muda constantemente, violando a propriedade de Markov necessária para a convergência de algoritmos tradicionais \cite{huh2023marl}. Além disso, a explosão do espaço de ações conjuntas em enxames de grande escala dificulta a estabilidade do treino e a otimização de funções de recompensa esparsas.
+
+Por outro lado, os métodos evolutivos e bio-inspirados (como o PSO) têm demonstrado uma robustez consolidada, tratando o controlo como a exploração de uma superfície de \textit{fitness} global \cite{wang2022comparative}. Contudo, como notado por Kegeleirs et al. (2025), estas abordagens resultam frequentemente em controladores estáticos que carecem de adaptabilidade em tempo real perante mudanças estruturais imprevistas no ambiente \cite{kegeleirs2025towards}. Esta rigidez cria o que a literatura denomina como \textit{Deployment Gap} (fosso de implantação), onde algoritmos otimizados em laboratório falham ao enfrentar o ruído e a incerteza do mundo real.
+
+Portanto, a definição do problema desta tese é a \textbf{necessidade de uma avaliação comparativa rigorosa e sistemática}. Este estudo visa determinar qual o \textit{framework} de controlo que melhor responde aos desafios práticos do controlo de enxames através de três eixos fundamentais:
+
+\begin{itemize}
+    \item \textbf{Desempenho da Tarefa:} Avaliar a eficiência absoluta na concretização de objetivos globais (ex: taxa de cobertura de área ou taxa de recolha em \textit{foraging}). Seguindo a linha de Iskandar et al. (2024), pretende-se quantificar se a convergência mais lenta do MARL resulta, de facto, numa política final superior em eficiência energética comparativamente aos métodos bio-inspirados \cite{iskandar2024comparative}.
+    \item \textbf{Escalabilidade (Zero-Shot Transfer):} Analisar como a \textit{performance} se degrada à medida que o número de agentes ($N$) aumenta para além do cenário de treino. É crucial validar se as arquiteturas baseadas em \textit{Graph Neural Networks} (GNNs), defendidas por Sun et al. (2024), permitem uma escalabilidade superior face à rigidez dos controladores evolutivos fixos \cite{sun2024graph}.
+    \item \textbf{Robustez e Adaptação Dinâmica:} Testar a resiliência do sistema perante a perda súbita de agentes (falhas de \textit{hardware}) ou a introdução de obstáculos móveis imprevistos. O objetivo é verificar se a capacidade de aprendizagem contínua do MARL compensa a sua complexidade de implementação face à estabilidade \textit{offline} dos algoritmos evolutivos.
+\end{itemize}
+
+Esta tese justifica-se pela urgência de transformar o controlo de enxames de uma disciplina puramente teórica numa ferramenta de engenharia fiável. Através do uso de um simulador de alta-fidelidade, este trabalho pretende fornecer dados quantitativos que orientem a escolha do paradigma de controlo em função dos requisitos de missão e da disponibilidade de recursos computacionais.
+
+\section{Objetivos da Tese}
+Com base na definição do problema e na lacuna de investigação identificada na literatura recente, o objetivo geral desta dissertação é \textbf{desenvolver um \textit{framework} de simulação de alta-fidelidade e realizar um \textit{benchmarking} comparativo rigoroso entre o \textit{Multi-Agent Reinforcement Learning} (MARL) e algoritmos de otimização bio-inspirados} (e.g., Algoritmos Evolutivos) aplicados ao controlo descentralizado de enxames \cite{kegeleirs2025towards, schmickl2025gnn}. Pretende-se determinar, de forma quantitativa, em que condições a inteligência adaptativa e emergente do MARL supera a robustez estática das abordagens de otimização tradicionais \cite{heimann2024runtime}.
+
+Para atingir o objetivo geral, foram definidos os seguintes objetivos específicos:
+\begin{itemize}
+    \item \textbf{Desenvolver um Ambiente de Simulação de Referência:} Projetar e implementar um simulador em ambiente Python capaz de modelar tarefas fundamentais de enxame, como vigilância cooperativa e \textit{foraging} dinâmico \cite{bettini2024benchmarl}. O ambiente deve contemplar modelos físicos realistas, observação local e parcial dos agentes e a simulação de falhas súbitas de agentes para testar a resiliência do sistema \cite{he2024self}.
+    \item \textbf{Implementar um Framework MARL Escalável (RS2C):} Desenvolver o \textit{framework} \textit{Robust and Scalable Swarm Control} (RS2C) assente em execução descentralizada com partilha de parâmetros \cite{sun2024graph}. Este objetivo inclui a exploração de \textbf{redes de grafos com mecanismos de atenção}, que garantem a invariância à permutação e permitem que um controlador treinado com $N$ agentes seja aplicado a enxames de outra dimensão sem retreino (\textit{Zero-Shot Transfer}).
+    \item \textbf{Implementar Baselines de Otimização Bio-inspirada:} Desenvolver controladores baseados em Algoritmos Evolutivos (AE) ou \textit{Particle Swarm Optimization} (PSO) para servirem como termo de comparação de desempenho \cite{hassen2025hybrid}. Estes controladores serão otimizados \textit{offline} para encontrar os pesos ótimos de redes neuronais estáticas, representando o paradigma de robustez pré-programada \cite{kennedy1995pso}.
+    \item \textbf{Realizar uma Análise Comparativa e Estatística:} Executar experiências controladas utilizando as métricas de performance da tarefa, escalabilidade e robustez a perturbações \cite{iskandar2024comparative}. Os resultados deverão ser validados através de tratamento estatístico rigoroso (e.g., testes \textit{t-student}), garantindo que as conclusões sobre a superioridade de um paradigma sobre o outro são cientificamente sustentadas.
+\end{itemize}
+
+% --- CAPÍTULO 2 ---
+\chapter{Fundamentos Teóricos e Tecnologias}
+\label{ch:fundamentos}
+
+\section{Introdução ao Capítulo}
+Este capítulo estabelece os fundamentos teóricos e os alicerces tecnológicos necessários para uma compreensão aprofundada do controlo descentralizado de enxames. A transição de sistemas robóticos isolados para coletivos coordenados exige uma base conceptual que interliga a biologia, a engenharia de controlo e a aprendizagem automática avançada. Assim, o presente capítulo visa dotar a dissertação do rigor matemático e técnico indispensável para suportar a investigação proposta.
+
+Em primeiro lugar, serão definidos e contextualizados os conceitos de \textit{Swarm Intelligence} (SI) e \textit{Swarm Robotics} (SR). Esta análise inicial é fundamental para compreender como comportamentos globais complexos e auto-organizados podem emergir a partir de regras de interação locais extremamente simples. Conforme discutido por Riviere et al. (2020), a robustez destes sistemas reside precisamente na sua natureza descentralizada, o que impõe desafios únicos ao desenho de controladores eficientes.
+
+Posteriormente, o foco incidirá sobre as duas principais classes de paradigmas de controlo que constituem o núcleo do \textit{benchmarking} desta tese:
+\begin{enumerate}
+    \item \textbf{Otimização Bio-inspirada:} Serão explorados algoritmos como a Otimização por Enxame de Partículas (\textit{Particle Swarm Optimization} - PSO) e os Algoritmos Evolutivos (AE). Estas técnicas tratam o controlo como um problema de busca num espaço de parâmetros global, focando-se na convergência para soluções estáveis e robustas em cenários estáticos.
+    \item \textbf{Multi-Agent Reinforcement Learning (MARL):} Será introduzida a formalização matemática do problema através do modelo de Processo de Decisão de Markov Parcialmente Observável Descentralizado (\textit{Dec-POMDP}). Esta secção detalhará como a aprendizagem por reforço permite a emergência de políticas adaptativas através da interação \textit{online}, abordando conceitos críticos como a arquitetura \textit{Centralized Training with Decentralized Execution} (CTDE) e o papel das \textit{Graph Neural Networks} (GNNs) na garantia da escalabilidade do enxame, tal como defendido por Sun et al. (2024).
+\end{enumerate}
+
+Ao estabelecer estas definições, este capítulo permite identificar o ``Deployment Gap'' (fosso de implantação) discutido por Kegeleirs et al. (2025), justificando a necessidade de uma metodologia rigorosa para validar a transição destes algoritmos do domínio da simulação para aplicações reais de alta fidelidade \cite{kegeleirs2025towards}.
+
+\section{Swarm Intelligence (SI) e Robótica de Enxame}
+A Inteligência de Enxame (\textit{Swarm Intelligence} - SI) refere-se ao comportamento coletivo e coordenado de sistemas descentralizados e auto-organizados, sejam eles naturais ou artificiais \cite{dorigo1992optimization}. Este paradigma baseia-se na observação de sistemas biológicos — tais como colónias de formigas, enxames de abelhas ou cardumes de peixes — onde agentes individuais com capacidades cognitivas limitadas conseguem, através de interações sociais simples, resolver problemas de elevada complexidade que excederiam a capacidade de qualquer indivíduo isolado \cite{kennedy1995pso}.
+
+A Robótica de Enxame (\textit{Swarm Robotics} - SR) surge como a aplicação direta dos princípios de SI ao domínio de sistemas multi-robô \cite{kegeleirs2025towards}. Ao contrário da robótica cooperativa tradicional, a SR foca-se na coordenação de um grande número de agentes, tipicamente homogéneos e de baixo custo, que operam sem uma infraestrutura de controlo centralizada ou um mapa global do ambiente. O controlo nestes sistemas é inerentemente distribuído, o que confere ao coletivo três propriedades fundamentais identificadas na literatura:
+\begin{itemize}
+    \item \textbf{Robustez:} A redundância do sistema garante que a missão prossiga mesmo perante a falha de múltiplos agentes \cite{riviere2020deep}.
+    \item \textbf{Escalabilidade:} O sistema mantém a sua eficiência independentemente da dimensão do enxame ($N$), uma vez que as interações são predominantemente locais.
+    \item \textbf{Flexibilidade:} O enxame consegue adaptar-se a diferentes tarefas e ambientes dinâmicos sem necessidade de reprogramação externa.
+\end{itemize}
+
+O alicerce técnico destes sistemas reside no comportamento emergente. Conforme discutido por Riviere et al. (2020), as ações globais coordenadas emergem de um ciclo de \textit{feedback} contínuo entre regras de interação locais simples e o ambiente. Um mecanismo crítico para esta emergência é a \textbf{estigmergia}, um método de coordenação indireta onde os agentes alteram o ambiente (por exemplo, através de trilhos de feromonas ou comunicação local ruidosa), influenciando as ações subsequentes de outros membros do grupo.
+
+No entanto, projetar manualmente estas regras locais para atingir um objetivo global específico é um desafio de engenharia não trivial. Como não existe um ``conhecimento global'' partilhado, o desenho do controlador deve garantir que a soma das micro-decisões individuais resulte na macro-estabilidade do enxame. Este desafio justifica a exploração de métodos de Aprendizagem Automática Avançada, onde, em vez de programar regras explícitas, o sistema ``aprende'' ou ``evolui'' as interações ótimas através de reforço ou otimização.
+
+\section{Paradigmas de Controlo para Enxames}
+O controlo de sistemas multi-robô em larga escala foca-se primordialmente no desenho das chamadas ``regras locais'' de interação. O desafio fundamental reside na resolução do problema inverso da robótica de enxame: como determinar comportamentos individuais simples que, quando executados em paralelo, resultem numa macro-estabilidade e no cumprimento de um objetivo global. Existem duas abordagens principais na literatura contemporânea que esta tese se propõe a analisar e comparar:
+
+\begin{enumerate}
+    \item \textbf{Otimização Bio-inspirada (Offline):} Esta categoria abrange duas subfamílias principais frequentemente utilizadas em robótica:
+    \begin{itemize}
+        \item \textbf{Algoritmos Evolutivos (AE):} Inspirados na seleção natural (Darwin), utilizam operadores como mutação e cruzamento para evoluir uma população de controladores ao longo de gerações.
+        \item \textbf{Inteligência de Enxame (SI):} Inspirados em comportamentos sociais (e.g., bandos de pássaros), como o \textit{Particle Swarm Optimization} (PSO), onde a solução emerge do movimento cooperativo de partículas no espaço de busca.
+    \end{itemize}
+    Ambas as abordagens procuram \textit{offline} o melhor conjunto de parâmetros fixos, maximizando uma função de \textit{fitness}. Embora gerem comportamentos robustos, resultam frequentemente em controladores rígidos perante mudanças ambientais não previstas.
+
+    \item \textbf{Aprendizagem por Reforço (Online/Adaptativa):} ... (o resto mantém-se)
+\end{enumerate}
+
+Esta distinção é crucial para o \textit{benchmarking} proposto, pois permite avaliar se o custo computacional e a complexidade de treino da aprendizagem automática são justificados por um ganho real em adaptabilidade face às soluções otimizadas tradicionais.
+
+\section{Abordagem 1: Otimização Bio-inspirada}
+Esta abordagem utiliza algoritmos de busca meta-heurística para navegar no vasto espaço de parâmetros $\theta$ de um controlador — frequentemente representado por uma rede neuronal (\textit{Neuroevolution}) ou uma máquina de estados — com o intuito de maximizar uma função de desempenho global $J(\theta)$.
+
+\subsection{Fundamentos Matemáticos dos Algoritmos Evolutivos}
+O processo evolutivo opera sobre uma \textbf{população} $\Pi_g = \{\theta_1, \theta_2, \ldots, \theta_K\}$ de $K$ controladores candidatos, denominados \textbf{genomas}, onde cada genoma $\theta_k \in \mathbb{R}^{|\theta|}$ é o vetor concatenado de todos os pesos e \textit{biases} de uma rede neuronal. A topologia arquitetural da rede é fixada \textit{a priori}; apenas os seus parâmetros numéricos são sujeitos a otimização --- esta abordagem denomina-se \textbf{Neuroevolução}. Ao contrário do RL, a Neuroevolução não necessita de gradientes calculáveis, tornando-a aplicável a qualquer função de recompensa não-diferenciável.
+
+\paragraph{Função de \textit{Fitness}:}
+O critério de qualidade de cada genoma é quantificado pela função de \textit{fitness} $J(\theta_k)$, definida como o retorno acumulado médio em $E$ episódios de simulação independentes:
+\begin{equation}
+    J(\theta_k) = \frac{1}{E} \sum_{e=1}^{E} \sum_{t=0}^{T} \mathcal{R}(s_t, \mathbf{a}_t;\, \theta_k)
+    \label{eq:fitness}
+\end{equation}
+onde $\mathcal{R}$ é a recompensa do ambiente no instante $t$ e $T$ é a duração máxima do episódio. A média sobre $E=3$ episódios reduz a variância estocástica da avaliação, tornando a estimativa de $J$ mais fiável sem incorrer em custo computacional excessivo.
+
+\paragraph{Mutação Gaussiana \textit{Element-wise}:}
+Em vez de perturbar a totalidade dos $|\theta|$ pesos em simultâneo --- o que degradaria irrecuperavelmente a diversidade populacional em redes de grande dimensão ---, implementa-se uma mutação esparsa controlada por uma máscara binária $\mathbf{m} \in \{0,1\}^{|\theta|}$:
+\begin{equation}
+    \theta_j^{(\text{filho})} = \theta_j^{(\text{pai})} + m_j \cdot \varepsilon_j, \quad m_j \sim \operatorname{Bernoulli}(p_{mut}), \quad \varepsilon_j \sim \mathcal{N}(0, \sigma^2)
+    \label{eq:mutation}
+\end{equation}
+com $p_{mut} = 0.1$. Apenas 10\% dos pesos são perturbados por operação, preservando a estrutura do controlador pai enquanto introduz variações localizadas. Esta formulação é equivalente ao \textit{Evolution Strategies} de Salimans et al.\ (2017) com máscara esparsa.
+
+\paragraph{\textit{Sigma Decay} --- Anilamento Adaptativo da Exploração:}
+O desvio padrão $\sigma$ controla a magnitude das perturbações. Para implementar a transição gradual de exploração agressiva para refinamento local, $\sigma$ decai geometricamente a cada geração $g$:
+\begin{equation}
+    \sigma_{g+1} = \max\!\left(\sigma_{\min},\; \sigma_g \cdot \rho\right)
+    \label{eq:sigma_decay}
+\end{equation}
+com $\sigma_0 = 0.1$, $\rho = 0.995$ e $\sigma_{\min} = 0.01$. Este decaimento assegura que nas fases iniciais o algoritmo explora amplamente a superfície $J(\theta)$, convergindo progressivamente para refinamento local do melhor ótimo encontrado.
+
+\paragraph{Elitismo e Seleção por Ordenação:}
+Após avaliar todos os $K$ genomas, estes são ordenados por $J(\theta_k)$ em ordem decrescente. Os $e = \max\!\left(3,\, \lfloor 0.2 \cdot K \rfloor\right)$ melhores genomas (elites) são preservados intactos na nova geração, garantindo que o melhor comportamento descoberto nunca se perde por mutações desfavoráveis. Os restantes $K - e$ genomas são gerados como mutações de cópias aleatórias dos elites. Para $K=30$, preservam-se $e=6$ genomas elite por geração.
+
+\paragraph{Otimização por Enxame de Partículas (PSO):} O PSO modela cada controlador candidato como uma ``partícula'' que navega num espaço de busca multidimensional. A inovação crucial deste método reside na partilha de informação social: cada partícula ajusta a sua velocidade e posição baseada na sua melhor experiência pessoal ($pBest$) e na melhor experiência coletiva descoberta por todo o enxame ($gBest$). Estudos de Hassen e Amin (2025) demonstram que variantes modernas de PSO são extremamente eficientes na navegação reativa, embora a convergência do enxame indique tipicamente a descoberta de um controlador estático que pode falhar em cenários onde a topologia do problema muda subitamente \cite{hassen2025hybrid}.
+
+\section{Abordagem 2: Multi-Agent Reinforcement Learning (MARL)}
+O MARL representa a fronteira da Aprendizagem Automática aplicada a sistemas coletivos, focando-se na aprendizagem de políticas adaptativas ($\pi$) através da interação sequencial.
+
+\subsection{Processos de Decisão de Markov (MDPs) e Dec-POMDP}
+\paragraph{Fundamentos do Processo de Decisão de Markov (MDP):}
+A base matemática da aprendizagem por reforço é o \textbf{Processo de Decisão de Markov (MDP)}, definido pela tupla $\langle \mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma \rangle$:
+\begin{itemize}
+    \item $\mathcal{S}$: espaço de estados do ambiente (contínuo em robótica);
+    \item $\mathcal{A}$: espaço de ações ($\mathbf{a}_i \in [-1,1]^3$ nesta tese --- deslocamento contínuo nos três eixos egocêntricos do robô: Frontal, Direito e Superior, escalado por um passo máximo de $0.2$\,m);
+    \item $\mathcal{P}(s'\mid s,a)$: dinâmica de transição --- probabilidade de atingir $s'$ ao executar $a$ em $s$;
+    \item $\mathcal{R}(s,a,s') \in \mathbb{R}$: sinal de recompensa escalar;
+    \item $\gamma \in [0,1)$: fator de desconto temporal ($\gamma = 0.99$ nesta implementação).
+\end{itemize}
+
+\paragraph{Funções de Valor e Equação de Bellman:}
+O objetivo do agente é encontrar uma política $\pi^*(a\mid s)$ que maximize o \textbf{retorno esperado descontado} $G_t = \sum_{k=0}^{\infty} \gamma^k r_{t+k}$. A qualidade de uma política é quantificada por duas funções fundamentais.
+
+A \textbf{Função de Valor de Estado} $V^\pi(s)$ mede o retorno esperado ao seguir $\pi$ a partir de $s$:
+\begin{equation}
+    V^\pi(s) = \mathbb{E}_\pi\!\left[\sum_{t=0}^{\infty} \gamma^t r_t \;\Big|\; s_0 = s\right]
+    \label{eq:value_function}
+\end{equation}
+
+A \textbf{Função $Q$} (ou Função de Valor de Ação) $Q^\pi(s,a)$ mede o retorno esperado ao executar $a$ em $s$ e depois seguir $\pi$:
+\begin{equation}
+    Q^\pi(s,a) = \mathbb{E}_\pi\!\left[\sum_{t=0}^{\infty} \gamma^t r_t \;\Big|\; s_0 = s,\, a_0 = a\right]
+    \label{eq:q_function}
+\end{equation}
+
+Estas funções satisfazem a \textbf{Equação de Bellman}, que permite a sua estimação recursiva:
+\begin{equation}
+    V^\pi(s) = \sum_{a} \pi(a\mid s) \sum_{s'} \mathcal{P}(s'\mid s,a)\!\left[\mathcal{R}(s,a,s') + \gamma V^\pi(s')\right]
+    \label{eq:bellman}
+\end{equation}
+
+A política ótima verifica a \textbf{Equação de Bellman de Optimalidade}:
+\begin{equation}
+    Q^*(s,a) = \mathbb{E}_{s'}\!\left[\mathcal{R}(s,a,s') + \gamma \max_{a'} Q^*(s',a')\right]
+    \label{eq:bellman_optimal}
+\end{equation}
+
+\paragraph{Extensão para Dec-POMDP em Enxames:}
+Em sistemas multiagente, o estado global $s \in \mathcal{S}$ é inacessível a qualquer robô individual. O problema estende-se para o \textbf{Processo de Decisão de Markov Parcialmente Observável Descentralizado (Dec-POMDP)}, definido pela tupla $\langle \mathcal{N}, \mathcal{S}, \{\mathcal{A}_i\}_{i \in \mathcal{N}}, \mathcal{P}, \mathcal{R}, \Omega, \{\mathcal{O}_i\}_{i \in \mathcal{N}}, \gamma \rangle$, onde $\mathcal{N} = \{1,\ldots,N\}$ é o conjunto de agentes, $\Omega$ é o espaço de observações conjuntas, e $\mathcal{O}_i(s) \in \mathbb{R}^{107}$ é a observação local e parcial do agente $i$ \cite{sutton2018reinforcement, huh2023marl}. Cada robô mantém uma política descentralizada $\pi_i(a_i \mid o_i)$ e o objetivo coletivo é maximizar o retorno conjunto:
+\begin{equation}
+    J(\pi_1, \ldots, \pi_N) = \mathbb{E}\!\left[\sum_{t=0}^{\infty} \gamma^t \mathcal{R}(s_t, \mathbf{a}_t)\right], \quad \mathbf{a}_t = (a_1^t, \ldots, a_N^t)
+    \label{eq:dec_pomdp_obj}
+\end{equation}
+
+\subsection{Otimização de Políticas: Do Actor-Critic ao PPO e SAC}
+\paragraph{Arquitetura Actor-Critic:}
+Tanto o PPO como o SAC assentam na arquitetura \textbf{Actor-Critic}, onde duas redes são treinadas em conjunto:
+\begin{itemize}
+    \item \textbf{Ator} ($\pi_\theta$): mapeia a observação $o_i$ para uma distribuição sobre ações. Em execução descentralizada, \textbf{apenas o ator é necessário} a bordo de cada robô.
+    \item \textbf{Crítico} ($V_\phi$ ou $Q_\psi$): rede auxiliar que estima o retorno esperado, utilizada \textbf{exclusivamente durante o treino} para calcular gradientes de atualização do ator.
+\end{itemize}
+
+\paragraph{PPO --- \textit{Clipped Surrogate Objective}:}
+O PPO (\textit{Proximal Policy Optimization}) é um algoritmo \textit{on-policy}: recolhe \textit{rollouts} com a política atual e atualiza os parâmetros através de um objetivo \textit{clipped} que previne passos de gradiente destabilizadores. Seja a \textbf{razão de importância}:
+\begin{equation}
+    r_t(\theta) = \frac{\pi_\theta(a_t \mid o_t)}{\pi_{\theta_{\text{old}}}(a_t \mid o_t)}
+    \label{eq:importance_ratio}
+\end{equation}
+
+O \textbf{objetivo PPO \textit{clipped}} é:
+\begin{equation}
+    L^{\text{CLIP}}(\theta) = \mathbb{E}_t\!\left[\min\!\left(r_t(\theta)\,\hat{A}_t,\;\operatorname{clip}\!\left(r_t(\theta),\, 1{-}\varepsilon,\, 1{+}\varepsilon\right)\hat{A}_t\right)\right]
+    \label{eq:ppo_clip}
+\end{equation}
+com $\varepsilon = 0.2$. A estimativa da vantagem $\hat{A}_t$ é calculada via \textbf{Estimação de Vantagem Generalizada (GAE)}:
+\begin{equation}
+    \hat{A}_t = \sum_{l=0}^{T-t-1} (\gamma\lambda)^l \,\delta_{t+l}, \qquad \delta_t = r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)
+    \label{eq:gae}
+\end{equation}
+O objetivo final inclui ainda um erro de regressão do crítico e um bónus de entropia:
+\begin{equation}
+    L^{\text{PPO}}(\theta,\phi) = L^{\text{CLIP}}(\theta) - c_1\,\mathbb{E}_t\!\left[(V_\phi(s_t) - V_t^{\text{targ}})^2\right] + c_2\,\mathbb{E}_t\!\left[H(\pi_\theta(\cdot\mid o_t))\right]
+    \label{eq:ppo_full}
+\end{equation}
+
+\paragraph{SAC --- Maximização de Entropia:}
+O SAC (\textit{Soft Actor-Critic}) é um algoritmo \textit{off-policy} que augmenta o objetivo de RL com o termo de entropia de Shannon $H(\pi) = -\mathbb{E}[\log \pi(a\mid s)]$, promovendo a \textbf{exploração máxima} consistente com o desempenho na tarefa:
+\begin{equation}
+    J(\pi) = \mathbb{E}_{\rho_\pi}\!\left[\sum_{t=0}^{\infty} \gamma^t \Big(r_t + \alpha\, H(\pi(\cdot\mid s_t))\Big)\right]
+    \label{eq:sac_objective}
+\end{equation}
+onde $\alpha > 0$ é o \textbf{coeficiente de temperatura}, que controla o equilíbrio entre exploração e recompensa ($\alpha=0.1$ nesta implementação). A \textbf{Função de Valor Suave} incorpora diretamente o termo de entropia:
+\begin{equation}
+    V^*(s) = \mathbb{E}_{a\sim\pi}\!\left[Q^*(s,a) - \alpha\log\pi(a\mid s)\right]
+    \label{eq:sac_v}
+\end{equation}
+O ator é atualizado minimizando a divergência KL relativamente à distribuição de Boltzmann $\propto \exp(Q/\alpha)$:
+\begin{equation}
+    J_\pi(\phi) = \mathbb{E}_{s_t\sim\mathcal{D}}\!\left[\mathbb{E}_{a_t\sim\pi_\phi}\!\left[\alpha\log\pi_\phi(a_t\mid o_t) - Q_\psi(s_t, a_t)\right]\right]
+    \label{eq:sac_actor}
+\end{equation}
+O SAC mantém dois críticos $Q_{\psi_1}, Q_{\psi_2}$ cujo mínimo é usado no alvo (\textit{double Q-trick}), reduzindo o viés de sobre-estimação. As transições $(s_t, a_t, r_t, s_{t+1})$ são armazenadas num \textbf{Replay Buffer} de capacidade $|\mathcal{D}| = 500\,000$, permitindo a reutilização \textit{off-policy} de experiências passadas.
+
+\paragraph{O Desafio da Não-Estacionaridade:} A principal barreira teórica na aplicação de MARL a enxames é a não-estacionaridade do ambiente. Num sistema multiagente, as transições de estado para um agente $i$ dependem das ações de todos os outros agentes. Como todos os robôs estão a aprender e a alterar as suas políticas simultaneamente, a dinâmica do ambiente é instável, o que viola a propriedade fundamental de Markov e dificulta a convergência dos algoritmos tradicionais de agente único.
+
+\paragraph{Arquitetura CTDE e Escalabilidade com GNNs:} Para mitigar a instabilidade, utiliza-se a arquitetura de \textbf{Treinamento Centralizado com Execução Descentralizada} (CTDE). Nesta abordagem, um componente ``Crítico'' tem acesso ao estado global durante a fase de treino para estabilizar os sinais de recompensa, enquanto o ``Ator'' (controlador do robô) utiliza apenas observações locais durante a fase de execução \cite{sun2024graph}.
+
+Contudo, para garantir que o enxame é verdadeiramente escalável, a investigação moderna tem integrado \textbf{Graph Neural Networks (GNNs)} e mecanismos de atenção espacial.
+
+\subsection{Fundamentos de Graph Neural Networks e Mecanismos de Atenção}
+\paragraph{Representação em Grafo do Enxame:}
+O enxame de $N$ robôs é modelado como um grafo dinâmico $G_t = (V_t, E_t)$, onde $V_t = \{1,\ldots,N\}$ é o conjunto de nós (robôs). Em vez de um corte rígido por raio de comunicação, adota-se um \textbf{grafo completamente ligado} ($E_t = \{(i,j) : i \neq j\}$) cujas arestas são ponderadas dinamicamente pelos coeficientes de atenção $\alpha_{ij}$ (Equação~\ref{eq:attention_scores}). A topologia efetiva é assim aprendida e reflete, a cada passo, a relevância relativa de cada vizinho para a decisão do agente --- arestas irrelevantes recebem peso próximo de zero, emulando o efeito de um corte de proximidade sem o impor \textit{a priori}.
+
+\paragraph{Propagação de Mensagens (\textit{Message Passing}):}
+O paradigma geral das GNNs é o framework MPNN (\textit{Message Passing Neural Network}). A representação $\mathbf{h}_i^{(l)}$ do nó $i$ na camada $l$ é atualizada por:
+\begin{equation}
+    \mathbf{h}_i^{(l+1)} = \text{UPDATE}\!\left(\mathbf{h}_i^{(l)},\;\text{AGG}\!\left(\!\left\{\mathbf{m}_{j \to i}^{(l)} : j \in \mathcal{N}(i)\right\}\!\right)\right)
+    \label{eq:mpnn}
+\end{equation}
+onde $\mathbf{m}_{j \to i}^{(l)} = \text{MSG}(\mathbf{h}_i^{(l)}, \mathbf{h}_j^{(l)})$ é a mensagem do vizinho $j$, e $\text{AGG}(\cdot)$ é uma função invariante à permutação (soma, média ou máximo). Esta invariância é fundamental: a operação é independente da ordem dos vizinhos, garantindo que o enxame é tratado como um conjunto não-ordenado.
+
+\paragraph{Mecanismo de Atenção Escalada:}
+A arquitetura implementada (\texttt{GNNAgent3D}) usa o mecanismo de \textbf{atenção de produto interno escalado}. Para o agente $i$, codificam-se as suas características locais $\mathbf{h}_i^{env} = f_{enc}(\mathbf{o}_i^{env}) \in \mathbb{R}^d$ e as dos $N-1$ vizinhos $\mathbf{h}_j^{nbr} = f_{nbr}(\mathbf{n}_{j,i}) \in \mathbb{R}^d$, formando a matriz de contexto:
+\begin{equation}
+    \mathbf{H} = \bigl[\mathbf{h}_i^{env};\, \mathbf{h}_1^{nbr};\, \ldots;\, \mathbf{h}_{N-1}^{nbr}\bigr] \in \mathbb{R}^{N \times d}
+\end{equation}
+
+As projeções de consulta, chave e valor são calculadas pelas matrizes treináveis $\mathbf{W}^Q, \mathbf{W}^K, \mathbf{W}^V \in \mathbb{R}^{d \times d}$:
+\begin{equation}
+    \mathbf{Q} = \mathbf{h}_i^{env}\,\mathbf{W}^Q \in \mathbb{R}^{1 \times d}, \quad
+    \mathbf{K} = \mathbf{H}\,\mathbf{W}^K \in \mathbb{R}^{N \times d}, \quad
+    \mathbf{V} = \mathbf{H}\,\mathbf{W}^V \in \mathbb{R}^{N \times d}
+    \label{eq:qkv}
+\end{equation}
+
+Os \textbf{coeficientes de atenção} $\alpha_{ij}$ medem a importância que o agente $i$ atribui ao vizinho $j$:
+\begin{equation}
+    \boldsymbol{\alpha}_{i} = \operatorname{softmax}\!\left(\frac{\mathbf{Q}\,\mathbf{K}^\top}{\sqrt{d}}\right) \in \mathbb{R}^{1 \times N}
+    \label{eq:attention_scores}
+\end{equation}
+A divisão por $\sqrt{d}$ previne a saturação do \textit{softmax} em espaços de alta dimensão. O \textbf{pool de mensagens agregado} é:
+\begin{equation}
+    \mathbf{m}_i = \boldsymbol{\alpha}_{i}\,\mathbf{V} = \sum_{j=0}^{N-1} \alpha_{ij}\,\mathbf{h}_j \in \mathbb{R}^d
+    \label{eq:msg_pool}
+\end{equation}
+A representação final concatena o vetor ego com o pool de mensagens e gera a ação contínua:
+\begin{equation}
+    \mathbf{z}_i = [\mathbf{h}_i^{env};\, \mathbf{m}_i] \in \mathbb{R}^{2d}, \qquad \mathbf{a}_i = f_{actor}(\mathbf{z}_i) \in [-1,1]^3
+    \label{eq:gat_final}
+\end{equation}
+
+Ao modelar o enxame como um grafo dinâmico $G = (V, E)$, onde os nós são robôs e as arestas são ligações de comunicação, é possível aprender políticas invariantes ao número de agentes. Como demonstrado por Sun et al. (2024), esta abordagem permite o \textbf{Zero-Shot Transfer}, onde um controlador treinado com um pequeno grupo de agentes pode ser diretamente aplicado a enxames de centenas de robôs sem necessidade de retreino \cite{sun2024graph}. Esta tese visa precisamente validar se este paradigma de aprendizagem adaptativa supera as limitações de rigidez das abordagens bio-inspiradas em cenários de stress dinâmico \cite{he2024self}.
+
+% --- CAPÍTULO 3 ---
+\chapter{Estado da Arte}
+\label{ch:sota}
+
+\section{Introdução ao Capítulo}
+Este capítulo apresenta uma Revisão Sistemática da Literatura (SLR) rigorosa, centrada nos paradigmas de controlo de enxames discutidos no capítulo anterior. Numa área em constante evolução como a Robótica de Enxame, onde as publicações científicas transitaram das conceptualizações iniciais da década de 1990 para aplicações críticas e complexas em 2025, torna-se imperativo adotar um método de análise que seja simultaneamente metódico e reprodutível. O objetivo primordial desta revisão não é apenas sumarizar o conhecimento existente, mas sim analisar de que forma a Aprendizagem Automática — especificamente o \textit{Multi-Agent Reinforcement Learning} (MARL) — e os métodos de Otimização Bio-inspirada (como o PSO e AE) têm convergido ou divergido na resolução de problemas de coordenação descentralizada \cite{lin2025survey}.
+
+A motivação para esta análise sistemática reside na observação de que a comunidade científica tem, historicamente, operado em silos: a literatura de MARL foca-se predominantemente na estabilidade do treino sob condições de não-estacionaridade, enquanto a literatura de otimização prioriza a robustez de controladores estáticos. Esta divisão tem dificultado a realização de confrontos diretos que validem qual o paradigma mais resiliente perante o chamado ``Deployment Gap'' (fosso de implantação). Conforme discutido por Iskandar et al. (2024), a falta de um referencial comum de desempenho impede uma compreensão clara de quando a adaptabilidade \textit{online} compensa a complexidade computacional do treino em larga escala \cite{iskandar2024comparative}.
+
+Desta forma, a estrutura desta SLR foca-se em identificar e mapear as lacunas de \textit{benchmarking} que justificam a necessidade desta dissertação. Através da taxonomia aqui apresentada, serão exploradas as tendências de escalabilidade via \textit{Graph Neural Networks} (GNNs), defendidas por Sun et al. (2024), e as abordagens de hibridização emergentes que tentam fundir a eficácia dos algoritmos evolutivos com a flexibilidade do RL \cite{sun2024graph, zheng2025lns2}. Ao finalizar este capítulo, será possível sustentar a validade da metodologia proposta no Capítulo 4 como a resposta necessária às limitações encontradas na literatura contemporânea \cite{kegeleirs2025towards}.
+
+\section{Metodologia da Revisão Sistemática}
+Para garantir o rigor científico, a reprodutibilidade e a transparência no processo de seleção da informação, foi adotada uma metodologia baseada no protocolo PRISMA (\textit{Preferred Reporting Items for Systematic Reviews and Meta-Analyses}, versão 2020). A adoção deste protocolo permite mitigar o viés de seleção e assegurar que a análise crítica das tecnologias MARL e de otimização bio-inspirada se fundamenta numa amostra representativa e qualificada da literatura contemporânea.
+
+\subsection{Critérios de Seleção e Rigor Técnico}
+A pesquisa priorizou bases de dados com elevado fator de impacto na área da computação e robótica: \textbf{IEEE Xplore}, \textbf{ACM Digital Library} e \textbf{Scopus}. Fontes genéricas ou não indexadas foram descartadas para garantir a qualidade da \textit{baseline}.
+
+O critério de inclusão principal focou-se na formalização matemática do problema: foram selecionados apenas estudos que modelassem o controlo de enxame como um \textbf{Processo de Decisão de Markov Parcialmente Observável Descentralizado (Dec-POMDP)} ou problemas de otimização equivalentes. Artigos anteriores a 2020 ou que apresentassem abordagens puramente teóricas sem validação em simulação dinâmica foram excluídos na fase de triagem, garantindo que o Estado da Arte reflete apenas as tecnologias de ponta atuais.
+
+\subsection{Protocolo de Pesquisa e Bases de Dados}
+A fase de levantamento bibliográfico foi conduzida entre Setembro e Outubro de 2025, recorrendo a fontes de dados fidedignas e amplamente reconhecidas pela comunidade científica. O fluxo de trabalho, desde a captura inicial até à leitura técnica detalhada, foi centralizado na plataforma \textbf{Mendeley}. Esta ferramenta foi crucial não apenas para a organização dos artigos, mas também para a gestão automática de metadados, deteção de duplicados e anotação técnica, garantindo a integridade e a rastreabilidade da bibliografia apresentada ao longo da dissertação.
+
+As bases de dados científicas indexadas foram selecionadas estrategicamente para cobrir tanto a especificidade técnica da engenharia como o impacto global das publicações:
+\begin{itemize}
+    \item \textbf{IEEE Xplore e ACM Digital Library:} Consultadas pela sua especialização em computação, robótica e engenharia eletrotécnica, onde se encontram os principais desenvolvimentos em algoritmos de controlo descentralizado.
+    \item \textbf{Scopus e Google Scholar:} Utilizadas para garantir uma abrangência multidisciplinar e capturar artigos de alto impacto e revisões de literatura que estabelecem o estado da arte em inteligência artificial.
+\end{itemize}
+
+A \textit{string} de pesquisa foi desenhada utilizando operadores booleanos para capturar a interseção precisa entre o domínio da Robótica de Enxame e as soluções tecnológicas em análise:
+
+\begin{quote}
+    \textit{("Swarm Robotics" OR "Multi-Robot Systems") AND ("Reinforcement Learning" OR "MARL" OR "Bio-inspired Optimization" OR "PSO") AND ("Control" OR "Navigation").}
+\end{quote}
+
+Esta combinação de termos permitiu filtrar estudos que abordassem simultaneamente o paradigma de controlo (MARL ou Otimização) e a aplicação prática em enxames (Navegação/Controlo), excluindo automaticamente literatura focada em agentes isolados ou aplicações puramente teóricas sem componente robótica.
+
+\subsection{Processo de Seleção (Fluxo PRISMA)}
+O rigor do processo de seleção é fundamental para assegurar que o corpo de literatura analisado é robusto e diretamente relevante para os objetivos desta dissertação. O fluxo de trabalho seguiu três fases críticas, documentadas detalhadamente no fluxograma da Figura \ref{fig:prisma}:
+
+\begin{enumerate}
+    \item \textbf{Identificação:} A pesquisa inicial nas bases de dados selecionadas retornou um total de \textbf{145 artigos}. Todos os registos foram importados para o software \textbf{Mendeley}, facilitando a triagem inicial e a deteção de duplicados. Após a remoção automática e manual de 25 duplicados, restaram 120 registos únicos para análise de mérito.
+    \item \textbf{Triagem (Screening):} Foram \textbf{excluídos 60 artigos após a leitura integral de títulos e resumos}. O principal critério de exclusão nesta fase residiu no desvio do âmbito técnico, nomeadamente estudos focados exclusivamente em biologia animal teórica ou sistemas robóticos de agente único, que não oferecem contributos para a problemática da coordenação descentralizada.
+    \item \textbf{Elegibilidade:} Dos restantes 60 artigos lidos na íntegra, 34 foram excluídos por apresentarem falta de dados comparativos quantitativos ou metodologias obsoletas que não consideravam ambientes dinâmicos e ruidosos. Esta fase foi crucial para garantir que apenas estudos com validade estatística e relevância para o controlo de enxames moderno fossem retidos.
+\end{enumerate}
+
+No final deste processo, \textbf{26 artigos} foram selecionados para a fase de análise qualitativa e extração de dados técnicos, servindo de base para a taxonomia apresentada de seguida.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm]
+    \tikzstyle{process} = [rectangle, minimum width=4.5cm, minimum height=1.5cm, text centered, draw=black, fill=white, text width=4.5cm, font=\small]
+    \tikzstyle{arrow} = [thick,->,>=stealth]
+    \tikzstyle{side_label} = [rotate=90, anchor=south, font=\bfseries\footnotesize, color=blue!70!black, fill=blue!10, minimum width=3cm, align=center]
+
+    % FASE 1: IDENTIFICAÇÃO
+    \node (id_db) [process] {Registos identificados nas Bases de Dados (IEEE, ACM, Scopus): \\ \textbf{(n = 145)}};
+    \node (dup) [process, right=1.5cm of id_db, text width=5cm] {Registos removidos antes da triagem: \\ \raggedright • Duplicados (n = 25) \\ • Anteriores a 2020 (n = 0)};
+
+    % FASE 2: TRIAGEM
+    \node (screen) [process, below=1.5cm of id_db] {Registos triados (Título/Resumo) \\ \textbf{(n = 120)}};
+    \node (excluded) [process, right=1.5cm of screen] {Registos excluídos \\ (Fora do âmbito técnico) \\ \textbf{(n = 60)}};
+
+    % FASE 3: RECUPERAÇÃO
+    \node (sought) [process, below=1.5cm of screen] {Relatórios procurados para leitura integral \\ \textbf{(n = 60)}};
+    \node (not_retrieved) [process, right=1.5cm of sought] {Não recuperados \\ \textbf{(n = 0)}};
+
+    % FASE 4: ELEGIBILIDADE
+    \node (eligible) [process, below=1.5cm of sought] {Artigos avaliados para elegibilidade (Texto Completo) \\ \textbf{(n = 60)}};
+    \node (excluded_reason) [process, right=1.5cm of eligible, text width=5cm] {Artigos excluídos: \textbf{(n = 34)} \\ \raggedright \scriptsize • Sem comparação quantitativa (n=15) \\ • Simulação estática/simplista (n=10) \\ • Não utiliza Dec-POMDP/MARL (n=9)};
+
+    % FASE 5: INCLUSÃO
+    \node (included) [process, below=1.5cm of eligible] {Estudos incluídos na revisão \\ \textbf{(n = 26)}};
+
+    % LIGAÇÕES
+    \draw [arrow] (id_db) -- (screen);
+    \draw [arrow] (id_db) -- (dup);
+    \draw [arrow] (screen) -- (sought);
+    \draw [arrow] (screen) -- (excluded);
+    \draw [arrow] (sought) -- (eligible);
+    \draw [arrow] (sought) -- (not_retrieved);
+    \draw [arrow] (eligible) -- (included);
+    \draw [arrow] (eligible) -- (excluded_reason);
+
+    % LABELS LATERAIS
+    \node [side_label, minimum width=3cm] at (-5.5, 0) {Identificação};
+    \node [side_label, minimum width=4.5cm] at (-5.5, -3.7) {Triagem};
+    \node [side_label, minimum width=6cm] at (-5.5, -9.5) {Inclusão};
+    \end{tikzpicture}
+    \caption{Fluxograma PRISMA 2020: Seleção focada em estudos recentes e quantitativos.}
+    \label{fig:prisma}
+\end{figure}
+
+\section{Análise dos Melhores Resultados}
+
+\subsection{Subgrupo A: Otimização Bio-inspirada (A Referência de Eficiência)}
+Os estudos mais relevantes neste grupo, como o de \textbf{Hassen e Amin (2025)}, demonstram que variantes híbridas de PSO continuam a deter o recorde de eficiência energética em mapas estáticos. Os resultados indicam que, quando o ambiente não muda, a otimização \textit{offline} converge para soluções com 98\% de otimalidade, servindo como uma \textit{baseline} extremamente difícil de bater para o RL. Contudo, estes mesmos estudos reportam quebras de performance superiores a 40\% quando são introduzidos obstáculos móveis não previstos no treino inicial \cite{hassen2025hybrid}.
+
+\subsection{Subgrupo B: MARL e Escalabilidade (O Estado da Arte)}
+A literatura de MARL abandonou abordagens simplistas (como Q-Learning tabular) em favor de arquiteturas baseadas em grafos. O trabalho de destaque de \textbf{Sun et al. (2024)} prova que o uso de \textbf{Graph Neural Networks (GNNs)} permite reduzir o erro de estimação em 25\% comparado com métodos de atenção padrão. Mais importante, demonstraram que uma política treinada com apenas 10 agentes mantém a coerência operacional com 100 agentes (\textit{Zero-Shot Transfer}), validando o uso de GNNs para resolver o problema da dimensionalidade dos modelos de Markov \cite{sun2024graph}.
+
+% --- NOVO PARÁGRAFO AQUI ---
+Recentemente, Xiao et al. (2026) propuseram o método CSPER, destacando que abordagens de RL sofrem de fraca exploração em ambientes complexos de navegação devido a recompensas esparsas \cite{xiao2026csper}. Este trabalho reforça a necessidade de mecanismos de recompensa densos, como os propostos nesta tese. Paralelamente, Roveda (2026) explorou a hibridização entre RL e Algoritmos Evolutivos para manipulação adaptativa, sugerindo que a combinação dos dois mundos pode mitigar a incerteza em ambientes não estruturados \cite{roveda2026hybrid}.
+% ---------------------------
+
+\section{O Desafio do \textit{Deployment Gap} em Robótica de Enxame}
+% TODO: (EXPANSÃO) Escrever 2 a 3 páginas profundas sobre o "Fosso de Implantação" (Sim-to-Real). Explicar por que é que políticas que convergem a 100% no simulador falham catastroficamente no robô físico real (e-puck/Khepera). Abordar o ruído dos sensores, fricção assimétrica, falhas/atrasos de comunicação. Referenciar literatura sobre "Domain Randomization".
+
+\section{Lacunas Identificadas e Oportunidade de Melhoria}
+A revisão sistemática da literatura permitiu consolidar a evidência de que a principal barreira ao avanço da robótica de enxame não reside na escassez de algoritmos, mas sim na \textbf{falha sistemática de rigor comparativo} entre paradigmas distintos. Observou-se que as comunidades de \textit{Multi-Agent Reinforcement Learning} (MARL) e de Otimização Bio-inspirada operam em silos metodológicos quase estanques:
+\begin{itemize}
+    \item A comunidade de aprendizagem foca-se primordialmente na estabilidade do treino e na superação da não-estacionaridade, testando novos algoritmos (ex: MAPPO, QMIX) contra variantes de RL, negligenciando baselines de otimização consolidada \cite{bettini2024benchmarl}.
+    \item A comunidade de otimização foca-se na eficiência energética e otimalidade em cenários estáticos, ignorando a flexibilidade que a aprendizagem adaptativa pode oferecer em tempo real \cite{wang2022comparative}.
+\end{itemize}
+
+Esta fragmentação resulta numa negligência crítica de testes de \textit{stress} dinâmico, como a falha súbita de 10\% do enxame ou alterações abruptas na topologia de comunicação. Conforme identificado por Kegeleirs et al. (2025), esta ausência de testes em ambientes ruidosos e imprevisíveis constitui o principal entrave à transição dos enxames para aplicações industriais e de busca e salvamento \cite{kegeleirs2025towards}.
+
+Esta tese pretende melhorar este cenário ao propor um \textit{benchmark} que transcende a simples métrica de performance final, focando-se na \textbf{capacidade de recuperação e adaptação} perante perturbações dinâmicas. A oportunidade de melhoria reside na utilização de \textit{Graph Neural Networks} (GNNs), que permitem modelar o enxame como um grafo dinâmico $G = (V, E)$ \cite{sun2024graph}. Esta abordagem garante a invariância à permutação e a escalabilidade necessárias para superar a rigidez dos métodos bio-inspirados, permitindo que o sistema mantenha a coesão e a eficácia mesmo quando a estrutura do coletivo é alterada por eventos externos imprevistos.
+
+\section{Artigos-Chave e Ligação ao Problema}
+Para fundamentar cientificamente a definição do problema desta tese, foram selecionados seis artigos críticos que mapeiam os avanços e as limitações tecnológicas de 2020 a 2025:
+
+\begin{enumerate}
+    \item \textbf{Sun et al. (2024):} Este trabalho é fundamental por demonstrar a eficácia das \textbf{GNNs} na minimização do erro de estimação em enxames totalmente descentralizados, validando a arquitetura tecnológica de base escolhida para o simulador desta tese \cite{sun2024graph}.
+    \item \textbf{Elrod et al. (2025):} Explora o potencial de arquiteturas baseadas em \textbf{Transformers} para a coordenação multiagente, destacando como a atenção espacial é superior aos métodos de agregação simples para manter a coesão do grupo em tarefas dinâmicas \cite{elrod2025gnn}.
+    \item \textbf{Heimann et al. (2024):} Introduz o conceito de \textbf{Safe MARL}, integrando métodos de verificação em tempo real no processo de aprendizagem para mitigar o risco de colisões catastróficas, uma preocupação central para a implantação em sistemas físicos reais \cite{heimann2024runtime}.
+    \item \textbf{Iskandar et al. (2024):} Realiza um dos raros \textbf{benchmarking diretos} entre Q-Learning e PSO, concluindo que o RL atinge maior eficiência energética após treino extensivo, o que reforça a hipótese de que a aprendizagem adaptativa justifica a sua complexidade computacional \cite{iskandar2024comparative}.
+    \item \textbf{Kegeleirs et al. (2025):} Identifica criticamente as limitações na transição da simulação para a realidade (\textit{sim-to-real}), apontando a ausência de testes em ambientes ruidosos e com falhas de comunicação como o principal obstáculo à adoção industrial \cite{kegeleirs2025towards}.
+    \item \textbf{Zheng et al. (2025):} Propõe o \textit{framework} \textbf{LNS2+RL}, demonstrando que a hibridização entre pesquisa local e aprendizagem por reforço é a via mais eficaz para resolver problemas de \textit{pathfinding} em larga escala com obstáculos móveis \cite{zheng2025lns2}.
+\end{enumerate}
+
+\section{Conclusão Parcial}
+O Estado da Arte validou a escolha da aprendizagem automática avançada, particularmente através de modelos de MARL descentralizados, como o paradigma com maior potencial para o desenvolvimento de sistemas de controlo verdadeiramente adaptativos \cite{he2024self}. A literatura recente confirma que, embora os métodos bio-inspirados continuem a definir linhas de base robustas para tarefas estáticas, a sua limitação de adaptação \textit{online} restringe a sua utilidade em ambientes de alta incerteza \cite{he2024self}.
+
+No entanto, a manifesta escassez de dados comparativos quantitativos entre as versões modernas de MARL (utilizando GNNs e Transformers) e variantes avançadas de PSO e Algoritmos Evolutivos em tarefas dinâmicas justifica a necessidade da metodologia proposta no capítulo seguinte \cite{iskandar2024comparative}. Este trabalho propõe-se a preencher este vazio, fornecendo as métricas necessárias para determinar quando a complexidade computacional da aprendizagem compensa, de facto, a robustez pré-programada da otimização tradicional.
+
+
+
+\section{Síntese Comparativa da Literatura}
+A Tabela \ref{tab:sota_summary} apresenta uma síntese dos estudos mais relevantes analisados, destacando a abordagem utilizada e as limitações que motivam a presente dissertação.
+
+\begin{table}[H]
+    \centering
+    \footnotesize
+    \caption{Resumo dos artigos mais relevantes e identificação de lacunas.}
+    \label{tab:sota_summary}
+    \renewcommand{\arraystretch}{1.3} % Mais espaço entre linhas
+    \begin{tabular}{|p{2.5cm}|p{2cm}|p{4.5cm}|p{4.5cm}|}
+        \hline
+        \textbf{Referência} & \textbf{Paradigma} & \textbf{Contributo Principal} & \textbf{Limitação / Gap Identificada} \\ \hline
+
+        Sun et al. (2024) \cite{sun2024graph} & MARL (GNN) & Demonstra escalabilidade (Zero-Shot) de 10 para 100 agentes usando GNNs. & Foca-se apenas na minimização do erro de estimação, sem obstáculos físicos complexos. \\ \hline
+
+        Hassen \& Amin (2025) \cite{hassen2025hybrid} & Bio-inspirado (PSO) & Alta eficiência energética (98\% otimalidade) em mapas estáticos. & Performance degrada-se 40\% com obstáculos móveis (falta de adaptação online). \\ \hline
+
+        Heimann et al. (2024) \cite{heimann2024runtime} & Safe MARL & Introduz verificação em tempo real para evitar colisões durante o treino. & Avaliado em ambientes simplificados, sem comparação com métodos evolutivos. \\ \hline
+
+        Iskandar et al. (2024) \cite{iskandar2024comparative} & Híbrido & Comparação direta inicial entre Q-Learning e PSO. & Cenário de navegação simples; não testa falhas de agentes ou "stress" do enxame. \\ \hline
+
+        Kegeleirs et al. (2025) \cite{kegeleirs2025towards} & Review & Identifica o "Deployment Gap" como barreira principal. & Trabalho teórico; não propõe uma solução algorítmica direta. \\ \hline
+    \end{tabular}
+\end{table}
+
+Esta análise tabular reforça que, embora existam soluções robustas para problemas isolados (escalabilidade ou segurança), falta uma validação integrada que compare a \textbf{adaptabilidade dinâmica} do MARL contra a \textbf{eficiência estática} do PSO sob condições de falha.
+
+% --- CAPÍTULO 4 ---
+\chapter{Desenvolvimento do Ambiente de Simulação}
+\label{ch:simulation_env}
+
+\section{Arquitetura de Software e Stack Tecnológica}
+Para assegurar a viabilidade técnica e a reprodutibilidade dos resultados, a implementação do sistema foi desenvolvida com base nas tecnologias padrão da indústria para Inteligência Artificial. A arquitetura adotada privilegia a modularidade, a flexibilidade e o desempenho computacional, permitindo a substituição independente de qualquer componente sem comprometer a integridade do \textit{pipeline} experimental.
+
+\subsection{Ambiente de Simulação e Interação}
+O desenvolvimento foi centralizado na linguagem \textbf{Python 3.x}, escolhida pela sua vasta comunidade científica e pelo ecossistema de bibliotecas especializadas em aprendizagem automática. A interface do simulador foi implementada em conformidade com a norma \textbf{PettingZoo}, um padrão aberto para ambientes de agentes múltiplos que permite a abstração completa da física interna e facilita a troca entre algoritmos sem reescrever o código base do ambiente \cite{bettini2024benchmarl}.
+
+A observação de cada agente é estritamente \textbf{local e parcial}, garantindo que o sistema opera num regime verdadeiramente descentralizado. Não existe qualquer componente com acesso ao estado global durante a fase de execução, replicando fielmente as limitações sensoriais de plataformas físicas como o Khepera IV ou o e-puck.
+
+\subsection{Implementação dos Algoritmos}
+A construção das redes neuronais e o treino dos agentes MARL apoiaram-se em \textit{frameworks} de computação tensorial de alto desempenho:
+\begin{itemize}
+    \item \textbf{PyTorch:} Utilizado para a implementação da \textit{Graph Neural Network} (GNN) do algoritmo evolutivo, devido ao seu suporte nativo para grafos dinâmicos e à facilidade de depuração de operações tensoriais personalizadas.
+    \item \textbf{Stable-Baselines3:} Biblioteca de referência para a implementação dos algoritmos PPO e SAC, fornecendo implementações estáveis e bem validadas pela comunidade científica, com suporte a ambientes vetorizados paralelos.
+    \item \textbf{Aceleração de Hardware:} O código foi otimizado para tirar partido de aceleração por GPU via CUDA, permitindo a execução paralela de múltiplos ambientes de simulação e reduzindo significativamente o tempo de treino.
+\end{itemize}
+
+\subsection{Arquitetura Geral do Simulador}
+A Figura \ref{fig:sim_arch} ilustra o fluxo de dados em ciclo fechado do simulador, onde cada agente iterativamente recolhe observações e executa ações sob a validação de um motor de física contínuo.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.8cm and 2.5cm,
+        box/.style={rectangle, draw=blue!70!black, fill=blue!5, thick, minimum width=3.5cm, minimum height=1.2cm, align=center, rounded corners=3pt, font=\small},
+        arrow/.style={->, >=stealth, thick, color=gray!80!black},
+        label/.style={font=\footnotesize\itshape, text=gray!80!black, align=center}
+    ]
+    
+    % Nodes
+    \node (env) [box] {\textbf{Estado Global (Ambiente)} \\ \scriptsize Posições, Ninho, Muros};
+    \node (obs) [box, below left=of env] {\textbf{Gerador de Observações} \\ \scriptsize LiDAR, Vetores Egocêntricos};
+    \node (agent) [box, below right=of obs] {\textbf{Controlador Descentralizado} \\ \scriptsize GNN / PPO / SAC};
+    \node (physics) [box, above right=of agent] {\textbf{Motor de Física} \\ \scriptsize Colisões AABB e Deslizamento};
+    
+    % Arrows
+    \draw [arrow] (env.west) -| node[label, xshift=-1.5cm, yshift=1cm] {Extração de estado local (Parcial)} (obs.north);
+    \draw [arrow] (obs.south) |- node[label, xshift=-1cm, yshift=-0.4cm] {Vetor $\mathbf{o}_i$ (107 vars)} (agent.west);
+    \draw [arrow] (agent.east) -| node[label, xshift=1.2cm, yshift=-1cm] {Ação contínua $\mathbf{a}_i$} (physics.south);
+    \draw [arrow] (physics.north) |- node[label, xshift=0.8cm, yshift=0.4cm] {Atualização de posições e Penalizações} (env.east);
+    
+    \end{tikzpicture}
+    \caption{Diagrama da arquitetura do simulador e fluxo de interação agente-ambiente.}
+    \label{fig:sim_arch}
+\end{figure}
+
+\section{O Ambiente de Simulação}
+O simulador foi desenvolvido de raiz em \textbf{Python}, projetado para colmatar o \textit{Deployment Gap} (fosso de implantação) através da modelação de alta fidelidade da física dos agentes, das restrições sensoriais e das perturbações dinâmicas do ambiente \cite{kegeleirs2025towards}. Todos os algoritmos são avaliados no mesmo ambiente, garantindo a paridade da comparação.
+
+\subsection{Modelo Físico e Hiperparâmetros}
+A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m, onde $N = 20$ agentes homogéneos operam em simultâneo. A Tabela \ref{tab:hyperparameters} sintetiza os hiperparâmetros físicos e arquiteturais aplicados.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Hiperparâmetros reais utilizados na simulação e no treino dos modelos.}
+\label{tab:hyperparameters}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|l|l|c|}
+\hline
+\textbf{Categoria} & \textbf{Hiperparâmetro} & \textbf{Valor Real} \\ \hline
+\textbf{Ambiente} & Raio da Arena ($r_{arena}$) & $15.0$\,m \\
+ & Número de Agentes ($N$) & $20$ \\
+ & Número de Obstáculos Dinâmicos & $50$ \\
+ & Raio dos Obstáculos ($r_{obs}$) & $0.2$\,m \\
+ & Velocidade dos Obstáculos ($v_{obs}$) & $0.02$\,m/s \\
+ & Raio do Ninho ($r_{nest}$) & $1.5$\,m \\
+ & Velocidade do Ninho ($v_{nest}$) & $0.015$\,m/s \\
+ & Limite do Temporizador de Fome ($hunger$) & $250$ passos \\
+ & Cooperação Mínima para Alimentar ($k_{min}$) & $3$ agentes \\ \hline
+\textbf{PPO} & Taxa de Aprendizagem ($lr$) & $10^{-4}$ \\
+ & Passos por Rollout ($n_{steps}$) & $64$ (por CPU) \\
+ & Batch Size & $512$ \\
+ & Número de Épocas ($n_{epochs}$) & $4$ \\
+ & Arquitetura da Rede & MLP $[256, 256]$ \\
+ & Número de CPUs Paralelos & $8$ \\ \hline
+\textbf{SAC} & Buffer de Replay & $500,000$ transições \\
+ & Coeficiente de Entropia ($\alpha$) & $0.1$ \\
+ & Taxa de Aprendizagem ($lr$) & $10^{-4}$ \\
+ & Arquitetura da Rede & MLP $[256, 256]$ \\ \hline
+\textbf{Evolutivo (AE)} & Tamanho da População ($K$) & $30$ genomas \\
+ & Taxa de Mutação ($p_{mut}$) & $0.1$ \\
+ & Desvio Padrão Inicial ($\sigma$) & $0.1$ (Decaimento: $\times 0.995$) \\
+ & Episódios de Avaliação por Genoma & $3$ (média) \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Espaço de Observação}
+\label{sec:obs_space}
+As observações de cada agente são estritamente locais, parciais e expressas num referencial \textbf{egocêntrico} (relativo à orientação atual do próprio robô). O vetor de observação tem dimensão $d_{obs} = 12 + (N-1) \times 5 = 107$ (para $N=20$ agentes) e está estruturado em três componentes:
+
+\begin{equation}
+    \mathbf{o}_i = \big[ \mathbf{v}_{nest, i}, \, d_{nest, i}, \, \mathbf{l}_i, \, \mathbf{n}_{1, i}, \dots, \mathbf{n}_{19, i} \big] \in \mathbb{R}^{107}
+\end{equation}
+
+\begin{enumerate}
+    \item \textbf{Direção e Distância ao Ninho ($4$ valores):} Projeção do vetor direcional unitário do ninho nos eixos egocêntricos Frontal ($F$), Direito ($R$) e Superior ($U$) do robô, mais a distância normalizada ($d / 2r_{arena}$). Esta informação de \textbf{homing} está sempre disponível, mesmo quando existem muros entre o agente e o ninho. Este pressuposto é padrão em robótica de enxame --- assume-se um sentido global de orientação para a base (análogo à bússola magnética dos pombos, à orientação solar das formigas ou ao GPS de drones), mas \textbf{nunca} um mapa prévio dos obstáculos. A parcialidade da observação é assim mantida ao nível dos obstáculos (detetáveis apenas localmente pelo LiDAR), e não ao nível do objetivo. Esta opção corrige uma limitação de uma versão anterior, em que a direção era anulada na ausência de linha de visão, o que cegava os agentes em todos os cenários com paredes e os impedia de aprender a contornar.
+    \item \textbf{LiDAR Horizontal ($8$ valores, vetor $\mathbf{l}_i$):} Oito raios medidos em plano horizontal, uniformemente distribuídos a 360\textdegree{}, com alcance máximo de 5\,m. O valor devolvido é $1 - (d_{hit} / d_{max})$, onde $1.0$ significa impacto iminente.
+    \item \textbf{Vetor de Vizinhos ($19 \times 5 = 95$ valores, vetores $\mathbf{n}_{j, i}$):} Para os restantes 19 agentes, envia-se o vetor de direção local ($3$ valores), distância normalizada ($1$ valor) e um sinal binário de comunicação ($1$ valor). Este último é ativado ($1.0$) quando o vizinho atinge o ninho e se encontra a repousar, servindo como mecanismo de recrutamento estigmérgico.
+\end{enumerate}
+
+\subsection{Espaço de Ação e Dinâmica do Passo de Simulação}
+\label{sec:action_space}
+Cada agente emite, a cada passo, uma ação contínua $\mathbf{a}_i = (a_F, a_R, a_U) \in [-1,1]^3$ interpretada como um \textbf{deslocamento no referencial egocêntrico} do robô. O vetor é convertido para o referencial global através da base ortonormal $\{F, R, U\}$ (Frontal, Direito, Superior) e escalado por um passo máximo $\delta_{max}=0.2$\,m:
+\begin{equation}
+    \Delta \mathbf{p}_i = 0.2 \cdot \big( a_F\, \mathbf{F}_i + a_R\, \mathbf{R}_i + a_U\, \mathbf{U}_i \big)
+\end{equation}
+A orientação $\mathbf{F}_i$ é atualizada para a direção do movimento sempre que $\lVert \Delta\mathbf{p}_i \rVert > 0.02$, garantindo coerência entre a pose visual e a trajetória.
+
+O passo de simulação ($\texttt{step}$) processa o enxame por uma ordem determinística que assegura a consistência física:
+\begin{enumerate}
+    \item \textbf{Perturbações dinâmicas:} movimento dos obstáculos e do alvo móvel; injeção de falhas de agentes (Secção~\ref{sec:res_robustez}) quando aplicável.
+    \item \textbf{Aplicação da ação com \textit{wall-sliding}:} cada deslocamento é projetado ortogonalmente à normal de qualquer muro intersetado, permitindo deslizamento em vez de paragem abrupta.
+    \item \textbf{Resolução de colisões:} reposicionamento por penetração contra obstáculos (distância euclidiana), muros (AABB) e fronteira circular da arena.
+    \item \textbf{Separação física e dispersão:} repulsão geométrica de pares sobrepostos e penalização \textit{anti-clustering}, isenta nas zonas de cooperação.
+    \item \textbf{Lógica de tarefa:} verificação de ocupação do ninho ($k_{min}\ge 3$), cerco do alvo móvel (360\textdegree{}) ou abertura da porta cooperativa.
+    \item \textbf{Atribuição de recompensa e terminação:} cálculo dos seis termos de $\mathcal{R}$ e verificação do horizonte temporal ($t \ge t_{max}$).
+\end{enumerate}
+
+\subsection{Cenários de Teste}
+Para garantir uma avaliação exaustiva e progressiva das capacidades de controlo descentralizado, foram desenvolvidos seis cenários de dificuldade crescente:
+
+\begin{enumerate}
+    \item \textbf{Foraging Aberto (Sandbox):} Cenário base sem barreiras fixas. Contém os agentes, obstáculos dinâmicos e um ninho móvel. Serve para aferir a capacidade pura de cooperação e gestão de energia sem entropia espacial acrescida.
+    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_sandbox.png} \caption{Cenário Sandbox no visualizador.} \end{figure}
+    
+    \item \textbf{Beco Sem Saída (Muro em U):} Um grande obstáculo em forma de "U" bloqueia a linha direta ao ninho. A parede superior tem $14$\,m e as pernas laterais têm $10$\,m. Os agentes começam do lado de fora da "taça" e têm de explorar lateralmente as aberturas de $7$\,m. Avalia a exploração prolongada em detrimento da navegação gananciosa.
+    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_u_wall.png} \caption{Cenário Muro em U.} \end{figure}
+
+    \item \textbf{Gargalo (Porta Estreita):} A arena é cortada a meio por uma parede contínua, deixando apenas uma passagem de $1.5$\,m de largura. Obriga a um alinhamento e gestão do fluxo do enxame, punindo gravemente o congestionamento desenfreado.
+    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_bottleneck.png} \caption{Cenário Gargalo.} \end{figure}
+
+    \item \textbf{Quatro Salas (Labirinto):} Duas grandes paredes cruzam a arena vertical e horizontalmente, criando quatro salas isoladas ligadas apenas por corredores laterais de $1.5$\,m de largura. Os agentes começam no extremo oposto ao ninho, exigindo memória temporal e navegação estruturada de longo termo.
+    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_four_rooms.png} \caption{Cenário Quatro Salas.} \end{figure}
+
+    \item \textbf{Porta Cooperativa:} Similar ao Gargalo, mas a passagem de $3$\,m de largura encontra-se bloqueada por um portão físico. A porta só abre (deslizando para fora do caminho, com realce visual no \textit{dashboard}) quando no mínimo 3 agentes ocupam a zona de pressão em simultâneo. Por exigir uma sincronização mais demorada, este cenário dispõe de um horizonte temporal alargado de $800$ passos (face aos $500$ dos restantes), dando margem para que o enxame coordene a abertura e ainda alcance o ninho. Foca-se em comportamentos de sincronização sem comunicação explícita.
+    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_cooperative_door.png} \caption{Cenário Porta Cooperativa.} \end{figure}
+
+    \item \textbf{Perceção Cooperativa (Alvo Móvel):} A noção de "ninho físico" desaparece. O alvo de interesse viaja livremente pelo mapa ao dobro da velocidade normal ($0.03$\,m/s). Só é considerado capturado quando $3$ agentes se aproximam a menos de $4$\,m de distância e distribuem-se num raio de 360\textdegree{} em redor do mesmo, testando manobras de cerco e perseguição.
+    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_perception.png} \caption{Cenário Perceção Cooperativa.} \end{figure}
+\end{enumerate}
+
+\section{Design da Função de Recompensa}
+Para guiar a emergência de comportamentos coordenados e seguros, a função de recompensa global $\mathcal{R}$ partilhada entre os agentes foi formulada para garantir sinais de treino densos (mitigando problemas de exploração \cite{xiao2026csper}) e a rigorosa penalização de infrações físicas:
+
+\begin{equation}
+    \mathcal{R}(s, \mathbf{a}) = R_{\text{tarefa}} + R_{\text{progresso}} + R_{\text{exploração}} - R_{\text{dispersão}} - R_{\text{colisão}} - R_{\text{controlo}}
+\end{equation}
+
+Os valores exatos utilizados na simulação estão calibrados da seguinte forma:
+\begin{itemize}
+    \item \textbf{Tarefa ($R_{\text{tarefa}}$):} Recompensa majorada atribuída \textit{apenas} quando a colaboração é bem sucedida. No \textit{foraging} normal, $+100$ quando $k_{min} \ge 3$ repousam no ninho em simultâneo. No modo de Perceção Cooperativa, o valor aumenta para $+300$ após um cerco de sucesso de 360\textdegree{}.
+    \item \textbf{Progresso ($R_{\text{progresso}}$):} Baseado no método \textit{Potential-Based Reward Shaping} \cite{ng1999policy}, atribui uma recompensa ou penalidade fluida $50.0 \cdot (d_{t-1} - d_{t})$, encorajando passos na direção do ninho e desincentivando o desvio desnecessário sem alterar a política ótima do cenário.
+    \item \textbf{Exploração ($R_{\text{exploração}}$):} Bónus de exploração \textit{count-based} que atribui $+2.0$ na primeira vez que um agente visita cada célula de uma grelha de discretização espacial ($2 \times 2$\,m). Este sinal é fundamental para escapar aos mínimos locais induzidos pelo termo de progresso euclidiano: em cenários com paredes, aproximar-se em linha reta do ninho conduz frequentemente a um beco, e contornar o obstáculo implica afastar-se temporariamente (penalizado pelo progresso). O bónus de cobertura recompensa a descoberta de zonas novas, incentivando o desvio necessário, em linha com a necessidade de mecanismos densos de exploração identificada por Xiao et al. (2026) \cite{xiao2026csper}.
+    \item \textbf{Dispersão ($R_{\text{dispersão}}$):} Penalização \textit{anti-clustering} de até $-1.5$ por cada par de agentes que se aproxime a menos de $1.0$\,m, proporcional à sobreposição. Desincentiva o colapso do enxame numa única ``bola'' compacta (comportamento degenerado observado em políticas com parâmetros partilhados, em que observações semelhantes geram ações idênticas). A penalização é \textbf{isenta nas zonas de cooperação} (a menos de $4$\,m do ninho, do alvo móvel ou da zona de pressão da porta), onde a tarefa exige precisamente a agregação de $k_{min} \ge 3$ agentes.
+    \item \textbf{Colisão e Fome ($R_{\text{colisão}}$):} Independentemente do objeto (parede, obstáculo móvel ou delimitação exterior da arena), é aplicada uma penalização fixa de $-2.0$ por passo de colisão. Complementarmente, um mecanismo de \textbf{separação física} repele geometricamente quaisquer dois agentes que se sobreponham (distância inferior a $2\,r_{robot}$), garantindo que o enxame nunca colapsa em sobreposições não-físicas. Adicionalmente, caso o temporizador de \textit{hunger} ultrapasse 250 passos, o agente ``morre'', sofre um revés crítico de $-50.0$ e a sua posição é restabelecida.
+    \item \textbf{Controlo Energético ($R_{\text{controlo}}$):} Subtração de $-0.05$ a cada passo de simulação por agente não inativo. Pressiona temporalmente o enxame para finalizar o forrageamento o mais célere possível.
+\end{itemize}
+
+\section{Desafios de Engenharia e Otimização Computacional}
+A construção de um simulador de raiz capaz de suportar o treino de algoritmos de aprendizagem por reforço profundo exige um rigoroso esforço de engenharia de software. O ambiente desenvolvido (\texttt{swarm\_env\_3d.py} e o respetivo visualizador \texttt{launcher\_dashboard.py}) foi desenhado para mitigar estrangulamentos computacionais comuns em arquiteturas \textit{Multi-Agent}, focando-se na otimização matemática e abstração arquitetural.
+
+\subsection{Motor de Visualização Interativa (Dashboard)}
+Para permitir a inspeção do comportamento emergente do enxame sem comprometer o desempenho do treino, o sistema adota um padrão de arquitetura que desacopla rigorosamente a lógica de simulação física do motor de renderização gráfica.
+A inspeção do comportamento é feita por um visualizador 3D implementado com o motor \textbf{Ursina} (assente em Panda3D), que projeta a telemetria do motor contínuo interno num espaço tridimensional navegável, com representação do ninho, obstáculos móveis, muros e indicadores de proximidade. O controlo experimental --- lançamento de treinos, seleção de cenários e geração de gráficos --- é centralizado num \textit{dashboard} interativo construído em \textbf{CustomTkinter}. Esta separação permite que o simulador opere num modo \textit{headless} (sem sobrecarga gráfica) durante sessões de treino intensivo --- processando milhares de transições por segundo ---, enquanto oferece um modo interativo para demonstração e análise qualitativa das políticas aprendidas.
+
+\subsection{Otimização Matemática da Física e Deteção de Colisões}
+A viabilidade do RL depende de ciclos de simulação contínuos em ordem de milissegundos. Simular colisões dinâmicas para $N=20$ agentes e dezenas de obstáculos não-estáticos de forma ineficiente levaria a um aumento quadrático no custo computacional.
+\begin{itemize}
+    \item \textbf{Deteção Geométrica de Colisões:} O motor resolve as colisões por testes geométricos diretos --- distância Euclidiana para os obstáculos esféricos e caixas envolventes alinhadas aos eixos (\textit{Axis-Aligned Bounding Boxes}, AABB) para os muros retangulares ---, recorrendo a operações vetoriais \textbf{NumPy} no cálculo de distâncias e profundidades de penetração. Um passo dedicado de \textbf{separação física} repele geometricamente qualquer par de agentes sobrepostos, assegurando a ausência de interpenetrações não-físicas no enxame.
+    \item \textbf{Wall-Sliding Cinemático:} Quando um robô entra em contacto com uma parede retangular, o motor não o imobiliza mecanicamente (o que penalizaria irreversivelmente a exploração do algoritmo MARL). Em vez disso, recorre à projeção ortogonal do vetor de velocidade ao longo da direção normal da superfície de colisão, reproduzindo matematicamente de forma realista o deslizamento (\textit{wall-sliding}) contínuo de um chassi móvel \textit{differential-drive}.
+\end{itemize}
+
+\subsection{Mecanismo de Atenção sobre Vizinhos (GNN)}
+O extrator de relações entre robôs foi implementado de raiz em \textbf{PyTorch puro} (sem recurso a bibliotecas de grafos como o PyTorch Geometric), através de um mecanismo de \textbf{atenção de produto interno escalado} sobre o conjunto de vizinhos, conforme formalizado nas Equações~\ref{eq:qkv}--\ref{eq:msg_pool}.
+\begin{itemize}
+    \item \textbf{Representação Densa do Vizinhança:} A cada passo, cada agente $i$ observa os restantes $N-1$ agentes através de um vetor de \textit{features} de dimensão fixa (direção egocêntrica, distância normalizada e sinal de comunicação por vizinho). Diferentemente de uma abordagem baseada em arestas esparsas com raio de comunicação fixo, todos os vizinhos são apresentados ao módulo de atenção, sendo a \textbf{relevância de cada um aprendida} pelos coeficientes $\alpha_{ij}$ --- a rede atribui dinamicamente pesos próximos de zero aos vizinhos irrelevantes, dispensando um corte geométrico explícito.
+    \item \textbf{Dimensão Fixa e \textit{Parameter Sharing}:} Como a representação tem dimensão fixa ($\mathbb{R}^{107}$), a integração em \textit{batches} de treino é direta, sem necessidade de \textit{padding} dinâmico ou conversão para listas de índices. As projeções \textit{Query}-\textit{Key}-\textit{Value} e o \textit{softmax} operam sobre o número de vizinhos presentes, pelo que a mesma rede processa enxames de qualquer dimensão --- viabilizando o \textit{Zero-Shot Transfer} para $N \in \{10, 50, 100\}$ sem retreino.
+\end{itemize}
+
+\subsection{Ambientes Vetorizados e Paralelização Multiprocesso}
+Por forma a escalar exponencialmente a recolha de experiência (nas instâncias SAC/PPO) e na avaliação paralela da neuro-evolução:
+\begin{itemize}
+    \item \textbf{Vectorized Environments:} O motor de ambiente Gym original foi encapsulado através dos \textit{wrappers} \texttt{SubprocVecEnv} (fornecidos pela *Stable-Baselines3*), forçando a inicialização de dezenas de cópias do simulador correndo de forma isolada e simultânea através de múltiplos processos de CPU paralelos.
+    \item \textbf{Mecanismo de Guilhotina (Early Stopping):} Este mecanismo heurístico otimizou criticamente o tempo de otimização estocástica evolutiva. Se as recompensas operacionais de um indivíduo descerem subitamente até limiares proibitivos nos passos primários da simulação — fruto de uma política disfuncional gerada por mutação —, a execução contínua é descartada, transitando de imediato os recursos de ciclo de CPU do sistema para o processamento de novos indivíduos concorrentes na mesma geração.
+\end{itemize}
+
+% --- CAPÍTULO 5 ---
+\chapter{Arquitetura Algorítmica e Controladores}
+\label{ch:algorithms}
+
+\section{Algoritmo 1: Multi-Agent Reinforcement Learning (RS2C)}
+A primeira abordagem investigada fundamenta-se no \textit{framework} \textbf{Robust and Scalable Swarm Control (RS2C)}. Este adota um esquema de \textbf{execução descentralizada com partilha de parâmetros} (\textit{parameter sharing}) --- em que todos os agentes partilham uma única política que atua sobre observações estritamente locais ---, formulando a coordenação do enxame como um Processo de Decisão de Markov Parcialmente Observável Cooperativo (Dec-POMDP):
+\begin{equation}
+    \langle \mathcal{N}, \mathcal{S}, \{\mathcal{A}_i\}_{i \in \mathcal{N}}, \mathcal{P}, \mathcal{R}, \Omega, \{\mathcal{O}_i\}_{i \in \mathcal{N}}, \gamma \rangle
+\end{equation}
+
+Sob o RS2C investigam-se dois algoritmos de aprendizagem por reforço profundo padrão: \textbf{PPO} (\textit{on-policy}) e \textbf{SAC} (\textit{off-policy}). Em ambos, os $N$ agentes partilham uma única política (\textit{parameter sharing}) que recebe a observação local de dimensão fixa $\mathbf{o}_i \in \mathbb{R}^{107}$ --- a qual já codifica, em formato \textit{dense}, as \textit{features} de toda a vizinhança (Secção~\ref{sec:obs_space}). Na implementação atual, esta política partilhada é uma rede totalmente ligada (MLP $[256, 256]$, da \textit{Stable-Baselines3}); o \textbf{mecanismo de atenção sobre grafo} formalizado no Capítulo~\ref{ch:fundamentos} é instanciado no controlador neuroevolutivo (Secção~\ref{sec:algo_evolutivo}), sendo a base da invariância à permutação e da capacidade de \textit{Zero-Shot Transfer} aí avaliadas. A integração direta do módulo de atenção numa política treinável por gradiente constitui uma extensão natural deixada para trabalho futuro (Secção~\ref{sec:limitacoes}).
+
+\subsection{Configuração PPO (\textit{On-Policy})}
+
+No modo PPO, os pesos da política MLP partilhada são otimizados através de gradientes calculados sobre \textit{rollouts} de experiência recolhidos com a política atual. O \textit{pipeline} de treino opera da seguinte forma:
+\begin{enumerate}
+    \item \textbf{Recolha de Experiência:} Em cada iteração, $N_{arenas}=8$ cópias paralelas do simulador (\texttt{SubprocVecEnv}) geram transições durante $n_{steps}=64$ passos cada. Como os $N=20$ agentes de cada arena são tratados como ambientes independentes (\textit{parameter sharing}), o \textit{rollout buffer} acumula $8 \times 20 \times 64 = 10\,240$ transições por iteração.
+    \item \textbf{Cálculo da Vantagem:} As vantagens $\hat{A}_t$ são estimadas via GAE (Equação~\ref{eq:gae}) com $\gamma=0.99$ e $\lambda=0.95$ sobre o \textit{rollout} completo.
+    \item \textbf{Atualização:} O buffer é amostrado em \textit{mini-batches} de 512 transições e o gradiente de $L^{\text{PPO}}$ é calculado durante $n_{epochs}=4$ passagens completas.
+    \item \textbf{\textit{Parameter Sharing}:} Os $N=20$ robôs partilham o mesmo conjunto de parâmetros $\theta$. Cada transição $(o_i^t, a_i^t, r_t)$ de qualquer agente contribui para o gradiente, aumentando efetivamente o tamanho do \textit{batch} por fator $N$.
+\end{enumerate}
+
+\subsection{Configuração SAC (\textit{Off-Policy})}
+
+O SAC opera em modo \textit{off-policy}: as experiências acumulam-se assincronamente num \textbf{Replay Buffer} de capacidade $|\mathcal{D}|=500\,000$ transições. Para $N=20$ agentes, cada passo de simulação contribui 20 transições, preenchendo o buffer rapidamente. O SAC mantém dois críticos independentes $Q_{\psi_1}$ e $Q_{\psi_2}$ (\textit{double Q-trick}) e a cada passo do ambiente uma mini-batch de 256 transições é amostrada aleatoriamente para atualizar os parâmetros. O coeficiente de temperatura $\alpha=0.1$ é mantido constante, sem adaptação automática.
+
+\subsection{Representação da Vizinhança e \textit{Parameter Sharing}}
+
+A cada passo de simulação, o vetor de observação de cada agente é construído em \texttt{swarm\_env\_3d.py}:
+\begin{enumerate}
+    \item \textbf{Vizinhança Completa:} As \textit{features} de todos os restantes $N-1$ agentes (direção egocêntrica, distância normalizada e sinal de comunicação) são incluídas no vetor de observação $\mathbf{o}_i$. Não é aplicado um corte por raio de comunicação fixo: a seleção dos vizinhos relevantes é delegada no mecanismo de atenção, que aprende os pesos $\alpha_{ij}$.
+    \item \textbf{Representação \textit{Dense} de Dimensão Fixa:} O vetor $\mathbf{o}_i \in \mathbb{R}^{107}$ incorpora os $N-1$ vizinhos em formato \textit{dense}, preservando uma dimensão de entrada constante e dispensando estruturas esparsas (\textit{edge-index}) ou \textit{padding} dinâmico.
+    \item \textbf{Dimensão de Entrada Fixa (PPO/SAC):} A política MLP partilhada recebe um vetor de dimensão \textbf{fixa} $\mathbb{R}^{107}$, definida para $N=20$ agentes. Por construção, esta abordagem \textbf{não é invariante} ao tamanho do enxame: alterar $N$ modifica a dimensão da observação ($12 + (N-1)\times 5$) e inviabiliza a aplicação direta da rede. A invariância à permutação e o \textit{Zero-Shot Transfer} para $N \in \{10, 50, 100\}$ são propriedades do mecanismo de atenção (Equações~\ref{eq:qkv} e~\ref{eq:attention_scores}), cujas operações QKV e \textit{softmax} se definem sobre o número de vizinhos presentes; são, por isso, avaliados no controlador neuroevolutivo (Secção~\ref{sec:algo_evolutivo}).
+\end{enumerate}
+
+\section{Algoritmo 2: Otimização Bio-inspirada (Benchmark)}
+\label{sec:algo_evolutivo}
+A \textit{baseline} adotada assenta num processo de \textbf{Neuroevolução}, utilizando um Algoritmo Evolutivo clássico com elitismo (preservação dos 20\% melhores) e mutações Gaussianas independentes nos pesos ($p_{mut} = 0.1$, com atenuação \textit{sigma decay}). É neste controlador que se instancia a \textbf{rede de grafos com atenção} (\texttt{GNNAgent3D}) formalizada no Capítulo~\ref{ch:fundamentos}: é precisamente esta arquitetura, invariante ao número de agentes, que habilita o \textit{Zero-Shot Transfer}. A otimização evolutiva \textit{offline} ajusta os seus pesos sobre $30$ genomas candidatos, sem recurso a gradientes nem a um sinal de recompensa denso por passo.
+
+\subsection{Ciclo de Treino Evolutivo}
+
+O treino evolutivo segue o ciclo \textit{avaliação} $\to$ \textit{seleção} $\to$ \textit{mutação}, implementado em \texttt{evo\_trainer\_3d.py}:
+\begin{enumerate}
+    \item \textbf{Avaliação Paralela:} Os $K=30$ genomas são avaliados em paralelo via \texttt{multiprocessing.Pool} com até 8 processos. Cada processo executa $E=3$ episódios independentes e devolve $J(\theta_k)$ (Equação~\ref{eq:fitness}).
+    \item \textbf{Mecanismo de Guilhotina:} Se a recompensa acumulada após 150 passos for inferior ao limiar $J < -200$, o episódio é terminado prematuramente e o genoma recebe uma penalidade adicional de $-1000$. Este mecanismo evita desperdiçar ciclos de CPU em genomas claramente disfuncionais.
+    \item \textbf{Seleção Elitista:} Os $e=6$ melhores genomas são copiados intactos. Os restantes 24 são gerados por mutação element-wise (Equação~\ref{eq:mutation}) de cópias aleatórias dos elites.
+    \item \textbf{Anilamento de $\sigma$:} A cada geração, $\sigma$ é atualizado pela Equação~\ref{eq:sigma_decay}, com decaimento de 0.5\% por geração.
+    \item \textbf{Critério de Paragem:} O treino prossegue até esgotar o orçamento temporal configurado (e.g., 120 minutos), garantindo duração determinística e comparável com os algoritmos MARL.
+\end{enumerate}
+
+\section{Plano de Experiências e Tratamento Estatístico}
+O \textit{pipeline} experimental é segmentado em cinco avaliações prioritárias (Tabela \ref{tab:experiments_priority}) por forma a assegurar validação e significância dos resultados reportados na tese.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Plano de testes experimentais e métricas associadas.}
+\label{tab:experiments_priority}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{|c|p{4cm}|c|p{3.5cm}|p{2cm}|}
+\hline
+\textbf{Prior.} & \textbf{Experiência} & \textbf{Duração} & \textbf{Objetivo Científico} & \textbf{Métrica} \\ \hline
+1 & Treino longo (Sandbox) & 24h & Convergência máxima dos 3 modelos no cenário base. & $P_{task}$ (Treino) \\ \hline
+2 & Avaliação Determinística (\texttt{eval\_all.py}) & 5 min & Desempenho sem exploração (20 episódios). & $P_{task}$ (Eval) \\ \hline
+3 & Benchmark Estatístico (30 runs) & 3-4 dias & Validação de hipóteses estatísticas ($p < 0.05$). & Teste $t$-Student \\ \hline
+4 & Robustez a Falhas (Remover 10\% agentes) & 1h + Treino & Medir resiliência à perda súbita de robôs a meio do episódio. & $R_{robust}$ \\ \hline
+5 & Escalabilidade Zero-Shot ($N \in \{10, 50, 100\}$) & 3h & Testar generalização do grafo dinâmico sem retreino. & $S_{scale}$ \\ \hline
+\end{tabular}
+\end{table}
+
+A integridade empírica apoia-se na execução paralela de simulações heterogéneas. Quaisquer evidências de supremacia algorítmica serão escrutinadas estatisticamente recorrendo ao teste $t$-Student, assumindo o valor convencional de significância estatística em inteligência artificial ($p < 0.05$).
+
+
+% --- CAPÍTULO 6 ---
+\chapter{Resultados Experimentais e Discussão}
+\label{ch:results}
+
+Este capítulo é dedicado à apresentação e análise rigorosa de todos os dados recolhidos durante as baterias de simulação. Aqui, confrontamos o paradigma de \textit{Multi-Agent Reinforcement Learning} (PPO e SAC) com o paradigma de Otimização Bio-inspirada (Algoritmos Evolutivos), utilizando tratamento estatístico para validar as nossas hipóteses de investigação.
+
+% =====================================================================
+% NOTA DE PREENCHIMENTO (apagar quando o capítulo estiver completo):
+% Os PNGs dos gráficos são gerados em results/graficos_tese/<sessao>/.
+% Copiá-los para Tese/images/resultados/ e, em cada figura abaixo,
+% comentar a linha \imgplaceholder e descomentar a linha \includegraphics.
+% =====================================================================
+
+\section{Metodologia de Avaliação e Notas de Leitura}
+\label{sec:res_metodologia}
+Antes da análise, importa fixar as convenções de leitura dos resultados:
+\begin{itemize}
+    \item \textbf{Runs independentes:} Cada combinação (algoritmo, cenário) foi treinada em $R$ \textit{runs} independentes com sementes distintas. As curvas reportam a média e a banda sombreada corresponde ao desvio padrão entre \textit{runs}.
+    \item \textbf{Eixo temporal normalizado:} Como o GNN (evolutivo) e os métodos MARL (PPO/SAC) operam em unidades de progresso distintas (gerações $\times$ passos vs.\ \textit{timesteps} de política), o eixo das abcissas das curvas comparativas é normalizado para o intervalo $[0\%, 100\%]$ do orçamento de treino de cada algoritmo, permitindo uma sobreposição justa.
+    \item \textbf{Métrica de tarefa pura ($P_{task}$):} Para além da recompensa total (que inclui \textit{shaping}), reporta-se a recompensa de tarefa pura (recolhas $\times 100$), obtida em avaliação determinística, por ser a medida não-enviesada do sucesso na missão.
+    \item \textbf{Escalas não-comparáveis entre paradigmas:} O GNN usa \textit{fitness} evolutiva e o PPO/SAC recompensa episódica; comparações de valor absoluto entre paradigmas devem ser feitas com cautela, privilegiando a métrica $P_{task}$ da avaliação determinística.
+\end{itemize}
+
+\section{Convergência e Desempenho no Cenário Base (Sandbox)}
+\label{sec:res_sandbox}
+% TODO: Analisar a velocidade de convergência e o desempenho final de PPO vs SAC vs GNN no cenário base, sem obstáculos fixos. Comentar qual converge mais depressa e qual atinge o melhor valor final.
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.85}{images/resultados/comparacao_mapa_none.png}{Curva de aprendizagem no Sandbox (3 algoritmos)}
+    \caption{Curvas de aprendizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do treino) e a banda sombreada representa o desvio padrão entre \textit{runs}.}
+    \label{fig:res_sandbox_curva}
+\end{figure}
+
+A Tabela~\ref{tab:res_sandbox} sintetiza o melhor desempenho alcançado por cada algoritmo neste cenário.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Desempenho no cenário Sandbox (média $\pm$ desvio padrão entre \textit{runs}).}
+\label{tab:res_sandbox}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Algoritmo} & \textbf{Melhor Score} & \textbf{$P_{task}$ (Eval)} & \textbf{Taxa de Sucesso} \\ \hline
+GNN (Evolutivo) & \dots & \dots & \dots \\ \hline
+PPO & \dots & \dots & \dots \\ \hline
+SAC & \dots & \dots & \dots \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Desempenho Comparativo por Cenário (Curvas de Aprendizagem)}
+\label{sec:res_curvas_cenario}
+% TODO: Para cada cenário, discutir o comportamento de aprendizagem dos três algoritmos. Destacar onde o MARL supera o evolutivo e vice-versa.
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/comparacao_mapa_u_wall.png}{Curva de aprendizagem --- Beco Sem Saída (Muro U)}
+    \caption{Curvas de aprendizagem no cenário Beco Sem Saída (Muro em U).}
+    \label{fig:res_curva_uwall}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/comparacao_mapa_bottleneck.png}{Curva de aprendizagem --- Gargalo (Porta Estreita)}
+    \caption{Curvas de aprendizagem no cenário Gargalo.}
+    \label{fig:res_curva_bottleneck}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/comparacao_mapa_four_rooms.png}{Curva de aprendizagem --- Quatro Salas (Labirinto)}
+    \caption{Curvas de aprendizagem no cenário Quatro Salas (Labirinto).}
+    \label{fig:res_curva_fourrooms}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/comparacao_mapa_cooperative_door.png}{Curva de aprendizagem --- Porta Cooperativa}
+    \caption{Curvas de aprendizagem no cenário Porta Cooperativa.}
+    \label{fig:res_curva_door}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/comparacao_mapa_cooperative_perception.png}{Curva de aprendizagem --- Perceção Cooperativa (Alvo Móvel)}
+    \caption{Curvas de aprendizagem no cenário Perceção Cooperativa (Alvo Móvel).}
+    \label{fig:res_curva_perception}
+\end{figure}
+
+\section{Fiabilidade e Variância entre \textit{Runs} (Boxplots)}
+\label{sec:res_boxplots}
+% TODO: Discutir a consistência de cada algoritmo. Caixas estreitas = treino fiável; caixas largas ou outliers = treino instável (ex: variância do GNN entre runs).
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.49}{images/resultados/boxplot_none.png}{Boxplot --- Sandbox}
+    \hfill
+    \figresultado{0.49}{images/resultados/boxplot_u_wall.png}{Boxplot --- Muro U}
+    \caption{Distribuição dos melhores scores por \textit{run}: Sandbox (esq.) e Muro U (dir.).}
+    \label{fig:res_box_1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.49}{images/resultados/boxplot_bottleneck.png}{Boxplot --- Gargalo}
+    \hfill
+    \figresultado{0.49}{images/resultados/boxplot_four_rooms.png}{Boxplot --- Quatro Salas}
+    \caption{Distribuição dos melhores scores por \textit{run}: Gargalo (esq.) e Quatro Salas (dir.).}
+    \label{fig:res_box_2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.49}{images/resultados/boxplot_cooperative_door.png}{Boxplot --- Porta Cooperativa}
+    \hfill
+    \figresultado{0.49}{images/resultados/boxplot_cooperative_perception.png}{Boxplot --- Perceção Cooperativa}
+    \caption{Distribuição dos melhores scores por \textit{run}: Porta Cooperativa (esq.) e Perceção Cooperativa (dir.).}
+    \label{fig:res_box_3}
+\end{figure}
+
+\section{Visão Global por Algoritmo}
+\label{sec:res_global}
+% TODO: Comentar o perfil de cada algoritmo across todos os cenários. Qual é mais robusto à dificuldade do mapa? Onde colapsa cada um?
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/desempenho_global_gnn.png}{Desempenho global do GNN em todos os cenários}
+    \caption{Desempenho do GNN (evolutivo) nos seis cenários.}
+    \label{fig:res_global_gnn}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/desempenho_global_ppo.png}{Desempenho global do PPO em todos os cenários}
+    \caption{Desempenho do PPO nos seis cenários.}
+    \label{fig:res_global_ppo}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/desempenho_global_sac.png}{Desempenho global do SAC em todos os cenários}
+    \caption{Desempenho do SAC nos seis cenários.}
+    \label{fig:res_global_sac}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.9}{images/resultados/comparacao_barras_geral.png}{Comparação geral --- barras de melhor score por algoritmo e cenário}
+    \caption{Resumo geral: melhor score médio por algoritmo e cenário (barras de erro = desvio padrão entre \textit{runs}).}
+    \label{fig:res_barras_geral}
+\end{figure}
+
+\section{Avaliação Determinística (Tarefa Pura)}
+\label{sec:res_eval}
+% TODO: Apresentar os resultados de eval_all.py (20 episódios, modo determinístico sem exploração). Esta é a métrica mais honesta do desempenho real na missão.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Avaliação determinística (20 episódios): taxa de sucesso e recolhas médias por episódio.}
+\label{tab:res_eval}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|c|c|c|c|}
+\hline
+\textbf{Cenário} & \multicolumn{2}{c|}{\textbf{GNN}} & \multicolumn{2}{c|}{\textbf{PPO}} & \multicolumn{2}{c|}{\textbf{SAC}} \\ \cline{2-7}
+ & Sucesso & Recolhas & Sucesso & Recolhas & Sucesso & Recolhas \\ \hline
+Sandbox & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
+Muro U & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
+Gargalo & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
+Quatro Salas & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
+Porta Cooperativa & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
+Perceção Coop. & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Análise de Cenários Complexos e Comportamento Emergente}
+\label{sec:res_complexos}
+% TODO: Inserir capturas de ecrã do visualizador 3D (Ursina) mostrando trajetórias/comportamento emergente nos cenários difíceis. Discutir clustering, contorno de paredes, sincronização na porta e cerco do alvo móvel.
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.48}{images/resultados/viz_u_wall.png}{Captura do visualizador --- contorno do Muro U}
+    \hfill
+    \figresultado{0.48}{images/resultados/viz_four_rooms.png}{Captura do visualizador --- navegação no Labirinto}
+    \caption{Comportamento emergente no visualizador 3D: contorno do obstáculo em U (esq.) e navegação no labirinto de Quatro Salas (dir.).}
+    \label{fig:res_viz_nav}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.48}{images/resultados/viz_cooperative_door.png}{Captura --- sincronização na Porta Cooperativa}
+    \hfill
+    \figresultado{0.48}{images/resultados/viz_cooperative_perception.png}{Captura --- cerco do Alvo Móvel}
+    \caption{Comportamento cooperativo: abertura sincronizada da porta (esq.) e cerco a 360\textdegree{} do alvo móvel (dir.).}
+    \label{fig:res_viz_coop}
+\end{figure}
+
+\section{Análise de Escalabilidade (Zero-Shot Transfer)}
+\label{sec:res_scale}
+% TODO: Apresentar a métrica P_task quando o modelo treinado com N=20 controla N in {10, 50, 100} sem retreino. Discutir a invariância à dimensão garantida pelo mecanismo de atenção.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Escalabilidade Zero-Shot: $P_{task}$ ao transferir a política treinada com $N=20$ para outras dimensões de enxame, sem retreino.}
+\label{tab:res_scale}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Algoritmo} & \textbf{$N=10$} & \textbf{$N=20$ (treino)} & \textbf{$N=50$} & \textbf{$N=100$} \\ \hline
+GNN (Evolutivo) & \dots & \dots & \dots & \dots \\ \hline
+PPO & N/A$^{\dagger}$ & \dots & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
+SAC & N/A$^{\dagger}$ & \dots & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
+\end{tabular}
+
+\vspace{0.4em}
+{\footnotesize $^{\dagger}$ A política MLP do PPO/SAC tem dimensão de entrada fixa ($\mathbb{R}^{107}$, para $N=20$), sendo incompatível com outras dimensões de enxame. Só a arquitetura de atenção sobre grafo (controlador evolutivo) suporta a transferência \textit{Zero-Shot}.}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/escalabilidade_zeroshot_none.png}{Grafico de barras/linhas --- desempenho vs. numero de agentes}
+    \caption{Degradação (ou estabilidade) do desempenho com o aumento do número de agentes, sem retreino.}
+    \label{fig:res_escalabilidade}
+\end{figure}
+
+\section{Resiliência e Robustez a Falhas de Agentes}
+\label{sec:res_robustez}
+% TODO: Mostrar o impacto da quebra abrupta de 10% do enxame a meio do episódio. Comparar a recuperação do MARL adaptativo vs o controlador evolutivo estático.
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.8}{images/resultados/robustez_falhas.png}{Grafico --- desempenho antes/depois da falha de 10\% dos agentes}
+    \caption{Resiliência do enxame perante a perda súbita de 10\% dos agentes a meio do episódio ($R_{robust}$).}
+    \label{fig:res_robustez}
+\end{figure}
+
+\section{Desempenho Computacional do Simulador}
+\label{sec:res_computacional}
+% TODO: Mostrar métricas de Steps-Per-Second (SPS): VecEnvs paralelos vs single-thread. Quantificar a aceleração do mecanismo de Guilhotina no treino evolutivo.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Desempenho computacional: \textit{throughput} de simulação e aceleração obtida.}
+\label{tab:res_computacional}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Configuração} & \textbf{Steps/segundo (SPS)} & \textbf{Aceleração} \\ \hline
+Single-thread (1 arena) & \dots & $1\times$ (referência) \\ \hline
+VecEnv ($8$ arenas paralelas) & \dots & \dots \\ \hline
+Evolutivo com Guilhotina & \dots & \dots \\ \hline
+\end{tabular}
+\end{table}
+
+\section{Discussão Global e Validação da Hipótese}
+\label{sec:res_discussao}
+% TODO: Síntese final. Confrontar os resultados com a hipótese central (inteligência adaptativa MARL vs robustez estática bio-inspirada). Aplicar testes estatísticos (t-Student / Wilcoxon, p<0.05) às diferenças observadas e concluir em que cenários cada paradigma é superior.
+
+% --- CAPÍTULO 7 ---
+\chapter{Conclusões e Trabalhos Futuros}
+
+\section{Conclusões da Proposta}
+Esta proposta de tese incide sobre um dos desafios mais prementes na robótica contemporânea: a definição de paradigmas de controlo que garantam a operabilidade de enxames em ambientes de alta incerteza. A investigação preliminar aqui apresentada identificou uma lacuna crítica na literatura científica — o isolamento metodológico entre as comunidades de \textit{Multi-Agent Reinforcement Learning} (MARL) e de Otimização Bio-inspirada. Esta fragmentação tem impedido a realização de um \textbf{benchmarking rigoroso e imparcial} que determine, de forma quantitativa, em que condições a adaptabilidade da aprendizagem automática compensa a robustez estática dos métodos tradicionais.
+
+Através da análise do Estado da Arte (2020-2025), concluiu-se que, embora as soluções bio-inspiradas (como o PSO) ofereçam alicerces sólidos para tarefas reativas, elas carecem da flexibilidade necessária para lidar com o ``Deployment Gap'' identificado por Kegeleirs et al. (2025). Por outro lado, o MARL, especialmente quando potenciado por \textit{Graph Neural Networks} (GNNs) e arquiteturas CTDE, emerge como o paradigma com maior potencial para garantir a escalabilidade e a resiliência do enxame perante falhas catastróficas.
+
+A metodologia proposta neste documento visa preencher esta lacuna através do desenvolvimento de um simulador de alta-fidelidade e da implementação do \textit{framework} RS2C, assegurando que a comparação entre paradigmas seja validada por testes de \textit{stress} dinâmico e tratamento estatístico rigoroso.
+
+\section{Limitações do Estudo}
+\label{sec:limitacoes}
+Em prol da transparência científica, identificam-se as seguintes limitações da implementação atual:
+\begin{itemize}
+    \item \textbf{Arquitetura assimétrica entre controladores:} os \textit{baselines} MARL (PPO e SAC) empregam uma política totalmente ligada (MLP) sobre a observação de vizinhança densa, enquanto o mecanismo de atenção sobre grafo é instanciado apenas no controlador neuroevolutivo. Esta opção --- ditada pelo uso das implementações de referência da \textit{Stable-Baselines3} --- implica que a comparação entre paradigmas combina dois fatores (algoritmo de otimização \textit{e} arquitetura da rede). A integração do módulo de atenção numa política treinável por gradiente (\textit{custom policy}) é a extensão prioritária de trabalho futuro, permitindo isolar o efeito do otimizador.
+    \item \textbf{Escalabilidade restrita ao controlador de grafo:} como consequência do ponto anterior, o \textit{Zero-Shot Transfer} para $N \neq 20$ só é diretamente avaliável no controlador com atenção; a MLP de entrada fixa do PPO/SAC é, por construção, incompatível com outras dimensões de enxame.
+    \item \textbf{Crítico não-centralizado:} a fase de treino utiliza um crítico que parte da mesma observação local do ator (\textit{parameter sharing}), não explorando o estado global. Trata-se de execução e treino descentralizados, e não de uma arquitetura CTDE com crítico centralizado em sentido estrito.
+    \item \textbf{\textit{Sim-to-real} não validado:} a totalidade dos resultados é obtida em simulação; a transferência para plataformas físicas (\textit{Deployment Gap}) permanece por validar empiricamente.
+\end{itemize}
+
+\section{Contributos Esperados}
+Com a execução deste plano de investigação, preveem-se os seguintes contributos para o avanço do conhecimento na área de Sistemas Multiagente e Robótica de Enxame:
+\begin{itemize}
+    \item \textbf{Framework de Benchmarking Quantitativo:} A disponibilização de uma metodologia de teste padronizada que permita comparar algoritmos de naturezas distintas (aprendizagem vs. otimização) sob as mesmas métricas de performance, escalabilidade e robustez.
+    \item \textbf{Validação da Adaptabilidade Zero-Shot:} A demonstração empírica de como arquiteturas baseadas em grafos permitem que políticas aprendidas via MARL escalem de $N=10$ para $N=100$ agentes sem degradação crítica de performance, respondendo aos desafios de escalabilidade propostos por Sun et al. (2024).
+    \item \textbf{Identificação do Ponto de Inflexão Tecnológica:} O fornecimento de dados que permitam a investigadores e engenheiros determinar o limiar de complexidade ambiental a partir do qual o investimento computacional no treino de modelos MARL se traduz numa vantagem operacional real face às heurísticas evolutivas.
+    \item \textbf{Implementação de Referência:} A criação de um repositório de código contendo o simulador e as implementações dos algoritmos (RS2C e AE/PSO), servindo de base para futuros estudos de hibridização no ISCTE.
+\end{itemize}
+
+\section{Trabalhos Futuros (Roadmap)}
+O plano de trabalhos para a conclusão desta dissertação está organizado em quatro fases principais, garantindo que o rigor científico é mantido em cada etapa do desenvolvimento:
+\begin{enumerate}
+    \item \textbf{Fase 1: Consolidação do Ambiente (Mês 1-2):} Finalização do simulador em Python, incluindo a modelação física detalhada, a definição do espaço de observação local e parcial e a implementação dos cenários de Vigilância e \textit{Foraging}.
+    \item \textbf{Fase 2: Implementação e Treino (Mês 3-5):} Desenvolvimento do \textit{pipeline} RS2C (incluindo as camadas GAT e CTDE) e otimização dos controladores evolutivos de referência ($\theta_{AE}^*$). Esta fase foca-se na convergência e estabilidade dos modelos.
+    \item \textbf{Fase 3: Benchmarking e Stress Tests (Mês 6-7):} Execução das 30 baterias de testes para cada cenário, variando o número de agentes e introduzindo perturbações dinâmicas (falhas de agentes e obstáculos).
+    \item \textbf{Fase 4: Análise Estatística e Redação Final (Mês 8-9):} Aplicação de testes de hipótese ($p < 0.05$) aos dados recolhidos, discussão dos resultados à luz da literatura e redação final da dissertação para defesa pública.
+\end{enumerate}
+
+\printbibliography[title={Referências}]
+
+% --- APÊNDICES ---
+\appendix
+
+\chapter{Configurações e Hiperparâmetros}
+\label{apx:hyperparameters}
+% TODO: (EXPANSÃO) Inserir tabelas detalhadas com as grelhas de hyperparameter search (ex: Learning Rate, Gamma, Batch Size, Entropy Coefficient) utilizadas no Optuna/Treino.
+
+\chapter{Excertos de Código Relevantes}
+\label{apx:code}
+Apresentam-se os excertos que materializam os principais contributos técnicos descritos nos Capítulos~\ref{ch:fundamentos} e seguintes. O código integral está disponível no repositório (Apêndice~\ref{apx:resources}).
+
+\section{Mecanismo de Atenção sobre Vizinhos (QKV)}
+Implementação em PyTorch puro do \textit{forward-pass} da \texttt{GNNAgent3D}, sem recurso a bibliotecas de grafos. Corresponde às Equações~\ref{eq:qkv}--\ref{eq:msg_pool}.
+\begin{lstlisting}[style=python, caption={Atenção de produto interno escalado sobre a vizinhanca.}]
+# h_env: features do ego; h_all: ego + vizinhos embebidos
+Q = self.query_proj(h_env_expanded)          # consulta (1 x d)
+K = self.key_proj(h_all)                      # chaves   (N x d)
+V = self.value_proj(h_all)                    # valores  (N x d)
+
+# Atencao escalada por sqrt(d) -> coeficientes alpha_ij
+scores = torch.bmm(Q, K.transpose(1, 2)) / (self.hidden_dim ** 0.5)
+alpha = F.softmax(scores, dim=-1)
+msg_pool = torch.bmm(alpha, V).squeeze(1)     # agregacao ponderada
+
+# Concatena ego + mensagem agregada e gera a acao continua
+combined = torch.cat([h_env, msg_pool], dim=1)
+action = self.actor(combined)                 # Tanh -> [-1, 1]^3
+\end{lstlisting}
+
+\section{Física de Deslizamento em Muros (\textit{Wall-Sliding})}
+Em vez de imobilizar o agente, o motor projeta o movimento ortogonalmente à normal da face atingida, reproduzindo o deslizamento contínuo de um chassi móvel.
+\begin{lstlisting}[style=python, caption={Projecao ortogonal do movimento contra a normal do muro.}]
+for wall in self.walls:
+    next_pos = self.agent_positions[idx] + move_global
+    delta = next_pos - wall['pos']
+    half_size = wall['size'] / 2.0
+    penetration = (half_size + self.robot_radius) - np.abs(delta)
+    if np.all(penetration > 0):                   # ha colisao
+        min_axis = np.argmin(penetration)         # face atingida
+        normal = np.zeros(3)
+        normal[min_axis] = np.sign(delta[min_axis]) or 1.0
+        # remove a componente do movimento contra a normal (desliza)
+        move_global = move_global - np.dot(move_global, normal) * normal
+\end{lstlisting}
+
+\section{Recompensa de Exploração \textit{Count-Based}}
+Bónus atribuído na primeira visita a cada célula de uma grelha de discretização, fundamental para escapar aos mínimos locais induzidos pelo termo de progresso euclidiano.
+\begin{lstlisting}[style=python, caption={Bonus de exploracao por cobertura de celulas novas.}]
+cell = (int(pos[0] // self.exploration_cell_size),
+        int(pos[1] // self.exploration_cell_size))
+if cell not in self.visited_cells[idx]:
+    self.visited_cells[idx].add(cell)
+    rewards[agent] += self.exploration_bonus     # +2.0 por celula nova
+\end{lstlisting}
+
+\chapter{Recursos Adicionais}
+\label{apx:resources}
+% TODO: (EXPANSÃO) Inserir links para o repositório GitHub do projeto e para os vídeos demonstrativos do visualizador 3D (Ursina) a correr as diferentes experiências.
+
+\end{document}
