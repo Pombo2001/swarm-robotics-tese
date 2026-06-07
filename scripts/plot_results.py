@@ -428,11 +428,24 @@ def create_thesis_plots_3d():
     except Exception as e:
         print(f"[!] Graficos de avaliacao nao gerados (nao critico): {e}")
 
-    # NOTA: os heatmaps (ocupação + geodésico) são gerados à parte, pelo botão
-    # dedicado do dashboard (scripts/heatmaps.py --mode all), por serem lentos
-    # (correm os modelos). Mantém o "Gerar Gráficos" rápido (só lê CSVs).
+    # ==============================================================
+    # 6. HEATMAPS + MAPAS 3D na MESMA pasta da sessão (tudo organizado num só sítio)
+    #    Heatmaps correm os modelos (lentos) mas ficam ao lado dos gráficos.
+    # ==============================================================
+    config_src = os.path.join(base_dir, 'configs', 'foraging.yaml')
+    try:
+        from scripts.heatmaps import generate_all as _gen_heatmaps
+        _gen_heatmaps(out_dir=output_dir, episodes=6)
+    except Exception as e:
+        print(f"[!] Heatmaps nao gerados (nao critico): {e}")
+    try:
+        from scripts.render_maps import render_scenario, ALL_SCENARIOS
+        for _sc in ALL_SCENARIOS:
+            render_scenario(_sc, config_src, camera="iso", out_dir=output_dir)
+    except Exception as e:
+        print(f"[!] Mapas 3D nao gerados (nao critico): {e}")
 
-    print(f"\n[*] Concluido! Graficos guardados em: {output_dir}")
+    print(f"\n[*] Concluido! Tudo guardado em: {output_dir}")
 
     if os.name == 'nt':
         os.startfile(output_dir)

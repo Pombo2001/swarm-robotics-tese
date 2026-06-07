@@ -642,19 +642,13 @@ class SwarmController(ctk.CTk):
                         color=meta["color"], height=34
                         ).pack(side="left", padx=3)
 
-        # Grupo 2 — gerar figuras/resultados
+        # Grupo 2 — gerar TUDO de uma vez (gráficos + avaliação + heatmaps + mapas)
+        # na mesma pasta datada. Um só botão em vez de quatro.
         ctk.CTkFrame(inner, width=1, height=36, fg_color="#3A3F4C").pack(side="left", padx=12)
-        primary_btn(inner, "📊  Gráficos",
+        primary_btn(inner, "📊  Gerar Relatório Completo",
                     self._plot_thesis, color="#0D7377", height=34).pack(side="left", padx=3)
-        primary_btn(inner, "🔥  Heatmaps",
-                    self._render_heatmaps, color="#B45309", height=34).pack(side="left", padx=3)
-        primary_btn(inner, "🗺️  Mapas",
-                    self._render_maps, color="#0E7490", height=34).pack(side="left", padx=3)
-        primary_btn(inner, "🎯  Avaliar",
-                    self._eval_model, color="#6B4FA0", height=34).pack(side="left", padx=3)
 
         # Grupo 3 — utilitário
-        ctk.CTkFrame(inner, width=1, height=36, fg_color="#3A3F4C").pack(side="left", padx=12)
         primary_btn(inner, "🔄  Recarregar",
                     self._refresh_sessions, color="#374151", height=34).pack(side="left", padx=3)
 

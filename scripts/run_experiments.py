@@ -152,6 +152,16 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
         except Exception as e:
             print(f"[!] Avaliação automática falhou (não crítico): {e}")
 
+    # RELATÓRIO COMPLETO automático: gráficos da tese + gráficos de avaliação +
+    # heatmaps + mapas 3D, tudo numa pasta datada (results/graficos_tese/<sessao>/).
+    # Assim, ao acabar de treinar, fica tudo gerado e organizado num só sítio.
+    print("\n--- A GERAR RELATÓRIO COMPLETO (gráficos + heatmaps + mapas) ---")
+    try:
+        from scripts.plot_results import create_thesis_plots_3d
+        create_thesis_plots_3d()
+    except Exception as e:
+        print(f"[!] Relatório não gerado (não crítico): {e}")
+
 def generate_plots(df_curves, df_best):
     print("\n--- A GERAR GRÁFICOS AVANÇADOS ---")
     out_dir = os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas')
