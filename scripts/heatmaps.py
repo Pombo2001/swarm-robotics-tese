@@ -250,6 +250,8 @@ def main():
                         help="(occupancy/all) nº de episódios a acumular")
     parser.add_argument("--bins", type=int, default=120,
                         help="(occupancy) resolução do histograma 2D")
+    parser.add_argument("--open", action="store_true",
+                        help="abrir a pasta de saída no fim (para o botão do dashboard)")
     args = parser.parse_args()
 
     config_path = os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")
@@ -258,6 +260,11 @@ def main():
         # Forma rápida de refazer tudo: um comando, robusto a modelos em falta.
         generate_all(episodes=args.episodes, scenarios=args.scenarios,
                      config_path=config_path)
+        if args.open and os.name == "nt":
+            try:
+                os.startfile(OUT_DIR)
+            except Exception:
+                pass
         return
 
     if not args.scenario:

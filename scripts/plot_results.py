@@ -428,16 +428,9 @@ def create_thesis_plots_3d():
     except Exception as e:
         print(f"[!] Graficos de avaliacao nao gerados (nao critico): {e}")
 
-    # ==============================================================
-    # 6. HEATMAPS (ocupação por algo×cenário + geodésico por labirinto)
-    #    Import lazy: evita mexer no backend do matplotlib já carregado.
-    #    Robusto: uma falha aqui não deve perder os gráficos já gerados.
-    # ==============================================================
-    try:
-        from scripts.heatmaps import generate_all as _gen_heatmaps
-        _gen_heatmaps(out_dir=output_dir, episodes=6)
-    except Exception as e:
-        print(f"[!] Heatmaps nao gerados (nao critico): {e}")
+    # NOTA: os heatmaps (ocupação + geodésico) são gerados à parte, pelo botão
+    # dedicado do dashboard (scripts/heatmaps.py --mode all), por serem lentos
+    # (correm os modelos). Mantém o "Gerar Gráficos" rápido (só lê CSVs).
 
     print(f"\n[*] Concluido! Graficos guardados em: {output_dir}")
 
