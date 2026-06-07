@@ -54,7 +54,13 @@ MAP_DESCRIPTIONS = {
 
 def create_thesis_plots_3d():
     print("\n A gerar os Graficos de Tese Avancados...")
-    
+    try:
+        from scripts.progress import set_progress, clear_progress
+    except Exception:
+        def set_progress(f, m): pass
+        def clear_progress(): pass
+    set_progress(0.03, "A preparar relatório...")
+
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     stats_dir = os.path.join(base_dir, 'results', 'graficos_tese', 'estatisticas')
     
@@ -420,6 +426,7 @@ def create_thesis_plots_3d():
     #    algoritmos, ao contrário do reward de treino (shaping + escalas mistas).
     #    Lê results/evaluation/eval_summary.csv (gerado pela rotina/eval_suite).
     # ==============================================================
+    set_progress(0.28, "Gráficos de avaliação (taxa de sucesso, recolhas)...")
     try:
         from scripts.eval_suite import plot_evaluation
         if not plot_evaluation(out_dir=output_dir):
@@ -433,11 +440,13 @@ def create_thesis_plots_3d():
     #    Heatmaps correm os modelos (lentos) mas ficam ao lado dos gráficos.
     # ==============================================================
     config_src = os.path.join(base_dir, 'configs', 'foraging.yaml')
+    set_progress(0.35, "Mapas de calor (heatmaps)...")
     try:
         from scripts.heatmaps import generate_all as _gen_heatmaps
-        _gen_heatmaps(out_dir=output_dir, episodes=6)
+        _gen_heatmaps(out_dir=output_dir, episodes=6, progress_base=0.35, progress_span=0.55)
     except Exception as e:
         print(f"[!] Heatmaps nao gerados (nao critico): {e}")
+    set_progress(0.92, "Mapas 3D dos cenários...")
     try:
         from scripts.render_maps import render_scenario, ALL_SCENARIOS
         for _sc in ALL_SCENARIOS:
@@ -445,7 +454,9 @@ def create_thesis_plots_3d():
     except Exception as e:
         print(f"[!] Mapas 3D nao gerados (nao critico): {e}")
 
+    set_progress(1.0, "Concluído")
     print(f"\n[*] Concluido! Tudo guardado em: {output_dir}")
+    clear_progress()
 
     if os.name == 'nt':
         os.startfile(output_dir)

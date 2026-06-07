@@ -652,6 +652,19 @@ class SwarmController(ctk.CTk):
         primary_btn(inner, "🔄  Recarregar",
                     self._refresh_sessions, color="#374151", height=34).pack(side="left", padx=3)
 
+        # ── Barra de progresso + estado da geração do relatório ─────────────
+        # Atualizada no _tick a partir de scripts/progress.py (ficheiro escrito
+        # pelo gerador). Mostra a fração e que gráfico está a ser gerado agora.
+        prog_row = ctk.CTkFrame(top, fg_color="transparent")
+        prog_row.pack(pady=(0, 10), padx=16, fill="x")
+        self.report_bar = ctk.CTkProgressBar(prog_row, height=12, progress_color="#0D7377")
+        self.report_bar.set(0)
+        self.report_bar.pack(side="left", fill="x", expand=True)
+        self.report_status = ctk.CTkLabel(
+            prog_row, text="pronto", font=("Consolas", 11),
+            text_color="#6B7280", anchor="w", width=360)
+        self.report_status.pack(side="left", padx=(12, 0))
+
         # ── Left: session list + graph selector ────────────────────────────
         self._left_scroll = ctk.CTkScrollableFrame(
             page, width=268, fg_color="#1E2128", corner_radius=10,
@@ -1085,7 +1098,25 @@ class SwarmController(ctk.CTk):
     def _tick(self):
         self._update_algo_metrics()
         self._update_timers()
+        self._update_report_progress()
         self.after(1000, self._tick)
+
+    def _update_report_progress(self):
+        if not hasattr(self, "report_bar"):
+            return
+        try:
+            from scripts.progress import read_progress
+            p = read_progress()
+        except Exception:
+            p = None
+        if p is None:
+            self.report_bar.set(0)
+            self.report_status.configure(text="pronto", text_color="#6B7280")
+        else:
+            frac, msg = p
+            self.report_bar.set(frac)
+            self.report_status.configure(text=f"{int(frac*100):3d}%  {msg}",
+                                         text_color="#22D3EE")
 
     def _update_algo_metrics(self):
         p = self._get_paths()

@@ -198,37 +198,52 @@ def run_geodesic(scenario, config_path, out_dir=None):
 
 
 def generate_all(out_dir=None, episodes=6, algos=("sac", "ppo", "gnn"),
-                 scenarios=None, config_path=None):
+                 scenarios=None, config_path=None, progress_base=0.0, progress_span=1.0):
     """Gera TODOS os heatmaps (ocupação por algo×cenário + geodésico por labirinto).
     Robusto: falhas individuais (modelo em falta, etc.) não abortam o conjunto.
-    Pensado para ser chamado pelo plot_results.py após a rotina noturna."""
+    progress_base/span: mapeia o progresso local [0,1] para uma fatia da barra global
+    (usado pelo plot_results para a progress bar do dashboard)."""
     if config_path is None:
         config_path = os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")
     if scenarios is None:
         scenarios = list(SCENARIO_LABELS.keys())
-    maze_scenarios = ["u_wall", "bottleneck", "four_rooms", "cooperative_door"]
+    maze_scenarios = [s for s in ["u_wall", "bottleneck", "four_rooms", "cooperative_door"]
+                      if s in scenarios]
+
+    try:
+        from scripts.progress import set_progress
+    except Exception:
+        def set_progress(frac, msg): pass
+
+    total = len(maze_scenarios) + len(scenarios) * len(algos)
+    done = 0
+
+    def _p(msg):
+        set_progress(progress_base + progress_span * (done / max(1, total)), msg)
 
     print("\n[HEATMAPS] A gerar mapas de calor...")
     n_ok = 0
 
     # 1) Campo geodésico (não precisa de modelos) — figuras de justificação da tese.
     for sc in maze_scenarios:
-        if sc not in scenarios:
-            continue
+        _p(f"Heatmap geodésico — {sc}")
         try:
             if run_geodesic(sc, config_path, out_dir=out_dir):
                 n_ok += 1
         except Exception as e:
             print(f"[!] Falha no heatmap geodésico '{sc}': {e}")
+        done += 1
 
     # 2) Ocupação por algoritmo × cenário (salta os que não têm modelo treinado).
     for sc in scenarios:
         for algo in algos:
+            _p(f"Heatmap de ocupação — {algo.upper()}/{sc}")
             try:
                 if run_occupancy(algo, sc, episodes, 120, config_path, out_dir=out_dir):
                     n_ok += 1
             except Exception as e:
                 print(f"[!] Falha no heatmap de ocupação {algo}/{sc}: {e}")
+            done += 1
 
     dest = out_dir or OUT_DIR
     print(f"[HEATMAPS] {n_ok} mapa(s) gerado(s) em: {dest}")
