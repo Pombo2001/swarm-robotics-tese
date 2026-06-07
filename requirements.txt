@@ -19,3 +19,4 @@ seaborn==0.13.2
 customtkinter==5.2.2
 pillow==12.1.0           # carregamento de imagens no dashboard
 ursina==8.3.0            # visualizador 3D
+pyvista==0.48.4          # renders 3D dos mapas para a tese (scripts/render_maps.py)
