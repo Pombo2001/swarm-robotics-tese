@@ -94,23 +94,25 @@ def render_scenario(scenario, config_path, camera="iso", out_dir=None):
                      position="upper_edge", font_size=18, color="#111827")
 
     R = float(env.arena_radius)
-    plotter.add_light(pv.Light(position=(R, -R, 2 * R), light_type="scene light", intensity=0.6))
-    try:
-        plotter.enable_shadows()
-    except Exception:
-        pass
-
     # Enquadramento automático (view_* faz reset_camera e ajusta a escala
     # ortográfica para caber toda a cena — essencial com projeção paralela).
     if camera == "top":
+        # Planta técnica: luz frontal uniforme (evita o efeito de "domo") e sem sombras.
+        plotter.add_light(pv.Light(light_type="headlight", intensity=0.9))
         plotter.view_xy()
     else:
+        plotter.add_light(pv.Light(position=(R, -R, 2 * R), light_type="scene light", intensity=0.6))
+        try:
+            plotter.enable_shadows()
+        except Exception:
+            pass
         plotter.view_isometric()
     plotter.camera.zoom(1.25)
 
     out_dir = out_dir or OUT_DIR
     os.makedirs(out_dir, exist_ok=True)
-    out = os.path.join(out_dir, f"mapa_3d_{scenario}.png")
+    tag = "topo" if camera == "top" else "3d"
+    out = os.path.join(out_dir, f"mapa_{tag}_{scenario}.png")
     plotter.screenshot(out, transparent_background=False)
     plotter.close()
     _autocrop(out)
