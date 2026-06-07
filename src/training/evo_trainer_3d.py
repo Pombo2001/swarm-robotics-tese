@@ -23,10 +23,13 @@
 # Sigma decay: sigma começa em 0.1 e decai 0.5%/geração até mín. 0.01.
 #   Exploração agressiva no início → refinamento gradual.
 #
-# Exploração: NÃO há reward shaping durante a evolução. A fitness é a
-#   recompensa bruta do episódio (média de eval_episodes episódios — ver
-#   foraging.yaml, atualmente 3 — para reduzir variância).
-#   A "exploração" vem da estocasticidade da mutação Gaussiana.
+# Fitness: DOMINADA PELA TAREFA. Cada recolha (food) vale 10000 — muito acima
+#   de qualquer reward de shaping —, e o shaping entra apenas LIMITADO (clip
+#   ±5000) como gradiente/desempate quando nenhum genoma ainda recolhe. Isto
+#   evita o reward hacking: a fitness anterior era o reward bruto (que inclui o
+#   shaping de progresso + exploração), pelo que a evolução maximizava o shaping
+#   sem cumprir a tarefa (ex.: 98k de fitness com 0 recolhas no Muro U).
+#   A exploração vem da estocasticidade da mutação Gaussiana.
 #
 # Paralelismo: cada genoma é avaliado num processo separado (multiprocessing).
 # =============================================================================
@@ -62,6 +65,7 @@ def evaluate_genome(args):
     agent.load_state_dict(weights)
 
     episode_rewards = []
+    episode_foods = []
     total_steps = 0
 
     for ep in range(eval_episodes):
@@ -95,11 +99,19 @@ def evaluate_genome(args):
                 done = True
 
         episode_rewards.append(episode_reward)
+        # total_food_collected é zerado no reset, por isso é lido por episódio
+        # (antes só o último episódio contava — bug).
+        episode_foods.append(int(env.total_food_collected))
         total_steps += steps
 
-    avg_fitness  = float(np.mean(episode_rewards))
-    food_count   = int(env.total_food_collected)   # recolhas sem shaping (tarefa pura)
-    return avg_fitness, total_steps, food_count
+    avg_reward = float(np.mean(episode_rewards))   # reward bruto (com shaping)
+    avg_food   = float(np.mean(episode_foods))     # recolhas (tarefa pura)
+    # Fitness DOMINADA PELA TAREFA: cada recolha vale 10000 (>> qualquer shaping);
+    # o shaping entra só limitado (±5000) como gradiente/desempate quando ainda
+    # ninguém recolhe. Elimina o reward hacking (fitness = reward bruto -> 98k
+    # com 0 recolhas) e força a evolução a cumprir efetivamente a missão.
+    fitness = avg_food * 10000.0 + float(np.clip(avg_reward, -5000.0, 5000.0))
+    return fitness, total_steps, avg_food
 
 
 class GeneticTrainer3D:
