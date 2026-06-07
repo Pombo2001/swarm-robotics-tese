@@ -21,6 +21,12 @@ ALGORITHMS = {
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'foraging.yaml')
 
+# Raiz do projeto no sys.path para o import 'from scripts.eval_suite import ...'
+# funcionar quando o script é corrido como 'python scripts/run_experiments.py'
+# (senão a avaliação automática no fim do treino falha com ModuleNotFoundError).
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
 LOG_PATHS = {
     'GNN': os.path.join(BASE_DIR, 'results', 'logs', 'gnn_3d_training.csv'),
     'PPO': os.path.join(BASE_DIR, 'results', 'logs_ppo', 'training_history_ppo_3d.csv'),
