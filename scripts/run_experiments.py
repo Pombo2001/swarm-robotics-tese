@@ -53,7 +53,7 @@ def set_scenario(scenario_name):
         print(f"[!] Erro ao configurar cenário: {e}")
 
 def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
-                    time_overrides=None):
+                    time_overrides=None, eval_episodes=20):
     if algorithms is None:
         algorithms = ALGORITHMS
     if scenarios is None:
@@ -130,8 +130,21 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
 
     df_curves = pd.DataFrame(curves_data)
     df_best = pd.DataFrame(best_scores_data)
-    
+
     generate_plots(df_curves, df_best)
+
+    # ── AVALIAÇÃO DETERMINÍSTICA no fim do treino ────────────────────────────
+    # A rotina noturna treinava mas não avaliava, deixando os eval_*.csv (taxa de
+    # sucesso, recolhas/ep — as métricas de TAREFA, comparáveis entre algoritmos)
+    # desfasados dos modelos. Agora avalia automaticamente os 6 cenários sobre os
+    # modelos acabados de treinar. eval_episodes=0 desliga este passo.
+    if eval_episodes and eval_episodes > 0:
+        print(f"\n--- A AVALIAR MODELOS (determinístico, {eval_episodes} ep/algo) ---")
+        try:
+            from scripts.eval_suite import evaluate_all
+            evaluate_all(episodes=eval_episodes)  # scenarios=None => os 6 cenários
+        except Exception as e:
+            print(f"[!] Avaliação automática falhou (não crítico): {e}")
 
 def generate_plots(df_curves, df_best):
     print("\n--- A GERAR GRÁFICOS AVANÇADOS ---")
@@ -211,6 +224,8 @@ if __name__ == '__main__':
                         help="Algoritmo único a correr (GNN, PPO ou SAC). Omitir = todos.")
     parser.add_argument("--scenarios", type=str,   default=None,
                         help="Cenários separados por vírgula. Omitir = todos.")
+    parser.add_argument("--eval-episodes", type=int, default=20,
+                        help="Episódios de avaliação no fim do treino (0 = não avaliar)")
     args = parser.parse_args()
 
     # Filter algorithms
@@ -240,4 +255,4 @@ if __name__ == '__main__':
 
     run_experiments(num_runs=args.runs, time_limit=args.time,
                     algorithms=algos, scenarios=scenarios,
-                    time_overrides=overrides)
+                    time_overrides=overrides, eval_episodes=args.eval_episodes)

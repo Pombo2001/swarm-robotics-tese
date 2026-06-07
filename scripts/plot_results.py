@@ -7,6 +7,12 @@ import sys
 from datetime import datetime
 import shutil
 
+# Windows: evita UnicodeEncodeError (cp1252) ao imprimir caracteres de caixa.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 # Force a Unicode-capable font on Windows to avoid encoding errors with
 # accented characters (ó, é, etc.) and math symbols (±, ×, →).
 matplotlib.rcParams['font.family'] = 'DejaVu Sans'
@@ -408,8 +414,33 @@ def create_thesis_plots_3d():
         plt.close()
         print(f"[i] Total: {max(plotted, plotted_time, plotted_task)} algoritmo(s) com dados")
         
+    # ==============================================================
+    # 5. GRÁFICOS DE AVALIAÇÃO (métricas de TAREFA por cenário)
+    #    Taxa de sucesso (Ptask) + recolhas/ep — honestos e comparáveis entre
+    #    algoritmos, ao contrário do reward de treino (shaping + escalas mistas).
+    #    Lê results/evaluation/eval_summary.csv (gerado pela rotina/eval_suite).
+    # ==============================================================
+    try:
+        from scripts.eval_suite import plot_evaluation
+        if not plot_evaluation(out_dir=output_dir):
+            print("[i] Sem dados de avaliacao (eval_summary.csv) — corre a rotina "
+                  "noturna ou 'python scripts/eval_suite.py' para gerar os graficos de tarefa.")
+    except Exception as e:
+        print(f"[!] Graficos de avaliacao nao gerados (nao critico): {e}")
+
+    # ==============================================================
+    # 6. HEATMAPS (ocupação por algo×cenário + geodésico por labirinto)
+    #    Import lazy: evita mexer no backend do matplotlib já carregado.
+    #    Robusto: uma falha aqui não deve perder os gráficos já gerados.
+    # ==============================================================
+    try:
+        from scripts.heatmaps import generate_all as _gen_heatmaps
+        _gen_heatmaps(out_dir=output_dir, episodes=6)
+    except Exception as e:
+        print(f"[!] Heatmaps nao gerados (nao critico): {e}")
+
     print(f"\n[*] Concluido! Graficos guardados em: {output_dir}")
-    
+
     if os.name == 'nt':
         os.startfile(output_dir)
 

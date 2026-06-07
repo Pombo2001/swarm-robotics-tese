@@ -17,6 +17,14 @@ import pandas as pd
 import torch
 import yaml
 
+# Windows: a consola usa cp1252 por defeito e rebenta (UnicodeEncodeError) ao
+# imprimir caracteres de caixa (─, └, ┌). Sem isto, o crash acontecia ANTES de
+# guardar o CSV → o eval ficava sem resultados (e sabotava a rotina noturna).
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)

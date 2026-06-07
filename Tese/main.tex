@@ -833,8 +833,10 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
  & Velocidade dos Obstáculos ($v_{obs}$) & $0.02$\,m/s \\
  & Raio do Ninho ($r_{nest}$) & $1.5$\,m \\
  & Velocidade do Ninho ($v_{nest}$) & $0.015$\,m/s \\
- & Limite do Temporizador de Fome ($hunger$) & $250$ passos \\
- & Cooperação Mínima para Alimentar ($k_{min}$) & $3$ agentes \\ \hline
+ & Limite do Temporizador de Fome ($hunger$) & $250$ passos (só Sandbox) \\
+ & Cooperação Mínima para Alimentar ($k_{min}$) & $3$ agentes \\
+ & Fator de Progresso (PBRS) & $10.0$ \\
+ & Resolução do Campo Geodésico & $0.4$\,m \\ \hline
 \textbf{PPO} & Taxa de Aprendizagem ($lr$) & $10^{-4}$ \\
  & Passos por Rollout ($n_{steps}$) & $64$ (por CPU) \\
  & Batch Size & $512$ \\
@@ -917,10 +919,10 @@ Para guiar a emergência de comportamentos coordenados e seguros, a função de 
 Os valores exatos utilizados na simulação estão calibrados da seguinte forma:
 \begin{itemize}
     \item \textbf{Tarefa ($R_{\text{tarefa}}$):} Recompensa majorada atribuída \textit{apenas} quando a colaboração é bem sucedida. No \textit{foraging} normal, $+100$ quando $k_{min} \ge 3$ repousam no ninho em simultâneo. No modo de Perceção Cooperativa, o valor aumenta para $+300$ após um cerco de sucesso de 360\textdegree{}.
-    \item \textbf{Progresso ($R_{\text{progresso}}$):} Baseado no método \textit{Potential-Based Reward Shaping} \cite{ng1999policy}, atribui uma recompensa ou penalidade fluida $50.0 \cdot (d_{t-1} - d_{t})$, encorajando passos na direção do ninho e desincentivando o desvio desnecessário sem alterar a política ótima do cenário.
-    \item \textbf{Exploração ($R_{\text{exploração}}$):} Bónus de exploração \textit{count-based} que atribui $+2.0$ na primeira vez que um agente visita cada célula de uma grelha de discretização espacial ($2 \times 2$\,m). Este sinal é fundamental para escapar aos mínimos locais induzidos pelo termo de progresso euclidiano: em cenários com paredes, aproximar-se em linha reta do ninho conduz frequentemente a um beco, e contornar o obstáculo implica afastar-se temporariamente (penalizado pelo progresso). O bónus de cobertura recompensa a descoberta de zonas novas, incentivando o desvio necessário, em linha com a necessidade de mecanismos densos de exploração identificada por Xiao et al. (2026) \cite{xiao2026csper}.
+    \item \textbf{Progresso ($R_{\text{progresso}}$):} Baseado no método \textit{Potential-Based Reward Shaping} (PBRS) \cite{ng1999policy}, atribui $10.0 \cdot (\Phi_{t-1} - \Phi_{t})$, onde $\Phi$ é o \textbf{potencial de navegação} até ao ninho. Nos cenários com paredes (Muro U, Gargalo, Quatro Salas e Porta Cooperativa) este potencial é a \textbf{distância geodésica} --- o comprimento do caminho mais curto que contorna os obstáculos, calculado por uma pesquisa de custo uniforme (Dijkstra, 8-conexa) sobre uma grelha de discretização ($0.4$\,m, com as paredes dilatadas pelo raio do robô) --- e não a distância euclidiana. Esta escolha elimina na raiz um mínimo local clássico: com a distância euclidiana, contornar uma parede \textit{afasta} o agente do ninho e é penalizado, prendendo o enxame contra os obstáculos; com a distância geodésica, qualquer passo ao longo do caminho viável é recompensado. Por se tratar de PBRS, não altera a política ótima do cenário \cite{ng1999policy}. Decisivamente, o campo geodésico é um \textbf{sinal de treino} (a geometria é conhecida pelo simulador apenas durante o treino) e \textbf{não} uma observação: em execução o agente dispõe somente da bússola de \textit{homing} euclidiana e do LiDAR local (Secção~\ref{sec:obs_space}), preservando a observabilidade parcial. Distingue-se assim, claramente, de fornecer ao agente um mapa dos obstáculos ou \textit{waypoints} de um planeador A*.
+    \item \textbf{Exploração ($R_{\text{exploração}}$):} Bónus de exploração \textit{count-based} que atribui $+2.0$ na primeira vez que um agente visita cada célula de uma grelha de discretização espacial ($2 \times 2$\,m). Complementa o termo de progresso geodésico, premiando a cobertura de zonas novas em regiões onde o gradiente do potencial é pouco informativo (por exemplo, grandes áreas abertas ou antes de o agente detetar localmente um desvio), em linha com a necessidade de mecanismos densos de exploração identificada por Xiao et al. (2026) \cite{xiao2026csper}.
     \item \textbf{Dispersão ($R_{\text{dispersão}}$):} Penalização \textit{anti-clustering} de até $-1.5$ por cada par de agentes que se aproxime a menos de $1.0$\,m, proporcional à sobreposição. Desincentiva o colapso do enxame numa única ``bola'' compacta (comportamento degenerado observado em políticas com parâmetros partilhados, em que observações semelhantes geram ações idênticas). A penalização é \textbf{isenta nas zonas de cooperação} (a menos de $4$\,m do ninho, do alvo móvel ou da zona de pressão da porta), onde a tarefa exige precisamente a agregação de $k_{min} \ge 3$ agentes.
-    \item \textbf{Colisão e Fome ($R_{\text{colisão}}$):} Independentemente do objeto (parede, obstáculo móvel ou delimitação exterior da arena), é aplicada uma penalização fixa de $-2.0$ por passo de colisão. Complementarmente, um mecanismo de \textbf{separação física} repele geometricamente quaisquer dois agentes que se sobreponham (distância inferior a $2\,r_{robot}$), garantindo que o enxame nunca colapsa em sobreposições não-físicas. Adicionalmente, caso o temporizador de \textit{hunger} ultrapasse 250 passos, o agente ``morre'', sofre um revés crítico de $-50.0$ e a sua posição é restabelecida.
+    \item \textbf{Colisão e Fome ($R_{\text{colisão}}$):} Independentemente do objeto (parede, obstáculo móvel ou delimitação exterior da arena), é aplicada uma penalização fixa de $-2.0$ por passo de colisão. Complementarmente, um mecanismo de \textbf{separação física} repele geometricamente quaisquer dois agentes que se sobreponham (distância inferior a $2\,r_{robot}$), garantindo que o enxame nunca colapsa em sobreposições não-físicas. Adicionalmente, caso o temporizador de \textit{hunger} ultrapasse 250 passos, o agente ``morre'', sofre um revés crítico de $-50.0$ e a sua posição é restabelecida. Esta reposição está \textbf{ativa apenas no forrageamento contínuo} (cenário Sandbox); nos cenários de objetivo fixo foi desativada, pois a combinação do teletransporte com a re-sincronização do potencial tornava o termo de progresso \textit{farmável} (aproximar-se, ser reposto longe sem cobrança do recuo, repetir), induzindo políticas degeneradas que acumulavam recompensa de \textit{shaping} sem nunca cumprir a tarefa.
     \item \textbf{Controlo Energético ($R_{\text{controlo}}$):} Subtração de $-0.05$ a cada passo de simulação por agente não inativo. Pressiona temporalmente o enxame para finalizar o forrageamento o mais célere possível.
 \end{itemize}
 
@@ -1047,6 +1049,48 @@ Antes da análise, importa fixar as convenções de leitura dos resultados:
     \item \textbf{Métrica de tarefa pura ($P_{task}$):} Para além da recompensa total (que inclui \textit{shaping}), reporta-se a recompensa de tarefa pura (recolhas $\times 100$), obtida em avaliação determinística, por ser a medida não-enviesada do sucesso na missão.
     \item \textbf{Escalas não-comparáveis entre paradigmas:} O GNN usa \textit{fitness} evolutiva e o PPO/SAC recompensa episódica; comparações de valor absoluto entre paradigmas devem ser feitas com cautela, privilegiando a métrica $P_{task}$ da avaliação determinística.
 \end{itemize}
+
+\section{Desempenho de Tarefa por Cenário ($P_{task}$)}
+\label{sec:res_ptask}
+% TODO: Analisar a taxa de sucesso e as recolhas/ep por cenario. Destacar o contraste entre cenarios abertos e labirintos, e entre os tres algoritmos.
+A métrica central de comparação é o desempenho de \textbf{tarefa} em avaliação determinística: a taxa de sucesso ($P_{task}$, fração de episódios com pelo menos uma recolha) e o número de recolhas por episódio. Ao contrário da recompensa de treino --- que inclui \textit{shaping} e mistura escalas entre paradigmas (\textit{fitness} evolutiva vs.\ recompensa episódica) ---, estas métricas são diretamente comparáveis entre os três algoritmos e medem o cumprimento efetivo da missão.
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.9}{images/resultados/taxa_sucesso_por_cenario.png}{Taxa de sucesso por cenario e algoritmo}
+    \caption{Taxa de sucesso ($P_{task}$) por cenário, em avaliação determinística (20 episódios emparelhados por algoritmo).}
+    \label{fig:res_ptask_sucesso}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.9}{images/resultados/recolhas_por_cenario.png}{Recolhas por episodio, por cenario e algoritmo}
+    \caption{Recolhas por episódio (média $\pm$ desvio padrão) por cenário. Mede a magnitude do desempenho, para além do sucesso binário.}
+    \label{fig:res_ptask_recolhas}
+\end{figure}
+
+\section{Análise Qualitativa da Navegação: Mapas de Calor}
+\label{sec:res_heatmaps}
+% TODO: Comentar o contorno do Muro U nos heatmaps de ocupacao e a leitura do campo geodesico.
+Para fundamentar a opção pelo potencial geodésico no termo de progresso e diagnosticar o comportamento de navegação, recorre-se a dois tipos de mapa de calor. A Figura~\ref{fig:res_heatmap_geo} contrasta o potencial euclidiano com o geodésico no Muro U: as curvas de nível euclidianas atravessam a parede (atraindo o agente para o interior do beco), enquanto as geodésicas a contornam, atribuindo gradiente positivo ao desvio correto. A Figura~\ref{fig:res_heatmap_ocup} mostra a densidade de ocupação dos robôs --- zonas brilhantes coladas a uma parede revelam agentes presos, ao passo que um fluxo que contorna o obstáculo indica navegação resolvida.
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.95}{images/resultados/heatmap_geodesico_u_wall.png}{Potencial euclidiano vs geodesico no Muro U}
+    \caption{Potencial de navegação no Muro U: euclidiano (esquerda) vs.\ geodésico (direita). As curvas de nível indicam a direção para a qual o termo de progresso atrai o agente; só o geodésico contorna a barra do U.}
+    \label{fig:res_heatmap_geo}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.32}{images/resultados/heatmap_ocupacao_gnn_u_wall.png}{Ocupacao GNN no Muro U}
+    \hfill
+    \figresultado{0.32}{images/resultados/heatmap_ocupacao_ppo_u_wall.png}{Ocupacao PPO no Muro U}
+    \hfill
+    \figresultado{0.32}{images/resultados/heatmap_ocupacao_sac_u_wall.png}{Ocupacao SAC no Muro U}
+    \caption{Densidade de ocupação dos robôs no Muro U (GNN, PPO e SAC, da esquerda para a direita). O fluxo que contorna a barra do U pelos lados evidencia a navegação resolvida pelo potencial geodésico.}
+    \label{fig:res_heatmap_ocup}
+\end{figure}
 
 \section{Convergência e Desempenho no Cenário Base (Sandbox)}
 \label{sec:res_sandbox}
@@ -1371,8 +1415,28 @@ for wall in self.walls:
         move_global = move_global - np.dot(move_global, normal) * normal
 \end{lstlisting}
 
+\section{Campo Geodésico para o \textit{Reward Shaping}}
+Potencial de navegação $\Phi$ usado no termo de progresso nos cenários com paredes. Uma pesquisa de custo uniforme (Dijkstra, 8-conexa) a partir da célula do ninho calcula o comprimento do caminho mais curto que contorna os obstáculos, eliminando o mínimo local da distância euclidiana. O campo é constante por cenário (paredes e ninho fixos), pelo que é calculado uma única vez e reutilizado.
+\begin{lstlisting}[style=python, caption={Campo de distancia geodesica ao ninho (Dijkstra sobre grelha).}]
+# paredes dilatadas por r_robot -> caminho fisicamente percorrivel
+dist = np.full((n, n), np.inf); dist[ni, nj] = 0.0
+heap = [(0.0, ni, nj)]
+while heap:
+    d, i, j = heapq.heappop(heap)
+    if d > dist[i, j]:
+        continue
+    for di, dj, cost in neigh:        # 4 ortogonais (res) + 4 diagonais (res*sqrt2)
+        ii, jj = i + di, j + dj
+        if 0 <= ii < n and 0 <= jj < n and not blocked[ii, jj]:
+            nd = d + cost
+            if nd < dist[ii, jj]:
+                dist[ii, jj] = nd
+                heapq.heappush(heap, (nd, ii, jj))
+# Phi(pos) = dist[celula(pos)]; progresso = 10.0 * (Phi_{t-1} - Phi_t)
+\end{lstlisting}
+
 \section{Recompensa de Exploração \textit{Count-Based}}
-Bónus atribuído na primeira visita a cada célula de uma grelha de discretização, fundamental para escapar aos mínimos locais induzidos pelo termo de progresso euclidiano.
+Bónus atribuído na primeira visita a cada célula de uma grelha de discretização, complementando o termo de progresso geodésico ao premiar a cobertura de zonas novas onde o gradiente do potencial é pouco informativo.
 \begin{lstlisting}[style=python, caption={Bonus de exploracao por cobertura de celulas novas.}]
 cell = (int(pos[0] // self.exploration_cell_size),
         int(pos[1] // self.exploration_cell_size))

@@ -10,6 +10,12 @@ import pandas as pd
 import torch
 import yaml
 
+# Windows: evita UnicodeEncodeError (cp1252) ao imprimir caracteres de caixa.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)

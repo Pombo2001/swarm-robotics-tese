@@ -3,6 +3,7 @@ from gymnasium import spaces
 import numpy as np
 import yaml
 import os
+import heapq
 
 
 class SwarmForagingEnv3D(gym.Env):
@@ -47,6 +48,18 @@ class SwarmForagingEnv3D(gym.Env):
         self.max_steps_override = {}
         if 'max_steps_cooperative_door' in env_config:
             self.max_steps_override['cooperative_door'] = env_config['max_steps_cooperative_door']
+
+        # ── Campo geodésico (BFS/Dijkstra) para o progress reward ────────────
+        # Em cenários com paredes, a distância euclidiana ao ninho cria mínimos
+        # locais: contornar uma parede AFASTA do ninho (progress negativo) → os
+        # agentes colam-se à parede mais próxima do ninho e nunca a contornam.
+        # A distância geodésica (caminho real que contorna as paredes) elimina
+        # esse mínimo: o gradiente passa a apontar SEMPRE para o desvio correto.
+        self.geo_res = env_config.get('geodesic_cell_size', 0.4)
+        self.geo_field = None
+        self.geo_n = 0
+        self.use_geodesic = False
+        self._geo_cache = {}   # campo é constante por cenário (paredes+ninho fixos)
 
         # Rrobust (resiliência): fração de agentes que "falha" a meio do episódio.
         # 0.0 = desligado (treino normal); 0.1 = 10% dos agentes ficam inertes
@@ -169,7 +182,16 @@ class SwarmForagingEnv3D(gym.Env):
             self._spawn_obstacles()
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
 
+        # Cenários com paredes e ninho estático usam o campo geodésico no progress
+        # reward (elimina o mínimo local). Os restantes (sandbox, perceção
+        # cooperativa) têm ninho móvel e sem paredes → euclidiano basta.
+        self.use_geodesic = self.classic_scenario in (
+            "u_wall", "bottleneck", "four_rooms", "cooperative_door")
+        if self.use_geodesic:
+            self._build_geodesic_field()
+
         self.prev_dist_to_nest = np.array([np.linalg.norm(p - self.nest_pos) for p in self.agent_positions])
+        self.prev_pot = np.array([self._potential(p) for p in self.agent_positions])
         self.hunger_timers = np.zeros(self.num_agents, dtype=int)
 
         # Grelha de células visitadas por agente (reward de exploração count-based)
@@ -277,6 +299,86 @@ class SwarmForagingEnv3D(gym.Env):
         y = r * np.sin(phi) * np.sin(theta)
         z = r * np.cos(phi)
         return np.array([x, y, z])
+
+    def _to_cell(self, pos):
+        """Converte uma posição do mundo (x, y) no índice (i, j) da grelha geodésica."""
+        R = self.arena_radius
+        i = int((pos[0] + R) / self.geo_res)
+        j = int((pos[1] + R) / self.geo_res)
+        return i, j
+
+    def _build_geodesic_field(self):
+        """Calcula o campo de distância geodésica ao ninho (Dijkstra 8-conexo numa
+        grelha), contornando as paredes. O resultado (em metros) é cacheado por
+        cenário — as paredes e o ninho são fixos nos cenários de labirinto."""
+        if self.classic_scenario in self._geo_cache:
+            self.geo_field, self.geo_n = self._geo_cache[self.classic_scenario]
+            return
+
+        res = self.geo_res
+        R = self.arena_radius
+        n = int(2 * R / res) + 1
+        dist = np.full((n, n), np.inf, dtype=np.float64)
+        blocked = np.zeros((n, n), dtype=bool)
+
+        # Inflar as paredes pelo raio do robô → o caminho geodésico é fisicamente
+        # percorrível (não corta cantos nem passa por frestas mais estreitas que o robô).
+        inflate = self.robot_radius
+        for w_i, wall in enumerate(self.walls):
+            # A porta cooperativa é tratada como PASSÁVEL no BFS: assim o gradiente
+            # aponta para a porta (= push zone), que é o objetivo do cenário.
+            if (self.classic_scenario == "cooperative_door"
+                    and w_i == getattr(self, 'door_wall_index', -1)):
+                continue
+            # Paredes "removidas" (porta aberta → pos 999) não bloqueiam.
+            if np.any(np.abs(wall['pos']) > R + 5):
+                continue
+            half = wall['size'] / 2.0
+            i0 = max(0, int((wall['pos'][0] - half[0] - inflate + R) / res))
+            i1 = min(n - 1, int((wall['pos'][0] + half[0] + inflate + R) / res))
+            j0 = max(0, int((wall['pos'][1] - half[1] - inflate + R) / res))
+            j1 = min(n - 1, int((wall['pos'][1] + half[1] + inflate + R) / res))
+            blocked[i0:i1 + 1, j0:j1 + 1] = True
+
+        ni, nj = self._to_cell(self.nest_pos)
+        ni = min(max(ni, 0), n - 1)
+        nj = min(max(nj, 0), n - 1)
+        blocked[ni, nj] = False  # o ninho tem de ser alcançável
+
+        diag = res * np.sqrt(2.0)
+        neigh = ((1, 0, res), (-1, 0, res), (0, 1, res), (0, -1, res),
+                 (1, 1, diag), (1, -1, diag), (-1, 1, diag), (-1, -1, diag))
+        dist[ni, nj] = 0.0
+        heap = [(0.0, ni, nj)]
+        while heap:
+            d, i, j = heapq.heappop(heap)
+            if d > dist[i, j]:
+                continue
+            for di, dj, cost in neigh:
+                ii, jj = i + di, j + dj
+                if 0 <= ii < n and 0 <= jj < n and not blocked[ii, jj]:
+                    nd = d + cost
+                    if nd < dist[ii, jj]:
+                        dist[ii, jj] = nd
+                        heapq.heappush(heap, (nd, ii, jj))
+
+        self.geo_field = dist
+        self.geo_n = n
+        self._geo_cache[self.classic_scenario] = (dist, n)
+
+    def _potential(self, pos):
+        """Potencial de navegação Φ(pos): distância (geodésica nos labirintos,
+        euclidiana caso contrário) ao ninho. O progress reward é Φ(prev)−Φ(atual)."""
+        if not self.use_geodesic or self.geo_field is None:
+            return float(np.linalg.norm(pos - self.nest_pos))
+        i, j = self._to_cell(pos)
+        if 0 <= i < self.geo_n and 0 <= j < self.geo_n:
+            d = self.geo_field[i, j]
+            if np.isfinite(d):
+                return float(d)
+        # Célula bloqueada/inalcançável (ex.: dentro da margem de uma parede):
+        # euclidiana + penalização grande → gradiente para sair da parede.
+        return float(np.linalg.norm(pos - self.nest_pos) + 2.0 * self.arena_radius)
 
     def _has_line_of_sight(self, p1, p2):
         for t in np.linspace(0.1, 0.9, 10):
@@ -621,16 +723,22 @@ class SwarmForagingEnv3D(gym.Env):
                         self.agent_positions[idx] = self._get_scenario_spawn_pos()
                         self.hunger_timers[idx] = 0
                     self.prev_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
+                    self.prev_pot[idx] = self._potential(self.agent_positions[idx])
                     self.signaling[idx] = 0.0
 
         for idx, agent in enumerate(self.agents):
             dist_nest = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
+            pot = self._potential(self.agent_positions[idx])
 
             if np.linalg.norm(self.agent_positions[idx]) > (self.arena_radius - self.robot_radius):
                 direction = -self.agent_positions[idx]
                 direction /= (np.linalg.norm(direction) + 1e-6)
                 self.agent_positions[idx] += direction * 0.5
                 obstacle_hits[agent] = 1
+                # Re-sincroniza o potencial (o empurrão para dentro não é mérito do
+                # agente) para não injetar progress espúrio no passo seguinte.
+                self.prev_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
+                self.prev_pot[idx] = self._potential(self.agent_positions[idx])
                 continue
 
             if self.signaling[idx] == 1.0:
@@ -640,11 +748,14 @@ class SwarmForagingEnv3D(gym.Env):
                 # NOTA: NÃO há ICM (Intrinsic Curiosity Module).
                 # A exploração é incentivada exclusivamente por reward shaping:
                 #
-                #   progress_reward = factor × (dist_t-1 − dist_t)
-                #     → positivo se o agente se aproximou do ninho
-                #     → negativo se se afastou (desincentiva desvios)
-                #     → funciona como "Potential-Based Reward Shaping"
-                #        (Ng et al., 1999) — não altera a política óptima
+                #   progress_reward = factor × (Φ_t-1 − Φ_t)
+                #     onde Φ é o POTENCIAL de navegação: distância GEODÉSICA ao
+                #     ninho nos cenários com paredes (contorna-as), euclidiana nos
+                #     restantes. Geodésico → contornar uma parede dá progress
+                #     POSITIVO (antes, com euclidiano, contornar = afastar =
+                #     negativo, prendendo os agentes nas paredes).
+                #     → "Potential-Based Reward Shaping" (Ng et al., 1999):
+                #        não altera a política óptima.
                 #
                 #   energy_cost = −0.05/passo
                 #     → pressão temporal para resolver a tarefa depressa
@@ -653,7 +764,7 @@ class SwarmForagingEnv3D(gym.Env):
                 #   food_collected_reward = +100 (quando required_to_eat
                 #   agentes chegam simultaneamente ao ninho)
                 # ─────────────────────────────────────────────────────────────
-                progress = self.prev_dist_to_nest[idx] - dist_nest
+                progress = self.prev_pot[idx] - pot
                 rewards[agent] += (progress * self.progress_reward_factor) + self.energy_cost
                 self.hunger_timers[idx] += 1
 
@@ -670,17 +781,28 @@ class SwarmForagingEnv3D(gym.Env):
                 # ─────────────────────────────────────────────────────────────
 
             self.prev_dist_to_nest[idx] = dist_nest
+            self.prev_pot[idx] = pot
 
             if obstacle_hits[agent]: rewards[agent] += self.obstacle_penalty
             if self._spreading_penalties[idx] > 0:
                 rewards[agent] -= self._spreading_penalties[idx]
 
-            if self.hunger_timers[idx] > self.hunger_timer_max:
+            # ── Hunger / respawn ─────────────────────────────────────────────
+            # Nos cenários de LABIRINTO o teleporte por hunger era "farmável":
+            # aproximar-se da parede (progress +) → reset para o spawn (sem cobrar
+            # o salto) → reaproximar (progress + outra vez). A política óptima
+            # aprendida passava a ser "colar à parede e esperar o reset" — daí o
+            # total_reward ≈ 20.000 com ZERO comida. Por isso o teleporte só está
+            # ativo no foraging contínuo (sandbox); nos labirintos a pressão
+            # temporal vem só do energy_cost.
+            if (not self.use_geodesic
+                    and self.hunger_timers[idx] > self.hunger_timer_max):
                 rewards[agent] -= 50.0
                 self.deaths_count += 1
                 self.agent_positions[idx] = self._get_scenario_spawn_pos()
                 self.hunger_timers[idx] = 0
                 self.prev_dist_to_nest[idx] = np.linalg.norm(self.agent_positions[idx] - self.nest_pos)
+                self.prev_pot[idx] = self._potential(self.agent_positions[idx])
 
             terms[agent] = self.steps >= self.max_steps
 

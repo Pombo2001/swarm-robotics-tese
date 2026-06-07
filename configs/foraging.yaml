@@ -1,11 +1,12 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: cooperative_perception
+  classic_scenario: u_wall
   dynamic_nest: true
   dynamic_obstacles: true
   exploration_bonus: 2.0
   exploration_cell_size: 2.0
   forbidden_area: 2.2
+  geodesic_cell_size: 0.4
   hunger_timer_max: 250
   max_steps: 500
   max_steps_cooperative_door: 800
@@ -17,7 +18,7 @@ environment:
   obstacle_penalty: -2.0
   obstacle_radius: 0.2
   obstacle_velocity: 0.02
-  progress_reward_factor: 50.0
+  progress_reward_factor: 10.0
   required_to_eat: 3
   spreading_penalty_factor: 1.5
 evolution:
