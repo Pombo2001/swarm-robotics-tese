@@ -337,17 +337,24 @@ class SwarmController(ctk.CTk):
 
         top = ctk.CTkFrame(page, fg_color="#1E2128", corner_radius=10)
         top.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(0, 14))
-        inner = ctk.CTkFrame(top, fg_color="transparent")
-        inner.pack(pady=14, padx=20)
 
-        ctk.CTkLabel(inner, text="⏱  Tempo Máx. por Algoritmo (minutos):",
+        ctk.CTkLabel(top, text="⚡  Treino Rápido — um algoritmo, um cenário",
+                     font=("Roboto", 15, "bold"), text_color="#FFFFFF"
+                     ).pack(anchor="w", padx=20, pady=(14, 2))
+        self.lbl_rapido_hint = ctk.CTkLabel(
+            top, text="Treina o algoritmo escolhido no cenário selecionado na barra lateral. "
+                      "Ideal para testar rapidamente um caso específico.",
+            font=("Roboto", 12), text_color="#6B7280")
+        self.lbl_rapido_hint.pack(anchor="w", padx=20, pady=(0, 10))
+
+        inner = ctk.CTkFrame(top, fg_color="transparent")
+        inner.pack(anchor="w", padx=20, pady=(0, 14))
+        ctk.CTkLabel(inner, text="⏱  Tempo máx. (min):",
                      font=("Roboto", 13), text_color="#D1D5DB").pack(side="left", padx=(0, 10))
         self.e_time = ctk.CTkEntry(inner, width=80, height=32, font=("Roboto", 13),
                                    fg_color="#2A2D35", border_color="#3A3F4C")
         self.e_time.insert(0, "480")
-        self.e_time.pack(side="left", padx=(0, 20))
-        primary_btn(inner, "🚀  INICIAR OS 3 ALGORITMOS",
-                    self._start_all, color="#DC2626", height=40).pack(side="left")
+        self.e_time.pack(side="left")
 
         for col, (algo, meta) in enumerate(ALGO_META.items()):
             self._build_algo_card(page, algo, meta, col)
@@ -975,12 +982,6 @@ class SwarmController(ctk.CTk):
         self._save_config()
 
     # ── Training actions ─────────────────────────────────────────────────────
-
-    def _start_all(self):
-        self._save_config()
-        t = self.e_time.get()
-        for algo in ("GNN", "PPO", "SAC"):
-            self._launch_algo(algo, t)
 
     def _start_one(self, algo):
         self._save_config()
