@@ -102,9 +102,20 @@ class SwarmForagingEnv3D(gym.Env):
                 # South of the horizontal barrier (barrier covers y -1 to 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
             elif self.classic_scenario == "four_rooms":
-                # SW quadrant, bounded to stay inside circular arena (r≤15)
-                # Original (-13,-13) corner had distance ≈18 > 15 → out of bounds
-                pos = np.array([np.random.uniform(-10, -2), np.random.uniform(-10, -2), 0.0])
+                # Spawn ESPALHADO pelas 3 salas opostas ao ninho (que está no
+                # quadrante NE). Antes os 20 agentes nasciam todos na sala SW, o
+                # que causava congestionamento e bloqueio nas passagens estreitas
+                # de 1.5m — a maioria ficava presa a empurrar-se na sala de origem.
+                # Distribuir por SW/NW/SE reduz a densidade por sala e por passagem,
+                # mantendo os agentes longe do ninho (navegação de longo termo).
+                # Limites a |coord|<=10 para ficar dentro da arena circular (r=15).
+                sala = np.random.randint(3)
+                if sala == 0:      # SW (a mais distante do ninho)
+                    pos = np.array([np.random.uniform(-10, -2), np.random.uniform(-10, -2), 0.0])
+                elif sala == 1:    # NW
+                    pos = np.array([np.random.uniform(-10, -2), np.random.uniform(2, 10), 0.0])
+                else:              # SE
+                    pos = np.array([np.random.uniform(2, 10), np.random.uniform(-10, -2), 0.0])
             elif self.classic_scenario == "cooperative_door":
                 # South of the horizontal barrier (barrier covers y -1 to 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
