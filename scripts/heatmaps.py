@@ -237,17 +237,31 @@ def generate_all(out_dir=None, episodes=6, algos=("sac", "ppo", "gnn"),
 
 def main():
     parser = argparse.ArgumentParser(description="Mapas de calor (ocupação / geodésico)")
-    parser.add_argument("--mode", required=True, choices=["occupancy", "geodesic"])
+    parser.add_argument("--mode", required=True, choices=["occupancy", "geodesic", "all"],
+                        help="all = regenera TODOS os heatmaps (ocupação 3 algos × 6 cenários "
+                             "+ geodésico dos labirintos) num só comando")
     parser.add_argument("--algo", choices=["gnn", "ppo", "sac"],
                         help="(occupancy) algoritmo a carregar")
-    parser.add_argument("--scenario", required=True)
+    parser.add_argument("--scenario", default=None,
+                        help="cenário (obrigatório em occupancy/geodesic; ignorado em all)")
+    parser.add_argument("--scenarios", nargs="*", default=None,
+                        help="(all) subconjunto de cenários (default: os 6)")
     parser.add_argument("--episodes", type=int, default=10,
-                        help="(occupancy) nº de episódios a acumular")
+                        help="(occupancy/all) nº de episódios a acumular")
     parser.add_argument("--bins", type=int, default=120,
                         help="(occupancy) resolução do histograma 2D")
     args = parser.parse_args()
 
     config_path = os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")
+
+    if args.mode == "all":
+        # Forma rápida de refazer tudo: um comando, robusto a modelos em falta.
+        generate_all(episodes=args.episodes, scenarios=args.scenarios,
+                     config_path=config_path)
+        return
+
+    if not args.scenario:
+        parser.error("--scenario é obrigatório nos modos occupancy/geodesic")
 
     if args.mode == "occupancy":
         if not args.algo:
