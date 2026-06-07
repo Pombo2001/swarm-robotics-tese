@@ -261,28 +261,12 @@ class SwarmController(ctk.CTk):
         ctk.CTkFrame(sb, height=1, fg_color="#2A2D35").grid(
             row=4, column=0, padx=12, pady=8, sticky="ew")
 
-        primary_btn(sb, "📊  Gerar Gráficos da Tese",
-                    self._plot_thesis, color="#0D7377", height=40
-                    ).grid(row=9, column=0, padx=12, pady=6, sticky="ew")
-
-        f_viz = section(sb, "VISUALIZAÇÃO 3D")
-        f_viz.grid(row=10, column=0, padx=12, pady=(0, 12), sticky="sew")
-        for algo, meta in ALGO_META.items():
-            primary_btn(f_viz, f"{meta['icon']}  Ver {algo}",
-                        lambda a=algo: self._viz(a),
-                        color=meta["color"], height=32
-                        ).pack(padx=12, pady=3, fill="x")
-        ctk.CTkFrame(f_viz, height=4, fg_color="transparent").pack()
-        primary_btn(f_viz, "📊  Avaliar Modelo",
-                    self._eval_model, color="#6B4FA0", height=32
-                    ).pack(padx=12, pady=(0, 6), fill="x")
-        primary_btn(f_viz, "🗺️  Ver Mapas (3D + Topo)",
-                    self._render_maps, color="#0E7490", height=32
-                    ).pack(padx=12, pady=(0, 6), fill="x")
-        primary_btn(f_viz, "🔥  Gerar Heatmaps",
-                    self._render_heatmaps, color="#B45309", height=32
-                    ).pack(padx=12, pady=(0, 6), fill="x")
-        ctk.CTkFrame(f_viz, height=4, fg_color="transparent").pack()
+        # A sidebar fica só com a configuração da arena. Visualização, gráficos,
+        # mapas, heatmaps e avaliação estão centralizados no separador Resultados.
+        ctk.CTkLabel(
+            sb, text="🎬  Visualização, gráficos, mapas e\navaliação estão no separador\n📈  Resultados.",
+            font=("Roboto", 11), text_color="#6B7280", justify="left"
+            ).grid(row=9, column=0, padx=16, pady=10, sticky="w")
 
     def _build_main(self, main):
         tab_bar = ctk.CTkFrame(main, fg_color="#13151A", height=50, corner_radius=0)
@@ -648,7 +632,8 @@ class SwarmController(ctk.CTk):
         inner = ctk.CTkFrame(top, fg_color="transparent")
         inner.pack(pady=10, padx=16, fill="x")
 
-        ctk.CTkLabel(inner, text="VISUALIZAÇÃO 3D:",
+        # Grupo 1 — ver os modelos a mexer ao vivo (Ursina)
+        ctk.CTkLabel(inner, text="VER AO VIVO:",
                      font=("Roboto", 11, "bold"), text_color="#6B7280"
                      ).pack(side="left", padx=(0, 8))
         for algo, meta in ALGO_META.items():
@@ -657,13 +642,21 @@ class SwarmController(ctk.CTk):
                         color=meta["color"], height=34
                         ).pack(side="left", padx=3)
 
-        ctk.CTkFrame(inner, width=1, height=36, fg_color="#3A3F4C").pack(side="left", padx=14)
-        primary_btn(inner, "📊  Gerar Gráficos",
-                    self._plot_thesis, color="#0D7377", height=34
-                    ).pack(side="left", padx=3)
-        primary_btn(inner, "🔄  Recarregar Sessões",
-                    self._refresh_sessions, color="#374151", height=34
-                    ).pack(side="left", padx=3)
+        # Grupo 2 — gerar figuras/resultados
+        ctk.CTkFrame(inner, width=1, height=36, fg_color="#3A3F4C").pack(side="left", padx=12)
+        primary_btn(inner, "📊  Gráficos",
+                    self._plot_thesis, color="#0D7377", height=34).pack(side="left", padx=3)
+        primary_btn(inner, "🔥  Heatmaps",
+                    self._render_heatmaps, color="#B45309", height=34).pack(side="left", padx=3)
+        primary_btn(inner, "🗺️  Mapas",
+                    self._render_maps, color="#0E7490", height=34).pack(side="left", padx=3)
+        primary_btn(inner, "🎯  Avaliar",
+                    self._eval_model, color="#6B4FA0", height=34).pack(side="left", padx=3)
+
+        # Grupo 3 — utilitário
+        ctk.CTkFrame(inner, width=1, height=36, fg_color="#3A3F4C").pack(side="left", padx=12)
+        primary_btn(inner, "🔄  Recarregar",
+                    self._refresh_sessions, color="#374151", height=34).pack(side="left", padx=3)
 
         # ── Left: session list + graph selector ────────────────────────────
         self._left_scroll = ctk.CTkScrollableFrame(
