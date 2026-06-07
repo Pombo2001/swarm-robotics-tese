@@ -887,7 +887,19 @@ O passo de simulação ($\texttt{step}$) processa o enxame por uma ordem determi
 \end{enumerate}
 
 \subsection{Cenários de Teste}
-Para garantir uma avaliação exaustiva e progressiva das capacidades de controlo descentralizado, foram desenvolvidos seis cenários de dificuldade crescente:
+Para garantir uma avaliação exaustiva e progressiva das capacidades de controlo descentralizado, foram desenvolvidos seis cenários de dificuldade crescente (Figura~\ref{fig:cenarios_3d}):
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.32\textwidth]{images/mapa_3d_none.png}\hfill
+    \includegraphics[width=0.32\textwidth]{images/mapa_3d_u_wall.png}\hfill
+    \includegraphics[width=0.32\textwidth]{images/mapa_3d_bottleneck.png}\\[0.6em]
+    \includegraphics[width=0.32\textwidth]{images/mapa_3d_four_rooms.png}\hfill
+    \includegraphics[width=0.32\textwidth]{images/mapa_3d_cooperative_door.png}\hfill
+    \includegraphics[width=0.32\textwidth]{images/mapa_3d_cooperative_perception.png}
+    \caption{Renderizações 3D dos seis cenários de teste, geradas a partir da geometria real do simulador (\texttt{scripts/render\_maps.py}). Em cima, da esquerda para a direita: Sandbox, Beco Sem Saída (Muro em U) e Gargalo; em baixo: Quatro Salas, Porta Cooperativa (com a porta destacada a âmbar) e Perceção Cooperativa. A esfera verde assinala o ninho (ou o alvo móvel, no último cenário).}
+    \label{fig:cenarios_3d}
+\end{figure}
 
 \begin{enumerate}
     \item \textbf{Foraging Aberto (Sandbox):} Cenário base sem barreiras fixas. Contém os agentes, obstáculos dinâmicos e um ninho móvel. Serve para aferir a capacidade pura de cooperação e gestão de energia sem entropia espacial acrescida.

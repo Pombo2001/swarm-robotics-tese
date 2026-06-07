@@ -113,8 +113,26 @@ def render_scenario(scenario, config_path, camera="iso", out_dir=None):
     out = os.path.join(out_dir, f"mapa_3d_{scenario}.png")
     plotter.screenshot(out, transparent_background=False)
     plotter.close()
+    _autocrop(out)
     print(f"[OK] Mapa 3D ({scenario}) -> {out}")
     return out
+
+
+def _autocrop(path, margin=35):
+    """Recorta a margem branca à volta da cena (melhor aspeto em painéis na tese)."""
+    try:
+        from PIL import Image, ImageChops
+    except Exception:
+        return
+    img = Image.open(path).convert("RGB")
+    bg = Image.new("RGB", img.size, (255, 255, 255))
+    bbox = ImageChops.difference(img, bg).getbbox()
+    if not bbox:
+        return
+    x0, y0, x1, y1 = bbox
+    x0, y0 = max(0, x0 - margin), max(0, y0 - margin)
+    x1, y1 = min(img.width, x1 + margin), min(img.height, y1 + margin)
+    img.crop((x0, y0, x1, y1)).save(path)
 
 
 def main():
