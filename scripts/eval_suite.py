@@ -52,7 +52,7 @@ ALGO_COLORS = {"GNN": "#2E7D32", "PPO": "#E65100", "SAC": "#0277BD"}
 
 
 def evaluate_all(episodes=20, scenarios=None, algos=None, seed_base=1000,
-                 config_path=None, quiet=True):
+                 config_path=None):
     """Avalia (algo × cenário) de forma emparelhada e grava os CSVs.
     Devolve um DataFrame long-format (1 linha por episódio) ou vazio se nada avaliado."""
     from scripts.eval_all import eval_algo  # reutiliza o avaliador emparelhado
