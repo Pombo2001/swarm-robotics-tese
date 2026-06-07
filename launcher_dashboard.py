@@ -276,6 +276,9 @@ class SwarmController(ctk.CTk):
         primary_btn(f_viz, "📊  Avaliar Modelo",
                     self._eval_model, color="#6B4FA0", height=32
                     ).pack(padx=12, pady=(0, 6), fill="x")
+        primary_btn(f_viz, "🗺️  Ver Mapas (3D + Topo)",
+                    self._render_maps, color="#0E7490", height=32
+                    ).pack(padx=12, pady=(0, 6), fill="x")
         ctk.CTkFrame(f_viz, height=4, fg_color="transparent").pack()
 
     def _build_main(self, main):
@@ -927,6 +930,7 @@ class SwarmController(ctk.CTk):
             "plot":    "scripts/plot_results.py",
             "run_exp": "scripts/run_experiments.py",
             "eval":    "scripts/eval_all.py",
+            "render_maps": "scripts/render_maps.py",
         }
 
     def _run_script(self, script, args=None, console=True):
@@ -1062,6 +1066,10 @@ class SwarmController(ctk.CTk):
 
     def _plot_thesis(self):
         self._run_script(self._get_paths()["plot"])
+
+    def _render_maps(self):
+        # Gera as duas vistas (isométrica + topo) dos 6 mapas e abre a pasta no fim.
+        self._run_script(self._get_paths()["render_maps"], ["--camera", "both", "--open"])
 
     def _eval_model(self):
         self._save_config()

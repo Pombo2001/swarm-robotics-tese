@@ -141,7 +141,10 @@ def main():
     parser = argparse.ArgumentParser(description="Renders 3D dos mapas (PyVista)")
     parser.add_argument("--scenario", default=None, help="um cenário específico")
     parser.add_argument("--scenarios", nargs="*", default=None, help="subconjunto de cenários")
-    parser.add_argument("--camera", choices=["iso", "top"], default="iso")
+    parser.add_argument("--camera", choices=["iso", "top", "both"], default="iso",
+                        help="both = gera as duas vistas (isométrica + topo)")
+    parser.add_argument("--open", action="store_true",
+                        help="abrir a pasta de saída no fim (para o botão do dashboard)")
     args = parser.parse_args()
 
     config_path = os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")
@@ -152,11 +155,19 @@ def main():
     else:
         scenarios = ALL_SCENARIOS
 
-    for sc in scenarios:
+    cams = ["iso", "top"] if args.camera == "both" else [args.camera]
+    for cam in cams:
+        for sc in scenarios:
+            try:
+                render_scenario(sc, config_path, camera=cam)
+            except Exception as e:
+                print(f"[!] Falha a renderizar '{sc}' ({cam}): {e}")
+
+    if args.open and os.name == "nt":
         try:
-            render_scenario(sc, config_path, camera=args.camera)
-        except Exception as e:
-            print(f"[!] Falha a renderizar '{sc}': {e}")
+            os.startfile(OUT_DIR)
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
