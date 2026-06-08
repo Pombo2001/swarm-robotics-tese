@@ -1,6 +1,6 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: u_wall
+  classic_scenario: none
   dynamic_nest: true
   dynamic_obstacles: true
   exploration_bonus: 2.0
@@ -14,7 +14,7 @@ environment:
   nest_radius: 1.5
   nest_velocity: 0.015
   num_agents: 20
-  num_obstacles: 50
+  num_obstacles: 100
   obstacle_penalty: -2.0
   obstacle_radius: 0.2
   obstacle_velocity: 0.02
@@ -22,12 +22,12 @@ environment:
   required_to_eat: 3
   spreading_penalty_factor: 1.5
 evolution:
-  eval_episodes: 3
+  eval_episodes: 1
   mutation_rate: 0.1
   pop_size: 30
   sigma: 0.1
 gnn_agent:
-  hidden_dim: 64
+  hidden_dim: 32
 physics:
   agent_radius: 0.15
   collision_penalty: -1.0

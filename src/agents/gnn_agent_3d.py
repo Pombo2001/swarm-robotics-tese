@@ -19,7 +19,8 @@ class GNNAgent3D(nn.Module):
         agent_config = config.get('gnn_agent', {})
         self.hidden_dim = agent_config.get('hidden_dim', 64)
 
-        self.env_feats_dim = 12
+        # Ego-features = 16: bússola ninho (4) + LiDAR (8) + bússola porta (4) [B1].
+        self.env_feats_dim = 16
         self.neighbor_dim = 5
 
         self.encoder = nn.Sequential(

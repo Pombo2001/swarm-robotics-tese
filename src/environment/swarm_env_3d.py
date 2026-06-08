@@ -82,7 +82,11 @@ class SwarmForagingEnv3D(gym.Env):
 
         self.action_space_val = spaces.Box(low=-1.0, high=1.0, shape=(3,), dtype=np.float32)
 
-        obs_size = 12 + (self.num_agents - 1) * 5
+        # Ego-features = 16: bússola ninho (4) + LiDAR (8) + bússola porta/entrada (4).
+        # Os 4 da porta (B1) só são preenchidos em cenários com porta definida
+        # (cooperative_door); zeros nos restantes.
+        self.ego_feats_dim = 16
+        obs_size = self.ego_feats_dim + (self.num_agents - 1) * 5
         self.observation_space_val = spaces.Box(low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float32)
 
         self.action_spaces = {a: self.action_space_val for a in self.agents}
@@ -501,6 +505,18 @@ class SwarmForagingEnv3D(gym.Env):
                 # Normalize lidar: 1.0 means crash, 0.0 means free path
                 lidar_sensor_vals[i] = 1.0 - (closest_dist / max_ray_dist)
 
+            # ── B1: BÚSSOLA DA PORTA/ENTRADA (direção+distância egocêntricas) ──
+            # Indica onde está a porta/passagem-objetivo do cenário. Preenchida
+            # apenas quando existe uma porta DEFINIDA (cooperative_door) — que é um
+            # sub-objetivo físico do cenário (como o ninho), não um waypoint de
+            # planeamento. Nos restantes cenários fica a zeros (não revela o caminho
+            # nos labirintos, o que seria batota). Mantém a dimensão da obs fixa.
+            if self.classic_scenario == "cooperative_door":
+                local_dir_door, dist_door = to_egocentric(self.door_pos)
+                norm_dist_door = dist_door / (self.arena_radius * 2)
+            else:
+                local_dir_door, norm_dist_door = np.array([0.0, 0.0, 0.0]), 0.0
+
             neighbor_feats = []
             for j, other_pos in enumerate(self.agent_positions):
                 if idx == j: continue
@@ -511,6 +527,7 @@ class SwarmForagingEnv3D(gym.Env):
             obs = np.concatenate([
                 local_dir_nest, [norm_dist_nest],
                 lidar_sensor_vals,
+                local_dir_door, [norm_dist_door],
                 np.array(neighbor_feats)
             ]).astype(np.float32)
 
