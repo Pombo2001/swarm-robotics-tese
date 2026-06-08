@@ -579,15 +579,20 @@ class SwarmController(ctk.CTk):
 
         right = ctk.CTkFrame(body, fg_color="#1E2128", corner_radius=10)
         right.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
-        ctk.CTkLabel(right, text="O QUE SERÁ EXECUTADO",
-                     font=("Roboto", 11, "bold"), text_color="#6B7280"
+        ctk.CTkLabel(right, text="CENÁRIOS A TREINAR  (escolhe quais — menos cenários = mais tempo cada)",
+                     font=("Roboto", 11, "bold"), text_color="#6B7280", wraplength=360, justify="left"
                      ).pack(anchor="w", padx=16, pady=(16, 8))
-        for label, _ in SCENARIOS:
+        self._night_scen_vars = {}
+        for label, key in SCENARIOS:
             row = ctk.CTkFrame(right, fg_color="#13151A", corner_radius=6)
             row.pack(fill="x", padx=16, pady=2)
-            ctk.CTkLabel(row, text=f"📍 {label}",
-                         font=("Roboto", 12), text_color="#D1D5DB"
-                         ).pack(side="left", padx=12, pady=8)
+            var = ctk.BooleanVar(value=True)
+            self._night_scen_vars[key] = var
+            ctk.CTkCheckBox(row, text=f"📍 {label}", variable=var,
+                            command=self._update_night_est,
+                            font=("Roboto", 12), text_color="#D1D5DB",
+                            fg_color="#D97706", hover_color="#B45309"
+                            ).pack(side="left", padx=12, pady=8)
             ctk.CTkLabel(row, text="GNN  PPO  SAC",
                          font=("Consolas", 10), text_color="#4B5563"
                          ).pack(side="right", padx=12, pady=8)
@@ -601,21 +606,28 @@ class SwarmController(ctk.CTk):
     GNN_TIME_WEIGHT = 1.4
     SAC_TIME_WEIGHT = 1.0
 
+    def _night_n_scenarios(self):
+        """Nº de cenários selecionados (mínimo 1)."""
+        vars_ = getattr(self, "_night_scen_vars", {})
+        n = sum(1 for v in vars_.values() if v.get())
+        return max(1, n) if vars_ else 6
+
     def _update_night_est(self, event=None):
         try:
             horas = float(self.e_night_hours.get())
             runs  = int(self.e_night_runs.get())
-            total = 6 * 3 * runs
-            # Distribuição ponderada por cada 6 cenários × runs
+            n_scen = self._night_n_scenarios()
+            total = n_scen * 3 * runs
+            # Distribuição ponderada pelos cenários SELECIONADOS × runs
             w_sum = self.PPO_TIME_WEIGHT + self.SAC_TIME_WEIGHT + self.GNN_TIME_WEIGHT
-            weighted_slots = 6 * runs * w_sum
+            weighted_slots = n_scen * runs * w_sum
             min_base = max(1, int(horas * 60 / weighted_slots))
             min_sac  = max(1, int(min_base * self.SAC_TIME_WEIGHT))
             min_ppo  = max(1, int(min_base * self.PPO_TIME_WEIGHT))
             min_gnn  = max(1, int(min_base * self.GNN_TIME_WEIGHT))
             self.lbl_night_est.configure(
                 text=f"SAC ~{min_sac} min  ·  PPO ~{min_ppo} min  ·  GNN ~{min_gnn} min  ·  "
-                     f"{total} runs  ·  {horas}h")
+                     f"{total} runs ({n_scen} cenários)  ·  {horas}h")
         except (ValueError, AttributeError):
             pass
 
@@ -1045,11 +1057,18 @@ class SwarmController(ctk.CTk):
 
     def _start_night(self):
         self._save_config()
+        sel = [k for k, v in getattr(self, "_night_scen_vars", {}).items() if v.get()]
+        if not sel:
+            self.btn_night.configure(text="⚠  Escolhe pelo menos 1 cenário", fg_color="#B91C1C")
+            self.after(2500, lambda: self.btn_night.configure(
+                text="🚀  INICIAR ROTINA NOTURNA", fg_color="#D97706"))
+            return
         try:
             horas = float(self.e_night_hours.get())
             runs  = int(self.e_night_runs.get())
+            n_scen = len(sel)
             w_sum = self.PPO_TIME_WEIGHT + self.SAC_TIME_WEIGHT + self.GNN_TIME_WEIGHT
-            weighted_slots = 6 * runs * w_sum
+            weighted_slots = n_scen * runs * w_sum
             min_base = max(1, int(horas * 60 / weighted_slots))
             min_sac  = max(1, int(min_base * self.SAC_TIME_WEIGHT))
             min_ppo  = max(1, int(min_base * self.PPO_TIME_WEIGHT))
@@ -1058,7 +1077,8 @@ class SwarmController(ctk.CTk):
             return
         self._run_script(self._get_paths()["run_exp"],
                          ["--runs", str(runs), "--time", str(min_sac),
-                          "--time-ppo", str(min_ppo), "--time-gnn", str(min_gnn)])
+                          "--time-ppo", str(min_ppo), "--time-gnn", str(min_gnn),
+                          "--scenarios", ",".join(sel)])
         self.btn_night.configure(text="✔  Rotina Iniciada (background)", fg_color="#065F46")
         self.after(4000, lambda: self.btn_night.configure(
             text="🚀  INICIAR ROTINA NOTURNA", fg_color="#D97706"))
