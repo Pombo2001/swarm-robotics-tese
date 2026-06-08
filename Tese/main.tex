@@ -493,7 +493,7 @@ A política ótima verifica a \textbf{Equação de Bellman de Optimalidade}:
 \end{equation}
 
 \paragraph{Extensão para Dec-POMDP em Enxames:}
-Em sistemas multiagente, o estado global $s \in \mathcal{S}$ é inacessível a qualquer robô individual. O problema estende-se para o \textbf{Processo de Decisão de Markov Parcialmente Observável Descentralizado (Dec-POMDP)}, definido pela tupla $\langle \mathcal{N}, \mathcal{S}, \{\mathcal{A}_i\}_{i \in \mathcal{N}}, \mathcal{P}, \mathcal{R}, \Omega, \{\mathcal{O}_i\}_{i \in \mathcal{N}}, \gamma \rangle$, onde $\mathcal{N} = \{1,\ldots,N\}$ é o conjunto de agentes, $\Omega$ é o espaço de observações conjuntas, e $\mathcal{O}_i(s) \in \mathbb{R}^{107}$ é a observação local e parcial do agente $i$ \cite{oliehoek2016concise, sutton2018reinforcement, huh2023marl}. Cada robô mantém uma política descentralizada $\pi_i(a_i \mid o_i)$ e o objetivo coletivo é maximizar o retorno conjunto:
+Em sistemas multiagente, o estado global $s \in \mathcal{S}$ é inacessível a qualquer robô individual. O problema estende-se para o \textbf{Processo de Decisão de Markov Parcialmente Observável Descentralizado (Dec-POMDP)}, definido pela tupla $\langle \mathcal{N}, \mathcal{S}, \{\mathcal{A}_i\}_{i \in \mathcal{N}}, \mathcal{P}, \mathcal{R}, \Omega, \{\mathcal{O}_i\}_{i \in \mathcal{N}}, \gamma \rangle$, onde $\mathcal{N} = \{1,\ldots,N\}$ é o conjunto de agentes, $\Omega$ é o espaço de observações conjuntas, e $\mathcal{O}_i(s) \in \mathbb{R}^{111}$ é a observação local e parcial do agente $i$ \cite{oliehoek2016concise, sutton2018reinforcement, huh2023marl}. Cada robô mantém uma política descentralizada $\pi_i(a_i \mid o_i)$ e o objetivo coletivo é maximizar o retorno conjunto:
 \begin{equation}
     J(\pi_1, \ldots, \pi_N) = \mathbb{E}\!\left[\sum_{t=0}^{\infty} \gamma^t \mathcal{R}(s_t, \mathbf{a}_t)\right], \quad \mathbf{a}_t = (a_1^t, \ldots, a_N^t)
     \label{eq:dec_pomdp_obj}
@@ -802,7 +802,7 @@ A Figura \ref{fig:sim_arch} ilustra o fluxo de dados em ciclo fechado do simulad
     
     % Arrows
     \draw [arrow] (env.west) -| node[label, xshift=-1.5cm, yshift=1cm] {Extração de estado local (Parcial)} (obs.north);
-    \draw [arrow] (obs.south) |- node[label, xshift=-1cm, yshift=-0.4cm] {Vetor $\mathbf{o}_i$ (107 vars)} (agent.west);
+    \draw [arrow] (obs.south) |- node[label, xshift=-1cm, yshift=-0.4cm] {Vetor $\mathbf{o}_i$ (111 vars)} (agent.west);
     \draw [arrow] (agent.east) -| node[label, xshift=1.2cm, yshift=-1cm] {Ação contínua $\mathbf{a}_i$} (physics.south);
     \draw [arrow] (physics.north) |- node[label, xshift=0.8cm, yshift=0.4cm] {Atualização de posições e Penalizações} (env.east);
     
@@ -850,21 +850,23 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
 \textbf{Evolutivo (AE)} & Tamanho da População ($K$) & $30$ genomas \\
  & Taxa de Mutação ($p_{mut}$) & $0.1$ \\
  & Desvio Padrão Inicial ($\sigma$) & $0.1$ (Decaimento: $\times 0.995$) \\
- & Episódios de Avaliação por Genoma & $3$ (média) \\ \hline
+ & Episódios de Avaliação por Genoma & $1$ \\
+ & Dimensão Oculta da Rede ($h$) & $32$ ($\approx 8$k pesos) \\ \hline
 \end{tabular}
 \end{table}
 
 \subsection{Espaço de Observação}
 \label{sec:obs_space}
-As observações de cada agente são estritamente locais, parciais e expressas num referencial \textbf{egocêntrico} (relativo à orientação atual do próprio robô). O vetor de observação tem dimensão $d_{obs} = 12 + (N-1) \times 5 = 107$ (para $N=20$ agentes) e está estruturado em três componentes:
+As observações de cada agente são estritamente locais, parciais e expressas num referencial \textbf{egocêntrico} (relativo à orientação atual do próprio robô). O vetor de observação tem dimensão $d_{obs} = 16 + (N-1) \times 5 = 111$ (para $N=20$ agentes) e está estruturado em quatro componentes:
 
 \begin{equation}
-    \mathbf{o}_i = \big[ \mathbf{v}_{nest, i}, \, d_{nest, i}, \, \mathbf{l}_i, \, \mathbf{n}_{1, i}, \dots, \mathbf{n}_{19, i} \big] \in \mathbb{R}^{107}
+    \mathbf{o}_i = \big[ \mathbf{v}_{nest, i}, \, d_{nest, i}, \, \mathbf{l}_i, \, \mathbf{v}_{porta, i}, \, d_{porta, i}, \, \mathbf{n}_{1, i}, \dots, \mathbf{n}_{19, i} \big] \in \mathbb{R}^{111}
 \end{equation}
 
 \begin{enumerate}
     \item \textbf{Direção e Distância ao Ninho ($4$ valores):} Projeção do vetor direcional unitário do ninho nos eixos egocêntricos Frontal ($F$), Direito ($R$) e Superior ($U$) do robô, mais a distância normalizada ($d / 2r_{arena}$). Esta informação de \textbf{homing} está sempre disponível, mesmo quando existem muros entre o agente e o ninho. Este pressuposto é padrão em robótica de enxame --- assume-se um sentido global de orientação para a base (análogo à bússola magnética dos pombos, à orientação solar das formigas ou ao GPS de drones), mas \textbf{nunca} um mapa prévio dos obstáculos. A parcialidade da observação é assim mantida ao nível dos obstáculos (detetáveis apenas localmente pelo LiDAR), e não ao nível do objetivo. Esta opção corrige uma limitação de uma versão anterior, em que a direção era anulada na ausência de linha de visão, o que cegava os agentes em todos os cenários com paredes e os impedia de aprender a contornar.
     \item \textbf{LiDAR Horizontal ($8$ valores, vetor $\mathbf{l}_i$):} Oito raios medidos em plano horizontal, uniformemente distribuídos a 360\textdegree{}, com alcance máximo de 5\,m. O valor devolvido é $1 - (d_{hit} / d_{max})$, onde $1.0$ significa impacto iminente.
+    \item \textbf{Direção e Distância à Porta/Entrada ($4$ valores, $\mathbf{v}_{porta, i}$ e $d_{porta, i}$):} Direção egocêntrica e distância normalizada à porta-objetivo do cenário, preenchidas \textbf{apenas} nos cenários com uma porta física definida (Porta Cooperativa); nos restantes são nulas. A porta é um sub-objetivo explícito do cenário --- tal como o ninho ---, pelo que a indicar não constitui revelar o trajeto. Distingue-se assim de fornecer \textit{waypoints} das passagens dos labirintos, o que equivaleria a um planeador externo e quebraria a observabilidade parcial.
     \item \textbf{Vetor de Vizinhos ($19 \times 5 = 95$ valores, vetores $\mathbf{n}_{j, i}$):} Para os restantes 19 agentes, envia-se o vetor de direção local ($3$ valores), distância normalizada ($1$ valor) e um sinal binário de comunicação ($1$ valor). Este último é ativado ($1.0$) quando o vizinho atinge o ninho e se encontra a repousar, servindo como mecanismo de recrutamento estigmérgico.
 \end{enumerate}
 
@@ -968,7 +970,7 @@ A viabilidade do RL depende de ciclos de simulação contínuos em ordem de mili
 O extrator de relações entre robôs foi implementado de raiz em \textbf{PyTorch puro} (sem recurso a bibliotecas de grafos como o PyTorch Geometric), através de um mecanismo de \textbf{atenção de produto interno escalado} sobre o conjunto de vizinhos, conforme formalizado nas Equações~\ref{eq:qkv}--\ref{eq:msg_pool}.
 \begin{itemize}
     \item \textbf{Representação Densa do Vizinhança:} A cada passo, cada agente $i$ observa os restantes $N-1$ agentes através de um vetor de \textit{features} de dimensão fixa (direção egocêntrica, distância normalizada e sinal de comunicação por vizinho). Diferentemente de uma abordagem baseada em arestas esparsas com raio de comunicação fixo, todos os vizinhos são apresentados ao módulo de atenção, sendo a \textbf{relevância de cada um aprendida} pelos coeficientes $\alpha_{ij}$ --- a rede atribui dinamicamente pesos próximos de zero aos vizinhos irrelevantes, dispensando um corte geométrico explícito.
-    \item \textbf{Dimensão Fixa e \textit{Parameter Sharing}:} Como a representação tem dimensão fixa ($\mathbb{R}^{107}$), a integração em \textit{batches} de treino é direta, sem necessidade de \textit{padding} dinâmico ou conversão para listas de índices. As projeções \textit{Query}-\textit{Key}-\textit{Value} e o \textit{softmax} operam sobre o número de vizinhos presentes, pelo que a mesma rede processa enxames de qualquer dimensão --- viabilizando o \textit{Zero-Shot Transfer} para $N \in \{10, 50, 100\}$ sem retreino.
+    \item \textbf{Dimensão Fixa e \textit{Parameter Sharing}:} Como a representação tem dimensão fixa ($\mathbb{R}^{111}$), a integração em \textit{batches} de treino é direta, sem necessidade de \textit{padding} dinâmico ou conversão para listas de índices. As projeções \textit{Query}-\textit{Key}-\textit{Value} e o \textit{softmax} operam sobre o número de vizinhos presentes, pelo que a mesma rede processa enxames de qualquer dimensão --- viabilizando o \textit{Zero-Shot Transfer} para $N \in \{10, 50, 100\}$ sem retreino.
 \end{itemize}
 
 \subsection{Ambientes Vetorizados e Paralelização Multiprocesso}
@@ -988,7 +990,7 @@ A primeira abordagem investigada fundamenta-se no \textit{framework} \textbf{Rob
     \langle \mathcal{N}, \mathcal{S}, \{\mathcal{A}_i\}_{i \in \mathcal{N}}, \mathcal{P}, \mathcal{R}, \Omega, \{\mathcal{O}_i\}_{i \in \mathcal{N}}, \gamma \rangle
 \end{equation}
 
-Sob o RS2C investigam-se dois algoritmos de aprendizagem por reforço profundo padrão: \textbf{PPO} (\textit{on-policy}) e \textbf{SAC} (\textit{off-policy}). Em ambos, os $N$ agentes partilham uma única política (\textit{parameter sharing}) que recebe a observação local de dimensão fixa $\mathbf{o}_i \in \mathbb{R}^{107}$ --- a qual já codifica, em formato \textit{dense}, as \textit{features} de toda a vizinhança (Secção~\ref{sec:obs_space}). Na implementação atual, esta política partilhada é uma rede totalmente ligada (MLP $[256, 256]$, da \textit{Stable-Baselines3}); o \textbf{mecanismo de atenção sobre grafo} formalizado no Capítulo~\ref{ch:fundamentos} é instanciado no controlador neuroevolutivo (Secção~\ref{sec:algo_evolutivo}), sendo a base da invariância à permutação e da capacidade de \textit{Zero-Shot Transfer} aí avaliadas. A integração direta do módulo de atenção numa política treinável por gradiente constitui uma extensão natural deixada para trabalho futuro (Secção~\ref{sec:limitacoes}).
+Sob o RS2C investigam-se dois algoritmos de aprendizagem por reforço profundo padrão: \textbf{PPO} (\textit{on-policy}) e \textbf{SAC} (\textit{off-policy}). Em ambos, os $N$ agentes partilham uma única política (\textit{parameter sharing}) que recebe a observação local de dimensão fixa $\mathbf{o}_i \in \mathbb{R}^{111}$ --- a qual já codifica, em formato \textit{dense}, as \textit{features} de toda a vizinhança (Secção~\ref{sec:obs_space}). Na implementação atual, esta política partilhada é uma rede totalmente ligada (MLP $[256, 256]$, da \textit{Stable-Baselines3}); o \textbf{mecanismo de atenção sobre grafo} formalizado no Capítulo~\ref{ch:fundamentos} é instanciado no controlador neuroevolutivo (Secção~\ref{sec:algo_evolutivo}), sendo a base da invariância à permutação e da capacidade de \textit{Zero-Shot Transfer} aí avaliadas. A integração direta do módulo de atenção numa política treinável por gradiente constitui uma extensão natural deixada para trabalho futuro (Secção~\ref{sec:limitacoes}).
 
 \subsection{Configuração PPO (\textit{On-Policy})}
 
@@ -1009,8 +1011,8 @@ O SAC opera em modo \textit{off-policy}: as experiências acumulam-se assincrona
 A cada passo de simulação, o vetor de observação de cada agente é construído em \texttt{swarm\_env\_3d.py}:
 \begin{enumerate}
     \item \textbf{Vizinhança Completa:} As \textit{features} de todos os restantes $N-1$ agentes (direção egocêntrica, distância normalizada e sinal de comunicação) são incluídas no vetor de observação $\mathbf{o}_i$. Não é aplicado um corte por raio de comunicação fixo: a seleção dos vizinhos relevantes é delegada no mecanismo de atenção, que aprende os pesos $\alpha_{ij}$.
-    \item \textbf{Representação \textit{Dense} de Dimensão Fixa:} O vetor $\mathbf{o}_i \in \mathbb{R}^{107}$ incorpora os $N-1$ vizinhos em formato \textit{dense}, preservando uma dimensão de entrada constante e dispensando estruturas esparsas (\textit{edge-index}) ou \textit{padding} dinâmico.
-    \item \textbf{Dimensão de Entrada Fixa (PPO/SAC):} A política MLP partilhada recebe um vetor de dimensão \textbf{fixa} $\mathbb{R}^{107}$, definida para $N=20$ agentes. Por construção, esta abordagem \textbf{não é invariante} ao tamanho do enxame: alterar $N$ modifica a dimensão da observação ($12 + (N-1)\times 5$) e inviabiliza a aplicação direta da rede. A invariância à permutação e o \textit{Zero-Shot Transfer} para $N \in \{10, 50, 100\}$ são propriedades do mecanismo de atenção (Equações~\ref{eq:qkv} e~\ref{eq:attention_scores}), cujas operações QKV e \textit{softmax} se definem sobre o número de vizinhos presentes; são, por isso, avaliados no controlador neuroevolutivo (Secção~\ref{sec:algo_evolutivo}).
+    \item \textbf{Representação \textit{Dense} de Dimensão Fixa:} O vetor $\mathbf{o}_i \in \mathbb{R}^{111}$ incorpora os $N-1$ vizinhos em formato \textit{dense}, preservando uma dimensão de entrada constante e dispensando estruturas esparsas (\textit{edge-index}) ou \textit{padding} dinâmico.
+    \item \textbf{Dimensão de Entrada Fixa (PPO/SAC):} A política MLP partilhada recebe um vetor de dimensão \textbf{fixa} $\mathbb{R}^{111}$, definida para $N=20$ agentes. Por construção, esta abordagem \textbf{não é invariante} ao tamanho do enxame: alterar $N$ modifica a dimensão da observação ($12 + (N-1)\times 5$) e inviabiliza a aplicação direta da rede. A invariância à permutação e o \textit{Zero-Shot Transfer} para $N \in \{10, 50, 100\}$ são propriedades do mecanismo de atenção (Equações~\ref{eq:qkv} e~\ref{eq:attention_scores}), cujas operações QKV e \textit{softmax} se definem sobre o número de vizinhos presentes; são, por isso, avaliados no controlador neuroevolutivo (Secção~\ref{sec:algo_evolutivo}).
 \end{enumerate}
 
 \section{Algoritmo 2: Otimização Bio-inspirada (Benchmark)}
@@ -1310,7 +1312,7 @@ SAC & N/A$^{\dagger}$ & \dots & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
 \end{tabular}
 
 \vspace{0.4em}
-{\footnotesize $^{\dagger}$ A política MLP do PPO/SAC tem dimensão de entrada fixa ($\mathbb{R}^{107}$, para $N=20$), sendo incompatível com outras dimensões de enxame. Só a arquitetura de atenção sobre grafo (controlador evolutivo) suporta a transferência \textit{Zero-Shot}.}
+{\footnotesize $^{\dagger}$ A política MLP do PPO/SAC tem dimensão de entrada fixa ($\mathbb{R}^{111}$, para $N=20$), sendo incompatível com outras dimensões de enxame. Só a arquitetura de atenção sobre grafo (controlador evolutivo) suporta a transferência \textit{Zero-Shot}.}
 \end{table}
 
 \begin{figure}[H]
