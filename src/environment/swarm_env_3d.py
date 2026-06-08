@@ -33,6 +33,10 @@ class SwarmForagingEnv3D(gym.Env):
         self.max_steps = env_config.get('max_steps', 500)
 
         self.robot_radius = self.config['physics'].get('agent_radius', 0.15)
+        # Penalização de colisão física inter-agente (sobreposição real). Ensina
+        # os agentes a NÃO chocarem entre si, complementando a separação física
+        # (que apenas os empurra). Proporcional à penetração.
+        self.collision_penalty = self.config['physics'].get('collision_penalty', -1.0)
         self.obstacle_radius = env_config.get('obstacle_radius', 0.2)
         self.obstacle_velocity_magnitude = env_config.get('obstacle_velocity', 0.02)
         self.obstacle_velocities = []
@@ -145,6 +149,7 @@ class SwarmForagingEnv3D(gym.Env):
         self.steps = 0
         self.deaths_count = 0
         self.total_food_collected = 0
+        self.total_collisions = 0
         self.current_nest_occupancy = 0
         self.signaling = np.zeros(self.num_agents)
         self.walls = []
@@ -672,6 +677,7 @@ class SwarmForagingEnv3D(gym.Env):
         # em zonas de cooperação onde a tarefa exige proximidade (junto ao ninho,
         # ao alvo móvel, ou à push zone da porta), senão sabotava required_to_eat.
         self._spreading_penalties = np.zeros(self.num_agents)
+        self._collision_penalties = np.zeros(self.num_agents)
         min_sep = self.robot_radius * 2
         spread_dist = self.min_spread_distance
 
@@ -699,10 +705,17 @@ class SwarmForagingEnv3D(gym.Env):
                                      np.random.uniform(-0.05, 0.05), 0.0])
                     dist = np.linalg.norm(diff) + 1e-6
                 if dist < min_sep:
+                    # COLISÃO física (sobreposição): separa E penaliza sempre — chocar
+                    # é indesejado mesmo nas zonas de cooperação. Proporcional à penetração.
                     push = (diff / dist) * (min_sep - dist) * 0.5
                     self.agent_positions[i] += push
                     self.agent_positions[j] -= push
-                if dist < spread_dist and not (in_coop_zone[i] or in_coop_zone[j]):
+                    col = abs(self.collision_penalty) * (1.0 - dist / min_sep)
+                    self._collision_penalties[i] += col
+                    self._collision_penalties[j] += col
+                    self.total_collisions += 1
+                elif dist < spread_dist and not (in_coop_zone[i] or in_coop_zone[j]):
+                    # PROXIMIDADE (sem sobreposição): anti-clustering só na navegação.
                     pen = self.spreading_penalty_factor * (1.0 - dist / spread_dist)
                     self._spreading_penalties[i] += pen
                     self._spreading_penalties[j] += pen
@@ -797,6 +810,8 @@ class SwarmForagingEnv3D(gym.Env):
             if obstacle_hits[agent]: rewards[agent] += self.obstacle_penalty
             if self._spreading_penalties[idx] > 0:
                 rewards[agent] -= self._spreading_penalties[idx]
+            if self._collision_penalties[idx] > 0:
+                rewards[agent] -= self._collision_penalties[idx]
 
             # ── Hunger / respawn ─────────────────────────────────────────────
             # Nos cenários de LABIRINTO o teleporte por hunger era "farmável":
