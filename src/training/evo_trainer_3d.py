@@ -161,7 +161,10 @@ class GeneticTrainer3D:
         os.chmod(self.history_file, 0o666)
 
     def train(self):
-        num_cores = min(8, cpu_count())
+        # Avalia a população toda em paralelo (1 genoma por núcleo). Em servidores
+        # com muitos núcleos, isto reduz drasticamente o tempo por geração —
+        # crucial para a neuroevolução, que precisa de muitas gerações.
+        num_cores = min(self.pop_size, cpu_count())
 
         print(f"[START] Treino GNN 3D Iniciado (Meta: Orcamento de {self.time_limit_seconds / 60:.1f} minutos)")
         print(f"[ACELERACAO] {num_cores} NUCLEOS DO RYZEN A AVALIAR EM PARALELO!")

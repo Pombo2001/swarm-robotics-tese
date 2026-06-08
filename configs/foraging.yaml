@@ -43,7 +43,7 @@ ppo:
   net_arch:
   - 256
   - 256
-  num_cpu: 8
+  num_cpu: 16
 rewards:
   energy_cost: -0.05
   food_collected: 100.0
@@ -58,7 +58,7 @@ sac:
   net_arch:
   - 256
   - 256
-  num_cpu: 8
+  num_cpu: 16
 simulation:
   guillotine_threshold: -200
   max_steps: 500
