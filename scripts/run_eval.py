@@ -41,6 +41,12 @@ SCENARIO_LABELS = {
 }
 
 
+def _incompat(path, detalhe):
+    return RuntimeError(
+        f"{os.path.basename(path)} INCOMPATÍVEL com a observação/rede atuais ({detalhe}). "
+        f"Foi treinado antes da mudança B1 (observação 107->111) / GNN. É preciso RETREINAR.")
+
+
 def load_model(algo, scenario, config_path):
     suffix = f"_{scenario}" if scenario and scenario != "none" else ""
 
@@ -53,33 +59,32 @@ def load_model(algo, scenario, config_path):
             os.path.join(PROJECT_ROOT, "results", "models", "gnn_3d_best.pth"),
         ]:
             if os.path.exists(path):
-                agent.load_state_dict(torch.load(path, weights_only=True))
+                try:
+                    agent.load_state_dict(torch.load(path, weights_only=True))
+                except RuntimeError:
+                    raise _incompat(path, "tamanhos da rede diferentes")
                 agent.eval()
                 print(f"[OK] GNN carregado: {path}")
                 return agent
         raise FileNotFoundError("Modelo GNN nao encontrado em results/models/")
 
-    elif algo == "ppo":
-        from stable_baselines3 import PPO
+    elif algo in ("ppo", "sac"):
+        from stable_baselines3 import PPO, SAC
+        cls = PPO if algo == "ppo" else SAC
+        sub = "models_ppo" if algo == "ppo" else "models_sac"
+        exp_obs = SwarmForagingEnv3D(config_path=config_path).observation_space_val.shape[0]
         for path in [
-            os.path.join(PROJECT_ROOT, "results", "models_ppo", f"ppo_3d_final{suffix}.zip"),
-            os.path.join(PROJECT_ROOT, "results", "models_ppo", "ppo_3d_final.zip"),
+            os.path.join(PROJECT_ROOT, "results", sub, f"{algo}_3d_final{suffix}.zip"),
+            os.path.join(PROJECT_ROOT, "results", sub, f"{algo}_3d_final.zip"),
         ]:
             if os.path.exists(path):
-                print(f"[OK] PPO carregado: {path}")
-                return PPO.load(path)
-        raise FileNotFoundError("Modelo PPO nao encontrado em results/models_ppo/")
-
-    elif algo == "sac":
-        from stable_baselines3 import SAC
-        for path in [
-            os.path.join(PROJECT_ROOT, "results", "models_sac", f"sac_3d_final{suffix}.zip"),
-            os.path.join(PROJECT_ROOT, "results", "models_sac", "sac_3d_final.zip"),
-        ]:
-            if os.path.exists(path):
-                print(f"[OK] SAC carregado: {path}")
-                return SAC.load(path)
-        raise FileNotFoundError("Modelo SAC nao encontrado em results/models_sac/")
+                model = cls.load(path)
+                got = model.observation_space.shape[0]
+                if got != exp_obs:
+                    raise _incompat(path, f"obs do modelo={got} vs atual={exp_obs}")
+                print(f"[OK] {algo.upper()} carregado: {path}")
+                return model
+        raise FileNotFoundError(f"Modelo {algo.upper()} nao encontrado em results/{sub}/")
 
 
 def run_episode(env, algo, model, seed=None):

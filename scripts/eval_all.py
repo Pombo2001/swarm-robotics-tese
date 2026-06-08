@@ -42,25 +42,31 @@ def load_model(algo, scenario, config_path):
                   "results/models/gnn_3d_best.pth"]:
             fp = os.path.join(PROJECT_ROOT, p)
             if os.path.exists(fp):
-                agent.load_state_dict(torch.load(fp, weights_only=True))
+                try:
+                    agent.load_state_dict(torch.load(fp, weights_only=True))
+                except RuntimeError:
+                    print(f"  [!] {os.path.basename(fp)} INCOMPATÍVEL com a observação/rede "
+                          f"atuais (treinado antes da mudança B1/GNN). RETREINA. — saltado")
+                    return None, None
                 agent.eval()
                 return agent, fp
         return None, None
-    elif algo == "ppo":
-        from stable_baselines3 import PPO
-        for p in [f"results/models_ppo/ppo_3d_final{suffix}.zip",
-                  "results/models_ppo/ppo_3d_final.zip"]:
+    elif algo in ("ppo", "sac"):
+        from stable_baselines3 import PPO, SAC
+        cls = PPO if algo == "ppo" else SAC
+        sub = "models_ppo" if algo == "ppo" else "models_sac"
+        exp_obs = SwarmForagingEnv3D(config_path=config_path).observation_space_val.shape[0]
+        for p in [f"results/{sub}/{algo}_3d_final{suffix}.zip",
+                  f"results/{sub}/{algo}_3d_final.zip"]:
             fp = os.path.join(PROJECT_ROOT, p)
             if os.path.exists(fp):
-                return PPO.load(fp), fp
-        return None, None
-    elif algo == "sac":
-        from stable_baselines3 import SAC
-        for p in [f"results/models_sac/sac_3d_final{suffix}.zip",
-                  "results/models_sac/sac_3d_final.zip"]:
-            fp = os.path.join(PROJECT_ROOT, p)
-            if os.path.exists(fp):
-                return SAC.load(fp), fp
+                model = cls.load(fp)
+                got = model.observation_space.shape[0]
+                if got != exp_obs:
+                    print(f"  [!] {os.path.basename(fp)} INCOMPATÍVEL: obs do modelo={got} "
+                          f"vs atual={exp_obs} (treinado antes da mudança B1). RETREINA. — saltado")
+                    return None, None
+                return model, fp
         return None, None
 
 
