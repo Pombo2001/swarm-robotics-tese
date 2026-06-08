@@ -58,8 +58,26 @@ def set_scenario(scenario_name):
     except Exception as e:
         print(f"[!] Erro ao configurar cenário: {e}")
 
+# Backup/retoma: regista cada treino (cenário|algo|run) já concluído, para
+# poder RETOMAR após um crash sem repetir o que já foi feito (treinos de dias).
+PROGRESS_SESSION = os.path.join(BASE_DIR, 'results', 'logs', '_sessao_treino.txt')
+
+
+def _load_done():
+    if os.path.exists(PROGRESS_SESSION):
+        with open(PROGRESS_SESSION, encoding='utf-8') as f:
+            return set(l.strip() for l in f if l.strip())
+    return set()
+
+
+def _mark_done(key):
+    os.makedirs(os.path.dirname(PROGRESS_SESSION), exist_ok=True)
+    with open(PROGRESS_SESSION, 'a', encoding='utf-8') as f:
+        f.write(key + '\n')
+
+
 def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
-                    time_overrides=None, eval_episodes=20):
+                    time_overrides=None, eval_episodes=20, resume=False):
     if algorithms is None:
         algorithms = ALGORITHMS
     if scenarios is None:
@@ -70,10 +88,20 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
     curves_data = []
     best_scores_data = []
 
+    # Retoma: se --resume, salta os treinos já concluídos; senão começa do zero.
+    done = _load_done() if resume else set()
+    if not resume and os.path.exists(PROGRESS_SESSION):
+        try:
+            os.remove(PROGRESS_SESSION)
+        except Exception:
+            pass
+
     print(f"Iniciando Automacao de Experiencias:")
     print(f"Runs: {num_runs} | Tempo base: {time_limit}m | Cenários: {len(scenarios)} | Algoritmos: {list(algorithms.keys())}")
     if time_overrides:
         print(f"Tempos especificos por algoritmo: {time_overrides}")
+    if resume and done:
+        print(f"[RETOMA] {len(done)} treinos já concluídos serão saltados.")
 
     for scenario in scenarios:
         set_scenario(scenario)
@@ -86,6 +114,10 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
             algo_time = time_overrides.get(algo_name, time_limit)
 
             for run in range(1, num_runs + 1):
+                key = f"{scenario}|{algo_name}|{run}"
+                if key in done:
+                    print(f"[SKIP] já concluído nesta sessão: {key}")
+                    continue
                 print(f"\n--- A EXECUTAR | Cenário: {scenario} | Algoritmo: {algo_name} | Run: {run}/{num_runs} | {algo_time}m ---")
 
                 if os.path.exists(log_path):
@@ -133,6 +165,8 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
                         print(f"[!] Erro ao ler CSV do {algo_name} Run {run}: {e}")
                 else:
                     print(f"[!] Ficheiro de log {log_path} nao encontrado apos a execucao.")
+
+                _mark_done(key)   # treino concluído → retomável se houver crash
 
     df_curves = pd.DataFrame(curves_data)
     df_best = pd.DataFrame(best_scores_data)
@@ -242,6 +276,9 @@ if __name__ == '__main__':
                         help="Cenários separados por vírgula. Omitir = todos.")
     parser.add_argument("--eval-episodes", type=int, default=20,
                         help="Episódios de avaliação no fim do treino (0 = não avaliar)")
+    parser.add_argument("--resume", action="store_true",
+                        help="Retomar: salta os treinos (cenário|algo|run) já concluídos "
+                             "registados em results/logs/_sessao_treino.txt (útil após crash)")
     args = parser.parse_args()
 
     # Filter algorithms
@@ -271,4 +308,5 @@ if __name__ == '__main__':
 
     run_experiments(num_runs=args.runs, time_limit=args.time,
                     algorithms=algos, scenarios=scenarios,
-                    time_overrides=overrides, eval_episodes=args.eval_episodes)
+                    time_overrides=overrides, eval_episodes=args.eval_episodes,
+                    resume=args.resume)

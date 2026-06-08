@@ -454,6 +454,24 @@ def create_thesis_plots_3d():
     except Exception as e:
         print(f"[!] Mapas 3D nao gerados (nao critico): {e}")
 
+    # ==============================================================
+    # 7. ARQUIVAR MODELOS na pasta da sessão (backup + permite visualizar/comparar
+    #    este treino mesmo depois de novos treinos sobrescreverem results/models*).
+    #    Torna a pasta da sessão AUTO-CONTIDA: gráficos + heatmaps + mapas + modelos.
+    # ==============================================================
+    set_progress(0.97, "A arquivar modelos da sessão...")
+    try:
+        mdl_dest = os.path.join(output_dir, 'modelos')
+        n_mdl = 0
+        for sub in ('models', 'models_ppo', 'models_sac'):
+            src = os.path.join(base_dir, 'results', sub)
+            if os.path.isdir(src):
+                shutil.copytree(src, os.path.join(mdl_dest, sub), dirs_exist_ok=True)
+                n_mdl += len([f for f in os.listdir(src) if f.endswith(('.pth', '.zip'))])
+        print(f"[*] {n_mdl} modelos arquivados em: {mdl_dest}")
+    except Exception as e:
+        print(f"[!] Falha a arquivar modelos (nao critico): {e}")
+
     set_progress(1.0, "Concluído")
     print(f"\n[*] Concluido! Tudo guardado em: {output_dir}")
     clear_progress()
