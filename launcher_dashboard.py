@@ -1092,7 +1092,7 @@ class SwarmController(ctk.CTk):
     def _plot_thesis(self):
         self._run_script(self._get_paths()["plot"])
 
-    def _render_maps(self):
+    def _render_maps(self): 
         # Gera as duas vistas (isométrica + topo) dos 6 mapas e abre a pasta no fim.
         self._run_script(self._get_paths()["render_maps"], ["--camera", "both", "--open"])
 
