@@ -235,3 +235,18 @@ data/
 *.csv
 *.log
 .DS_Store
+
+# Config local do Claude Code (especifico da maquina)
+.claude/
+
+# Auxiliares de compilacao LaTeX (regeneraveis)
+*.bcf
+*.run.xml
+*.synctex
+*.synctex(busy)
+*.synctex.gz
+*.aux
+*.lof
+*.lot
+*.out
+*.toc
