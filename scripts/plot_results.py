@@ -76,12 +76,19 @@ def create_thesis_plots_3d():
         sns.set_theme(style="whitegrid")
         
         # ==============================================================
-        # 1. Gráficos "1 MAPA, 3 MODELOS" — eixo X normalizado [0→100%]
-        #    Cada algoritmo tem unidades diferentes (GNN: passos evolutivos;
-        #    PPO/SAC: timesteps de política). Normalizar para progresso relativo
-        #    permite comparação justa na mesma figura.
+        # 1. Gráficos "1 MAPA, 3 MODELOS" — PAINÉIS SEPARADOS por algoritmo.
+        #    Cada algoritmo tem unidades diferentes E métricas diferentes (GNN:
+        #    fitness evolutiva em dezenas de milhar; PPO/SAC: recompensa episódica).
+        #    Sobrepô-los no mesmo eixo Y é enganador (escalas incomparáveis). Por
+        #    isso usamos um subplot por algoritmo, cada um com o SEU eixo Y; o eixo
+        #    X é o progresso do treino normalizado [0→100%], esse sim comparável.
         # ==============================================================
         palette_models = {'GNN': '#2E7D32', 'PPO': '#E65100', 'SAC': '#0277BD'}
+        ylabel_models = {
+            'GNN': 'Fitness Evolutiva (melhor genoma)',
+            'PPO': 'Recompensa Episódica',
+            'SAC': 'Recompensa Episódica',
+        }
         scenarios = df_curves['Scenario'].unique()
         print(f"[*] Encontrados dados de {len(scenarios)} cenários no Treino Noturno.")
 
@@ -99,28 +106,39 @@ def create_thesis_plots_3d():
             label_pt = SCENARIO_LABELS_PT.get(scenario, scenario.upper())
             desc     = MAP_DESCRIPTIONS.get(scenario, "")
 
-            fig, ax = plt.subplots(figsize=(11, 7))
-            sns.lineplot(data=df_scen, x='TrainingProgress', y='Score', hue='Algorithm',
-                         palette=palette_models, linewidth=2.5, errorbar='sd', ax=ax)
+            algos_here = [a for a in ['GNN', 'PPO', 'SAC']
+                          if a in df_scen['Algorithm'].unique()]
+            if not algos_here:
+                continue
 
-            ax.set_title(f'Comparação de Desempenho — {label_pt}',
-                         fontsize=15, fontweight='bold', pad=14)
-            ax.set_xlabel('Progresso do Treino (%)', fontsize=11)
-            ax.set_ylabel('Recompensa Média por Episódio', fontsize=11)
-            ax.set_xlim(0, 100)
-            ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0f}%'))
-            ax.legend(title="Algoritmo", loc='lower right', fontsize=11)
-            ax.grid(True, linestyle='--', alpha=0.5)
+            fig, axes = plt.subplots(1, len(algos_here),
+                                     figsize=(5.2 * len(algos_here), 6), squeeze=False)
+            axes = axes[0]
+            for ax, algo in zip(axes, algos_here):
+                df_a = df_scen[df_scen['Algorithm'] == algo]
+                sns.lineplot(data=df_a, x='TrainingProgress', y='Score',
+                             color=palette_models[algo], linewidth=2.5,
+                             errorbar='sd', ax=ax)
+                ax.set_title(algo, fontsize=13, fontweight='bold')
+                ax.set_xlabel('Progresso do Treino (%)', fontsize=10)
+                ax.set_ylabel(ylabel_models.get(algo, 'Score'), fontsize=10)
+                ax.set_xlim(0, 100)
+                ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0f}%'))
+                ax.grid(True, linestyle='--', alpha=0.5)
 
-            caption = ("Eixo X normalizado (0%→100% do treino de cada algoritmo) para comparação justa. "
-                       "GNN: fitness evolutiva; PPO/SAC: recompensa episódica.")
+            fig.suptitle(f'Curvas de Aprendizagem — {label_pt}',
+                         fontsize=15, fontweight='bold')
+
+            caption = ("Painéis separados: cada algoritmo tem o seu eixo Y porque as métricas não são "
+                       "comparáveis (GNN = fitness evolutiva; PPO/SAC = recompensa episódica). "
+                       "O eixo X (0%→100% do treino) é que é comparável. "
+                       "Para comparar desempenho entre algoritmos ver os gráficos de tarefa (taxa de sucesso/recolhas).")
             if desc:
                 caption = desc.replace('\n', ' ') + "  |  " + caption
-            fig.text(0.5, 0.01, caption, ha='center', va='bottom',
-                     fontsize=8.5, color='#555555', style='italic')
-            fig.subplots_adjust(bottom=0.14)
+            fig.text(0.5, 0.005, caption, ha='center', va='bottom',
+                     fontsize=8, color='#555555', style='italic', wrap=True)
 
-            plt.tight_layout(rect=[0, 0.10, 1, 1])
+            plt.tight_layout(rect=[0, 0.08, 1, 0.95])
             out_path = os.path.join(output_dir, f'comparacao_mapa_{scenario}.png')
             plt.savefig(out_path, dpi=300)
             plt.close()
@@ -192,6 +210,20 @@ def create_thesis_plots_3d():
         sns.set_theme(style="whitegrid")
         palette_models = {'GNN': '#2E7D32', 'PPO': '#E65100', 'SAC': '#0277BD'}
         
+        # Nº REAL de runs por (cenário, algoritmo) — não assumir 5 (o treino pode
+        # ter corrido --runs 1, e dizer "5 runs" no caption seria falso).
+        def _runs_label(df_subset):
+            counts = df_subset.groupby('Algorithm')['Run'].nunique()
+            if counts.empty:
+                return "runs"
+            lo, hi = int(counts.min()), int(counts.max())
+            n = lo if lo == hi else None
+            if n == 1:
+                return "1 run (sem replicação — caixa degenerada)"
+            if n is not None:
+                return f"{n} runs independentes"
+            return f"{lo}–{hi} runs independentes"
+
         # 3a. Boxplots por Mapa (um por cenário, algoritmos lado a lado)
         # NOTA: GNN usa fitness evolutiva; PPO/SAC usam recompensa episódica.
         # São métricas diferentes — as escalas não são directamente comparáveis.
@@ -210,7 +242,7 @@ def create_thesis_plots_3d():
             ax.grid(True, linestyle='--', alpha=0.4, axis='y')
 
             caption = ("ATENCAO: GNN usa fitness evolutiva; PPO/SAC usam recompensa episodica "
-                       "(escalas diferentes). Cada caixa = 5 runs independentes, mediana + IQR 25-75%.")
+                       f"(escalas diferentes). Cada caixa = {_runs_label(df_scen)}, mediana + IQR 25-75%.")
             if desc:
                 caption = desc.replace('\n', ' ') + "  |  " + caption
             fig.text(0.5, 0.01, caption, ha='center', va='bottom',
@@ -249,7 +281,7 @@ def create_thesis_plots_3d():
             sns.boxplot(data=df_algo, x='ScenLabel', y='BestScore',
                         order=ordered,
                         color=palette_models.get(algo, '#888888'), ax=ax)
-            ax.set_title(f'{algo} — Desempenho por Cenario (5 runs cada)',
+            ax.set_title(f'{algo} — Desempenho por Cenario ({_runs_label(df_algo)})',
                          fontsize=14, fontweight='bold', pad=12)
             ax.set_ylabel(algo_ylabels.get(algo, 'Score'), fontsize=11)
             ax.set_xlabel('Cenario', fontsize=11)
@@ -265,35 +297,42 @@ def create_thesis_plots_3d():
             plt.close()
             print(f"[*] Boxplot por algoritmo: {algo}")
 
-        # 4. Gráfico de Barras Agregador
-        df_best_labeled = df_best.copy()
-        df_best_labeled['Scenario'] = df_best_labeled['Scenario'].map(
-            lambda s: SCENARIO_LABELS_PT.get(s, s))
+        # 4. Gráfico de Barras Agregador — MÉTRICA DE TAREFA (comparável)
+        #    Antes este gráfico punha BestScore (fitness-GNN vs reward-PPO/SAC) no
+        #    MESMO eixo Y — escalas incomparáveis, o ponto que o orientador apontou.
+        #    Agora usa as RECOLHAS por episódio (food_collected) da avaliação, que
+        #    é a mesma unidade para os três algoritmos -> comparação honesta.
+        eval_summary = os.path.join(base_dir, 'results', 'evaluation', 'eval_summary.csv')
+        if os.path.exists(eval_summary):
+            df_eval = pd.read_csv(eval_summary)
+            df_eval['Scenario'] = df_eval['Scenario'].map(
+                lambda s: SCENARIO_LABELS_PT.get(s, s))
 
-        fig, ax = plt.subplots(figsize=(14, 7))
-        sns.barplot(data=df_best_labeled, x='Scenario', y='BestScore',
-                    hue='Algorithm', errorbar='sd',
-                    palette=palette_models, ax=ax)
-        ax.set_title('Resumo Geral — Melhor Recompensa por Algoritmo e Cenário',
-                     fontsize=15, fontweight='bold', pad=14)
-        ax.set_ylabel('Recompensa Máxima Média (± Desvio Padrão entre runs)', fontsize=11)
-        ax.set_xlabel('Cenário', fontsize=11)
-        ax.legend(title="Algoritmo", loc='upper right', fontsize=11)
-        ax.grid(True, linestyle='--', alpha=0.4, axis='y')
-        plt.xticks(rotation=18, ha='right', fontsize=10)
+            fig, ax = plt.subplots(figsize=(14, 7))
+            sns.barplot(data=df_eval, x='Scenario', y='food_collected',
+                        hue='Algorithm', errorbar='sd',
+                        palette=palette_models, ax=ax)
+            ax.set_title('Resumo Geral — Recolhas por Episódio (Avaliação)',
+                         fontsize=15, fontweight='bold', pad=14)
+            ax.set_ylabel('Recolhas Médias por Episódio (± Desvio Padrão)', fontsize=11)
+            ax.set_xlabel('Cenário', fontsize=11)
+            ax.legend(title="Algoritmo", loc='upper right', fontsize=11)
+            ax.grid(True, linestyle='--', alpha=0.4, axis='y')
+            plt.xticks(rotation=18, ha='right', fontsize=10)
+            fig.text(0.5, 0.01,
+                     "Métrica de TAREFA (recolhas/episódio na avaliação determinística): mesma unidade "
+                     "para os três algoritmos, logo directamente comparável — ao contrário do reward de "
+                     "treino (fitness-GNN vs recompensa-PPO/SAC, escalas incomparáveis).",
+                     ha='center', va='bottom', fontsize=9, color='#555555', style='italic')
+            fig.subplots_adjust(bottom=0.14)
+            plt.tight_layout(rect=[0, 0.09, 1, 1])
+            plt.savefig(os.path.join(output_dir, 'comparacao_barras_geral.png'), dpi=300)
+            plt.close()
+            print("[*] Gerado Grafico de Barras Agregador (recolhas/ep, comparavel)")
+        else:
+            print("[i] eval_summary.csv ausente — barras agregadoras de tarefa nao geradas "
+                  "(corre a avaliacao/rotina noturna). Sem fallback de reward (escalas incomparaveis).")
 
-        fig.text(0.5, 0.01,
-                 "Cada barra é a média do melhor score por run (N=5). "
-                 "Barras de erro representam o desvio padrão entre runs independentes. "
-                 "GNN usa fitness evolutiva; PPO e SAC usam recompensa episódica.",
-                 ha='center', va='bottom', fontsize=9, color='#555555', style='italic')
-        fig.subplots_adjust(bottom=0.14)
-
-        plt.tight_layout(rect=[0, 0.09, 1, 1])
-        plt.savefig(os.path.join(output_dir, 'comparacao_barras_geral.png'), dpi=300)
-        plt.close()
-        print("[*] Gerado Grafico de Barras Agregador")
-        
         shutil.copy(best_csv, os.path.join(output_dir, 'dados_melhores_scores.csv'))
     else:
         print("[!] Ficheiro 'all_best_scores.csv' nao encontrado para fazer Boxplots!")

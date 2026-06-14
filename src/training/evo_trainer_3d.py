@@ -24,17 +24,42 @@
 #   Exploração agressiva no início → refinamento gradual.
 #
 # Fitness: DOMINADA PELA TAREFA. Cada recolha (food) vale 10000 — muito acima
-#   de qualquer reward de shaping —, e o shaping entra apenas LIMITADO (clip
-#   ±5000) como gradiente/desempate quando nenhum genoma ainda recolhe. Isto
-#   evita o reward hacking: a fitness anterior era o reward bruto (que inclui o
-#   shaping de progresso + exploração), pelo que a evolução maximizava o shaping
-#   sem cumprir a tarefa (ex.: 98k de fitness com 0 recolhas no Muro U).
-#   A exploração vem da estocasticidade da mutação Gaussiana.
+#   de qualquer reward de shaping —, e o shaping entra apenas COMPRIMIDO por uma
+#   tangente hiperbólica (5000·tanh(reward/5000)) como gradiente/desempate quando
+#   nenhum genoma ainda recolhe. Isto evita o reward hacking: a fitness anterior
+#   era o reward bruto (que inclui o shaping de progresso + exploração), pelo que
+#   a evolução maximizava o shaping sem cumprir a tarefa (ex.: 98k de fitness com
+#   0 recolhas no Muro U). A exploração vem da estocasticidade da mutação Gaussiana.
+#
+#   Porquê tanh e não clip(±5000): o clip SATURAVA no teto +5000 sempre que o
+#   shaping acumulado passava de 5000 (frequente: 500 passos × 20 agentes). Com o
+#   teto atingido o termo virava CONSTANTE → deixava de dar gradiente. No Muro U
+#   (food sempre 0) todos os genomas decentes ficavam com fitness=5000.0 EXACTO →
+#   seleção cega, o GNN nunca progredia (origem dos valores redondos 5000/15000/
+#   75000 nos logs). A tanh é monótona e nunca satura abruptamente: continua a
+#   distinguir um genoma que se aproxima do ninho de outro que vagueia, mantendo
+#   food a dominar (1 recolha = 10000 >> amplitude ±5000 do shaping).
+#
+# Avaliação: cada genoma corre eval_episodes episódios num conjunto de seeds FIXO
+#   ao longo de todas as gerações (eval_seed_base constante). Antes a seed mudava
+#   por geração (gen_seed = seed + gen), o que tornava a fitness ruidosa e fazia os
+#   elites re-avaliados saltar/cair — as "quedas estranhas na recompensa média".
+#   Conjunto fixo + eval_episodes>1 estabiliza a seleção e reduz overfitting a 1 mapa.
 #
 # Paralelismo: cada genoma é avaliado num processo separado (multiprocessing).
 # =============================================================================
 import os
 import sys
+# Limitar BLAS/OpenMP a 1 thread ANTES de importar numpy/torch. Cada genoma é
+# avaliado num processo separado (Pool); sem este limite, cada um dos 30 workers
+# tenta usar todos os núcleos em threads (ex.: 30 workers × 32 threads ≈ 965
+# threads em 64 cores = 15× oversubscription, contenção brutal -> 1 geração
+# demorava >17 min). Com 1 thread/worker, 30 workers cabem nos núcleos sem luta
+# e cada geração acelera ~10-15×. NÃO afeta PPO/SAC (são scripts separados).
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 import torch
 import numpy as np
 import copy
@@ -53,6 +78,10 @@ from src.agents.gnn_agent_3d import GNNAgent3D
 
 
 def evaluate_genome(args):
+    # Reforço por worker: garante 1 thread mesmo que o fork tenha herdado outro
+    # valor; redes pequenas avaliam mais rápido single-thread (sem overhead de
+    # threading) e evita a contenção entre os 30 processos do Pool.
+    torch.set_num_threads(1)
     weights, config_path, eval_seed = args
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
@@ -69,8 +98,9 @@ def evaluate_genome(args):
     total_steps = 0
 
     for ep in range(eval_episodes):
-        # Todos os genomas da mesma geração enfrentam os mesmos episódios
-        # (seed por geração) — seleção menos ruidosa e reproduzível.
+        # Conjunto de seeds de avaliação FIXO entre gerações: todos os genomas e
+        # os elites re-avaliados enfrentam os mesmos mapas -> seleção estável e
+        # reproduzível, sem o ruído de avaliar cada geração numa seed diferente.
         ep_seed = (eval_seed + ep) if eval_seed is not None else None
         obs_dict, _ = env.reset(seed=ep_seed)
         episode_reward = 0
@@ -107,10 +137,13 @@ def evaluate_genome(args):
     avg_reward = float(np.mean(episode_rewards))   # reward bruto (com shaping)
     avg_food   = float(np.mean(episode_foods))     # recolhas (tarefa pura)
     # Fitness DOMINADA PELA TAREFA: cada recolha vale 10000 (>> qualquer shaping);
-    # o shaping entra só limitado (±5000) como gradiente/desempate quando ainda
-    # ninguém recolhe. Elimina o reward hacking (fitness = reward bruto -> 98k
-    # com 0 recolhas) e força a evolução a cumprir efetivamente a missão.
-    fitness = avg_food * 10000.0 + float(np.clip(avg_reward, -5000.0, 5000.0))
+    # o shaping entra COMPRIMIDO por tanh em (-5000, 5000) como gradiente/desempate
+    # quando ainda ninguém recolhe. Elimina o reward hacking (fitness = reward bruto
+    # -> 98k com 0 recolhas) e, ao contrário do clip(±5000), NUNCA satura: a tanh é
+    # monótona, portanto a seleção nunca fica cega (sem patamares fitness=5000.0
+    # exactos) e continua a distinguir genomas que se aproximam do ninho.
+    shaping_term = 5000.0 * float(np.tanh(avg_reward / 5000.0))
+    fitness = avg_food * 10000.0 + shaping_term
     return fitness, total_steps, avg_food
 
 
@@ -126,6 +159,14 @@ class GeneticTrainer3D:
         if seed is not None:
             np.random.seed(seed)
             torch.manual_seed(seed)
+
+        # Seeds de AVALIAÇÃO fixas ao longo das gerações: todos os genomas (e os
+        # elites re-avaliados) enfrentam SEMPRE o mesmo conjunto de eval_episodes
+        # mapas. Estabiliza a seleção e a curva de fitness — elimina o overfitting
+        # a uma seed sortuda que mudava a cada geração (antes: gen_seed = seed + gen,
+        # causa das "quedas estranhas" na recompensa média). Runs distintos (--seed
+        # diferente) usam conjuntos distintos; dentro de um run o conjunto é fixo.
+        self.eval_seed_base = (seed if seed is not None else 0) + 10000
 
         temp_env = SwarmForagingEnv3D(config_path)
         self.template_agent = GNNAgent3D("template_3d", temp_env.action_space("robot_0"), config_path)
@@ -184,8 +225,8 @@ class GeneticTrainer3D:
                     print(f"\n[FIM DO TEMPO] O cronometro atingiu o limite. A fechar e guardar o modelo...")
                     break
 
-                gen_seed = (self.seed + gen) if self.seed is not None else None
-                args_list = [(self.population[i], self.config_path, gen_seed)
+                # Conjunto de seeds de avaliação FIXO entre gerações (ver __init__).
+                args_list = [(self.population[i], self.config_path, self.eval_seed_base)
                              for i in range(self.pop_size)]
                 results = pool.map(evaluate_genome, args_list)
 
