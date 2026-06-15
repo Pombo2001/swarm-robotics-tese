@@ -71,7 +71,7 @@ for obs_pos in env.obstacles:
 wall_views = []
 for i, wall in enumerate(env.walls):
     # Se estivermos no cenário da porta E este for o muro que serve de porta (o último)
-    is_door = getattr(env, 'classic_scenario', '') == "cooperative_door" and hasattr(env,
+    is_door = getattr(env, 'classic_scenario', '') in ("cooperative_door", "cooperative_door_bypass") and hasattr(env,
                                                                                      'door_wall_index') and i == env.door_wall_index
 
     wall_color = color.red if is_door else color.rgba(50, 50, 50, 180)

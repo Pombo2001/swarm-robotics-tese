@@ -179,7 +179,7 @@ def main(args):
                 obs_e.position = (env.obstacles[i][0], env.obstacles[i][1], -0.15)
 
         # Porta cooperativa: animação de abertura (deslize para cima)
-        if scenario == 'cooperative_door' and not state['door_animated']:
+        if scenario in ('cooperative_door', 'cooperative_door_bypass') and not state['door_animated']:
             door_idx = getattr(env, 'door_wall_index', None)
             if door_idx is not None and not getattr(env, 'door_active', True):
                 if door_idx < len(wall_entities):

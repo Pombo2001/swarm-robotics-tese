@@ -23,6 +23,7 @@ SCENARIOS = [
     ("Quatro Salas (Labirinto)",          "four_rooms"),
     ("Porta Cooperativa (3 Robôs)",       "cooperative_door"),
     ("Perceção Cooperativa (Alvo Móvel)", "cooperative_perception"),
+    ("Porta Coop. c/ Alternativa",        "cooperative_door_bypass"),
 ]
 SCENARIO_LABELS = [s[0] for s in SCENARIOS]
 SCENARIO_KEYS   = {s[0]: s[1] for s in SCENARIOS}

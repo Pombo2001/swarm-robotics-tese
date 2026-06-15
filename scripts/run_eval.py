@@ -38,6 +38,7 @@ SCENARIO_LABELS = {
     "four_rooms":             "Quatro Salas",
     "cooperative_door":       "Porta Cooperativa",
     "cooperative_perception": "Percepcao Cooperativa",
+    "cooperative_door_bypass": "Porta Coop. c/ Alternativa",
 }
 
 

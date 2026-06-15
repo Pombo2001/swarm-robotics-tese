@@ -25,7 +25,7 @@ from src.agents.gnn_agent_3d import GNNAgent3D
 
 CONFIG_PATH = os.path.join(PROJECT_ROOT, 'configs', 'foraging.yaml')
 SCENARIOS = ['none', 'u_wall', 'bottleneck', 'four_rooms',
-             'cooperative_door', 'cooperative_perception']
+             'cooperative_door', 'cooperative_perception', 'cooperative_door_bypass']
 
 
 def _make_env(scenario='none'):
@@ -42,7 +42,7 @@ def test_reset_observation_shape():
     assert isinstance(obs_dict, dict)
     assert len(obs_dict) == env.num_agents
 
-    expected_dim = 12 + (env.num_agents - 1) * 5
+    expected_dim = 16 + (env.num_agents - 1) * 5
     for agent_id in env.agents:
         assert obs_dict[agent_id].shape == (expected_dim,), (
             f"{agent_id}: esperado {expected_dim}, obtido {obs_dict[agent_id].shape}")

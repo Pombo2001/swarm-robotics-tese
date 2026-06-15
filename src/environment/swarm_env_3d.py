@@ -52,6 +52,8 @@ class SwarmForagingEnv3D(gym.Env):
         self.max_steps_override = {}
         if 'max_steps_cooperative_door' in env_config:
             self.max_steps_override['cooperative_door'] = env_config['max_steps_cooperative_door']
+        if 'max_steps_cooperative_door_bypass' in env_config:
+            self.max_steps_override['cooperative_door_bypass'] = env_config['max_steps_cooperative_door_bypass']
 
         # ── Campo geodésico (BFS/Dijkstra) para o progress reward ────────────
         # Em cenários com paredes, a distância euclidiana ao ninho cria mínimos
@@ -124,7 +126,7 @@ class SwarmForagingEnv3D(gym.Env):
                     pos = np.array([np.random.uniform(-10, -2), np.random.uniform(2, 10), 0.0])
                 else:              # SE
                     pos = np.array([np.random.uniform(2, 10), np.random.uniform(-10, -2), 0.0])
-            elif self.classic_scenario == "cooperative_door":
+            elif self.classic_scenario in ("cooperative_door", "cooperative_door_bypass"):
                 # South of the horizontal barrier (barrier covers y -1 to 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
             else:
@@ -188,6 +190,16 @@ class SwarmForagingEnv3D(gym.Env):
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
             self._spawn_obstacles_cooperative_door()
 
+        elif self.classic_scenario == "cooperative_door_bypass":
+            # 7º cenário (sugestão do Prof. Nunes): igual à porta cooperativa, mas
+            # existe um percurso ALTERNATIVO mais longo, SEM porta. Testa se a
+            # aprendizagem descobre a cooperação (caminho curto pela porta, exige 3
+            # agentes) mesmo havendo uma saída sub-ótima que não obriga a cooperar.
+            self.nest_pos = np.array([0.0, 12.0, 0.0])
+            self.nest_velocity = np.zeros(3)
+            self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
+            self._spawn_obstacles_cooperative_door_bypass()
+
         elif self.classic_scenario == "cooperative_perception":
             # O "ninho" é o Alvo Móvel neste cenário
             self.nest_pos = self._random_spawn(max_radius=0.7)
@@ -206,7 +218,8 @@ class SwarmForagingEnv3D(gym.Env):
         # reward (elimina o mínimo local). Os restantes (sandbox, perceção
         # cooperativa) têm ninho móvel e sem paredes → euclidiano basta.
         self.use_geodesic = self.classic_scenario in (
-            "u_wall", "bottleneck", "four_rooms", "cooperative_door")
+            "u_wall", "bottleneck", "four_rooms", "cooperative_door",
+            "cooperative_door_bypass")
         if self.use_geodesic:
             self._build_geodesic_field()
 
@@ -309,6 +322,29 @@ class SwarmForagingEnv3D(gym.Env):
         self.door_wall_index = len(self.walls)
         self.walls.append({'pos': self.door_pos.copy(), 'size': self.door_size})
 
+    def _spawn_obstacles_cooperative_door_bypass(self):
+        # 7º cenário: porta cooperativa COM percurso alternativo longo (sem porta).
+        # Geometria (arena r=15; ninho em (0,12); agentes nascem a sul, y<0):
+        #  • Barreira horizontal em y=0 com PORTA de 3m no centro (caminho CURTO,
+        #    exige 3 agentes a empurrar — idêntico à porta cooperativa).
+        #  • O segmento DIREITO é mais curto (acaba em x=11) → deixa uma abertura
+        #    livre de 4m em x∈[11,15]: o percurso ALTERNATIVO, que não tem porta.
+        #  • Uma parede DEFLETORA em y=8 (x∈[5,15]) obriga quem usa a abertura a
+        #    desviar-se para x<5 antes de subir ao ninho → o bypass é ~2x mais longo
+        #    que a porta. Assim cooperar (porta) tem MAIOR fitness do que o bypass.
+        self.obstacles = []
+        self.obstacle_velocities = []
+        self.walls = [
+            {'pos': np.array([-8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, 30.0])},  # esq: x -15 a -1.5
+            {'pos': np.array([ 6.25, 0.0, 0.0]), 'size': np.array([ 9.5, 2.0, 30.0])},  # dir: x  1.5 a  11
+            {'pos': np.array([10.0,  8.0, 0.0]), 'size': np.array([10.0, 2.0, 30.0])},  # defletor: x 5 a 15 @ y=8
+        ]
+        self.door_active = True
+        self.door_pos  = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        self.door_size = np.array([3.0, 2.0, 30.0])   # porta de 3m no centro
+        self.door_wall_index = len(self.walls)
+        self.walls.append({'pos': self.door_pos.copy(), 'size': self.door_size})
+
     def _random_spawn(self, min_radius=0.0, max_radius=0.8):
         u = np.random.uniform(0, 1)
         v = np.random.uniform(0, 1)
@@ -347,7 +383,7 @@ class SwarmForagingEnv3D(gym.Env):
         for w_i, wall in enumerate(self.walls):
             # A porta cooperativa é tratada como PASSÁVEL no BFS: assim o gradiente
             # aponta para a porta (= push zone), que é o objetivo do cenário.
-            if (self.classic_scenario == "cooperative_door"
+            if (self.classic_scenario in ("cooperative_door", "cooperative_door_bypass")
                     and w_i == getattr(self, 'door_wall_index', -1)):
                 continue
             # Paredes "removidas" (porta aberta → pos 999) não bloqueiam.
@@ -511,7 +547,7 @@ class SwarmForagingEnv3D(gym.Env):
             # sub-objetivo físico do cenário (como o ninho), não um waypoint de
             # planeamento. Nos restantes cenários fica a zeros (não revela o caminho
             # nos labirintos, o que seria batota). Mantém a dimensão da obs fixa.
-            if self.classic_scenario == "cooperative_door":
+            if self.classic_scenario in ("cooperative_door", "cooperative_door_bypass"):
                 local_dir_door, dist_door = to_egocentric(self.door_pos)
                 norm_dist_door = dist_door / (self.arena_radius * 2)
             else:
@@ -645,7 +681,7 @@ class SwarmForagingEnv3D(gym.Env):
 
                 self.agent_positions[idx] += move_global
 
-        if self.classic_scenario == "cooperative_door" and getattr(self, 'door_active', False):
+        if self.classic_scenario in ("cooperative_door", "cooperative_door_bypass") and getattr(self, 'door_active', False):
             pushing_robots = []
             for i in range(self.num_agents):
                 if self.failed[i]:
@@ -699,7 +735,7 @@ class SwarmForagingEnv3D(gym.Env):
         spread_dist = self.min_spread_distance
 
         coop_points = [self.nest_pos]
-        if self.classic_scenario == "cooperative_door":
+        if self.classic_scenario in ("cooperative_door", "cooperative_door_bypass"):
             coop_points.append(np.array([0.0, -1.0, 0.0]))  # centro da push zone
         coop_zone = 4.0
         in_coop_zone = np.zeros(self.num_agents, dtype=bool)

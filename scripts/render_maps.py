@@ -34,6 +34,7 @@ SCENARIO_LABELS = {
     "none": "Sandbox (Arena Aberta)", "u_wall": "Beco Sem Saída (Muro U)",
     "bottleneck": "Gargalo (Porta Estreita)", "four_rooms": "Quatro Salas (Labirinto)",
     "cooperative_door": "Porta Cooperativa", "cooperative_perception": "Perceção Cooperativa (Alvo Móvel)",
+    "cooperative_door_bypass": "Porta Cooperativa c/ Alternativa",
 }
 ALL_SCENARIOS = list(SCENARIO_LABELS.keys())
 OUT_DIR = os.path.join(PROJECT_ROOT, "results", "maps_3d")
@@ -62,7 +63,7 @@ def _add_map(plotter, env):
         pos, size = wall["pos"], wall["size"]
         if np.any(np.abs(pos) > R + 5):
             continue  # parede removida (porta aberta)
-        is_door = (env.classic_scenario == "cooperative_door" and w_i == door_idx)
+        is_door = (env.classic_scenario in ("cooperative_door", "cooperative_door_bypass") and w_i == door_idx)
         cube = pv.Cube(center=(float(pos[0]), float(pos[1]), WALL_H / 2.0),
                        x_length=float(size[0]), y_length=float(size[1]), z_length=WALL_H)
         plotter.add_mesh(cube, color=C_DOOR if is_door else C_WALL,

@@ -65,6 +65,12 @@ no ponto certo da escrita. O que falta é exatamente o que o prof. diz que deve 
       + seeds de avaliação FIXAS (`evo_trainer_3d.py`: `eval_seed_base`, era `seed+gen`). VALIDADO em
       smoke (cenário none, seed 42): best_fitness monótono não-decrescente, 0 quedas (elites mantêm o
       valor exato); antes saltava ±10-20k. SÓ depois disto correr os 30 runs.
+- [x] **7º cenário sugerido pelo Prof. Nunes IMPLEMENTADO** (15 jun, branch
+      `feature/cenario-porta-alternativa`) — `cooperative_door_bypass`: porta cooperativa
+      (caminho curto, 3 robôs) + percurso ALTERNATIVO longo sem porta. Porta validada (abre só
+      com ≥3 agentes); bypass navegável e 1.7× mais longo (geodésico 33m vs 20m) → cooperar
+      dá melhor score. Registado em todos os scripts (treino/eval/labels/visualizadores).
+      Teste: `scripts/test_cenario_bypass.py` (4/4 verde). **Falta:** treinar+avaliar este cenário.
 - [ ] Decidir o que fazer ao *reward hacking* do PPO no Muro U (aceitar como resultado
       científico válido — é uma resposta à pergunta de investigação — ou ajustar `exploration_bonus`)
 - [ ] **Reformular o launcher** (DECISÃO 10 jun: arranca DEPOIS de recolhidos/avaliados os

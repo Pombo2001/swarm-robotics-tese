@@ -39,11 +39,12 @@ OUT_DIR = os.path.join(PROJECT_ROOT, "results", "estatisticas")
 
 ALGOS = ["GNN", "PPO", "SAC"]
 SCENARIO_ORDER = ["none", "u_wall", "bottleneck", "four_rooms",
-                  "cooperative_door", "cooperative_perception"]
+                  "cooperative_door", "cooperative_perception", "cooperative_door_bypass"]
 SCENARIO_LABELS = {
     "none": "Sandbox", "u_wall": "Beco Sem Saida (U)", "bottleneck": "Gargalo",
     "four_rooms": "Quatro Salas", "cooperative_door": "Porta Cooperativa",
     "cooperative_perception": "Percepcao Cooperativa",
+    "cooperative_door_bypass": "Porta Coop. c/ Alternativa",
 }
 
 # eval_{algo}_{scenario}.csv  (algo em minusculas; scenario pode ter underscores)

@@ -10,7 +10,7 @@ import seaborn as sns
 # ==============================================================================
 # CONFIGURAÇÕES BASE DO SCRIPT
 # ==============================================================================
-SCENARIOS = ['none', 'u_wall', 'bottleneck', 'four_rooms', 'cooperative_door', 'cooperative_perception']
+SCENARIOS = ['none', 'u_wall', 'bottleneck', 'four_rooms', 'cooperative_door', 'cooperative_perception', 'cooperative_door_bypass']
 
 ALGORITHMS = {
     'GNN': 'src/training/evo_trainer_3d.py',
