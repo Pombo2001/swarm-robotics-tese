@@ -7,7 +7,6 @@ linhas vão para um buffer thread-safe que a UI drena e mostra na consola integr
 O backend continua a ser scripts/run_experiments.py (treina + avalia + gera gráficos
 numa só invocação). Este módulo só constrói os argumentos e orquestra a sequência.
 """
-import os
 import sys
 import subprocess
 import threading
@@ -114,11 +113,12 @@ class JobQueue:
 
     # ── Interno ──────────────────────────────────────────────────────────────
     def _run_loop(self):
-        for job in self.jobs:
-            if self._stop_requested:
+        # Procura sempre o próximo 'em fila' na lista ATUAL (não num snapshot): assim
+        # add/remove/clear durante a corrida são respeitados (a lista é reatribuída).
+        while not self._stop_requested:
+            job = next((j for j in list(self.jobs) if j.status == "em fila"), None)
+            if job is None:
                 break
-            if job.status != "em fila":
-                continue
             self._run_job(job)
         self._running = False
         self._proc = None

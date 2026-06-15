@@ -64,6 +64,7 @@ def build():
                 ui.label("Nenhum gráfico para este filtro.").classes("text-gray-500")
                 return
             comparar = sess_b.value != NONE
+            pngs_b = set(data.list_pngs(sess_b.value)) if comparar else set()
             with ui.grid().classes("w-full gap-3").style(
                     f"grid-template-columns: repeat({'1' if comparar else '3'}, minmax(0, 1fr))"):
                 for f in pngs:
@@ -74,8 +75,13 @@ def build():
                                 for s, tag in ((sess_a.value, "A"), (sess_b.value, "B")):
                                     with ui.column().classes("flex-1 gap-0 items-center"):
                                         ui.badge(f"{tag} · {s}", color="primary").props("rounded").classes("text-[10px]")
-                                        ui.image(_url(s, f)).classes("w-full cursor-pointer") \
-                                            .on("click", lambda _, s=s, f=f: open_zoom(s, f))
+                                        # o ficheiro pode não existir na sessão B
+                                        if tag == "B" and f not in pngs_b:
+                                            ui.label("(não existe nesta sessão)") \
+                                                .classes("text-xs text-gray-600 italic py-4")
+                                        else:
+                                            ui.image(_url(s, f)).classes("w-full cursor-pointer") \
+                                                .on("click", lambda _, s=s, f=f: open_zoom(s, f))
                         else:
                             ui.image(_url(sess_a.value, f)).classes("w-full cursor-pointer") \
                                 .on("click", lambda _, f=f: open_zoom(sess_a.value, f))

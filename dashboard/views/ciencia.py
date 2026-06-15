@@ -76,8 +76,8 @@ def build():
                     with ui.grid(columns=cols).classes("w-full gap-1 mt-2"):
                         ui.label("Cenário").classes("font-bold text-sm self-center")
                         for a in config.ALGOS:
-                            ui.label(a).classes("font-bold text-sm text-center "
-                                                f"text-[{config.ALGO_META[a]['color']}]")
+                            ui.label(a).classes("font-bold text-sm text-center") \
+                                .style(f"color: {config.ALGO_META[a]['color']}")
                         for key in config.SCENARIO_KEYS:
                             if key not in table:
                                 continue
