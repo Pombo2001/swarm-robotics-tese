@@ -4,7 +4,7 @@ import sys
 import os
 import pandas as pd
 import time
-import yaml
+import yamlcontinuo
 from datetime import timedelta
 
 try:

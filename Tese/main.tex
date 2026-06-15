@@ -1084,13 +1084,16 @@ Antes da análise, importa fixar as convenções de leitura dos resultados:
 
 \section{Desempenho de Tarefa por Cenário ($P_{task}$)}
 \label{sec:res_ptask}
-% TODO: Analisar a taxa de sucesso e as recolhas/ep por cenario. Destacar o contraste entre cenarios abertos e labirintos, e entre os tres algoritmos.
-A métrica central de comparação é o desempenho de \textbf{tarefa} em avaliação determinística: a taxa de sucesso ($P_{task}$, fração de episódios com pelo menos uma recolha) e o número de recolhas por episódio. Ao contrário da recompensa de treino --- que inclui \textit{shaping} e mistura escalas entre paradigmas (\textit{fitness} evolutiva vs.\ recompensa episódica) ---, estas métricas são diretamente comparáveis entre os três algoritmos e medem o cumprimento efetivo da missão.
+A métrica central de comparação é o desempenho de \textbf{tarefa} em avaliação determinística: a taxa de sucesso ($P_{task}$, fração de episódios com pelo menos uma recolha) e o número de recolhas por episódio. Ao contrário da recompensa de treino --- que inclui \textit{shaping} e mistura escalas entre paradigmas (\textit{fitness} evolutiva vs.\ recompensa episódica) ---, estas métricas são diretamente comparáveis entre os três algoritmos e medem o cumprimento efetivo da missão. Os valores reportados resultam de \textbf{30 episódios determinísticos emparelhados} (\textit{seeds} comuns aos três algoritmos) sobre os modelos finais.
+
+A Tabela~\ref{tab:res_eval} e as Figuras~\ref{fig:res_ptask_sucesso}--\ref{fig:res_ptask_recolhas} revelam três perfis de desempenho nitidamente distintos. O \textbf{SAC} é o único algoritmo a resolver os seis cenários (100\% de sucesso em todos, incluindo o Muro U, onde nenhum outro paradigma navega de forma fiável), confirmando-se como o controlador mais robusto em navegação. O \textbf{PPO} iguala o SAC em cinco cenários --- superando-o inclusive em magnitude de recolhas no Sandbox (73,3 vs.\ 25,2 recolhas/ep) e na Porta Cooperativa (67,7 vs.\ 60,5) ---, mas \textbf{colapsa para 0\% no Muro U}: a recompensa episódica registada nesse cenário ($\approx$132 mil, a mais elevada de toda a campanha, acompanhada de zero recolhas) denuncia um caso claro de \textit{reward hacking}, em que a política maximiza o bónus de exploração percorrendo indefinidamente o beco sem jamais recolher comida (Secção~\ref{sec:res_discussao}).
+
+O \textbf{GNN evolutivo} fica muito aquém na tarefa: só atinge sucesso assinalável nos cenários sem paredes interiores (Sandbox 66,7\%, Perceção Cooperativa 96,7\%) e ainda assim com magnitude residual (0,77 e 2,63 recolhas/ep), falhando por completo (0\%) os três cenários com gargalos estreitos --- Gargalo, Quatro Salas e Porta Cooperativa. Esta dissociação entre \textit{fitness} de treino elevada e recolhas quase nulas é a assinatura do fenómeno de \textit{fitness exploitation} analisado adiante. Curiosamente, no Muro U o GNN (43,3\%) chega a superar o PPO (0\%), não por resolver o labirinto, mas por não sucumbir ao mesmo \textit{reward hacking}. O padrão transversal é claro: a fronteira de dificuldade não separa cenários ``cooperativos'' de ``simples'', mas antes os cenários de \textbf{navegação por gargalos} dos de espaço aberto --- e é precisamente nessa classe que se observa a maior divergência entre paradigmas.
 
 \begin{figure}[H]
     \centering
     \figresultado{0.9}{images/resultados/taxa_sucesso_por_cenario.png}{Taxa de sucesso por cenario e algoritmo}
-    \caption{Taxa de sucesso ($P_{task}$) por cenário, em avaliação determinística (20 episódios emparelhados por algoritmo).}
+    \caption{Taxa de sucesso ($P_{task}$) por cenário, em avaliação determinística (30 episódios emparelhados por algoritmo).}
     \label{fig:res_ptask_sucesso}
 \end{figure}
 
@@ -1103,7 +1106,6 @@ A métrica central de comparação é o desempenho de \textbf{tarefa} em avalia�
 
 \section{Análise Qualitativa da Navegação: Mapas de Calor}
 \label{sec:res_heatmaps}
-% TODO: Comentar o contorno do Muro U nos heatmaps de ocupacao e a leitura do campo geodesico.
 Para fundamentar a opção pelo potencial geodésico no termo de progresso e diagnosticar o comportamento de navegação, recorre-se a dois tipos de mapa de calor. A Figura~\ref{fig:res_heatmap_geo} contrasta o potencial euclidiano com o geodésico no Muro U: as curvas de nível euclidianas atravessam a parede (atraindo o agente para o interior do beco), enquanto as geodésicas a contornam, atribuindo gradiente positivo ao desvio correto. A Figura~\ref{fig:res_heatmap_ocup} mostra a densidade de ocupação dos robôs --- zonas brilhantes coladas a uma parede revelam agentes presos, ao passo que um fluxo que contorna o obstáculo indica navegação resolvida.
 
 \begin{figure}[H]
@@ -1126,35 +1128,40 @@ Para fundamentar a opção pelo potencial geodésico no termo de progresso e dia
 
 \section{Convergência e Desempenho no Cenário Base (Sandbox)}
 \label{sec:res_sandbox}
-% TODO: Analisar a velocidade de convergência e o desempenho final de PPO vs SAC vs GNN no cenário base, sem obstáculos fixos. Comentar qual converge mais depressa e qual atinge o melhor valor final.
+O cenário Sandbox --- arena aberta, sem paredes interiores --- isola a capacidade de \textit{foraging} da componente de navegação por obstáculos, servindo de referência de otimalidade. A Figura~\ref{fig:res_sandbox_curva} mostra que os dois métodos de gradiente convergem para políticas funcionais, mas com dinâmicas distintas: o \textbf{SAC} (\textit{off-policy}) sobe rapidamente nos primeiros passos, beneficiando da reutilização de experiência do \textit{replay buffer}; o \textbf{PPO} (\textit{on-policy}) progride mais lentamente mas atinge o desempenho de tarefa mais alto (73,3 recolhas/ep, contra 25,2 do SAC). O \textbf{GNN evolutivo} estabiliza num patamar muito inferior: apesar de alcançar sucesso em dois terços dos episódios, recolhe em média menos de uma unidade por episódio, sinal de uma política que aprende a aproximar-se da comida mas raramente completa o ciclo de recolha-e-entrega.
 
 \begin{figure}[H]
     \centering
     \figresultado{0.85}{images/resultados/comparacao_mapa_none.png}{Curva de aprendizagem no Sandbox (3 algoritmos)}
-    \caption{Curvas de aprendizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do treino) e a banda sombreada representa o desvio padrão entre \textit{runs}.}
+    \caption{Curvas de aprendizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do treino). Cada curva corresponde a uma única execução de treino (ver Secção~\ref{sec:res_boxplots}).}
     \label{fig:res_sandbox_curva}
 \end{figure}
 
-A Tabela~\ref{tab:res_sandbox} sintetiza o melhor desempenho alcançado por cada algoritmo neste cenário.
+A Tabela~\ref{tab:res_sandbox} sintetiza o desempenho de avaliação neste cenário.
 
 \begin{table}[H]
 \centering
 \footnotesize
-\caption{Desempenho no cenário Sandbox (média $\pm$ desvio padrão entre \textit{runs}).}
+\caption{Desempenho no cenário Sandbox (avaliação determinística, 30 episódios; recolhas em média $\pm$ desvio padrão entre episódios).}
 \label{tab:res_sandbox}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|l|c|c|c|}
 \hline
-\textbf{Algoritmo} & \textbf{Melhor Score} & \textbf{$P_{task}$ (Eval)} & \textbf{Taxa de Sucesso} \\ \hline
-GNN (Evolutivo) & \dots & \dots & \dots \\ \hline
-PPO & \dots & \dots & \dots \\ \hline
-SAC & \dots & \dots & \dots \\ \hline
+\textbf{Algoritmo} & \textbf{Recolhas/ep} & \textbf{$P_{task}$} & \textbf{Recompensa (eval)} \\ \hline
+GNN (Evolutivo) & $0{,}77 \pm 0{,}68$ & $66{,}7\%$ & $413$ \\ \hline
+PPO & $73{,}30 \pm 5{,}14$ & $100\%$ & $49\,183$ \\ \hline
+SAC & $25{,}23 \pm 3{,}69$ & $100\%$ & $19\,533$ \\ \hline
 \end{tabular}
+
+\vspace{0.4em}
+{\footnotesize A coluna ``Recompensa (eval)'' refere-se à recompensa episódica média; não é comparável entre o GNN (cuja seleção usa \textit{fitness}) e os métodos de gradiente, servindo apenas de leitura intra-algoritmo.}
 \end{table}
 
 \section{Desempenho Comparativo por Cenário (Curvas de Aprendizagem)}
 \label{sec:res_curvas_cenario}
-% TODO: Para cada cenário, discutir o comportamento de aprendizagem dos três algoritmos. Destacar onde o MARL supera o evolutivo e vice-versa.
+As curvas de aprendizagem por cenário (Figuras~\ref{fig:res_curva_uwall}--\ref{fig:res_curva_perception}) detalham a dinâmica de treino subjacente aos resultados de tarefa. Importa uma ressalva de leitura: os eixos verticais não são comparáveis entre paradigmas --- o GNN é selecionado por \textit{fitness} (dominada pelo termo de comida $\times 10^4$), ao passo que PPO e SAC reportam recompensa episódica com \textit{shaping} ---, pelo que cada subgráfico deve ser lido como a trajetória \emph{interna} de cada algoritmo, e não como uma corrida no mesmo eixo.
+
+Nos cenários de gargalo (\textbf{Gargalo}, Figura~\ref{fig:res_curva_bottleneck}; \textbf{Quatro Salas}, Figura~\ref{fig:res_curva_fourrooms}; \textbf{Porta Cooperativa}, Figura~\ref{fig:res_curva_door}) observa-se o padrão dominante do estudo: o SAC sobe cedo e estabiliza em valores elevados, o PPO converge mais tarde para desempenho equivalente, e o GNN estagna --- a sua \textit{fitness} sobe pela componente de \textit{shaping} geodésico sem que tal se traduza em recolhas, exatamente o sintoma de \textit{fitness exploitation}. No \textbf{Muro U} (Figura~\ref{fig:res_curva_uwall}), a curva do PPO é enganadora: a recompensa dispara para valores recorde enquanto a tarefa permanece a zero, materializando o \textit{reward hacking} do bónus de exploração. Já na \textbf{Perceção Cooperativa} (Figura~\ref{fig:res_curva_perception}), cenário de alvo móvel sem paredes interiores, os três algoritmos progridem e o GNN atinge a sua melhor taxa de sucesso (96,7\%), ainda que com poucas recolhas. Em suma, o MARL (PPO/SAC) supera o evolutivo em todos os cenários quanto à tarefa efetiva; o GNN só se aproxima em espaço aberto, e a sua vantagem manifesta-se noutra dimensão --- a escalabilidade (Secção~\ref{sec:res_scale}).
 
 \begin{figure}[H]
     \centering
@@ -1193,7 +1200,7 @@ SAC & \dots & \dots & \dots \\ \hline
 
 \section{Fiabilidade e Variância entre \textit{Runs} (Boxplots)}
 \label{sec:res_boxplots}
-% TODO: Discutir a consistência de cada algoritmo. Caixas estreitas = treino fiável; caixas largas ou outliers = treino instável (ex: variância do GNN entre runs).
+A análise da fiabilidade de treino requer múltiplas execuções independentes por configuração, de modo a distinguir o desempenho sistemático do ruído de inicialização. \textbf{Os resultados aqui apresentados correspondem a uma única execução por par algoritmo--cenário}; consequentemente, os diagramas de caixa das Figuras~\ref{fig:res_box_1}--\ref{fig:res_box_3} degeneram num único ponto e não suportam, ainda, inferência sobre a variância entre \textit{runs}. Apresentam-se como referência metodológica e espaço reservado: a bateria definitiva de \textbf{30 execuções por cenário e algoritmo} --- exigida pelo protocolo experimental (Capítulo~\ref{ch:fundamentos}) para validar a significância dos resultados --- está prevista para a fase final de experimentação nos servidores de cálculo, e substituirá estas figuras pelas distribuições completas. A análise de significância estatística que se segue (Secção~\ref{sec:res_discussao}) é, por isso, conduzida sobre a distribuição dos \textbf{episódios de avaliação} (30 por configuração), que é a base estatística sólida atualmente disponível.
 
 \begin{figure}[H]
     \centering
@@ -1224,7 +1231,7 @@ SAC & \dots & \dots & \dots \\ \hline
 
 \section{Visão Global por Algoritmo}
 \label{sec:res_global}
-% TODO: Comentar o perfil de cada algoritmo across todos os cenários. Qual é mais robusto à dificuldade do mapa? Onde colapsa cada um?
+Consolidando o desempenho ao longo dos seis cenários (Figuras~\ref{fig:res_global_gnn}--\ref{fig:res_global_sac}), emergem três perfis bem definidos. O \textbf{SAC} é o controlador mais \emph{robusto à dificuldade do mapa}: é o único que não colapsa em nenhum cenário, mantendo 100\% de sucesso mesmo no Muro U. O \textbf{PPO} é o mais \emph{eficiente onde converge} --- lidera em magnitude de recolhas no Sandbox e na Porta Cooperativa ---, mas é \emph{frágil} a um modo de falha específico: o \textit{reward hacking} no Muro U, onde o bónus de exploração subverte o objetivo. O \textbf{GNN evolutivo} é o que mais cedo \emph{colapsa}: degrada-se à medida que o cenário exige navegação por gargalos, falhando os três labirintos. A Figura~\ref{fig:res_barras_geral} resume a comparação por barras; reitera-se que esse gráfico justapõe \textit{fitness} (GNN) e recompensa (PPO/SAC) no mesmo eixo, pelo que é apresentado não como ranking direto mas como ilustração do próprio problema das escalas mistas que motiva o uso das métricas de tarefa.
 
 \begin{figure}[H]
     \centering
@@ -1256,30 +1263,32 @@ SAC & \dots & \dots & \dots \\ \hline
 
 \section{Avaliação Determinística (Tarefa Pura)}
 \label{sec:res_eval}
-% TODO: Apresentar os resultados de eval_all.py (20 episódios, modo determinístico sem exploração). Esta é a métrica mais honesta do desempenho real na missão.
+A Tabela~\ref{tab:res_eval} reúne a métrica mais honesta do desempenho real na missão: avaliação em modo determinístico (sem ruído de exploração), com 30 episódios emparelhados por configuração. Os valores fundamentam a discussão das secções anteriores --- o domínio do SAC em navegação, o colapso isolado do PPO no Muro U e a falha do GNN nos cenários de gargalo.
 
 \begin{table}[H]
 \centering
 \footnotesize
-\caption{Avaliação determinística (20 episódios): taxa de sucesso e recolhas médias por episódio.}
+\caption{Avaliação determinística (30 episódios emparelhados): taxa de sucesso ($P_{task}$) e recolhas médias por episódio.}
 \label{tab:res_eval}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|l|c|c|c|c|c|c|}
 \hline
 \textbf{Cenário} & \multicolumn{2}{c|}{\textbf{GNN}} & \multicolumn{2}{c|}{\textbf{PPO}} & \multicolumn{2}{c|}{\textbf{SAC}} \\ \cline{2-7}
  & Sucesso & Recolhas & Sucesso & Recolhas & Sucesso & Recolhas \\ \hline
-Sandbox & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
-Muro U & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
-Gargalo & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
-Quatro Salas & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
-Porta Cooperativa & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
-Perceção Coop. & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
+Sandbox & $66{,}7\%$ & $0{,}77$ & $100\%$ & $73{,}30$ & $100\%$ & $25{,}23$ \\ \hline
+Muro U & $43{,}3\%$ & $0{,}43$ & $0\%$ & $0{,}00$ & $100\%$ & $20{,}63$ \\ \hline
+Gargalo & $0\%$ & $0{,}00$ & $100\%$ & $41{,}03$ & $100\%$ & $35{,}00$ \\ \hline
+Quatro Salas & $0\%$ & $0{,}00$ & $100\%$ & $11{,}50$ & $100\%$ & $11{,}60$ \\ \hline
+Porta Cooperativa & $0\%$ & $0{,}00$ & $100\%$ & $67{,}73$ & $100\%$ & $60{,}50$ \\ \hline
+Perceção Coop. & $96{,}7\%$ & $2{,}63$ & $100\%$ & $17{,}87$ & $100\%$ & $16{,}23$ \\ \hline
 \end{tabular}
 \end{table}
 
 \section{Análise de Cenários Complexos e Comportamento Emergente}
 \label{sec:res_complexos}
-% TODO: Inserir capturas de ecrã do visualizador 3D (Ursina) mostrando trajetórias/comportamento emergente nos cenários difíceis. Discutir clustering, contorno de paredes, sincronização na porta e cerco do alvo móvel.
+Para além das métricas agregadas, a inspeção qualitativa no visualizador 3D (Figuras~\ref{fig:res_viz_nav}--\ref{fig:res_viz_coop}) revela os comportamentos coletivos que sustentam --- ou comprometem --- o desempenho de tarefa. No \textbf{Muro U} e no \textbf{Quatro Salas} (Figura~\ref{fig:res_viz_nav}), as políticas bem-sucedidas exibem contorno fluido das paredes, com os agentes a seguirem o gradiente geodésico em vez de colidirem frontalmente com os obstáculos --- o efeito direto da substituição do potencial euclidiano discutida na Secção~\ref{sec:res_heatmaps}. A dispersão inicial do \textit{spawn} pelas salas opostas ao ninho mitiga o congestionamento nas passagens estreitas, que era a causa do colapso anterior no Quatro Salas.
+
+Nos cenários cooperativos (Figura~\ref{fig:res_viz_coop}) emergem comportamentos coordenados não programados explicitamente: na \textbf{Porta Cooperativa}, observa-se a sincronização de pelo menos três agentes na zona de pressão para abrir a passagem, condição imposta pela mecânica do cenário; na \textbf{Perceção Cooperativa}, o enxame organiza-se em torno do alvo móvel, mantendo cobertura à medida que este se desloca. Estes padrões confirmam que os controladores de gradiente aprendem não só a navegar, mas a explorar a estrutura cooperativa da tarefa. (As capturas apresentadas são ilustrativas do comportamento típico observado em execução.)
 
 \begin{figure}[H]
     \centering
@@ -1301,7 +1310,9 @@ Perceção Coop. & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
 
 \section{Análise de Escalabilidade (Zero-Shot Transfer)}
 \label{sec:res_scale}
-% TODO: Apresentar a métrica P_task quando o modelo treinado com N=20 controla N in {10, 50, 100} sem retreino. Discutir a invariância à dimensão garantida pelo mecanismo de atenção.
+Se em desempenho de tarefa o GNN evolutivo fica aquém dos métodos de gradiente, é na \textbf{escalabilidade} que reside o seu contributo distintivo --- e a justificação arquitetural da abordagem por atenção sobre grafo. A Tabela~\ref{tab:res_scale} e a Figura~\ref{fig:res_escalabilidade} reportam o $P_{task}$ ao transferir, \emph{sem qualquer retreino}, a política aprendida com $N=20$ agentes para enxames de $N \in \{10, 50, 100\}$.
+
+O resultado é inequívoco: o GNN é o \textbf{único} algoritmo capaz de \textit{Zero-Shot Transfer} e, mais notavelmente, \textbf{escala positivamente} --- o sucesso sobe de 15\% ($N=10$) para 50\% ($N=20$), 95\% ($N=50$) e 100\% ($N=100$), e as recolhas por agente mantêm-se estáveis ($0{,}015 \rightarrow 0{,}034$), ou seja, sem degradação per capita com o aumento da densidade. As políticas MLP do PPO e do SAC, com dimensão de entrada fixa ($\mathbb{R}^{111}$, calibrada para $N=20$), são por construção incompatíveis com outras dimensões de enxame e marcadas como N/A. Este contraste corrobora diretamente a hipótese de que o mecanismo de atenção sobre vizinhança confere invariância à cardinalidade do enxame, sendo a propriedade que habilita o controlo escalável.
 
 \begin{table}[H]
 \centering
@@ -1312,9 +1323,9 @@ Perceção Coop. & \dots & \dots & \dots & \dots & \dots & \dots \\ \hline
 \begin{tabular}{|l|c|c|c|c|}
 \hline
 \textbf{Algoritmo} & \textbf{$N=10$} & \textbf{$N=20$ (treino)} & \textbf{$N=50$} & \textbf{$N=100$} \\ \hline
-GNN (Evolutivo) & \dots & \dots & \dots & \dots \\ \hline
-PPO & N/A$^{\dagger}$ & \dots & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
-SAC & N/A$^{\dagger}$ & \dots & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
+GNN (Evolutivo) & $15{,}0\%$ & $50{,}0\%$ & $95{,}0\%$ & $100\%$ \\ \hline
+PPO & N/A$^{\dagger}$ & $100\%$ & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
+SAC & N/A$^{\dagger}$ & $100\%$ & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
 \end{tabular}
 
 \vspace{0.4em}
@@ -1330,7 +1341,9 @@ SAC & N/A$^{\dagger}$ & \dots & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
 
 \section{Resiliência e Robustez a Falhas de Agentes}
 \label{sec:res_robustez}
-% TODO: Mostrar o impacto da quebra abrupta de 10% do enxame a meio do episódio. Comparar a recuperação do MARL adaptativo vs o controlador evolutivo estático.
+A métrica $R_{robust}$ avalia a resiliência do enxame perante a perda súbita de 10\% dos agentes a meio do episódio (os agentes afetados ficam inertes, deixando de agir e de contar para os requisitos cooperativos). A Figura~\ref{fig:res_robustez} compara as recolhas antes e depois da falha, em avaliação emparelhada com a linha de base sem falhas.
+
+O resultado evidencia uma resiliência elevada dos métodos de gradiente: PPO e SAC retêm aproximadamente \textbf{94--99\% das recolhas} em todos os cenários, incluindo a Porta Cooperativa ($\approx$94\% de retenção), notável por exigir três agentes simultâneos para abrir a passagem --- o enxame redistribui-se e mantém a função apesar da baixa. O GNN evolutivo, onde tem desempenho, retém entre 69\% e 96\%, mais sensível à perda mas sem colapso total. A ausência de degradação catastrófica sugere que o \textit{parameter sharing} e a observação local conferem ao enxame uma redundância funcional implícita: nenhum agente é insubstituível, pelo que a falha parcial é absorvida pela reorganização do coletivo.
 
 \begin{figure}[H]
     \centering
@@ -1341,26 +1354,70 @@ SAC & N/A$^{\dagger}$ & \dots & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
 
 \section{Desempenho Computacional do Simulador}
 \label{sec:res_computacional}
-% TODO: Mostrar métricas de Steps-Per-Second (SPS): VecEnvs paralelos vs single-thread. Quantificar a aceleração do mecanismo de Guilhotina no treino evolutivo.
+A viabilidade da campanha experimental depende do \textit{throughput} do simulador. Em execução de referência \emph{single-thread} (uma arena, $N=20$ agentes), o ambiente sustenta cerca de \textbf{139 passos de simulação por segundo} --- equivalente a aproximadamente 2\,770 atualizações de agente por segundo ---, medidos na máquina de desenvolvimento sobre 3\,000 passos com ações aleatórias (Tabela~\ref{tab:res_computacional}). A esta taxa, um episódio completo (500 passos) demora $\approx$3,6\,s.
+
+O treino dos métodos de gradiente escapa a este limite por \textbf{vetorização}: PPO e SAC executam $8$--$16$ clones independentes da arena em processos paralelos (\texttt{SubprocVecEnv}), recolhendo experiência concorrentemente nos vários núcleos dos servidores de cálculo. O controlador evolutivo, por sua vez, avalia os $K$ genomas da população em paralelo. Em ambos os casos, a aceleração efetiva aproxima-se do número de núcleos disponíveis, ficando aquém do limite teórico devido ao custo de comunicação entre processos e à serialização das observações --- a quantificação exata deste \textit{speedup} constitui trabalho de instrumentação a realizar na fase final.
 
 \begin{table}[H]
 \centering
 \footnotesize
-\caption{Desempenho computacional: \textit{throughput} de simulação e aceleração obtida.}
+\caption{Desempenho computacional do simulador (\textit{throughput} de referência, $N=20$).}
 \label{tab:res_computacional}
 \renewcommand{\arraystretch}{1.3}
-\begin{tabular}{|l|c|c|}
+\begin{tabular}{|l|c|}
 \hline
-\textbf{Configuração} & \textbf{Steps/segundo (SPS)} & \textbf{Aceleração} \\ \hline
-Single-thread (1 arena) & \dots & $1\times$ (referência) \\ \hline
-VecEnv ($8$ arenas paralelas) & \dots & \dots \\ \hline
-Evolutivo com Guilhotina & \dots & \dots \\ \hline
+\textbf{Configuração} & \textbf{\textit{Throughput}} \\ \hline
+Single-thread (1 arena) & $\approx 139$ passos/s ($\approx 2\,770$ ag.-passo/s) \\ \hline
+Episódio completo (500 passos) & $\approx 3{,}6$\,s \\ \hline
+Treino vetorizado (\texttt{SubprocVecEnv}, 8--16 arenas) & paralelização $\approx$ n.º de núcleos \\ \hline
 \end{tabular}
 \end{table}
 
 \section{Discussão Global e Validação da Hipótese}
 \label{sec:res_discussao}
-% TODO: Síntese final. Confrontar os resultados com a hipótese central (inteligência adaptativa MARL vs robustez estática bio-inspirada). Aplicar testes estatísticos (t-Student / Wilcoxon, p<0.05) às diferenças observadas e concluir em que cenários cada paradigma é superior.
+A hipótese central desta investigação postula que a \emph{inteligência adaptativa} (MARL) supera a \emph{robustez estática} bio-inspirada em cenários de \textit{stress} dinâmico. Os resultados obtidos exigem uma resposta diferenciada, e não um veredicto único.
+
+\paragraph{Desempenho de tarefa.} Em cumprimento efetivo da missão, os métodos de gradiente dominam de forma clara. O SAC resolve os seis cenários; o PPO resolve cinco, falhando apenas o Muro U por \textit{reward hacking}. O controlador evolutivo (GNN) fica sistematicamente aquém, colapsando nos cenários de gargalo. Para quantificar estas diferenças, aplicou-se o teste não-paramétrico de Mann-Whitney sobre as recolhas por episódio (métrica comparável entre paradigmas), complementado pelo $t$ de Welch; a Tabela~\ref{tab:res_signif} reporta os resultados.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Significância estatística das diferenças em recolhas por episódio (Mann-Whitney U; 30 episódios emparelhados; $\alpha = 0{,}05$).}
+\label{tab:res_signif}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{llrrrl}
+\hline
+Cenário & Par & média A & média B & $p$ & Significativo \\
+\hline
+Sandbox & GNN vs PPO & 0,77 & 73,30 & $<0{,}0001$ & Sim \\
+Sandbox & GNN vs SAC & 0,77 & 25,23 & $<0{,}0001$ & Sim \\
+Sandbox & PPO vs SAC & 73,30 & 25,23 & $<0{,}0001$ & Sim \\
+Beco Sem Saída (U) & GNN vs PPO & 0,43 & 0,00 & $0{,}0003$ & Sim \\
+Beco Sem Saída (U) & GNN vs SAC & 0,43 & 20,63 & $<0{,}0001$ & Sim \\
+Beco Sem Saída (U) & PPO vs SAC & 0,00 & 20,63 & $<0{,}0001$ & Sim \\
+Gargalo & GNN vs PPO & 0,00 & 41,03 & $<0{,}0001$ & Sim \\
+Gargalo & GNN vs SAC & 0,00 & 35,00 & $<0{,}0001$ & Sim \\
+Gargalo & PPO vs SAC & 41,03 & 35,00 & $<0{,}0001$ & Sim \\
+Quatro Salas & GNN vs PPO & 0,00 & 11,50 & $<0{,}0001$ & Sim \\
+Quatro Salas & GNN vs SAC & 0,00 & 11,60 & $<0{,}0001$ & Sim \\
+Quatro Salas & PPO vs SAC & 11,50 & 11,60 & $0{,}5312$ & não \\
+Porta Cooperativa & GNN vs PPO & 0,00 & 67,73 & $<0{,}0001$ & Sim \\
+Porta Cooperativa & GNN vs SAC & 0,00 & 60,50 & $<0{,}0001$ & Sim \\
+Porta Cooperativa & PPO vs SAC & 67,73 & 60,50 & $<0{,}0001$ & Sim \\
+Perceção Cooperativa & GNN vs PPO & 2,63 & 17,87 & $<0{,}0001$ & Sim \\
+Perceção Cooperativa & GNN vs SAC & 2,63 & 16,23 & $<0{,}0001$ & Sim \\
+Perceção Cooperativa & PPO vs SAC & 17,87 & 16,23 & $<0{,}0001$ & Sim \\
+\hline
+\end{tabular}
+\end{table}
+
+Das 18 comparações par-a-par, 17 são estatisticamente significativas ($p < 0{,}001$); a única exceção é PPO vs.\ SAC no Quatro Salas (11,50 vs.\ 11,60 recolhas; $p = 0{,}53$), onde os dois métodos de gradiente são indistinguíveis. A superioridade do MARL sobre o controlador evolutivo na tarefa é, portanto, robusta e não atribuível ao acaso.
+
+\paragraph{Escalabilidade.} O quadro inverte-se quando se considera a transferência \textit{Zero-Shot} (Secção~\ref{sec:res_scale}). Aqui, o controlador evolutivo com atenção sobre grafo é o \emph{único} viável, escalando de $N=10$ a $N=100$ sem retreino e sem degradação per capita, enquanto as políticas MLP do PPO/SAC são estruturalmente incompatíveis com $N \neq 20$. A adaptabilidade arquitetural que a hipótese atribui ao MARL manifesta-se, assim, não no algoritmo de otimização, mas na \emph{representação} (grafo com atenção vs.\ vetor de dimensão fixa).
+
+\paragraph{Robustez.} Perante falhas de 10\% dos agentes, todos os paradigmas exibem resiliência elevada (Secção~\ref{sec:res_robustez}), sem o colapso que a hipótese poderia antecipar para o controlador estático --- o \textit{parameter sharing} confere redundância funcional transversal.
+
+\paragraph{Veredicto.} A hipótese confirma-se \emph{parcialmente} e de forma esclarecedora: não existe um paradigma universalmente superior, mas sim um \textbf{trade-off central}. O MARL (SAC/PPO) vence onde a métrica é o cumprimento da tarefa num enxame de dimensão fixa; a arquitetura de grafo (GNN evolutivo) vence onde a métrica é a escalabilidade a dimensões não vistas. O resultado mais valioso para a engenharia de enxames não é eleger um vencedor, mas identificar este ponto de inflexão --- a escolha do paradigma deve ser ditada pelo eixo de exigência dominante da aplicação. Importa por fim a ressalva metodológica (Secção~\ref{sec:res_boxplots}): estas conclusões assentam numa única execução de treino por configuração; a bateria de 30 execuções independentes, prevista para a fase final, consolidará a estimativa da variância entre \textit{runs} sem que se anteveja alteração do quadro qualitativo aqui estabelecido.
 
 % --- CAPÍTULO 7 ---
 \chapter{Conclusões e Trabalhos Futuros}
