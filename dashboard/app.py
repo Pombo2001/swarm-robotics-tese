@@ -6,28 +6,21 @@ Abre em http://localhost:8080 (e fica acessível na rede local).
 F1 entrega a vista 'Treinar' (fila de jobs + consola integrada). As restantes vistas
 mostram um roadmap do que trarão em F2 (Monitorizar) e F3 (Ciência / Resultados).
 """
-from nicegui import ui
+import os
 
+from nicegui import ui, app
+
+from . import config
 from .jobs import JobQueue
-from .views import treinar, servidor, ciencia
+from .views import treinar, servidor, ciencia, resultados
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
 
-
-def _roadmap(icon: str, titulo: str, fase: str, desc: str, features: list[str]):
-    """Placeholder elegante (em vez de um 'em breve' seco) para vistas por fazer."""
-    with ui.column().classes("w-full items-center justify-center gap-4 py-12"):
-        ui.icon(icon).classes("text-7xl text-sky-500/70")
-        ui.label(titulo).classes("text-3xl font-bold")
-        ui.badge(f"Planeado · {fase}", color="primary").props("rounded").classes("text-sm px-3 py-1")
-        ui.label(desc).classes("text-gray-400 text-center max-w-2xl")
-        with ui.card().classes("bg-slate-800/60 rounded-xl shadow-lg p-5 mt-2 w-full max-w-xl"):
-            ui.label("O que esta vista vai trazer").classes("text-sm font-semibold text-sky-300 mb-1")
-            for f in features:
-                with ui.row().classes("items-center gap-2 no-wrap"):
-                    ui.icon("check_circle").classes("text-emerald-400 text-base")
-                    ui.label(f).classes("text-sm text-gray-300")
+# Serve os PNGs das sessões de treino para a galeria (vista Resultados).
+_graficos = os.path.join(config.BASE_DIR, "results", "graficos_tese")
+if os.path.isdir(_graficos):
+    app.add_static_files("/graficos", _graficos)
 
 
 @ui.page("/")
@@ -62,11 +55,7 @@ def index():
         with ui.tab_panel(t_ciencia):
             ciencia.build()
         with ui.tab_panel(t_result):
-            _roadmap("image", "Resultados", "F3",
-                     "Galeria de gráficos com comparação e exportação direta para a tese.",
-                     ["Filtros por sessão / tipo / cenário e zoom",
-                      "Comparação A/B lado a lado (ex.: treino 24h vs 48h)",
-                      "Botão 'Enviar para a Tese' (copia o PNG com o nome certo)"])
+            resultados.build()
 
 
 def main():
