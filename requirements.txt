@@ -17,6 +17,7 @@ torch==2.10.0
 matplotlib==3.10.8
 seaborn==0.13.2
 nicegui==3.13.0          # dashboard "Mission Control" (web local) — pacote dashboard/
+plotly==6.8.0            # curvas de aprendizagem ao vivo no dashboard (vista Monitorizar)
 customtkinter==5.2.2     # launcher antigo (launcher_dashboard.py); migração incremental
 pillow==12.1.0           # carregamento de imagens no dashboard
 ursina==8.3.0            # visualizador 3D

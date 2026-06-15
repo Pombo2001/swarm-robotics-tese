@@ -12,7 +12,7 @@ from nicegui import ui, app
 
 from . import config
 from .jobs import JobQueue
-from .views import treinar, servidor, ciencia, resultados
+from .views import treinar, servidor, ciencia, resultados, curvas
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
@@ -51,6 +51,8 @@ def index():
         with ui.tab_panel(t_treinar):
             treinar.build(queue)
         with ui.tab_panel(t_monitor):
+            with ui.column().classes("w-full gap-4 p-4"):
+                curvas.build()
             servidor.build()
         with ui.tab_panel(t_ciencia):
             ciencia.build()

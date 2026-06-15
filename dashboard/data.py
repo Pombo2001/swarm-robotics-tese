@@ -103,6 +103,39 @@ def graph_type(filename: str) -> str:
     return "Outros"
 
 
+# ── Curvas de treino ao vivo (vista Monitorizar) ─────────────────────────────
+# algo -> (caminho, coluna_x, coluna_score, coluna_tarefa)
+TRAIN_LOGS = {
+    "GNN": (os.path.join(config.BASE_DIR, "results", "logs", "gnn_3d_training.csv"),
+            "timestep", "best_fitness", "best_task_food"),
+    "PPO": (os.path.join(config.BASE_DIR, "results", "logs_ppo", "training_history_ppo_3d.csv"),
+            "timesteps", "ep_rew_mean", "ep_task_mean"),
+    "SAC": (os.path.join(config.BASE_DIR, "results", "logs_sac", "training_history_sac_3d.csv"),
+            "timesteps", "ep_rew_mean", "ep_task_mean"),
+}
+
+
+def training_curves():
+    """Lê os CSVs de treino locais. Devolve {algo: {x, score, task, mtime}} (só os que existem)."""
+    out = {}
+    for algo, (path, xcol, scol, tcol) in TRAIN_LOGS.items():
+        if not os.path.exists(path):
+            continue
+        try:
+            df = pd.read_csv(path)
+        except Exception:
+            continue
+        if xcol not in df.columns or len(df) == 0:
+            continue
+        out[algo] = {
+            "x": df[xcol].tolist(),
+            "score": df[scol].tolist() if scol in df.columns else [],
+            "task": df[tcol].tolist() if tcol in df.columns else [],
+            "mtime": _mtime(path),
+        }
+    return out
+
+
 def send_to_thesis(session: str, filename: str):
     """Copia um PNG da sessão para Tese/images/resultados/ (nome inalterado)."""
     src = os.path.join(GRAFICOS_DIR, session, filename)
