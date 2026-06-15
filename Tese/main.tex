@@ -426,12 +426,12 @@ Esta abordagem utiliza algoritmos de busca meta-heurística para navegar no vast
 O processo evolutivo opera sobre uma \textbf{população} $\Pi_g = \{\theta_1, \theta_2, \ldots, \theta_K\}$ de $K$ controladores candidatos, denominados \textbf{genomas}, onde cada genoma $\theta_k \in \mathbb{R}^{|\theta|}$ é o vetor concatenado de todos os pesos e \textit{biases} de uma rede neuronal. A topologia arquitetural da rede é fixada \textit{a priori}; apenas os seus parâmetros numéricos são sujeitos a otimização --- esta abordagem denomina-se \textbf{Neuroevolução}. Ao contrário do RL, a Neuroevolução não necessita de gradientes calculáveis, tornando-a aplicável a qualquer função de recompensa não-diferenciável.
 
 \paragraph{Função de \textit{Fitness}:}
-O critério de qualidade de cada genoma é quantificado pela função de \textit{fitness} $J(\theta_k)$, definida como o retorno acumulado médio em $E$ episódios de simulação independentes:
+O critério de qualidade de cada genoma, $J(\theta_k)$, foi deliberadamente desenhado para que a \textbf{tarefa} domine a seleção, relegando a recompensa com \textit{shaping} para o papel de gradiente de desempate. Combina assim duas grandezas distintas:
 \begin{equation}
-    J(\theta_k) = \frac{1}{E} \sum_{e=1}^{E} \sum_{t=0}^{T} \mathcal{R}(s_t, \mathbf{a}_t;\, \theta_k)
+    J(\theta_k) = \underbrace{\bar{f}_k \cdot \lambda_{task}}_{\text{tarefa}} \;+\; \underbrace{\beta \cdot \tanh\!\left(\frac{\bar{R}_k}{\beta}\right)}_{\text{\textit{shaping} comprimido}}
     \label{eq:fitness}
 \end{equation}
-onde $\mathcal{R}$ é a recompensa do ambiente no instante $t$ e $T$ é a duração máxima do episódio. A média sobre $E=3$ episódios reduz a variância estocástica da avaliação, tornando a estimativa de $J$ mais fiável sem incorrer em custo computacional excessivo.
+onde $\bar{f}_k = \frac{1}{E}\sum_{e=1}^{E} f_{k,e}$ é o número médio de recolhas (a tarefa pura) e $\bar{R}_k = \frac{1}{E}\sum_{e=1}^{E}\sum_{t=0}^{T}\mathcal{R}(s_t, \mathbf{a}_t;\, \theta_k)$ é o retorno acumulado médio (a recompensa do ambiente no instante $t$, com \textit{shaping}; $T$ é a duração máxima do episódio). O peso $\lambda_{task}=10000$ assegura que cada recolha vale mais do que qualquer acumulação de \textit{shaping}, e $\beta = 5000$ limita o contributo da recompensa. A compressão por $\tanh$ é deliberada: ao contrário de um \textit{clip} rígido --- que saturaria num valor constante sempre que nenhum genoma recolhe, anulando o gradiente de seleção ---, a $\tanh$ é monótona e nunca satura abruptamente, mantendo sinal de seleção mesmo nas fases iniciais. Esta formulação distingue \textit{fitness} de recompensa --- é possível aumentar a recompensa (rondar a comida acumulando \textit{shaping}) sem aumentar a tarefa ---, eliminando o \textit{reward hacking}. A média sobre $E=4$ episódios com \textit{seeds} fixas reduz a variância estocástica da avaliação, estabilizando o sinal de seleção entre gerações.
 
 \paragraph{Mutação Gaussiana \textit{Element-wise}:}
 Em vez de perturbar a totalidade dos $|\theta|$ pesos em simultâneo --- o que degradaria irrecuperavelmente a diversidade populacional em redes de grande dimensão ---, implementa-se uma mutação esparsa controlada por uma máscara binária $\mathbf{m} \in \{0,1\}^{|\theta|}$:
@@ -856,7 +856,7 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
 \textbf{Evolutivo (AE)} & Tamanho da População ($K$) & $30$ genomas \\
  & Taxa de Mutação ($p_{mut}$) & $0.1$ \\
  & Desvio Padrão Inicial ($\sigma$) & $0.1$ (Decaimento: $\times 0.995$) \\
- & Episódios de Avaliação por Genoma & $1$ \\
+ & Episódios de Avaliação por Genoma ($E$) & $4$ \\
  & Dimensão Oculta da Rede ($h$) & $32$ ($\approx 8$k pesos) \\ \hline
 \end{tabular}
 \end{table}
@@ -1029,7 +1029,7 @@ A \textit{baseline} adotada assenta num processo de \textbf{Neuroevolução} \ci
 
 O treino evolutivo segue o ciclo \textit{avaliação} $\to$ \textit{seleção} $\to$ \textit{mutação}, implementado em \texttt{evo\_trainer\_3d.py}:
 \begin{enumerate}
-    \item \textbf{Avaliação Paralela:} Os $K=30$ genomas são avaliados em paralelo via \texttt{multiprocessing.Pool} com até 8 processos. Cada processo executa $E=3$ episódios independentes e devolve $J(\theta_k)$ (Equação~\ref{eq:fitness}).
+    \item \textbf{Avaliação Paralela:} Os $K=30$ genomas são avaliados em paralelo via \texttt{multiprocessing.Pool} com até 8 processos. Cada processo executa $E=4$ episódios independentes (com \textit{seeds} fixas ao longo da evolução) e devolve $J(\theta_k)$ (Equação~\ref{eq:fitness}).
     \item \textbf{Mecanismo de Guilhotina:} Se a recompensa acumulada após 150 passos for inferior ao limiar $J < -200$, o episódio é terminado prematuramente e o genoma recebe uma penalidade adicional de $-1000$. Este mecanismo evita desperdiçar ciclos de CPU em genomas claramente disfuncionais.
     \item \textbf{Seleção Elitista:} Os $e=6$ melhores genomas são copiados intactos. Os restantes 24 são gerados por mutação element-wise (Equação~\ref{eq:mutation}) de cópias aleatórias dos elites.
     \item \textbf{Anilamento de $\sigma$:} A cada geração, $\sigma$ é atualizado pela Equação~\ref{eq:sigma_decay}, com decaimento de 0.5\% por geração.
