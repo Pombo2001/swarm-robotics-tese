@@ -48,8 +48,6 @@ ppo:
 rewards:
   energy_cost: -0.05
   food_collected: 100.0
-  out_of_bounds: -10.0
-  wall_penalty: -5.0
 sac:
   buffer_size: 500000
   checkpoint_interval_min: 30

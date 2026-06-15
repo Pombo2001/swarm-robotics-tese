@@ -247,7 +247,7 @@ Iscte -- Instituto Universitário de Lisboa\\
 Departamento de Ciências e Tecnologias da Informação\\
 ~\\
 ~\\
-\textbf{Reinforcement Learning para Controlo de Enxames}\\
+\textbf{Aprendizagem por Reforço para Controlo de Enxames}\\
 ~\\
 ~\\
 ~\\
@@ -297,13 +297,16 @@ Gostaria de expressar a minha gratidão aos meus familiares, por me terem apoiad
 \noindent This work was partially supported by national funds through Fundação para a Ciência e a Tecnologia, I.P. (FCT), ISTAR-Iscte Pluriannual Projects UID/04466/2025 (\url{https://doi.org/10.54499/UID/04466/2025}).
 
 \chapter*{Resumo}
-Esta dissertação propõe um estudo comparativo rigoroso entre a Aprendizagem por Reforço Multiagente (MARL) e a Otimização Bio-inspirada para o controlo de enxames robóticos. Através de um simulador de alta fidelidade, implementa-se o \textit{framework} MARL RS2C (com os algoritmos PPO e SAC, sob partilha de parâmetros) e um controlador bio-inspirado neuro-evolutivo assente numa rede neuronal de grafos com atenção --- responsável pela invariância à dimensão do enxame ---, pretendendo-se validar a hipótese de que a inteligência adaptativa supera a robustez estática em cenários de stress dinâmico.
+Esta dissertação apresenta um estudo comparativo rigoroso entre a Aprendizagem por Reforço Multiagente (MARL) e a Otimização Bio-inspirada para o controlo de enxames robóticos. Através de um simulador de alta fidelidade, implementou-se o \textit{framework} MARL RS2C (com os algoritmos PPO e SAC, sob partilha de parâmetros) e um controlador bio-inspirado neuroevolutivo assente numa rede neuronal de grafos com atenção --- responsável pela invariância à dimensão do enxame ---, avaliando-se ambos em seis cenários de dificuldade crescente sob tratamento estatístico. Os resultados revelam um \textit{trade-off} central: os métodos de gradiente dominam no cumprimento da tarefa (o SAC resolve os seis cenários), enquanto apenas a arquitetura de atenção sobre grafo permite a transferência \textit{Zero-Shot} para enxames de dimensão não vista ($N$ de $10$ a $100$) sem retreino. A hipótese de que a inteligência adaptativa supera a robustez estática confirma-se, assim, parcialmente: a vantagem reside na \emph{representação} (grafo) e não no algoritmo de otimização.
 
 \vspace{3ex}
 \textsc{Palavras Chave:} Robótica de Enxame, MARL, Otimização Bio-inspirada, GNNs.
 
-%\chapter*{Abstract}
-%This thesis proposes a rigorous comparative study... (Se precisares do abstract em inglês, descomenta)
+\chapter*{Abstract}
+This dissertation presents a rigorous comparative study between Multi-Agent Reinforcement Learning (MARL) and Bio-inspired Optimization for the control of robotic swarms. Using a high-fidelity simulator, we implemented the MARL framework RS2C (with the PPO and SAC algorithms, under parameter sharing) and a neuroevolutionary bio-inspired controller built on a graph neural network with attention --- responsible for invariance to swarm size ---, evaluating both across six scenarios of increasing difficulty under statistical treatment. The results reveal a central trade-off: gradient-based methods dominate in task completion (SAC solves all six scenarios), whereas only the graph-attention architecture enables Zero-Shot transfer to unseen swarm sizes ($N$ from $10$ to $100$) without retraining. The hypothesis that adaptive intelligence surpasses static robustness is therefore partially confirmed: the advantage lies in the \emph{representation} (graph) rather than in the optimization algorithm.
+
+\vspace{3ex}
+\textsc{Keywords:} Swarm Robotics, MARL, Bio-inspired Optimization, GNNs.
 
 \tableofcontents
 \listoffigures
@@ -366,9 +369,9 @@ Com base na definição do problema e na lacuna de investigação identificada n
 
 Para atingir o objetivo geral, foram definidos os seguintes objetivos específicos:
 \begin{itemize}
-    \item \textbf{Desenvolver um Ambiente de Simulação de Referência:} Projetar e implementar um simulador em ambiente Python capaz de modelar tarefas fundamentais de enxame, como vigilância cooperativa e \textit{foraging} dinâmico \cite{bettini2024benchmarl}. O ambiente deve contemplar modelos físicos realistas, observação local e parcial dos agentes e a simulação de falhas súbitas de agentes para testar a resiliência do sistema \cite{he2024self}.
+    \item \textbf{Desenvolver um Ambiente de Simulação de Referência:} Projetar e implementar um simulador em ambiente Python capaz de modelar tarefas fundamentais de enxame, como o \textit{foraging} (forrageamento) cooperativo dinâmico e a perceção cooperativa (cerco de alvos móveis), em cenários de dificuldade de navegação crescente \cite{bettini2024benchmarl}. O ambiente deve contemplar modelos físicos realistas, observação local e parcial dos agentes e a simulação de falhas súbitas de agentes para testar a resiliência do sistema \cite{he2024self}.
     \item \textbf{Implementar um Framework MARL Escalável (RS2C):} Desenvolver o \textit{framework} \textit{Robust and Scalable Swarm Control} (RS2C) assente em execução descentralizada com partilha de parâmetros \cite{sun2024graph}. Este objetivo inclui a exploração de \textbf{redes de grafos com mecanismos de atenção}, que garantem a invariância à permutação e permitem que um controlador treinado com $N$ agentes seja aplicado a enxames de outra dimensão sem retreino (\textit{Zero-Shot Transfer}).
-    \item \textbf{Implementar Baselines de Otimização Bio-inspirada:} Desenvolver controladores baseados em Algoritmos Evolutivos (AE) ou \textit{Particle Swarm Optimization} (PSO) para servirem como termo de comparação de desempenho \cite{hassen2025hybrid}. Estes controladores serão otimizados \textit{offline} para encontrar os pesos ótimos de redes neuronais estáticas, representando o paradigma de robustez pré-programada \cite{kennedy1995pso}.
+    \item \textbf{Implementar uma \textit{Baseline} de Otimização Bio-inspirada:} Desenvolver um controlador baseado em \textbf{Neuroevolução} (um Algoritmo Evolutivo, AE) para servir de termo de comparação de desempenho \cite{hassen2025hybrid, salimans2017es}. Este controlador é otimizado \textit{offline}, sem gradientes, para encontrar os pesos de uma rede neuronal de grafos com atenção, representando o paradigma de robustez pré-programada \cite{kennedy1995pso}.
     \item \textbf{Realizar uma Análise Comparativa e Estatística:} Executar experiências controladas utilizando as métricas de performance da tarefa, escalabilidade e robustez a perturbações \cite{iskandar2024comparative}. Os resultados deverão ser validados através de tratamento estatístico rigoroso (e.g., testes \textit{t-student}), garantindo que as conclusões sobre a superioridade de um paradigma sobre o outro são cientificamente sustentadas.
 \end{itemize}
 
@@ -777,7 +780,7 @@ Esta análise tabular reforça que, embora existam soluções robustas para prob
 Para assegurar a viabilidade técnica e a reprodutibilidade dos resultados, a implementação do sistema foi desenvolvida com base nas tecnologias padrão da indústria para Inteligência Artificial. A arquitetura adotada privilegia a modularidade, a flexibilidade e o desempenho computacional, permitindo a substituição independente de qualquer componente sem comprometer a integridade do \textit{pipeline} experimental.
 
 \subsection{Ambiente de Simulação e Interação}
-O desenvolvimento foi centralizado na linguagem \textbf{Python 3.x}, escolhida pela sua vasta comunidade científica e pelo ecossistema de bibliotecas especializadas em aprendizagem automática. A interface do simulador foi implementada em conformidade com a norma \textbf{PettingZoo}, um padrão aberto para ambientes de agentes múltiplos que permite a abstração completa da física interna e facilita a troca entre algoritmos sem reescrever o código base do ambiente \cite{bettini2024benchmarl}.
+O desenvolvimento foi centralizado na linguagem \textbf{Python 3.x}, escolhida pela sua vasta comunidade científica e pelo ecossistema de bibliotecas especializadas em aprendizagem automática. A interface do simulador segue o estilo da \textbf{API \textit{parallel} do PettingZoo} --- um padrão aberto para ambientes de agentes múltiplos ---, devolvendo a cada passo dicionários de observações, recompensas e sinais de terminação indexados por agente. Esta convenção abstrai a física interna e facilita a troca entre algoritmos sem reescrever o código base do ambiente \cite{bettini2024benchmarl}.
 
 A observação de cada agente é estritamente \textbf{local e parcial}, garantindo que o sistema opera num regime verdadeiramente descentralizado. Não existe qualquer componente com acesso ao estado global durante a fase de execução, replicando fielmente as limitações sensoriais de plataformas físicas como o Khepera IV ou o e-puck.
 
@@ -786,7 +789,7 @@ A construção das redes neuronais e o treino dos agentes MARL apoiaram-se em \t
 \begin{itemize}
     \item \textbf{PyTorch:} Utilizado para a implementação da \textit{Graph Neural Network} (GNN) do algoritmo evolutivo, devido ao seu suporte nativo para grafos dinâmicos e à facilidade de depuração de operações tensoriais personalizadas.
     \item \textbf{Stable-Baselines3:} Biblioteca de referência para a implementação dos algoritmos PPO e SAC, fornecendo implementações estáveis e bem validadas pela comunidade científica, com suporte a ambientes vetorizados paralelos.
-    \item \textbf{Aceleração de Hardware:} O código foi otimizado para tirar partido de aceleração por GPU via CUDA, permitindo a execução paralela de múltiplos ambientes de simulação e reduzindo significativamente o tempo de treino.
+    \item \textbf{Paralelização Multiprocesso (CPU):} A aceleração do treino assenta na execução paralela de múltiplos ambientes de simulação em processos independentes --- \texttt{SubprocVecEnv} para o PPO e o SAC e \texttt{multiprocessing.Pool} para a avaliação da população evolutiva ---, distribuindo a carga pelos vários núcleos de CPU dos servidores de cálculo. O simulador é implementado em Python/NumPy e executa em CPU; as redes envolvidas (a MLP $[256,256]$ da \textit{Stable-Baselines3} e a \texttt{GNNAgent3D} de $\approx 8$k parâmetros) são suficientemente compactas para não exigirem GPU dedicada, sendo o \textit{throughput} de treino dominado pela simulação física do ambiente e não pela passagem pelas redes.
 \end{itemize}
 
 \subsection{Arquitetura Geral do Simulador}
@@ -834,7 +837,7 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
 \textbf{Categoria} & \textbf{Hiperparâmetro} & \textbf{Valor Real} \\ \hline
 \textbf{Ambiente} & Raio da Arena ($r_{arena}$) & $15.0$\,m \\
  & Número de Agentes ($N$) & $20$ \\
- & Número de Obstáculos Dinâmicos & $50$ \\
+ & Número de Obstáculos Dinâmicos & $100$ \\
  & Raio dos Obstáculos ($r_{obs}$) & $0.2$\,m \\
  & Velocidade dos Obstáculos ($v_{obs}$) & $0.02$\,m/s \\
  & Raio do Ninho ($r_{nest}$) & $1.5$\,m \\
@@ -848,7 +851,7 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
  & Batch Size & $512$ \\
  & Número de Épocas ($n_{epochs}$) & $4$ \\
  & Arquitetura da Rede & MLP $[256, 256]$ \\
- & Número de CPUs Paralelos & $8$ \\ \hline
+ & Número de CPUs Paralelos & $16$ \\ \hline
 \textbf{SAC} & Buffer de Replay & $500,000$ transições \\
  & Coeficiente de Entropia ($\alpha$) & $0.1$ \\
  & Taxa de Aprendizagem ($lr$) & $10^{-4}$ \\
@@ -966,7 +969,7 @@ Para permitir a inspeção do comportamento emergente do enxame sem comprometer 
 A inspeção do comportamento é feita por um visualizador 3D implementado com o motor \textbf{Ursina} (assente em Panda3D), que projeta a telemetria do motor contínuo interno num espaço tridimensional navegável, com representação do ninho, obstáculos móveis, muros e indicadores de proximidade. O controlo experimental --- lançamento de treinos, seleção de cenários e geração de gráficos --- é centralizado num \textit{dashboard} interativo construído em \textbf{CustomTkinter}. Esta separação permite que o simulador opere num modo \textit{headless} (sem sobrecarga gráfica) durante sessões de treino intensivo --- processando milhares de transições por segundo ---, enquanto oferece um modo interativo para demonstração e análise qualitativa das políticas aprendidas.
 
 \subsection{Otimização Matemática da Física e Deteção de Colisões}
-A viabilidade do RL depende de ciclos de simulação contínuos em ordem de milissegundos. Simular colisões dinâmicas para $N=20$ agentes e dezenas de obstáculos não-estáticos de forma ineficiente levaria a um aumento quadrático no custo computacional.
+A viabilidade do RL depende de ciclos de simulação contínuos em ordem de milissegundos. Simular colisões dinâmicas para $N=20$ agentes e uma centena de obstáculos não-estáticos de forma ineficiente levaria a um aumento quadrático no custo computacional.
 \begin{itemize}
     \item \textbf{Deteção Geométrica de Colisões:} O motor resolve as colisões por testes geométricos diretos --- distância Euclidiana para os obstáculos esféricos e caixas envolventes alinhadas aos eixos (\textit{Axis-Aligned Bounding Boxes}, AABB) para os muros retangulares ---, recorrendo a operações vetoriais \textbf{NumPy} no cálculo de distâncias e profundidades de penetração. Um passo dedicado de \textbf{separação física} repele geometricamente qualquer par de agentes sobrepostos, assegurando a ausência de interpenetrações não-físicas no enxame.
     \item \textbf{Wall-Sliding Cinemático:} Quando um robô entra em contacto com uma parede retangular, o motor não o imobiliza mecanicamente (o que penalizaria irreversivelmente a exploração do algoritmo MARL). Em vez disso, recorre à projeção ortogonal do vetor de velocidade ao longo da direção normal da superfície de colisão, reproduzindo matematicamente de forma realista o deslizamento (\textit{wall-sliding}) contínuo de um chassi móvel \textit{differential-drive}.
@@ -1002,7 +1005,7 @@ Sob o RS2C investigam-se dois algoritmos de aprendizagem por reforço profundo p
 
 No modo PPO, os pesos da política MLP partilhada são otimizados através de gradientes calculados sobre \textit{rollouts} de experiência recolhidos com a política atual. O \textit{pipeline} de treino opera da seguinte forma:
 \begin{enumerate}
-    \item \textbf{Recolha de Experiência:} Em cada iteração, $N_{arenas}=8$ cópias paralelas do simulador (\texttt{SubprocVecEnv}) geram transições durante $n_{steps}=64$ passos cada. Como os $N=20$ agentes de cada arena são tratados como ambientes independentes (\textit{parameter sharing}), o \textit{rollout buffer} acumula $8 \times 20 \times 64 = 10\,240$ transições por iteração.
+    \item \textbf{Recolha de Experiência:} Em cada iteração, $N_{arenas}=16$ cópias paralelas do simulador (\texttt{SubprocVecEnv}) geram transições durante $n_{steps}=64$ passos cada. Como os $N=20$ agentes de cada arena são tratados como ambientes independentes (\textit{parameter sharing}), o \textit{rollout buffer} acumula $16 \times 20 \times 64 = 20\,480$ transições por iteração.
     \item \textbf{Cálculo da Vantagem:} As vantagens $\hat{A}_t$ são estimadas via GAE (Equação~\ref{eq:gae}) com $\gamma=0.99$ e $\lambda=0.95$ sobre o \textit{rollout} completo.
     \item \textbf{Atualização:} O buffer é amostrado em \textit{mini-batches} de 512 transições e o gradiente de $L^{\text{PPO}}$ é calculado durante $n_{epochs}=4$ passagens completas.
     \item \textbf{\textit{Parameter Sharing}:} Os $N=20$ robôs partilham o mesmo conjunto de parâmetros $\theta$. Cada transição $(o_i^t, a_i^t, r_t)$ de qualquer agente contribui para o gradiente, aumentando efetivamente o tamanho do \textit{batch} por fator $N$.
@@ -1018,7 +1021,7 @@ A cada passo de simulação, o vetor de observação de cada agente é construí
 \begin{enumerate}
     \item \textbf{Vizinhança Completa:} As \textit{features} de todos os restantes $N-1$ agentes (direção egocêntrica, distância normalizada e sinal de comunicação) são incluídas no vetor de observação $\mathbf{o}_i$. Não é aplicado um corte por raio de comunicação fixo: a seleção dos vizinhos relevantes é delegada no mecanismo de atenção, que aprende os pesos $\alpha_{ij}$.
     \item \textbf{Representação \textit{Dense} de Dimensão Fixa:} O vetor $\mathbf{o}_i \in \mathbb{R}^{111}$ incorpora os $N-1$ vizinhos em formato \textit{dense}, preservando uma dimensão de entrada constante e dispensando estruturas esparsas (\textit{edge-index}) ou \textit{padding} dinâmico.
-    \item \textbf{Dimensão de Entrada Fixa (PPO/SAC):} A política MLP partilhada recebe um vetor de dimensão \textbf{fixa} $\mathbb{R}^{111}$, definida para $N=20$ agentes. Por construção, esta abordagem \textbf{não é invariante} ao tamanho do enxame: alterar $N$ modifica a dimensão da observação ($12 + (N-1)\times 5$) e inviabiliza a aplicação direta da rede. A invariância à permutação e o \textit{Zero-Shot Transfer} para $N \in \{10, 50, 100\}$ são propriedades do mecanismo de atenção (Equações~\ref{eq:qkv} e~\ref{eq:attention_scores}), cujas operações QKV e \textit{softmax} se definem sobre o número de vizinhos presentes; são, por isso, avaliados no controlador neuroevolutivo (Secção~\ref{sec:algo_evolutivo}).
+    \item \textbf{Dimensão de Entrada Fixa (PPO/SAC):} A política MLP partilhada recebe um vetor de dimensão \textbf{fixa} $\mathbb{R}^{111}$, definida para $N=20$ agentes. Por construção, esta abordagem \textbf{não é invariante} ao tamanho do enxame: alterar $N$ modifica a dimensão da observação ($16 + (N-1)\times 5$) e inviabiliza a aplicação direta da rede. A invariância à permutação e o \textit{Zero-Shot Transfer} para $N \in \{10, 50, 100\}$ são propriedades do mecanismo de atenção (Equações~\ref{eq:qkv} e~\ref{eq:attention_scores}), cujas operações QKV e \textit{softmax} se definem sobre o número de vizinhos presentes; são, por isso, avaliados no controlador neuroevolutivo (Secção~\ref{sec:algo_evolutivo}).
 \end{enumerate}
 
 \section{Algoritmo 2: Otimização Bio-inspirada (Benchmark)}
@@ -1029,7 +1032,7 @@ A \textit{baseline} adotada assenta num processo de \textbf{Neuroevolução} \ci
 
 O treino evolutivo segue o ciclo \textit{avaliação} $\to$ \textit{seleção} $\to$ \textit{mutação}, implementado em \texttt{evo\_trainer\_3d.py}:
 \begin{enumerate}
-    \item \textbf{Avaliação Paralela:} Os $K=30$ genomas são avaliados em paralelo via \texttt{multiprocessing.Pool} com até 8 processos. Cada processo executa $E=4$ episódios independentes (com \textit{seeds} fixas ao longo da evolução) e devolve $J(\theta_k)$ (Equação~\ref{eq:fitness}).
+    \item \textbf{Avaliação Paralela:} Os $K=30$ genomas são avaliados em paralelo via \texttt{multiprocessing.Pool} com até 16 processos (limitado ao mínimo entre o tamanho da população e o número de núcleos disponíveis). Cada processo executa $E=4$ episódios independentes (com \textit{seeds} fixas ao longo da evolução) e devolve $J(\theta_k)$ (Equação~\ref{eq:fitness}).
     \item \textbf{Mecanismo de Guilhotina:} Se a recompensa acumulada após 150 passos for inferior ao limiar $J < -200$, o episódio é terminado prematuramente e o genoma recebe uma penalidade adicional de $-1000$. Este mecanismo evita desperdiçar ciclos de CPU em genomas claramente disfuncionais.
     \item \textbf{Seleção Elitista:} Os $e=6$ melhores genomas são copiados intactos. Os restantes 24 são gerados por mutação element-wise (Equação~\ref{eq:mutation}) de cópias aleatórias dos elites.
     \item \textbf{Anilamento de $\sigma$:} A cada geração, $\sigma$ é atualizado pela Equação~\ref{eq:sigma_decay}, com decaimento de 0.5\% por geração.
@@ -1200,7 +1203,7 @@ Nos cenários de gargalo (\textbf{Gargalo}, Figura~\ref{fig:res_curva_bottleneck
 
 \section{Fiabilidade e Variância entre \textit{Runs} (Boxplots)}
 \label{sec:res_boxplots}
-A análise da fiabilidade de treino requer múltiplas execuções independentes por configuração, de modo a distinguir o desempenho sistemático do ruído de inicialização. \textbf{Os resultados aqui apresentados correspondem a uma única execução por par algoritmo--cenário}; consequentemente, os diagramas de caixa das Figuras~\ref{fig:res_box_1}--\ref{fig:res_box_3} degeneram num único ponto e não suportam, ainda, inferência sobre a variância entre \textit{runs}. Apresentam-se como referência metodológica e espaço reservado: a bateria definitiva de \textbf{30 execuções por cenário e algoritmo} --- exigida pelo protocolo experimental (Capítulo~\ref{ch:fundamentos}) para validar a significância dos resultados --- está prevista para a fase final de experimentação nos servidores de cálculo, e substituirá estas figuras pelas distribuições completas. A análise de significância estatística que se segue (Secção~\ref{sec:res_discussao}) é, por isso, conduzida sobre a distribuição dos \textbf{episódios de avaliação} (30 por configuração), que é a base estatística sólida atualmente disponível.
+A análise da fiabilidade de treino requer múltiplas execuções independentes por configuração, de modo a distinguir o desempenho sistemático do ruído de inicialização. \textbf{Os resultados aqui apresentados correspondem a uma única execução por par algoritmo--cenário}; consequentemente, os diagramas de caixa das Figuras~\ref{fig:res_box_1}--\ref{fig:res_box_3} degeneram num único ponto e não suportam, ainda, inferência sobre a variância entre \textit{runs}. Apresentam-se como referência metodológica e espaço reservado: a bateria definitiva de \textbf{30 execuções por cenário e algoritmo} --- exigida pelo protocolo experimental (Tabela~\ref{tab:experiments_priority}) para validar a significância dos resultados --- está prevista para a fase final de experimentação nos servidores de cálculo, e substituirá estas figuras pelas distribuições completas. A análise de significância estatística que se segue (Secção~\ref{sec:res_discussao}) é, por isso, conduzida sobre a distribuição dos \textbf{episódios de avaliação} (30 por configuração), que é a base estatística sólida atualmente disponível.
 
 \begin{figure}[H]
     \centering
@@ -1356,7 +1359,7 @@ O resultado evidencia uma resiliência elevada dos métodos de gradiente: PPO e 
 \label{sec:res_computacional}
 A viabilidade da campanha experimental depende do \textit{throughput} do simulador. Em execução de referência \emph{single-thread} (uma arena, $N=20$ agentes), o ambiente sustenta cerca de \textbf{139 passos de simulação por segundo} --- equivalente a aproximadamente 2\,770 atualizações de agente por segundo ---, medidos na máquina de desenvolvimento sobre 3\,000 passos com ações aleatórias (Tabela~\ref{tab:res_computacional}). A esta taxa, um episódio completo (500 passos) demora $\approx$3,6\,s.
 
-O treino dos métodos de gradiente escapa a este limite por \textbf{vetorização}: PPO e SAC executam $8$--$16$ clones independentes da arena em processos paralelos (\texttt{SubprocVecEnv}), recolhendo experiência concorrentemente nos vários núcleos dos servidores de cálculo. O controlador evolutivo, por sua vez, avalia os $K$ genomas da população em paralelo. Em ambos os casos, a aceleração efetiva aproxima-se do número de núcleos disponíveis, ficando aquém do limite teórico devido ao custo de comunicação entre processos e à serialização das observações --- a quantificação exata deste \textit{speedup} constitui trabalho de instrumentação a realizar na fase final.
+O treino dos métodos de gradiente escapa a este limite por \textbf{vetorização}: PPO e SAC executam 16 clones independentes da arena em processos paralelos (\texttt{SubprocVecEnv}), recolhendo experiência concorrentemente nos vários núcleos dos servidores de cálculo. O controlador evolutivo, por sua vez, avalia os $K$ genomas da população em paralelo. Em ambos os casos, a aceleração efetiva aproxima-se do número de núcleos disponíveis, ficando aquém do limite teórico devido ao custo de comunicação entre processos e à serialização das observações --- a quantificação exata deste \textit{speedup} constitui trabalho de instrumentação a realizar na fase final.
 
 \begin{table}[H]
 \centering
@@ -1369,7 +1372,7 @@ O treino dos métodos de gradiente escapa a este limite por \textbf{vetorizaçã
 \textbf{Configuração} & \textbf{\textit{Throughput}} \\ \hline
 Single-thread (1 arena) & $\approx 139$ passos/s ($\approx 2\,770$ ag.-passo/s) \\ \hline
 Episódio completo (500 passos) & $\approx 3{,}6$\,s \\ \hline
-Treino vetorizado (\texttt{SubprocVecEnv}, 8--16 arenas) & paralelização $\approx$ n.º de núcleos \\ \hline
+Treino vetorizado (\texttt{SubprocVecEnv}, 16 arenas) & paralelização $\approx$ n.º de núcleos \\ \hline
 \end{tabular}
 \end{table}
 
@@ -1422,12 +1425,12 @@ Das 18 comparações par-a-par, 17 são estatisticamente significativas ($p < 0{
 % --- CAPÍTULO 7 ---
 \chapter{Conclusões e Trabalhos Futuros}
 
-\section{Conclusões da Proposta}
-Esta proposta de tese incide sobre um dos desafios mais prementes na robótica contemporânea: a definição de paradigmas de controlo que garantam a operabilidade de enxames em ambientes de alta incerteza. A investigação preliminar aqui apresentada identificou uma lacuna crítica na literatura científica — o isolamento metodológico entre as comunidades de \textit{Multi-Agent Reinforcement Learning} (MARL) e de Otimização Bio-inspirada. Esta fragmentação tem impedido a realização de um \textbf{benchmarking rigoroso e imparcial} que determine, de forma quantitativa, em que condições a adaptabilidade da aprendizagem automática compensa a robustez estática dos métodos tradicionais.
+\section{Conclusões}
+Esta dissertação incidiu sobre um dos desafios mais prementes na robótica contemporânea: a definição de paradigmas de controlo que garantam a operabilidade de enxames em ambientes de alta incerteza. Identificou-se uma lacuna crítica na literatura --- o isolamento metodológico entre as comunidades de \textit{Multi-Agent Reinforcement Learning} (MARL) e de Otimização Bio-inspirada --- e respondeu-se a essa lacuna com um \textbf{benchmarking rigoroso e imparcial}: desenvolveu-se um simulador de alta fidelidade, implementou-se o \textit{framework} RS2C (com PPO e SAC) e um controlador neuroevolutivo assente numa rede de grafos com atenção, e compararam-se os três algoritmos nos mesmos seis cenários, sob avaliação determinística e tratamento estatístico.
 
-Através da análise do Estado da Arte (2020-2025), concluiu-se que, embora as soluções bio-inspiradas (como o PSO) ofereçam alicerces sólidos para tarefas reativas, elas carecem da flexibilidade necessária para lidar com o ``Deployment Gap'' identificado por Kegeleirs et al. (2025). Por outro lado, o MARL, especialmente quando potenciado por \textit{Graph Neural Networks} (GNNs) e arquiteturas CTDE, emerge como o paradigma com maior potencial para garantir a escalabilidade e a resiliência do enxame perante falhas catastróficas.
+Os resultados (Capítulo~\ref{ch:results}) não elegem um vencedor universal, mas revelam um \textbf{\textit{trade-off} central}. No cumprimento efetivo da tarefa, os métodos de gradiente dominam: o SAC resolve os seis cenários e o PPO cinco (falhando apenas o Muro U, por \textit{reward hacking}), ao passo que o controlador evolutivo colapsa nos cenários de gargalo --- um caso de \textit{fitness exploitation} em que a \textit{fitness} de treino sobe sem se traduzir em recolhas. Em contrapartida, na transferência \textbf{\textit{Zero-Shot}} o quadro inverte-se: só a arquitetura de atenção sobre grafo escala de $N=10$ a $N=100$ sem retreino e sem degradação per capita, enquanto as políticas MLP de dimensão fixa do PPO/SAC são estruturalmente incompatíveis com $N\neq 20$. A adaptabilidade que a hipótese atribuía ao MARL manifesta-se, afinal, não no algoritmo de otimização, mas na \emph{representação} (grafo com atenção vs.\ vetor de dimensão fixa). Perante falhas de 10\% dos agentes, todos os paradigmas exibem resiliência elevada, conferida pela partilha de parâmetros e pela observação local.
 
-A metodologia proposta neste documento visa preencher esta lacuna através do desenvolvimento de um simulador de alta-fidelidade e da implementação do \textit{framework} RS2C, assegurando que a comparação entre paradigmas seja validada por testes de \textit{stress} dinâmico e tratamento estatístico rigoroso.
+Confirma-se, assim, \emph{parcialmente} a hipótese: a escolha do paradigma deve ser ditada pelo eixo de exigência dominante da aplicação --- desempenho de tarefa num enxame de dimensão fixa (MARL) versus escalabilidade a dimensões não vistas (grafo com atenção). Importa a ressalva metodológica de que estas conclusões assentam, por ora, numa única execução de treino por configuração; a bateria de 30 execuções independentes (Secção~\ref{sec:limitacoes_trabalho_futuro}) consolidará a estimativa de variância, não se antevendo alteração do quadro qualitativo aqui estabelecido.
 
 \section{Limitações do Estudo}
 \label{sec:limitacoes}
@@ -1445,16 +1448,18 @@ Com a execução deste plano de investigação, preveem-se os seguintes contribu
     \item \textbf{Framework de Benchmarking Quantitativo:} A disponibilização de uma metodologia de teste padronizada que permita comparar algoritmos de naturezas distintas (aprendizagem vs. otimização) sob as mesmas métricas de performance, escalabilidade e robustez.
     \item \textbf{Validação da Adaptabilidade Zero-Shot:} A demonstração empírica de como arquiteturas baseadas em grafos permitem que políticas aprendidas via MARL escalem de $N=10$ para $N=100$ agentes sem degradação crítica de performance, respondendo aos desafios de escalabilidade propostos por Sun et al. (2024).
     \item \textbf{Identificação do Ponto de Inflexão Tecnológica:} O fornecimento de dados que permitam a investigadores e engenheiros determinar o limiar de complexidade ambiental a partir do qual o investimento computacional no treino de modelos MARL se traduz numa vantagem operacional real face às heurísticas evolutivas.
-    \item \textbf{Implementação de Referência:} A criação de um repositório de código contendo o simulador e as implementações dos algoritmos (RS2C e AE/PSO), servindo de base para futuros estudos de hibridização no ISCTE.
+    \item \textbf{Implementação de Referência:} A criação de um repositório de código contendo o simulador e as implementações dos algoritmos (o \textit{framework} RS2C com PPO/SAC e o controlador neuroevolutivo AE), servindo de base para futuros estudos de hibridização no ISCTE.
 \end{itemize}
 
-\section{Trabalhos Futuros (Roadmap)}
-O plano de trabalhos para a conclusão desta dissertação está organizado em quatro fases principais, garantindo que o rigor científico é mantido em cada etapa do desenvolvimento:
+\section{Trabalhos Futuros}
+\label{sec:limitacoes_trabalho_futuro}
+A partir das limitações identificadas (Secção~\ref{sec:limitacoes}) e do estado atual da experimentação, delineiam-se as seguintes linhas de trabalho prioritárias:
 \begin{enumerate}
-    \item \textbf{Fase 1: Consolidação do Ambiente (Mês 1-2):} Finalização do simulador em Python, incluindo a modelação física detalhada, a definição do espaço de observação local e parcial e a implementação dos cenários de Vigilância e \textit{Foraging}.
-    \item \textbf{Fase 2: Implementação e Treino (Mês 3-5):} Desenvolvimento do \textit{pipeline} RS2C (incluindo as camadas GAT e CTDE) e otimização dos controladores evolutivos de referência ($\theta_{AE}^*$). Esta fase foca-se na convergência e estabilidade dos modelos.
-    \item \textbf{Fase 3: Benchmarking e Stress Tests (Mês 6-7):} Execução das 30 baterias de testes para cada cenário, variando o número de agentes e introduzindo perturbações dinâmicas (falhas de agentes e obstáculos).
-    \item \textbf{Fase 4: Análise Estatística e Redação Final (Mês 8-9):} Aplicação de testes de hipótese ($p < 0.05$) aos dados recolhidos, discussão dos resultados à luz da literatura e redação final da dissertação para defesa pública.
+    \item \textbf{Consolidação estatística (30 \textit{runs}):} Repetir o treino de cada par algoritmo--cenário em 30 execuções independentes com sementes distintas, substituindo os diagramas de caixa degenerados (Secção~\ref{sec:res_boxplots}) por distribuições completas e robustecendo a estimativa da variância entre \textit{runs}. É a extensão de maior prioridade, já em curso nos servidores de cálculo.
+    \item \textbf{Política de gradiente com atenção (\textit{custom policy}):} Integrar o mecanismo de atenção sobre grafo numa política treinável por gradiente (PPO/SAC com extrator de \textit{features} personalizado na \textit{Stable-Baselines3}), de modo a \emph{isolar} o efeito do algoritmo de otimização do efeito da arquitetura --- removendo a assimetria MLP vs.\ grafo que atualmente confunde a comparação (Secção~\ref{sec:limitacoes}).
+    \item \textbf{Novos cenários e tarefas:} Implementar tarefas de cobertura/vigilância de área (para além do \textit{foraging} e do cerco de alvos móveis) e cenários com percursos alternativos, ampliando o espaço de avaliação de comportamentos coletivos.
+    \item \textbf{Validação \textit{Sim-to-Real}:} Transferir as políticas para plataformas físicas (e.g.\ e-puck, Khepera IV) ou para um simulador de física de maior fidelidade, quantificando empiricamente o \textit{Deployment Gap}.
+    \item \textbf{Hibridização de paradigmas:} Explorar arquiteturas que combinem a escalabilidade do controlador evolutivo com a eficiência de tarefa dos métodos de gradiente (e.g.\ inicialização evolutiva seguida de afinação por RL).
 \end{enumerate}
 
 \printbibliography[title={Referências}]
