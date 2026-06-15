@@ -16,7 +16,8 @@ torch==2.10.0
 # Visualização e dashboard
 matplotlib==3.10.8
 seaborn==0.13.2
-customtkinter==5.2.2
+nicegui==3.13.0          # dashboard "Mission Control" (web local) — pacote dashboard/
+customtkinter==5.2.2     # launcher antigo (launcher_dashboard.py); migração incremental
 pillow==12.1.0           # carregamento de imagens no dashboard
 ursina==8.3.0            # visualizador 3D
 pyvista==0.48.4          # renders 3D dos mapas para a tese (scripts/render_maps.py)
