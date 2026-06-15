@@ -9,7 +9,7 @@ mostram um roadmap do que trarão em F2 (Monitorizar) e F3 (Ciência / Resultado
 from nicegui import ui
 
 from .jobs import JobQueue
-from .views import treinar, servidor
+from .views import treinar, servidor, ciencia
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
@@ -60,11 +60,7 @@ def index():
         with ui.tab_panel(t_monitor):
             servidor.build()
         with ui.tab_panel(t_ciencia):
-            _roadmap("science", "Ciência", "F3",
-                     "O estado científico da tese num só ecrã, lido dos CSVs de avaliação.",
-                     ["Matriz algoritmo × cenário com Ptask (% sucesso) e recolhas/ep",
-                      "Painéis Rrobust (retenção) e Sscale (sucesso vs N agentes)",
-                      "Significância estatística (p-values) e deteção de evals desfasados"])
+            ciencia.build()
         with ui.tab_panel(t_result):
             _roadmap("image", "Resultados", "F3",
                      "Galeria de gráficos com comparação e exportação direta para a tese.",
