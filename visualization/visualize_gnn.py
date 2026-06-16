@@ -114,14 +114,25 @@ for r_pos in env.agent_positions:
     robot_views.append(robot)
 
 
+# Teto de passos de simulação por frame de render. Permite que a barra de
+# velocidade ultrapasse o limite de FPS: antes fazia-se 1 passo por frame,
+# logo ~60 passos/s no máximo mesmo com a barra a 120 (era a causa do "lento").
+MAX_STEPS_PER_FRAME = 20
+
+
 def update():
     global obs_dict, time_accumulator
 
     time_accumulator += time.dt
     target_delay = 1.0 / speed_slider.value
 
-    if time_accumulator >= target_delay:
-        time_accumulator = 0.0
+    # Avança a simulação tantos passos quantos couberem neste frame (não só 1).
+    stepped = False
+    n_steps = 0
+    while time_accumulator >= target_delay and n_steps < MAX_STEPS_PER_FRAME:
+        time_accumulator -= target_delay
+        n_steps += 1
+        stepped = True
 
         actions = {}
         for agent_id in env.agents:
@@ -133,40 +144,45 @@ def update():
 
         obs_dict, rewards, terms, truncs, infos = env.step(actions)
 
-        nest_view.position = tuple(env.nest_pos)
-
-        for i, obs_pos in enumerate(env.obstacles):
-            obs_views[i].position = tuple(obs_pos)
-
-        # Atualiza a posição da Porta (para ela desaparecer visualmente quando abrir)
-        for i, wall in enumerate(env.walls):
-            wall_views[i].position = tuple(wall['pos'])
-
-        for i, r_pos in enumerate(env.agent_positions):
-            robot_views[i].position = tuple(r_pos)
-
-            heading = env.agent_headings[i]
-            robot_views[i].look_at(robot_views[i].position + Vec3(*heading))
-
-            # ── Cor por estado de proximidade ──────────────────────────────
-            w_dist = wall_min_dist(r_pos, env.walls, env.arena_radius)
-            r_dist = robot_min_dist(r_pos, env.agent_positions, i)
-
-            if env.signaling[i] == 1.0:
-                robot_views[i].color = color.gold        # a sinalizar
-                robot_views[i].scale = env.robot_radius * 4
-            elif w_dist < 0.8:
-                robot_views[i].color = color.red         # perto de parede/borda
-                robot_views[i].scale = env.robot_radius * 2
-            elif r_dist < 1.0:
-                robot_views[i].color = color.cyan        # perto de outro robot
-                robot_views[i].scale = env.robot_radius * 2
-            else:
-                robot_views[i].color = color.orange      # normal
-                robot_views[i].scale = env.robot_radius * 2
-
         if any(terms.values()):
             obs_dict, _ = env.reset()
+            break
+
+    if not stepped:
+        return
+
+    # Atualiza a parte visual uma vez por frame (última posição da simulação).
+    nest_view.position = tuple(env.nest_pos)
+
+    for i, obs_pos in enumerate(env.obstacles):
+        obs_views[i].position = tuple(obs_pos)
+
+    # Atualiza a posição da Porta (para ela desaparecer visualmente quando abrir)
+    for i, wall in enumerate(env.walls):
+        wall_views[i].position = tuple(wall['pos'])
+
+    for i, r_pos in enumerate(env.agent_positions):
+        robot_views[i].position = tuple(r_pos)
+
+        heading = env.agent_headings[i]
+        robot_views[i].look_at(robot_views[i].position + Vec3(*heading))
+
+        # ── Cor por estado de proximidade ──────────────────────────────
+        w_dist = wall_min_dist(r_pos, env.walls, env.arena_radius)
+        r_dist = robot_min_dist(r_pos, env.agent_positions, i)
+
+        if env.signaling[i] == 1.0:
+            robot_views[i].color = color.gold        # a sinalizar
+            robot_views[i].scale = env.robot_radius * 4
+        elif w_dist < 0.8:
+            robot_views[i].color = color.red         # perto de parede/borda
+            robot_views[i].scale = env.robot_radius * 2
+        elif r_dist < 1.0:
+            robot_views[i].color = color.cyan        # perto de outro robot
+            robot_views[i].scale = env.robot_radius * 2
+        else:
+            robot_views[i].color = color.orange      # normal
+            robot_views[i].scale = env.robot_radius * 2
 
 
 app.run()

@@ -50,8 +50,13 @@ _STATUS_CMD = (
     "echo @@HOST; hostname; "
     "echo @@UP; uptime; "
     "echo @@TMUX; tmux ls 2>/dev/null || echo '(sem sessões tmux)'; "
-    "echo @@PROC; echo evo=$(pgrep -fc evo_trainer_3d) ppo=$(pgrep -fc train_ppo) "
-    "sac=$(pgrep -fc train_sac) runexp=$(pgrep -fc run_experiments); "
+    # NOTA: o truque do bracket ([e]vo...) impede que este próprio comando de
+    # monitorização se conte a si mesmo. Com 'pgrep -f' a linha de comando do
+    # shell que corre este script contém as palavras 'evo_trainer_3d'/'train_ppo'
+    # /etc — sem o bracket, os contadores ficavam sempre >=1 e mostrava
+    # "A TREINAR" para sempre, mesmo com o treino já terminado.
+    "echo @@PROC; echo evo=$(pgrep -fc '[e]vo_trainer_3d') ppo=$(pgrep -fc '[t]rain_ppo') "
+    "sac=$(pgrep -fc '[t]rain_sac') runexp=$(pgrep -fc '[r]un_experiments'); "
     f"cd {REMOTE_DIR} 2>/dev/null; "
     "echo @@GNN; tail -n 2 results/logs/gnn_3d_training.csv 2>/dev/null || echo '(sem csv)'; "
     "echo @@SESS; ls -t results/graficos_tese/ 2>/dev/null | head -1 || echo '(nenhuma)'; "
