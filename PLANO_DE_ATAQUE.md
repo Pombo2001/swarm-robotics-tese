@@ -11,6 +11,45 @@
 
 ---
 
+## ⏱ ATUALIZAÇÃO 21 jun 2026 — LER PRIMEIRO (o snapshot de 10 jun abaixo está ultrapassado)
+
+**Feito desde 10 jun:**
+- ✅ **Dashboard reformulado COMPLETO** (secção 6 / Fase F1–F3): pacote `dashboard/` em **NiceGUI**
+  (browser) com as 4 vistas — Treinar, Monitorizar/Servidor ISCTE, Ciência, Resultados — + curvas
+  de aprendizagem ao vivo (Plotly) + **comparação de treinos A/B** (números e imagens), no browser
+  **e** no launcher desktop. Falta só **F4 (modo Demo)** para a defesa.
+- ✅ **Cap 6 e Cap 7 redigidos** (análise das figuras, tabela de significância colada, discussão
+  global, limitações, trabalhos futuros). Tese compila limpa, **87 págs**.
+- ✅ **Mecanismo do colapso do GNN escrito** na Discussão (Cap 6): neuroevolução cega + recompensa
+  esparsa → planalto de *fitness*; variância entre *runs* como assinatura do método.
+- ✅ **Bibliografia auditada e corrigida** (21 jun, commit `f825cab`): removidas **2 refs
+  FABRICADAS** (`iskandar2024comparative`, `wang2022comparative`) + **12 órfãs**; metadados de
+  `majid2023deep`/`lin2025survey` corrigidos; substitutos reais verificados na web. **0 refs indefinidas**.
+- ✅ **Fitness GNN `tanh` + `eval_episodes=4` + seeds fixas** validados em produção.
+
+**A história do GNN (importante):**
+- **24h v2** (16 jun, 1 run, com `tanh`): GNN melhorou muito nos labirintos (Muro U 100%, Porta Coop 100%).
+- **Fase B** (18 jun, **3 runs**): deu os boxplots de variância MAS o GNN **REGREDIU** nos labirintos
+  (todos 0%) por tempo/run curto (55 min). Confirmado visualmente (Muro U: **41→0 recolhas**).
+  Ver `memory/faseb_vs_anteriores.md`. **O 24h v2 foi o melhor GNN** nos labirintos.
+- 🔄 **A CORRER AGORA: re-treino GNN-48h** (`tmux treino_gnn48`, `.14`, lançado 21 jun 17:22):
+  **só GNN**, 3 runs × **160 min/run** (~3× o 24h v2) para recuperar os labirintos. **Fim ~23 jun**.
+  (PPO/SAC não são tocados — `--algo GNN`.)
+
+**PRÓXIMOS PASSOS (por ordem):**
+1. **[~23 jun]** Treino GNN-48h termina → trazer (pscp/dashboard) + **re-avaliar** + ver se os
+   labirintos voltaram. Se sim, fixar como o GNN de referência da tese.
+2. **Definir a "Fase B oficial"**: os 3 runs chegam para os boxplots de variância, ou é mesmo
+   preciso os **30 runs** da proposta? (decisão de âmbito — 30×6×3×tempo é muito servidor.)
+3. **Decisão pendente:** *reward hacking* do PPO no Muro U — aceitar como resultado científico ou ajustar.
+4. **Treinar + avaliar o 7º cenário** (`cooperative_door_bypass`) — implementado, falta correr.
+5. **Revisão completa da tese** ponta a ponta (consistência texto-número-figura) + confirmar a lista
+   de autores de 3 refs ainda com "and others" (`heimann2024runtime`, `schmickl2025gnn`, `he2024self`).
+6. **Fase D — ARTIGO 6–8 págs** (crítico p/ nota >17) — **ainda por começar**.
+7. **Fase E** — modo Demo do dashboard (F4) + preparação da defesa.
+
+---
+
 ## 1. Onde estamos (10 jun 2026)
 
 ### Feito ✅
