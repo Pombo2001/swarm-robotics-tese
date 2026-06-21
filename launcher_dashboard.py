@@ -662,6 +662,8 @@ class SwarmController(ctk.CTk):
                     self._plot_thesis, color="#0D7377", height=34).pack(side="left", padx=3)
 
         # Grupo 3 — utilitário
+        primary_btn(inner, "⚖️  Comparar Treinos",
+                    self._open_compare_window, color="#6D28D9", height=34).pack(side="left", padx=3)
         primary_btn(inner, "🔄  Recarregar",
                     self._refresh_sessions, color="#374151", height=34).pack(side="left", padx=3)
 
@@ -1089,6 +1091,117 @@ class SwarmController(ctk.CTk):
     def _viz(self, algo):
         self._save_config()
         self._run_script(self._get_paths()[f"viz_{algo}"], console=False)
+
+    # ── Comparar treinos (métricas de avaliação) ────────────────────────────
+    SCEN_ORDER_CMP = ["none", "u_wall", "bottleneck", "four_rooms",
+                      "cooperative_door", "cooperative_perception"]
+    SCEN_SHORT = {
+        "none": "Sandbox", "u_wall": "Muro U", "bottleneck": "Gargalo",
+        "four_rooms": "4 Salas", "cooperative_door": "Porta coop.",
+        "cooperative_perception": "Perceção coop.",
+    }
+
+    def _open_compare_window(self):
+        """Janela que compara Ptask/recolhas entre dois treinos (usa dashboard.data)."""
+        try:
+            from dashboard import data as ddata
+        except Exception as e:
+            self._compare_error(f"Não foi possível carregar dashboard.data:\n{e}")
+            return
+        sessions = ddata.sessions_with_eval()
+        if not sessions:
+            self._compare_error("Nenhum treino com avaliação (eval_summary.csv) encontrado.\n"
+                                "Só treinos com a fase de avaliação geram estas métricas.")
+            return
+
+        win = ctk.CTkToplevel(self)
+        win.title("Comparar Treinos")
+        win.geometry("980x640")
+        win.configure(fg_color="#13151A")
+        win.transient(self)
+        win.after(200, win.lift)
+
+        ctk.CTkLabel(win, text="⚖️  Comparar Treinos (métricas de avaliação)",
+                     font=("Roboto", 16, "bold"), text_color="#E5E7EB"
+                     ).pack(anchor="w", padx=16, pady=(14, 2))
+        ctk.CTkLabel(win, text="Ptask = taxa de sucesso · recolhas por episódio · "
+                               "Δ a verde = Treino B melhor que A",
+                     font=("Roboto", 11), text_color="#6B7280"
+                     ).pack(anchor="w", padx=16, pady=(0, 10))
+
+        sel = ctk.CTkFrame(win, fg_color="transparent")
+        sel.pack(fill="x", padx=16)
+        a_var = ctk.StringVar(value=sessions[0])
+        b_var = ctk.StringVar(value=sessions[1] if len(sessions) > 1 else sessions[0])
+        ctk.CTkLabel(sel, text="Treino A:", text_color="#9CA3AF").pack(side="left", padx=(0, 6))
+        ctk.CTkOptionMenu(sel, variable=a_var, values=sessions, width=330,
+                          command=lambda _=None: render()).pack(side="left", padx=(0, 16))
+        ctk.CTkLabel(sel, text="Treino B:", text_color="#9CA3AF").pack(side="left", padx=(0, 6))
+        ctk.CTkOptionMenu(sel, variable=b_var, values=sessions, width=330,
+                          command=lambda _=None: render()).pack(side="left")
+
+        table = ctk.CTkScrollableFrame(win, fg_color="#1E2128", corner_radius=10)
+        table.pack(fill="both", expand=True, padx=16, pady=14)
+
+        def render():
+            for w in table.winfo_children():
+                w.destroy()
+            ma = ddata.session_metrics(a_var.get()) or {}
+            mb = ddata.session_metrics(b_var.get()) or {}
+            headers = ["Cenário", "Algo", "A Ptask", "B Ptask", "Δ", "A rec", "B rec", "Δ"]
+            for c, h in enumerate(headers):
+                ctk.CTkLabel(table, text=h, font=("Roboto", 11, "bold"),
+                             text_color="#9CA3AF").grid(row=0, column=c, padx=10, pady=(8, 6),
+                                                        sticky="w")
+            r = 1
+            for s in self.SCEN_ORDER_CMP:
+                a_s, b_s = ma.get(s, {}), mb.get(s, {})
+                for algo in ("GNN", "PPO", "SAC"):
+                    pa, pb = a_s.get(algo), b_s.get(algo)
+                    scen_txt = self.SCEN_SHORT.get(s, s) if algo == "GNN" else ""
+                    ctk.CTkLabel(table, text=scen_txt, font=("Roboto", 11, "bold"),
+                                 text_color="#93C5FD").grid(row=r, column=0, padx=10, pady=1,
+                                                            sticky="w")
+                    ctk.CTkLabel(table, text=algo, text_color="#E2E8F0"
+                                 ).grid(row=r, column=1, padx=10, sticky="w")
+                    self._cmp_cell(table, r, 2, pa, "ptask", "{:.0f}%")
+                    self._cmp_cell(table, r, 3, pb, "ptask", "{:.0f}%")
+                    self._cmp_delta(table, r, 4, pa, pb, "ptask", "%")
+                    self._cmp_cell(table, r, 5, pa, "recolhas", "{:.1f}")
+                    self._cmp_cell(table, r, 6, pb, "recolhas", "{:.1f}")
+                    self._cmp_delta(table, r, 7, pa, pb, "recolhas", "")
+                    r += 1
+
+        render()
+
+    def _cmp_cell(self, parent, row, col, m, key, fmt):
+        txt = fmt.format(m[key]) if m else "n/d"
+        ctk.CTkLabel(parent, text=txt, text_color="#E2E8F0" if m else "#475569"
+                     ).grid(row=row, column=col, padx=10, sticky="w")
+
+    def _cmp_delta(self, parent, row, col, ma, mb, key, unit):
+        if not ma or not mb:
+            ctk.CTkLabel(parent, text="—", text_color="#64748B"
+                         ).grid(row=row, column=col, padx=10, sticky="w")
+            return
+        d = mb[key] - ma[key]
+        if abs(d) < 1e-9:
+            ctk.CTkLabel(parent, text="0", text_color="#64748B"
+                         ).grid(row=row, column=col, padx=10, sticky="w")
+            return
+        ctk.CTkLabel(parent, text=f"{'+' if d > 0 else ''}{d:.1f}{unit}",
+                     text_color="#22C55E" if d > 0 else "#EF4444",
+                     font=("Roboto", 11, "bold")).grid(row=row, column=col, padx=10, sticky="w")
+
+    def _compare_error(self, msg):
+        win = ctk.CTkToplevel(self)
+        win.title("Comparar Treinos")
+        win.geometry("480x190")
+        win.configure(fg_color="#13151A")
+        win.transient(self)
+        ctk.CTkLabel(win, text="⚠️  " + msg, font=("Roboto", 12), text_color="#FCA5A5",
+                     wraplength=440, justify="left").pack(padx=20, pady=24)
+        ctk.CTkButton(win, text="Fechar", command=win.destroy, width=120).pack(pady=4)
 
     def _plot_thesis(self):
         self._run_script(self._get_paths()["plot"])

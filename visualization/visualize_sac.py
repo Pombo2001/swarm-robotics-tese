@@ -20,7 +20,7 @@ window.exit_button.visible = False
 window.fps_counter.enabled = True
 EditorCamera()
 
-DirectionalLight(y=2, z=3, shadows=True)
+DirectionalLight(y=2, z=3, shadows=False)  # sombras dinamicas em ~140 entidades eram caras
 AmbientLight(color=color.rgba(100, 100, 100, 1.0))
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -125,11 +125,12 @@ def update():
         n_steps += 1
         stepped = True
 
-        actions = {}
-        for agent_id in env.agents:
-            obs = np.array(obs_dict[agent_id], dtype=np.float32)
-            action, _ = model.predict(obs, deterministic=True)
-            actions[agent_id] = action
+        # Um único predict (batch) para todos os agentes — SB3 aceita um lote de
+        # observações e é bem mais rápido que N predicts individuais.
+        agent_ids = list(env.agents)
+        obs_batch = np.stack([np.asarray(obs_dict[a], dtype=np.float32) for a in agent_ids])
+        act_batch, _ = model.predict(obs_batch, deterministic=True)
+        actions = {aid: act_batch[k] for k, aid in enumerate(agent_ids)}
 
         obs_dict, rewards, terms, truncs, infos = env.step(actions)
 

@@ -20,7 +20,7 @@ window.exit_button.visible = False
 window.fps_counter.enabled = True
 EditorCamera()
 
-DirectionalLight(y=2, z=3, shadows=True)
+DirectionalLight(y=2, z=3, shadows=False)  # sombras dinâmicas em ~140 entidades eram caras
 AmbientLight(color=color.rgba(100, 100, 100, 1.0))
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -134,13 +134,15 @@ def update():
         n_steps += 1
         stepped = True
 
-        actions = {}
-        for agent_id in env.agents:
-            obs = np.array(obs_dict[agent_id], dtype=np.float32)
-            obs_tensor = torch.tensor(obs).unsqueeze(0)
-            with torch.no_grad():
-                action = agent(obs_tensor).squeeze(0).numpy()
-            actions[agent_id] = action
+        # Um único forward para TODOS os agentes (cada agente é independente na
+        # sua obs, logo o batch dá o mesmo resultado que N forwards individuais
+        # mas ~10x mais rápido — era a principal causa de lentidão do GNN).
+        agent_ids = list(env.agents)
+        obs_batch = torch.tensor(
+            np.stack([np.asarray(obs_dict[a], dtype=np.float32) for a in agent_ids]))
+        with torch.no_grad():
+            act_batch = agent(obs_batch).numpy()
+        actions = {aid: act_batch[k] for k, aid in enumerate(agent_ids)}
 
         obs_dict, rewards, terms, truncs, infos = env.step(actions)
 
