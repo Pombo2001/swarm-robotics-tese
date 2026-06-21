@@ -1,0 +1,250 @@
+%% Artigo da dissertacao — modelo Elsevier (elsarticle), fornecido pelo Prof. Luis Nunes.
+%% Draft destilado da dissertacao "Aprendizagem por Reforco para Controlo de Enxames".
+\documentclass[final,5p,times,twocolumn,authoryear]{elsarticle}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{url}
+
+\journal{Preprint --- ISCTE-IUL / ISTAR}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Adaptive Learning versus Static Robustness: Benchmarking Reinforcement
+Learning and Neuroevolution for Swarm Control}
+
+\author[iscte]{Gon\c{c}alo Pombo}
+\ead{goncalopombo123@gmail.com}
+\author[iscte]{Lu\'is Nunes}
+
+\affiliation[iscte]{organization={Instituto Universit\'ario de Lisboa (ISCTE-IUL), ISTAR},
+            city={Lisbon},
+            country={Portugal}}
+
+\begin{abstract}
+The control of robotic swarms is approached by two communities that rarely meet
+on a common benchmark: multi-agent reinforcement learning (MARL), which promises
+\emph{online} adaptability, and bio-inspired optimisation, which offers
+pre-programmed robustness. This work provides a controlled, paradigm-agnostic
+comparison of three controllers --- a neuroevolved graph network with attention
+over neighbours, Proximal Policy Optimisation (PPO) and Soft Actor--Critic (SAC)
+--- on the same high-fidelity 3D foraging simulator with six scenarios of
+increasing difficulty, under deterministic evaluation and statistical testing.
+On task completion, gradient methods dominate: SAC solves all six scenarios and
+PPO five of six, failing the U-maze through \emph{reward hacking}, whereas the
+evolutionary controller collapses in the bottleneck scenarios. The picture
+inverts under zero-shot scalability: only the attention-based controller
+transfers from $N=10$ to $N=100$ agents without retraining, since the fixed-size
+policies of PPO/SAC are structurally incompatible with $N\neq 20$. The
+hypothesis that adaptive intelligence dominates static robustness is therefore
+only \emph{partially} confirmed, revealing a central trade-off between
+task performance at a fixed swarm size and scalability to unseen sizes.
+\end{abstract}
+
+\begin{keyword}
+swarm robotics \sep multi-agent reinforcement learning \sep neuroevolution
+\sep zero-shot scalability \sep graph neural networks \sep benchmarking
+\end{keyword}
+
+\end{frontmatter}
+
+\section{Introduction}
+\label{sec:intro}
+Robotic swarms promise scalable and resilient solutions for tasks such as
+search-and-rescue, environmental monitoring and distributed logistics. The
+central engineering question is which control paradigm best sustains operability
+under uncertainty. Two schools dominate. \emph{Bio-inspired optimisation} (e.g.
+evolutionary algorithms, particle swarm optimisation) searches a global
+parameter space \emph{offline} for robust, static controllers
+\citep{kennedy1995pso}. \emph{Multi-agent reinforcement learning} (MARL) instead
+learns adaptive policies \emph{online} through interaction
+\citep{huh2023marl}. Despite extensive work on each, direct and rigorous
+comparisons across paradigms remain scarce \citep{majid2023deep,
+bettini2024benchmarl}: studies typically refine a single algorithm against
+variants of its own family, neglecting cross-paradigm baselines.
+
+This paper addresses that gap with an impartial benchmark. We implement a
+high-fidelity 3D foraging simulator and evaluate three controllers --- a
+neuroevolved graph network with self-attention over neighbours, PPO and SAC ---
+across six scenarios, along three axes: task performance ($P_{\text{task}}$),
+robustness to agent failures ($R_{\text{robust}}$) and zero-shot scalability
+($S_{\text{scale}}$), all supported by non-parametric significance testing. Our
+contribution is twofold: (i) a reproducible, paradigm-agnostic evaluation
+protocol; and (ii) evidence of a central trade-off, in which the gradient
+methods win on task completion at a fixed swarm size while only the graph-based
+controller scales to unseen swarm sizes. The full methodology and results are
+detailed in the accompanying dissertation.
+
+\section{Related Work}
+\label{sec:related}
+Deep reinforcement learning has been applied to swarm systems with parameter
+sharing to tame the joint-action explosion \citep{huttenrauch2019deep}, and
+graph neural networks (GNNs) have emerged as the key enabler of scalability:
+by modelling the swarm as a graph and attending over neighbours, a policy
+trained with few agents can be deployed with many \citep{sun2024graph}. On the
+bio-inspired side, neuroevolution optimises network weights without gradients
+\citep{salimans2017es}, offering stable controllers for static tasks but limited
+\emph{online} adaptability \citep{kegeleirs2025towards}. Comparative surveys of
+deep RL versus evolution strategies highlight the lack of a common performance
+reference across the two families \citep{majid2023deep}, while standardised MARL
+benchmarks remain focused within the learning community
+\citep{bettini2024benchmarl}. Applications of deep RL to swarm navigation
+\citep{iskandar2023navigation} illustrate the type of single-paradigm study that
+this work extends with a systematic, statistically grounded comparison against
+the bio-inspired alternative.
+
+\section{Methodology}
+\label{sec:method}
+
+\subsection{Simulation environment}
+The environment is a 3D continuous foraging task in a circular arena
+(radius $15$\,m) with $N=20$ homogeneous agents that must collect food and
+return it to a nest. Six scenarios of increasing difficulty are used: an open
+\emph{Sandbox}; three navigation mazes (\emph{U-wall}, \emph{Bottleneck},
+\emph{Four Rooms}); and two cooperative tasks (\emph{Cooperative Door},
+requiring $\geq 3$ agents to open a passage, and \emph{Cooperative Perception},
+with a moving target). Each agent observes an egocentric homing compass to the
+nest, eight LiDAR rays for local obstacle sensing, and the relative state of
+neighbours --- a partially observable setting. To avoid local minima in the
+maze scenarios, the progress reward uses a \emph{geodesic} potential computed by
+Dijkstra's algorithm over an inflated occupancy grid, acting as
+potential-based reward shaping \citep{ng1999policy} that does not alter the
+optimal policy and is used as a training signal only, never as an observation.
+
+\subsection{Controllers}
+The \emph{evolutionary controller} (GNN) is a compact network that encodes the
+egocentric features and applies scaled dot-product self-attention over the
+neighbour set \citep{vaswani2017attention}, producing an action invariant to the
+number of neighbours. Its weights are optimised by a $(1{+}\lambda)$ evolution
+strategy (population $30$, truncation with elitism, Gaussian mutation), with a
+fitness that prioritises the task, $J = \bar{f}\cdot 10^4 + 5000\tanh(\bar{R}/5000)$,
+where $\bar{f}$ is the mean food collected and $\bar{R}$ the mean shaped reward;
+the $\tanh$ term prevents the saturation that would otherwise make selection
+blind. The \emph{learning baselines} are PPO \citep{schulman2017ppo} and SAC
+\citep{haarnoja2018sac} from Stable-Baselines3, using a shared multilayer
+perceptron policy ($[256,256]$) over the dense neighbourhood observation
+(parameter sharing). The attention-over-graph mechanism is thus instantiated
+only in the evolutionary controller, which is what enables its zero-shot
+transfer.
+
+\subsection{Evaluation protocol}
+All controllers are evaluated deterministically over $30$ paired-seed episodes
+per scenario. We report $P_{\text{task}}$ (success rate, with success defined as
+at least one item collected) and the mean food collected per episode, a metric
+comparable across paradigms. Robustness ($R_{\text{robust}}$) injects the
+failure of $10\%$ of agents at mid-episode; scalability ($S_{\text{scale}}$)
+tests $N\in\{10,20,50,100\}$ without retraining. Pairwise differences are
+assessed with the Mann--Whitney $U$ test, complemented by Welch's $t$-test, at
+$\alpha = 0.05$.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Task performance}
+Table~\ref{tab:task} reports the food collected per episode --- the magnitude
+metric --- alongside the success rate. We stress the former: a success rate of
+$100\%$ under the definition ``at least one item collected'' is a weak signal,
+as the table makes clear. The gradient methods dominate the task: SAC collects
+substantially in all six scenarios and PPO in five of six, failing only the
+U-wall, where it collects \emph{zero} items despite accumulating a large shaped
+reward --- a clear case of \emph{reward hacking}, in which the exploration bonus
+is exploited without foraging. The evolutionary controller is the weakest by a
+wide margin: although it occasionally reaches a non-zero success rate (e.g.\
+$97\%$ in Cooperative Perception), it collects only residual amounts
+($2.6$ items there, and essentially zero in the three mazes). This gap between a
+high success rate and a near-zero yield is the signature of \emph{fitness
+exploitation}: the training fitness rises without translating into task
+completion. Of the $18$ pairwise comparisons on food collected, $17$ are
+significant ($p<0.001$); the only exception is PPO vs.\ SAC in Four Rooms.
+
+\begin{table*}[t]
+\centering
+\caption{Per-episode performance under deterministic evaluation ($30$
+paired-seed episodes per scenario, official run): mean food collected $\pm$
+standard deviation, with the task success rate (percentage of episodes with at
+least one item collected) in parentheses. Food collected is the magnitude
+metric compared across paradigms; the success rate alone is a weak indicator,
+since an agent reaches $100\%$ by collecting a single item. Best mean per row in
+bold.}
+\label{tab:task}
+\footnotesize
+\begin{tabular}{lccc}
+\toprule
+Scenario & GNN & PPO & SAC \\
+\midrule
+Sandbox                & $0.8\pm0.7$ (67\%) & $\mathbf{73.3\pm5.1}$ (100\%) & $25.2\pm3.6$ (100\%) \\
+U-wall                 & $0.4\pm0.5$ (43\%) & $0.0\pm0.0$ (0\%)            & $\mathbf{20.6\pm1.3}$ (100\%) \\
+Bottleneck             & $0.0\pm0.0$ (0\%)  & $\mathbf{41.0\pm1.4}$ (100\%) & $35.0\pm1.6$ (100\%) \\
+Four Rooms             & $0.0\pm0.0$ (0\%)  & $11.5\pm3.4$ (100\%)        & $\mathbf{11.6\pm3.0}$ (100\%) \\
+Cooperative Door       & $0.0\pm0.0$ (0\%)  & $\mathbf{67.7\pm1.6}$ (100\%) & $60.5\pm1.3$ (100\%) \\
+Cooperative Perception & $2.6\pm1.4$ (97\%) & $\mathbf{17.9\pm1.9}$ (100\%) & $16.2\pm1.8$ (100\%) \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Zero-shot scalability}
+The trade-off emerges under scalability. Only the attention-based controller is
+viable for $N\neq 20$: its success rate \emph{increases} with swarm size, from
+$15\%$ at $N=10$ to $100\%$ at $N=100$, with no per-capita degradation. The
+MLP policies of PPO/SAC have a fixed-size input and are structurally
+incompatible with other swarm sizes. Architectural adaptability --- the property
+the hypothesis attributes to MARL --- thus manifests in the \emph{representation}
+(graph with attention), not in the optimisation algorithm.
+
+\subsection{Robustness}
+Under the failure of $10\%$ of agents at mid-episode, all paradigms retain high
+performance (94--99\% of collected items for PPO/SAC; 69--96\% for the GNN where
+it functions), with no collapse: parameter sharing and local observation confer
+functional redundancy across the swarm.
+
+\section{Discussion}
+\label{sec:discussion}
+The collapse of the evolutionary controller in the maze scenarios is not a
+property of the architecture --- the same graph-with-attention representation
+underpins its scalability advantage --- but of the interaction between the
+optimisation method and the reward structure. Neuroevolution optimises from a
+single scalar fitness per episode, without temporal credit assignment; it never
+learns \emph{which} action mattered. When the task reward is sparse, as in the
+mazes, almost every genome collects no food, fitness reduces to the (saturated)
+shaping term, and the population settles on a \emph{fitness plateau} where
+selective pressure vanishes. The same stochastic nature explains the high
+variance between independent runs, absent in the gradient methods: without a
+gradient pulling every run to a common optimum, each run is a different random
+walk over the fitness landscape, and finding the narrow valley of maze solutions
+depends largely on the number of generations explored.
+
+Two implications follow. First, the comparison combines two factors ---
+optimisation algorithm and network architecture --- so the limitation observed
+is one of \emph{sampling efficiency} of the optimiser, not representational
+capacity; integrating the attention module into a gradient-trained policy is the
+natural next step to isolate the effect. Second, the engineering value is not in
+electing a winner but in identifying the inflection point: the choice of
+paradigm should follow the dominant axis of demand --- task performance at a
+fixed swarm size (MARL) versus scalability to unseen sizes (graph with
+attention).
+
+\section{Conclusions}
+\label{sec:conclusions}
+We presented an impartial benchmark of a neuroevolved attention controller
+against PPO and SAC on a 3D foraging swarm, across six scenarios and three axes
+of evaluation with statistical support. The hypothesis that adaptive
+intelligence dominates static robustness is only partially confirmed: gradient
+methods win decisively on task completion at $N=20$, while only the
+attention-based controller scales zero-shot to $N=100$. Future work includes a
+gradient-trained attention policy to disentangle optimiser from architecture, a
+multi-run protocol to consolidate variance estimates, and validation of the
+sim-to-real transfer \citep{tobin2017domain}.
+
+\section*{Acknowledgements}
+This article was partially supported by national funds through Funda\c{c}\~ao
+para a Ci\^encia e a Tecnologia, I.P. (FCT), ISTAR-Iscte Pluriannual Projects
+UID/04466/2025 (\url{https://doi.org/10.54499/UID/04466/2025}).
+
+\bibliographystyle{elsarticle-harv}
+\bibliography{references}
+
+\end{document}

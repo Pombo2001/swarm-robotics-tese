@@ -1,0 +1,11 @@
+# Auxiliares de compilação LaTeX
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.spl
+*.synctex.gz
+*.toc
+*.fls
+*.fdb_latexmk
