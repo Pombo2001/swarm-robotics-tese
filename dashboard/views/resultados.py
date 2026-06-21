@@ -10,11 +10,72 @@ from .. import data
 CARD = "bg-slate-800/70 rounded-xl shadow-lg p-4 w-full"
 NONE = "— (sem comparação)"
 
+SCEN_ORDER = ["none", "u_wall", "bottleneck", "four_rooms",
+              "cooperative_door", "cooperative_perception"]
+SCEN_LABEL = {
+    "none": "Sandbox", "u_wall": "Muro em U", "bottleneck": "Gargalo",
+    "four_rooms": "4 Salas", "cooperative_door": "Porta coop.",
+    "cooperative_perception": "Perceção coop.",
+}
+
 
 def _section_title(icon: str, text: str):
     with ui.row().classes("items-center gap-2 no-wrap"):
         ui.icon(icon).classes("text-sky-400 text-xl")
         ui.label(text).classes("text-lg font-bold")
+
+
+def _comparison_html(metrics_a: dict, metrics_b: dict) -> str:
+    """Tabela HTML A vs B com Ptask% e recolhas/ep e delta colorido (maior=melhor)."""
+    def delta(va, vb, unit=""):
+        if va is None or vb is None:
+            return "<span style='color:#64748b'>—</span>"
+        d = vb - va
+        if abs(d) < 1e-9:
+            return "<span style='color:#64748b'>0</span>"
+        col = "#22c55e" if d > 0 else "#ef4444"
+        sign = "+" if d > 0 else ""
+        return f"<span style='color:{col};font-weight:600'>{sign}{d:.1f}{unit}</span>"
+
+    def cell(m, key, fmt):
+        if m is None:
+            return "<span style='color:#475569'>n/d</span>"
+        return fmt.format(m[key])
+
+    th = ("padding:4px 10px;text-align:center;border-bottom:1px solid #334155;"
+          "font-weight:600;color:#cbd5e1")
+    td = "padding:3px 10px;text-align:center;border-bottom:1px solid #1e293b"
+    rows = []
+    algos = ["GNN", "PPO", "SAC"]
+    for s in SCEN_ORDER:
+        a_s = metrics_a.get(s, {}) if metrics_a else {}
+        b_s = metrics_b.get(s, {}) if metrics_b else {}
+        for i, alg in enumerate(algos):
+            ma, mb = a_s.get(alg), b_s.get(alg)
+            scen_cell = (f"<td style='{td};text-align:left;font-weight:600;color:#93c5fd' "
+                         f"rowspan='3'>{SCEN_LABEL.get(s, s)}</td>") if i == 0 else ""
+            rows.append(
+                f"<tr>{scen_cell}"
+                f"<td style='{td};text-align:left;color:#e2e8f0'>{alg}</td>"
+                f"<td style='{td}'>{cell(ma, 'ptask', '{:.0f}%')}</td>"
+                f"<td style='{td}'>{cell(mb, 'ptask', '{:.0f}%')}</td>"
+                f"<td style='{td}'>{delta(ma['ptask'] if ma else None, mb['ptask'] if mb else None, '%')}</td>"
+                f"<td style='{td}'>{cell(ma, 'recolhas', '{:.1f}')}</td>"
+                f"<td style='{td}'>{cell(mb, 'recolhas', '{:.1f}')}</td>"
+                f"<td style='{td}'>{delta(ma['recolhas'] if ma else None, mb['recolhas'] if mb else None)}</td>"
+                f"</tr>")
+    return (
+        "<table style='border-collapse:collapse;width:100%;font-size:13px'>"
+        "<thead><tr>"
+        f"<th style='{th};text-align:left'>Cenário</th>"
+        f"<th style='{th};text-align:left'>Algo</th>"
+        f"<th style='{th}' colspan='3'>Ptask (sucesso %)</th>"
+        f"<th style='{th}' colspan='3'>Recolhas / ep</th>"
+        "</tr><tr>"
+        f"<th style='{th}'></th><th style='{th}'></th>"
+        f"<th style='{th}'>A</th><th style='{th}'>B</th><th style='{th}'>Δ</th>"
+        f"<th style='{th}'>A</th><th style='{th}'>B</th><th style='{th}'>Δ</th>"
+        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table>")
 
 
 def _url(session: str, filename: str) -> str:
@@ -45,6 +106,36 @@ def build():
         return
 
     with ui.column().classes("w-full gap-4 p-4"):
+        # ── Comparar treinos (métricas) ──────────────────────────────────────
+        eval_sessions = data.sessions_with_eval()
+        if len(eval_sessions) >= 1:
+            with ui.card().classes(CARD):
+                _section_title("compare_arrows", "Comparar treinos (métricas de avaliação)")
+                ui.label("Escolhe dois treinos para comparar Ptask e recolhas por cenário. "
+                         "Δ verde = B melhor que A.").classes("text-xs text-gray-400")
+                default_a = eval_sessions[0]
+                default_b = eval_sessions[1] if len(eval_sessions) > 1 else eval_sessions[0]
+                with ui.row().classes("w-full gap-2 no-wrap items-center mt-1"):
+                    cmp_a = ui.select(eval_sessions, value=default_a, label="Treino A") \
+                        .props("outlined dense").classes("flex-1")
+                    ui.icon("arrow_forward").classes("text-gray-500")
+                    cmp_b = ui.select(eval_sessions, value=default_b, label="Treino B") \
+                        .props("outlined dense").classes("flex-1")
+
+                @ui.refreshable
+                def tabela_cmp():
+                    ma = data.session_metrics(cmp_a.value)
+                    mb = data.session_metrics(cmp_b.value)
+                    if ma is None and mb is None:
+                        ui.label("Sem métricas para os treinos escolhidos.") \
+                            .classes("text-gray-500")
+                        return
+                    ui.html(_comparison_html(ma or {}, mb or {})).classes("w-full mt-2")
+
+                for el in (cmp_a, cmp_b):
+                    el.on_value_change(lambda: tabela_cmp.refresh())
+                tabela_cmp()
+
         with ui.card().classes(CARD):
             _section_title("photo_library", "Galeria de resultados")
             with ui.row().classes("w-full gap-2 no-wrap items-center mt-1"):

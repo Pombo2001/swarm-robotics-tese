@@ -24,14 +24,14 @@ def _mtime(path: str) -> float:
     return os.path.getmtime(path) if os.path.exists(path) else 0.0
 
 
-def science_table():
-    """Agrega o eval_summary por (cenário, algoritmo).
+def _aggregate_eval(path: str):
+    """Agrega um eval_summary.csv por (cenário, algoritmo).
 
     Devolve {scenario: {algo: {"ptask": %, "recolhas": média, "n": episódios}}} ou None.
     """
-    if not os.path.exists(EVAL_SUMMARY):
+    if not path or not os.path.exists(path):
         return None
-    df = pd.read_csv(EVAL_SUMMARY)
+    df = pd.read_csv(path)
     agg = df.groupby(["Scenario", "Algorithm"]).agg(
         ptask=("success", lambda s: 100.0 * s.mean()),
         recolhas=("food_collected", "mean"),
@@ -43,6 +43,43 @@ def science_table():
             "ptask": float(r["ptask"]), "recolhas": float(r["recolhas"]), "n": int(r["n"]),
         }
     return out
+
+
+def science_table():
+    """Métricas do eval oficial (results/evaluation/eval_summary.csv) ou None."""
+    return _aggregate_eval(EVAL_SUMMARY)
+
+
+# ── Comparação de métricas entre treinos (vista Resultados) ───────────────────
+OFICIAL_LABEL = "★ Oficial (10 jun · results/evaluation)"
+
+
+def _session_eval_path(session: str):
+    """Caminho do eval_summary de uma sessão (procura em subpastas) ou None.
+
+    A entrada especial OFICIAL_LABEL aponta para o eval oficial em results/evaluation/.
+    """
+    if session == OFICIAL_LABEL:
+        return EVAL_SUMMARY if os.path.exists(EVAL_SUMMARY) else None
+    base = os.path.join(GRAFICOS_DIR, session)
+    hits = glob.glob(os.path.join(base, "**", "eval_summary.csv"), recursive=True)
+    return hits[0] if hits else None
+
+
+def sessions_with_eval():
+    """Treinos que têm métricas de avaliação, prontos a comparar (oficial primeiro)."""
+    out = []
+    if os.path.exists(EVAL_SUMMARY):
+        out.append(OFICIAL_LABEL)
+    for s in list_sessions():
+        if glob.glob(os.path.join(GRAFICOS_DIR, s, "**", "eval_summary.csv"), recursive=True):
+            out.append(s)
+    return out
+
+
+def session_metrics(session: str):
+    """Métricas Ptask/recolhas por (cenário, algo) de um treino, ou None."""
+    return _aggregate_eval(_session_eval_path(session))
 
 
 def eval_freshness():
