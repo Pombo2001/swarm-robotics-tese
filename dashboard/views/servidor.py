@@ -3,6 +3,8 @@
 Mostra o estado do servidor de treino (tmux, load, processos, progresso do GNN, log)
 e permite trazer os resultados por scp — sem sair do dashboard. Requer VPN ligada.
 """
+from datetime import datetime
+
 from nicegui import ui, run
 
 from .. import remote
@@ -111,10 +113,13 @@ def build():
                     _info("terminal", "Sessões tmux", res.get("tmux", "—"))
                     _info("folder", "Sessão mais recente", res.get("sessao", "—"))
 
+                _eta_block(res.get("eta"), training)
+
                 ui.separator().classes("my-1")
                 ui.label("Progresso GNN (últimas linhas do CSV)").classes("text-sm font-semibold text-sky-300")
                 ui.label(res.get("gnn", "—")).classes("text-xs font-mono whitespace-pre-wrap text-gray-300")
-                ui.label("Log de treino (treino_24h.log)").classes("text-sm font-semibold text-sky-300 mt-2")
+                logname = res.get("logname") or "—"
+                ui.label(f"Log de treino ({logname})").classes("text-sm font-semibold text-sky-300 mt-2")
                 with ui.element("div").classes("bg-[#0d1117] rounded-lg p-2 w-full max-h-48 overflow-auto"):
                     ui.label(res.get("log", "—")).classes("text-xs font-mono whitespace-pre-wrap text-green-400")
         painel()
@@ -128,6 +133,49 @@ def build():
             ui.label("Empacota a sessão de gráficos mais recente + avaliação/logs e descarrega "
                      "para out/res_servidor.tar.gz.").classes("text-xs text-gray-500")
             fetch_log = ui.column().classes("w-full mt-1")
+
+
+_DIAS = ("seg", "ter", "qua", "qui", "sex", "sáb", "dom")
+
+
+def _fmt_dt(dt: datetime) -> str:
+    return f"{_DIAS[dt.weekday()]} {dt.strftime('%d/%m %H:%M')}"
+
+
+def _eta_block(eta: dict | None, training: bool):
+    """Mostra início, fim estimado e progresso do treino (se houver dados)."""
+    if not eta:
+        return
+    done, total = eta.get("done"), eta.get("total_treinos")
+    pct = int(round(100 * done / total)) if (done and total) else None
+
+    with ui.card().classes("bg-slate-900/60 rounded-xl p-3 w-full mt-2 border border-sky-900"):
+        with ui.row().classes("items-center gap-2"):
+            ui.icon("schedule").classes("text-sky-400")
+            ui.label("Estimativa de fim do treino").classes("text-sm font-semibold text-sky-300")
+        with ui.grid(columns=2).classes("w-full gap-2 mt-1"):
+            _info("play_arrow", "Início", _fmt_dt(eta["start"]) + " (servidor)")
+            if eta.get("eta"):
+                _info("flag", "Fim estimado", _fmt_dt(eta["eta"]) + " (servidor)")
+            if eta.get("runs") and eta.get("cenarios") and eta.get("algos"):
+                cfg = (f"{eta['runs']} runs × {eta['cenarios']} cenários × "
+                       f"{len(eta['algos'])} algos ({'/'.join(eta['algos'])})")
+                _info("tune", "Plano", cfg)
+            if pct is not None:
+                _info("checklist", "Treinos concluídos", f"{done}/{total}  (~{pct}%)")
+            elif done:
+                _info("checklist", "Treinos concluídos", str(done))
+
+        # "Faltam" calculado com o relógio do SERVIDOR (sem problemas de fuso).
+        if training and eta.get("eta") and eta.get("now"):
+            horas = (eta["eta"] - eta["now"]).total_seconds() / 3600
+            if horas > 0:
+                txt = f"Faltam ~{horas:.0f}h" if horas >= 1 else f"Faltam ~{int(horas * 60)} min"
+                ui.label(f"⏳ {txt} — estimativa pelo ritmo real (a avaliação final acrescenta algum tempo).") \
+                    .classes("text-xs text-amber-200 mt-1")
+        elif not training:
+            ui.label("Sem treino ativo — a estimativa refere o último plano registado.") \
+                .classes("text-xs text-gray-500 mt-1")
 
 
 def _info(icon: str, titulo: str, valor: str):
