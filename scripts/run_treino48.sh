@@ -5,7 +5,7 @@
 #
 # ARRANQUE LIMPO (começa do zero, apaga o estado de sessão anterior):
 #   tmux new -s treino48
-#   bash run_treino48.sh
+#   bash scripts/run_treino48.sh
 #   (Ctrl+B, D para sair sem matar)
 #
 # RETOMA APÓS CRASH (mesma sessão, salta o que já ficou feito):

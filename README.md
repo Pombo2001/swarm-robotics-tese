@@ -39,7 +39,9 @@ ICM/curiosidade intrínseca).
 
 ```
 configs/foraging.yaml          Configuração única (ambiente, treino, visualização)
-launcher_dashboard.py          Dashboard CustomTkinter (ponto de entrada principal)
+dashboard/                     Dashboard NiceGUI (ponto de entrada: python -m dashboard.app)
+  app.py / views/ / remote.py  Vistas (Treinar/Servidor/Ciência/Resultados) + ligação ao servidor
+launcher_dashboard.py          Launcher CustomTkinter antigo (mantido; migração incremental)
 src/
   environment/swarm_env_3d.py  Ambiente Gymnasium (física, LiDAR, recompensas)
   agents/gnn_agent_3d.py       Rede de grafos com atenção (política do GNN)
@@ -51,10 +53,14 @@ scripts/
   eval_scalability.py          Sscale: transferência Zero-Shot para N variável
   statistical_tests.py         Testes de significância (Mann-Whitney / t de Welch)
   plot_results.py              Geração dos gráficos da tese
+  run_treino24.sh / 48.sh      Lançadores de treino no servidor ISCTE (via tmux)
 visualization/
   visualize_{gnn,ppo,sac}.py   Visualizadores 3D Ursina (usados pelo launcher)
   main_visualizer.py           Visualizador 3D unificado (--algo)
-tests/test_simulation.py       Smoke test funcional (env + GNN + cenários)
+tests/                         test_simulation.py (smoke) + test_dashboard_jobs.py
+Tese/                          Dissertação LaTeX (main.tex, references.bib, images/)
+Artigo/                        Artigo destilado para a dissertação (Elsevier, PT)
+docs/                          Documentos de trabalho (plano, respostas, updates de reunião)
 results/                       Logs, modelos e gráficos gerados (não versionado)
 ```
 
