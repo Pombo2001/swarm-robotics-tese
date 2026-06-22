@@ -41,7 +41,11 @@ class SwarmForagingEnv3D(gym.Env):
         self.obstacle_velocity_magnitude = env_config.get('obstacle_velocity', 0.02)
         self.obstacle_velocities = []
 
-        self.required_to_eat = env_config.get('required_to_eat', 3)
+        # Valor BASE (cenários cooperativos). Nos labirintos de navegação o reset
+        # força required_to_eat=1 (ver _scenario_required_to_eat).
+        self.required_to_eat_coop = env_config.get('required_to_eat', 3)
+        self.required_to_eat = self.required_to_eat_coop
+        self.lidar_range = env_config.get('lidar_range', 5.0)
         self.hunger_timer_max = env_config.get('hunger_timer_max', 600)
         self.progress_reward_factor = env_config.get('progress_reward_factor', 50.0)
         self.obstacle_penalty = env_config.get('obstacle_penalty', -2.0)
@@ -161,6 +165,11 @@ class SwarmForagingEnv3D(gym.Env):
         self.walls = []
 
         self.classic_scenario = self.config['environment'].get('classic_scenario', 'none')
+
+        # required_to_eat por cenário: navegação pura = 1 agente basta (a tarefa é
+        # chegar ao ninho); cooperação (porta/perceção) = valor do config (3).
+        _nav_scenarios = ("u_wall", "bottleneck", "four_rooms")
+        self.required_to_eat = 1 if self.classic_scenario in _nav_scenarios else self.required_to_eat_coop
 
         base_max_steps = self.config['environment'].get('max_steps', 500)
         self.max_steps = self.max_steps_override.get(self.classic_scenario, base_max_steps)
@@ -296,7 +305,7 @@ class SwarmForagingEnv3D(gym.Env):
             {'pos': np.array([-12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
             {'pos': np.array([0.0, 0.0, 0.0]), 'size': np.array([17.35, 1.5, 30.0])},
             {'pos': np.array([12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
-            
+
             # Eixo Vertical X=0 (dividido para não sobrepor o centro horizontal)
             {'pos': np.array([0.0, -12.5875, 0.0]), 'size': np.array([1.5, 4.825, 30.0])},
             {'pos': np.array([0.0, -4.7125, 0.0]), 'size': np.array([1.5, 7.925, 30.0])},
@@ -481,7 +490,7 @@ class SwarmForagingEnv3D(gym.Env):
             # ---------------- LiDAR RAYCASTING (8 Rays) ----------------
             num_rays = 8
             ray_angles = np.linspace(0, 2 * np.pi, num_rays, endpoint=False)
-            max_ray_dist = 5.0
+            max_ray_dist = self.lidar_range
             lidar_sensor_vals = np.zeros(num_rays, dtype=np.float32)
 
             # Project heading to horizontal plane for LiDAR to ensure robust wall detection even if pitching

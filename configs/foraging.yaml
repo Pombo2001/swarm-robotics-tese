@@ -1,13 +1,22 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: cooperative_door_bypass
+  classic_scenario: u_wall
   dynamic_nest: true
   dynamic_obstacles: true
-  exploration_bonus: 2.0
+  # RECOMPENSA SIMPLES (Prof. Nunes + utilizador, 22 jun): manter o sistema com o
+  # MINIMO de termos e 2 focos -- EXPLORAR e ENCONTRAR O NINHO. A exploracao e
+  # PEQUENA (0.5/celula) de proposito: incentiva cobrir o mapa, mas o ninho (300,
+  # repetivel) domina sempre, evitando o vaguear que estragava o PPO no u_wall
+  # (que acontecia porque o ninho exigia 3 agentes; agora exige 1 na navegacao).
+  exploration_bonus: 0.5
   exploration_cell_size: 2.0
   forbidden_area: 2.2
   geodesic_cell_size: 0.4
   hunger_timer_max: 250
+  # Alcance do LiDAR: subido de 5->8m para o agente "ver" o desvio dos labirintos
+  # a tempo (o contorno do u_wall fica a ~8m, antes fora de alcance). Mantem-se
+  # observabilidade parcial (nao ve o mapa todo nem a direcao geodesica).
+  lidar_range: 8.0
   max_steps: 500
   max_steps_cooperative_door: 800
   max_steps_cooperative_door_bypass: 1000
@@ -16,12 +25,20 @@ environment:
   nest_velocity: 0.015
   num_agents: 20
   num_obstacles: 100
-  obstacle_penalty: -2.0
+  # Penalizacoes secundarias DESLIGADAS (recompensa simples -- nao baralhar): a
+  # fisica de colisao/separacao mantem-se (os agentes nao se sobrepoem nem
+  # atravessam paredes), so se removeu o sinal de RECOMPENSA destes termos.
+  # Se aparecer clustering ou agentes colados as paredes, readicionar aos poucos.
+  obstacle_penalty: 0.0
   obstacle_radius: 0.2
   obstacle_velocity: 0.02
   progress_reward_factor: 10.0
+  # required_to_eat e o valor dos cenarios COOPERATIVOS (porta, percecao). Nos
+  # labirintos de NAVEGACAO (u_wall, bottleneck, four_rooms) o ambiente forca =1
+  # no reset: exigir 3 agentes simultaneos ali transformava navegacao em
+  # cooperacao artificial e dava 0 recolhas mesmo chegando 1-2 agentes ao ninho.
   required_to_eat: 3
-  spreading_penalty_factor: 1.5
+  spreading_penalty_factor: 0.0
 evolution:
   eval_episodes: 4
   mutation_rate: 0.1
@@ -31,7 +48,7 @@ gnn_agent:
   hidden_dim: 32
 physics:
   agent_radius: 0.15
-  collision_penalty: -1.0
+  collision_penalty: 0.0
 plotting:
   smoothing_window: 10
 ppo:
@@ -47,7 +64,10 @@ ppo:
   num_cpu: 16
 rewards:
   energy_cost: -0.05
-  food_collected: 100.0
+  # Recompensa de tarefa SUBIDA de 100->300 (Prof. Nunes): com a exploracao
+  # pequena, a comida tem de dominar claramente o shaping de progresso para a
+  # politica convergir para "recolher", nao para "vaguear".
+  food_collected: 300.0
 sac:
   buffer_size: 500000
   checkpoint_interval_min: 30
