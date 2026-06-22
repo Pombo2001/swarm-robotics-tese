@@ -34,18 +34,13 @@ import pandas as pd
 from scipy import stats
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 EVAL_DIR = os.path.join(PROJECT_ROOT, "results", "evaluation")
 OUT_DIR = os.path.join(PROJECT_ROOT, "results", "estatisticas")
 
+from src.scenarios import SCENARIOS as SCENARIO_ORDER, SCENARIO_LABELS_SHORT as SCENARIO_LABELS
 ALGOS = ["GNN", "PPO", "SAC"]
-SCENARIO_ORDER = ["none", "u_wall", "bottleneck", "four_rooms",
-                  "cooperative_door", "cooperative_perception", "cooperative_door_bypass"]
-SCENARIO_LABELS = {
-    "none": "Sandbox", "u_wall": "Beco Sem Saida (U)", "bottleneck": "Gargalo",
-    "four_rooms": "Quatro Salas", "cooperative_door": "Porta Cooperativa",
-    "cooperative_perception": "Percepcao Cooperativa",
-    "cooperative_door_bypass": "Porta Coop. c/ Alternativa",
-}
 
 # eval_{algo}_{scenario}.csv  (algo em minusculas; scenario pode ter underscores)
 _FNAME_RE = re.compile(r"^eval_(gnn|ppo|sac)_(.+)\.csv$")

@@ -10,8 +10,6 @@ import seaborn as sns
 # ==============================================================================
 # CONFIGURAÇÕES BASE DO SCRIPT
 # ==============================================================================
-SCENARIOS = ['none', 'u_wall', 'bottleneck', 'four_rooms', 'cooperative_door', 'cooperative_perception', 'cooperative_door_bypass']
-
 ALGORITHMS = {
     'GNN': 'src/training/evo_trainer_3d.py',
     'PPO': 'src/training/train_ppo_3d.py',
@@ -26,6 +24,8 @@ CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'foraging.yaml')
 # (senão a avaliação automática no fim do treino falha com ModuleNotFoundError).
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
+
+from src.scenarios import SCENARIOS  # lista canónica de cenários (treino + avaliação)
 
 LOG_PATHS = {
     'GNN': os.path.join(BASE_DIR, 'results', 'logs', 'gnn_3d_training.csv'),

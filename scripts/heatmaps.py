@@ -40,16 +40,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from src.environment.swarm_env_3d import SwarmForagingEnv3D
-
-SCENARIO_LABELS = {
-    "none":                   "Sandbox (Arena Aberta)",
-    "u_wall":                 "Beco Sem Saída (Muro U)",
-    "bottleneck":             "Gargalo (Porta Estreita)",
-    "four_rooms":             "Quatro Salas (Labirinto)",
-    "cooperative_door":       "Porta Cooperativa (3 Robôs)",
-    "cooperative_perception": "Perceção Cooperativa (Alvo Móvel)",
-}
-ALGO_LABELS = {"gnn": "GNN (Evolutivo)", "ppo": "PPO", "sac": "SAC"}
+from src.scenarios import SCENARIOS, SCENARIO_LABELS, ALGO_LABELS, MAZE_SCENARIOS
 
 OUT_DIR = os.path.join(PROJECT_ROOT, "results", "heatmaps")
 
@@ -206,9 +197,8 @@ def generate_all(out_dir=None, episodes=6, algos=("sac", "ppo", "gnn"),
     if config_path is None:
         config_path = os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")
     if scenarios is None:
-        scenarios = list(SCENARIO_LABELS.keys())
-    maze_scenarios = [s for s in ["u_wall", "bottleneck", "four_rooms", "cooperative_door"]
-                      if s in scenarios]
+        scenarios = list(SCENARIOS)
+    maze_scenarios = [s for s in MAZE_SCENARIOS if s in scenarios]
 
     try:
         from scripts.progress import set_progress

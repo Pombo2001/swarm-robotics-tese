@@ -11,17 +11,13 @@ import sys
 
 sys.stdout.reconfigure(encoding="utf-8")
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 EVAL_DIR = os.path.join(PROJECT_ROOT, "results", "evaluation")
 
-ALL_SCENARIOS = ["none", "u_wall", "bottleneck", "four_rooms",
-                 "cooperative_door", "cooperative_perception"]
-SCENARIO_LABELS = {
-    "none": "Sandbox", "u_wall": "Beco Sem Saída (U)", "bottleneck": "Gargalo",
-    "four_rooms": "Quatro Salas", "cooperative_door": "Porta Cooperativa",
-    "cooperative_perception": "Perceção Cooperativa",
-}
+from src.scenarios import (SCENARIOS as ALL_SCENARIOS,
+                           SCENARIO_LABELS_SHORT as SCENARIO_LABELS, ALGO_COLORS)
 ALGOS = ["GNN", "PPO", "SAC"]
-ALGO_COLORS = {"GNN": "#2E7D32", "PPO": "#E65100", "SAC": "#0277BD"}
 
 
 def main():

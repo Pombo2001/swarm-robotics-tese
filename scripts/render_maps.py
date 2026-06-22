@@ -29,14 +29,9 @@ if PROJECT_ROOT not in sys.path:
 
 import pyvista as pv
 from src.environment.swarm_env_3d import SwarmForagingEnv3D
+from src.scenarios import SCENARIOS, SCENARIO_LABELS
 
-SCENARIO_LABELS = {
-    "none": "Sandbox (Arena Aberta)", "u_wall": "Beco Sem Saída (Muro U)",
-    "bottleneck": "Gargalo (Porta Estreita)", "four_rooms": "Quatro Salas (Labirinto)",
-    "cooperative_door": "Porta Cooperativa", "cooperative_perception": "Perceção Cooperativa (Alvo Móvel)",
-    "cooperative_door_bypass": "Porta Cooperativa c/ Alternativa",
-}
-ALL_SCENARIOS = list(SCENARIO_LABELS.keys())
+ALL_SCENARIOS = list(SCENARIOS)
 OUT_DIR = os.path.join(PROJECT_ROOT, "results", "maps_3d")
 
 # Paleta (coerente com o resto dos gráficos)

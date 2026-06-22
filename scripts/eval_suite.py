@@ -39,16 +39,9 @@ if PROJECT_ROOT not in sys.path:
 
 EVAL_DIR = os.path.join(PROJECT_ROOT, "results", "evaluation")
 
-ALL_SCENARIOS = ["none", "u_wall", "bottleneck", "four_rooms",
-                 "cooperative_door", "cooperative_perception"]
+from src.scenarios import (SCENARIOS as ALL_SCENARIOS,
+                           SCENARIO_LABELS_SHORT as SCENARIO_LABELS, ALGO_COLORS)
 ALL_ALGOS = ["gnn", "ppo", "sac"]
-
-SCENARIO_LABELS = {
-    "none": "Sandbox", "u_wall": "Beco Sem Saída (U)", "bottleneck": "Gargalo",
-    "four_rooms": "Quatro Salas", "cooperative_door": "Porta Cooperativa",
-    "cooperative_perception": "Perceção Cooperativa",
-}
-ALGO_COLORS = {"GNN": "#2E7D32", "PPO": "#E65100", "SAC": "#0277BD"}
 
 
 def evaluate_all(episodes=20, scenarios=None, algos=None, seed_base=1000,

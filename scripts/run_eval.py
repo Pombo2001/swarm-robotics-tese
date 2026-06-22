@@ -30,16 +30,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from src.environment.swarm_env_3d import SwarmForagingEnv3D
-
-SCENARIO_LABELS = {
-    "none":                   "Sandbox",
-    "u_wall":                 "Beco Sem Saida (U)",
-    "bottleneck":             "Gargalo",
-    "four_rooms":             "Quatro Salas",
-    "cooperative_door":       "Porta Cooperativa",
-    "cooperative_perception": "Percepcao Cooperativa",
-    "cooperative_door_bypass": "Porta Coop. c/ Alternativa",
-}
+from src.scenarios import SCENARIO_LABELS_SHORT as SCENARIO_LABELS
 
 
 def _incompat(path, detalhe):
