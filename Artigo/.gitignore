@@ -1,3 +1,6 @@
+# Logs temporários de compilação
+pass*.txt
+
 # Auxiliares de compilação LaTeX
 *.aux
 *.bbl
