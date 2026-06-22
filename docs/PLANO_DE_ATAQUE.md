@@ -11,7 +11,29 @@
 
 ---
 
-## ⏱ ATUALIZAÇÃO 21 jun 2026 — LER PRIMEIRO (o snapshot de 10 jun abaixo está ultrapassado)
+## ⏱ ATUALIZAÇÃO 22 jun 2026 — LER PRIMEIRO (saúde do código + vídeos 3D)
+
+Sessão de **otimização/regularização** (não toca em treino/recompensa → não invalida resultados):
+
+- ✅ **`main` sincronizada** com `tese-final-graficos` (estava **13 commits atrás**; fast-forward
+  `58ad5bd→13e9c7c`, local+remoto). Branches de backup mantidas. Trabalhar na `tese-final-graficos`.
+- ✅ **Fonte única de cenários** — novo `src/scenarios.py` (`SCENARIOS`, `MAZE_SCENARIOS`, labels
+  longo/curto, `ALGO_LABELS/COLORS`, `scenario_suffix`). 9 ficheiros ligados (heatmaps, render_maps,
+  eval_suite, eval_all, run_eval, plot_robustez, statistical_tests, run_experiments, record_3d).
+  **Corrigiu BUG real:** as listas estavam duplicadas com **6 vs 7 cenários** → o 7º
+  (`cooperative_door_bypass`) era **treinado mas NUNCA avaliado** (nem heatmaps/robustez). Agora os
+  7 entram em todo o lado **automaticamente** → ao re-treinar/re-avaliar, o bypass já é coberto.
+  −34 linhas líquidas; 4/4 smoke tests; `plot_robustez` corre limpo. **Importar SEMPRE de `src.scenarios`.**
+- ✅ **Vídeos 3D dos episódios** — novo `scripts/record_3d.py` (PyVista offscreen→MP4, z REAL dos
+  robôs; o treino é mesmo 3D, z varia ~[-7,+1] m). Guarda em `<pasta-do-treino>/videos/`. No pipeline
+  do `plot_results` **atrás de `SWARM_VIDEOS=1`** (gravar 21 vídeos demora minutos); à parte:
+  `python scripts/record_3d.py --all`. Decidido PyVista (não Ursina — já é o motor da tese).
+- 🔜 **Adiado (otimização futura):** `load_model` único nos 4 visualizadores; **vetorizar a
+  avaliação** (batch predict — `eval_suite` ~30 min é lento). Fazer quando se re-avaliar o GNN-48h.
+
+---
+
+## ⏱ ATUALIZAÇÃO 21 jun 2026 (o snapshot de 10 jun abaixo está ultrapassado)
 
 **Feito desde 10 jun:**
 - ✅ **Dashboard reformulado COMPLETO** (secção 6 / Fase F1–F3): pacote `dashboard/` em **NiceGUI**
@@ -43,6 +65,7 @@
    preciso os **30 runs** da proposta? (decisão de âmbito — 30×6×3×tempo é muito servidor.)
 3. **Decisão pendente:** *reward hacking* do PPO no Muro U — aceitar como resultado científico ou ajustar.
 4. **Treinar + avaliar o 7º cenário** (`cooperative_door_bypass`) — implementado, falta correr.
+   (A lacuna da AVALIAÇÃO já foi corrigida a 22 jun: o pipeline já o avalia automaticamente.)
 5. **Revisão completa da tese** ponta a ponta (consistência texto-número-figura) + confirmar a lista
    de autores de 3 refs ainda com "and others" (`heimann2024runtime`, `schmickl2025gnn`, `he2024self`).
 6. **Fase D — ARTIGO 6–8 págs** (crítico p/ nota >17) — **ainda por começar**.
