@@ -1,6 +1,6 @@
 environment:
   arena_radius: 15.0
-  classic_scenario: cooperative_door
+  classic_scenario: cooperative_door_bypass
   dynamic_nest: true
   dynamic_obstacles: true
   exploration_bonus: 2.0
