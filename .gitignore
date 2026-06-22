@@ -236,6 +236,9 @@ data/
 *.log
 .DS_Store
 
+# Artefactos de dados trazidos do servidor (grandes, regeneraveis)
+out/*.tar.gz
+
 # Config local do Claude Code (especifico da maquina)
 .claude/
 
