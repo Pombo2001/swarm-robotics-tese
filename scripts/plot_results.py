@@ -493,6 +493,20 @@ def create_thesis_plots_3d():
     except Exception as e:
         print(f"[!] Mapas 3D nao gerados (nao critico): {e}")
 
+    # Vídeos 3D (MP4) de um episódio por algoritmo×cenário, na subpasta videos/.
+    # Desligados por omissão (gravar 21 vídeos demora minutos); ativar com SWARM_VIDEOS=1.
+    if os.environ.get("SWARM_VIDEOS", "0") == "1":
+        set_progress(0.94, "Vídeos 3D dos episódios...")
+        try:
+            from scripts.record_3d import generate_all as _gen_videos
+            _gen_videos(output_dir, config_path=config_src, seconds=8, fps=15,
+                        progress_base=0.94, progress_span=0.02)
+        except Exception as e:
+            print(f"[!] Vídeos nao gerados (nao critico): {e}")
+    else:
+        print("[i] Vídeos 3D desligados (SWARM_VIDEOS=1 para gerar no pipeline; "
+              "ou à parte: python scripts/record_3d.py --all).")
+
     # ==============================================================
     # 7. ARQUIVAR MODELOS na pasta da sessão (backup + permite visualizar/comparar
     #    este treino mesmo depois de novos treinos sobrescreverem results/models*).
