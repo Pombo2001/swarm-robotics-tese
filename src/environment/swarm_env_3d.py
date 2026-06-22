@@ -291,26 +291,37 @@ class SwarmForagingEnv3D(gym.Env):
         self.obstacles = []
         self.obstacle_velocities = []
         # PORTAS ALARGADAS: Passagem central de 1.5 metros de largura.
+        # Barreira horizontal (y=0, espessura 8m) com uma ABERTURA central.
+        # Antes: paredes de 40m (saíam 25m fora da arena r=15) e abertura de 1.5m
+        # (20 agentes congestionavam). Agora: largura ajustada à arena e abertura
+        # alargada para 2.5m (22 jun, a pedido — reduz o congestionamento).
+        # Esq tapa x[-16,-1.25]; dir tapa x[1.25,16]; abertura = x[-1.25,1.25].
         self.walls = [
-            {'pos': np.array([-20.75, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])},
-            {'pos': np.array([20.75, 0.0, 0.0]), 'size': np.array([40.0, 8.0, 30.0])}
+            {'pos': np.array([-8.625, 0.0, 0.0]), 'size': np.array([14.75, 8.0, 30.0])},
+            {'pos': np.array([ 8.625, 0.0, 0.0]), 'size': np.array([14.75, 8.0, 30.0])}
         ]
 
     def _spawn_obstacles_maze(self):
         self.obstacles = []
         self.obstacle_velocities = []
-        # LABIRINTO ALARGADO: Passagens de 1.5 metros encostadas às paredes exteriores.
+        # Cruz com 4 quadrantes. Espessura das paredes 1.5m. As passagens entre
+        # salas foram ALARGADAS de 1.5m → 2.5m (22 jun, a pedido): cada segmento
+        # adjacente a uma abertura foi encurtado 0.5m no lado da abertura, mantendo
+        # a estrutura. Aberturas resultantes (2.5m): no eixo horizontal em x≈±9.4;
+        # no eixo vertical em y≈±9.4 e no cruzamento central (y≈0).
         self.walls = [
-            # Eixo Horizontal Y=0
-            {'pos': np.array([-12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
-            {'pos': np.array([0.0, 0.0, 0.0]), 'size': np.array([17.35, 1.5, 30.0])},
-            {'pos': np.array([12.5875, 0.0, 0.0]), 'size': np.array([4.825, 1.5, 30.0])},
+            # Eixo Horizontal Y=0  (aberturas em x[-10.675,-8.175] e x[8.175,10.675])
+            {'pos': np.array([-12.8375, 0.0, 0.0]), 'size': np.array([4.325, 1.5, 30.0])},
+            {'pos': np.array([0.0, 0.0, 0.0]), 'size': np.array([16.35, 1.5, 30.0])},
+            {'pos': np.array([12.8375, 0.0, 0.0]), 'size': np.array([4.325, 1.5, 30.0])},
 
-            # Eixo Vertical X=0 (dividido para não sobrepor o centro horizontal)
-            {'pos': np.array([0.0, -12.5875, 0.0]), 'size': np.array([1.5, 4.825, 30.0])},
-            {'pos': np.array([0.0, -4.7125, 0.0]), 'size': np.array([1.5, 7.925, 30.0])},
-            {'pos': np.array([0.0, 4.7125, 0.0]), 'size': np.array([1.5, 7.925, 30.0])},
-            {'pos': np.array([0.0, 12.5875, 0.0]), 'size': np.array([1.5, 4.825, 30.0])}
+            # Eixo Vertical X=0  (aberturas exteriores em y≈±9.4 alargadas para 2.5m).
+            # Os 2 segmentos centrais SÓ encurtam no lado exterior — o lado interior
+            # encosta à barra horizontal central (não criar frestas no cruzamento).
+            {'pos': np.array([0.0, -12.8375, 0.0]), 'size': np.array([1.5, 4.325, 30.0])},
+            {'pos': np.array([0.0, -4.4625, 0.0]), 'size': np.array([1.5, 7.425, 30.0])},
+            {'pos': np.array([0.0, 4.4625, 0.0]), 'size': np.array([1.5, 7.425, 30.0])},
+            {'pos': np.array([0.0, 12.8375, 0.0]), 'size': np.array([1.5, 4.325, 30.0])}
         ]
 
     def _spawn_obstacles_cooperative_door(self):
