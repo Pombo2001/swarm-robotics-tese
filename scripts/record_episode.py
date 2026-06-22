@@ -157,6 +157,42 @@ def record(algo, scenario, config_path, seed=2024, seconds=15, fps=20,
     return out
 
 
+def _build_panels(videos_dir, panels_dir, scenarios, algos, frac=0.85):
+    """Painel comparativo por cenario: junta um frame tardio (~frac do episodio) dos
+    GIFs dos 3 algos lado a lado -> panels_dir/painel_videos_<cenario>.png.
+    Ordem de exibicao fixa (GNN | PPO | SAC) independentemente da ordem de gravacao."""
+    try:
+        from PIL import Image
+    except Exception:
+        print("[paineis] Pillow indisponivel; paineis saltados.")
+        return 0
+    order = [a for a in ("gnn", "ppo", "sac") if a in algos]
+    n_ok = 0
+    for sc in scenarios:
+        frames = []
+        for a in order:
+            p = os.path.join(videos_dir, f"{a}_{sc}.gif")
+            if not os.path.exists(p):
+                continue
+            im = Image.open(p)
+            nfr = getattr(im, "n_frames", 1)
+            im.seek(min(nfr - 1, int(nfr * frac)))
+            frames.append(im.convert("RGB"))
+        if not frames:
+            continue
+        w = sum(f.width for f in frames)
+        h = max(f.height for f in frames)
+        montage = Image.new("RGB", (w, h), "white")
+        x = 0
+        for f in frames:
+            montage.paste(f, (x, 0))
+            x += f.width
+        montage.save(os.path.join(panels_dir, f"painel_videos_{sc}.png"))
+        n_ok += 1
+    print(f"[paineis] {n_ok} painel(eis) comparativo(s) em: {panels_dir}")
+    return n_ok
+
+
 def generate_all(out_dir, algos=("sac", "ppo", "gnn"), scenarios=None,
                  config_path=None, seconds=12, fps=15, trails=False,
                  progress_base=0.0, progress_span=1.0):
@@ -188,6 +224,8 @@ def generate_all(out_dir, algos=("sac", "ppo", "gnn"), scenarios=None,
                 print(f"[!] Falha no video {algo}/{sc}: {e}")
             done += 1
     print(f"[VIDEOS 2D] {n_ok} video(s) gravado(s) em: {videos_dir}")
+    # Paineis comparativos (GNN|PPO|SAC) na pasta do treino, ao lado dos outros graficos.
+    _build_panels(videos_dir, out_dir, scenarios, list(algos))
     return n_ok
 
 
