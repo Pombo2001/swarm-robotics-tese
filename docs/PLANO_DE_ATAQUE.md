@@ -57,6 +57,19 @@ no servidor: sem tmux, sem processos. `_sessao_treino.txt` = GNN × 6 cenários 
   e relatório completo correm automaticamente no fim. Monitorizar pela vista Servidor do dashboard
   (deteta `treino_fds.log` e a sessão tmux). Receita de arranque: `out/launch_fds.sh` (local).
 
+- 🐛→✅ **BUG CRÍTICO encontrado e corrigido no `evo_trainer_3d.py`** (24 jun, ~11h): o 1º
+  arranque do treino crashava na **geração 1** com `OSError: [Errno 24] Too many open files`.
+  Causa: `pool.map` enviava os genomas como **`state_dict` de tensores torch**; o pickle de
+  tensores usa memória partilhada/**file descriptors por tensor** (pop=30 × ~15 tensores = 450+
+  FDs/geração) → estourava o `ulimit` (1024). Subir o `ulimit` **não** chegou: mesmo sem crashar,
+  o `resource_sharer` engasgava e o `Pool` deixava de paralelizar (1 geração passou de ~60s para
+  **>9 min**, load 0.00). **Fix definitivo:** converter o genoma para **arrays numpy** antes do
+  `pool.map` (pickle por valor, sem FDs) e reconstruir o tensor dentro de `evaluate_genome`.
+  Validado: gerações a **~145s** (ritmo normal, = ao treino antigo), load ~25, 0 erros. O treino
+  foi **relançado limpo às 11:32 UTC**. Nota: este bug existia no código LOCAL (o GNN-48h correu
+  no código antigo do servidor, de 14 jun, que não tinha o problema). `ulimit -n 65535` ficou no
+  `launch_fds.sh` por segurança.
+
 ---
 
 ## ⏱ ATUALIZAÇÃO 22 jun 2026 (saúde do código + vídeos 3D)
