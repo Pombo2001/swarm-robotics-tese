@@ -24,7 +24,7 @@ def _build_fig(curves: dict, metric: str) -> go.Figure:
     algos = [a for a in config.ALGOS if a in curves]
     if not algos:
         fig = go.Figure()
-        fig.update_layout(template="plotly_dark", height=200,
+        fig.update_layout(template="plotly_white", height=200,
                           annotations=[dict(text="Sem CSVs de treino locais ainda.",
                                             showarrow=False, font=dict(color="gray"))])
         return fig
@@ -40,7 +40,7 @@ def _build_fig(curves: dict, metric: str) -> go.Figure:
             row=i, col=1)
         fig.update_yaxes(title_text=metric, row=i, col=1)
     fig.update_xaxes(title_text="timesteps", row=len(algos), col=1)
-    fig.update_layout(template="plotly_dark", showlegend=False,
+    fig.update_layout(template="plotly_white", showlegend=False,
                       height=240 * len(algos), margin=dict(l=50, r=20, t=30, b=40),
                       paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
     return fig
