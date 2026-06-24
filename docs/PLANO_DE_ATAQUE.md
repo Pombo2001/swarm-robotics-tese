@@ -44,6 +44,19 @@ no servidor: sem tmux, sem processos. `_sessao_treino.txt` = GNN × 6 cenários 
   (versões do `requirements.txt`). Chega para Resultados/Ciência/Monitorizar; treinar/avaliar
   localmente exige o `requirements.txt` completo (torch etc.) — ainda não instalado.
 
+- 🔄 **A CORRER AGORA: treino "fim-de-semana" com a RECOMPENSA SIMPLIFICADA** (`tmux treino_fds`,
+  `.14`, lançado **24 jun 09:01 UTC**). **ARMADILHA EVITADA:** o servidor tinha a recompensa
+  ANTIGA (food 100, exploração 2.0, penalizações on) e código de 14 jun (6 cenários) — o GNN-48h
+  acima foi treinado com ESSA recompensa antiga. Antes de lançar, **deployei o código+config
+  simplificados** (local→servidor: `src/`+`scripts/`+`configs/`; backup em
+  `~/code_backup_pre_fds_20260624_0859.tar.gz`). Servidor confirmado: food **300**, exploração
+  **0.5**, penalizações **0.0**, **7 cenários**. Plano:
+  `run_experiments.py --runs 3 --time 48 --time-gnn 160 --time-ppo 48 --eval-episodes 20`
+  → **7 cenários × 3 algos × 3 runs**, GNN **160 min/run** (≈3,3× PPO/SAC=48 min) = foco no GNN +
+  labirintos. ~90h treino + eval/gráficos → **fim ~domingo 28 de manhã**. Avaliação dos 7 cenários
+  e relatório completo correm automaticamente no fim. Monitorizar pela vista Servidor do dashboard
+  (deteta `treino_fds.log` e a sessão tmux). Receita de arranque: `out/launch_fds.sh` (local).
+
 ---
 
 ## ⏱ ATUALIZAÇÃO 22 jun 2026 (saúde do código + vídeos 3D)
