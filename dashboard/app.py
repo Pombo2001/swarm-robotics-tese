@@ -5,7 +5,7 @@ Abre em http://localhost:8080 (e fica acessível na rede local).
 
 Layout: barra lateral (esquerda) com a navegação organizada por fluxo de trabalho
 — OPERAÇÃO (Treinar, Monitorizar) e ANÁLISE (Ciência, Resultados, Vídeos) — e a
-área principal com a vista selecionada. Tema claro (branco/preto, monocromático).
+área principal com a vista selecionada. Tema escuro (modo noturno).
 """
 import os
 
@@ -23,82 +23,53 @@ _graficos = os.path.join(config.BASE_DIR, "results", "graficos_tese")
 if os.path.isdir(_graficos):
     app.add_static_files("/graficos", _graficos)
 
-# Tema visual CLARO (branco/preto). Remapeia as classes (Tailwind) que as vistas já
-# usam para valores claros, por isso TODAS as vistas mudam de forma coerente sem ter
-# de reescrever cada uma. Tipografia Inter; cartões brancos; acentos a preto
-# (monocromático); semáforos/estados mantêm a cor (significado); consolas ficam
-# escuras de propósito (legibilidade de terminal).
+# Tema visual ESCURO (modo noturno). As vistas já usam classes (Tailwind) escuras,
+# por isso aqui só se trata da "casca": fundo, cartões glass, barra lateral, tabs,
+# scrollbar e o efeito dos cartões de vídeo. As consolas já são escuras e os
+# semáforos/estados mantêm a cor original.
 _THEME_CSS = r"""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 html, body, .q-page, .nicegui-content { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif !important; }
 body { background:
-    radial-gradient(900px 500px at 100% -10%, rgba(15,23,42,.04), transparent 60%),
-    linear-gradient(180deg,#fbfcfe 0%, #f2f4f8 100%) !important;
-  background-attachment: fixed !important; color:#0f172a !important; }
+    radial-gradient(1100px 560px at 12% -12%, rgba(61,158,255,.10), transparent 60%),
+    radial-gradient(900px 480px at 102% -4%, rgba(0,200,150,.07), transparent 55%),
+    linear-gradient(165deg,#0a0e17 0%, #0b1018 60%, #090d14 100%) !important;
+  background-attachment: fixed !important; color:#e2e8f0; }
 
-/* Cartões claros */
-.glass { background:#ffffff !important; border:1px solid #e7e9f0 !important;
-  box-shadow:0 1px 2px rgba(15,23,42,.05), 0 10px 30px rgba(15,23,42,.05) !important;
-  backdrop-filter:none !important; }
-.bg-slate-800\/70 { background:#ffffff !important; border:1px solid #e7e9f0;
-  box-shadow:0 1px 2px rgba(15,23,42,.05); }
-.bg-slate-900\/40, .bg-slate-900\/50, .bg-slate-900\/60 { background:#f1f4f9 !important; }
-.bg-slate-900 { background:#eef2f7 !important; }
-.bg-slate-600 { background:#cbd5e1 !important; }
-.bg-black\/30 { background:#f1f4f9 !important; }
-/* Consolas ficam escuras de propósito */
-.bg-\[\#0d1117\] { background:#0f172a !important; }
-
-/* Texto — cinzentos escuros sobre fundo claro */
-.text-gray-200 { color:#334155 !important; }
-.text-gray-300 { color:#475569 !important; }
-.text-gray-400 { color:#64748b !important; }
-.text-gray-500 { color:#6b7280 !important; }
-.text-gray-600 { color:#4b5563 !important; }
-.text-gray-700 { color:#334155 !important; }
-/* Acentos a preto (monocromático) */
-.text-sky-200, .text-sky-300, .text-sky-400 { color:#0f172a !important; }
-
-/* Semáforos / estados (mantêm o significado) */
-.bg-emerald-700\/60, .bg-emerald-700 { background:#059669 !important; }
-.bg-amber-700\/60, .bg-amber-700 { background:#d97706 !important; }
-.bg-red-800\/60, .bg-red-800 { background:#dc2626 !important; }
-.bg-red-900\/40 { background:#fef2f2 !important; border:1px solid #fecaca; }
-.text-red-200 { color:#b91c1c !important; }
-.text-red-400 { color:#dc2626 !important; }
-.text-emerald-300, .text-emerald-400 { color:#059669 !important; }
-.text-amber-200, .text-amber-300, .text-amber-400 { color:#b45309 !important; }
+/* Cartões "glass" escuros (header, drawer, vista Vídeos) */
+.glass { background: rgba(20,26,40,.72) !important; border:1px solid rgba(148,163,184,.12) !important;
+  backdrop-filter: blur(10px); box-shadow:0 10px 30px rgba(0,0,0,.35) !important; }
 
 /* Navegação (barra lateral) */
-.q-drawer { background:#ffffff !important; border-right:1px solid #e7e9f0 !important; }
+.q-drawer { background:#0b1120 !important; border-right:1px solid rgba(148,163,184,.10) !important; }
 .q-tab { text-transform:none !important; font-weight:600; letter-spacing:.2px;
   justify-content:flex-start; border-radius:10px; min-height:44px; }
 .q-tab__content { align-items:flex-start; }
-.q-tab--active { color:#0f172a !important; background:#eef2f7; }
-.q-tab:hover { background:#f3f5f9; }
+.q-tab--active { color:#fff !important; background:rgba(61,158,255,.12); }
+.q-tab:hover { background:rgba(148,163,184,.07); }
 
 .vid-card { transition: transform .18s ease, box-shadow .18s ease; }
-.vid-card:hover { transform: translateY(-4px); box-shadow:0 14px 30px rgba(15,23,42,.12); }
+.vid-card:hover { transform: translateY(-4px); box-shadow:0 14px 34px rgba(0,0,0,.55); }
 ::-webkit-scrollbar { width:10px; height:10px; }
 ::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:8px; border:2px solid transparent; background-clip:padding-box; }
-::-webkit-scrollbar-thumb:hover { background:#9ca3af; background-clip:padding-box; }
+::-webkit-scrollbar-thumb { background:#1e293b; border-radius:8px; border:2px solid transparent; background-clip:padding-box; }
+::-webkit-scrollbar-thumb:hover { background:#334155; background-clip:padding-box; }
 .q-field--outlined .q-field__control { border-radius:10px; }
 """
 
 
 @ui.page("/")
 def index():
-    ui.dark_mode().disable()  # tema claro
-    ui.colors(primary="#111827", secondary="#475569", accent="#334155", dark="#0f172a")
+    ui.dark_mode().enable()  # modo noturno
+    ui.colors(primary="#3D9EFF", secondary="#00C896", accent="#FF6B6B", dark="#0b0f17")
     ui.add_head_html(f"<style>{_THEME_CSS}</style>")
 
     # ── Header ────────────────────────────────────────────────────────────────
     with ui.header(elevated=False).classes("items-center gap-2 px-4 py-2 glass") \
             .style("border-radius:0 0 14px 14px"):
         ui.button(icon="menu", on_click=lambda: drawer.toggle()) \
-            .props("flat round dense color=dark")
-        ui.icon("hub").classes("text-2xl").style("color:#111827")
+            .props("flat round dense color=white")
+        ui.icon("hub").classes("text-2xl text-sky-400")
         with ui.column().classes("gap-0"):
             ui.label("Mission Control").classes("text-lg font-extrabold leading-tight tracking-tight")
             ui.label("Swarm Robotics · Tese ISCTE").classes("text-xs opacity-60 leading-tight")
