@@ -57,7 +57,7 @@ def build():
         fetch_log.clear()
         with fetch_log:
             ui.label(txt).classes("text-xs font-mono whitespace-pre-wrap")
-        ui.notify("Resultados trazidos para out/res_servidor.tar.gz" if ok
+        ui.notify("Resultados trazidos e desempacotados — vê na vista Resultados" if ok
                   else "Falha a trazer resultados", type="positive" if ok else "negative")
 
     with ui.column().classes("w-full gap-4 p-4"):
@@ -130,8 +130,9 @@ def build():
                 _section_title("download", "Trazer resultados")
                 ui.button("Trazer resultados (scp)", icon="cloud_download", on_click=trazer) \
                     .props("color=secondary outline")
-            ui.label("Empacota a sessão de gráficos mais recente + avaliação/logs e descarrega "
-                     "para out/res_servidor.tar.gz.").classes("text-xs text-gray-500")
+            ui.label("Empacota a sessão de gráficos mais recente + avaliação/logs, descarrega "
+                     "para out/res_servidor.tar.gz e desempacota em results/ (aparece logo na "
+                     "vista Resultados).").classes("text-xs text-gray-500")
             fetch_log = ui.column().classes("w-full mt-1")
 
 

@@ -9,6 +9,7 @@ visível na lista de processos local; aceitável num launcher de uso pessoal.)
 """
 import os
 import subprocess
+import tarfile
 from datetime import datetime
 
 from . import config
@@ -145,10 +146,34 @@ def get_status(ip: str, hostkey: str, password: str) -> dict:
     return res
 
 
-def fetch_results(ip: str, hostkey: str, password: str) -> tuple[bool, str]:
-    """Empacota a sessão de gráficos mais recente + avaliação/logs e traz por scp.
+def _extract_into_project(tarball: str) -> tuple[bool, str]:
+    """Desempacota o tarball na raiz do projeto (caminhos são 'results/...').
 
-    Devolve (ok, texto_de_log). O ficheiro chega a out/res_servidor.tar.gz.
+    Assim a sessão cai em results/graficos_tese/<sessão> e o eval em
+    results/evaluation/ — exatamente de onde o dashboard (data.py) lê. Sem este
+    passo o tarball ficava em out/ e nada aparecia na vista Resultados/Ciência.
+    """
+    try:
+        with tarfile.open(tarball, "r:gz") as tf:
+            members = tf.getnames()
+            # Segurança: só extrair caminhos relativos dentro de results/.
+            safe = [m for m in tf.getmembers()
+                    if not (m.name.startswith(("/", "..")) or os.path.isabs(m.name))]
+            tf.extractall(config.BASE_DIR, members=safe)
+    except (tarfile.TarError, OSError) as e:
+        return False, f"[erro a desempacotar] {e}"
+    sess = next((os.path.basename(m.rstrip("/")) for m in members
+                 if m.startswith("results/graficos_tese/")
+                 and m.count("/") == 2), "(?)")
+    return True, f"[ok] desempacotado em results/ — sessão: {sess}"
+
+
+def fetch_results(ip: str, hostkey: str, password: str) -> tuple[bool, str]:
+    """Empacota a sessão de gráficos mais recente + avaliação/logs, traz por scp
+    e desempacota em results/ para o dashboard a mostrar logo.
+
+    Devolve (ok, texto_de_log). O tarball fica em out/res_servidor.tar.gz e o
+    conteúdo é extraído para results/ (graficos_tese/<sessão>, evaluation, logs).
     """
     log = []
     pack = (
@@ -178,4 +203,7 @@ def fetch_results(ip: str, hostkey: str, password: str) -> tuple[bool, str]:
         log.append(f"[erro scp] {r.stderr.strip()}")
         return False, "\n".join(log)
     log.append(f"[ok] resultados trazidos para: {dest}")
-    return True, "\n".join(log)
+
+    ok_ext, msg_ext = _extract_into_project(dest)
+    log.append(msg_ext)
+    return ok_ext, "\n".join(log)
