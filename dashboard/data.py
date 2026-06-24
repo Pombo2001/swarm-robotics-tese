@@ -173,6 +173,54 @@ def training_curves():
     return out
 
 
+# ── Vídeos dos episódios (vista Vídeos) ───────────────────────────────────────
+VIDEO_ALGOS = ("gnn", "ppo", "sac")
+
+
+def _videos_dir(session: str) -> str:
+    return os.path.join(GRAFICOS_DIR, session, "videos")
+
+
+def video_sessions():
+    """Sessões com vídeos (pasta videos/ não vazia), mais recentes primeiro."""
+    out = []
+    for s in list_sessions():
+        d = _videos_dir(s)
+        if os.path.isdir(d) and any(f.lower().endswith(".gif") for f in os.listdir(d)):
+            out.append(s)
+    return out
+
+
+def list_videos(session: str):
+    """Nomes dos GIFs de uma sessão (ordenados)."""
+    d = _videos_dir(session)
+    if not os.path.isdir(d):
+        return []
+    return sorted(f for f in os.listdir(d) if f.lower().endswith(".gif"))
+
+
+def parse_video(filename: str):
+    """'gnn_u_wall.gif' -> ('gnn', 'u_wall'). Algo = prefixo conhecido."""
+    base = filename[:-4] if filename.lower().endswith(".gif") else filename
+    for a in VIDEO_ALGOS:
+        if base.startswith(a + "_"):
+            return a, base[len(a) + 1:]
+    return "?", base
+
+
+def video_for(session: str, algo: str, scenario: str):
+    """Nome do GIF de (algo, cenário) nessa sessão, ou None se não existir."""
+    fn = f"{algo}_{scenario}.gif"
+    return fn if fn in list_videos(session) else None
+
+
+def scenarios_with_video(session: str):
+    """Cenários (chaves) que têm pelo menos um vídeo na sessão, na ordem canónica."""
+    present = {parse_video(f)[1] for f in list_videos(session)}
+    from . import config
+    return [k for k in config.SCENARIO_KEYS if k in present]
+
+
 def send_to_thesis(session: str, filename: str):
     """Copia um PNG da sessão para Tese/images/resultados/ (nome inalterado)."""
     src = os.path.join(GRAFICOS_DIR, session, filename)
