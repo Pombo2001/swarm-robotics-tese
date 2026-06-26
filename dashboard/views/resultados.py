@@ -29,11 +29,20 @@ TYPE_ICON = {
 _PREFIXES = ["comparacao_mapa", "comparacao_barras", "heatmap_ocupacao",
              "heatmap_geodesico", "boxplot_por_algo", "desempenho_global",
              "taxa_sucesso", "recolhas", "boxplot"]
+# Nomes descritivos (sem algo nem cenário) que a heurística de prefixo não
+# resolve bem — título fixo e legível (com acentos que o ficheiro não tem).
+_FULL_TITLE = {
+    "taxa_sucesso_por_cenario": "Taxa de sucesso por cenário",
+    "recolhas_por_cenario": "Recolhas por cenário",
+    "comparacao_barras_geral": "Comparação geral (barras)",
+}
 
 
 def _pretty_title(f: str) -> str:
     """'heatmap_ocupacao_gnn_u_wall.png' -> 'GNN · Muro em U' (título legível)."""
     name = f[:-4] if f.lower().endswith(".png") else f
+    if name in _FULL_TITLE:
+        return _FULL_TITLE[name]
     rest = name
     for p in sorted(_PREFIXES, key=len, reverse=True):
         if name.startswith(p):
