@@ -5,18 +5,14 @@ As imagens são servidas pela rota estática '/graficos' (registada em app.py).
 """
 from nicegui import ui
 
-from .. import data
+from .. import config, data
 
 CARD = "bg-slate-800/70 rounded-xl shadow-lg p-4 w-full"
 NONE = "— (sem comparação)"
 
-SCEN_ORDER = ["none", "u_wall", "bottleneck", "four_rooms",
-              "cooperative_door", "cooperative_perception"]
-SCEN_LABEL = {
-    "none": "Sandbox", "u_wall": "Muro em U", "bottleneck": "Gargalo",
-    "four_rooms": "4 Salas", "cooperative_door": "Porta coop.",
-    "cooperative_perception": "Perceção coop.",
-}
+# Cenários e labels vêm de config (fonte única — ver dashboard/config.py).
+SCEN_ORDER = config.MAIN_SCENARIO_KEYS
+SCEN_LABEL = config.SCENARIO_LABEL_SHORT
 
 
 def _section_title(icon: str, text: str):

@@ -14,9 +14,10 @@ from . import config
 GRAFICOS_DIR = os.path.join(config.BASE_DIR, "results", "graficos_tese")
 TESE_IMG_DIR = os.path.join(config.BASE_DIR, "Tese", "images", "resultados")
 
-EVAL_SUMMARY = os.path.join(config.BASE_DIR, "results", "evaluation", "eval_summary.csv")
-SIGNIF = os.path.join(config.BASE_DIR, "results", "estatisticas",
-                      "testes_significancia_food_collected.csv")
+EVAL_DIR = os.path.join(config.BASE_DIR, "results", "evaluation")
+EVAL_SUMMARY = os.path.join(EVAL_DIR, "eval_summary.csv")
+STATS_DIR = os.path.join(config.BASE_DIR, "results", "estatisticas")
+SIGNIF = os.path.join(STATS_DIR, "testes_significancia_food_collected.csv")
 MODEL_DIRS = ("models", "models_ppo", "models_sac")
 
 
@@ -101,6 +102,75 @@ def significance():
     if not os.path.exists(SIGNIF):
         return None
     return pd.read_csv(SIGNIF)
+
+
+# ── Robustez a falhas (Rrobust) ───────────────────────────────────────────────
+def robustness_table():
+    """Por (cenário, algo): recolhas base vs com 10% de falhas + retenção %.
+
+    Base = eval_summary.csv (avaliação sem falhas, agregada por cenário/algo).
+    Falhas = eval_{algo}_{cenário}_fail10.csv (run_eval.py --fail-frac 0.1).
+    Devolve {scenario: {algo: {base, fail, base_succ, fail_succ, retencao, n}}}
+    só para os pares que têm ambas as avaliações; {} se ainda não há nada.
+    """
+    if not os.path.exists(EVAL_SUMMARY):
+        return {}
+    base = pd.read_csv(EVAL_SUMMARY)
+    out = {}
+    for scen in config.SCENARIO_KEYS:
+        for algo in config.ALGOS:
+            b = base[(base["Scenario"] == scen) & (base["Algorithm"] == algo)]
+            fp = os.path.join(EVAL_DIR, f"eval_{algo.lower()}_{scen}_fail10.csv")
+            if b.empty or not os.path.exists(fp):
+                continue
+            f = pd.read_csv(fp)
+            base_m = float(b["food_collected"].mean())
+            fail_m = float(f["food_collected"].mean())
+            out.setdefault(scen, {})[algo] = {
+                "base": base_m,
+                "fail": fail_m,
+                "base_succ": 100.0 * float(b["success"].mean()),
+                "fail_succ": (100.0 * float(f["success"].mean())
+                              if "success" in f.columns else None),
+                "retencao": (100.0 * fail_m / base_m) if base_m > 1e-9 else None,
+                "n": int(len(f)),
+            }
+    return out
+
+
+# ── Escalabilidade Zero-Shot (Sscale) ─────────────────────────────────────────
+def scalability_scenarios():
+    """Cenários com CSV de escalabilidade (escalabilidade_{cenário}.csv)."""
+    if not os.path.isdir(STATS_DIR):
+        return []
+    return [k for k in config.SCENARIO_KEYS
+            if os.path.exists(os.path.join(STATS_DIR, f"escalabilidade_{k}.csv"))]
+
+
+def scalability_table(scenario: str):
+    """Lê escalabilidade_{scenario}.csv → {algo: [pontos ordenados por N]} ou None.
+
+    Cada ponto: {N, food_per_agent, success_rate, mean_food, compatible}. Os
+    pontos incompatíveis (MLP do PPO/SAC com N!=20) vêm com compatible=False e
+    métricas a None — é a evidência da vantagem de escala da GNN.
+    """
+    fp = os.path.join(STATS_DIR, f"escalabilidade_{scenario}.csv")
+    if not os.path.exists(fp):
+        return None
+    df = pd.read_csv(fp)
+    num = lambda v: None if pd.isna(v) else float(v)
+    out = {}
+    for _, r in df.iterrows():
+        out.setdefault(r["Algorithm"], []).append({
+            "N": int(r["N"]),
+            "food_per_agent": num(r["food_per_agent"]),
+            "success_rate": num(r["success_rate"]),
+            "mean_food": num(r["mean_food"]),
+            "compatible": bool(r["compatible"]),
+        })
+    for a in out:
+        out[a].sort(key=lambda d: d["N"])
+    return out
 
 
 # ── Galeria de resultados (vista Resultados) ──────────────────────────────────
