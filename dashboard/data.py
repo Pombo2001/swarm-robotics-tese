@@ -197,8 +197,10 @@ def graph_type(filename: str) -> str:
     f = filename.lower()
     if f.startswith("comparacao_mapa"):
         return "Curvas por mapa"
+    if f.startswith("boxplot_por_algo"):
+        return "Boxplots por algoritmo"
     if f.startswith("boxplot"):
-        return "Boxplots"
+        return "Boxplots por cenário"
     if f.startswith("desempenho_global"):
         return "Curvas por algoritmo"
     if f.startswith("heatmap_geodesico"):
@@ -299,3 +301,8 @@ def send_to_thesis(session: str, filename: str):
     os.makedirs(TESE_IMG_DIR, exist_ok=True)
     shutil.copy2(src, os.path.join(TESE_IMG_DIR, filename))
     return True, filename
+
+
+def is_in_thesis(filename: str) -> bool:
+    """True se o gráfico já foi copiado para Tese/images/resultados/."""
+    return os.path.exists(os.path.join(TESE_IMG_DIR, filename))

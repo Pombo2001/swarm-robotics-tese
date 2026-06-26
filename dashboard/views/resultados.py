@@ -17,11 +17,14 @@ SCEN_LABEL = config.SCENARIO_LABEL_SHORT
 # Ordem e ícone de cada secção da galeria (agrupa por tipo de gráfico).
 TYPE_ORDER = [
     "Métricas de tarefa", "Curvas por algoritmo", "Curvas por mapa",
-    "Boxplots", "Heatmaps de ocupação", "Heatmaps geodésicos", "Outros",
+    "Boxplots por cenário", "Boxplots por algoritmo",
+    "Heatmaps de ocupação", "Heatmaps geodésicos", "Outros",
 ]
 TYPE_ICON = {
     "Métricas de tarefa": "leaderboard", "Curvas por algoritmo": "show_chart",
-    "Curvas por mapa": "stacked_line_chart", "Boxplots": "candlestick_chart",
+    "Curvas por mapa": "stacked_line_chart",
+    "Boxplots por cenário": "candlestick_chart",
+    "Boxplots por algoritmo": "candlestick_chart",
     "Heatmaps de ocupação": "grid_view", "Heatmaps geodésicos": "route",
     "Outros": "image",
 }
@@ -179,27 +182,62 @@ def build():
                 tabela_cmp()
 
         with ui.card().classes(CARD):
-            _section_title("photo_library", "Galeria de resultados")
+            with ui.row().classes("w-full items-center no-wrap gap-2"):
+                _section_title("photo_library", "Galeria de resultados")
+                contagem = ui.label("").classes("text-xs text-gray-400 ml-auto")
             with ui.row().classes("w-full gap-2 no-wrap items-center mt-1"):
                 sess_a = ui.select(sessions, value=sessions[0], label="Sessão A") \
                     .props("outlined dense").classes("flex-1")
                 sess_b = ui.select([NONE] + sessions, value=NONE, label="Sessão B (A/B)") \
                     .props("outlined dense").classes("flex-1")
-                tipos = ["Todos"] + sorted({data.graph_type(f) for f in data.list_pngs(sessions[0])})
-                tipo = ui.select(tipos, value="Todos", label="Tipo") \
+                tipo = ui.select(["Todos"], value="Todos", label="Tipo") \
                     .props("outlined dense").classes("flex-1")
+            busca = ui.input(placeholder="Pesquisar por nome ou título…") \
+                .props("outlined dense clearable").classes("w-full mt-1")
 
-        def _img_card(f: str, comparar: bool, pngs_b: set):
+        def _session_for(f: str, a_set: set, b_set: set):
+            """Sessão de onde copiar o ficheiro (A tem prioridade)."""
+            if f in a_set:
+                return sess_a.value
+            if f in b_set:
+                return sess_b.value
+            return None
+
+        def _enviar(f: str, session: str):
+            ok, msg = data.send_to_thesis(session, f)
+            ui.notify(f"Enviado: {msg}" if ok else f"Falhou: {msg}",
+                      type="positive" if ok else "negative")
+            galeria.refresh()
+
+        def _enviar_seccao(files: list, a_set: set, b_set: set):
+            n = 0
+            for f in files:
+                s = _session_for(f, a_set, b_set)
+                if s and data.send_to_thesis(s, f)[0]:
+                    n += 1
+            ui.notify(f"Enviados {n}/{len(files)} gráficos para a tese",
+                      type="positive" if n else "warning")
+            galeria.refresh()
+
+        def _card_title(f: str):
+            with ui.row().classes("w-full items-center no-wrap gap-1"):
+                ui.label(_pretty_title(f)).classes("text-sm font-semibold text-sky-200 truncate")
+                if data.is_in_thesis(f):
+                    ui.icon("check_circle").classes("text-emerald-400 text-sm") \
+                        .tooltip("Já está na tese")
+
+        def _img_card(f: str, comparar: bool, a_set: set, b_set: set):
             with ui.card().classes("bg-slate-900/50 rounded-lg p-2"):
-                ui.label(_pretty_title(f)).classes("text-sm font-semibold text-sky-200")
+                _card_title(f)
                 ui.label(f).classes("text-[10px] font-mono text-gray-500 truncate")
                 if comparar:
                     with ui.row().classes("w-full gap-2 no-wrap"):
-                        for s, tag in ((sess_a.value, "A"), (sess_b.value, "B")):
+                        for s, tag, present in ((sess_a.value, "A", f in a_set),
+                                                (sess_b.value, "B", f in b_set)):
                             with ui.column().classes("flex-1 gap-0 items-center"):
-                                ui.badge(f"{tag} · {s}", color="primary").props("rounded").classes("text-[10px]")
-                                # o ficheiro pode não existir na sessão B
-                                if tag == "B" and f not in pngs_b:
+                                ui.badge(f"{tag} · {s}", color="primary") \
+                                    .props("rounded").classes("text-[10px]")
+                                if not present:
                                     ui.label("(não existe nesta sessão)") \
                                         .classes("text-xs text-gray-600 italic py-4")
                                 else:
@@ -208,37 +246,70 @@ def build():
                 else:
                     ui.image(_url(sess_a.value, f)).classes("w-full cursor-pointer") \
                         .on("click", lambda _, f=f: open_zoom(sess_a.value, f))
+                send_s = _session_for(f, a_set, b_set)
+                if send_s:
+                    ui.button(icon="upload_file",
+                              on_click=lambda f=f, s=send_s: _enviar(f, s)) \
+                        .props("flat dense size=sm color=secondary") \
+                        .classes("self-end -mt-1").tooltip("Enviar para a tese")
 
         @ui.refreshable
         def galeria():
-            pngs = [f for f in data.list_pngs(sess_a.value)
-                    if tipo.value == "Todos" or data.graph_type(f) == tipo.value]
-            if not pngs:
-                ui.label("Nenhum gráfico para este filtro.").classes("text-gray-500")
-                return
             comparar = sess_b.value != NONE
-            pngs_b = set(data.list_pngs(sess_b.value)) if comparar else set()
+            a_set = set(data.list_pngs(sess_a.value))
+            b_set = set(data.list_pngs(sess_b.value)) if comparar else set()
+            universo = sorted(a_set | b_set) if comparar else sorted(a_set)
+            q = (busca.value or "").strip().lower()
+
+            def _match(f):
+                if tipo.value != "Todos" and data.graph_type(f) != tipo.value:
+                    return False
+                if q and q not in f.lower() and q not in _pretty_title(f).lower():
+                    return False
+                return True
+
+            pngs = [f for f in universo if _match(f)]
 
             # Agrupa por tipo e desenha cada grupo como uma secção com cabeçalho.
             grupos = {}
             for f in pngs:
                 grupos.setdefault(data.graph_type(f), []).append(f)
+            contagem.text = f"{len(pngs)} gráficos · {len(grupos)} secções"
+            if not pngs:
+                ui.label("Nenhum gráfico para este filtro.").classes("text-gray-500")
+                return
             ordem = [t for t in TYPE_ORDER if t in grupos] + \
                     [t for t in grupos if t not in TYPE_ORDER]
             cols = "1" if comparar else "3"
             for tname in ordem:
                 files = grupos[tname]
-                with ui.row().classes("items-center gap-2 w-full mt-4 mb-1"):
+                with ui.row().classes("items-center gap-2 w-full mt-4 mb-1 no-wrap"):
                     ui.icon(TYPE_ICON.get(tname, "image")).classes("text-sky-400 text-xl")
                     ui.label(tname).classes("text-base font-bold")
                     ui.badge(str(len(files)), color="primary").props("rounded")
+                    ui.button("Enviar secção", icon="drive_folder_upload",
+                              on_click=lambda fs=files: _enviar_seccao(fs, a_set, b_set)) \
+                        .props("flat dense size=sm color=secondary").classes("ml-auto") \
+                        .tooltip("Copiar todos estes gráficos para a tese")
                 ui.separator().classes("opacity-30")
                 with ui.grid().classes("w-full gap-3").style(
                         f"grid-template-columns: repeat({cols}, minmax(0, 1fr))"):
                     for f in files:
-                        _img_card(f, comparar, pngs_b)
+                        _img_card(f, comparar, a_set, b_set)
 
-        # refrescar a galeria quando muda qualquer filtro
-        for el in (sess_a, sess_b, tipo):
+        def _refresh_tipos():
+            files = set(data.list_pngs(sess_a.value))
+            if sess_b.value != NONE:
+                files |= set(data.list_pngs(sess_b.value))
+            presentes = {data.graph_type(f) for f in files}
+            opts = ["Todos"] + [t for t in TYPE_ORDER if t in presentes] + \
+                   sorted(t for t in presentes if t not in TYPE_ORDER)
+            tipo.set_options(opts, value=tipo.value if tipo.value in opts else "Todos")
+
+        # filtros: trocar de sessão reconstrói os tipos disponíveis
+        for el in (sess_a, sess_b):
+            el.on_value_change(lambda: (_refresh_tipos(), galeria.refresh()))
+        for el in (tipo, busca):
             el.on_value_change(lambda: galeria.refresh())
+        _refresh_tipos()
         galeria()
