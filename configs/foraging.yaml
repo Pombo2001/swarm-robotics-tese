@@ -44,6 +44,20 @@ evolution:
   mutation_rate: 0.1
   pop_size: 30
   sigma: 0.1
+  # Exploração: manter viva ao longo das gerações para não convergir cedo demais
+  # (sigma a colapsar = campeão decora as seeds de avaliação -> overfitting).
+  sigma_min: 0.03
+  sigma_decay: 0.999
+  # Fitness = food*food_weight + shaping_amplitude*tanh(reward/shaping_scale).
+  # A escala (denominador) é GRANDE de propósito: nos labirintos food=0 para todos
+  # os genomas e o shaping (progresso geodésico) é da ordem das dezenas de milhar;
+  # com escala pequena a tanh saturava (todos ~amplitude) e a seleção ficava cega.
+  # Escala grande mantém a tanh quase-linear na gama de operação -> gradiente que
+  # premeia quem se aproxima do ninho mesmo antes de recolher. Ajustar shaping_scale
+  # à magnitude real do reward bruto (ver coluna RewBruto no log do treino).
+  fitness_food_weight: 10000.0
+  fitness_shaping_amplitude: 5000.0
+  fitness_shaping_scale: 50000.0
 gnn_agent:
   hidden_dim: 32
 physics:

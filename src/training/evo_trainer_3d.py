@@ -140,15 +140,22 @@ def evaluate_genome(args):
 
     avg_reward = float(np.mean(episode_rewards))   # reward bruto (com shaping)
     avg_food   = float(np.mean(episode_foods))     # recolhas (tarefa pura)
-    # Fitness DOMINADA PELA TAREFA: cada recolha vale 10000 (>> qualquer shaping);
-    # o shaping entra COMPRIMIDO por tanh em (-5000, 5000) como gradiente/desempate
-    # quando ainda ninguém recolhe. Elimina o reward hacking (fitness = reward bruto
-    # -> 98k com 0 recolhas) e, ao contrário do clip(±5000), NUNCA satura: a tanh é
-    # monótona, portanto a seleção nunca fica cega (sem patamares fitness=5000.0
-    # exactos) e continua a distinguir genomas que se aproximam do ninho.
-    shaping_term = 5000.0 * float(np.tanh(avg_reward / 5000.0))
-    fitness = avg_food * 10000.0 + shaping_term
-    return fitness, total_steps, avg_food
+    # Fitness DOMINADA PELA TAREFA: cada recolha vale food_weight (>> shaping); o
+    # shaping entra COMPRIMIDO por tanh, limitado a ±amplitude, como gradiente quando
+    # ainda ninguém recolhe. PORQUÊ a escala (denominador) grande: nos labirintos
+    # food=0 para TODOS os genomas e o reward bruto (progresso geodésico + exploração)
+    # é da ordem das dezenas de milhar. Com escala pequena (=5000) a tanh saturava —
+    # tanh(reward/5000)≈1 para todos -> fitness ≈ amplitude EXACTA -> seleção CEGA
+    # (foi o que vimos: "Fitness 5000.0" fixo por 120 gerações, 0 comida). Com escala
+    # grande a tanh fica quase-linear na gama de operação: um genoma que se aproxima
+    # mais do ninho tem fitness maior -> gradiente para a comida mesmo antes de comer.
+    evo = config.get('evolution', {})
+    food_weight   = evo.get('fitness_food_weight', 10000.0)
+    shaping_amp   = evo.get('fitness_shaping_amplitude', 5000.0)
+    shaping_scale = evo.get('fitness_shaping_scale', 50000.0)
+    shaping_term = shaping_amp * float(np.tanh(avg_reward / shaping_scale))
+    fitness = avg_food * food_weight + shaping_term
+    return fitness, total_steps, avg_food, avg_reward
 
 
 class GeneticTrainer3D:
@@ -179,8 +186,12 @@ class GeneticTrainer3D:
         self.pop_size = evo_config.get('pop_size', 30)
         self.mutation_rate = evo_config.get('mutation_rate', 0.10)
         self.sigma = evo_config.get('sigma', 0.1)  # desvio da mutação Gaussiana (foraging.yaml)
-        self.sigma_min = 0.01
-        self.sigma_decay = 0.995
+        # Piso e decaimento da sigma lidos do config: manter exploração viva ao longo
+        # das gerações (antes 0.01/0.995 colapsava ~0.055 em 120 gen -> convergência
+        # prematura -> campeão decora as seeds de avaliação = overfitting). Defaults
+        # mais conservadores; o elitismo preserva os melhores, a sigma só afeta filhos.
+        self.sigma_min = evo_config.get('sigma_min', 0.03)
+        self.sigma_decay = evo_config.get('sigma_decay', 0.999)
 
         self.population = []
         for i in range(self.pop_size):
@@ -246,6 +257,7 @@ class GeneticTrainer3D:
 
                 scores       = [res[0] for res in results]
                 food_counts  = [res[2] for res in results]
+                rewards_raw  = [res[3] for res in results]
                 total_steps_this_gen = sum(res[1] for res in results)
                 global_timestep += total_steps_this_gen
 
@@ -272,11 +284,15 @@ class GeneticTrainer3D:
                 self.population = new_population
 
                 best_food = food_counts[sorted_indices[0]]
+                best_reward = rewards_raw[sorted_indices[0]]
+                # RewBruto = reward médio (com shaping) do melhor genoma. Diagnóstico
+                # da magnitude para afinar fitness_shaping_scale: a tanh deve ficar
+                # quase-linear (|RewBruto/scale| < ~1), não saturada (>> 1).
                 print(
                     f"Gen {gen} | Steps: {global_timestep} | "
                     f"Fitness: {scores[0]:.1f} | Média: {np.mean(scores):.1f} | "
-                    f"Comida (melhor): {best_food} | Sigma: {self.sigma:.4f} | "
-                    f"Tempo: {cumulative_time:.1f}s")
+                    f"Comida (melhor): {best_food} | RewBruto: {best_reward:.0f} | "
+                    f"Sigma: {self.sigma:.4f} | Tempo: {cumulative_time:.1f}s")
 
                 # Apply Adaptive Mutation (Decay)
                 self.sigma = max(self.sigma_min, self.sigma * self.sigma_decay)
