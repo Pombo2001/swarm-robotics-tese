@@ -7,11 +7,44 @@
 > rumo, regista aqui a decisão e a data.
 
 **Tese**: "Aprendizagem por Reforço para Controlo de Enxames" — ISCTE, Mestrado em IA
-**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 | **Hoje**: 2026-06-10
+**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 | **Hoje**: 2026-06-28
 
 ---
 
-## ⏱ ATUALIZAÇÃO 24 jun 2026 — LER PRIMEIRO (GNN-48h terminou + fix do dashboard)
+## ⏱ ATUALIZAÇÃO 28 jun 2026 (noite) — LER PRIMEIRO (GNN come em labirintos: fitness de HOMING + treino 3 dias a correr)
+
+**AVANÇO PRINCIPAL — o GNN passou a comer em labirintos pela 1ª vez.** Resolvido o colapso
+crónico do GNN nos labirintos (0% em todos os treinos anteriores). Ver `memory/gnn_homing_fitness.md`.
+
+- 🔬 **Diagnóstico (causa raiz):** a fitness `food*10000 + 5000·tanh(reward/5000)` levava a
+  **farming de shaping** — nos labirintos (food=0 p/ todos), o GNN maximizava o reward de exploração
+  vagueando SEM entrar no ninho (entrar dá signaling=1, 0 reward/passo → parar é "perda"). Como
+  nenhum genoma comia, o termo `food*10000` nunca ativava → seleção cega. Não era falta de tempo
+  (123 gen e na mesma 0) nem arquitetura — era a **fitness (seleção)**.
+- ✅ **Correção (commits `03e87bd` + `922f143`):** fitness de **HOMING** =
+  `avg_food*10000 + 5000·avg_homing`, onde homing = proximidade FINAL ao ninho
+  (`frac = clip((Φ_ini − Φ_fim)/Φ_ini, 0, 1)`, Φ = potencial geodésico). **Não-farmável** (só conta
+  os extremos, vaguear não aumenta) e seleciona a PRÉ-CONDIÇÃO de comer. Também: `sigma_min 0.01→0.03`,
+  `sigma_decay 0.995→0.999`. Só mexe no GNN — PPO/SAC intactos.
+- ✅ **Validado no `u_wall`** (servidor, 35 min, seed 42): gen 13 = 1ª recolha, gen 22 = **7.25 rec/ep**.
+  Antes: **0** em todos os treinos (10jun/FaseB/treino_fds).
+- 🔄 **A CORRER AGORA (28 jun 22:09, `.14`):** servidor estava livre; código sincronizado por pscp
+  (= HEAD `922f143`). Dois tmux encadeados:
+  - `val_gnn` — valida a fitness de homing nos restantes labirintos (`bottleneck → four_rooms →
+    cooperative_door → cooperative_door_bypass`, 35 min cada, seed 42). Script `val_gnn_labirintos.sh`.
+  - `val_watch` — `watch_and_train.sh`: espera o `val_gnn` acabar, analisa `max(best_task_food)` por
+    cenário → `val_verdict.txt`, e **se ≥1 labirinto comeu LANÇA AUTOMATICAMENTE** o treino de 3 dias.
+  - **Treino 3 dias (só GNN):** `run_experiments --algo GNN --runs 3 --time-gnn 195 --scenarios
+    none,u_wall,bottleneck,four_rooms,cooperative_door,cooperative_perception,cooperative_door_bypass
+    --eval-episodes 20` → tmux `train3d`, log `treino_3dias_gnn.log` (~68h + eval/gráficos).
+- 📋 **AO RETOMAR:** `plink ... "cat val_verdict.txt; tmux ls; tail results/logs/gnn_3d_training.csv"`
+  (fitness > 5000 com homing ⇒ já há comida). No fim, trazer `results/` por pscp e re-correr eval +
+  `statistical_tests` + atualizar Cap 6 (só os números do GNN mudam; PPO/SAC mantêm o treino_fds).
+- ⚠️ Pendente de antes: auditoria entrada-a-entrada do `references.bib` (~16 entradas suspeitas).
+
+---
+
+## ⏱ ATUALIZAÇÃO 24 jun 2026 (GNN-48h terminou + fix do dashboard)
 
 **Treino GNN-48h CONCLUÍDO** (sessão `23-06-2026_19h39m`, recolhido para `out/res_servidor/`
 e copiado para `results/graficos_tese/` + `results/evaluation/`). `eval_summary.csv` de 23 jun
