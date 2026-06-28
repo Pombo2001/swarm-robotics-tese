@@ -99,6 +99,7 @@ def evaluate_genome(args):
 
     episode_rewards = []
     episode_foods = []
+    episode_homing = []   # fração [0,1] de aproximação ao ninho no FIM do episódio
     total_steps = 0
 
     for ep in range(eval_episodes):
@@ -107,6 +108,10 @@ def evaluate_genome(args):
         # reproduzível, sem o ruído de avaliar cada geração numa seed diferente.
         ep_seed = (eval_seed + ep) if eval_seed is not None else None
         obs_dict, _ = env.reset(seed=ep_seed)
+        # Potencial (distância geodésica/euclidiana ao ninho) de cada agente no
+        # INÍCIO. O env calcula-o no reset (env.prev_pot). Serve de referência para
+        # medir homing = quanto os agentes se aproximaram do ninho até ao fim.
+        start_pot = np.array(env.prev_pot, dtype=float).copy()
         episode_reward = 0
         steps = 0
         done = False
@@ -136,26 +141,33 @@ def evaluate_genome(args):
         # total_food_collected é zerado no reset, por isso é lido por episódio
         # (antes só o último episódio contava — bug).
         episode_foods.append(int(env.total_food_collected))
+        # Homing: quão perto do ninho os agentes TERMINAM. Usa-se o potencial final
+        # (geodésico nos labirintos -> contorna paredes). frac=1 se o agente chega ao
+        # ninho (pot=0), 0 se não se aproximou. É NÃO-FARMÁVEL: depende só dos extremos
+        # (início vs fim), não do caminho -> ao contrário do reward acumulado, vaguear
+        # a explorar não o aumenta. Agentes no ninho ficam com pot=0 (frac=1).
+        end_pot = np.array([env._potential(p) for p in env.agent_positions], dtype=float)
+        frac = np.clip((start_pot - end_pot) / (start_pot + 1e-6), 0.0, 1.0)
+        episode_homing.append(float(np.mean(frac)))
         total_steps += steps
 
-    avg_reward = float(np.mean(episode_rewards))   # reward bruto (com shaping)
+    avg_reward = float(np.mean(episode_rewards))   # reward bruto (só diagnóstico)
     avg_food   = float(np.mean(episode_foods))     # recolhas (tarefa pura)
-    # Fitness DOMINADA PELA TAREFA: cada recolha vale food_weight (>> shaping); o
-    # shaping entra COMPRIMIDO por tanh, limitado a ±amplitude, como gradiente quando
-    # ainda ninguém recolhe. PORQUÊ a escala (denominador) grande: nos labirintos
-    # food=0 para TODOS os genomas e o reward bruto (progresso geodésico + exploração)
-    # é da ordem das dezenas de milhar. Com escala pequena (=5000) a tanh saturava —
-    # tanh(reward/5000)≈1 para todos -> fitness ≈ amplitude EXACTA -> seleção CEGA
-    # (foi o que vimos: "Fitness 5000.0" fixo por 120 gerações, 0 comida). Com escala
-    # grande a tanh fica quase-linear na gama de operação: um genoma que se aproxima
-    # mais do ninho tem fitness maior -> gradiente para a comida mesmo antes de comer.
+    avg_homing = float(np.mean(episode_homing))    # aproximação ao ninho [0,1]
+    # Fitness DOMINADA PELA TAREFA: cada recolha vale food_weight (>> shaping). O
+    # shaping é o HOMING (proximidade FINAL ao ninho), NÃO o reward acumulado.
+    # PORQUÊ: o reward acumulado (progresso + exploração) é FARMÁVEL — o GNN
+    # maximizava-o a vaguear/explorar sem nunca entrar no ninho (RewBruto ~88000,
+    # comida 0), porque parar no ninho corta o rendimento por passo. Selecionar pelo
+    # homing premeia genomas cujos agentes ACABAM no ninho (= pré-condição de comer,
+    # required_to_eat=1 nos labirintos); assim que um come, food*food_weight domina.
+    # O homing é não-farmável (só conta o estado final, não o caminho).
     evo = config.get('evolution', {})
-    food_weight   = evo.get('fitness_food_weight', 10000.0)
-    shaping_amp   = evo.get('fitness_shaping_amplitude', 5000.0)
-    shaping_scale = evo.get('fitness_shaping_scale', 50000.0)
-    shaping_term = shaping_amp * float(np.tanh(avg_reward / shaping_scale))
+    food_weight = evo.get('fitness_food_weight', 10000.0)
+    shaping_amp = evo.get('fitness_shaping_amplitude', 5000.0)
+    shaping_term = shaping_amp * avg_homing
     fitness = avg_food * food_weight + shaping_term
-    return fitness, total_steps, avg_food, avg_reward
+    return fitness, total_steps, avg_food, avg_reward, avg_homing
 
 
 class GeneticTrainer3D:
@@ -258,6 +270,7 @@ class GeneticTrainer3D:
                 scores       = [res[0] for res in results]
                 food_counts  = [res[2] for res in results]
                 rewards_raw  = [res[3] for res in results]
+                homing_vals  = [res[4] for res in results]
                 total_steps_this_gen = sum(res[1] for res in results)
                 global_timestep += total_steps_this_gen
 
@@ -285,14 +298,16 @@ class GeneticTrainer3D:
 
                 best_food = food_counts[sorted_indices[0]]
                 best_reward = rewards_raw[sorted_indices[0]]
-                # RewBruto = reward médio (com shaping) do melhor genoma. Diagnóstico
-                # da magnitude para afinar fitness_shaping_scale: a tanh deve ficar
-                # quase-linear (|RewBruto/scale| < ~1), não saturada (>> 1).
+                best_homing = homing_vals[sorted_indices[0]]
+                # Homing = proximidade final ao ninho do melhor genoma ([0,1]; 1=chegou).
+                # É o sinal de seleção dos labirintos: deve subir antes de aparecer
+                # comida. RewBruto fica só como diagnóstico (já não entra na fitness).
                 print(
                     f"Gen {gen} | Steps: {global_timestep} | "
                     f"Fitness: {scores[0]:.1f} | Média: {np.mean(scores):.1f} | "
-                    f"Comida (melhor): {best_food} | RewBruto: {best_reward:.0f} | "
-                    f"Sigma: {self.sigma:.4f} | Tempo: {cumulative_time:.1f}s")
+                    f"Comida (melhor): {best_food} | Homing: {best_homing:.3f} | "
+                    f"RewBruto: {best_reward:.0f} | Sigma: {self.sigma:.4f} | "
+                    f"Tempo: {cumulative_time:.1f}s")
 
                 # Apply Adaptive Mutation (Decay)
                 self.sigma = max(self.sigma_min, self.sigma * self.sigma_decay)
