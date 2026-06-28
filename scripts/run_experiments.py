@@ -196,6 +196,24 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
     except Exception as e:
         print(f"[!] Relatório não gerado (não crítico): {e}")
 
+    # ── VÍDEOS dos episódios (GIF 2D top-down) ───────────────────────────────
+    # Grava 1 GIF por (algoritmo × cenário) treinado, na pasta da sessão acabada
+    # de gerar (results/graficos_tese/<sessao>/videos/). Robusto: falhas
+    # individuais não abortam o conjunto. Desligar com SWARM_VIDEOS=0 (gera ~1
+    # GIF por algo/cenário, alguns minutos no total).
+    if os.environ.get("SWARM_VIDEOS", "1") != "0":
+        print("\n--- A GRAVAR VÍDEOS DOS EPISÓDIOS (GIF 2D top-down) ---")
+        try:
+            from scripts.record_episode import generate_all, _latest_training_dir
+            sess_dir = _latest_training_dir()
+            if sess_dir:
+                algos_lower = tuple(a.lower() for a in algorithms.keys())
+                generate_all(sess_dir, algos=algos_lower, scenarios=scenarios)
+            else:
+                print("[!] Sem pasta de sessão para os vídeos.")
+        except Exception as e:
+            print(f"[!] Vídeos não gerados (não crítico): {e}")
+
 def generate_plots(df_curves, df_best):
     print("\n--- A GERAR GRÁFICOS AVANÇADOS ---")
     out_dir = os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas')

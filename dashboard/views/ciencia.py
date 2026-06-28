@@ -27,6 +27,87 @@ def _ptask_color(p: float) -> str:
     return "bg-red-800/60"
 
 
+def _echart_axis_label():
+    return {"color": "#94a3b8"}
+
+
+def _robustez_option(table: dict) -> dict:
+    """Barras de retenção (%) por cenário, uma série por algoritmo.
+
+    Retenção = recolhas com 10% de falhas / recolhas sem falhas. 100% = imune.
+    """
+    scen_keys = [k for k in config.SCENARIO_KEYS if k in table]
+    labels = [config.SCENARIO_LABEL_SHORT[k] for k in scen_keys]
+    series = []
+    for a in config.ALGOS:
+        pts = []
+        for k in scen_keys:
+            info = table[k].get(a)
+            pts.append(round(info["retencao"], 1)
+                       if info and info["retencao"] is not None else None)
+        s = {"name": a, "type": "bar", "barMaxWidth": 26,
+             "itemStyle": {"color": config.ALGO_META[a]["color"],
+                           "borderRadius": [4, 4, 0, 0]},
+             "data": pts}
+        series.append(s)
+    if series:
+        series[0]["markLine"] = {
+            "silent": True, "symbol": "none",
+            "lineStyle": {"color": "#64748b", "type": "dashed"},
+            "data": [{"yAxis": 100,
+                      "label": {"formatter": "100% · imune", "color": "#94a3b8"}}]}
+    return {
+        "tooltip": {"trigger": "axis"},
+        "legend": {"textStyle": {"color": "#cbd5e1"}, "top": 0},
+        "grid": {"left": 48, "right": 16, "top": 36, "bottom": 64},
+        "xAxis": {"type": "category", "data": labels,
+                  "axisLabel": {"color": "#94a3b8", "rotate": 18}},
+        "yAxis": {"type": "value", "name": "Retenção (%)",
+                  "nameTextStyle": {"color": "#94a3b8"},
+                  "axisLabel": _echart_axis_label(),
+                  "splitLine": {"lineStyle": {"color": "rgba(148,163,184,.12)"}}},
+        "series": series,
+    }
+
+
+def _escala_option(tbl: dict) -> dict:
+    """Linhas de eficiência (recolhas/agente) vs N, uma série por algoritmo.
+
+    Pontos incompatíveis (MLP do PPO/SAC com N!=20) ficam a None → a linha
+    interrompe-se, mostrando que só a GNN transfere para outro N (zero-shot).
+    """
+    all_n = sorted({p["N"] for pts in tbl.values() for p in pts})
+    series = []
+    for a in config.ALGOS:
+        if a not in tbl:
+            continue
+        by_n = {p["N"]: p for p in tbl[a]}
+        pts = []
+        for n in all_n:
+            p = by_n.get(n)
+            ok = p and p["compatible"] and p["food_per_agent"] is not None
+            pts.append(round(p["food_per_agent"], 3) if ok else None)
+        series.append({"name": a, "type": "line", "connectNulls": False,
+                       "symbolSize": 9, "lineStyle": {"width": 3},
+                       "itemStyle": {"color": config.ALGO_META[a]["color"]},
+                       "data": pts})
+    return {
+        "tooltip": {"trigger": "axis"},
+        "legend": {"textStyle": {"color": "#cbd5e1"}, "top": 0},
+        "grid": {"left": 56, "right": 20, "top": 36, "bottom": 44},
+        "xAxis": {"type": "category", "data": [str(n) for n in all_n],
+                  "name": "Nº de agentes (N)",
+                  "nameLocation": "middle", "nameGap": 28,
+                  "nameTextStyle": {"color": "#94a3b8"},
+                  "axisLabel": _echart_axis_label()},
+        "yAxis": {"type": "value", "name": "Recolhas / agente",
+                  "nameTextStyle": {"color": "#94a3b8"},
+                  "axisLabel": _echart_axis_label(),
+                  "splitLine": {"lineStyle": {"color": "rgba(148,163,184,.12)"}}},
+        "series": series,
+    }
+
+
 def _cell(info: dict):
     if info is None:
         with ui.element("div").classes("bg-slate-900/40 rounded-lg p-2 text-center"):
@@ -104,6 +185,81 @@ def build():
                         ui.table(rows=rows, columns=[
                             {"name": k, "label": k, "field": k, "align": "left"}
                             for k in rows[0]]).classes("w-full").props("dense")
+
+            # ── Robustez a falhas (Rrobust) ──────────────────────────────────
+            rob = data.robustness_table()
+            with ui.card().classes(CARD):
+                _section_title("health_and_safety",
+                               "Robustez a falhas de agentes (Rrobust)")
+                ui.label("Recolhas retidas quando 10% dos agentes falham a meio do "
+                         "episódio (avaliação emparelhada, mesmas seeds). 100% = imune.") \
+                    .classes("text-xs text-gray-400")
+                if not rob:
+                    with ui.row().classes("items-center gap-2 mt-2"):
+                        ui.icon("info").classes("text-sky-400")
+                        ui.label("Ainda sem avaliações com falhas.").classes("text-gray-400")
+                    ui.label("Gera com:  python scripts/run_eval.py --algo sac "
+                             "--scenario none --episodes 30 --fail-frac 0.1") \
+                        .classes("text-xs font-mono text-gray-500")
+                else:
+                    ui.echart(_robustez_option(rob)).classes("w-full").style("height:340px")
+                    with ui.expansion("Tabela (recolhas: base → com falhas)",
+                                      icon="table_view").classes("w-full"):
+                        rrows = []
+                        for k in config.SCENARIO_KEYS:
+                            if k not in rob:
+                                continue
+                            for a in config.ALGOS:
+                                info = rob[k].get(a)
+                                if not info:
+                                    continue
+                                rrows.append({
+                                    "Cenário": config.SCENARIO_LABEL_SHORT[k], "Algo": a,
+                                    "Base": f"{info['base']:.1f}",
+                                    "10% falhas": f"{info['fail']:.1f}",
+                                    "Retenção": (f"{info['retencao']:.0f}%"
+                                                 if info["retencao"] is not None else "—"),
+                                    "n": info["n"],
+                                })
+                        if rrows:
+                            ui.table(rows=rrows, columns=[
+                                {"name": c, "label": c, "field": c, "align": "left"}
+                                for c in rrows[0]]).classes("w-full").props("dense")
+
+            # ── Escalabilidade Zero-Shot (Sscale) ────────────────────────────
+            scen_scale = data.scalability_scenarios()
+            with ui.card().classes(CARD):
+                _section_title("open_in_full", "Escalabilidade Zero-Shot (Sscale)")
+                ui.label("Eficiência (recolhas/agente) ao transferir, sem retreino, a "
+                         "política de N=20 para outros tamanhos de enxame. A linha do "
+                         "PPO/SAC interrompe-se em N≠20 (MLP de entrada fixa); só a GNN "
+                         "(atenção sobre vizinhos) é invariante a N.") \
+                    .classes("text-xs text-gray-400")
+                if not scen_scale:
+                    with ui.row().classes("items-center gap-2 mt-2"):
+                        ui.icon("info").classes("text-sky-400")
+                        ui.label("Ainda sem dados de escalabilidade.").classes("text-gray-400")
+                    ui.label("Gera com:  python scripts/eval_scalability.py --scenario none "
+                             "--sizes 10,20,50,100 --episodes 30") \
+                        .classes("text-xs font-mono text-gray-500")
+                else:
+                    sel = ui.select({k: config.SCENARIO_LABEL_SHORT[k] for k in scen_scale},
+                                    value=scen_scale[0], label="Cenário") \
+                        .props("outlined dense").classes("w-60 mt-1")
+                    holder = ui.column().classes("w-full")
+
+                    def draw_scale():
+                        holder.clear()
+                        tbl = data.scalability_table(sel.value)
+                        with holder:
+                            if not tbl:
+                                ui.label("Sem dados para este cenário.").classes("text-gray-500")
+                            else:
+                                ui.echart(_escala_option(tbl)).classes("w-full") \
+                                    .style("height:340px")
+
+                    sel.on_value_change(draw_scale)
+                    draw_scale()
 
     with ui.column().classes("w-full gap-4 p-4"):
         with ui.row().classes("w-full items-center justify-between"):

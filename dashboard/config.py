@@ -22,6 +22,21 @@ SCENARIOS = [
 SCENARIO_LABEL_BY_KEY = {k: lbl for lbl, k in SCENARIOS}
 SCENARIO_KEYS = [k for _, k in SCENARIOS]
 
+# Labels curtos (para tabelas/gráficos onde o nome completo não cabe) — fonte
+# única partilhada pelas vistas (evita SCEN_LABEL duplicados por ficheiro).
+SCENARIO_LABEL_SHORT = {
+    "none": "Sandbox",
+    "u_wall": "Muro em U",
+    "bottleneck": "Gargalo",
+    "four_rooms": "4 Salas",
+    "cooperative_door": "Porta coop.",
+    "cooperative_perception": "Perceção coop.",
+    "cooperative_door_bypass": "Porta c/ alt.",
+}
+# Conjunto canónico de experiências da tese (os 6 cenários principais, sem o
+# bypass exploratório) — ordem usada nas tabelas comparativas.
+MAIN_SCENARIO_KEYS = [k for k in SCENARIO_KEYS if k != "cooperative_door_bypass"]
+
 ALGOS = ["GNN", "PPO", "SAC"]
 ALGO_META = {
     "GNN": {"color": "#00C896", "icon": "🧬", "label": "GNN (Evolutivo)"},

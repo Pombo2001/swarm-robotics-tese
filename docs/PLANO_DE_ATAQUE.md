@@ -11,7 +11,68 @@
 
 ---
 
-## ⏱ ATUALIZAÇÃO 22 jun 2026 — LER PRIMEIRO (saúde do código + vídeos 3D)
+## ⏱ ATUALIZAÇÃO 24 jun 2026 — LER PRIMEIRO (GNN-48h terminou + fix do dashboard)
+
+**Treino GNN-48h CONCLUÍDO** (sessão `23-06-2026_19h39m`, recolhido para `out/res_servidor/`
+e copiado para `results/graficos_tese/` + `results/evaluation/`). `eval_summary.csv` de 23 jun
+20:39 (posterior ao fim do treino → corresponde aos modelos, sem a armadilha nº 3). Confirmado
+no servidor: sem tmux, sem processos. `_sessao_treino.txt` = GNN × 6 cenários × 3 runs.
+
+- 📊 **Resultado MISTO — labirintos só recuperaram em parte.** Sucesso% / recolhas/ep (eval):
+  | Cenário | GNN | PPO | SAC |
+  |---|---|---|---|
+  | none | 100% / 35.5 | 100% / 71.7 | 100% / 21.0 |
+  | **u_wall (Muro U)** | **100% / 13.4** ✅ | 0% / 0 | 0% / 0 |
+  | bottleneck | **0% / 0** ❌ | 100% / 41.4 | 100% / 36.5 |
+  | four_rooms | **0% / 0** ❌ | 100% / 10.9 | 55% / 0.9 |
+  | cooperative_door | **0% / 0** ❌ | 100% / 66.6 | 100% / 62.3 |
+  | cooperative_perception | 100% / 16.7 ✅ | 100% / 17.8 | 100% / 9.5 |
+  - ✅ **Muro U recuperado** e é vitória EXCLUSIVA do GNN (PPO/SAC a 0% — reward hacking do PPO).
+  - ❌ **bottleneck, four_rooms, cooperative_door ficaram a 0%** — NÃO recuperaram (o 24h v2 fazia
+    Muro U *e* Porta Coop a 100%; este não). 
+  - ⚠️ *Fitness exploitation* persiste: `cooperative_door` run 1 teve fitness de treino **527 500**
+    (~52 food) mas **0 recolhas na avaliação**; runs 2/3 em `5000.0` exato (0 food).
+  - **DECISÃO PENDENTE:** fixar este como GNN de referência (ganha-se o Muro U) ou 3ª tentativa nos
+    3 labirintos que falharam. Os boxplots de variância (3 runs) já existem nesta sessão.
+
+- 🛠 **Fix do dashboard (botão "Trazer resultados"):** `remote.fetch_results` só descarregava o
+  tarball para `out/` — não o desempacotava → a sessão **nunca aparecia** na vista Resultados
+  (que lê de `results/graficos_tese/`). Agora `fetch_results` **desempacota automaticamente na
+  raiz do projeto** (novo `_extract_into_project()`, extrai só caminhos relativos seguros) → a
+  sessão e o eval caem logo no sítio certo. Validado: `list_sessions()` passou a ver `23-06-...`.
+- 🛠 **`.venv` local recriado** (Python 3.13) **só com o dashboard**: `nicegui`/`plotly`/`pandas`
+  (versões do `requirements.txt`). Chega para Resultados/Ciência/Monitorizar; treinar/avaliar
+  localmente exige o `requirements.txt` completo (torch etc.) — ainda não instalado.
+
+- 🔄 **A CORRER AGORA: treino "fim-de-semana" com a RECOMPENSA SIMPLIFICADA** (`tmux treino_fds`,
+  `.14`, lançado **24 jun 09:01 UTC**). **ARMADILHA EVITADA:** o servidor tinha a recompensa
+  ANTIGA (food 100, exploração 2.0, penalizações on) e código de 14 jun (6 cenários) — o GNN-48h
+  acima foi treinado com ESSA recompensa antiga. Antes de lançar, **deployei o código+config
+  simplificados** (local→servidor: `src/`+`scripts/`+`configs/`; backup em
+  `~/code_backup_pre_fds_20260624_0859.tar.gz`). Servidor confirmado: food **300**, exploração
+  **0.5**, penalizações **0.0**, **7 cenários**. Plano:
+  `run_experiments.py --runs 3 --time 48 --time-gnn 160 --time-ppo 48 --eval-episodes 20`
+  → **7 cenários × 3 algos × 3 runs**, GNN **160 min/run** (≈3,3× PPO/SAC=48 min) = foco no GNN +
+  labirintos. ~90h treino + eval/gráficos → **fim ~domingo 28 de manhã**. Avaliação dos 7 cenários
+  e relatório completo correm automaticamente no fim. Monitorizar pela vista Servidor do dashboard
+  (deteta `treino_fds.log` e a sessão tmux). Receita de arranque: `out/launch_fds.sh` (local).
+
+- 🐛→✅ **BUG CRÍTICO encontrado e corrigido no `evo_trainer_3d.py`** (24 jun, ~11h): o 1º
+  arranque do treino crashava na **geração 1** com `OSError: [Errno 24] Too many open files`.
+  Causa: `pool.map` enviava os genomas como **`state_dict` de tensores torch**; o pickle de
+  tensores usa memória partilhada/**file descriptors por tensor** (pop=30 × ~15 tensores = 450+
+  FDs/geração) → estourava o `ulimit` (1024). Subir o `ulimit` **não** chegou: mesmo sem crashar,
+  o `resource_sharer` engasgava e o `Pool` deixava de paralelizar (1 geração passou de ~60s para
+  **>9 min**, load 0.00). **Fix definitivo:** converter o genoma para **arrays numpy** antes do
+  `pool.map` (pickle por valor, sem FDs) e reconstruir o tensor dentro de `evaluate_genome`.
+  Validado: gerações a **~145s** (ritmo normal, = ao treino antigo), load ~25, 0 erros. O treino
+  foi **relançado limpo às 11:32 UTC**. Nota: este bug existia no código LOCAL (o GNN-48h correu
+  no código antigo do servidor, de 14 jun, que não tinha o problema). `ulimit -n 65535` ficou no
+  `launch_fds.sh` por segurança.
+
+---
+
+## ⏱ ATUALIZAÇÃO 22 jun 2026 (saúde do código + vídeos 3D)
 
 Sessão de **otimização/regularização** (não toca em treino/recompensa → não invalida resultados):
 
@@ -59,8 +120,9 @@ Sessão de **otimização/regularização** (não toca em treino/recompensa → 
   (PPO/SAC não são tocados — `--algo GNN`.)
 
 **PRÓXIMOS PASSOS (por ordem):**
-1. **[~23 jun]** Treino GNN-48h termina → trazer (pscp/dashboard) + **re-avaliar** + ver se os
-   labirintos voltaram. Se sim, fixar como o GNN de referência da tese.
+1. ~~**[~23 jun]** Treino GNN-48h termina → trazer + re-avaliar + ver se os labirintos voltaram.~~
+   ✅ **FEITO (24 jun)** — ver atualização no topo. Labirintos só recuperaram em parte (Muro U sim;
+   bottleneck/four_rooms/cooperative_door a 0%). **Decisão pendente:** fixar como referência ou 3ª tentativa.
 2. **Definir a "Fase B oficial"**: os 3 runs chegam para os boxplots de variância, ou é mesmo
    preciso os **30 runs** da proposta? (decisão de âmbito — 30×6×3×tempo é muito servidor.)
 3. **Decisão pendente:** *reward hacking* do PPO no Muro U — aceitar como resultado científico ou ajustar.

@@ -5,18 +5,51 @@ As imagens são servidas pela rota estática '/graficos' (registada em app.py).
 """
 from nicegui import ui
 
-from .. import data
+from .. import config, data
 
 CARD = "bg-slate-800/70 rounded-xl shadow-lg p-4 w-full"
 NONE = "— (sem comparação)"
 
-SCEN_ORDER = ["none", "u_wall", "bottleneck", "four_rooms",
-              "cooperative_door", "cooperative_perception"]
-SCEN_LABEL = {
-    "none": "Sandbox", "u_wall": "Muro em U", "bottleneck": "Gargalo",
-    "four_rooms": "4 Salas", "cooperative_door": "Porta coop.",
-    "cooperative_perception": "Perceção coop.",
+# Cenários e labels vêm de config (fonte única — ver dashboard/config.py).
+SCEN_ORDER = config.MAIN_SCENARIO_KEYS
+SCEN_LABEL = config.SCENARIO_LABEL_SHORT
+
+# Ordem e ícone de cada secção da galeria (agrupa por tipo de gráfico).
+TYPE_ORDER = [
+    "Métricas de tarefa", "Curvas por algoritmo", "Curvas por mapa",
+    "Boxplots", "Heatmaps de ocupação", "Heatmaps geodésicos", "Outros",
+]
+TYPE_ICON = {
+    "Métricas de tarefa": "leaderboard", "Curvas por algoritmo": "show_chart",
+    "Curvas por mapa": "stacked_line_chart", "Boxplots": "candlestick_chart",
+    "Heatmaps de ocupação": "grid_view", "Heatmaps geodésicos": "route",
+    "Outros": "image",
 }
+# Prefixos conhecidos dos nomes de ficheiro (removidos para gerar o título).
+_PREFIXES = ["comparacao_mapa", "comparacao_barras", "heatmap_ocupacao",
+             "heatmap_geodesico", "boxplot_por_algo", "desempenho_global",
+             "taxa_sucesso", "recolhas", "boxplot"]
+
+
+def _pretty_title(f: str) -> str:
+    """'heatmap_ocupacao_gnn_u_wall.png' -> 'GNN · Muro em U' (título legível)."""
+    name = f[:-4] if f.lower().endswith(".png") else f
+    rest = name
+    for p in sorted(_PREFIXES, key=len, reverse=True):
+        if name.startswith(p):
+            rest = name[len(p):].lstrip("_")
+            break
+    bits = []
+    for a in ("gnn", "ppo", "sac"):
+        if rest == a or rest.startswith(a + "_"):
+            bits.append(a.upper())
+            rest = rest[len(a):].lstrip("_")
+            break
+    if rest in SCEN_LABEL:
+        bits.append(SCEN_LABEL[rest])
+    elif rest:
+        bits.append(rest.replace("_", " ").title())
+    return " · ".join(bits) if bits else name
 
 
 def _section_title(icon: str, text: str):
@@ -147,6 +180,26 @@ def build():
                 tipo = ui.select(tipos, value="Todos", label="Tipo") \
                     .props("outlined dense").classes("flex-1")
 
+        def _img_card(f: str, comparar: bool, pngs_b: set):
+            with ui.card().classes("bg-slate-900/50 rounded-lg p-2"):
+                ui.label(_pretty_title(f)).classes("text-sm font-semibold text-sky-200")
+                ui.label(f).classes("text-[10px] font-mono text-gray-500 truncate")
+                if comparar:
+                    with ui.row().classes("w-full gap-2 no-wrap"):
+                        for s, tag in ((sess_a.value, "A"), (sess_b.value, "B")):
+                            with ui.column().classes("flex-1 gap-0 items-center"):
+                                ui.badge(f"{tag} · {s}", color="primary").props("rounded").classes("text-[10px]")
+                                # o ficheiro pode não existir na sessão B
+                                if tag == "B" and f not in pngs_b:
+                                    ui.label("(não existe nesta sessão)") \
+                                        .classes("text-xs text-gray-600 italic py-4")
+                                else:
+                                    ui.image(_url(s, f)).classes("w-full cursor-pointer") \
+                                        .on("click", lambda _, s=s, f=f: open_zoom(s, f))
+                else:
+                    ui.image(_url(sess_a.value, f)).classes("w-full cursor-pointer") \
+                        .on("click", lambda _, f=f: open_zoom(sess_a.value, f))
+
         @ui.refreshable
         def galeria():
             pngs = [f for f in data.list_pngs(sess_a.value)
@@ -156,26 +209,25 @@ def build():
                 return
             comparar = sess_b.value != NONE
             pngs_b = set(data.list_pngs(sess_b.value)) if comparar else set()
-            with ui.grid().classes("w-full gap-3").style(
-                    f"grid-template-columns: repeat({'1' if comparar else '3'}, minmax(0, 1fr))"):
-                for f in pngs:
-                    with ui.card().classes("bg-slate-900/50 rounded-lg p-2"):
-                        ui.label(f).classes("text-xs font-mono text-gray-400 truncate")
-                        if comparar:
-                            with ui.row().classes("w-full gap-2 no-wrap"):
-                                for s, tag in ((sess_a.value, "A"), (sess_b.value, "B")):
-                                    with ui.column().classes("flex-1 gap-0 items-center"):
-                                        ui.badge(f"{tag} · {s}", color="primary").props("rounded").classes("text-[10px]")
-                                        # o ficheiro pode não existir na sessão B
-                                        if tag == "B" and f not in pngs_b:
-                                            ui.label("(não existe nesta sessão)") \
-                                                .classes("text-xs text-gray-600 italic py-4")
-                                        else:
-                                            ui.image(_url(s, f)).classes("w-full cursor-pointer") \
-                                                .on("click", lambda _, s=s, f=f: open_zoom(s, f))
-                        else:
-                            ui.image(_url(sess_a.value, f)).classes("w-full cursor-pointer") \
-                                .on("click", lambda _, f=f: open_zoom(sess_a.value, f))
+
+            # Agrupa por tipo e desenha cada grupo como uma secção com cabeçalho.
+            grupos = {}
+            for f in pngs:
+                grupos.setdefault(data.graph_type(f), []).append(f)
+            ordem = [t for t in TYPE_ORDER if t in grupos] + \
+                    [t for t in grupos if t not in TYPE_ORDER]
+            cols = "1" if comparar else "3"
+            for tname in ordem:
+                files = grupos[tname]
+                with ui.row().classes("items-center gap-2 w-full mt-4 mb-1"):
+                    ui.icon(TYPE_ICON.get(tname, "image")).classes("text-sky-400 text-xl")
+                    ui.label(tname).classes("text-base font-bold")
+                    ui.badge(str(len(files)), color="primary").props("rounded")
+                ui.separator().classes("opacity-30")
+                with ui.grid().classes("w-full gap-3").style(
+                        f"grid-template-columns: repeat({cols}, minmax(0, 1fr))"):
+                    for f in files:
+                        _img_card(f, comparar, pngs_b)
 
         # refrescar a galeria quando muda qualquer filtro
         for el in (sess_a, sess_b, tipo):

@@ -83,6 +83,10 @@ def evaluate_genome(args):
     # threading) e evita a contenção entre os 30 processos do Pool.
     torch.set_num_threads(1)
     weights, config_path, eval_seed = args
+    # Os pesos chegam como arrays numpy (ver args_list em train(): evita o estouro
+    # de file descriptors do pickle de tensores torch). Reconstrói o state_dict.
+    weights = {k: torch.from_numpy(v) if isinstance(v, np.ndarray) else v
+               for k, v in weights.items()}
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
@@ -226,7 +230,17 @@ class GeneticTrainer3D:
                     break
 
                 # Conjunto de seeds de avaliação FIXO entre gerações (ver __init__).
-                args_list = [(self.population[i], self.config_path, self.eval_seed_base)
+                # Converte cada genoma (state_dict de tensores torch) para arrays
+                # NUMPY antes de o enviar aos workers. Motivo: o pickle de tensores
+                # torch usa memória partilhada/file-descriptors por tensor (com
+                # pop_size=30 são 450+ por geração) -> estoura o ulimit
+                # ("OSError: [Errno 24] Too many open files") e, mesmo subindo o
+                # ulimit, fica lentíssimo (o resource_sharer engasga e o Pool deixa
+                # de paralelizar: 1 geração passava de ~60s para >9min). Os arrays
+                # numpy fazem pickle POR VALOR — rápidos e sem FDs. São reconvertidos
+                # em tensores dentro de evaluate_genome.
+                args_list = [({k: v.detach().cpu().numpy() for k, v in self.population[i].items()},
+                              self.config_path, self.eval_seed_base)
                              for i in range(self.pop_size)]
                 results = pool.map(evaluate_genome, args_list)
 
