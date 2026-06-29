@@ -465,8 +465,75 @@ class SwarmForagingEnv3D(gym.Env):
                     return False
         return True
 
+    def _lidar_scan(self, pos, heading, w_min_arr, w_max_arr, obs_arr):
+        """LiDAR de 8 raios, vetorizado (slab method). Bit-exacto vs. o loop original
+        (ver tests/test_lidar_equivalence.py). pos/heading: (3,); w_min_arr/w_max_arr:
+        (W,3) cantos das AABB; obs_arr: (O,3) centros dos obstáculos."""
+        num_rays = 8
+        max_d = self.lidar_range
+        r_obs = self.obstacle_radius
+
+        # Heading projetado no plano horizontal (robusto a pitch), igual ao original.
+        F_horiz = np.array([heading[0], heading[1], 0.0])
+        n = np.linalg.norm(F_horiz)
+        F_horiz = np.array([1.0, 0.0, 0.0]) if n < 1e-6 else F_horiz / n
+        R_horiz = np.array([-F_horiz[1], F_horiz[0], 0.0])
+
+        angles = np.linspace(0, 2 * np.pi, num_rays, endpoint=False)
+        ray_dirs = (np.cos(angles)[:, None] * F_horiz[None, :]
+                    + np.sin(angles)[:, None] * R_horiz[None, :])  # (R,3), z=0
+
+        closest = np.full(num_rays, max_d, dtype=np.float64)
+
+        # ---- Paredes (AABB, slab method em X e Y) ----
+        if w_min_arr.shape[0] > 0:
+            d = ray_dirs[:, :2] * max_d                       # (R,2)
+            parallel = np.abs(d) < 1e-6
+            d_safe = np.where(parallel, 1.0, d)
+            pos2 = pos[:2]
+            wmin2 = w_min_arr[:, :2]
+            wmax2 = w_max_arr[:, :2]
+            t_a = (wmin2[None, :, :] - pos2[None, None, :]) / d_safe[:, None, :]
+            t_b = (wmax2[None, :, :] - pos2[None, None, :]) / d_safe[:, None, :]
+            low = np.minimum(t_a, t_b)                        # (R,W,2)
+            high = np.maximum(t_a, t_b)
+            inside = ((pos2[None, None, :] >= wmin2[None, :, :])
+                      & (pos2[None, None, :] <= wmax2[None, :, :]))
+            par = np.broadcast_to(parallel[:, None, :], low.shape)
+            low = np.where(par & inside, -np.inf, low)        # eixo paralelo+dentro: livre
+            high = np.where(par & inside, np.inf, high)
+            discard = np.any(par & ~inside, axis=2)           # paralelo+fora: descarta wall
+            t_enter = np.maximum(0.0, np.max(low, axis=2))    # (R,W)
+            t_exit = np.minimum(1.0, np.min(high, axis=2))
+            hit = (t_enter <= t_exit) & (t_exit >= 0.0) & (t_enter <= 1.0) & ~discard
+            hit_dist = np.where(hit, t_enter * max_d, np.inf)
+            closest = np.minimum(closest, np.min(hit_dist, axis=1))
+
+        # ---- Obstáculos (esferas projetadas no raio) ----
+        if obs_arr.shape[0] > 0:
+            vec = np.broadcast_to(obs_arr[None, :, :] - pos[None, None, :],
+                                  (num_rays, obs_arr.shape[0], 3))
+            proj = np.einsum('rod,rd->ro', vec, ray_dirs)     # (R,O)
+            perp = np.linalg.norm(vec - proj[:, :, None] * ray_dirs[:, None, :], axis=2)
+            under = np.clip(r_obs ** 2 - perp ** 2, 0.0, None)
+            hd = proj - np.sqrt(under)
+            valid = (proj > 0) & (perp <= r_obs) & (hd > 0)
+            hd = np.where(valid, hd, np.inf)
+            closest = np.minimum(closest, np.min(hd, axis=1))
+
+        return (1.0 - (closest / max_d)).astype(np.float32)
+
     def _get_observations(self):
         observations = {}
+        # Pré-computa os cantos das AABB das paredes e o array de obstáculos UMA vez
+        # por step (não por agente) — entrada do LiDAR vetorizado (ver _lidar_scan).
+        if self.walls:
+            w_min_arr = np.array([w['pos'] - w['size'] / 2.0 for w in self.walls])
+            w_max_arr = np.array([w['pos'] + w['size'] / 2.0 for w in self.walls])
+        else:
+            w_min_arr = np.zeros((0, 3))
+            w_max_arr = np.zeros((0, 3))
+        obs_arr = np.asarray(self.obstacles, dtype=float).reshape(-1, 3)
         for idx, agent in enumerate(self.agents):
             pos = self.agent_positions[idx]
             heading = self.agent_headings[idx]
@@ -499,67 +566,10 @@ class SwarmForagingEnv3D(gym.Env):
             norm_dist_nest = dist_nest / (self.arena_radius * 2)
 
             # ---------------- LiDAR RAYCASTING (8 Rays) ----------------
-            num_rays = 8
-            ray_angles = np.linspace(0, 2 * np.pi, num_rays, endpoint=False)
-            max_ray_dist = self.lidar_range
-            lidar_sensor_vals = np.zeros(num_rays, dtype=np.float32)
-
-            # Project heading to horizontal plane for LiDAR to ensure robust wall detection even if pitching
-            F_horiz = np.array([F[0], F[1], 0.0])
-            if np.linalg.norm(F_horiz) < 1e-6:
-                F_horiz = np.array([1.0, 0.0, 0.0])
-            else:
-                F_horiz /= np.linalg.norm(F_horiz)
-            R_horiz = np.array([-F_horiz[1], F_horiz[0], 0.0])
-
-            for i, angle in enumerate(ray_angles):
-                # Calculate global direction of the ray based on robot's horizontal heading
-                ray_dir = np.cos(angle) * F_horiz + np.sin(angle) * R_horiz
-                ray_end = pos + ray_dir * max_ray_dist
-                
-                closest_dist = max_ray_dist
-                
-                # Check intersection with walls (AABB)
-                for wall in self.walls:
-                    half_size = wall['size'] / 2.0
-                    w_min = wall['pos'] - half_size
-                    w_max = wall['pos'] + half_size
-                    
-                    t_min = 0.0
-                    t_max = 1.0
-                    
-                    for axis in range(2): # Only X and Y
-                        d = ray_end[axis] - pos[axis]
-                        if abs(d) < 1e-6:
-                            if pos[axis] < w_min[axis] or pos[axis] > w_max[axis]:
-                                t_max = -1.0
-                                break
-                        else:
-                            t1 = (w_min[axis] - pos[axis]) / d
-                            t2 = (w_max[axis] - pos[axis]) / d
-                            if t1 > t2:
-                                t1, t2 = t2, t1
-                            t_min = max(t_min, t1)
-                            t_max = min(t_max, t2)
-                            
-                    if t_max >= t_min and t_max >= 0.0 and t_min <= 1.0:
-                        hit_dist = t_min * max_ray_dist
-                        if hit_dist < closest_dist:
-                            closest_dist = hit_dist
-                            
-                # Check intersection with moving obstacles
-                for obs in self.obstacles:
-                    vec = obs - pos
-                    proj = np.dot(vec, ray_dir)
-                    if proj > 0:
-                        perp_dist = np.linalg.norm(vec - proj * ray_dir)
-                        if perp_dist <= self.obstacle_radius:
-                            hit_dist = proj - np.sqrt(self.obstacle_radius**2 - perp_dist**2)
-                            if hit_dist > 0 and hit_dist < closest_dist:
-                                closest_dist = hit_dist
-
-                # Normalize lidar: 1.0 means crash, 0.0 means free path
-                lidar_sensor_vals[i] = 1.0 - (closest_dist / max_ray_dist)
+            # Versão vetorizada (slab method em NumPy). PROVADA bit-exacta vs. o triplo
+            # loop Python original (0/8000 cenas com divergência) e ~19× mais rápida.
+            # Teste de regressão: tests/test_lidar_equivalence.py.
+            lidar_sensor_vals = self._lidar_scan(pos, heading, w_min_arr, w_max_arr, obs_arr)
 
             # ── B1: BÚSSOLA DA PORTA/ENTRADA (direção+distância egocêntricas) ──
             # Indica onde está a porta/passagem-objetivo do cenário. Preenchida
