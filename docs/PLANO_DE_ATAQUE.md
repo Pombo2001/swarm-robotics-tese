@@ -7,11 +7,51 @@
 > rumo, regista aqui a decisão e a data.
 
 **Tese**: "Aprendizagem por Reforço para Controlo de Enxames" — ISCTE, Mestrado em IA
-**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 | **Hoje**: 2026-06-28
+**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 | **Hoje**: 2026-06-29
 
 ---
 
-## ⏱ ATUALIZAÇÃO 28 jun 2026 (noite) — LER PRIMEIRO (GNN come em labirintos: fitness de HOMING + treino 3 dias a correr)
+## ⏱ ATUALIZAÇÃO 29 jun 2026 — LER PRIMEIRO (treino 3 dias a meio + revisão da reescrita da tese + LiDAR vetorizado integrado)
+
+**1) Treino de 3 dias (`train3d`, só GNN) — A CORRER, saudável.** Verificado 29 jun 16:48 UTC:
+tmux `train3d` vivo, ~16h20 de ~68h, load 25, **a comer 62.5 recolhas/ep** no ~5º cenário
+(cooperative_door). Conclusão estimada **~1 jul** (tarde). CSV `results/logs/gnn_3d_training.csv`
+é a fonte fiável ao vivo (o `.log` via `tee` está block-buffered). Loop de verificação horária
+ativo nesta sessão (plink+VPN). Validação prévia: GNN come em **3/5 labirintos** (u_wall 7.25,
+four_rooms 13.75, cooperative_door 12.25); **bottleneck** homing 0.86 (pode fechar com 195min);
+**bypass** o caso difícil (pode resistir — resultado honesto). Ver `memory/gnn_homing_fitness.md`.
+
+**2) Revisão do plano de reescrita da tese — são DUAS atualizações, não uma.** Ao rever
+`docs/AVANCO_GNN_HOMING.md §3` descobri que a tese tem **duas** narrativas desatualizadas que
+interagem (o plano antigo só via a do GNN):
+- **GNN colapsa** nos labirintos (tanh saturada) → curado pelo **homing**.
+- **PPO reward hacking no Muro U** (7 sítios: §437,1110,1112,1185,1255,1401,1453) → **curado pelo
+  treino_fds** (recompensa simplificada): PPO u_wall **0→100%**. Nenhum número novo está na tese
+  ainda (73,3/67,7/0,77 são de campanha ANTERIOR ao treino_fds).
+- Também desfasado: §976 exploração 2.0→**0.5**, §977 dispersão −1.5→**0** (desligada), food
+  100→**300**, required_to_eat=1 nos labirintos de navegação.
+- **DECISÃO (utilizador, 29 jun): narrativa "diagnóstico + CURA"** — contar as 2 patologias como
+  diagnosticadas+corrigidas (contributo metodológico), não esconder os resultados antigos. O
+  *trade-off* central (gradiente=tarefa, grafo=escala Zero-Shot) SOBREVIVE mas atenua (PPO≈SAC).
+  Plano detalhado e sítios com nº de linha em `docs/AVANCO_GNN_HOMING.md §3` (reescrito 29 jun).
+  **NÃO editar `main.tex` até os resultados finais (train3d) existirem.**
+
+**3) Pesquisa de otimizações + LiDAR vetorizado INTEGRADO (✅ feito hoje).** Pesquisei a
+literatura recente (ver fontes na conversa); quick win nº1 = **vetorizar o LiDAR** (maior
+multiplicador de throughput, e bit-exacto ⇒ não invalida modelos nem a tese).
+- ✅ **Integrado** em `swarm_env_3d.py`: novo método `_lidar_scan` (slab method NumPy) substitui
+  o triplo loop Python; cantos das AABB pré-computados 1×/step. **Bit-exacto** vs. o loop
+  (`0.00e+00`, 0/8000 cenas) e **~19.5× mais rápido** na parte do LiDAR.
+- ✅ **Teste de regressão** `tests/test_lidar_equivalence.py` (8000 cenas, casos-limite) — rede de
+  segurança permanente. Smoke test 4/4 e equivalência no env real (7 cenários × 20 agentes) = `0.00e+00`.
+- ⚠️ NÃO afeta o `train3d` (servidor, código antigo). Qualquer treino futuro fica idêntico, só + rápido.
+- 🔜 Otimizações pesquisadas ainda por fazer (próxima iteração): RecurrentPPO (memória/POMDP),
+  Novelty/Quality-Diversity no evolutivo (para o bypass deceptive), 8→16 raios LiDAR,
+  vetorizar LiDAR também sobre os 20 agentes. Ver `memory/lidar_vetorizado.md`.
+
+---
+
+## ⏱ ATUALIZAÇÃO 28 jun 2026 (noite) — (GNN come em labirintos: fitness de HOMING + treino 3 dias a correr)
 
 **AVANÇO PRINCIPAL — o GNN passou a comer em labirintos pela 1ª vez.** Resolvido o colapso
 crónico do GNN nos labirintos (0% em todos os treinos anteriores). Ver `memory/gnn_homing_fitness.md`.
