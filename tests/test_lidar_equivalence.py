@@ -132,6 +132,37 @@ def test_lidar_vectorized_matches_loop():
     assert max_err < 1e-5, f"erro máximo absoluto demasiado alto: {max_err:.2e}"
 
 
+def test_lidar_batch_matches_loop():
+    """Versão batch (todos os agentes de uma vez) == loop de referência, agente a
+    agente, em cenas com 20 agentes (planas e com z≠0)."""
+    env = _make_env()
+    max_err = 0.0
+    mismatches = 0
+    for z_jitter, seed in [(0.0, 11), (2.0, 23)]:
+        rng = np.random.default_rng(seed)
+        for _ in range(800):
+            n_walls = int(rng.integers(0, 8))
+            n_obs = int(rng.integers(0, 12))
+            walls, obs, w_min, w_max = _random_scene(rng, n_walls, n_obs, z_jitter)
+            A = 20
+            positions = rng.uniform(-15, 15, size=(A, 3))
+            positions[:, 2] = rng.uniform(-z_jitter, z_jitter, size=A)
+            headings = rng.uniform(-1, 1, size=(A, 3))
+            headings /= (np.linalg.norm(headings, axis=1, keepdims=True) + 1e-9)
+
+            batch = env._lidar_scan_batch(positions, headings, w_min, w_max, obs.reshape(-1, 3))
+            for a in range(A):
+                ref = _lidar_loop_reference(positions[a], headings[a], walls, obs,
+                                            env.lidar_range, env.obstacle_radius)
+                err = float(np.max(np.abs(ref - batch[a])))
+                max_err = max(max_err, err)
+                if not np.allclose(ref, batch[a], atol=1e-5, rtol=0):
+                    mismatches += 1
+
+    assert mismatches == 0, f"batch divergiu em {mismatches} casos (erro máx {max_err:.2e})"
+    assert max_err < 1e-5, f"erro máximo absoluto demasiado alto: {max_err:.2e}"
+
+
 def test_lidar_empty_scene_is_free():
     """Sem paredes nem obstáculos, todos os raios veem caminho livre (LiDAR=0)."""
     env = _make_env()
@@ -141,9 +172,15 @@ def test_lidar_empty_scene_is_free():
     )
     assert vals.shape == (NUM_RAYS,)
     assert np.allclose(vals, 0.0)
+    # batch com cena vazia também é livre
+    batch = env._lidar_scan_batch(np.zeros((5, 3)), np.tile([1.0, 0.0, 0.0], (5, 1)),
+                                  np.zeros((0, 3)), np.zeros((0, 3)), np.zeros((0, 3)))
+    assert batch.shape == (5, NUM_RAYS)
+    assert np.allclose(batch, 0.0)
 
 
 if __name__ == "__main__":
     test_lidar_vectorized_matches_loop()
+    test_lidar_batch_matches_loop()
     test_lidar_empty_scene_is_free()
-    print("OK — LiDAR vetorizado equivalente ao loop (8000 cenas) e cena vazia livre.")
+    print("OK — LiDAR (single + batch) equivalente ao loop e cena vazia livre.")

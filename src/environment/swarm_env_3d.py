@@ -523,6 +523,71 @@ class SwarmForagingEnv3D(gym.Env):
 
         return (1.0 - (closest / max_d)).astype(np.float32)
 
+    def _lidar_scan_batch(self, positions, headings, w_min_arr, w_max_arr, obs_arr):
+        """Igual a _lidar_scan mas para TODOS os agentes de uma vez (vetorizado também
+        sobre A agentes). positions/headings: (A,3). Devolve (A,num_rays), bit-exacto
+        vs. o loop original. Elimina as A chamadas Python por step."""
+        A = positions.shape[0]
+        num_rays = 8
+        max_d = self.lidar_range
+        r_obs = self.obstacle_radius
+
+        # Heading projetado no plano horizontal, por agente (robusto a pitch).
+        F_horiz = np.array(headings, dtype=float)
+        F_horiz[:, 2] = 0.0
+        n = np.linalg.norm(F_horiz, axis=1)                       # (A,)
+        deg = n < 1e-6
+        F_horiz[deg] = np.array([1.0, 0.0, 0.0])
+        n = np.where(deg, 1.0, n)
+        F_horiz = F_horiz / n[:, None]
+        R_horiz = np.stack([-F_horiz[:, 1], F_horiz[:, 0], np.zeros(A)], axis=1)  # (A,3)
+
+        angles = np.linspace(0, 2 * np.pi, num_rays, endpoint=False)
+        ray_dirs = (np.cos(angles)[None, :, None] * F_horiz[:, None, :]
+                    + np.sin(angles)[None, :, None] * R_horiz[:, None, :])  # (A,R,3)
+
+        closest = np.full((A, num_rays), max_d, dtype=np.float64)
+
+        # ---- Paredes (AABB, slab em X e Y) ----
+        if w_min_arr.shape[0] > 0:
+            d = ray_dirs[:, :, :2] * max_d                        # (A,R,2)
+            parallel = np.abs(d) < 1e-6
+            d_safe = np.where(parallel, 1.0, d)
+            pos2 = positions[:, :2]                               # (A,2)
+            wmin2 = w_min_arr[:, :2]                              # (W,2)
+            wmax2 = w_max_arr[:, :2]
+            # broadcasting: (A,1,1,2) op (1,1,W,2) / (A,R,1,2)
+            t_a = (wmin2[None, None, :, :] - pos2[:, None, None, :]) / d_safe[:, :, None, :]
+            t_b = (wmax2[None, None, :, :] - pos2[:, None, None, :]) / d_safe[:, :, None, :]
+            low = np.minimum(t_a, t_b)                            # (A,R,W,2)
+            high = np.maximum(t_a, t_b)
+            inside = ((pos2[:, None, None, :] >= wmin2[None, None, :, :])
+                      & (pos2[:, None, None, :] <= wmax2[None, None, :, :]))  # (A,1,W,2)
+            par = parallel[:, :, None, :]                         # (A,R,1,2)
+            pi = par & inside                                     # -> (A,R,W,2)
+            low = np.where(pi, -np.inf, low)
+            high = np.where(pi, np.inf, high)
+            discard = np.any(par & ~inside, axis=3)               # (A,R,W)
+            t_enter = np.maximum(0.0, np.max(low, axis=3))        # (A,R,W)
+            t_exit = np.minimum(1.0, np.min(high, axis=3))
+            hit = (t_enter <= t_exit) & (t_exit >= 0.0) & (t_enter <= 1.0) & ~discard
+            hit_dist = np.where(hit, t_enter * max_d, np.inf)
+            closest = np.minimum(closest, np.min(hit_dist, axis=2))  # (A,R)
+
+        # ---- Obstáculos (esferas projetadas) ----
+        if obs_arr.shape[0] > 0:
+            vec = obs_arr[None, None, :, :] - positions[:, None, None, :]   # (A,1,O,3)
+            vec = np.broadcast_to(vec, (A, num_rays, obs_arr.shape[0], 3))
+            proj = np.einsum('arod,ard->aro', vec, ray_dirs)      # (A,R,O)
+            perp = np.linalg.norm(vec - proj[:, :, :, None] * ray_dirs[:, :, None, :], axis=3)
+            under = np.clip(r_obs ** 2 - perp ** 2, 0.0, None)
+            hd = proj - np.sqrt(under)
+            valid = (proj > 0) & (perp <= r_obs) & (hd > 0)
+            hd = np.where(valid, hd, np.inf)
+            closest = np.minimum(closest, np.min(hd, axis=2))     # (A,R)
+
+        return (1.0 - (closest / max_d)).astype(np.float32)
+
     def _get_observations(self):
         observations = {}
         # Pré-computa os cantos das AABB das paredes e o array de obstáculos UMA vez
@@ -534,6 +599,12 @@ class SwarmForagingEnv3D(gym.Env):
             w_min_arr = np.zeros((0, 3))
             w_max_arr = np.zeros((0, 3))
         obs_arr = np.asarray(self.obstacles, dtype=float).reshape(-1, 3)
+        # LiDAR de TODOS os agentes numa só passagem vetorizada (ver _lidar_scan_batch).
+        lidar_all = self._lidar_scan_batch(
+            np.asarray(self.agent_positions, dtype=float),
+            np.asarray(self.agent_headings, dtype=float),
+            w_min_arr, w_max_arr, obs_arr,
+        )
         for idx, agent in enumerate(self.agents):
             pos = self.agent_positions[idx]
             heading = self.agent_headings[idx]
@@ -566,10 +637,10 @@ class SwarmForagingEnv3D(gym.Env):
             norm_dist_nest = dist_nest / (self.arena_radius * 2)
 
             # ---------------- LiDAR RAYCASTING (8 Rays) ----------------
-            # Versão vetorizada (slab method em NumPy). PROVADA bit-exacta vs. o triplo
-            # loop Python original (0/8000 cenas com divergência) e ~19× mais rápida.
+            # Vetorizado sobre agentes×raios×paredes×obstáculos (ver _lidar_scan_batch),
+            # calculado 1× acima. PROVADO bit-exacto vs. o triplo loop Python original.
             # Teste de regressão: tests/test_lidar_equivalence.py.
-            lidar_sensor_vals = self._lidar_scan(pos, heading, w_min_arr, w_max_arr, obs_arr)
+            lidar_sensor_vals = lidar_all[idx]
 
             # ── B1: BÚSSOLA DA PORTA/ENTRADA (direção+distância egocêntricas) ──
             # Indica onde está a porta/passagem-objetivo do cenário. Preenchida
