@@ -7,11 +7,50 @@
 > rumo, regista aqui a decisão e a data.
 
 **Tese**: "Aprendizagem por Reforço para Controlo de Enxames" — ISCTE, Mestrado em IA
-**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 | **Hoje**: 2026-06-29
+**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 | **Hoje**: 2026-06-30
 
 ---
 
-## ⏱ ATUALIZAÇÃO 29 jun 2026 — LER PRIMEIRO (treino 3 dias a meio + revisão da reescrita da tese + LiDAR vetorizado integrado)
+## ⏱ ATUALIZAÇÃO 30 jun 2026 — LER PRIMEIRO (obs vetorizadas + Novelty Search lançado para o bypass)
+
+> Sessão dedicada a **melhores resultados** (pedido do utilizador), foco no **GNN** (PPO/SAC já
+> a 100% nos 7 cenários). Memórias: `memory/obs_vetorizadas.md`, `memory/novelty_search_bypass.md`.
+
+**1) Diagnóstico de recursos do servidor (.14).** Único utilizador. 64 vCPU (2× Xeon 4216),
+**125 GiB RAM**, sem GPU. Com o `train3d` (30 workers) o load é ~25 → o constrangimento é **só CPU**;
+RAM (122 GiB livres) e disco (79 GB) não limitam. Há folga para +1 treino em paralelo.
+
+**2) Quick win nº2 — observações vetorizadas (✅ integrado, bit-exacto).** Profiling mostrou que,
+depois do LiDAR, o gargalo passou a ser `_get_observations` (**78% do step()**): loop O(N²) Python
+de vizinhos com `norm`/`cross`/`dot` por par. Vetorizado (bases F/R/U em batch + projeções via
+`einsum`/broadcasting). **`0.00e+00` em 42000 cenas-agente** (7 cenários); `_get_observations`
+2.55→0.42 ms (6.1×); **step() inteiro 3.48→~1.35 ms (2.58×)**. Soma com o LiDAR. Teste de regressão
+`tests/test_obs_equivalence.py`. Commit `71006f8` na branch `test/lidar-vetorizado` (NÃO pushed).
+Bit-exacto ⇒ não invalida modelos nem a tese; só acelera (mais gerações/treino = melhor evolução).
+
+**3) Novelty Search para o `bypass` deceptive (✅ implementado + treino A CORRER).** O GNN come em
+3/5 labirintos (homing), mas o `cooperative_door_bypass` fica a 0 porque é um ótimo **deceptive**
+(o gradiente de homing aponta para o beco). Implementado **Novelty Search** (Lehman & Stanley 2011)
+em `evo_trainer_3d.py`, **config-driven** (`novelty_weight=0` → idêntico ao histórico):
+- BC = centroide final (x,y) do swarm; novelty = dist. média aos k-NN (população ∪ arquivo FIFO);
+  seleção = blend min-max `(1-w)·obj + w·novelty`. **Save/log seguem sempre o OBJETIVO** (food).
+- `--config` novo no `__main__` → treino isolado sem mexer no `foraging.yaml` partilhado.
+- Commit `761f216` na branch **`feat/novelty-search`**. Smoke local + no servidor OK.
+- **Treino LANÇADO** (30 jun 09:42 UTC, decisão: paralelo moderado): tmux **`novelty_bypass`**,
+  ISOLADO em `~/swarm-novelty/` (risco ZERO p/ o train3d), pop 24, novelty_weight 0.5, seed 42,
+  10h. Sinal de sucesso = **`Comida (melhor) > 0`** no log. Monitorização automática de 3/3h
+  (trigger `trig_011R2tP3nFEkhXPwS4jUYKYx`, push+email) — avisa quando comer.
+
+**4) `train3d` (baseline, objetivo puro) — continua A CORRER**, saudável, ~32h de ~68h (30 jun).
+Não foi tocado. Conclusão estimada **~1 jul**. É a baseline contra a qual se compara o Novelty.
+
+**Próximos passos:** se o Novelty fizer o GNN comer no bypass → resultado FORTE p/ a tese (GNN
+resolve o deceptive); atualizar `docs/AVANCO_GNN_HOMING.md` e o Cap 6. Mergear as branches de perf
+(`test/lidar-vetorizado`) e `feat/novelty-search` em `tese-final-graficos` quando validadas.
+
+---
+
+## ⏱ ATUALIZAÇÃO 29 jun 2026 (treino 3 dias a meio + revisão da reescrita da tese + LiDAR vetorizado integrado)
 
 **1) Treino de 3 dias (`train3d`, só GNN) — A CORRER, saudável.** Verificado 29 jun 16:48 UTC:
 tmux `train3d` vivo, ~16h20 de ~68h, load 25, **a comer 62.5 recolhas/ep** no ~5º cenário
