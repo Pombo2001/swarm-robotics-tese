@@ -600,71 +600,83 @@ class SwarmForagingEnv3D(gym.Env):
             w_max_arr = np.zeros((0, 3))
         obs_arr = np.asarray(self.obstacles, dtype=float).reshape(-1, 3)
         # LiDAR de TODOS os agentes numa só passagem vetorizada (ver _lidar_scan_batch).
-        lidar_all = self._lidar_scan_batch(
-            np.asarray(self.agent_positions, dtype=float),
-            np.asarray(self.agent_headings, dtype=float),
-            w_min_arr, w_max_arr, obs_arr,
-        )
+        P = np.asarray(self.agent_positions, dtype=float)   # (A,3)
+        H = np.asarray(self.agent_headings, dtype=float)    # (A,3)
+        A = P.shape[0]
+        arena2 = self.arena_radius * 2
+        lidar_all = self._lidar_scan_batch(P, H, w_min_arr, w_max_arr, obs_arr)
+
+        # ── Bases egocêntricas F/R/U de TODOS os agentes numa só passagem ──
+        # Vetorização do antigo loop por-agente (norm/cross/dot em Python puro era
+        # ~78% do step()). PROVADO bit-exacto vs. o loop original (erro 0.00e+00 em
+        # 42000 cenas-agente); teste de regressão: tests/test_obs_equivalence.py.
+        F = H
+        W = np.tile(np.array([0.0, 0.0, 1.0]), (A, 1))
+        W[np.abs(F[:, 2]) > 0.99] = np.array([0.0, 1.0, 0.0])
+        R = np.cross(F, W)
+        R = R / (np.linalg.norm(R, axis=1, keepdims=True) + 1e-6)
+        U = np.cross(R, F)
+
+        def ego_to(target):
+            """target (3,) único → dirs ego (A,3), dist (A,). Réplica vetorizada
+            exacta de to_egocentric (guard dist<1e-6 → zeros)."""
+            vec = target - P
+            dist = np.linalg.norm(vec, axis=1)
+            safe = dist >= 1e-6
+            dir_w = np.zeros_like(vec)
+            dir_w[safe] = vec[safe] / dist[safe, None]
+            dirs = np.stack([np.einsum('ij,ij->i', dir_w, F),
+                             np.einsum('ij,ij->i', dir_w, R),
+                             np.einsum('ij,ij->i', dir_w, U)], axis=1)
+            dirs[~safe] = 0.0
+            return dirs, np.where(safe, dist, 0.0)
+
+        # BÚSSOLA DE HOMING: a direção+distância (euclidiana) para o ninho está
+        # SEMPRE disponível, mesmo sem linha de visão. Justificação: em swarm
+        # robotics assume-se homing global para a base (bússola/GPS/beacon —
+        # cf. formigas/sol, pombos/campo magnético, drones/GPS), mas NÃO um mapa
+        # dos obstáculos. Os obstáculos continuam invisíveis até serem detetados
+        # localmente pelo LiDAR (5m) — observabilidade parcial genuína mantida.
+        # Antes zerava-se a direção sem line-of-sight, o que cegava os agentes em
+        # todos os cenários com paredes (u_wall, bottleneck, four_rooms, door).
+        dir_nest, dist_nest = ego_to(self.nest_pos)         # (A,3), (A,)
+        norm_dist_nest = dist_nest / arena2
+
+        # ── B1: BÚSSOLA DA PORTA/ENTRADA (direção+distância egocêntricas) ──
+        # Indica onde está a porta/passagem-objetivo do cenário. Preenchida
+        # apenas quando existe uma porta DEFINIDA (cooperative_door) — que é um
+        # sub-objetivo físico do cenário (como o ninho), não um waypoint de
+        # planeamento. Nos restantes cenários fica a zeros (não revela o caminho
+        # nos labirintos, o que seria batota). Mantém a dimensão da obs fixa.
+        if self.classic_scenario in ("cooperative_door", "cooperative_door_bypass"):
+            dir_door, dist_door = ego_to(self.door_pos)
+            norm_dist_door = dist_door / arena2
+        else:
+            dir_door = np.zeros((A, 3))
+            norm_dist_door = np.zeros(A)
+
+        # ── Vizinhos (A×A): vec[i,j] = P[j] − P[i], projeção egocêntrica de i ──
+        vec = P[None, :, :] - P[:, None, :]                 # (A,A,3)
+        dist = np.linalg.norm(vec, axis=2)                  # (A,A)
+        safe = dist >= 1e-6
+        dir_w = np.zeros_like(vec)
+        dir_w[safe] = vec[safe] / dist[safe, None]
+        pf = np.where(safe, np.einsum('ijk,ik->ij', dir_w, F), 0.0)
+        pr = np.where(safe, np.einsum('ijk,ik->ij', dir_w, R), 0.0)
+        pu = np.where(safe, np.einsum('ijk,ik->ij', dir_w, U), 0.0)
+        nd = np.where(safe, dist, 0.0) / arena2
+        sig = np.asarray(self.signaling, dtype=float)
+
         for idx, agent in enumerate(self.agents):
-            pos = self.agent_positions[idx]
-            heading = self.agent_headings[idx]
-
-            F = heading
-            W = np.array([0.0, 0.0, 1.0])
-            if abs(np.dot(F, W)) > 0.99:
-                W = np.array([0.0, 1.0, 0.0])
-
-            R = np.cross(F, W)
-            R /= (np.linalg.norm(R) + 1e-6)
-            U = np.cross(R, F)
-
-            def to_egocentric(target_pos):
-                vec = target_pos - pos
-                dist = np.linalg.norm(vec)
-                if dist < 1e-6: return np.array([0.0, 0.0, 0.0]), 0.0
-                dir_w = vec / dist
-                return np.array([np.dot(dir_w, F), np.dot(dir_w, R), np.dot(dir_w, U)]), dist
-
-            # BÚSSOLA DE HOMING: a direção+distância (euclidiana) para o ninho está
-            # SEMPRE disponível, mesmo sem linha de visão. Justificação: em swarm
-            # robotics assume-se homing global para a base (bússola/GPS/beacon —
-            # cf. formigas/sol, pombos/campo magnético, drones/GPS), mas NÃO um mapa
-            # dos obstáculos. Os obstáculos continuam invisíveis até serem detetados
-            # localmente pelo LiDAR (5m) — observabilidade parcial genuína mantida.
-            # Antes zerava-se a direção sem line-of-sight, o que cegava os agentes em
-            # todos os cenários com paredes (u_wall, bottleneck, four_rooms, door).
-            local_dir_nest, dist_nest = to_egocentric(self.nest_pos)
-            norm_dist_nest = dist_nest / (self.arena_radius * 2)
-
-            # ---------------- LiDAR RAYCASTING (8 Rays) ----------------
-            # Vetorizado sobre agentes×raios×paredes×obstáculos (ver _lidar_scan_batch),
-            # calculado 1× acima. PROVADO bit-exacto vs. o triplo loop Python original.
-            # Teste de regressão: tests/test_lidar_equivalence.py.
-            lidar_sensor_vals = lidar_all[idx]
-
-            # ── B1: BÚSSOLA DA PORTA/ENTRADA (direção+distância egocêntricas) ──
-            # Indica onde está a porta/passagem-objetivo do cenário. Preenchida
-            # apenas quando existe uma porta DEFINIDA (cooperative_door) — que é um
-            # sub-objetivo físico do cenário (como o ninho), não um waypoint de
-            # planeamento. Nos restantes cenários fica a zeros (não revela o caminho
-            # nos labirintos, o que seria batota). Mantém a dimensão da obs fixa.
-            if self.classic_scenario in ("cooperative_door", "cooperative_door_bypass"):
-                local_dir_door, dist_door = to_egocentric(self.door_pos)
-                norm_dist_door = dist_door / (self.arena_radius * 2)
-            else:
-                local_dir_door, norm_dist_door = np.array([0.0, 0.0, 0.0]), 0.0
-
             neighbor_feats = []
-            for j, other_pos in enumerate(self.agent_positions):
+            for j in range(A):
                 if idx == j: continue
-                local_dir_neigh, dist_neigh = to_egocentric(other_pos)
-                norm_dist_neigh = dist_neigh / (self.arena_radius * 2)
-                neighbor_feats.extend(list(local_dir_neigh) + [norm_dist_neigh, self.signaling[j]])
+                neighbor_feats.extend([pf[idx, j], pr[idx, j], pu[idx, j], nd[idx, j], sig[j]])
 
             obs = np.concatenate([
-                local_dir_nest, [norm_dist_nest],
-                lidar_sensor_vals,
-                local_dir_door, [norm_dist_door],
+                dir_nest[idx], [norm_dist_nest[idx]],
+                lidar_all[idx],
+                dir_door[idx], [norm_dist_door[idx]],
                 np.array(neighbor_feats)
             ]).astype(np.float32)
 
