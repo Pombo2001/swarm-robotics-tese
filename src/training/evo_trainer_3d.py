@@ -77,6 +77,16 @@ from src.environment.swarm_env_3d import SwarmForagingEnv3D
 from src.agents.gnn_agent_3d import GNNAgent3D
 
 
+def _minmax(x):
+    """Normaliza para [0,1] por geração (min-max). Vetor constante → zeros, para
+    não amplificar ruído quando todos os genomas têm o mesmo score."""
+    x = np.asarray(x, dtype=float)
+    lo, hi = float(x.min()), float(x.max())
+    if hi - lo < 1e-12:
+        return np.zeros_like(x)
+    return (x - lo) / (hi - lo)
+
+
 def evaluate_genome(args):
     # Reforço por worker: garante 1 thread mesmo que o fork tenha herdado outro
     # valor; redes pequenas avaliam mais rápido single-thread (sem overhead de
@@ -100,6 +110,7 @@ def evaluate_genome(args):
     episode_rewards = []
     episode_foods = []
     episode_homing = []   # fração [0,1] de aproximação ao ninho no FIM do episódio
+    episode_bc = []       # behavior characterization p/ Novelty Search (centroide final x,y)
     total_steps = 0
 
     for ep in range(eval_episodes):
@@ -149,6 +160,11 @@ def evaluate_genome(args):
         end_pot = np.array([env._potential(p) for p in env.agent_positions], dtype=float)
         frac = np.clip((start_pot - end_pot) / (start_pot + 1e-6), 0.0, 1.0)
         episode_homing.append(float(np.mean(frac)))
+        # BC do Novelty Search: posição final (x,y) do centroide do swarm. Captura
+        # PARA ONDE o genoma levou os agentes — genomas que exploram regiões novas
+        # (ex. o desvio do bypass) ganham novelty mesmo sem food. Só usado se
+        # novelty_weight>0; barato de calcular sempre.
+        episode_bc.append(np.mean(np.asarray(env.agent_positions)[:, :2], axis=0))
         total_steps += steps
 
     avg_reward = float(np.mean(episode_rewards))   # reward bruto (só diagnóstico)
@@ -167,7 +183,8 @@ def evaluate_genome(args):
     shaping_amp = evo.get('fitness_shaping_amplitude', 5000.0)
     shaping_term = shaping_amp * avg_homing
     fitness = avg_food * food_weight + shaping_term
-    return fitness, total_steps, avg_food, avg_reward, avg_homing
+    bc = np.mean(np.asarray(episode_bc), axis=0)   # (2,) centroide final médio
+    return fitness, total_steps, avg_food, avg_reward, avg_homing, bc
 
 
 class GeneticTrainer3D:
@@ -205,6 +222,18 @@ class GeneticTrainer3D:
         self.sigma_min = evo_config.get('sigma_min', 0.03)
         self.sigma_decay = evo_config.get('sigma_decay', 0.999)
 
+        # ── Novelty Search (Lehman & Stanley 2011) — desligado por defeito ──
+        # novelty_weight=0 → seleção 100% pelo objetivo (comportamento idêntico ao
+        # histórico). >0 → score de seleção = blend normalizado objetivo/novelty,
+        # para escapar a ótimos DECEPTIVE (ex. cooperative_door_bypass, onde o
+        # gradiente de homing aponta para um beco). O save/log seguem sempre o
+        # OBJETIVO. Ver _novelty_scores e o bloco de seleção em train().
+        self.novelty_weight = evo_config.get('novelty_weight', 0.0)
+        self.novelty_k = evo_config.get('novelty_k', 10)
+        self.novelty_archive_max = evo_config.get('novelty_archive_max', 1000)
+        self.novelty_add_per_gen = evo_config.get('novelty_add_per_gen', 3)
+        self.novelty_archive = []
+
         self.population = []
         for i in range(self.pop_size):
             random_brain = GNNAgent3D(f"temp_{i}", temp_env.action_space("robot_0"), config_path)
@@ -228,6 +257,26 @@ class GeneticTrainer3D:
 
         os.chmod(self.history_file, 0o666)
 
+    def _novelty_scores(self, bcs):
+        """Novelty de cada genoma = distância média aos k vizinhos mais próximos no
+        conjunto (população atual ∪ arquivo histórico de comportamentos). Empurra a
+        busca para posições finais do swarm ainda não vistas → escapa a deceptive.
+        Atualiza o arquivo com os BCs mais novos da geração (cap FIFO)."""
+        bcs = np.asarray(bcs, dtype=float)
+        pts = bcs if not self.novelty_archive else np.vstack([bcs, np.asarray(self.novelty_archive)])
+        k = min(self.novelty_k, len(pts) - 1)
+        nov = np.zeros(len(bcs))
+        if k > 0:
+            for i in range(len(bcs)):
+                d = np.sort(np.linalg.norm(pts - bcs[i], axis=1))[1:k + 1]  # exclui o próprio (0)
+                nov[i] = float(np.mean(d))
+        # Arquivo: junta os comportamentos mais novos desta geração (cap FIFO).
+        for idx in np.argsort(nov)[::-1][:self.novelty_add_per_gen]:
+            self.novelty_archive.append(bcs[idx])
+        if len(self.novelty_archive) > self.novelty_archive_max:
+            self.novelty_archive = self.novelty_archive[-self.novelty_archive_max:]
+        return nov
+
     def train(self):
         # Avalia a população toda em paralelo (1 genoma por núcleo). Em servidores
         # com muitos núcleos, isto reduz drasticamente o tempo por geração —
@@ -244,6 +293,7 @@ class GeneticTrainer3D:
         # Fallback: se o tempo esgotar antes da 1ª geração terminar, ainda há algo
         # para guardar (evita NameError no save final).
         population_sorted = self.population
+        best_obj_genome = self.population[0]   # melhor por OBJETIVO (food) — o que se guarda
 
         with Pool(processes=num_cores) as pool:
             while True:
@@ -267,17 +317,35 @@ class GeneticTrainer3D:
                              for i in range(self.pop_size)]
                 results = pool.map(evaluate_genome, args_list)
 
-                scores       = [res[0] for res in results]
+                obj_scores   = np.array([res[0] for res in results])
                 food_counts  = [res[2] for res in results]
                 rewards_raw  = [res[3] for res in results]
                 homing_vals  = [res[4] for res in results]
+                bcs          = np.array([res[5] for res in results])
                 total_steps_this_gen = sum(res[1] for res in results)
                 global_timestep += total_steps_this_gen
 
                 cumulative_time = time.time() - overall_start_time
 
-                sorted_indices = np.argsort(scores)[::-1]
-                scores = np.array(scores)[sorted_indices]
+                # Score de SELEÇÃO: por defeito é o objetivo puro (idêntico ao
+                # histórico). Com Novelty Search (novelty_weight>0) faz-se um blend
+                # normalizado objetivo/novelty para escapar a deceptive. O SAVE e o
+                # LOG seguem sempre o OBJETIVO (best_obj_idx) — guardamos quem resolve
+                # a tarefa, não quem é só comportamentalmente novo.
+                if self.novelty_weight > 0.0:
+                    nov_raw = self._novelty_scores(bcs)
+                    sel_scores = ((1.0 - self.novelty_weight) * _minmax(obj_scores)
+                                  + self.novelty_weight * _minmax(nov_raw))
+                    gen_novelty = float(np.mean(nov_raw))
+                else:
+                    sel_scores = obj_scores
+                    gen_novelty = 0.0
+
+                best_obj_idx = int(np.argmax(obj_scores))   # melhor por tarefa (log/save)
+                best_obj_genome = self.population[best_obj_idx]
+
+                sorted_indices = np.argsort(sel_scores)[::-1]
+                scores = obj_scores[sorted_indices]   # objetivo reordenado (compat. log)
                 population_sorted = [self.population[i] for i in sorted_indices]
 
                 elite_count = max(3, int(self.pop_size * 0.2))
@@ -296,16 +364,22 @@ class GeneticTrainer3D:
 
                 self.population = new_population
 
-                best_food = food_counts[sorted_indices[0]]
-                best_reward = rewards_raw[sorted_indices[0]]
-                best_homing = homing_vals[sorted_indices[0]]
+                # Estatísticas reportadas/guardadas seguem o MELHOR POR OBJETIVO
+                # (best_obj_idx), não o melhor por seleção — com novelty estes podem
+                # divergir e queremos sempre acompanhar quem resolve a tarefa.
+                best_obj_fitness = float(obj_scores[best_obj_idx])
+                best_food = food_counts[best_obj_idx]
+                best_reward = rewards_raw[best_obj_idx]
+                best_homing = homing_vals[best_obj_idx]
                 # Homing = proximidade final ao ninho do melhor genoma ([0,1]; 1=chegou).
                 # É o sinal de seleção dos labirintos: deve subir antes de aparecer
                 # comida. RewBruto fica só como diagnóstico (já não entra na fitness).
+                novelty_str = f"Novelty: {gen_novelty:.2f} | " if self.novelty_weight > 0.0 else ""
                 print(
                     f"Gen {gen} | Steps: {global_timestep} | "
-                    f"Fitness: {scores[0]:.1f} | Média: {np.mean(scores):.1f} | "
+                    f"Fitness: {best_obj_fitness:.1f} | Média: {np.mean(obj_scores):.1f} | "
                     f"Comida (melhor): {best_food} | Homing: {best_homing:.3f} | "
+                    f"{novelty_str}"
                     f"RewBruto: {best_reward:.0f} | Sigma: {self.sigma:.4f} | "
                     f"Tempo: {cumulative_time:.1f}s")
 
@@ -314,19 +388,19 @@ class GeneticTrainer3D:
 
                 with open(self.history_file, 'a', newline='') as f:
                     writer = csv.writer(f)
-                    writer.writerow([global_timestep, scores[0], np.mean(scores),
+                    writer.writerow([global_timestep, best_obj_fitness, np.mean(obj_scores),
                                      best_food, cumulative_time])
 
                 if gen % 10 == 0:
                     save_path = os.path.join(self.model_dir, f"gnn_3d_best{self.model_suffix}.pth")
-                    self.template_agent.load_state_dict(population_sorted[0])
+                    self.template_agent.load_state_dict(best_obj_genome)
                     torch.save(self.template_agent.state_dict(), save_path)
                     os.chmod(save_path, 0o666)
 
                 gen += 1
 
         save_path = os.path.join(self.model_dir, f"gnn_3d_best{self.model_suffix}.pth")
-        self.template_agent.load_state_dict(population_sorted[0])
+        self.template_agent.load_state_dict(best_obj_genome)
         torch.save(self.template_agent.state_dict(), save_path)
         os.chmod(save_path, 0o666)
 
@@ -336,12 +410,16 @@ if __name__ == "__main__":
     parser.add_argument("--time_limit", type=float, default=120.0)
     parser.add_argument("--seed", type=int, default=None,
                         help="Semente de reprodutibilidade (omitir = aleatorio)")
+    parser.add_argument("--config", type=str, default=None,
+                        help="Caminho do config YAML (default: configs/foraging.yaml). "
+                             "Permite correr um treino isolado (ex. Novelty Search num "
+                             "config dedicado) sem mexer no foraging.yaml partilhado.")
     args = parser.parse_args()
 
     from multiprocessing import freeze_support
 
     freeze_support()
 
-    config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
+    config_path = args.config or os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
     trainer = GeneticTrainer3D(config_path, time_limit_minutes=args.time_limit, seed=args.seed)
     trainer.train()
