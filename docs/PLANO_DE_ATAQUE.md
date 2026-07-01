@@ -11,7 +11,58 @@
 
 ---
 
-## ⏱ ATUALIZAÇÃO 1 jul 2026 — LER PRIMEIRO (train3d TERMINOU o treino: GNN come nos 7/7 cenários; Novelty comeu no bypass MAS o baseline também)
+## ⏱ ATUALIZAÇÃO 1→2 jul 2026 (noite) — LER PRIMEIRO AO RETOMAR
+
+> Sessão noturna: armadilha nº8 descoberta+corrigida, porta refactorizada (bit-exacta),
+> dashboard redesenhado. O train3d fechou o TREINO; a avaliação automática ficou a
+> decorrer durante a noite (às 21:53 ia em 5/21 combinações, fim estimado ~00h20).
+
+**✅ AO RETOMAR (checklist, por ordem):**
+1. `plink ... "tmux ls; ls -lt ~/swarm-robotics-tese/results/graficos_tese/ | head -4"`
+   → deve existir a sessão nova (timestamp de ~02-07). Se a eval ainda correr, esperar.
+2. Trazer por pscp: sessão nova + `results/evaluation` + `results/models` + logs
+   **+ `~/swarm-novelty/`** (modelo Novelty 83.5 + log + CSV).
+3. ⚠️ O eval automático mede SÓ os modelos do run 3 (armadilha nº8, abaixo) — u_wall,
+   none e bypass vão aparecer maus SEM ser verdade. Interpretar com a tabela de treino
+   da secção de 1 jul.
+4. Deploy do código corrigido para o servidor (pscp `src/` — leva o fix do save
+   `d9a2c45` E o refactor da porta `d6d94b4`, bit-exacto) ANTES de qualquer retreino.
+5. **Decisão pendente:** re-correr os runs bons perdidos para recuperar os campeões
+   (seed = nº do run → reproduzíveis): `none` seed 2 (39.8), `u_wall` seed 2 (62.5),
+   `bypass` seed 1 (80.5) ≈ 3×195 min ≈ 10h de servidor. Com o fix, cada run passa a
+   guardar `_run{n}.pth` e o campeão só é substituído por melhor.
+6. Avaliar o modelo **Novelty** no bypass com o MESMO protocolo (eval 20 ep) → única
+   comparação justa Novelty vs baseline.
+
+**🐛→✅ ARMADILHA nº8 (descoberta 1 jul, corrigida em `d9a2c45`):** o `evo_trainer_3d.py`
+gravava `gnn_3d_best{suf}.pth` incondicionalmente → com `--runs 3`, o run 3 sobrescrevia
+sempre os campeões dos runs 1-2. Descoberto porque o eval do train3d deu none 60%/0.6 e
+u_wall 0% — números que batem certo com os runs 3 (1.0 e 0.0), não com os melhores.
+Perdidos: u_wall 62.5, none 39.8, **bypass 80.5**; o Novelty (83.5) SOBREVIVE (dir isolado).
+Fix: `_run{seed}.pth` por run + campeão só substituído se fitness ≥ sidecar `.meta.json`
+(seed=1 recomeça campanha). NOTA: evals de TODAS as campanhas multi-run antigas (Fase B,
+treino_fds, GNN-48h) mediam o último run → GNN possivelmente subestimado no histórico.
+
+**✅ Refactor da porta cooperativa (`d6d94b4`)** — pedido do utilizador ("estava martelada"):
+fim do teleporte da parede para (999,999,999) (abrir agora REMOVE o painel), constantes
+`DOOR_*` únicas, `_add_cooperative_door()`/`_update_door()`, `has_door` em vez de tuplos
+repetidos, band-aid do geodésico removido. **Bit-exacto** (A/B 12 rollouts, max|Δ|=0.0,
+incluindo o passo da abertura) + `tests/test_door.py` novo (5 casos). Não afeta treinos.
+
+**✅ Dashboard "Swarm Observatory" (`0844553`)** — redesign completo P&B noturno
+(decisão do utilizador: "preto e branco modo noturno"): `dashboard/theme.py` (fonte única
+de estilo), vista **Overview** nova (hero com boids em canvas, KPIs count-up, cartões de
+estado, timeline do projeto), casca nova. Utilizador aprovou ("ficou muito bom").
+
+**ℹ️ Curvas do GNN (pergunta do utilizador):** 3 padrões de sobe-e-desce — (1) dente-de-serra
+grande = arranque de run novo (CSV concatena runs; normal); (2) oscilações pequenas do
+"melhor" só com Novelty ativo = melhor-por-objetivo pode sair da elite (esperado; com o
+fix nº8 o .pth guarda sempre o pico); (3) quedas grandes a MEIO de um run = bug antigo de
+seed-overfitting, curado a 14 jun — se reaparecer em treino novo, é anomalia.
+
+---
+
+## ⏱ ATUALIZAÇÃO 1 jul 2026 (train3d TERMINOU o treino: GNN come nos 7/7 cenários; Novelty comeu no bypass MAS o baseline também)
 
 > Verificação noturna dos 2 treinos do servidor. Memórias: `memory/novelty_search_bypass.md`
 > (atualizada com o veredicto), `memory/gnn_homing_fitness.md`.
