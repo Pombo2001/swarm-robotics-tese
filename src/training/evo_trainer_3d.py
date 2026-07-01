@@ -65,8 +65,10 @@ import numpy as np
 import copy
 import time
 import csv
+import json
 import argparse
 import yaml
+from datetime import datetime
 from multiprocessing import Pool, cpu_count
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
@@ -249,6 +251,11 @@ class GeneticTrainer3D:
         scenario = self.config['environment'].get('classic_scenario', 'none')
         self.model_suffix = f"_{scenario}" if scenario and scenario != "none" else ""
 
+        # Melhor fitness já GRAVADA neste run (memória do processo): evita regravar
+        # um genoma pior quando a fitness da geração oscila (o melhor POR GERAÇÃO
+        # pode descer ligeiramente entre gerações).
+        self._run_saved_fitness = None
+
         self.history_file = os.path.join(self.log_dir, 'gnn_3d_training.csv')
         with open(self.history_file, 'w', newline='') as f:
             writer = csv.writer(f)
@@ -256,6 +263,49 @@ class GeneticTrainer3D:
                              'best_task_food', 'time'])
 
         os.chmod(self.history_file, 0o666)
+
+    def _save_models(self, best_obj_genome, best_obj_fitness):
+        """Guarda o melhor genoma SEM perder campeões de runs anteriores (armadilha nº8).
+
+        Antes gravava `gnn_3d_best{sufixo}.pth` incondicionalmente → em treinos
+        multi-run (run_experiments, --seed = nº do run) o ÚLTIMO run apagava os
+        campeões dos anteriores (perderam-se u_wall 62.5, none 39.8 e bypass 80.5
+        no train3d de 1 jul). Agora:
+        - `..._run{seed}.pth`: melhor do RUN atual — cada run fica preservado.
+        - `gnn_3d_best{sufixo}.pth` (campeão): só é sobrescrito se a fitness for
+          >= à registada no sidecar `.meta.json`. Exceção: --seed 1 (1º run de uma
+          campanha nova) sobrescreve sempre — recomeça a campanha, para não ficar
+          preso a fitness de campanhas antigas com outra escala de recompensa.
+        """
+        if self._run_saved_fitness is not None and best_obj_fitness < self._run_saved_fitness:
+            return  # o run já tem gravado um genoma melhor que o desta geração
+        self._run_saved_fitness = best_obj_fitness
+
+        self.template_agent.load_state_dict(best_obj_genome)
+        state = self.template_agent.state_dict()
+
+        if self.seed is not None:
+            run_path = os.path.join(self.model_dir,
+                                    f"gnn_3d_best{self.model_suffix}_run{self.seed}.pth")
+            torch.save(state, run_path)
+            os.chmod(run_path, 0o666)
+
+        champ_path = os.path.join(self.model_dir, f"gnn_3d_best{self.model_suffix}.pth")
+        meta_path = champ_path[:-4] + ".meta.json"
+        if self.seed != 1 and os.path.exists(meta_path):
+            try:
+                with open(meta_path) as f:
+                    prev = float(json.load(f)["fitness"])
+            except Exception:
+                prev = None
+            if prev is not None and best_obj_fitness < prev:
+                return  # o campeão de um run anterior é melhor — mantém-se
+        torch.save(state, champ_path)
+        os.chmod(champ_path, 0o666)
+        with open(meta_path, "w") as f:
+            json.dump({"fitness": float(best_obj_fitness), "seed": self.seed,
+                       "saved_at": datetime.now().isoformat(timespec="seconds")}, f)
+        os.chmod(meta_path, 0o666)
 
     def _novelty_scores(self, bcs):
         """Novelty de cada genoma = distância média aos k vizinhos mais próximos no
@@ -294,6 +344,7 @@ class GeneticTrainer3D:
         # para guardar (evita NameError no save final).
         population_sorted = self.population
         best_obj_genome = self.population[0]   # melhor por OBJETIVO (food) — o que se guarda
+        best_obj_fitness = float("-inf")       # idem (genoma não avaliado não bate campeões)
 
         with Pool(processes=num_cores) as pool:
             while True:
@@ -392,17 +443,11 @@ class GeneticTrainer3D:
                                      best_food, cumulative_time])
 
                 if gen % 10 == 0:
-                    save_path = os.path.join(self.model_dir, f"gnn_3d_best{self.model_suffix}.pth")
-                    self.template_agent.load_state_dict(best_obj_genome)
-                    torch.save(self.template_agent.state_dict(), save_path)
-                    os.chmod(save_path, 0o666)
+                    self._save_models(best_obj_genome, best_obj_fitness)
 
                 gen += 1
 
-        save_path = os.path.join(self.model_dir, f"gnn_3d_best{self.model_suffix}.pth")
-        self.template_agent.load_state_dict(best_obj_genome)
-        torch.save(self.template_agent.state_dict(), save_path)
-        os.chmod(save_path, 0o666)
+        self._save_models(best_obj_genome, best_obj_fitness)
 
 
 if __name__ == "__main__":
