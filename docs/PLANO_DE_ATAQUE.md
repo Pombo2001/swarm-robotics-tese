@@ -7,11 +7,57 @@
 > rumo, regista aqui a decisão e a data.
 
 **Tese**: "Aprendizagem por Reforço para Controlo de Enxames" — ISCTE, Mestrado em IA
-**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 | **Hoje**: 2026-06-30
+**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 | **Hoje**: 2026-07-01
 
 ---
 
-## ⏱ ATUALIZAÇÃO 30 jun 2026 — LER PRIMEIRO (obs vetorizadas + Novelty Search lançado para o bypass)
+## ⏱ ATUALIZAÇÃO 1 jul 2026 — LER PRIMEIRO (train3d TERMINOU o treino: GNN come nos 7/7 cenários; Novelty comeu no bypass MAS o baseline também)
+
+> Verificação noturna dos 2 treinos do servidor. Memórias: `memory/novelty_search_bypass.md`
+> (atualizada com o veredicto), `memory/gnn_homing_fitness.md`.
+
+**1) Novelty Search TERMINOU e COMEU no bypass.** 747 gerações em 10h (fim 30 jun 19:43 UTC);
+**Comida (melhor) = 83.5** rec/ep no `cooperative_door_bypass`, fitness ~837k, homing ~0.42.
+Modelo em `~/swarm-novelty/results/models/gnn_3d_best_cooperative_door_bypass.pth` (AINDA no servidor).
+
+**2) ⚠️ REVIRAVOLTA: o baseline (objetivo puro) TAMBÉM comeu no bypass** — run 1 = **80.5**,
+run 2 = **56.75** (run 3 falhou, 0). A premissa "o objetivo puro não escapa ao deceptive" vinha da
+validação de **35 min**; com **195 min** a fitness de homing resolve sozinha. Consequências:
+- O ganho do Novelty (83.5 vs 80.5) é **marginal** e a comparação **não é direta** (Novelty teve
+  600 min + env vetorizado → 747 gens vs ~153/run do baseline).
+- **Narrativa para a tese**: a CURA principal é a **fitness de homing**; o Novelty entra como
+  experiência complementar/robustez, não como o desbloqueio. Decidir com números de EVAL, não de treino.
+
+**3) train3d: treino CONCLUÍDO (21 runs), avaliação automática A CORRER** (verificado 21:13 do
+servidor: gráficos/CSVs gerados, eval de 20 ep em curso; sessão final em `graficos_tese/` ainda
+por criar). Melhor comida por run (números de TREINO — máx do log, 3 runs por cenário, na ordem):
+| Cenário | R1 | R2 | R3 | Histórico (todos os treinos anteriores) |
+|---|---|---|---|---|
+| none | 37.8 | 39.8 | 1.0 ⚠️ | comia |
+| u_wall | 46.8 | 62.5 | 0.0 ⚠️ | 0 |
+| **bottleneck** | **132.3** | **131.0** | **88.3** | **0 (nem na validação de 28 jun)** |
+| four_rooms | 59.3 | 42.8 | 44.8 | 0 |
+| cooperative_door | 59.3 | 59.5 | 67.5 | 0 |
+| cooperative_perception | 23.3 | 23.5 | 24.8 | comia |
+| bypass (deceptive) | 80.5 | 56.8 | 0 | 0 |
+- **A fitness de homing curou o GNN em TODOS os labirintos** (7/7 cenários com comida; o bottleneck,
+  que era 0 até na validação, passou a melhor resultado). Só precisava de tempo (343 gens vs ~30).
+- Variância entre runs mantém-se (2 runs falhados) = assinatura do método, boa para os boxplots.
+- ⚠️ **Armadilha nº 3**: números acima são de treino; o veredicto oficial é o `eval_summary.csv`
+  desta sessão (20 ep). NÃO concluir nada no Cap 6 sem ele.
+
+**PRÓXIMOS PASSOS (quando a eval fechar, esta noite):**
+1. Trazer por pscp: sessão `graficos_tese/<01-07-...>` + `results/evaluation` + modelos + logs
+   **+ o modelo/log do Novelty** (`~/swarm-novelty/`).
+2. Re-avaliar localmente (eval_suite 30 ep) + `statistical_tests.py`; avaliar também o modelo
+   Novelty no bypass com o MESMO protocolo → comparação justa Novelty vs baseline.
+3. Com números de eval: atualizar `docs/AVANCO_GNN_HOMING.md` + reescrever Cap 6 (narrativa
+   "diagnóstico + cura", decisão de 29 jun; agora com a cura confirmada nos 7 cenários).
+4. Mergear `test/lidar-vetorizado` + `feat/novelty-search` em `tese-final-graficos` (validadas).
+
+---
+
+## ⏱ ATUALIZAÇÃO 30 jun 2026 (obs vetorizadas + Novelty Search lançado para o bypass)
 
 > Sessão dedicada a **melhores resultados** (pedido do utilizador), foco no **GNN** (PPO/SAC já
 > a 100% nos 7 cenários). Memórias: `memory/obs_vetorizadas.md`, `memory/novelty_search_bypass.md`.
