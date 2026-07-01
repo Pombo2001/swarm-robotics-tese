@@ -8,20 +8,12 @@ servidos pela rota estática '/graficos' (registada em app.py). Três modos:
 """
 from nicegui import ui
 
-from .. import config, data
+from .. import config, data, theme
 
-CARD = "glass rounded-2xl shadow-xl p-4 w-full"
+CARD = theme.CARD + " p-4"
 NONE = "— (nenhum)"
 ALGO_ORDER = ["gnn", "ppo", "sac"]
-
-
-def _section_title(icon: str, text: str, sub: str = ""):
-    with ui.column().classes("gap-0"):
-        with ui.row().classes("items-center gap-2 no-wrap"):
-            ui.icon(icon).classes("text-sky-400 text-2xl")
-            ui.label(text).classes("text-xl font-bold tracking-tight")
-        if sub:
-            ui.label(sub).classes("text-xs text-gray-400 ml-8 -mt-1")
+_section_title = theme.section_title
 
 
 def _url(session: str, filename: str) -> str:

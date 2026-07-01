@@ -5,9 +5,9 @@ As imagens são servidas pela rota estática '/graficos' (registada em app.py).
 """
 from nicegui import ui
 
-from .. import config, data
+from .. import config, data, theme
 
-CARD = "bg-slate-800/70 rounded-xl shadow-lg p-4 w-full"
+CARD = theme.CARD + " p-4"
 NONE = "— (sem comparação)"
 
 # Cenários e labels vêm de config (fonte única — ver dashboard/config.py).
@@ -52,10 +52,7 @@ def _pretty_title(f: str) -> str:
     return " · ".join(bits) if bits else name
 
 
-def _section_title(icon: str, text: str):
-    with ui.row().classes("items-center gap-2 no-wrap"):
-        ui.icon(icon).classes("text-sky-400 text-xl")
-        ui.label(text).classes("text-lg font-bold")
+_section_title = theme.section_title
 
 
 def _comparison_html(metrics_a: dict, metrics_b: dict) -> str:

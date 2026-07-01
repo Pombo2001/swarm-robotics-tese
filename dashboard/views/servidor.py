@@ -7,15 +7,10 @@ from datetime import datetime
 
 from nicegui import ui, run
 
-from .. import remote
+from .. import remote, theme
 
-CARD = "bg-slate-800/70 rounded-xl shadow-lg p-4 w-full"
-
-
-def _section_title(icon: str, text: str):
-    with ui.row().classes("items-center gap-2 no-wrap"):
-        ui.icon(icon).classes("text-sky-400 text-xl")
-        ui.label(text).classes("text-lg font-bold")
+CARD = theme.CARD + " p-4"
+_section_title = theme.section_title
 
 
 def _is_training(proc: str) -> bool:

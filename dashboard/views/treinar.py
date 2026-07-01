@@ -6,7 +6,7 @@ com o stdout a aparecer na consola integrada (sem consolas Windows soltas).
 """
 from nicegui import ui
 
-from .. import config
+from .. import config, theme
 from ..jobs import Job, JobQueue
 
 # Presets: nome -> (algo, cenários, minutos, runs, eval_episodes, ícone, cor)
@@ -19,13 +19,8 @@ PRESETS = {
 _STATUS_COLOR = {"em fila": "grey", "a correr": "blue", "concluído": "green",
                  "falhou": "red", "parado": "orange"}
 
-CARD = "bg-slate-800/70 rounded-xl shadow-lg p-4 w-full"
-
-
-def _section_title(icon: str, text: str):
-    with ui.row().classes("items-center gap-2 no-wrap"):
-        ui.icon(icon).classes("text-sky-400 text-xl")
-        ui.label(text).classes("text-lg font-bold")
+CARD = theme.CARD + " p-4"
+_section_title = theme.section_title
 
 
 def build(queue: JobQueue):

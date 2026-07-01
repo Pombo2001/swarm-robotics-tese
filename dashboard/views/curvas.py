@@ -8,16 +8,11 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from nicegui import ui
 
-from .. import config, data
+from .. import config, data, theme
 
-CARD = "bg-slate-800/70 rounded-xl shadow-lg p-4 w-full"
+CARD = theme.CARD + " p-4"
+_section_title = theme.section_title
 _METRICS = {"Score (fitness / recompensa)": "score", "Tarefa (recolhas)": "task"}
-
-
-def _section_title(icon: str, text: str):
-    with ui.row().classes("items-center gap-2 no-wrap"):
-        ui.icon(icon).classes("text-sky-400 text-xl")
-        ui.label(text).classes("text-lg font-bold")
 
 
 def _build_fig(curves: dict, metric: str) -> go.Figure:
