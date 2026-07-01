@@ -5,6 +5,22 @@ import yaml
 import os
 import heapq
 
+# ── Porta cooperativa (cenários cooperative_door / cooperative_door_bypass) ──
+# A "porta" é um painel (parede normal para física/LiDAR) que fecha a abertura
+# de 3 m no centro da barreira em y=0. Abre-se quando DOOR_PUSHERS_REQUIRED
+# agentes ativos ocupam em simultâneo a push zone (faixa imediatamente a sul da
+# abertura) — nesse momento o painel é removido e cada agente que empurrou
+# recebe DOOR_OPEN_REWARD. No campo geodésico a porta é sempre PASSÁVEL, para o
+# gradiente de progresso apontar para a push zone (o objetivo do cenário).
+DOOR_SCENARIOS = ("cooperative_door", "cooperative_door_bypass")
+DOOR_POS = (0.0, 0.0, 0.0)          # centro da abertura na barreira
+DOOR_SIZE = (3.0, 2.0, 30.0)        # painel: largura 3 m (= abertura) × espessura 2 m
+DOOR_PUSH_HALF_WIDTH = 1.5          # push zone: |x| < 1.5 (largura da porta)
+DOOR_PUSH_Y_MIN, DOOR_PUSH_Y_MAX = -2.0, 0.0   # faixa a sul da barreira
+DOOR_PUSH_CENTER = (0.0, -1.0, 0.0)  # centro da push zone (isenção de spreading)
+DOOR_PUSHERS_REQUIRED = 3           # agentes em simultâneo para abrir
+DOOR_OPEN_REWARD = 100.0            # bónus por agente que participou na abertura
+
 
 class SwarmForagingEnv3D(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 30}
@@ -105,6 +121,14 @@ class SwarmForagingEnv3D(gym.Env):
         self.signaling = np.zeros(self.num_agents)
         self.agent_headings = np.zeros((self.num_agents, 3))
 
+        # Estado da porta cooperativa — definido para TODOS os cenários (False/None
+        # fora dos DOOR_SCENARIOS), para nunca depender de getattr defensivo.
+        self.has_door = False          # o cenário atual tem porta?
+        self.door_active = False       # a porta está fechada (painel presente)?
+        self.door_wall_index = None    # índice do painel em self.walls (se fechada)
+        self.door_pos = np.zeros(3, dtype=np.float32)
+        self.door_size = np.array(DOOR_SIZE)
+
     def _get_scenario_spawn_pos(self):
         max_attempts = 50
         for _ in range(max_attempts):
@@ -130,7 +154,7 @@ class SwarmForagingEnv3D(gym.Env):
                     pos = np.array([np.random.uniform(-10, -2), np.random.uniform(2, 10), 0.0])
                 else:              # SE
                     pos = np.array([np.random.uniform(2, 10), np.random.uniform(-10, -2), 0.0])
-            elif self.classic_scenario in ("cooperative_door", "cooperative_door_bypass"):
+            elif self.classic_scenario in DOOR_SCENARIOS:
                 # South of the horizontal barrier (barrier covers y -1 to 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
             else:
@@ -165,6 +189,12 @@ class SwarmForagingEnv3D(gym.Env):
         self.walls = []
 
         self.classic_scenario = self.config['environment'].get('classic_scenario', 'none')
+
+        # Porta cooperativa: estado limpo a cada episódio (o spawn do cenário
+        # volta a fechá-la via _add_cooperative_door).
+        self.has_door = self.classic_scenario in DOOR_SCENARIOS
+        self.door_active = False
+        self.door_wall_index = None
 
         # required_to_eat por cenário: navegação pura = 1 agente basta (a tarefa é
         # chegar ao ninho); cooperação (porta/perceção) = valor do config (3).
@@ -324,6 +354,18 @@ class SwarmForagingEnv3D(gym.Env):
             {'pos': np.array([0.0, 12.8375, 0.0]), 'size': np.array([1.5, 4.325, 30.0])}
         ]
 
+    def _add_cooperative_door(self):
+        """Fecha a abertura da barreira com o painel da porta cooperativa.
+
+        Enquanto fechada, a porta é uma parede normal (física + LiDAR). Abre em
+        _update_door quando DOOR_PUSHERS_REQUIRED agentes ocupam a push zone.
+        """
+        self.door_active = True
+        self.door_pos = np.array(DOOR_POS, dtype=np.float32)
+        self.door_size = np.array(DOOR_SIZE)
+        self.door_wall_index = len(self.walls)
+        self.walls.append({'pos': self.door_pos.copy(), 'size': self.door_size})
+
     def _spawn_obstacles_cooperative_door(self):
         self.obstacles = []
         self.obstacle_velocities = []
@@ -336,11 +378,7 @@ class SwarmForagingEnv3D(gym.Env):
             {'pos': np.array([-8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, 30.0])},  # x -15 to -1.5
             {'pos': np.array([ 8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, 30.0])},  # x  1.5 to  15
         ]
-        self.door_active = True
-        self.door_pos  = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.door_size = np.array([3.0, 2.0, 30.0])   # 3m wide door at center
-        self.door_wall_index = len(self.walls)
-        self.walls.append({'pos': self.door_pos.copy(), 'size': self.door_size})
+        self._add_cooperative_door()
 
     def _spawn_obstacles_cooperative_door_bypass(self):
         # 7º cenário: porta cooperativa COM percurso alternativo longo (sem porta).
@@ -359,11 +397,29 @@ class SwarmForagingEnv3D(gym.Env):
             {'pos': np.array([ 6.25, 0.0, 0.0]), 'size': np.array([ 9.5, 2.0, 30.0])},  # dir: x  1.5 a  11
             {'pos': np.array([10.0,  8.0, 0.0]), 'size': np.array([10.0, 2.0, 30.0])},  # defletor: x 5 a 15 @ y=8
         ]
-        self.door_active = True
-        self.door_pos  = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.door_size = np.array([3.0, 2.0, 30.0])   # porta de 3m no centro
-        self.door_wall_index = len(self.walls)
-        self.walls.append({'pos': self.door_pos.copy(), 'size': self.door_size})
+        self._add_cooperative_door()
+
+    def _update_door(self, rewards):
+        """Abre a porta quando DOOR_PUSHERS_REQUIRED agentes ativos ocupam a push
+        zone (faixa imediatamente a sul da abertura). Abrir = REMOVER o painel de
+        self.walls: deixa de existir para a física e para o LiDAR. Cada agente que
+        empurrou recebe DOOR_OPEN_REWARD. Agentes falhados (Rrobust) não contam."""
+        pushers = []
+        for i in range(self.num_agents):
+            if self.failed[i]:
+                continue
+            pos = self.agent_positions[i]
+            if (-DOOR_PUSH_HALF_WIDTH < pos[0] < DOOR_PUSH_HALF_WIDTH
+                    and DOOR_PUSH_Y_MIN < pos[1] < DOOR_PUSH_Y_MAX):
+                pushers.append(i)
+
+        if len(pushers) < DOOR_PUSHERS_REQUIRED:
+            return
+        self.door_active = False
+        self.walls.pop(self.door_wall_index)
+        self.door_wall_index = None
+        for idx in pushers:
+            rewards[self.agents[idx]] += DOOR_OPEN_REWARD
 
     def _random_spawn(self, min_radius=0.0, max_radius=0.8):
         u = np.random.uniform(0, 1)
@@ -403,11 +459,7 @@ class SwarmForagingEnv3D(gym.Env):
         for w_i, wall in enumerate(self.walls):
             # A porta cooperativa é tratada como PASSÁVEL no BFS: assim o gradiente
             # aponta para a porta (= push zone), que é o objetivo do cenário.
-            if (self.classic_scenario in ("cooperative_door", "cooperative_door_bypass")
-                    and w_i == getattr(self, 'door_wall_index', -1)):
-                continue
-            # Paredes "removidas" (porta aberta → pos 999) não bloqueiam.
-            if np.any(np.abs(wall['pos']) > R + 5):
+            if self.door_wall_index is not None and w_i == self.door_wall_index:
                 continue
             half = wall['size'] / 2.0
             i0 = max(0, int((wall['pos'][0] - half[0] - inflate + R) / res))
@@ -648,7 +700,7 @@ class SwarmForagingEnv3D(gym.Env):
         # sub-objetivo físico do cenário (como o ninho), não um waypoint de
         # planeamento. Nos restantes cenários fica a zeros (não revela o caminho
         # nos labirintos, o que seria batota). Mantém a dimensão da obs fixa.
-        if self.classic_scenario in ("cooperative_door", "cooperative_door_bypass"):
+        if self.has_door:
             dir_door, dist_door = ego_to(self.door_pos)
             norm_dist_door = dist_door / arena2
         else:
@@ -794,21 +846,8 @@ class SwarmForagingEnv3D(gym.Env):
 
                 self.agent_positions[idx] += move_global
 
-        if self.classic_scenario in ("cooperative_door", "cooperative_door_bypass") and getattr(self, 'door_active', False):
-            pushing_robots = []
-            for i in range(self.num_agents):
-                if self.failed[i]:
-                    continue  # Rrobust: agente falhado não empurra a porta
-                pos = self.agent_positions[i]
-                # Push zone: directly south of the door (x -1.5 to 1.5, y -2 to 0)
-                if -1.5 < pos[0] < 1.5 and -2.0 < pos[1] < 0.0:
-                    pushing_robots.append(i)
-
-            if len(pushing_robots) >= 3:
-                self.door_active = False
-                for idx in pushing_robots:
-                    rewards[self.agents[idx]] += 100.0
-                self.walls[self.door_wall_index]['pos'] = np.array([999.0, 999.0, 999.0], dtype=np.float32)
+        if self.has_door and self.door_active:
+            self._update_door(rewards)
 
         obstacle_hits = {a: 0 for a in self.agents}
         for idx, agent in enumerate(self.agents):
@@ -848,8 +887,8 @@ class SwarmForagingEnv3D(gym.Env):
         spread_dist = self.min_spread_distance
 
         coop_points = [self.nest_pos]
-        if self.classic_scenario in ("cooperative_door", "cooperative_door_bypass"):
-            coop_points.append(np.array([0.0, -1.0, 0.0]))  # centro da push zone
+        if self.has_door:
+            coop_points.append(np.array(DOOR_PUSH_CENTER))  # centro da push zone
         coop_zone = 4.0
         in_coop_zone = np.zeros(self.num_agents, dtype=bool)
         for idx in range(self.num_agents):
