@@ -112,6 +112,16 @@ def _status_card(icon: str, title: str, goto=None, view: str = ""):
     return body
 
 
+# Campanhas de treino no servidor ISCTE (nome, horas de parede) — curado à mão,
+# como a _TIMELINE: as sessões arquivadas não guardam a duração do treino.
+_CAMPANHAS = [
+    ("Treino 24h", 24), ("Treino 48h", 48), ("Treino 24h v2", 24),
+    ("Fase B (3 runs)", 45), ("GNN-48h", 48),
+    ("Fim-de-semana (recompensa simplificada)", 90),
+    ("Validações homing", 4), ("Treino 3 dias (GNN homing)", 68),
+    ("Novelty Search (bypass)", 10), ("Re-runs seed 2", 7),
+]
+
 # Linha do tempo do projeto (editar aqui à medida que há marcos novos).
 _TIMELINE = [
     ("08 jun", "Acesso aos servidores ISCTE", "Treinos longos passam para a .14 (64 vCPU)."),
@@ -165,13 +175,17 @@ def build(queue: JobQueue, goto=None):
         ui.timer(0.4, lambda: ui.run_javascript(_BOIDS_JS), once=True)
 
         # ── KPIs (count-up) ───────────────────────────────────────────────────
-        with ui.grid(columns=4).classes("w-full gap-4 fade-up-1"):
+        total_h = sum(h for _, h in _CAMPANHAS)
+        longest_name, longest_h = max(_CAMPANHAS, key=lambda c: c[1])
+        with ui.grid(columns=3).classes("w-full gap-4 fade-up-1"):
             _kpi("Sessões de treino", len(sessions))
             _kpi("Cenários de estudo", len(config.SCENARIO_KEYS))
             _kpi("Episódios avaliados", n_epis)
             best = max(covered.items(), key=lambda kv: kv[1])[0] if table else "—"
             _kpi(f"Cenários ≥80% · melhor algo ({best})",
                  max(covered.values()) if table else 0, suffix=f"/{len(config.SCENARIO_KEYS)}")
+            _kpi("Horas de treino no servidor", total_h, suffix="h")
+            _kpi(f"Treino mais longo · {longest_name.lower()}", longest_h, suffix="h")
 
         # ── Estado ────────────────────────────────────────────────────────────
         with ui.grid(columns=4).classes("w-full gap-4 fade-up-2"):
