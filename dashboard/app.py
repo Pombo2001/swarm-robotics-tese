@@ -33,7 +33,7 @@ def index():
     with ui.header(elevated=False).classes("items-center gap-3 px-4 py-2"):
         ui.button(icon="menu", on_click=lambda: drawer.toggle()) \
             .props("flat round dense color=white")
-        ui.icon("hub").classes("text-xl").style(f"color:{theme.INK}")
+        hub = ui.icon("hub").classes("text-xl").style(f"color:{theme.INK}")
         with ui.column().classes("gap-0"):
             ui.label("Swarm Observatory").classes(
                 "text-base font-bold mono-title leading-tight tracking-tight")
@@ -102,6 +102,11 @@ def index():
             running = queue.is_running
             dot.classes(remove="live-dot--idle", add="" if running else "live-dot--idle")
             lbl.text = "treino a correr" if running else "inativo"
+            # O "hub" do header roda devagar enquanto há treino a correr.
+            if running:
+                hub.classes(add="spin-slow")
+            else:
+                hub.classes(remove="spin-slow")
         except Exception:
             live_timer.cancel()
     live_timer = ui.timer(2.0, _tick_live)

@@ -103,15 +103,27 @@ def _escala_option(tbl: dict) -> dict:
     }
 
 
+_cell_seq = 0
+
+
 def _cell(info: dict):
+    global _cell_seq
     if info is None:
         with ui.element("div").classes("bg-slate-900/40 rounded-lg p-2 text-center"):
             ui.label("—").classes("text-gray-600")
         return
+    _cell_seq += 1
+    el_id = f"sci_cell_{_cell_seq}"
     with ui.element("div").classes(f"{_ptask_color(info['ptask'])} rounded-lg p-2 text-center"):
-        ui.label(f"{info['ptask']:.0f}%").classes("text-lg font-bold leading-tight")
+        # Ptask com count-up (o efeito dos KPIs da Overview, agora na matriz).
+        ui.html(f'<span id="{el_id}" class="text-lg font-bold leading-tight mono-num">'
+                f'{info["ptask"]:.0f}%</span>')
         ui.label(f"{info['recolhas']:.1f} rec/ep").classes("text-xs opacity-80 leading-tight")
         ui.label(f"n={info['n']}").classes("text-[10px] opacity-50 leading-tight")
+    delay = 0.15 + (_cell_seq % 24) * 0.04          # cascata pela grelha
+    ui.timer(delay, lambda i=el_id, v=info['ptask']: ui.run_javascript(
+        f"var e=document.getElementById('{i}');"
+        f"if(e&&window.monoCountUp) monoCountUp(e,{v:.0f},0,900,'%');"), once=True)
 
 
 def build():

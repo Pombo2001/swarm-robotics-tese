@@ -97,6 +97,31 @@ h1,h2,h3,.font-extrabold,.font-bold,.q-tab__label,.mono-title {
 .fade-up-2 { animation:fadeUp .5s .16s ease both; }
 .fade-up-3 { animation:fadeUp .5s .24s ease both; }
 
+/* Entrada em cascata ao trocar de vista: os filhos diretos de cada painel
+   sobem em sequência (o efeito da Overview, agora em toda a app). */
+.q-tab-panel > * { animation:fadeUp .45s ease both; }
+.q-tab-panel > *:nth-child(2) { animation-delay:.06s; }
+.q-tab-panel > *:nth-child(3) { animation-delay:.12s; }
+.q-tab-panel > *:nth-child(4) { animation-delay:.18s; }
+.q-tab-panel > *:nth-child(5) { animation-delay:.24s; }
+.q-tab-panel > *:nth-child(n+6) { animation-delay:.30s; }
+
+/* Navegação viva: deslize no hover, brilho no separador ativo. */
+.q-tab { transition:color .2s ease, background .2s ease, transform .18s ease; }
+.q-tab:hover { transform:translateX(3px); }
+.q-tab--active .q-icon { filter:drop-shadow(0 0 7px rgba(255,255,255,.45)); }
+
+/* Botões com "pressão" física. */
+.q-btn { transition:transform .12s ease, opacity .2s ease; }
+.q-btn:active { transform:scale(.96); }
+
+/* Rotação lenta (ícone do header enquanto há treino a correr). */
+@keyframes spinSlow { to { transform:rotate(360deg); } }
+.spin-slow { animation:spinSlow 9s linear infinite; }
+
+/* O conteúdo da app fica acima do enxame de fundo (canvas fixo, z-index 0). */
+.q-layout { position:relative; z-index:1; }
+
 @keyframes pulseDot { 0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(255,255,255,.35); }
                       50% { opacity:.55; box-shadow:0 0 0 5px rgba(255,255,255,0); } }
 .live-dot { width:8px; height:8px; border-radius:50%; background:var(--ink);
@@ -119,19 +144,79 @@ h1,h2,h3,.font-extrabold,.font-bold,.q-tab__label,.mono-title {
 .q-table, .q-table__container { background:transparent !important; }
 """
 
-# JS: contador animado (count-up) para os KPIs da Overview.
+# JS: contador animado (count-up) para KPIs e células numéricas.
 COUNTUP_JS = r"""
-window.monoCountUp = function (el, target, decimals, duration) {
-  decimals = decimals || 0; duration = duration || 1200;
+window.monoCountUp = function (el, target, decimals, duration, suffix) {
+  decimals = decimals || 0; duration = duration || 1200; suffix = suffix || '';
   const t0 = performance.now();
   function tick(t) {
     const p = Math.min((t - t0) / duration, 1);
     const eased = 1 - Math.pow(1 - p, 3);            // ease-out cúbico
-    el.textContent = (target * eased).toFixed(decimals);
+    el.textContent = (target * eased).toFixed(decimals) + suffix;
     if (p < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
 };
+"""
+
+# JS: enxame de fundo — a assinatura visual da Overview espalhada pela app.
+# Versão MUITO subtil dos boids do hero (menos pontos, opacidade baixa, canvas
+# fixo atrás de todo o conteúdo); pausa quando o separador do browser está oculto.
+BG_SWARM_JS = r"""
+(function () {
+  const cv = document.getElementById('boids-bg');
+  if (!cv || cv.dataset.running) return;
+  cv.dataset.running = '1';
+  const ctx = cv.getContext('2d');
+  let W, H;
+  function resize() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+
+  const N = 44, VIEW = 80, SPEED = .55;
+  const boids = Array.from({length: N}, () => ({
+    x: Math.random() * innerWidth, y: Math.random() * innerHeight,
+    vx: (Math.random() - .5), vy: (Math.random() - .5),
+  }));
+
+  function frame() {
+    if (!document.getElementById('boids-bg')) return;   // página morreu
+    if (document.hidden) { setTimeout(frame, 400); return; }
+    for (const b of boids) {
+      let cx = 0, cy = 0, ax = 0, ay = 0, sx = 0, sy = 0, n = 0;
+      for (const o of boids) {
+        if (o === b) continue;
+        const dx = o.x - b.x, dy = o.y - b.y, d2 = dx * dx + dy * dy;
+        if (d2 < VIEW * VIEW) {
+          cx += o.x; cy += o.y; ax += o.vx; ay += o.vy; n++;
+          if (d2 < 600) { sx -= dx; sy -= dy; }
+        }
+      }
+      if (n) {
+        b.vx += ((cx / n - b.x) * .0012) + ((ax / n - b.vx) * .04) + sx * .003;
+        b.vy += ((cy / n - b.y) * .0012) + ((ay / n - b.vy) * .04) + sy * .003;
+      }
+      const v = Math.hypot(b.vx, b.vy) || 1;
+      b.vx = b.vx / v * SPEED; b.vy = b.vy / v * SPEED;
+      b.x += b.vx; b.y += b.vy;
+      if (b.x < -10) b.x = W + 10;  if (b.x > W + 10) b.x = -10;
+      if (b.y < -10) b.y = H + 10;  if (b.y > H + 10) b.y = -10;
+    }
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(255,255,255,.035)';
+    for (let i = 0; i < boids.length; i++)
+      for (let j = i + 1; j < boids.length; j++) {
+        const a = boids[i], b = boids[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        if (dx * dx + dy * dy < 4900) {
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+    ctx.fillStyle = 'rgba(255,255,255,.28)';
+    for (const b of boids) { ctx.beginPath(); ctx.arc(b.x, b.y, 1.3, 0, 7); ctx.fill(); }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
 """
 
 
@@ -141,6 +226,11 @@ def apply():
     ui.colors(primary="#fafafa", secondary="#a3a3a3", accent="#f5f5f5", dark="#050505")
     ui.add_head_html(f"<style>{CSS}</style>")
     ui.add_head_html(f"<script>{COUNTUP_JS}</script>")
+    # Enxame de fundo (atrás de todas as vistas; .q-layout fica com z-index 1).
+    ui.add_body_html(
+        '<canvas id="boids-bg" style="position:fixed;inset:0;z-index:0;'
+        'pointer-events:none"></canvas>')
+    ui.timer(0.5, lambda: ui.run_javascript(BG_SWARM_JS), once=True)
 
 
 def section_title(icon: str, text: str, sub: str = ""):
