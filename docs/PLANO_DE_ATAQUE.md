@@ -75,12 +75,18 @@
 - 2º smoke (fase final, `SWARM_KEEP_SESSION=1`): **sentinela presente, CONCLUÍDA, 0 mortes** ✅.
 - Código corrigido deployado em `~/swarm-robotics-tese` E `~/smoke7d`.
 
-**Lançamento (3 jul, antes da partida)** — comando pronto (composição a confirmar):
-```
-# tmux principal (GNN 7 runs ≈ 6.6 dias):
-tmux new-session -d -s treino7d 'cd ~/swarm-robotics-tese && SWARM_VIDEOS=1 bash scripts/launch_7d.sh --algo GNN --runs 7 --time-gnn 195 --eval-episodes 20'
-# (opcional, paralelo, dir isolado a criar: PPO/SAC 7 runs ≈ 3.3 dias)
-```
+**🚀 LANÇADO (2 jul 18:30 UTC, decisão do utilizador "executa") — A CORRER:**
+- tmux **`treino7d_gnn`** (~/swarm-robotics-tese): `launch_7d.sh --algo GNN --runs 7
+  --time-gnn 195 --eval-episodes 20` → 7×7×195 min ≈ 159h treino → **fim ~9 jul
+  (manhã) + eval/relatório/vídeos ~3h**. Com fix nº8: guarda `_run{1..7}.pth` + campeão.
+- tmux **`treino7d_mlp`** (~/run7d_mlp, dir ISOLADO novo: cp de src+scripts+configs,
+  venv partilhada): PPO 7 runs (48 min/run) → depois SAC 7 runs → ≈81h → **fim ~6 jul
+  (manhã)**. Modelos `_run{n}.zip` por run (fix novo).
+- Load ~46/64 (30 GNN + 16 PPO). Arranque confirmado aos 90s (watchdog + PPO a treinar).
+- No fim de cada campanha: eval 20 ep + eval_by_run + gráficos + GIFs automáticos;
+  sentinela `_campanha_concluida.txt` fecha o watchdog.
+- ⚠️ Ao trazer resultados: os models/ e sessões ANTIGOS do servidor foram todos
+  arquivados no PC ANTES do lançamento (out/res_0207 + results/ locais, 2 jul).
 
 **⬜ DECISÃO PENDENTE (única coisa em aberto do checklist):** re-correr os campeões perdidos
 com o fix nº8 já deployado (seed = nº do run → reproduzíveis): `none` seed 2 (39.75) e
