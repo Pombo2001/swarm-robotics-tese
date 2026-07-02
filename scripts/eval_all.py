@@ -24,15 +24,18 @@ from src.environment.swarm_env_3d import SwarmForagingEnv3D
 from src.scenarios import SCENARIO_LABELS_SHORT as SCENARIO_LABELS
 
 
-def load_model(algo, scenario, config_path):
+def load_model(algo, scenario, config_path, model_path=None):
+    """Carrega o modelo do (algo, cenário). Com model_path, carrega ESSE
+    ficheiro em vez do default — usado pela avaliação por run (_run{n})."""
     suffix = f"_{scenario}" if scenario and scenario != "none" else ""
     if algo == "gnn":
         from src.agents.gnn_agent_3d import GNNAgent3D
         env_tmp = SwarmForagingEnv3D(config_path=config_path)
         agent = GNNAgent3D("eval", env_tmp.action_space("robot_0"), config_path)
-        for p in [f"results/models/gnn_3d_best{suffix}.pth",
-                  "results/models/gnn_3d_best.pth"]:
-            fp = os.path.join(PROJECT_ROOT, p)
+        paths = [model_path] if model_path else [
+            os.path.join(PROJECT_ROOT, f"results/models/gnn_3d_best{suffix}.pth"),
+            os.path.join(PROJECT_ROOT, "results/models/gnn_3d_best.pth")]
+        for fp in paths:
             if os.path.exists(fp):
                 try:
                     agent.load_state_dict(torch.load(fp, weights_only=True))
@@ -48,9 +51,10 @@ def load_model(algo, scenario, config_path):
         cls = PPO if algo == "ppo" else SAC
         sub = "models_ppo" if algo == "ppo" else "models_sac"
         exp_obs = SwarmForagingEnv3D(config_path=config_path).observation_space_val.shape[0]
-        for p in [f"results/{sub}/{algo}_3d_final{suffix}.zip",
-                  f"results/{sub}/{algo}_3d_final.zip"]:
-            fp = os.path.join(PROJECT_ROOT, p)
+        paths = [model_path] if model_path else [
+            os.path.join(PROJECT_ROOT, f"results/{sub}/{algo}_3d_final{suffix}.zip"),
+            os.path.join(PROJECT_ROOT, f"results/{sub}/{algo}_3d_final.zip")]
+        for fp in paths:
             if os.path.exists(fp):
                 model = cls.load(fp)
                 got = model.observation_space.shape[0]
@@ -94,8 +98,9 @@ def run_episode(env, algo, model, seed=None):
     }
 
 
-def eval_algo(algo, scenario, config_path, n_episodes, seed_base=1000):
-    model, path = load_model(algo, scenario, config_path)
+def eval_algo(algo, scenario, config_path, n_episodes, seed_base=1000,
+              model_path=None):
+    model, path = load_model(algo, scenario, config_path, model_path=model_path)
     if model is None:
         print(f"  [{algo.upper()}] ERRO: modelo nao encontrado — a saltar")
         return None, None

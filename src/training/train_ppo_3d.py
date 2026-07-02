@@ -228,6 +228,14 @@ def train_ppo_3d(time_limit_minutes, seed=None):
     model_path = os.path.join(model_dir, f"ppo_3d_final{model_suffix}")
     model.save(model_path)
     os.chmod(model_path + ".zip", 0o666)
+
+    # Preserva o modelo DESTE run: em treinos multi-run o ..._final é
+    # sobrescrito pelo último run (armadilha nº8) — sem isto, os runs
+    # anteriores perdem-se e a avaliação por run fica impossível.
+    if seed is not None:
+        run_path = os.path.join(model_dir, f"ppo_3d_final{model_suffix}_run{seed}")
+        model.save(run_path)
+        os.chmod(run_path + ".zip", 0o666)
     print(f"[DONE] Treino PPO 3D Multi-Core concluído! Modelo: {os.path.basename(model_path)}.zip")
 
 

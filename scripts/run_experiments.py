@@ -62,6 +62,14 @@ def set_scenario(scenario_name):
 # poder RETOMAR após um crash sem repetir o que já foi feito (treinos de dias).
 PROGRESS_SESSION = os.path.join(BASE_DIR, 'results', 'logs', '_sessao_treino.txt')
 
+# CSVs acumulados da campanha (curvas + melhor score por run). São gravados
+# INCREMENTALMENTE após cada run — antes viviam em memória até ao fim, e um
+# crash ao dia N de um treino longo perdia tudo (e o --resume, ao não reler os
+# runs saltados, apagava-os do CSV final no merge por cenário/algoritmo).
+STATS_DIR  = os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas')
+CURVES_CSV = os.path.join(STATS_DIR, 'all_curves_data.csv')
+BEST_CSV   = os.path.join(STATS_DIR, 'all_best_scores.csv')
+
 
 def _load_done():
     if os.path.exists(PROGRESS_SESSION):
@@ -84,9 +92,6 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
         scenarios = SCENARIOS
     if time_overrides is None:
         time_overrides = {}
-
-    curves_data = []
-    best_scores_data = []
 
     # Retoma: se --resume, salta os treinos já concluídos; senão começa do zero.
     done = _load_done() if resume else set()
@@ -135,30 +140,33 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
                 except subprocess.CalledProcessError as e:
                     print(f"[!] Run {run} do {algo_name} falhou: {e}")
                 
-                # Extracao de Dados
+                # Extração de dados do run + gravação IMEDIATA nos CSVs da
+                # campanha (merge por Scenario/Algorithm/Run) — um crash mais
+                # à frente não perde este run, e o --resume não o apaga.
                 if os.path.exists(log_path):
                     try:
                         df = pd.read_csv(log_path)
                         df.columns = df.columns.str.strip()
-                        
+
                         if not df.empty and score_col in df.columns and step_col in df.columns:
                             max_score = df[score_col].max()
-                            
-                            best_scores_data.append({
+
+                            run_best = pd.DataFrame([{
                                 'Scenario': scenario,
                                 'Algorithm': algo_name,
                                 'Run': run,
                                 'BestScore': max_score
+                            }])
+                            run_curves = pd.DataFrame({
+                                'Scenario': scenario,
+                                'Algorithm': algo_name,
+                                'Run': run,
+                                'Step': df[step_col].values,
+                                'Score': df[score_col].values,
                             })
-                            
-                            for _, row in df.iterrows():
-                                curves_data.append({
-                                    'Scenario': scenario,
-                                    'Algorithm': algo_name,
-                                    'Run': run,
-                                    'Step': row[step_col],
-                                    'Score': row[score_col]
-                                })
+                            os.makedirs(STATS_DIR, exist_ok=True)
+                            _merge_save(run_curves, CURVES_CSV)
+                            _merge_save(run_best, BEST_CSV)
                         else:
                             print(f"[!] Log vazio ou colunas nao encontradas para {algo_name} Run {run}.")
                     except Exception as e:
@@ -168,10 +176,7 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
 
                 _mark_done(key)   # treino concluído → retomável se houver crash
 
-    df_curves = pd.DataFrame(curves_data)
-    df_best = pd.DataFrame(best_scores_data)
-
-    generate_plots(df_curves, df_best)
+    generate_plots(scenarios, list(algorithms.keys()))
 
     # ── AVALIAÇÃO DETERMINÍSTICA no fim do treino ────────────────────────────
     # A rotina noturna treinava mas não avaliava, deixando os eval_*.csv (taxa de
@@ -185,6 +190,17 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
             evaluate_all(episodes=eval_episodes)  # scenarios=None => os 6 cenários
         except Exception as e:
             print(f"[!] Avaliação automática falhou (não crítico): {e}")
+
+        # Avaliação POR RUN (modelos _run{n} preservados pelo fix da armadilha
+        # nº8): gera eval_by_run.csv — boxplots de EVAL e testes estatísticos
+        # com N runs por célula, em vez de scores de treino.
+        try:
+            from scripts.eval_by_run import evaluate_by_run
+            evaluate_by_run(episodes=eval_episodes,
+                            scenarios=scenarios,
+                            algos=[a.lower() for a in algorithms.keys()])
+        except Exception as e:
+            print(f"[!] Avaliação por run falhou (não crítico): {e}")
 
     # RELATÓRIO COMPLETO automático: gráficos da tese + gráficos de avaliação +
     # heatmaps + mapas 3D, tudo numa pasta datada (results/graficos_tese/<sessao>/).
@@ -214,10 +230,27 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
         except Exception as e:
             print(f"[!] Vídeos não gerados (não crítico): {e}")
 
-def generate_plots(df_curves, df_best):
+def _load_campaign(path, scenarios, algorithms):
+    """Lê um CSV acumulado e devolve só as combinações desta campanha.
+    Ler do disco (e não da memória) permite que os gráficos incluam runs
+    feitos ANTES de um crash+--resume, que já lá estão gravados."""
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    try:
+        df = pd.read_csv(path)
+        return df[df['Scenario'].isin(scenarios) & df['Algorithm'].isin(algorithms)]
+    except Exception as e:
+        print(f"[!] Falha a ler {path} ({e}); gráficos sem esses dados.")
+        return pd.DataFrame()
+
+
+def generate_plots(scenarios, algorithms):
     print("\n--- A GERAR GRÁFICOS AVANÇADOS ---")
-    out_dir = os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas')
+    out_dir = STATS_DIR
     os.makedirs(out_dir, exist_ok=True)
+
+    df_curves = _load_campaign(CURVES_CSV, scenarios, algorithms)
+    df_best   = _load_campaign(BEST_CSV, scenarios, algorithms)
 
     sns.set_theme(style="whitegrid")
 
@@ -250,27 +283,26 @@ def generate_plots(df_curves, df_best):
         plt.savefig(os.path.join(out_dir, 'comparacao_barras_geral.png'), dpi=300)
         plt.close()
 
-    # Guarda raw data com MERGE inteligente: preserva resultados de
-    # algoritmos/cenários NÃO re-treinados nesta sessão. Permite treinar por
-    # partes (ex: PPO hoje, SAC amanhã) sem perder dados anteriores.
-    _merge_save(df_curves, os.path.join(out_dir, 'all_curves_data.csv'))
-    _merge_save(df_best,   os.path.join(out_dir, 'all_best_scores.csv'))
-
-    print(f"[*] Gráficos e CSVs finais guardados com sucesso em: {out_dir}")
+    print(f"[*] Gráficos gerados com sucesso em: {out_dir} "
+          f"(CSVs acumulados gravados run-a-run durante o treino)")
 
 
 def _merge_save(df_new, path):
-    """Substitui no CSV existente apenas as combinações (Scenario, Algorithm)
-    presentes em df_new; mantém todas as outras intactas."""
+    """Substitui no CSV existente apenas as combinações presentes em df_new;
+    mantém todas as outras intactas. A chave inclui o Run (quando existe nos
+    dois lados) para que gravar um run NÃO apague os runs anteriores da mesma
+    combinação — essencial na gravação incremental e na retoma pós-crash."""
     if df_new.empty:
         return
     if os.path.exists(path):
         try:
             df_old = pd.read_csv(path)
-            # Chaves (cenário, algoritmo) que foram re-treinadas agora
-            new_keys = set(zip(df_new['Scenario'], df_new['Algorithm']))
+            keycols = ['Scenario', 'Algorithm']
+            if 'Run' in df_new.columns and 'Run' in df_old.columns:
+                keycols.append('Run')
+            new_keys = set(zip(*(df_new[c] for c in keycols)))
             mask = df_old.apply(
-                lambda r: (r['Scenario'], r['Algorithm']) not in new_keys, axis=1)
+                lambda r: tuple(r[c] for c in keycols) not in new_keys, axis=1)
             df_old_kept = df_old[mask]
             df_merged = pd.concat([df_old_kept, df_new], ignore_index=True)
         except Exception as e:
@@ -278,7 +310,9 @@ def _merge_save(df_new, path):
             df_merged = df_new
     else:
         df_merged = df_new
-    df_merged.to_csv(path, index=False)
+    tmp = path + '.tmp'
+    df_merged.to_csv(tmp, index=False)
+    os.replace(tmp, path)   # escrita atómica: um crash a meio não corrompe o CSV
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Automação de Experiências para a Tese")
