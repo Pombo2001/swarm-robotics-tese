@@ -253,3 +253,6 @@ out/*.tar.gz
 *.lot
 *.out
 *.toc
+
+# Grafo de conhecimento do código (gerado por /graphify)
+graphify-out/
