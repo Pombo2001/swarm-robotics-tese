@@ -112,9 +112,11 @@ def _status_card(icon: str, title: str, goto=None, view: str = ""):
     return body
 
 
-# Campanhas de treino no servidor ISCTE (nome, horas de parede) — curado à mão,
-# como a _TIMELINE: as sessões arquivadas não guardam a duração do treino.
+# Campanhas de treino (nome, horas de parede) — curado à mão, como a _TIMELINE:
+# as sessões arquivadas não guardam a duração do treino. Inclui o servidor ISCTE
+# e os treinos locais deste PC (rotina noturna + testes, mai–jun; estimativa).
 _CAMPANHAS = [
+    ("Treinos locais no PC (rotina noturna, mai–jun)", 65),
     ("Treino 24h", 24), ("Treino 48h", 48), ("Treino 24h v2", 24),
     ("Fase B (3 runs)", 45), ("GNN-48h", 48),
     ("Fim-de-semana (recompensa simplificada)", 90),
@@ -184,7 +186,7 @@ def build(queue: JobQueue, goto=None):
             best = max(covered.items(), key=lambda kv: kv[1])[0] if table else "—"
             _kpi(f"Cenários ≥80% · melhor algo ({best})",
                  max(covered.values()) if table else 0, suffix=f"/{len(config.SCENARIO_KEYS)}")
-            _kpi("Horas de treino no servidor", total_h, suffix="h")
+            _kpi("Horas de treino acumuladas (PC + servidor)", total_h, suffix="h")
             _kpi(f"Treino mais longo · {longest_name.lower()}", longest_h, suffix="h")
 
         # ── Estado ────────────────────────────────────────────────────────────
