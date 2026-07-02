@@ -27,11 +27,22 @@ if [ "${SWARM_KEEP_SESSION:-0}" != "1" ]; then
     echo "[WATCHDOG] Campanha nova (progresso anterior limpo)." | tee -a "$LOG"
 fi
 
+# O sinal de conclusão é a SENTINELA escrita pelo run_experiments no fim,
+# não o exit code: libs nativas (VTK headless) podem abortar o processo
+# depois de todo o trabalho feito, e o exit ≠ 0 relançava uma campanha
+# já completa em loop (visto no smoke de 2 jul).
+DONE=results/logs/_campanha_concluida.txt
+
 MAX_TRIES=10
 try=0
-until python scripts/run_experiments.py "$@" --resume 2>&1 | tee -a "$LOG"; do
+while true; do
+    python scripts/run_experiments.py "$@" --resume 2>&1 | tee -a "$LOG"
+    if [ -f "$DONE" ]; then
+        echo "[WATCHDOG] Campanha CONCLUÍDA com sucesso (sentinela presente)." | tee -a "$LOG"
+        break
+    fi
     try=$((try+1))
-    echo "[WATCHDOG] run_experiments morreu (tentativa $try/$MAX_TRIES)." | tee -a "$LOG"
+    echo "[WATCHDOG] run_experiments morreu sem concluir (tentativa $try/$MAX_TRIES)." | tee -a "$LOG"
     if [ "$try" -ge "$MAX_TRIES" ]; then
         echo "[WATCHDOG] Limite de tentativas atingido — a desistir." | tee -a "$LOG"
         exit 1
@@ -39,4 +50,3 @@ until python scripts/run_experiments.py "$@" --resume 2>&1 | tee -a "$LOG"; do
     sleep 120
     echo "[WATCHDOG] A relançar com --resume..." | tee -a "$LOG"
 done
-echo "[WATCHDOG] Campanha CONCLUÍDA com sucesso." | tee -a "$LOG"

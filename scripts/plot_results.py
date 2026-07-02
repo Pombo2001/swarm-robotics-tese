@@ -486,10 +486,23 @@ def create_thesis_plots_3d():
     except Exception as e:
         print(f"[!] Heatmaps nao gerados (nao critico): {e}")
     set_progress(0.92, "Mapas 3D dos cenários...")
+    # Num SUBPROCESSO isolado: em servidores headless (sem X/EGL/OSMesa) o
+    # VTK/PyVista pode ABORTAR o processo (SIGABRT nativo, não é exceção
+    # Python) — in-process, o abort matava o pipeline inteiro já depois de
+    # todo o trabalho útil feito e fazia o watchdog relançar em loop
+    # (descoberto no smoke test de 2 jul).
     try:
-        from scripts.render_maps import render_scenario, ALL_SCENARIOS
-        for _sc in ALL_SCENARIOS:
-            render_scenario(_sc, config_src, camera="iso", out_dir=output_dir)
+        import subprocess
+        _code = (
+            "from scripts.render_maps import render_scenario, ALL_SCENARIOS\n"
+            f"cfg = {config_src!r}; out = {output_dir!r}\n"
+            "for _sc in ALL_SCENARIOS:\n"
+            "    render_scenario(_sc, cfg, camera='iso', out_dir=out)\n"
+        )
+        _r = subprocess.run([sys.executable, "-c", _code], cwd=base_dir, timeout=900)
+        if _r.returncode != 0:
+            print(f"[!] Mapas 3D nao gerados (subprocesso saiu com "
+                  f"{_r.returncode}; nao critico)")
     except Exception as e:
         print(f"[!] Mapas 3D nao gerados (nao critico): {e}")
 

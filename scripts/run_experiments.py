@@ -70,6 +70,12 @@ STATS_DIR  = os.path.join(BASE_DIR, 'results', 'graficos_tese', 'estatisticas')
 CURVES_CSV = os.path.join(STATS_DIR, 'all_curves_data.csv')
 BEST_CSV   = os.path.join(STATS_DIR, 'all_best_scores.csv')
 
+# Sentinela de CONCLUSÃO para o watchdog (launch_7d.sh). O exit code do
+# processo não chega como sinal: bibliotecas nativas (ex. VTK headless nos
+# mapas 3D) podem abortar o processo DEPOIS de todo o trabalho útil feito,
+# e o watchdog relançava em loop uma campanha já completa (smoke de 2 jul).
+DONE_SENTINEL = os.path.join(BASE_DIR, 'results', 'logs', '_campanha_concluida.txt')
+
 
 def _load_done():
     if os.path.exists(PROGRESS_SESSION):
@@ -92,6 +98,12 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
         scenarios = SCENARIOS
     if time_overrides is None:
         time_overrides = {}
+
+    # Execução nova → a sentinela de conclusão da anterior deixa de valer.
+    try:
+        os.remove(DONE_SENTINEL)
+    except OSError:
+        pass
 
     # Retoma: se --resume, salta os treinos já concluídos; senão começa do zero.
     done = _load_done() if resume else set()
@@ -229,6 +241,12 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
                 print("[!] Sem pasta de sessão para os vídeos.")
         except Exception as e:
             print(f"[!] Vídeos não gerados (não crítico): {e}")
+
+    # Campanha completa → sentinela para o watchdog não relançar.
+    os.makedirs(os.path.dirname(DONE_SENTINEL), exist_ok=True)
+    with open(DONE_SENTINEL, 'w', encoding='utf-8') as f:
+        f.write(str(pd.Timestamp.now()) + '\n')
+    print("[OK] Campanha concluída — sentinela gravada para o watchdog.")
 
 def _load_campaign(path, scenarios, algorithms):
     """Lê um CSV acumulado e devolve só as combinações desta campanha.
