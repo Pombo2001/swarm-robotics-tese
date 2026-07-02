@@ -63,8 +63,24 @@
 - ⚠️ duas instâncias de run_experiments NÃO podem partilhar o mesmo dir (config
   `foraging.yaml`, logs e `_sessao_treino.txt` são partilhados) → dir isolado obrigatório.
 
-**Falta:** smoke test no servidor (depois dos re-runs fecharem) + deploy de
-`scripts/` + `src/` atualizados + lançamento (~3-4 jul, antes da partida).
+**✅ SMOKE TEST COMPLETO (2 jul, tarde/noite) — pipeline SELADO para o lançamento:**
+- 1º smoke (3 algos × 2 runs × 2 min) validou: `_run{n}` nos 3 algos, CSVs incrementais,
+  `eval_by_run.csv`, watchdog a relançar com `--resume`.
+- 🐛→✅ **Bug real apanhado pelo smoke**: o `render_maps` (PyVista/VTK) ABORTA o processo
+  em servidores headless (SIGABRT nativo, try/except não apanha) DEPOIS de todo o trabalho
+  útil — o watchdog relançava em loop uma campanha completa (3 relances observados).
+  **Fix triplo**: (1) `plot_results` corre o render_maps num SUBPROCESSO isolado;
+  (2) `run_experiments` escreve sentinela `results/logs/_campanha_concluida.txt` no fim;
+  (3) `launch_7d.sh` decide pela SENTINELA, não pelo exit code.
+- 2º smoke (fase final, `SWARM_KEEP_SESSION=1`): **sentinela presente, CONCLUÍDA, 0 mortes** ✅.
+- Código corrigido deployado em `~/swarm-robotics-tese` E `~/smoke7d`.
+
+**Lançamento (3 jul, antes da partida)** — comando pronto (composição a confirmar):
+```
+# tmux principal (GNN 7 runs ≈ 6.6 dias):
+tmux new-session -d -s treino7d 'cd ~/swarm-robotics-tese && SWARM_VIDEOS=1 bash scripts/launch_7d.sh --algo GNN --runs 7 --time-gnn 195 --eval-episodes 20'
+# (opcional, paralelo, dir isolado a criar: PPO/SAC 7 runs ≈ 3.3 dias)
+```
 
 **⬜ DECISÃO PENDENTE (única coisa em aberto do checklist):** re-correr os campeões perdidos
 com o fix nº8 já deployado (seed = nº do run → reproduzíveis): `none` seed 2 (39.75) e
