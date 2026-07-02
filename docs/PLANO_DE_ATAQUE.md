@@ -11,6 +11,70 @@
 
 ---
 
+## ⏱ ATUALIZAÇÃO 2 jul 2026 (manhã) — CHECKLIST DE RETOMA EXECUTADO ✅
+
+> Eval do train3d fechou às 23h40 de 1 jul (sessão `01-07-2026_23h40m`); servidor sem tmux.
+> Tudo trazido, src corrigido deployado, Novelty avaliado. Falta SÓ a decisão dos re-runs.
+
+**✅ Feito (por ordem do checklist de 1→2 jul):**
+1. Resultados trazidos para `out/res_0207/` (res_0207.tar.gz 71M + novelty_0207.tar.gz):
+   sessão + evaluation + modelos + logs + `~/swarm-novelty`. **NÃO copiados ainda para
+   `results/`** — à espera da decisão dos re-runs (evitar fixar eval com none/u_wall falsos).
+2. **Deploy do src/+tests/ (HEAD `6e1d40a`) para o servidor** ✅ — fix nº8 + porta refactorizada
+   confirmados (`.meta.json` no evo_trainer, `DOOR_` no env). Backup:
+   `~/code_backup_pre_deploy_20260702.tar.gz`.
+3. **⭐ CORREÇÃO à leitura de 1 jul: o bypass run 3 FECHOU em 65.0** (o "0" era a gen 56,
+   a meio do run) → o modelo em disco resolve o deceptive. **Eval GNN bypass = 100% / 64.5.**
+   As únicas vítimas reais da armadilha nº8 são none (eval 60%/0.6 vs R2=39.75 de treino)
+   e u_wall (eval 0% vs R2=62.5).
+4. **⭐ EVAL DO NOVELTY (20 ep, seed-base 1000, protocolo emparelhado): 81.30 ± 1.89 rec/ep,
+   100% sucesso** — vs baseline 64.5 no mesmo protocolo → **+26% para o Novelty**, e muito
+   estável (77–84). Corrido isolado em `~/swarm-novelty` (tmux `eval_novelty`); CSV no PC em
+   `out/res_0207/swarm-novelty/results/eval_gnn_cooperative_door_bypass_NOVELTY.csv`.
+   Caveat honesto: Novelty teve 600 min vs 195/run; o run 1 do baseline (80.5 treino) perdeu-se.
+5. Eval completa (`eval_summary.csv`, 21 combos × 20 ep): GNN 100% em bottleneck (88.6),
+   four_rooms (40.7), coop_door (67.2), perception (21.1), **bypass (64.5)**; PPO/SAC 100%
+   nos 7 (PPO u_wall 65.8 — cura do treino_fds confirmada de novo).
+
+### 🚀 TREINO DE 7 DIAS (utilizador fora 1 semana a partir de ~4 jul) — PREPARAÇÃO FEITA (2 jul)
+
+**Decisão do utilizador:** aproveitar a semana fora para um treino longo; foco = ponto 2
+(estatística séria: boxplots de EVAL, Rrobust/Sscale nos modelos novos, significância).
+
+**Pipeline endurecido para correr SEM supervisão (4 correções, código local, por deployar):**
+1. `run_experiments.py` — curvas/scores gravados **incrementalmente após cada run**
+   (merge por Scenario/Algorithm/**Run**, escrita atómica). Antes: tudo em memória até
+   ao fim → crash ao dia N perdia a campanha, e o --resume apagava runs pré-crash do CSV.
+   `generate_plots` passou a ler do disco. Testado (4 casos de merge, pandas local).
+2. `train_ppo_3d.py`/`train_sac_3d.py` — **armadilha nº8 também nos MLP**: o `_final.zip`
+   era sobrescrito pelo último run. Agora guardam também `_run{seed}.zip` por run.
+3. **`scripts/eval_by_run.py` (novo)** — avalia TODOS os modelos `_run{n}` com o protocolo
+   emparelhado → `results/evaluation/eval_by_run.csv` (long, coluna Run) = boxplots de EVAL
+   + input p/ statistical_tests por run. Chamado automaticamente no fim do run_experiments.
+   (`eval_all.py` ganhou `model_path=` override para isto.)
+4. **`scripts/launch_7d.sh` (novo)** — watchdog: campanha nova limpa o `_sessao_treino.txt`
+   e corre `run_experiments --resume` em loop (máx 10 tentativas, sleep 120, pipefail,
+   log `treino_7d_<data>.log`). Crash a meio da semana → relança sozinho.
+
+**Composição proposta (por confirmar com o utilizador antes de lançar):**
+- GNN 7 runs × 7 cenários × 195 min ≈ 6.6 dias (tmux principal, ~/swarm-robotics-tese);
+- PPO/SAC 7 runs × 7 cenários × 48 min ≈ 3.3 dias em PARALELO num dir isolado
+  (PPO usa só 8 cores; load total ~46/64) — boxplots N=7 para os 3 algos.
+- ⚠️ duas instâncias de run_experiments NÃO podem partilhar o mesmo dir (config
+  `foraging.yaml`, logs e `_sessao_treino.txt` são partilhados) → dir isolado obrigatório.
+
+**Falta:** smoke test no servidor (depois dos re-runs fecharem) + deploy de
+`scripts/` + `src/` atualizados + lançamento (~3-4 jul, antes da partida).
+
+**⬜ DECISÃO PENDENTE (única coisa em aberto do checklist):** re-correr os campeões perdidos
+com o fix nº8 já deployado (seed = nº do run → reproduzíveis): `none` seed 2 (39.75) e
+`u_wall` seed 2 (62.5) ≈ 2×195 min ≈ 6.5h; `bypass` seed 1 (80.5) é opcional (já há 64.5
+em eval; o Novelty 81.3 cobre a história do deceptive) → +195 min se se quiser.
+Depois dos re-runs: re-avaliar, copiar tudo para `results/`, atualizar
+`docs/AVANCO_GNN_HOMING.md` + Cap 6, e mergear as branches.
+
+---
+
 ## ⏱ ATUALIZAÇÃO 1→2 jul 2026 (noite) — LER PRIMEIRO AO RETOMAR
 
 > Sessão noturna: armadilha nº8 descoberta+corrigida, porta refactorizada (bit-exacta),
