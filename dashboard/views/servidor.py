@@ -151,6 +151,10 @@ def _eta_block(eta: dict | None, training: bool):
             ui.label("Estimativa de fim do treino").classes("text-sm font-semibold text-sky-300")
         with ui.grid(columns=2).classes("w-full gap-2 mt-1"):
             _info("play_arrow", "Início", _fmt_dt(eta["start"]) + " (servidor)")
+            if eta.get("now") and eta.get("start"):
+                horas_dec = (eta["now"] - eta["start"]).total_seconds() / 3600
+                dec = f"{horas_dec:.1f}h" if horas_dec >= 1 else f"{int(horas_dec * 60)} min"
+                _info("timelapse", "Decorrido", dec)
             if eta.get("eta"):
                 _info("flag", "Fim estimado", _fmt_dt(eta["eta"]) + " (servidor)")
             if eta.get("runs") and eta.get("cenarios") and eta.get("algos"):
@@ -169,6 +173,13 @@ def _eta_block(eta: dict | None, training: bool):
                 txt = f"Faltam ~{horas:.0f}h" if horas >= 1 else f"Faltam ~{int(horas * 60)} min"
                 ui.label(f"⏳ {txt} — estimativa pelo ritmo real (a avaliação final acrescenta algum tempo).") \
                     .classes("text-xs text-amber-200 mt-1")
+        elif training and not eta.get("eta"):
+            # Warm-up da campanha: a ETA usa o ritmo REAL (treinos concluídos ÷
+            # tempo decorrido) — antes do 1º treino fechar não há ritmo.
+            ui.label("⏳ 1º treino da campanha ainda a decorrer — a estimativa de fim "
+                     "aparece quando ele fechar (é calculada pelo ritmo real, não por "
+                     "tempos teóricos). Com runs de 195 min, conta ~3h15 até à 1ª estimativa.") \
+                .classes("text-xs text-amber-200 mt-1")
         elif not training:
             ui.label("Sem treino ativo — a estimativa refere o último plano registado.") \
                 .classes("text-xs text-gray-500 mt-1")
