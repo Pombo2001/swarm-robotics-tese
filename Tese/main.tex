@@ -315,13 +315,23 @@ This dissertation presents a rigorous comparative study between Multi-Agent Rein
 
 \chapter*{Lista de Acrónimos}
 \begin{acronym}
+ \acro{AE}{Algoritmos Evolutivos}
  \acro{AI}{Artificial Intelligence}
- \acro{ML}{Machine Learning}
- \acro{MARL}{Multi-Agent Reinforcement Learning}
- \acro{PSO}{Particle Swarm Optimization}
- \acro{GNN}{Graph Neural Network}
  \acro{CTDE}{Centralized Training with Decentralized Execution}
  \acro{Dec-POMDP}{Decentralized Partially Observable Markov Decision Process}
+ \acro{GAE}{Generalized Advantage Estimation}
+ \acro{GNN}{Graph Neural Network}
+ \acro{MARL}{Multi-Agent Reinforcement Learning}
+ \acro{ML}{Machine Learning}
+ \acro{MLP}{Multi-Layer Perceptron}
+ \acro{PBRS}{Potential-Based Reward Shaping}
+ \acro{PPO}{Proximal Policy Optimization}
+ \acro{PSO}{Particle Swarm Optimization}
+ \acro{RL}{Reinforcement Learning}
+ \acro{SAC}{Soft Actor-Critic}
+ \acro{SI}{Swarm Intelligence}
+ \acro{SLR}{Systematic Literature Review}
+ \acro{SR}{Swarm Robotics}
 \end{acronym}
 
 \mainmatter
@@ -430,7 +440,7 @@ O controlo de sistemas multi-robô em larga escala foca-se primordialmente no de
     \end{itemize}
     Ambas as abordagens procuram \textit{offline} o melhor conjunto de parâmetros fixos, maximizando uma função de \textit{fitness}. Embora gerem comportamentos robustos, resultam frequentemente em controladores rígidos perante mudanças ambientais não previstas.
 
-    \item \textbf{Aprendizagem por Reforço (Online/Adaptativa):} ... (o resto mantém-se)
+    \item \textbf{Aprendizagem por Reforço (Online/Adaptativa):} Em vez de otimizar parâmetros fixos antes da implantação, o agente aprende uma política $\pi(a \mid o)$ através da interação sequencial com o ambiente, guiado por um sinal de recompensa. Na sua extensão multiagente (MARL), cada robô ajusta o seu comportamento em função das observações locais, permitindo em princípio a adaptação a condições não previstas no desenho. O custo desta flexibilidade é uma otimização substancialmente mais difícil: a não-estacionaridade introduzida pela aprendizagem simultânea de todos os agentes, a atribuição de crédito em recompensas coletivas e a sensibilidade ao desenho do sinal de recompensa (Secção~\ref{sec:reward_design}) são desafios centrais que esta tese aborda empiricamente.
 \end{enumerate}
 
 Esta distinção é crucial para o \textit{benchmarking} proposto, pois permite avaliar se o custo computacional e a complexidade de treino da aprendizagem automática são justificados por um ganho real em adaptabilidade face às soluções otimizadas tradicionais.
@@ -571,7 +581,7 @@ O SAC mantém dois críticos $Q_{\psi_1}, Q_{\psi_2}$ cujo mínimo é usado no a
 
 \paragraph{O Desafio da Não-Estacionaridade:} A principal barreira teórica na aplicação de MARL a enxames é a não-estacionaridade do ambiente. Num sistema multiagente, as transições de estado para um agente $i$ dependem das ações de todos os outros agentes. Como todos os robôs estão a aprender e a alterar as suas políticas simultaneamente, a dinâmica do ambiente é instável, o que viola a propriedade fundamental de Markov e dificulta a convergência dos algoritmos tradicionais de agente único.
 
-\paragraph{Arquitetura CTDE e Escalabilidade com GNNs:} Para mitigar a instabilidade, utiliza-se a arquitetura de \textbf{Treinamento Centralizado com Execução Descentralizada} (CTDE) \cite{lowe2017maddpg}. Nesta abordagem, um componente ``Crítico'' tem acesso ao estado global durante a fase de treino para estabilizar os sinais de recompensa, enquanto o ``Ator'' (controlador do robô) utiliza apenas observações locais durante a fase de execução \cite{sun2024graph}.
+\paragraph{Arquitetura CTDE e Escalabilidade com GNNs:} Para mitigar a instabilidade, a literatura recorre frequentemente à arquitetura de \textbf{Treinamento Centralizado com Execução Descentralizada} (CTDE) \cite{lowe2017maddpg}. Nesta abordagem, um componente ``Crítico'' tem acesso ao estado global durante a fase de treino para estabilizar os sinais de recompensa, enquanto o ``Ator'' (controlador do robô) utiliza apenas observações locais durante a fase de execução \cite{sun2024graph}. Importa notar que a implementação desta tese adota uma variante mais estrita --- treino \emph{e} execução descentralizados, com o crítico a partir da mesma observação local do ator (Secção~\ref{sec:limitacoes}) ---, pelo que o CTDE é aqui apresentado como contexto da literatura, e não como a arquitetura utilizada.
 
 Contudo, para garantir que o enxame é verdadeiramente escalável, a investigação moderna tem integrado \textbf{Graph Neural Networks (GNNs)} e mecanismos de atenção espacial.
 
@@ -720,10 +730,10 @@ Os estudos mais relevantes neste grupo, como o de \textbf{Hassen e Amin (2025)},
 A literatura de MARL abandonou abordagens simplistas (como Q-Learning tabular) em favor de arquiteturas baseadas em grafos. O trabalho de \textbf{Chen et al. (2024)} demonstra que a modelação do sistema como um grafo, processado por \textbf{redes neuronais de grafos (GNNs)} com atenção, reduz o erro de estimação face a métodos de agregação padrão e, decisivamente, preserva a transferibilidade da política quando o número de agentes varia (\textit{Zero-Shot Transfer}) --- validando o uso de GNNs para mitigar o problema da dimensionalidade em sistemas multiagente descentralizados \cite{sun2024graph}.
 
 % --- NOVO PARÁGRAFO AQUI ---
-Recentemente, Xiao et al. (2026) propuseram o método CSPER, destacando que abordagens de RL sofrem de fraca exploração em ambientes complexos de navegação devido a recompensas esparsas \cite{xiao2026csper}. Este trabalho reforça a necessidade de mecanismos de recompensa densos, como os propostos nesta tese. Paralelamente, Roveda (2026) explorou a hibridização entre RL e Algoritmos Evolutivos para manipulação adaptativa, sugerindo que a combinação dos dois mundos pode mitigar a incerteza em ambientes não estruturados \cite{roveda2026hybrid}.
+Recentemente, Xiao et al. (2026) propuseram o método CSPER, destacando que abordagens de RL sofrem de fraca exploração em ambientes complexos de navegação devido a recompensas esparsas \cite{xiao2026csper}. Este trabalho reforça a necessidade de mecanismos de recompensa densos, como os propostos nesta tese. Paralelamente, Onori et al. (2024) exploraram a hibridização entre RL e Algoritmos Evolutivos para manipulação robótica, demonstrando que a transferência evolutiva de conhecimento entre agentes melhora substancialmente a eficiência amostral do treino ($\approx$60\% menos amostras) \cite{onori2024adaptive}.
 % ---------------------------
 
-Mais próximo da formulação adotada nesta dissertação, Yigit et al. (2026) propõem um sistema de navegação de enxames totalmente descentralizado, modelado como um \textit{Multi-Agent Markov Decision Process} (MAMDP) e treinado exclusivamente com \textbf{PPO} e \textit{parameter sharing}, sem comunicação explícita entre agentes \cite{yigit2026marl}. Os autores reportam convergência rápida e taxas de sucesso quase perfeitas numa arena 2D com obstáculos circulares estáticos, recorrendo a uma função de recompensa multicomponente (progresso, penalização de colisões, \textit{team bonus}) muito semelhante à aqui empregue, o que valida empiricamente o paradigma PPO descentralizado adotado como \textit{baseline}. Contudo, este trabalho evidencia precisamente as lacunas que a presente tese pretende preencher: o espaço de observação é de dimensão fixa (8), impossibilitando o \textit{Zero-Shot Transfer} para enxames de tamanho variável; a avaliação restringe-se à comparação contra uma política aleatória, sem testes estatísticos nem cenários de \textit{stress}; e os próprios autores remetem para \textit{future work} a inclusão de obstáculos dinâmicos, agentes heterogéneos e falhas de comunicação --- aspetos já contemplados na metodologia desta dissertação através de \textit{Graph Neural Networks}, cenários de labirinto com campo geodésico e injeção controlada de falhas de agentes.
+Mais próximo da formulação adotada nesta dissertação, Yigit et al. (2026) propõem um sistema de navegação de enxames totalmente descentralizado, modelado como um \textit{Multi-Agent Markov Decision Process} (MAMDP) e treinado exclusivamente com \textbf{PPO} e \textit{parameter sharing}, sem comunicação explícita entre agentes \cite{yigit2026marl}. Os autores reportam convergência rápida e taxas de sucesso quase perfeitas numa arena 2D com obstáculos circulares estáticos, recorrendo a uma função de recompensa multicomponente (progresso, penalização de colisões, \textit{team bonus}) da mesma família da aqui empregue (progresso por potencial + recompensa de tarefa), o que valida empiricamente o paradigma PPO descentralizado adotado como \textit{baseline}. Contudo, este trabalho evidencia precisamente as lacunas que a presente tese pretende preencher: o espaço de observação é de dimensão fixa (8), impossibilitando o \textit{Zero-Shot Transfer} para enxames de tamanho variável; a avaliação restringe-se à comparação contra uma política aleatória, sem testes estatísticos nem cenários de \textit{stress}; e os próprios autores remetem para \textit{future work} a inclusão de obstáculos dinâmicos, agentes heterogéneos e falhas de comunicação --- aspetos já contemplados na metodologia desta dissertação através de \textit{Graph Neural Networks}, cenários de labirinto com campo geodésico e injeção controlada de falhas de agentes.
 
 \section{O Desafio do \textit{Deployment Gap} em Robótica de Enxame}
 \label{sec:deployment_gap}
@@ -744,7 +754,7 @@ O \textit{Deployment Gap} é particularmente severo em sistemas multiagente. Ao 
 A literatura propõe várias famílias de técnicas para estreitar o fosso. A \textbf{aleatorização de domínio} (\textit{domain randomization}) é a mais difundida: durante o treino, randomizam-se sistematicamente os parâmetros físicos e sensoriais do simulador (massas, fricções, ganhos de motor, níveis de ruído), forçando a política a ser robusta a uma \emph{distribuição} de dinâmicas em vez de a uma única, de modo que o mundo real surja como apenas mais uma amostra dessa distribuição \cite{tobin2017domain}. Complementarmente, a \textbf{identificação de sistema} (\textit{system identification}) calibra os parâmetros do simulador a partir de medições reais, reduzindo o enviesamento à partida; e o \textbf{ajuste fino} (\textit{fine-tuning}) no robô físico, ou em simuladores de fidelidade crescente, adapta a política às condições efetivas de operação.
 
 \subsection{Posicionamento desta Dissertação}
-Embora a validação \textit{sim-to-real} permaneça fora do âmbito experimental deste trabalho (Secção~\ref{sec:limitacoes}), várias opções de desenho foram tomadas no sentido de \emph{antecipar} o fosso, e não de o ignorar. A observação é mantida estritamente \textbf{local e parcial} (LiDAR limitado a $5$\,m, sem acesso ao estado global), replicando as restrições sensoriais de plataformas como o e-puck; introduz-se \textbf{observabilidade parcial genuína} ao nível dos obstáculos (detetáveis apenas localmente); a robustez é explicitamente testada através da \textbf{injeção de falhas} de $10\%$ dos agentes a meio do episódio (Secção~\ref{sec:res_robustez}); e o ambiente inclui \textbf{perturbações dinâmicas} (obstáculos e alvo móveis). A elevada resiliência observada perante falhas sugere que a partilha de parâmetros confere ao enxame uma redundância funcional favorável à transferência. A validação empírica em hardware, recorrendo às técnicas de \textit{domain randomization} e \textit{system identification} acima descritas, constitui a extensão natural deste trabalho (Secção~\ref{sec:limitacoes_trabalho_futuro}).
+Embora a validação \textit{sim-to-real} permaneça fora do âmbito experimental deste trabalho (Secção~\ref{sec:limitacoes}), várias opções de desenho foram tomadas no sentido de \emph{antecipar} o fosso, e não de o ignorar. A observação é mantida estritamente \textbf{local e parcial} (LiDAR limitado a $8$\,m, sem acesso ao estado global), replicando as restrições sensoriais de plataformas como o e-puck; introduz-se \textbf{observabilidade parcial genuína} ao nível dos obstáculos (detetáveis apenas localmente); a robustez é explicitamente testada através da \textbf{injeção de falhas} de $10\%$ dos agentes a meio do episódio (Secção~\ref{sec:res_robustez}); e o ambiente inclui \textbf{perturbações dinâmicas} (obstáculos e alvo móveis). A elevada resiliência observada perante falhas sugere que a partilha de parâmetros confere ao enxame uma redundância funcional favorável à transferência. A validação empírica em hardware, recorrendo às técnicas de \textit{domain randomization} e \textit{system identification} acima descritas, constitui a extensão natural deste trabalho (Secção~\ref{sec:limitacoes_trabalho_futuro}).
 
 \section{Lacunas Identificadas e Oportunidade de Melhoria}
 A revisão sistemática da literatura permitiu consolidar a evidência de que a principal barreira ao avanço da robótica de enxame não reside na escassez de algoritmos, mas sim na \textbf{falha sistemática de rigor comparativo} entre paradigmas distintos. Observou-se que as comunidades de \textit{Multi-Agent Reinforcement Learning} (MARL) e de Otimização Bio-inspirada operam em silos metodológicos quase estanques:
@@ -763,7 +773,7 @@ Para fundamentar cientificamente a definição do problema desta tese, foram sel
 \begin{enumerate}
     \item \textbf{Chen et al. (2024):} Este trabalho é fundamental por demonstrar a eficácia das \textbf{GNNs} na minimização do erro de estimação em enxames totalmente descentralizados, validando a arquitetura tecnológica de base escolhida para o simulador desta tese \cite{sun2024graph}.
     \item \textbf{Elrod et al. (2025):} Explora o potencial de arquiteturas baseadas em \textbf{Transformers} para a coordenação multiagente, destacando como a atenção espacial é superior aos métodos de agregação simples para manter a coesão do grupo em tarefas dinâmicas \cite{elrod2025gnn}.
-    \item \textbf{Heimann et al. (2024):} Introduz o conceito de \textbf{Safe MARL}, integrando métodos de verificação em tempo real no processo de aprendizagem para mitigar o risco de colisões catastróficas, uma preocupação central para a implantação em sistemas físicos reais \cite{heimann2024runtime}.
+    \item \textbf{Liu e Li (2024):} Introduzem o conceito de \textbf{Safe MARL}, integrando métodos de verificação em tempo real (\textit{runtime verification}) no processo de aprendizagem para mitigar o risco de colisões catastróficas, uma preocupação central para a implantação em sistemas físicos reais \cite{heimann2024runtime}.
     \item \textbf{Iskandar et al. (2023):} Aplica aprendizagem por reforço profundo à navegação de um enxame de robôs em simulação, representando a linha de investigação de RL aplicado a \textit{swarm} que esta dissertação estende com uma \textbf{comparação sistemática} face aos métodos bio-inspirados, ainda rara na literatura \cite{iskandar2023navigation}.
     \item \textbf{Kegeleirs et al. (2025):} Identifica criticamente as limitações na transição da simulação para a realidade (\textit{sim-to-real}), apontando a ausência de testes em ambientes ruidosos e com falhas de comunicação como o principal obstáculo à adoção industrial \cite{kegeleirs2025towards}.
     \item \textbf{Wang et al. (2025):} Propõe o \textit{framework} \textbf{LNS2+RL}, demonstrando que a hibridização entre pesquisa local e aprendizagem por reforço é a via mais eficaz para resolver problemas de \textit{pathfinding} em larga escala com obstáculos móveis \cite{zheng2025lns2}.
@@ -793,7 +803,7 @@ A Tabela \ref{tab:sota_summary} apresenta uma síntese dos estudos mais relevant
 
         Hassen \& Amin (2025) \cite{hassen2025hybrid} & Bio-inspirado (PSO) & Alta eficiência energética (98\% otimalidade) em mapas estáticos. & Performance degrada-se 40\% com obstáculos móveis (falta de adaptação online). \\ \hline
 
-        Heimann et al. (2024) \cite{heimann2024runtime} & Safe MARL & Introduz verificação em tempo real para evitar colisões durante o treino. & Avaliado em ambientes simplificados, sem comparação com métodos evolutivos. \\ \hline
+        Liu \& Li (2024) \cite{heimann2024runtime} & Safe MARL & Introduz verificação em tempo real para evitar colisões durante o treino. & Avaliado em ambientes simplificados, sem comparação com métodos evolutivos. \\ \hline
 
         Iskandar et al. (2023) \cite{iskandar2023navigation} & MARL (Deep RL) & Aplica aprendizagem por reforço profundo à navegação de um enxame de robôs em simulação. & Não compara com métodos bio-inspirados; cenário de navegação simples, sem falhas de agentes. \\ \hline
 
@@ -876,7 +886,8 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
  & Raio do Ninho ($r_{nest}$) & $1.5$\,m \\
  & Velocidade do Ninho ($v_{nest}$) & $0.015$\,m/s \\
  & Limite do Temporizador de Fome ($hunger$) & $250$ passos (só Sandbox) \\
- & Cooperação Mínima para Alimentar ($k_{min}$) & $3$ agentes \\
+ & Cooperação Mínima para Alimentar ($k_{min}$) & $3$ agentes ($1$ nos labirintos de navegação) \\
+ & Alcance do LiDAR & $8.0$\,m \\
  & Fator de Progresso (PBRS) & $10.0$ \\
  & Resolução do Campo Geodésico & $0.4$\,m \\ \hline
 \textbf{PPO} & Taxa de Aprendizagem ($lr$) & $10^{-4}$ \\
@@ -891,7 +902,7 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
  & Arquitetura da Rede & MLP $[256, 256]$ \\ \hline
 \textbf{Evolutivo (AE)} & Tamanho da População ($K$) & $30$ genomas \\
  & Taxa de Mutação ($p_{mut}$) & $0.1$ \\
- & Desvio Padrão Inicial ($\sigma$) & $0.1$ (Decaimento: $\times 0.995$) \\
+ & Desvio Padrão Inicial ($\sigma$) & $0.1$ (Decaimento: $\times 0.999$; $\sigma_{\min}=0.03$) \\
  & Episódios de Avaliação por Genoma ($E$) & $4$ \\
  & Dimensão Oculta da Rede ($h$) & $32$ ($\approx 8$k pesos) \\ \hline
 \end{tabular}
@@ -908,7 +919,7 @@ As observações de cada agente são estritamente locais, parciais e expressas n
 \begin{enumerate}
     \item \textbf{Direção e Distância ao Ninho ($4$ valores):} Projeção do vetor direcional unitário do ninho nos eixos egocêntricos Frontal ($F$), Direito ($R$) e Superior ($U$) do robô, mais a distância normalizada ($d / 2r_{arena}$). Esta informação de \textbf{homing} está sempre disponível, mesmo quando existem muros entre o agente e o ninho. Este pressuposto é padrão em robótica de enxame --- assume-se um sentido global de orientação para a base (análogo à bússola magnética dos pombos, à orientação solar das formigas ou ao GPS de drones), mas \textbf{nunca} um mapa prévio dos obstáculos. A parcialidade da observação é assim mantida ao nível dos obstáculos (detetáveis apenas localmente pelo LiDAR), e não ao nível do objetivo. Esta opção corrige uma limitação de uma versão anterior, em que a direção era anulada na ausência de linha de visão, o que cegava os agentes em todos os cenários com paredes e os impedia de aprender a contornar.
     \item \textbf{LiDAR Horizontal ($8$ valores, vetor $\mathbf{l}_i$):} Oito raios medidos em plano horizontal, uniformemente distribuídos a 360\textdegree{}, com alcance máximo de 8\,m. O valor devolvido é $1 - (d_{hit} / d_{max})$, onde $1.0$ significa impacto iminente. O alcance foi dimensionado para que o contorno dos grandes obstáculos dos labirintos (p.\,ex.\ as pernas do Muro em U, a $\approx$8\,m da rota direta) seja detetável a tempo de iniciar o desvio, preservando ainda assim a observabilidade parcial: o agente não vê o mapa completo nem a direção geodésica.
-    \item \textbf{Direção e Distância à Porta/Entrada ($4$ valores, $\mathbf{v}_{porta, i}$ e $d_{porta, i}$):} Direção egocêntrica e distância normalizada à porta-objetivo do cenário, preenchidas \textbf{apenas} nos cenários com uma porta física definida (Porta Cooperativa); nos restantes são nulas. A porta é um sub-objetivo explícito do cenário --- tal como o ninho ---, pelo que a indicar não constitui revelar o trajeto. Distingue-se assim de fornecer \textit{waypoints} das passagens dos labirintos, o que equivaleria a um planeador externo e quebraria a observabilidade parcial.
+    \item \textbf{Direção e Distância à Porta/Entrada ($4$ valores, $\mathbf{v}_{porta, i}$ e $d_{porta, i}$):} Direção egocêntrica e distância normalizada à porta-objetivo do cenário, preenchidas \textbf{apenas} nos cenários com uma porta física definida (Porta Cooperativa e Porta Cooperativa com Alternativa); nos restantes são nulas. A porta é um sub-objetivo explícito do cenário --- tal como o ninho ---, pelo que a indicar não constitui revelar o trajeto. Distingue-se assim de fornecer \textit{waypoints} das passagens dos labirintos, o que equivaleria a um planeador externo e quebraria a observabilidade parcial.
     \item \textbf{Vetor de Vizinhos ($19 \times 5 = 95$ valores, vetores $\mathbf{n}_{j, i}$):} Para os restantes 19 agentes, envia-se o vetor de direção local ($3$ valores), distância normalizada ($1$ valor) e um sinal binário de comunicação ($1$ valor). Este último é ativado ($1.0$) quando o vizinho atinge o ninho e se encontra a repousar, servindo como mecanismo de recrutamento estigmérgico.
 \end{enumerate}
 
@@ -925,9 +936,9 @@ O passo de simulação ($\texttt{step}$) processa o enxame por uma ordem determi
     \item \textbf{Perturbações dinâmicas:} movimento dos obstáculos e do alvo móvel; injeção de falhas de agentes (Secção~\ref{sec:res_robustez}) quando aplicável.
     \item \textbf{Aplicação da ação com \textit{wall-sliding}:} cada deslocamento é projetado ortogonalmente à normal de qualquer muro intersetado, permitindo deslizamento em vez de paragem abrupta.
     \item \textbf{Resolução de colisões:} reposicionamento por penetração contra obstáculos (distância euclidiana), muros (AABB) e fronteira circular da arena.
-    \item \textbf{Separação física e dispersão:} repulsão geométrica de pares sobrepostos e penalização \textit{anti-clustering}, isenta nas zonas de cooperação.
-    \item \textbf{Lógica de tarefa:} verificação de ocupação do ninho ($k_{min}\ge 3$), cerco do alvo móvel (360\textdegree{}) ou abertura da porta cooperativa.
-    \item \textbf{Atribuição de recompensa e terminação:} cálculo dos seis termos de $\mathcal{R}$ e verificação do horizonte temporal ($t \ge t_{max}$).
+    \item \textbf{Separação física:} repulsão geométrica de pares de agentes sobrepostos (a penalização \textit{anti-clustering} associada está desativada na formulação final da recompensa, Secção~\ref{sec:reward_design}; a resolução física mantém-se sempre ativa).
+    \item \textbf{Lógica de tarefa:} verificação de ocupação do ninho ($k_{min}$ agentes, consoante o cenário), cerco do alvo móvel (360\textdegree{}) ou abertura da porta cooperativa.
+    \item \textbf{Atribuição de recompensa e terminação:} cálculo dos termos de $\mathcal{R}$ (Secção~\ref{sec:reward_design}) e verificação do horizonte temporal ($t \ge t_{max}$).
 \end{enumerate}
 
 \subsection{Cenários de Teste}
@@ -982,6 +993,7 @@ Para garantir uma avaliação exaustiva e progressiva das capacidades de control
 \end{enumerate}
 
 \section{Design da Função de Recompensa}
+\label{sec:reward_design}
 A função de recompensa é o instrumento de desenho experimental mais sensível do sistema: as primeiras campanhas de treino acumularam termos secundários (penalizações de dispersão, de colisão entre agentes e de contacto com obstáculos) que, na prática, diluíam o sinal da tarefa e abriam portas a comportamentos degenerados. A formulação final adotou deliberadamente uma \textbf{recompensa simples}, com o número mínimo de termos e dois focos --- \emph{explorar o mapa} e \emph{encontrar o ninho} --- em que a recompensa de tarefa domina claramente todos os sinais de \textit{shaping}. As penalizações secundárias foram removidas \emph{apenas do sinal de treino}: a resolução física correspondente mantém-se no motor (os agentes continuam a não se sobrepor nem a atravessar paredes, Secção~\ref{sec:eng_fisica}), pelo que a simplificação não altera a dinâmica do mundo, apenas o que é ensinado.
 
 \begin{equation}
@@ -1555,20 +1567,22 @@ Para garantir a reprodutibilidade integral das experiências, este apêndice re�
 \texttt{obstacle\_velocity} & $0.02$\,m/s & Velocidade dos obstáculos \\
 \texttt{nest\_radius} & $1.5$\,m & Raio do ninho \\
 \texttt{nest\_velocity} & $0.015$\,m/s & Velocidade do ninho móvel \\
-\texttt{required\_to\_eat} & $3$ & Agentes mínimos para recolha ($k_{min}$) \\
+\texttt{required\_to\_eat} & $3$ & $k_{min}$ nos cenários cooperativos (forçado a $1$ nos labirintos de navegação) \\
 \texttt{hunger\_timer\_max} & $250$ & Limite de fome (só Sandbox) \\
+\texttt{lidar\_range} & $8.0$\,m & Alcance máximo do LiDAR \\
 \texttt{max\_steps} & $500$ & Horizonte temporal base \\
 \texttt{max\_steps\_cooperative\_door} & $800$ & Horizonte na Porta Cooperativa \\
+\texttt{max\_steps\_cooperative\_door\_bypass} & $1000$ & Horizonte na Porta Coop.\ c/ Alternativa \\
 \texttt{progress\_reward\_factor} & $10.0$ & Fator de Progresso (PBRS) \\
 \texttt{geodesic\_cell\_size} & $0.4$\,m & Resolução do campo geodésico \\
-\texttt{exploration\_bonus} & $2.0$ & Bónus por célula nova \\
+\texttt{exploration\_bonus} & $0.5$ & Bónus por célula nova \\
 \texttt{exploration\_cell\_size} & $2.0$\,m & Resolução da grelha de exploração \\
-\texttt{min\_spread\_distance} & $1.0$\,m & Limiar da penalização de dispersão \\
-\texttt{spreading\_penalty\_factor} & $1.5$ & Magnitude da penalização \textit{anti-clustering} \\
+\texttt{min\_spread\_distance} & $1.0$\,m & Limiar de dispersão (física; sem sinal de recompensa) \\
+\texttt{spreading\_penalty\_factor} & $0.0$ & Penalização \textit{anti-clustering} (desativada) \\
 \texttt{agent\_radius} & $0.15$\,m & Raio do robô \\
-\texttt{collision\_penalty} & $-1.0$ & Penalização de colisão entre agentes \\
-\texttt{obstacle\_penalty} & $-2.0$ & Penalização de colisão com obstáculo/parede \\
-\texttt{food\_collected} & $+100.0$ & Recompensa de tarefa (recolha) \\
+\texttt{collision\_penalty} & $0.0$ & Penalização de colisão entre agentes (desativada) \\
+\texttt{obstacle\_penalty} & $0.0$ & Penalização de colisão com obstáculo/parede (desativada) \\
+\texttt{food\_collected} & $+300.0$ & Recompensa de tarefa (recolha) \\
 \texttt{energy\_cost} & $-0.05$ & Custo energético por passo \\
 \texttt{guillotine\_threshold} & $-200$ & Limiar da guilhotina (aos 150 passos) \\ \hline
 \end{tabular}
@@ -1597,7 +1611,7 @@ Para garantir a reprodutibilidade integral das experiências, este apêndice re�
  & \texttt{num\_cpu} & $16$ \\ \hline
 \textbf{Evolutivo (AE)} & \texttt{pop\_size} ($K$) & $30$ \\
  & \texttt{mutation\_rate} ($p_{mut}$) & $0.1$ \\
- & \texttt{sigma} ($\sigma$) & $0.1$ ($\times 0.995$/geração) \\
+ & \texttt{sigma} ($\sigma$) & $0.1$ ($\times 0.999$/geração; $\sigma_{\min}=0.03$) \\
  & \texttt{eval\_episodes} ($E$) & $4$ (seeds fixas) \\
  & \texttt{hidden\_dim} ($h$) & $32$ ($\approx 8$k pesos) \\
  & Elitismo & $20\%$ ($e = 6$ genomas) \\ \hline
@@ -1669,7 +1683,7 @@ cell = (int(pos[0] // self.exploration_cell_size),
         int(pos[1] // self.exploration_cell_size))
 if cell not in self.visited_cells[idx]:
     self.visited_cells[idx].add(cell)
-    rewards[agent] += self.exploration_bonus     # +2.0 por celula nova
+    rewards[agent] += self.exploration_bonus     # +0.5 por celula nova
 \end{lstlisting}
 
 \chapter{Recursos Adicionais}
