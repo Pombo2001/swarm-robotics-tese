@@ -52,7 +52,7 @@ def science_table():
 
 
 # ── Comparação de métricas entre treinos (vista Resultados) ───────────────────
-OFICIAL_LABEL = "★ Oficial (10 jun · results/evaluation)"
+OFICIAL_LABEL = "★ Oficial (9 jul · campanha 7 dias, 7 runs × 20 ep)"
 
 
 def _session_eval_path(session: str):
