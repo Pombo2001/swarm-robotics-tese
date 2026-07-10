@@ -1,5 +1,12 @@
 # Avanço do GNN: fitness de *homing* (28–29 jun 2026)
 
+> ✅ **CONCLUÍDO E SUPERADO (10 jul 2026).** O plano de reescrita descrito abaixo foi
+> executado: a tese e o artigo já refletem a campanha final de 7 dias. Os **números
+> deste documento são de 29 jun** (treino de 3 dias) e ficaram desatualizados — os
+> definitivos estão em `docs/PLANO_DE_ATAQUE.md` (secção "RESULTADOS FINAIS") e em
+> `results/graficos_tese/final_7d/`. Mantém-se como registo do avanço metodológico,
+> que continua válido: a *fitness* de homing é a que está em produção.
+
 > Documento de trabalho. Regista o avanço metodológico (estável) e o **plano de
 > reescrita da tese**, a executar **só quando o treino de 3 dias (`train3d`) terminar**
 > e os resultados finais (eval + testes estatísticos) existirem. Ver memória

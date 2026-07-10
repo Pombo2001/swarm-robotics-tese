@@ -133,6 +133,8 @@ _TIMELINE = [
     ("28 jun", "Fitness de homing (GNN)", "O GNN come em labirintos pela primeira vez."),
     ("30 jun", "Novelty Search", "Ataque ao ótimo deceptive do bypass."),
     ("01 jul", "Treino de 3 dias fecha", "GNN come nos 7/7 cenários (números de treino)."),
+    ("02–09 jul", "Campanha final de 7 dias", "3 algos × 7 cenários × 7 runs = 147 treinos."),
+    ("10 jul", "Resultados fechados", "GNN 28/28 runs nos labirintos; Muro U bimodal p/ os 3."),
 ]
 
 

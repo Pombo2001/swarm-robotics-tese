@@ -11,6 +11,64 @@
 
 ---
 
+# 🏁 RESULTADOS FINAIS — campanha de 7 dias (10 jul 2026)
+
+> ⚠️ **Tudo o que está abaixo desta secção é HISTÓRICO.** Várias conclusões dessas
+> secções antigas (GNN colapsa nos labirintos; *reward hacking* do PPO no Muro U; SAC
+> resolve tudo; Sscale 15%→100%) foram **REFUTADAS** pela campanha final. Lê-as como
+> registo do percurso, não como estado do projeto.
+
+**Protocolo**: 3 algoritmos × 7 cenários × **7 runs** independentes = 147 treinos
+(GNN 195 min/run, PPO/SAC 48 min/run). Avaliação determinística: 20 ep/run com seeds
+emparelhadas = 140 ep/célula. Significância: Mann-Whitney + δ de Cliff sobre as
+**médias por run** (n=7) — a unidade independente é o run, não o episódio.
+
+Recolhas/ep (média ± dp *entre runs*), sucesso médio, [runs a 100%]:
+
+| Cenário | GNN | PPO | SAC |
+|---|---|---|---|
+| Sandbox | 38.3±31.0 (86%) [5/7] | **71.5±1.0** (100%) [7/7] | 69.2±1.9 (100%) [7/7] |
+| Muro em U | 24.5±32.7 (43%) [3/7] | **39.6±36.7** (71%) [4/7] | 9.0±15.1 (34%) [2/7] |
+| Gargalo | 121.4±20.0 (100%) [7/7] | **123.2±1.2** (100%) [7/7] | 41.4±36.8 (72%) [5/7] |
+| Quatro Salas | **59.8±13.2** (100%) [7/7] | 33.6±3.8 (100%) [7/7] | 31.8±3.3 (100%) [7/7] |
+| Porta Cooperativa | **69.8±1.0** (100%) [7/7] | 67.1±3.7 (100%) [7/7] | 62.1±2.5 (100%) [7/7] |
+| Perceção Cooperativa | **19.0±8.7** (91%) [6/7] | 15.3±0.4 (100%) [7/7] | 16.1±0.8 (100%) [7/7] |
+| Porta c/ Alternativa | **86.7±2.0** (100%) [7/7] | 85.3±4.0 (100%) [7/7] | 68.6±3.4 (100%) [7/7] |
+
+**Achado central**: o "colapso do evolutivo" era um **artefacto do desenho da fitness**
+(o retorno acumulado é *farmável* por deambulação), não uma limitação do paradigma. Com
+o **homing terminal** (`J = f̄·10⁴ + 5000·h̄`), o GNN converge em **28/28 runs** dos quatro
+labirintos não-decetivos e é **significativamente superior a ambos** os métodos de gradiente
+em 3 cenários (four_rooms, coop_door, perception) e superior ao SAC em mais 2 (bottleneck,
+bypass, empatando com o PPO).
+
+**Refutações explícitas do plano antigo:**
+- ~~GNN colapsa nos labirintos~~ → curado pelo homing (28/28 runs).
+- ~~PPO faz *reward hacking* no Muro U (0%)~~ → curado pela recompensa simplificada;
+  hoje o PPO é o **melhor** no Muro U (4/7 runs a 100%). O *reward hacking* subsiste
+  apenas como **nota histórica** sobre a calibração do bónus de exploração.
+- ~~SAC resolve os 6 cenários~~ → o SAC é o **mais frágil** nos gargalos físicos
+  (bottleneck 5/7, u_wall 2/7).
+- ~~Sscale: GNN 15%→100% de sucesso~~ → GNN a **100% em todas** as dimensões
+  (N=10→100); o que desce é a recolha *per capita* (3.82→1.36, recurso finito), e as
+  recolhas totais **crescem** (38.2→136.3).
+- **Muro em U**: nenhum algoritmo o resolve de forma fiável. É **bimodal** nos três
+  (GNN 3/7, PPO 4/7, SAC 2/7) e **nenhuma diferença é significativa**. O sinal de treino
+  está correto (potencial geodésico aponta para o desvio) — o que falha é a **descoberta**,
+  porque o agente só observa a bússola euclidiana e o LiDAR local.
+- **Novelty Search**: +26% vs objetivo puro (81.3 vs 64.5, Wilcoxon p=8.7e-5, δ=+1.00),
+  MAS com 600 min vs 195 → confundido com orçamento. A campanha final mostra que o homing
+  sozinho resolve o bypass (7/7, 86.7). Novelty deixa de ser "o melhor resultado" e passa
+  a "mecanismo de robustez para orçamento curto / deceção mais severa".
+
+**Estado dos entregáveis** (branch `feat/novelty-search`, 35 commits à frente da `main`):
+- Tese: 99 págs, compila, Cap. 6 + Conclusões + QI1-6 alinhados com estes dados.
+- Artigo: 8 págs PT-PT, reescrito (commit `ed1c069`), compila.
+- Dados: `results/graficos_tese/final_7d/` (figuras canónicas + eval_by_run_7d.csv).
+  Regenerar com `scripts/gerar_figuras_7d.py --install-oficial`.
+
+---
+
 ## ⏱ ATUALIZAÇÃO 2 jul 2026 (manhã) — CHECKLIST DE RETOMA EXECUTADO ✅
 
 > Eval do train3d fechou às 23h40 de 1 jul (sessão `01-07-2026_23h40m`); servidor sem tmux.

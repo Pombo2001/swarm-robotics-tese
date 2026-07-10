@@ -28,10 +28,13 @@ ICM/curiosidade intrínseca).
 |-------|-----------|
 | `none` | Sandbox: arena aberta, ninho e obstáculos móveis. |
 | `u_wall` | Muro em U a bloquear o caminho direto ao ninho. |
-| `bottleneck` | Duas paredes com passagem estreita de 1,5 m. |
-| `four_rooms` | Labirinto de quatro salas com passagens específicas. |
+| `bottleneck` | Duas paredes com passagem estreita de 2,5 m. |
+| `four_rooms` | Labirinto de quatro salas com passagens de 2,5 m. |
 | `cooperative_door` | Porta que só abre com 3 robôs a empurrar em simultâneo. |
 | `cooperative_perception` | Alvo móvel capturado quando rodeado por 3+ robôs a 360°. |
+| `cooperative_door_bypass` | Como a porta cooperativa, mas com um corredor lateral alternativo — cenário *deceptive*. |
+
+> Fonte única dos cenários e das etiquetas: `src/scenarios.py` (não duplicar noutros ficheiros).
 
 ---
 
@@ -91,7 +94,7 @@ python launcher_dashboard.py
 ```
 
 Permite editar a configuração, treinar cada algoritmo, lançar a **Rotina Noturna**
-(treina os 6 cenários × 3 algoritmos distribuindo um orçamento de horas), visualizar
+(treina os 7 cenários × 3 algoritmos distribuindo um orçamento de horas), visualizar
 modelos em 3D e gerar os gráficos da tese.
 
 ### Linha de comandos

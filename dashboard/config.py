@@ -33,9 +33,9 @@ SCENARIO_LABEL_SHORT = {
     "cooperative_perception": "Perceção coop.",
     "cooperative_door_bypass": "Porta c/ alt.",
 }
-# Conjunto canónico de experiências da tese (os 6 cenários principais, sem o
-# bypass exploratório) — ordem usada nas tabelas comparativas.
-MAIN_SCENARIO_KEYS = [k for k in SCENARIO_KEYS if k != "cooperative_door_bypass"]
+# Conjunto canónico de experiências da tese — os 7 cenários. O bypass deixou de ser
+# exploratório na campanha final (é o cenário deceptive, treinado e avaliado nos 7 runs).
+MAIN_SCENARIO_KEYS = list(SCENARIO_KEYS)
 
 ALGOS = ["GNN", "PPO", "SAC"]
 ALGO_META = {
