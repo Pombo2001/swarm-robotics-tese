@@ -61,6 +61,12 @@ bypass, empatando com o PPO).
   sozinho resolve o bypass (7/7, 86.7). Novelty deixa de ser "o melhor resultado" e passa
   a "mecanismo de robustez para orçamento curto / deceção mais severa".
 
+> 📋 **Decisão em aberto — o que treinar nos últimos 2 meses:** ver
+> **[`docs/PROPOSTA_TREINO_FINAL.md`](PROPOSTA_TREINO_FINAL.md)** (proposta autónoma, com custos,
+> cautelas metodológicas e títulos alternativos para o artigo). Resumo: correr o **Novelty Search
+> no Muro em U e no bypass com orçamento igualado** (~2 dias, fecha as duas lacunas que restam);
+> **não** repetir a campanha 7×7 nem tentar a política de atenção por gradiente.
+
 **Estado dos entregáveis** (branch `feat/novelty-search`, 35 commits à frente da `main`):
 - Tese: 99 págs, compila, Cap. 6 + Conclusões + QI1-6 alinhados com estes dados.
 - Artigo: 8 págs PT-PT, reescrito (commit `ed1c069`), compila.
