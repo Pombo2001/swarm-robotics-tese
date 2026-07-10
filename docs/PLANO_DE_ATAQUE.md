@@ -67,7 +67,7 @@ bypass, empatando com o PPO).
 > no Muro em U e no bypass com orçamento igualado** (~2 dias, fecha as duas lacunas que restam);
 > **não** repetir a campanha 7×7 nem tentar a política de atenção por gradiente.
 
-**Estado dos entregáveis** (branch `feat/novelty-search`, 35 commits à frente da `main`):
+**Estado dos entregáveis** (branch `feat/novelty-search` — toda a tese final está aqui, **não na `main`**; fazer merge antes de 15 set):
 - Tese: 99 págs, compila, Cap. 6 + Conclusões + QI1-6 alinhados com estes dados.
 - Artigo: 8 págs PT-PT, reescrito (commit `ed1c069`), compila.
 - Dados: `results/graficos_tese/final_7d/` (figuras canónicas + eval_by_run_7d.csv).

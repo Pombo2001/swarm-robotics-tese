@@ -94,6 +94,13 @@ Os dois desfechos servem:
 - **Se não subir** → resultado negativo limpo sobre os limites da pressão por novidade, com o
   mesmo orçamento e o mesmo protocolo. Publicável e honesto.
 
+> **Honestidade estatística sobre o que n=7 pode dar aqui**: na *taxa de convergência*, nem o
+> desfecho perfeito atinge significância — Fisher exato de 7/7 vs 3/7 dá **p = 0.070** (5/7 vs
+> 3/7 dá p = 0.59). A significância, a existir, virá da **magnitude** (Mann-Whitney sobre as
+> médias de recolhas por run, n=7 — o mesmo teste das outras células, onde um 7/7 estável
+> contra um bimodal 24.5±32.7 dá tipicamente p ≈ 0.001). Reportar os dois: a taxa como
+> descritivo, a magnitude como teste.
+
 ### ⭐ Prioridade 2 — Novelty Search no **bypass**, orçamento igualado (195 min)
 `7 runs × 195 min ≈ 23 h`
 
@@ -145,15 +152,34 @@ Sobram ~7 semanas para integrar os resultados, rever a tese e o artigo. Margem c
 
 1. **Pré-registar o número de runs.** Decidir *antes* de ver os resultados e **reportar todos**.
    Correr dez e ficar com os sete melhores invalida a estatística.
-2. **Seeds sem colisão.** `run_experiments.py` passa `--seed <índice do run>` (linha 148), e
-   `--resume` salta os runs já registados em `_sessao_treino.txt`. Runs novos ⇒ seeds 8, 9, 10…
-   Não há sobreposição com os 7 existentes — mas também não há desculpa para cherry-picking.
+2. **Seeds: regra diferente consoante a prioridade.** `run_experiments.py` passa
+   `--seed <índice do run>` (linha 148). Na **P3** (extensão do baseline), os runs novos têm de
+   usar seeds 8, 9, 10… (`--resume` salta os já registados em `_sessao_treino.txt`) — sem
+   sobreposição com os 7 existentes. Nas **P1/P2** (Novelty), as seeds voltam a ser 1–7: é uma
+   condição experimental *diferente* no mesmo protocolo emparelhado, não uma extensão da amostra.
+   Em nenhum caso há desculpa para cherry-picking.
 3. **Confirmar que o servidor tem o código do HEAD antes de lançar.** A armadilha em que o
    `.pth` guardava apenas o **último** run já mordeu uma vez (corrigida em `d9a2c45`).
 4. **Orçamento igualado.** O ponto inteiro das prioridades 1 e 2 é os 195 min. Se se der mais
    tempo ao Novelty, repete-se o erro que se quer corrigir.
-5. **Não alterar `configs/foraging.yaml` nem `src/` entre campanhas.** Os runs novos têm de ser
-   comparáveis com os 7 existentes.
+5. **Um único delta no config: `evolution.novelty_weight`.** Correr Novelty exige alterar o
+   `configs/foraging.yaml` (é a variável experimental: `novelty_weight: 0.5`, lida em
+   `evo_trainer_3d.py`). **Tudo o resto fica congelado** — recompensa, física, LiDAR, população,
+   sigma — para os runs serem comparáveis com os 7 existentes. No fim, repor `novelty_weight: 0.0`.
+
+### Como lançar (mecânica)
+```bash
+# no servidor (.14 ou .26), com código = HEAD e novelty_weight: 0.5 no config:
+tmux new-session -d -s novelty_uwall \
+  'source .venv/bin/activate && ulimit -n 65536 && \
+   python scripts/run_experiments.py --algo GNN --runs 7 --time-gnn 195 \
+     --scenarios u_wall --eval-episodes 20 2>&1 | tee novelty_uwall.log'
+# idem para cooperative_door_bypass no outro servidor (sessão novelty_bypass)
+```
+Os resultados oficiais da campanha 7d **já estão no PC**, portanto o servidor pode ser tocado
+sem risco; ainda assim, os runs Novelty ficam identificáveis pelo log e pelo `.meta.json` de
+cada modelo. As seeds serão 1–7 de novo — correto, porque é uma **condição experimental
+diferente** no mesmo protocolo emparelhado, não uma extensão da amostra baseline.
 
 ---
 
