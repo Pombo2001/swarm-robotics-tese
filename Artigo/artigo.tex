@@ -1,5 +1,6 @@
 %% Artigo da dissertacao — modelo Elsevier (elsarticle), fornecido pelo Prof. Luis Nunes.
 %% Versao destilada da dissertacao "Aprendizagem por Reforco para Controlo de Enxames".
+%% Numeros da campanha final de 7 dias (7 runs x 7 cenarios x 3 algoritmos).
 \documentclass[final,5p,times,twocolumn,authoryear]{elsarticle}
 
 \usepackage[T1]{fontenc}
@@ -36,19 +37,23 @@ oferece robustez pré-programada. Este trabalho apresenta uma comparação
 controlada e independente do paradigma entre três controladores --- uma rede de
 grafo neuroevoluída com atenção sobre os vizinhos, \emph{Proximal Policy
 Optimisation} (PPO) e \emph{Soft Actor--Critic} (SAC) --- no mesmo simulador
-tridimensional de \emph{foraging} de alta fidelidade, com seis cenários de
-dificuldade crescente, sob avaliação determinística e testes estatísticos. Na
-realização da tarefa, os métodos de gradiente dominam: o SAC resolve os seis
-cenários e o PPO cinco em seis, falhando o Muro~em~U por \emph{exploração da
-recompensa} (\emph{reward hacking}), ao passo que o controlador evolutivo colapsa
-nos cenários com estrangulamentos. O quadro inverte-se sob escalabilidade
-\emph{zero-shot}: apenas o controlador baseado em atenção transita de $N=10$ para
-$N=100$ agentes sem retreino, uma vez que as políticas de dimensão fixa do
-PPO/SAC são estruturalmente incompatíveis com $N\neq 20$. A hipótese de que a
-inteligência adaptativa domina a robustez estática é, por isso, apenas
-\emph{parcialmente} confirmada, revelando um compromisso central entre o
-desempenho na tarefa a um tamanho de enxame fixo e a escalabilidade para tamanhos
-nunca vistos.
+tridimensional de \emph{foraging} de alta fidelidade, em sete cenários de
+dificuldade crescente, com sete execuções de treino independentes por combinação,
+sob avaliação determinística emparelhada e testes não paramétricos ao nível da
+execução. O resultado central é que o desempenho do controlador evolutivo depende
+menos do orçamento de treino do que do \emph{desenho da função de aptidão}:
+substituindo o retorno acumulado --- que é farmável por deambulação --- por um
+\emph{shaping} de \emph{homing} terminal, o controlador converge nas $28$
+execuções dos quatro labirintos não-decetivos e torna-se estatisticamente superior
+aos métodos de gradiente em três cenários, indistinguível do melhor deles em mais
+dois. Os métodos de gradiente conservam duas vantagens sólidas: fiabilidade em
+espaço aberto, onde o evolutivo ocasionalmente degenera, e uma eficiência
+computacional cerca de $8\times$ superior. Sob escalabilidade \emph{zero-shot},
+apenas o controlador baseado em atenção transita de $N=10$ para $N=100$ agentes
+sem retreino, mantendo $100\%$ de sucesso. A hipótese de que a inteligência
+adaptativa domina a robustez estática é, por isso, apenas \emph{parcialmente}
+confirmada: a vantagem decisiva reside na \emph{representação} e no desenho do
+sinal de treino, e não no algoritmo de otimização.
 \end{abstract}
 
 \begin{keyword}
@@ -95,16 +100,26 @@ que a literatura raramente oferece.
 Este artigo aborda essa lacuna com uma avaliação comparativa imparcial.
 Implementámos um simulador tridimensional de \emph{foraging} de alta fidelidade e
 avaliámos três controladores --- uma rede de grafo neuroevoluída com
-auto-atenção sobre os vizinhos, PPO e SAC --- em seis cenários, ao longo de três
+auto-atenção sobre os vizinhos, PPO e SAC --- em sete cenários e ao longo de três
 eixos: desempenho na tarefa ($P_{\text{task}}$), robustez a falhas de agentes
-($R_{\text{robust}}$) e escalabilidade \emph{zero-shot} ($S_{\text{scale}}$),
-todos suportados por testes de significância não paramétricos. A nossa
-contribuição é dupla: (i) um protocolo de avaliação reprodutível e independente
-do paradigma; e (ii) a evidência de um compromisso central, em que os métodos de
-gradiente vencem na realização da tarefa a um tamanho de enxame fixo, enquanto
-apenas o controlador baseado em grafo escala para tamanhos de enxame nunca
-vistos. A metodologia e os resultados completos são detalhados na dissertação que
-acompanha este artigo.
+($R_{\text{robust}}$) e escalabilidade \emph{zero-shot} ($S_{\text{scale}}$).
+Cada combinação (algoritmo, cenário) foi treinada em sete execuções independentes,
+o que permite tratar a \emph{execução de treino} --- e não o episódio --- como
+unidade estatística, distinguindo o desempenho atingível da fiabilidade da
+convergência.
+
+A nossa contribuição é tripla: (i) um protocolo de avaliação reprodutível e
+independente do paradigma, com significância aferida ao nível da execução; (ii) a
+demonstração de que o alegado colapso da neuroevolução em cenários de
+estrangulamento é um artefacto do \emph{desenho da aptidão}, e não uma limitação
+intrínseca do paradigma, corrigível por um \emph{shaping} de \emph{homing}
+terminal não farmável; e (iii) a evidência de que a escalabilidade \emph{zero-shot}
+é uma propriedade da representação (grafo com atenção), e não do otimizador. Uma
+versão preliminar deste trabalho, com um orçamento de treino mais curto e uma
+aptidão baseada no retorno acumulado, levava à conclusão oposta sobre o
+paradigma evolutivo --- circunstância que ilustra a importância metodológica do
+segundo contributo. A metodologia e os resultados completos são detalhados na
+dissertação que acompanha este artigo.
 
 \section{Trabalho Relacionado}
 \label{sec:related}
@@ -134,10 +149,14 @@ três controladores.
 Do lado bio-inspirado, a neuroevolução otimiza os pesos da rede sem gradientes
 \citep{salimans2017es}, oferecendo controladores estáveis para tarefas estáticas,
 mas com adaptabilidade \emph{em linha} limitada \citep{kegeleirs2025towards}. As
-estratégias de evolução são atrativas pela simplicidade e pela
-paralelização trivial, mas otimizam a partir de um único escalar de aptidão por
-episódio, sem atribuição de crédito temporal --- uma distinção que se revelará
-decisiva nos resultados.
+estratégias de evolução são atrativas pela simplicidade e pela paralelização
+trivial, mas otimizam a partir de um único escalar de aptidão por episódio, sem
+atribuição de crédito temporal --- uma distinção que se revelará decisiva. Quando
+a recompensa de tarefa é esparsa, a aptidão fica refém do termo de modelação, e a
+escolha desse termo determina se a seleção discrimina ou fica cega. A procura por
+novidade \citep{lehman2011abandoning} propõe abandonar por completo o objetivo,
+selecionando comportamentos pela sua raridade --- uma resposta ao mesmo problema
+de deceção que aqui abordamos por via do desenho da aptidão.
 
 Os estudos comparativos entre aprendizagem por reforço profunda e estratégias de
 evolução salientam a ausência de uma referência de desempenho comum entre as duas
@@ -154,31 +173,38 @@ fundamentada contra a alternativa bio-inspirada.
 \subsection{Ambiente de simulação}
 O ambiente é uma tarefa de \emph{foraging} contínua e tridimensional, numa arena
 circular (raio $15$\,m) com $N=20$ agentes homogéneos que devem recolher comida e
-transportá-la para um ninho. Utilizam-se seis cenários de dificuldade crescente:
+transportá-la para um ninho. Utilizam-se sete cenários de dificuldade crescente:
 um \emph{Sandbox} aberto; três labirintos de navegação (\emph{Muro em U},
-\emph{Gargalo}, \emph{Quatro Salas}); e duas tarefas cooperativas (\emph{Porta
+\emph{Gargalo}, \emph{Quatro Salas}); duas tarefas cooperativas (\emph{Porta
 Cooperativa}, que exige $\geq 3$ agentes para abrir uma passagem, e \emph{Perceção
-Cooperativa}, com um alvo móvel). A Figura~\ref{fig:mapas} ilustra os seis
+Cooperativa}, com um alvo móvel); e um cenário \emph{deceptive}, a \emph{Porta
+Cooperativa com Alternativa}, em que a porta bloqueada atrai o gradiente de
+navegação enquanto o único caminho viável é um corredor lateral que obriga a
+afastar-se temporariamente do ninho. A Figura~\ref{fig:mapas} ilustra os sete
 cenários. Cada agente observa uma bússola de \emph{homing} egocêntrica para o
 ninho, oito raios LiDAR para deteção local de obstáculos e o estado relativo dos
 vizinhos --- um cenário parcialmente observável, formalizável como um Dec-POMDP
 \citep{oliehoek2016concise}. A bússola fornece a direção e a distância euclidiana
 ao ninho de forma sempre disponível (à imagem do \emph{homing} global em formigas
 ou da navegação por GPS), ao passo que os obstáculos só são percecionados
-localmente pelo LiDAR de $5$\,m, preservando uma observabilidade parcial genuína.
+localmente pelo LiDAR de $8$\,m, preservando uma observabilidade parcial genuína.
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.32\linewidth]{images/mapa_3d_none.png}\hfill
-\includegraphics[width=0.32\linewidth]{images/mapa_3d_u_wall.png}\hfill
-\includegraphics[width=0.32\linewidth]{images/mapa_3d_bottleneck.png}\\[2pt]
-\includegraphics[width=0.32\linewidth]{images/mapa_3d_four_rooms.png}\hfill
-\includegraphics[width=0.32\linewidth]{images/mapa_3d_cooperative_door.png}\hfill
-\includegraphics[width=0.32\linewidth]{images/mapa_3d_cooperative_perception.png}
-\caption{Os seis cenários de avaliação, renderizados a partir da geometria real
-do simulador. Em cima: Sandbox (aberto, com obstáculos esféricos), Muro em U e
-Gargalo. Em baixo: Quatro Salas, Porta Cooperativa (passagem a âmbar, abre com
-$\geq 3$ agentes) e Perceção Cooperativa (alvo móvel). O ninho é a esfera verde.}
+\includegraphics[width=0.24\linewidth]{images/mapa_3d_none.png}\hfill
+\includegraphics[width=0.24\linewidth]{images/mapa_3d_u_wall.png}\hfill
+\includegraphics[width=0.24\linewidth]{images/mapa_3d_bottleneck.png}\hfill
+\includegraphics[width=0.24\linewidth]{images/mapa_3d_four_rooms.png}\\[2pt]
+\includegraphics[width=0.24\linewidth]{images/mapa_3d_cooperative_door.png}\hfill
+\includegraphics[width=0.24\linewidth]{images/mapa_3d_cooperative_perception.png}\hfill
+\includegraphics[width=0.24\linewidth]{images/mapa_3d_cooperative_door_bypass.png}\hfill
+\hspace{0.24\linewidth}
+\caption{Os sete cenários de avaliação, renderizados a partir da geometria real
+do simulador. Em cima: Sandbox (aberto, com obstáculos esféricos), Muro em U,
+Gargalo e Quatro Salas. Em baixo: Porta Cooperativa (passagem a âmbar, abre com
+$\geq 3$ agentes), Perceção Cooperativa (alvo móvel) e Porta Cooperativa com
+Alternativa (cenário \emph{deceptive}: a porta atrai, o corredor lateral resolve).
+O ninho é a esfera verde.}
 \label{fig:mapas}
 \end{figure*}
 
@@ -189,7 +215,10 @@ potencial \citep{ng1999policy} que não altera a política ótima e é usada ape
 como sinal de treino, nunca como observação. A Figura~\ref{fig:geodesico}
 contrasta o potencial euclidiano ingénuo --- que ``atravessa'' a parede e cria um
 mínimo local que cola os agentes ao obstáculo --- com o campo geodésico, cujo
-gradiente premeia corretamente o contorno da barra.
+gradiente premeia corretamente o contorno da barra. Esta distinção é essencial
+para a leitura dos resultados: o sinal de treino aponta sempre para o desvio
+correto, pelo que as dificuldades observadas no Muro em U são de \emph{descoberta},
+não de modelação da recompensa.
 
 \begin{figure}[t]
 \centering
@@ -211,96 +240,135 @@ cima/baixo) de passo fixo $0.2$\,m, resolvidas por uma ordem determinística de
 \emph{step} que aplica deslizamento ao longo das paredes (\emph{wall-sliding}) em
 caso de colisão, evitando que o agente fique imobilizado num canto.
 
-A recompensa combina seis termos: (i) uma recompensa esparsa pela entrega de
-comida no ninho, que domina; (ii) o progresso geodésico descrito acima
-\citep{ng1999policy}; (iii) um bónus de exploração baseado em contagem, que premeia
-a visita a novas células e complementa o progresso onde este é plano; (iv) uma
-penalização de dispersão que desencoraja a aglomeração em ``bola'', isenta nas
-zonas de cooperação para não sabotar a abertura da porta; (v) um custo energético
-por passo, que impõe pressão temporal; e (vi) a separação física inter-agente. A
-aptidão evolutiva da Equação~\ref{eq:fitness} é, deliberadamente, distinta desta
-recompensa: prioriza a comida recolhida e usa o termo modelado apenas como
-desempate, ao passo que o PPO/SAC otimizam a recompensa densa completa.
+A recompensa foi deliberadamente \emph{simplificada} face a iterações anteriores,
+e reduz-se a quatro termos: (i) uma recompensa de tarefa de $+300$ por recolha,
+repetível ao longo do episódio e claramente dominante; (ii) o progresso geodésico
+descrito acima, com fator $10$ \citep{ng1999policy}; (iii) um bónus de exploração
+baseado em contagem ($+0.5$ por célula nova de $2\times2$\,m), pequeno de
+propósito; e (iv) um custo energético de $-0.05$ por passo, que impõe pressão
+temporal. As penalizações secundárias de dispersão e de colisão foram anuladas no
+\emph{sinal de recompensa} (a física de colisão e separação mantém-se), depois de
+se verificar que competiam com a tarefa sem benefício mensurável. O número de
+agentes exigidos em simultâneo no ninho é definido por cenário: $k_{\min}=3$ nos
+cenários em que a cooperação é o objeto de estudo, e $k_{\min}=1$ nos labirintos
+de navegação pura, onde exigir três agentes converteria um problema de navegação
+numa cooperação artificial. Uma calibração anterior, com um bónus de exploração
+maior, produziu \emph{exploração da recompensa}: a política aprendia a deambular a
+colher exploração em vez de convergir para a recolha.
 
 \subsection{Controladores}
 O \emph{controlador evolutivo} (GNN) é uma rede compacta que codifica as
 características egocêntricas e aplica auto-atenção de produto escalar normalizado
 sobre o conjunto de vizinhos \citep{vaswani2017attention}, produzindo uma ação
 invariante ao número de vizinhos. Os seus pesos são otimizados por uma estratégia
-de evolução $(1{+}\lambda)$ (população $30$, truncatura com elitismo, mutação
-gaussiana), com uma aptidão que prioriza a tarefa,
+de evolução com truncatura e elitismo (população $K=30$, $e=6$ elites preservados,
+mutação gaussiana esparsa com $\sigma$ inicial $0.1$, decaimento $0.999$ e piso
+$\sigma_{\min}=0.03$), guiada por uma aptidão em que a tarefa domina a seleção:
 \begin{equation}
-J = \bar{f}\cdot 10^4 + 5000\,\tanh\!\left(\bar{R}/5000\right),
+J(\theta_k) = \bar{f}_k \cdot \lambda_{\text{task}} \;+\; \beta \cdot \bar{h}_k,
+\qquad \lambda_{\text{task}} = 10^4,\; \beta = 5000,
 \label{eq:fitness}
 \end{equation}
-onde $\bar{f}$ é a média de comida recolhida e $\bar{R}$ a média da recompensa
-modelada; o termo $\tanh$ evita a saturação que, de outro modo, tornaria a seleção
-cega (o termo de modelação satura num teto constante e a aptidão deixa de
-discriminar genomas). Os \emph{baselines de aprendizagem} são o PPO
-\citep{schulman2017ppo} e o SAC \citep{haarnoja2018sac} da biblioteca
-Stable-Baselines3, com uma política de perceptrão multicamada partilhada
-($[256,256]$) sobre a observação densa da vizinhança (partilha de parâmetros). O
-mecanismo de atenção sobre o grafo é, assim, instanciado apenas no controlador
-evolutivo, o que é precisamente o que viabiliza a sua transferência
-\emph{zero-shot}. O PPO usa estimação de vantagem generalizada
+onde $\bar{f}_k$ é a média de comida recolhida e $\bar{h}_k \in [0,1]$ é o
+\emph{homing}: a fração média de aproximação ao ninho \emph{no final} do episódio,
+medida por agente como $\operatorname{clip}((\Phi_0 - \Phi_T)/\Phi_0, 0, 1)$, com
+$\Phi$ o potencial de navegação (geodésico nos cenários com paredes). As médias
+são tomadas sobre $E=4$ episódios com sementes fixas.
+
+A escolha de $\bar{h}$ é a decisão de desenho central deste trabalho. Numa
+formulação anterior, o termo de desempate era o retorno acumulado comprimido por
+uma $\tanh$; mas o retorno acumulado é \emph{farmável}, porque o progresso e a
+exploração rendem a cada passo: observaram-se genomas com retorno bruto
+$\approx 88\,000$ e \emph{zero} recolhas, que deambulavam indefinidamente porque
+parar no ninho --- a pré-condição da tarefa --- corta o rendimento por passo. O
+\emph{homing} terminal elimina a patologia por construção: depende apenas dos
+estados extremos do episódio, não do caminho, pelo que deambular não o aumenta, e
+a única forma de o maximizar é \emph{terminar} junto ao ninho. Como uma única
+recolha ($10^4$) vale o dobro do \emph{shaping} máximo ($5000$), a tarefa domina
+a seleção assim que um genoma recolhe.
+
+Os \emph{baselines de aprendizagem} são o PPO \citep{schulman2017ppo} e o SAC
+\citep{haarnoja2018sac} da biblioteca Stable-Baselines3, com uma política de
+perceptrão multicamada partilhada ($[256,256]$) sobre a observação densa da
+vizinhança (partilha de parâmetros). O mecanismo de atenção sobre o grafo é, assim,
+instanciado apenas no controlador evolutivo, o que é precisamente o que viabiliza
+a sua transferência \emph{zero-shot}. O PPO usa estimação de vantagem generalizada
 \citep{schulman2016gae} e o SAC, fora de política, regulariza por entropia; ambos
 são treinados sobre ambientes vetorizados em paralelo (\emph{SubprocVecEnv}), com
 a mesma política a recolher experiência de todos os agentes do enxame, e o
-controlador evolutivo avalia a sua população também em paralelo. Para garantir uma
-comparação justa, os três controladores partilham o mesmo orçamento de tempo de
-treino por cenário e a mesma semente de avaliação.
+controlador evolutivo avalia a sua população também em paralelo.
 
 \subsection{Protocolo de avaliação}
-Todos os controladores são avaliados deterministicamente ao longo de $30$
-episódios com sementes emparelhadas por cenário. Reportamos $P_{\text{task}}$
-(taxa de sucesso, com sucesso definido como pelo menos um item recolhido) e a
-média de comida recolhida por episódio, uma métrica comparável entre paradigmas.
-A robustez ($R_{\text{robust}}$) injeta a falha de $10\%$ dos agentes a meio do
-episódio; a escalabilidade ($S_{\text{scale}}$) testa $N\in\{10,20,50,100\}$ sem
-retreino. As diferenças par a par são avaliadas com o teste $U$ de
-Mann--Whitney, complementado pelo teste $t$ de Welch, a $\alpha = 0.05$.
+Cada combinação (algoritmo, cenário) foi treinada em \textbf{sete execuções
+independentes} com sementes distintas, perfazendo $3\times7\times7=147$ treinos
+numa campanha contínua de sete dias. Cada execução do controlador evolutivo
+dispôs de $195$ minutos sobre $\approx 30$ núcleos, e cada execução de PPO/SAC de
+$48$ minutos sobre $16$ núcleos; todos os regimes atingem o planalto de
+aprendizagem, pelo que a comparação mede o \emph{desempenho atingível}, embora os
+métodos de gradiente conservem uma vantagem de $\approx 8\times$ em núcleos-hora.
+
+Cada modelo é depois avaliado deterministicamente em $20$ episódios com sementes
+emparelhadas entre algoritmos, totalizando $140$ episódios por célula. Reportamos
+$P_{\text{task}}$ (taxa de sucesso, com sucesso definido como pelo menos um item
+recolhido) e a média de comida recolhida por episódio, que é a métrica de
+magnitude comparável entre paradigmas. A robustez ($R_{\text{robust}}$) injeta a
+falha de $10\%$ dos agentes a meio do episódio; a escalabilidade
+($S_{\text{scale}}$) testa $N\in\{10,20,50,100\}$ sem retreino.
+
+Um ponto metodológico merece ênfase: as diferenças par a par são avaliadas sobre
+as \textbf{médias por execução} ($n=7$ por grupo), com o teste $U$ de
+Mann--Whitney e o $\delta$ de Cliff como tamanho de efeito, a $\alpha=0.05$. A
+unidade estatística independente é a execução de treino, e não o episódio ---
+tratar os $140$ episódios como observações independentes inflacionaria
+artificialmente o poder do teste, pois episódios da mesma execução partilham o
+mesmo controlador.
 
 \section{Resultados}
 \label{sec:results}
 
 \subsection{Desempenho na tarefa}
-A Tabela~\ref{tab:task} reporta a comida recolhida por episódio --- a métrica de
-magnitude --- a par da taxa de sucesso. Salientamos a primeira: uma taxa de
-sucesso de $100\%$ sob a definição ``pelo menos um item recolhido'' é um sinal
-fraco, como a tabela deixa claro. Os métodos de gradiente dominam a tarefa: o SAC
-recolhe substancialmente nos seis cenários e o PPO em cinco de seis, falhando
-apenas o Muro em U, onde recolhe \emph{zero} itens apesar de acumular uma elevada
-recompensa modelada --- um caso claro de \emph{exploração da recompensa}, em que o
-bónus de exploração é aproveitado sem efetivamente recolher. O controlador
-evolutivo é o mais fraco por larga margem: embora ocasionalmente atinja uma taxa
-de sucesso não nula (por exemplo, $97\%$ na Perceção Cooperativa), recolhe apenas
-quantidades residuais ($2.6$ itens nesse caso, e essencialmente zero nos três
-labirintos). Este desfasamento entre uma elevada taxa de sucesso e um rendimento
-quase nulo é a assinatura da \emph{exploração da aptidão}: a aptidão de treino
-sobe sem se traduzir em conclusão da tarefa. A
-Figura~\ref{fig:recolhas} visualiza estas diferenças de magnitude.
+A Tabela~\ref{tab:task} reporta a comida recolhida por episódio, a taxa de sucesso
+e o número de execuções plenamente convergentes. Esta última coluna é essencial:
+uma taxa de sucesso média intermédia quase nunca significa ``resolve o cenário
+metade das vezes'', mas sim que \emph{algumas execuções resolvem-no integralmente
+e outras falham por completo}. Quinze das vinte e uma combinações
+algoritmo--cenário atingem $100\%$ de sucesso em todas as execuções; as seis
+restantes escondem, sem exceção, esta distribuição tudo-ou-nada.
+
+O quadro que emerge não tem um vencedor universal. O \textbf{controlador
+evolutivo} resolve os quatro cenários de gargalo não-decetivos nas $28$ execuções
+correspondentes, destacando-se no Gargalo ($121.4$ recolhas/ep), no Quatro Salas
+($59.8$, cerca de $1.8\times$ o melhor método de gradiente) e na Porta Cooperativa
+com Alternativa ($86.7$); mas exibe execuções degeneradas precisamente nos
+cenários \emph{sem} paredes (Sandbox, $5/7$; Perceção Cooperativa, $6/7$), onde a
+paisagem de aptidão oferece ótimos locais de deambulação. O \textbf{PPO} é o mais
+consistente, com $100\%$ de sucesso em seis dos sete cenários e a menor variância
+entre execuções. O \textbf{SAC} é fiável em espaço aberto e nos cooperativos, mas
+o mais frágil nos estrangulamentos físicos: no Gargalo apenas $5/7$ execuções
+convergem, com magnitude muito dispersa ($41.4\pm36.8$).
 
 \begin{table*}[t]
 \centering
-\caption{Desempenho por episódio sob avaliação determinística ($30$ episódios com
-sementes emparelhadas por cenário, execução oficial): média de comida recolhida
-$\pm$ desvio-padrão, com a taxa de sucesso (percentagem de episódios com pelo
-menos um item recolhido) entre parênteses. A comida recolhida é a métrica de
-magnitude comparada entre paradigmas; a taxa de sucesso, isolada, é um indicador
-fraco, pois um agente atinge $100\%$ recolhendo um único item. Melhor média por
-linha a negrito.}
+\caption{Desempenho sob avaliação determinística ($7$ execuções de treino
+independentes $\times$ $20$ episódios com sementes emparelhadas por cenário):
+média $\pm$ desvio-padrão da comida recolhida por episódio \emph{entre execuções},
+taxa de sucesso média entre parênteses, e número de execuções que atingem $100\%$
+de sucesso. A comida recolhida é a métrica de magnitude comparada entre
+paradigmas; a taxa de sucesso, isolada, é um indicador fraco, pois um agente
+atinge $100\%$ recolhendo um único item. Melhor média por linha a negrito.}
 \label{tab:task}
 \footnotesize
 \begin{tabular}{lccc}
 \toprule
 Cenário & GNN & PPO & SAC \\
 \midrule
-Sandbox                & $0.8\pm0.7$ (67\%) & $\mathbf{73.3\pm5.1}$ (100\%) & $25.2\pm3.6$ (100\%) \\
-Muro em U              & $0.4\pm0.5$ (43\%) & $0.0\pm0.0$ (0\%)            & $\mathbf{20.6\pm1.3}$ (100\%) \\
-Gargalo                & $0.0\pm0.0$ (0\%)  & $\mathbf{41.0\pm1.4}$ (100\%) & $35.0\pm1.6$ (100\%) \\
-Quatro Salas           & $0.0\pm0.0$ (0\%)  & $11.5\pm3.4$ (100\%)        & $\mathbf{11.6\pm3.0}$ (100\%) \\
-Porta Cooperativa      & $0.0\pm0.0$ (0\%)  & $\mathbf{67.7\pm1.6}$ (100\%) & $60.5\pm1.3$ (100\%) \\
-Perceção Cooperativa   & $2.6\pm1.4$ (97\%) & $\mathbf{17.9\pm1.9}$ (100\%) & $16.2\pm1.8$ (100\%) \\
+Sandbox                     & $38.3\pm31.0$ (86\%) [5/7] & $\mathbf{71.5\pm1.0}$ (100\%) [7/7] & $69.2\pm1.9$ (100\%) [7/7] \\
+Muro em U                   & $24.5\pm32.7$ (43\%) [3/7] & $\mathbf{39.6\pm36.7}$ (71\%) [4/7] & $9.0\pm15.1$ (34\%) [2/7] \\
+Gargalo                     & $121.4\pm20.0$ (100\%) [7/7] & $\mathbf{123.2\pm1.2}$ (100\%) [7/7] & $41.4\pm36.8$ (72\%) [5/7] \\
+Quatro Salas                & $\mathbf{59.8\pm13.2}$ (100\%) [7/7] & $33.6\pm3.8$ (100\%) [7/7] & $31.8\pm3.3$ (100\%) [7/7] \\
+Porta Cooperativa           & $\mathbf{69.8\pm1.0}$ (100\%) [7/7] & $67.1\pm3.7$ (100\%) [7/7] & $62.1\pm2.5$ (100\%) [7/7] \\
+Perceção Cooperativa        & $\mathbf{19.0\pm8.7}$ (91\%) [6/7] & $15.3\pm0.4$ (100\%) [7/7] & $16.1\pm0.8$ (100\%) [7/7] \\
+Porta c/ Alternativa        & $\mathbf{86.7\pm2.0}$ (100\%) [7/7] & $85.3\pm4.0$ (100\%) [7/7] & $68.6\pm3.4$ (100\%) [7/7] \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -309,60 +377,96 @@ Perceção Cooperativa   & $2.6\pm1.4$ (97\%) & $\mathbf{17.9\pm1.9}$ (100\%) & 
 \centering
 \includegraphics[width=\linewidth]{images/recolhas_por_cenario.png}
 \caption{Comida recolhida por episódio (média $\pm$ desvio-padrão) por cenário e
-controlador. O contraste de magnitude entre os métodos de gradiente e o
-controlador evolutivo é evidente, mesmo onde este último regista sucesso
-não nulo.}
+controlador. As barras de erro largas do controlador evolutivo no Sandbox e no
+Muro em U refletem bimodalidade entre execuções, não ruído de avaliação.}
 \label{fig:recolhas}
 \end{figure}
 
-\subsection{Análise qualitativa da navegação}
-Os mapas de ocupação acumulada explicam \emph{como} cada controlador se comporta
-no Muro em U (Figura~\ref{fig:ocupacao}). O controlador evolutivo fica preso
-abaixo da barra e nunca alcança o ninho; o PPO espalha-se pela arena a colher o
-bónus de exploração mas sem completar a entrega --- a marca visual do
-\emph{reward hacking}, em que a recompensa modelada sobe sem produzir comida; e o
-SAC contorna o muro pelos dois lados e converge para o ninho. A diferença não é de
-perceção --- os três partilham a mesma observação --- mas de qualidade da política
-aprendida sob a mesma recompensa geodésica.
+\subsection{O Muro em U e a bimodalidade entre execuções}
+O Muro em U é o único cenário que \emph{nenhum} algoritmo resolve de forma fiável,
+e a sua análise ilustra por que razão a unidade estatística importa. O desempenho
+é bimodal nos três paradigmas: cada execução ou aprende o desvio ao beco e atinge
+$100\%$ de sucesso, ou não o aprende de todo (GNN $3/7$, PPO $4/7$, SAC $2/7$).
+A Figura~\ref{fig:bimodal} mostra a distribuição por execução. Nenhuma diferença
+entre algoritmos atinge significância, e a conclusão honesta é que sete execuções
+não bastam para distinguir taxas de convergência de $2/7$ a $4/7$.
 
-\begin{figure*}[t]
+O obstáculo não está no sinal de treino --- o potencial geodésico aponta
+corretamente para o contorno (Figura~\ref{fig:geodesico}) --- mas na
+\emph{descoberta}: o agente observa apenas a bússola de \emph{homing} euclidiana e
+o LiDAR local, pelo que percorrer o desvio exige uma trajetória longa que se
+afasta, durante dezenas de passos, da única direção que o agente perceciona como
+sendo o ninho. Nenhum dos mecanismos de exploração estudados (entropia,
+\emph{clipped surrogate}, mutação gaussiana) garante essa descoberta.
+
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.32\linewidth]{images/heatmap_ocupacao_gnn_u_wall.png}\hfill
-\includegraphics[width=0.32\linewidth]{images/heatmap_ocupacao_ppo_u_wall.png}\hfill
-\includegraphics[width=0.32\linewidth]{images/heatmap_ocupacao_sac_u_wall.png}
-\caption{Mapas de ocupação no Muro em U (escala logarítmica). O controlador
-evolutivo (esquerda) fica preso abaixo da barra; o PPO (centro) percorre a arena a
-explorar mas sem entregar comida (\emph{reward hacking}); o SAC (direita)
-contorna o muro pelos dois lados e atinge o ninho. Mesma observação, políticas
-distintas.}
-\label{fig:ocupacao}
-\end{figure*}
+\includegraphics[width=\linewidth]{images/boxplot_eval_u_wall.png}
+\caption{Distribuição das recolhas por episódio no Muro em U, agregando as sete
+execuções de cada controlador. A dispersão não é ruído de avaliação: reflete
+execuções de treino que resolvem integralmente o cenário e execuções que falham
+por completo.}
+\label{fig:bimodal}
+\end{figure}
+
+\subsection{Deceção e procura por novidade}
+A Porta Cooperativa com Alternativa foi desenhada como armadilha \emph{deceptive}:
+o gradiente de \emph{homing} aponta para a porta bloqueada e o caminho viável
+exige afastamento temporário do ninho. Numa experiência controlada anterior à
+campanha final, um controlador com \emph{blend} de novidade
+\citep{lehman2011abandoning} ($w=0.5$, $600$ minutos) obteve $81.3\pm1.9$
+recolhas/ep contra $64.5$ do melhor controlador puramente objetivo então
+disponível --- $+26\%$, com Wilcoxon emparelhado $p=8.7\times10^{-5}$ e $\delta$
+de Cliff $=+1.00$. A ressalva é que essa execução dispôs de um orçamento
+$\approx 3\times$ superior, pelo que o resultado mede o efeito conjunto de
+novidade e orçamento.
+
+A campanha final matiza a conclusão: com o orçamento normal, a própria aptidão de
+\emph{homing} resolve o cenário de forma consistente ($7/7$ execuções a $100\%$,
+$86.7\pm2.0$ recolhas/ep), acima inclusive do resultado com novidade. A pressão
+por novidade \emph{consolidou} a fuga ao ótimo local num regime em que a
+otimização objetiva só o conseguia de forma inconsistente, mas não é condição
+\emph{necessária} no cenário estudado: dada profundidade de treino suficiente, o
+\emph{shaping} de \emph{homing} encontra o corredor alternativo de forma fiável.
+O contributo da novidade fica assim circunscrito a regimes de orçamento curto ou
+de deceção mais severa.
 
 \subsection{Escalabilidade \emph{zero-shot}}
-O compromisso emerge sob a escalabilidade. Apenas o controlador baseado em atenção
-é viável para $N\neq 20$: a sua taxa de sucesso \emph{aumenta} com o tamanho do
-enxame, de $15\%$ em $N=10$ para $100\%$ em $N=100$, sem degradação per capita
-(Figura~\ref{fig:escala}). As políticas de perceptrão multicamada do PPO/SAC têm
-uma entrada de dimensão fixa e são estruturalmente incompatíveis com outros
-tamanhos de enxame. A adaptabilidade arquitetural --- a propriedade que a hipótese
-atribui ao MARL --- manifesta-se, assim, na \emph{representação} (grafo com
-atenção), e não no algoritmo de otimização.
+Apenas o controlador baseado em atenção é viável para $N\neq 20$: transferindo sem
+qualquer retreino a política aprendida com $N=20$, mantém $100\%$ de sucesso em
+todas as dimensões testadas, e as recolhas totais crescem monotonicamente
+($38.2 \rightarrow 63.0 \rightarrow 98.5 \rightarrow 136.3$ para
+$N=10,20,50,100$), sem colapso de coordenação por congestionamento
+(Figura~\ref{fig:escala}). A recolha \emph{per capita} diminui, refletindo a
+partilha de um recurso finito por mais agentes, e não uma falha do controlador. As
+políticas de perceptrão multicamada do PPO/SAC têm uma entrada de dimensão fixa
+($\mathbb{R}^{111}$, calibrada para $N=20$) e são estruturalmente incompatíveis
+com outros tamanhos de enxame. A adaptabilidade arquitetural --- a propriedade que
+a hipótese atribui ao MARL --- manifesta-se, assim, na \emph{representação} (grafo
+com atenção), e não no algoritmo de otimização.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{images/escalabilidade_zeroshot_none.png}
 \caption{Transferência \emph{zero-shot} para tamanhos de enxame nunca vistos
-($N\in\{10,20,50,100\}$), sem retreino. Só o controlador com atenção sobre o grafo
-é estruturalmente compatível com $N\neq 20$, e a sua taxa de sucesso melhora com o
-tamanho do enxame. O PPO/SAC, com entrada de dimensão fixa, são incompatíveis.}
+($N\in\{10,20,50,100\}$), sem retreino. O eixo vertical é a recolha \emph{per
+capita}: a sua descida ($3.82 \rightarrow 1.36$) reflete a partilha de um recurso
+finito por mais agentes --- as recolhas \emph{totais} crescem
+($38.2 \rightarrow 136.3$) e a taxa de sucesso mantém-se em $100\%$ em todas as
+dimensões. O PPO/SAC, com entrada de dimensão fixa, são incompatíveis com
+$N\neq 20$ e surgem como pontos isolados.}
 \label{fig:escala}
 \end{figure}
 
 \subsection{Robustez}
 Sob a falha de $10\%$ dos agentes a meio do episódio, todos os paradigmas mantêm
-desempenho elevado ($94$--$99\%$ dos itens recolhidos para o PPO/SAC; $69$--$96\%$
-para o GNN onde funciona), sem colapso (Figura~\ref{fig:robustez}): a partilha de
-parâmetros e a observação local conferem redundância funcional ao enxame.
+desempenho elevado, com retenção entre $92\%$ e $106\%$ em todas as combinações
+com desempenho de base, sem colapso (Figura~\ref{fig:robustez}). Os valores
+pontualmente acima de $100\%$ correspondem a episódios em que a perda de agentes
+reduziu o congestionamento nas passagens estreitas. A robustez, sendo transversal
+aos três paradigmas, não constitui critério discriminante entre eles: a partilha
+de parâmetros e a observação local conferem ao enxame uma redundância funcional em
+que nenhum agente é insubstituível.
 
 \begin{figure}[t]
 \centering
@@ -374,72 +478,94 @@ emerge da partilha de parâmetros e da observação puramente local.}
 \end{figure}
 
 \subsection{Significância estatística}
-A Tabela~\ref{tab:signif} apresenta as $18$ comparações par a par sobre a comida
-recolhida. Dezassete são significativas ($p<0.001$); a única exceção é PPO vs.\
-SAC nas Quatro Salas ($p=0.53$), onde os dois métodos de gradiente são
-estatisticamente indistinguíveis. A magnitude e a consistência destas diferenças
-confirmam que o ordenamento dos controladores não é um artefacto da variância
-amostral.
+A Tabela~\ref{tab:signif} apresenta as $21$ comparações par a par sobre as médias
+de recolhas por execução ($n=7$ por grupo). O controlador evolutivo é
+significativamente superior a \emph{ambos} os métodos de gradiente em três
+cenários (Quatro Salas, Porta Cooperativa e Perceção Cooperativa) e superior ao
+SAC em mais dois (Gargalo e Porta com Alternativa), empatando com o PPO nesses
+dois. Os métodos de gradiente são superiores no Sandbox, onde as execuções
+degeneradas do evolutivo pesam ($\delta=\pm1.00$). No Muro em U nenhuma
+comparação atinge significância.
 
 \begin{table*}[t]
 \centering
-\caption{Testes de significância sobre a comida recolhida ($30$ episódios
-emparelhados; teste $U$ de Mann--Whitney, $\alpha=0.05$). ``méd.~A'' e ``méd.~B''
-são as médias de comida recolhida de cada elemento do par.}
+\caption{Testes de significância sobre as \emph{médias de recolhas por execução}
+($n=7$ por grupo; teste $U$ de Mann--Whitney com $\delta$ de Cliff, $\alpha=0.05$).
+A unidade independente é a execução de treino, não o episódio. ``méd.~A'' e
+``méd.~B'' são as médias de comida recolhida de cada elemento do par.}
 \label{tab:signif}
 \footnotesize
-\begin{tabular}{llrrrl}
+\begin{tabular}{llrrrrl}
 \toprule
-Cenário & Par & méd.~A & méd.~B & $p$ & Significativo \\
+Cenário & Par & méd.~A & méd.~B & $p$ & $\delta$ & Significativo \\
 \midrule
-Sandbox              & GNN vs PPO & 0.77 & 73.30 & $<0.001$ & Sim \\
-Sandbox              & GNN vs SAC & 0.77 & 25.23 & $<0.001$ & Sim \\
-Sandbox              & PPO vs SAC & 73.30 & 25.23 & $<0.001$ & Sim \\
-Muro em U            & GNN vs PPO & 0.43 & 0.00 & $0.0003$ & Sim \\
-Muro em U            & GNN vs SAC & 0.43 & 20.63 & $<0.001$ & Sim \\
-Muro em U            & PPO vs SAC & 0.00 & 20.63 & $<0.001$ & Sim \\
-Gargalo              & GNN vs PPO & 0.00 & 41.03 & $<0.001$ & Sim \\
-Gargalo              & GNN vs SAC & 0.00 & 35.00 & $<0.001$ & Sim \\
-Gargalo              & PPO vs SAC & 41.03 & 35.00 & $<0.001$ & Sim \\
-Quatro Salas         & GNN vs PPO & 0.00 & 11.50 & $<0.001$ & Sim \\
-Quatro Salas         & GNN vs SAC & 0.00 & 11.60 & $<0.001$ & Sim \\
-Quatro Salas         & PPO vs SAC & 11.50 & 11.60 & $0.5312$ & não \\
-Porta Cooperativa    & GNN vs PPO & 0.00 & 67.73 & $<0.001$ & Sim \\
-Porta Cooperativa    & GNN vs SAC & 0.00 & 60.50 & $<0.001$ & Sim \\
-Porta Cooperativa    & PPO vs SAC & 67.73 & 60.50 & $<0.001$ & Sim \\
-Perceção Cooperativa & GNN vs PPO & 2.63 & 17.87 & $<0.001$ & Sim \\
-Perceção Cooperativa & GNN vs SAC & 2.63 & 16.23 & $<0.001$ & Sim \\
-Perceção Cooperativa & PPO vs SAC & 17.87 & 16.23 & $<0.001$ & Sim \\
+Sandbox              & GNN vs PPO & 38.31 & 71.46 & $0.0006$ & $-1.00$ & Sim \\
+Sandbox              & GNN vs SAC & 38.31 & 69.24 & $0.0021$ & $-1.00$ & Sim \\
+Sandbox              & PPO vs SAC & 71.46 & 69.24 & $0.0297$ & $+0.71$ & Sim \\
+Muro em U            & GNN vs PPO & 24.54 & 39.62 & $0.1552$ & $-0.47$ & não \\
+Muro em U            & GNN vs SAC & 24.54 & 8.99  & $0.5714$ & $+0.18$ & não \\
+Muro em U            & PPO vs SAC & 39.62 & 8.99  & $0.0526$ & $+0.63$ & não \\
+Gargalo              & GNN vs PPO & 121.39 & 123.17 & $0.2086$ & $+0.43$ & não \\
+Gargalo              & GNN vs SAC & 121.39 & 41.44 & $0.0006$ & $+1.00$ & Sim \\
+Gargalo              & PPO vs SAC & 123.17 & 41.44 & $0.0006$ & $+1.00$ & Sim \\
+Quatro Salas         & GNN vs PPO & 59.76 & 33.58 & $0.0006$ & $+1.00$ & Sim \\
+Quatro Salas         & GNN vs SAC & 59.76 & 31.82 & $0.0006$ & $+1.00$ & Sim \\
+Quatro Salas         & PPO vs SAC & 33.58 & 31.82 & $0.3374$ & $+0.33$ & não \\
+Porta Cooperativa    & GNN vs PPO & 69.81 & 67.06 & $0.0262$ & $+0.71$ & Sim \\
+Porta Cooperativa    & GNN vs SAC & 69.81 & 62.09 & $0.0006$ & $+1.00$ & Sim \\
+Porta Cooperativa    & PPO vs SAC & 67.06 & 62.09 & $0.0175$ & $+0.76$ & Sim \\
+Perceção Cooperativa & GNN vs PPO & 18.98 & 15.33 & $0.0297$ & $+0.71$ & Sim \\
+Perceção Cooperativa & GNN vs SAC & 18.98 & 16.11 & $0.0297$ & $+0.71$ & Sim \\
+Perceção Cooperativa & PPO vs SAC & 15.33 & 16.11 & $0.0547$ & $-0.63$ & não \\
+Porta c/ Alternativa & GNN vs PPO & 86.70 & 85.25 & $0.8477$ & $+0.08$ & não \\
+Porta c/ Alternativa & GNN vs SAC & 86.70 & 68.61 & $0.0006$ & $+1.00$ & Sim \\
+Porta c/ Alternativa & PPO vs SAC & 85.25 & 68.61 & $0.0021$ & $+1.00$ & Sim \\
 \bottomrule
 \end{tabular}
 \end{table*}
 
 \section{Discussão}
 \label{sec:discussion}
-O colapso do controlador evolutivo nos cenários de labirinto não é uma
-propriedade da arquitetura --- a mesma representação de grafo com atenção sustenta
-a sua vantagem de escalabilidade --- mas da interação entre o método de otimização
-e a estrutura da recompensa. A neuroevolução otimiza a partir de um único escalar
-de aptidão por episódio, sem atribuição de crédito temporal; nunca aprende
-\emph{qual} ação importou. Quando a recompensa de tarefa é esparsa, como nos
-labirintos, quase todos os genomas não recolhem comida, a aptidão reduz-se ao
-termo de modelação (saturado) e a população instala-se num \emph{planalto de
-aptidão} onde a pressão seletiva desaparece. A mesma natureza estocástica explica
-a elevada variância entre execuções independentes, ausente nos métodos de
-gradiente: sem um gradiente a puxar cada execução para um ótimo comum, cada
-execução é um passeio aleatório distinto sobre a paisagem de aptidão, e encontrar
-o vale estreito das soluções dos labirintos depende largamente do número de
-gerações exploradas.
+Em campanhas exploratórias anteriores, o controlador evolutivo colapsava em todos
+os cenários de estrangulamento, e a mecânica desse colapso merece registo porque
+é o achado metodológico deste trabalho. A neuroevolução otimiza a partir de um
+único escalar de aptidão por episódio, sem atribuição de crédito temporal: nunca
+aprende \emph{qual} ação, em \emph{que} instante, importou. Quando a recompensa de
+tarefa é esparsa, quase todos os genomas recolhem zero, a aptidão reduz-se ao
+termo de modelação e --- na formulação inicial, saturada por uma $\tanh$ do
+retorno acumulado --- converge para um valor comum a toda a população: um
+\emph{planalto de aptidão} onde a pressão seletiva se anula.
 
-Decorrem duas implicações. Primeira, a comparação combina dois fatores ---
-algoritmo de otimização e arquitetura de rede --- pelo que a limitação observada é
-de \emph{eficiência amostral} do otimizador, e não de capacidade representacional;
-integrar o módulo de atenção numa política treinada por gradiente é o passo
-natural para isolar o efeito. Segunda, o valor de engenharia não está em eleger um
-vencedor, mas em identificar o ponto de inflexão: a escolha do paradigma deve
-seguir o eixo de exigência dominante --- desempenho na tarefa a um tamanho de
-enxame fixo (MARL) \emph{versus} escalabilidade para tamanhos nunca vistos (grafo
-com atenção).
+A cura não foi mais orçamento, mas \emph{melhor desenho da aptidão}. Substituir o
+retorno acumulado, farmável por deambulação, pelo \emph{homing} terminal, que só é
+maximizável terminando junto ao ninho, restaurou o gradiente de seleção nos
+labirintos: $28/28$ execuções convergentes nos quatro cenários de gargalo
+não-decetivos, com magnitudes que igualam ou superam os métodos de gradiente. O
+``colapso do evolutivo'' era, portanto, um artefacto do desenho da aptidão, e não
+uma limitação intrínseca do paradigma. A ressalva é que esta sensibilidade ao
+desenho é, em si mesma, um custo de engenharia que os métodos de gradiente, com
+atribuição de crédito passo a passo, não pagam na mesma medida.
+
+A distribuição da variância pelos cenários é igualmente informativa. O controlador
+evolutivo é quase determinístico nos labirintos com gradiente geodésico informativo
+(desvios de $1$--$2$ recolhas/ep nas duas Portas), mas bimodal nos cenários
+abertos: sem paredes que canalizem o \emph{homing}, a paisagem de aptidão oferece
+ótimos locais de deambulação dos quais algumas execuções não escapam. O SAC exibe
+o padrão inverso --- estável em espaço aberto, lotaria nos estrangulamentos
+físicos ---, sugerindo que a exploração por entropia máxima, eficaz em espaço
+aberto, não gera com fiabilidade as trajetórias longas e coordenadas que
+atravessam passagens estreitas.
+
+Decorrem duas implicações de engenharia. Primeira, a comparação combina dois
+fatores --- algoritmo de otimização e arquitetura de rede --- pelo que integrar o
+módulo de atenção numa política treinada por gradiente é o passo natural para
+isolar o efeito do otimizador. Segunda, o valor não está em eleger um vencedor,
+mas em mapear os eixos de escolha: estrutura do cenário, variabilidade da dimensão
+do enxame e orçamento de cómputo. Em enxames de dimensão fixa e conhecida, com
+prioridade na eficiência da tarefa e orçamento de treino curto, o MARL por
+gradiente é preferível; quando a dimensão é variável ou a missão exige escalar sem
+retreino, a arquitetura de grafo com atenção é a única opção viável entre as
+estudadas.
 
 \section{Limitações do estudo}
 \label{sec:limitacoes}
@@ -448,28 +574,35 @@ comparação é \emph{assimétrica}: o controlador evolutivo usa uma arquitetura
 grafo com atenção, enquanto os \emph{baselines} de gradiente usam um perceptrão
 multicamada de entrada fixa. Isolar o efeito do otimizador exigiria treinar a
 mesma arquitetura de atenção por gradiente --- o passo natural já identificado.
-Segunda, os números determinísticos reportados resultam de uma execução de treino
-oficial por controlador; embora a avaliação use $30$ episódios com sementes
-emparelhadas, a variância \emph{entre} execuções de treino da neuroevolução é
-elevada e só um protocolo de execução múltipla a poderá quantificar plenamente.
-Terceira, todos os resultados são em simulação; a transferência para hardware real
-introduz o conhecido \emph{reality gap}, cuja mitigação por aleatorização de
-domínio \citep{tobin2017domain} fica como trabalho futuro. Estas limitações não
-invalidam o achado central --- o compromisso desempenho/escalabilidade é robusto e
-estatisticamente suportado --- mas delimitam-no com honestidade.
+Segunda, sete execuções por configuração, embora suficientes para estabelecer
+significância na maioria das células, limitam o poder estatístico precisamente
+onde ele mais faz falta: nos cenários bimodais, distinguir taxas de convergência
+de $2/7$ a $4/7$ exigiria uma bateria substancialmente maior. Terceira, todos os
+resultados são em simulação; a transferência para hardware real introduz o
+conhecido \emph{reality gap}, cuja mitigação por aleatorização de domínio
+\citep{tobin2017domain} fica como trabalho futuro. Estas limitações não invalidam
+os achados centrais --- a dependência da neuroevolução face ao desenho da aptidão e
+o contraste de escalabilidade são robustos e estatisticamente suportados --- mas
+delimitam-nos com honestidade.
 
 \section{Conclusões}
 \label{sec:conclusions}
 Apresentámos uma avaliação comparativa imparcial de um controlador de atenção
 neuroevoluído contra o PPO e o SAC num enxame de \emph{foraging} tridimensional,
-ao longo de seis cenários e três eixos de avaliação com suporte estatístico. A
+ao longo de sete cenários e três eixos de avaliação, com sete execuções de treino
+independentes por combinação e significância aferida ao nível da execução. A
 hipótese de que a inteligência adaptativa domina a robustez estática é apenas
-parcialmente confirmada: os métodos de gradiente vencem decisivamente na conclusão
-da tarefa a $N=20$, enquanto apenas o controlador baseado em atenção escala
-\emph{zero-shot} até $N=100$. O trabalho futuro inclui uma política de atenção
-treinada por gradiente para separar o otimizador da arquitetura, um protocolo de
-execução múltipla para consolidar as estimativas de variância, e a validação da
-transferência simulação-para-real \citep{tobin2017domain}.
+parcialmente confirmada, e o quadro é mais rico do que o antecipado. Com o desenho
+adequado da aptidão, o controlador evolutivo deixou de ser o elo fraco na tarefa:
+é estatisticamente superior aos métodos de gradiente em três dos sete cenários,
+indistinguível do melhor deles em mais dois, e é o único a escalar
+\emph{zero-shot} até $N=100$. Os métodos de gradiente preservam a fiabilidade em
+espaço aberto e uma vantagem de $\approx 8\times$ em núcleos-hora. Permanece um
+desafio transversal: a exploração sob deceção espacial, que nenhum dos paradigmas
+resolveu de forma consistente. O trabalho futuro inclui uma política de atenção
+treinada por gradiente para separar o otimizador da arquitetura, o alargamento da
+bateria estatística nos cenários bimodais, e a validação da transferência
+simulação-para-real \citep{tobin2017domain}.
 
 \section*{Agradecimentos}
 This work was partially supported by national funds through Funda\c{c}\~ao para a
