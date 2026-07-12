@@ -8,6 +8,31 @@
 
 ---
 
+## ✅ DESFECHO (12 jul 2026) — P1 e P2 executadas e fechadas
+
+As duas campanhas correram no `.14` (lançadas 10 jul, fechadas 11 jul; 7 runs × 195 min
+cada, `novelty_weight: 0.5`, mesmo protocolo/seeds da campanha final). Mann-Whitney
+exato sobre médias por run (n=7) vs o braço GNN objetivo da campanha de 7 dias:
+
+| Cenário | Novelty (w=0.5) | Objetivo puro | Teste |
+|---|---|---|---|
+| **Muro em U** (P1) | **7/7 a 100%**, 69.8±5.9 rec/ep | 3/7, 24.5±32.7 | **p=0.026, δ=+0.71 — Novelty ganha** |
+| **Porta c/ Alternativa** (P2) | 7/7 a 100%, 63.0±21.9 | **7/7, 86.7±2.0** | **p=0.0006, δ=−1.00 — objetivo ganha** |
+
+- **Lacuna A fechada**: a única configuração de todo o estudo que resolve o Muro em U
+  de forma fiável é a hibridização com novidade. Resposta à QI6: positiva onde a
+  otimização objetiva é bimodal.
+- **Lacuna B fechada**: o +26% da experiência de 600 min era artefacto do orçamento —
+  com orçamento igualado, desviar metade da pressão seletiva para a novidade **custa**
+  desempenho num cenário que o homing já resolve (separação completa, δ=−1).
+- Leitura conjunta (já integrada na tese, `sec:res_novelty` + QI6, e no artigo):
+  a pressão por novidade é um instrumento **direcionado** — compra a descoberta onde
+  falta, desperdiça seleção onde sobra. Dosagem adaptativa de w = trabalho futuro.
+- Dados: `results/novelty_final/{uwall,bypass}/` (eval_by_run 7×20 ep, logs, modelos).
+  Config do servidor reposto (`novelty_weight: 0.0` nos dois dirs).
+
+---
+
 ## 1. Onde estamos
 
 Compararam-se três controladores para uma tarefa de *foraging* 3D com $N=20$ agentes:

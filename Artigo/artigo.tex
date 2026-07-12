@@ -50,7 +50,10 @@ dois. Os métodos de gradiente conservam duas vantagens sólidas: fiabilidade em
 espaço aberto, onde o evolutivo ocasionalmente degenera, e uma eficiência
 computacional cerca de $8\times$ superior. Sob escalabilidade \emph{zero-shot},
 apenas o controlador baseado em atenção transita de $N=10$ para $N=100$ agentes
-sem retreino, mantendo $100\%$ de sucesso. A hipótese de que a inteligência
+sem retreino, mantendo $100\%$ de sucesso. A hibridização com procura por
+novidade, sob orçamento igualado, resolve o único cenário que resistia aos três
+controladores ($7/7$ execuções no labirinto de deceção espacial), mas degrada o
+desempenho onde o gradiente da tarefa basta. A hipótese de que a inteligência
 adaptativa domina a robustez estática é, por isso, apenas \emph{parcialmente}
 confirmada: a vantagem decisiva reside na \emph{representação} e no desenho do
 sinal de treino, e não no algoritmo de otimização.
@@ -397,7 +400,8 @@ corretamente para o contorno (Figura~\ref{fig:geodesico}) --- mas na
 o LiDAR local, pelo que percorrer o desvio exige uma trajetória longa que se
 afasta, durante dezenas de passos, da única direção que o agente perceciona como
 sendo o ninho. Nenhum dos mecanismos de exploração estudados (entropia,
-\emph{clipped surrogate}, mutação gaussiana) garante essa descoberta.
+\emph{clipped surrogate}, mutação gaussiana) garante essa descoberta --- é esta a
+motivação da procura por novidade, avaliada de seguida.
 
 \begin{figure}[t]
 \centering
@@ -410,26 +414,33 @@ por completo.}
 \end{figure}
 
 \subsection{Deceção e procura por novidade}
-A Porta Cooperativa com Alternativa foi desenhada como armadilha \emph{deceptive}:
-o gradiente de \emph{homing} aponta para a porta bloqueada e o caminho viável
-exige afastamento temporário do ninho. Numa experiência controlada anterior à
-campanha final, um controlador com \emph{blend} de novidade
-\citep{lehman2011abandoning} ($w=0.5$, $600$ minutos) obteve $81.3\pm1.9$
-recolhas/ep contra $64.5$ do melhor controlador puramente objetivo então
-disponível --- $+26\%$, com Wilcoxon emparelhado $p=8.7\times10^{-5}$ e $\delta$
-de Cliff $=+1.00$. A ressalva é que essa execução dispôs de um orçamento
-$\approx 3\times$ superior, pelo que o resultado mede o efeito conjunto de
-novidade e orçamento.
+Numa experiência preliminar na Porta Cooperativa com Alternativa --- desenhada
+como armadilha \emph{deceptive}: o gradiente de \emph{homing} aponta para a porta
+bloqueada e o caminho viável exige afastamento temporário do ninho ---, um
+controlador com \emph{blend} de novidade \citep{lehman2011abandoning} ($w=0.5$,
+$600$ minutos) obteve $81.3\pm1.9$ recolhas/ep contra $64.5$ do melhor controlador
+puramente objetivo então disponível ($+26\%$; Wilcoxon emparelhado
+$p=8.7\times10^{-5}$). A ressalva era incontornável: a execução com novidade
+dispôs de um orçamento $\approx 3\times$ superior. Para isolar o efeito,
+corremos duas campanhas com \textbf{orçamento igualado} ao da campanha final
+(sete execuções de $195$ minutos por braço, mesmo protocolo e \emph{seeds}), nos
+dois cenários vulneráveis à deceção.
 
-A campanha final matiza a conclusão: com o orçamento normal, a própria aptidão de
-\emph{homing} resolve o cenário de forma consistente ($7/7$ execuções a $100\%$,
-$86.7\pm2.0$ recolhas/ep), acima inclusive do resultado com novidade. A pressão
-por novidade \emph{consolidou} a fuga ao ótimo local num regime em que a
-otimização objetiva só o conseguia de forma inconsistente, mas não é condição
-\emph{necessária} no cenário estudado: dada profundidade de treino suficiente, o
-\emph{shaping} de \emph{homing} encontra o corredor alternativo de forma fiável.
-O contributo da novidade fica assim circunscrito a regimes de orçamento curto ou
-de deceção mais severa.
+No Muro em U, a hibridização elevou a taxa de convergência de $3/7$ para
+$\mathbf{7/7}$ execuções a $100\%$ de sucesso, com $69.8\pm5.9$ recolhas/ep
+contra $24.5\pm32.7$ do objetivo puro (Mann--Whitney $p=0.026$, $\delta=+0.71$)
+--- tornando-se a única configuração estudada que resolve de forma fiável o
+cenário que resistia aos três controladores base. Na Porta com Alternativa, onde
+o \emph{homing} já convergia em $7/7$ execuções, o quadro inverte-se: a mesma
+pressão por novidade degradou a magnitude ($63.0\pm21.9$ vs.\ $86.7\pm2.0$;
+$p=0.0006$, $\delta=-1.00$), desmascarando o $+26\%$ preliminar como artefacto do
+orçamento triplo.
+
+A pressão por novidade é, pois, um instrumento direcionado, não um melhoramento
+universal: compra a descoberta do desvio onde a otimização objetiva é
+inconsistente e desperdiça pressão seletiva onde o gradiente da tarefa basta. O
+peso fixo $w=0.5$ explica ambos os efeitos; a sua dosagem adaptativa é a extensão
+natural.
 
 \subsection{Escalabilidade \emph{zero-shot}}
 Apenas o controlador baseado em atenção é viável para $N\neq 20$: transferindo sem
@@ -597,12 +608,15 @@ adequado da aptidão, o controlador evolutivo deixou de ser o elo fraco na taref
 é estatisticamente superior aos métodos de gradiente em três dos sete cenários,
 indistinguível do melhor deles em mais dois, e é o único a escalar
 \emph{zero-shot} até $N=100$. Os métodos de gradiente preservam a fiabilidade em
-espaço aberto e uma vantagem de $\approx 8\times$ em núcleos-hora. Permanece um
-desafio transversal: a exploração sob deceção espacial, que nenhum dos paradigmas
-resolveu de forma consistente. O trabalho futuro inclui uma política de atenção
-treinada por gradiente para separar o otimizador da arquitetura, o alargamento da
-bateria estatística nos cenários bimodais, e a validação da transferência
-simulação-para-real \citep{tobin2017domain}.
+espaço aberto e uma vantagem de $\approx 8\times$ em núcleos-hora. A exploração
+sob deceção espacial, que nenhum dos paradigmas base resolveu de forma
+consistente, cedeu apenas à hibridização com procura por novidade ($7/7$
+execuções no Muro em U, sob orçamento igualado) --- um mecanismo que,
+simetricamente, degrada o desempenho onde o gradiente da tarefa basta. O trabalho
+futuro inclui uma política de atenção treinada por gradiente para separar o
+otimizador da arquitetura, o alargamento da bateria estatística nos cenários
+bimodais, a dosagem adaptativa da pressão por novidade, e a validação da
+transferência simulação-para-real \citep{tobin2017domain}.
 
 \section*{Agradecimentos}
 This work was partially supported by national funds through Funda\c{c}\~ao para a
