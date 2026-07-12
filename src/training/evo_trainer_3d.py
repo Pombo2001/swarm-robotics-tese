@@ -190,7 +190,10 @@ def evaluate_genome(args):
 
 
 class GeneticTrainer3D:
-    def __init__(self, config_path, time_limit_minutes=120, seed=None):
+    def __init__(self, config_path, time_limit_minutes=120, seed=None,
+                 log_dir=None, model_dir=None):
+        # log_dir/model_dir: overrides opcionais (testes correm em dirs isolados
+        # para não tocar nos CSVs/modelos reais); por omissão, results/ do repo.
         self.config_path = config_path
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
@@ -236,13 +239,41 @@ class GeneticTrainer3D:
         self.novelty_add_per_gen = evo_config.get('novelty_add_per_gen', 3)
         self.novelty_archive = []
 
+        # ── Novelty ADAPTATIVO — anneal do peso após a descoberta ──
+        # Evidência (campanhas de 11 jul 2026, orçamento igualado 7×195 min):
+        # w=0.5 FIXO ganha no u_wall (7/7 vs 3/7 — a novidade paga a DESCOBERTA do
+        # desvio) mas perde no bypass (63.0 vs 86.7 — depois de descobrir, metade da
+        # pressão seletiva continua gasta em diversidade redundante e custa
+        # MAGNITUDE). O anneal junta os dois regimes: w mantém-se cheio enquanto o
+        # melhor genoma não come; após novelty_sustain_gens gerações consecutivas
+        # com comida, decai ×novelty_decay/geração até 0 (seleção volta ao objetivo
+        # puro). Nunca re-arma: o elitismo preserva os genomas que comem, e re-armar
+        # tornaria a seleção não-estacionária.
+        self.novelty_adaptive = evo_config.get('novelty_adaptive', False)
+        self.novelty_decay = evo_config.get('novelty_decay', 0.98)
+        self.novelty_sustain_gens = evo_config.get('novelty_sustain_gens', 10)
+        self._food_streak = 0
+        self._novelty_annealing = False
+
+        # ── Cache da fitness dos elites ──
+        # Os elites entram intactos na população seguinte e eram RE-avaliados em
+        # todas as gerações com as MESMAS seeds fixas e política determinística →
+        # resultado idêntico (verificável nos logs: fitness do melhor constante
+        # entre gerações sem melhoria). Guardar o resultado poupa elite_count/pop
+        # (~20%) das avaliações por geração. A novelty continua correta: recalcula-se
+        # em todas as gerações a partir dos BCs (cacheados para os elites), porque o
+        # arquivo cresce. Desligável no config para testes de equivalência.
+        self.elite_cache = evo_config.get('elite_cache', True)
+        self._elite_results = None   # resultados (na ordem 0..elite_count-1) dos elites
+        self.elite_count = max(3, int(self.pop_size * 0.2))
+
         self.population = []
         for i in range(self.pop_size):
             random_brain = GNNAgent3D(f"temp_{i}", temp_env.action_space("robot_0"), config_path)
             self.population.append(copy.deepcopy(random_brain.state_dict()))
 
-        self.log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs')
-        self.model_dir = os.path.join(os.path.dirname(__file__), '../../results/models')
+        self.log_dir = log_dir or os.path.join(os.path.dirname(__file__), '../../results/logs')
+        self.model_dir = model_dir or os.path.join(os.path.dirname(__file__), '../../results/models')
         os.makedirs(self.log_dir, exist_ok=True)
         os.makedirs(self.model_dir, exist_ok=True)
 
@@ -256,13 +287,21 @@ class GeneticTrainer3D:
         # pode descer ligeiramente entre gerações).
         self._run_saved_fitness = None
 
+        # CSV canónico (dashboard/monitorização lê este nome fixo) + CSV POR RUN.
+        # O canónico é sobrescrito a cada run (mode 'w'), pelo que em campanhas
+        # multi-run as curvas dos runs anteriores só sobreviviam via parse do log
+        # do tee — o CSV por run preserva-as (analise pós-campanha sem regex).
         self.history_file = os.path.join(self.log_dir, 'gnn_3d_training.csv')
-        with open(self.history_file, 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['timestep', 'best_fitness', 'avg_fitness',
-                             'best_task_food', 'time'])
-
-        os.chmod(self.history_file, 0o666)
+        self._history_files = [self.history_file]
+        if self.seed is not None:
+            self._history_files.append(os.path.join(
+                self.log_dir, f'gnn_3d_training{self.model_suffix}_run{self.seed}.csv'))
+        for path in self._history_files:
+            with open(path, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['timestep', 'best_fitness', 'avg_fitness',
+                                 'best_task_food', 'time'])
+            os.chmod(path, 0o666)
 
     def _save_models(self, best_obj_genome, best_obj_fitness):
         """Guarda o melhor genoma SEM perder campeões de runs anteriores (armadilha nº8).
@@ -327,6 +366,29 @@ class GeneticTrainer3D:
             self.novelty_archive = self.novelty_archive[-self.novelty_archive_max:]
         return nov
 
+    def _update_novelty_weight(self, best_food):
+        """Anneal do peso da novidade (só com novelty_adaptive). Chamar UMA vez por
+        geração, DEPOIS da seleção (a geração corrente usa o w com que foi
+        selecionada, tal como a sigma). Máquina de estados:
+        - fase de descoberta: w intacto; conta gerações consecutivas em que o melhor
+          genoma (por objetivo) come (best_food>0). Comida sustentada durante
+          novelty_sustain_gens gerações → passa a anneal. Com elitismo + seeds de
+          avaliação fixas, um genoma que come nunca sai da elite (minmax do objetivo
+          dá-lhe sel_score>=1-w), por isso a streak não oscila por ruído.
+        - fase de anneal: w ×= novelty_decay por geração; abaixo de 1e-3 fecha em 0.0
+          exato, o que desliga o ramo de novelty no train() (seleção = objetivo puro,
+          bit-idêntica ao histórico). Não re-arma."""
+        if not (self.novelty_adaptive and self.novelty_weight > 0.0):
+            return
+        if self._novelty_annealing:
+            self.novelty_weight *= self.novelty_decay
+            if self.novelty_weight < 1e-3:
+                self.novelty_weight = 0.0
+            return
+        self._food_streak = self._food_streak + 1 if best_food > 0 else 0
+        if self._food_streak >= self.novelty_sustain_gens:
+            self._novelty_annealing = True
+
     def train(self):
         # Avalia a população toda em paralelo (1 genoma por núcleo). Em servidores
         # com muitos núcleos, isto reduz drasticamente o tempo por geração —
@@ -363,17 +425,24 @@ class GeneticTrainer3D:
                 # de paralelizar: 1 geração passava de ~60s para >9min). Os arrays
                 # numpy fazem pickle POR VALOR — rápidos e sem FDs. São reconvertidos
                 # em tensores dentro de evaluate_genome.
+                # Cache dos elites: population[0..elite_count-1] são os elites da
+                # geração anterior (intactos, deep-copy) — o seu resultado com as
+                # seeds fixas é determinístico, logo reutiliza-se. Só os filhos
+                # mutados vão ao Pool. Na 1ª geração (sem cache) avalia-se tudo.
+                cached = (self._elite_results if self.elite_cache else None) or []
                 args_list = [({k: v.detach().cpu().numpy() for k, v in self.population[i].items()},
                               self.config_path, self.eval_seed_base)
-                             for i in range(self.pop_size)]
-                results = pool.map(evaluate_genome, args_list)
+                             for i in range(len(cached), self.pop_size)]
+                results = cached + pool.map(evaluate_genome, args_list)
 
                 obj_scores   = np.array([res[0] for res in results])
                 food_counts  = [res[2] for res in results]
                 rewards_raw  = [res[3] for res in results]
                 homing_vals  = [res[4] for res in results]
                 bcs          = np.array([res[5] for res in results])
-                total_steps_this_gen = sum(res[1] for res in results)
+                # Só os passos realmente EXECUTADOS nesta geração contam para o
+                # timestep global (os elites cacheados não correram episódios).
+                total_steps_this_gen = sum(res[1] for res in results[len(cached):])
                 global_timestep += total_steps_this_gen
 
                 cumulative_time = time.time() - overall_start_time
@@ -399,8 +468,11 @@ class GeneticTrainer3D:
                 scores = obj_scores[sorted_indices]   # objetivo reordenado (compat. log)
                 population_sorted = [self.population[i] for i in sorted_indices]
 
-                elite_count = max(3, int(self.pop_size * 0.2))
+                elite_count = self.elite_count
                 new_population = [copy.deepcopy(population_sorted[i]) for i in range(elite_count)]
+                # Resultados dos elites (na MESMA ordem em que entram na população
+                # seguinte) — reutilizados na próxima geração se elite_cache ativo.
+                self._elite_results = [results[i] for i in sorted_indices[:elite_count]]
 
                 while len(new_population) < self.pop_size:
                     parent_idx = np.random.randint(0, elite_count)
@@ -425,22 +497,32 @@ class GeneticTrainer3D:
                 # Homing = proximidade final ao ninho do melhor genoma ([0,1]; 1=chegou).
                 # É o sinal de seleção dos labirintos: deve subir antes de aparecer
                 # comida. RewBruto fica só como diagnóstico (já não entra na fitness).
-                novelty_str = f"Novelty: {gen_novelty:.2f} | " if self.novelty_weight > 0.0 else ""
+                # w atual no log quando a novelty está ativa (com anneal vê-se o
+                # decaimento e o momento em que fecha em 0). flush=True fura o
+                # buffer de 8KB do pipe para o tee — sem isto as linhas Gen só
+                # apareciam no log a cada ~55 gerações.
+                novelty_str = (f"Novelty: {gen_novelty:.2f} | w: {self.novelty_weight:.3f} | "
+                               if self.novelty_weight > 0.0 else "")
                 print(
                     f"Gen {gen} | Steps: {global_timestep} | "
                     f"Fitness: {best_obj_fitness:.1f} | Média: {np.mean(obj_scores):.1f} | "
                     f"Comida (melhor): {best_food} | Homing: {best_homing:.3f} | "
                     f"{novelty_str}"
                     f"RewBruto: {best_reward:.0f} | Sigma: {self.sigma:.4f} | "
-                    f"Tempo: {cumulative_time:.1f}s")
+                    f"Tempo: {cumulative_time:.1f}s", flush=True)
 
                 # Apply Adaptive Mutation (Decay)
                 self.sigma = max(self.sigma_min, self.sigma * self.sigma_decay)
+                # Anneal da novelty (se adaptativa) — mesma cadência da sigma: a
+                # geração corrente foi selecionada com o w antigo; o novo vale já
+                # para a próxima.
+                self._update_novelty_weight(best_food)
 
-                with open(self.history_file, 'a', newline='') as f:
-                    writer = csv.writer(f)
-                    writer.writerow([global_timestep, best_obj_fitness, np.mean(obj_scores),
-                                     best_food, cumulative_time])
+                for path in self._history_files:
+                    with open(path, 'a', newline='') as f:
+                        writer = csv.writer(f)
+                        writer.writerow([global_timestep, best_obj_fitness, np.mean(obj_scores),
+                                         best_food, cumulative_time])
 
                 if gen % 10 == 0:
                     self._save_models(best_obj_genome, best_obj_fitness)
