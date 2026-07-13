@@ -199,7 +199,17 @@ def build():
 
         @ui.refreshable
         def galeria():
-            pngs = [f for f in data.list_pngs(sess_a.value)
+            # Proveniência: que sessão está a ser mostrada, quantos artefactos tem e se
+            # está completa. Sem isto, uma sessão incompleta parece uma sessão sem
+            # resultados — e foi assim que os heatmaps do treino de 7 dias passaram por
+            # inexistentes quando o launcher abria (por engano) uma campanha de junho.
+            todos = data.list_pngs(sess_a.value)
+            n_heat = len([f for f in todos if f.startswith("heatmap")])
+            n_vid = len(data.list_videos(sess_a.value))
+            theme.fonte(f"sessão {sess_a.value} · {len(todos)} gráficos "
+                        f"({n_heat} heatmaps) · {n_vid} vídeos")
+
+            pngs = [f for f in todos
                     if tipo.value == "Todos" or data.graph_type(f) == tipo.value]
             if not pngs:
                 ui.label("Nenhum gráfico para este filtro.").classes("text-gray-500")

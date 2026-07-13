@@ -242,6 +242,16 @@ def build():
                          "PPO/SAC interrompe-se em N≠20 (MLP de entrada fixa); só a GNN "
                          "(atenção sobre vizinhos) é invariante a N.") \
                     .classes("text-xs text-gray-400")
+                # Cada cenário só aparece aqui se tiver sido AVALIADO. Um cenário em
+                # falta não significa "não escala" — significa "ainda não foi corrido";
+                # a distinção tem de ser visível, senão o silêncio parece resultado.
+                em_falta = [s for s in config.SCENARIO_KEYS if s not in scen_scale]
+                if em_falta:
+                    rot = ", ".join(config.SCENARIO_LABEL_SHORT.get(s, s) for s in em_falta)
+                    theme.fonte(f"Sem dados de escalabilidade em: {rot}. "
+                                f"Correr:  python scripts/eval_scalability.py "
+                                f"--scenario <cenário> --sizes 10,20,50,100 --episodes 20",
+                                aviso=True)
                 if not scen_scale:
                     with ui.row().classes("items-center gap-2 mt-2"):
                         ui.icon("info").classes("text-sky-400")

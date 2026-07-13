@@ -86,6 +86,37 @@ def session_metrics(session: str):
     return _aggregate_eval(_session_eval_path(session))
 
 
+# ── PROVENIÊNCIA DOS DADOS ───────────────────────────────────────────────────
+# Todas as vistas passam a declarar O QUE estão a ler e DE QUANDO é. Sem isto, o
+# dashboard não distingue "não existe" de "não está aqui": foi assim que uma sessão
+# antiga apareceu como se fosse a mais recente (ordenação por mtime), que curvas de há
+# 35 dias foram desenhadas como "ao vivo", e que a ausência de vídeos do PPO/SAC passou
+# por bug quando era apenas uma campanha que só treinou o GNN.
+
+def idade_legivel(ts):
+    """0.0 -> 'nunca'; senão 'há 3 min' / 'há 5 h' / 'há 12 dias'."""
+    if not ts:
+        return "nunca"
+    seg = max(0.0, time.time() - ts)
+    if seg < 3600:
+        return f"há {int(seg // 60)} min"
+    if seg < 86400:
+        return f"há {seg / 3600:.0f} h"
+    return f"há {seg / 86400:.0f} dias"
+
+
+def proveniencia(caminho, rotulo=None):
+    """Descreve a origem de um dado: ficheiro, se existe, e quando foi escrito.
+
+    Devolve (texto, obsoleto: bool). `obsoleto` é True se o ficheiro não existir.
+    """
+    nome = rotulo or os.path.relpath(caminho, config.BASE_DIR).replace("\\", "/")
+    ts = _mtime(caminho)
+    if not ts:
+        return f"{nome} — inexistente", True
+    return f"{nome} · {idade_legivel(ts)}", False
+
+
 def eval_freshness():
     """Compara a data do eval_summary com a dos modelos treinados.
 

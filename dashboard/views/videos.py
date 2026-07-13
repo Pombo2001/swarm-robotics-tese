@@ -95,6 +95,11 @@ def build():
                     .props("outlined dense").classes("min-w-[230px]")
             mode = ui.toggle(["Comparar algoritmos", "Galeria", "Comparar treinos"],
                              value=st["mode"]).props("no-caps").classes("mt-1")
+            # Que algoritmos têm vídeo NESTA sessão. Uma campanha lançada com --algo GNN
+            # só grava vídeos do GNN (o PPO/SAC não foram treinados nela) — sem isto
+            # escrito, a ausência parece um bug do dashboard em vez de uma consequência
+            # de como a campanha foi lançada.
+            fonte_lbl = theme.fonte("")
 
         body = ui.column().classes("w-full gap-4")
 
@@ -102,6 +107,15 @@ def build():
         def render():
             body.clear()
             st["session"] = sess_sel.value
+            vids = data.list_videos(st["session"])
+            algos = sorted({data.parse_video(v)[0] for v in vids} - {None})
+            faltam = [a for a in data.VIDEO_ALGOS if a not in algos]
+            txt = f"sessão {st['session']} · {len(vids)} vídeos · algoritmos: " \
+                  f"{', '.join(a.upper() for a in algos) or '—'}"
+            if faltam:
+                txt += f"  (sem vídeo: {', '.join(a.upper() for a in faltam)} — " \
+                       f"a campanha não treinou estes algoritmos)"
+            fonte_lbl.text = ("⚠ " if faltam else "fonte: ") + txt
             with body:
                 if mode.value == "Comparar algoritmos":
                     _render_compare_algos(st)

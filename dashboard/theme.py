@@ -242,6 +242,19 @@ def section_title(icon: str, text: str, sub: str = ""):
             ui.label(sub).classes("text-xs").style(f"color:{INK_MUTED}")
 
 
+def fonte(texto: str, aviso: bool = False):
+    """Rodapé de proveniência: DE ONDE vêm os dados desta vista e DE QUANDO são.
+
+    Toda a vista que mostre números ou imagens deve declarar a sua fonte. Sem isto o
+    dashboard não distingue "não existe" de "não está aqui" — e foi assim que uma
+    sessão antiga passou por recente, e curvas de há semanas passaram por "ao vivo".
+    Devolve o ui.label para poder ser atualizado dinamicamente.
+    """
+    lbl = ui.label(("⚠ " if aviso else "fonte: ") + texto).classes("text-xs mt-1")
+    lbl.style(f"color:{'#d97706' if aviso else INK_MUTED}")
+    return lbl
+
+
 # Base ECharts monocromática (eixos/grelha/tooltip) — as séries mantêm as cores
 # por algoritmo (significado científico).
 ECHART_BASE = {
