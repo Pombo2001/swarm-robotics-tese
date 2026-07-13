@@ -34,13 +34,49 @@ estudo é o enxame — que é a pergunta da revisão (§1 do protocolo). A decis
 tomada por critério de âmbito, e não por conveniência do número; ambas as contagens
 ficam registadas.
 
-## IEEE Xplore — (por correr)
+## IEEE Xplore — 13 jul 2026
 
-## ACM Digital Library — (não usada)
+**String exata** (Command Search, tal como foi colada):
 
-A justificar no capítulo: o Scopus indexa a maior parte das atas do IEEE e da ACM
-relevantes para esta pergunta. A ACM foi dispensada, e isso é declarado nas ameaças à
-validade (§7 do protocolo).
+```
+("Document Title":"swarm robot*" OR "Document Title":"robot swarm*" OR "Document Title":"multi-robot")
+AND ("All Metadata":"reinforcement learning" OR "All Metadata":"MARL" OR "All Metadata":"neuroevolution"
+     OR "All Metadata":"evolutionary algorithm" OR "All Metadata":"particle swarm"
+     OR "All Metadata":"bio-inspired optimization")
+AND ("All Metadata":"control" OR "All Metadata":"navigation" OR "All Metadata":"coordination"
+     OR "All Metadata":"foraging" OR "All Metadata":"path planning")
+```
+
+- Filtro aplicado na interface: **intervalo de anos 2020–2026** (equivalente ao
+  `PUBYEAR > 2019` do Scopus, que a sintaxe do IEEE não aceita na própria string).
+- Sem o filtro de anos: 725 resultados. **Com o filtro: 427 documentos.**
+- Exportado: CSV de resultados (inclui resumo) → `raw/ieee.csv`
+- Acesso: b-on / ISCTE
+
+## ACM Digital Library — não usada
+
+O Scopus indexa a maior parte das atas do IEEE e da ACM relevantes para esta pergunta,
+e a sobreposição observada entre as duas bases já usadas é substancial (203 duplicados
+em 883 registos, ~23%). A ACM foi dispensada por essa razão, e a decisão é declarada
+nas ameaças à validade (§7 do protocolo) em vez de omitida.
+
+---
+
+# Contagens consolidadas (para o fluxograma PRISMA)
+
+Geradas por `scripts/slr_pipeline.py ingest` a partir dos exports em `raw/`:
+
+| Fase | n |
+|---|---|
+| Identificados (Scopus 456 + IEEE 427) | **883** |
+| Duplicados removidos (por DOI / título normalizado) | **203** |
+| **Registos únicos para triagem** | **680** |
+| Triados (título/resumo) | *a preencher* |
+| Avaliados em texto integral | *a preencher* |
+| **Incluídos** | *a preencher* |
+
+> As fases seguintes são preenchidas automaticamente a partir de `screening.csv`
+> quando se corre `python scripts/slr_pipeline.py prisma`.
 
 ## Notas / desvios ao protocolo
 
