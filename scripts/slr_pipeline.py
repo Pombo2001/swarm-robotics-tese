@@ -46,6 +46,9 @@ MOTIVOS = {
     'E4': 'Não revisto por pares / integridade da publicação em causa',
     'E5': 'Duplicado',
     'E6': 'Método fora do âmbito (nem MARL nem otimização bio-inspirada)',
+    'E7': 'Tarefa fora do âmbito da revisão (alocação/escalonamento, SLAM, '
+          'comunicações, manipulação — a revisão cobre navegação, exploração, '
+          'foraging, formação e coordenação de movimento em enxame)',
 }
 
 
@@ -224,8 +227,32 @@ def lote():
     print(f"--- {len(pendentes)} registos mostrados; {len(regs) - len([r for r in regs if r['decisao']])} por decidir no total")
 
 
+def promover():
+    """Passa os incluídos na triagem para a fase de texto integral.
+
+    O PRISMA distingue as duas fases: quem for excluído a partir daqui conta como
+    'excluído em texto integral', e não como excluído na triagem.
+    """
+    regs = _carregar()
+    n = 0
+    for r in regs:
+        if r['decisao'] == 'incluir' and r['fase'] == 'titulo_resumo':
+            r['fase'] = 'texto_integral'
+            r['decisao'] = ''          # volta a estar por decidir, agora na 2.ª fase
+            n += 1
+    with open(SCREENING, 'w', encoding='utf-8', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=COLUNAS)
+        w.writeheader()
+        w.writerows(regs)
+    print(f'{n} registos promovidos a texto_integral (por decidir na 2.ª fase).')
+
+
 def aplicar():
-    """Aplica decisões de um ficheiro 'idx|decisao|motivo' (uma por linha)."""
+    """Aplica decisões de um ficheiro 'idx|decisao|motivo' (uma por linha).
+
+    A fase de cada registo é preservada: os que já estão em 'texto_integral'
+    continuam lá, e as suas exclusões contam para a fase de elegibilidade.
+    """
     if len(sys.argv) < 3:
         sys.exit('uso: aplicar <ficheiro_de_decisoes>')
     regs = _carregar()
@@ -240,10 +267,11 @@ def aplicar():
         if decisao not in ('incluir', 'excluir'):
             sys.exit(f'[!] decisão inválida na linha: {linha}')
         if decisao == 'excluir' and not motivo:
-            sys.exit(f'[!] exclusão sem motivo (E1..E5): {linha}')
+            sys.exit(f'[!] exclusão sem motivo (E1..E7): {linha}')
         regs[idx]['decisao'] = decisao
         regs[idx]['motivo'] = motivo
-        regs[idx]['fase'] = 'titulo_resumo'
+        if not regs[idx]['fase']:
+            regs[idx]['fase'] = 'titulo_resumo'
         n += 1
     with open(SCREENING, 'w', encoding='utf-8', newline='') as f:
         w = csv.DictWriter(f, fieldnames=COLUNAS)
@@ -349,6 +377,8 @@ if __name__ == '__main__':
         ingest()
     elif cmd == 'lote':
         lote()
+    elif cmd == 'promover':
+        promover()
     elif cmd == 'aplicar':
         aplicar()
     elif cmd == 'estado':

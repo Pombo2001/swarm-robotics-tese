@@ -1,0 +1,26 @@
+% GERADO por scripts/slr_pipeline.py a partir de docs/slr/screening.csv
+% NÃO editar à mão: os números vêm da triagem real. Ver docs/PROTOCOLO_SLR.md
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm]
+    \tikzstyle{process} = [rectangle, minimum width=4.5cm, minimum height=1.5cm,
+        text centered, draw=black, fill=white, text width=4.5cm, font=\small]
+    \tikzstyle{arrow} = [thick,->,>=stealth]
+
+    \node (id) [process] {Registos identificados nas bases de dados: \\ \textbf{(n = 680)}};
+    \node (screen) [process, below=1.5cm of id] {Registos triados (título/resumo) \\ \textbf{(n = 680)}};
+    \node (exc1) [process, right=1.5cm of screen] {Registos excluídos \\ \textbf{(n = 201)}};
+    \node (full) [process, below=1.5cm of screen] {Artigos avaliados em texto integral \\ \textbf{(n = 479)}};
+    \node (exc2) [process, right=1.5cm of full, text width=5cm] {Artigos excluídos: \textbf{(n = 421)} \\ \raggedright \scriptsize $\bullet$ Tarefa fora do âmbito da revisão (alocação/escalonamento, SLAM, comunicações, manipulação — a revisão cobre navegação, exploração, foraging, formação e coordenação de movimento em enxame) (n=79) \\ $\bullet$ E8 (n=342)};
+    \node (inc) [process, below=1.5cm of full] {Estudos incluídos na revisão \\ \textbf{(n = 58)}};
+
+    \draw [arrow] (id) -- (screen);
+    \draw [arrow] (screen) -- (full);
+    \draw [arrow] (screen) -- (exc1);
+    \draw [arrow] (full) -- (inc);
+    \draw [arrow] (full) -- (exc2);
+    \end{tikzpicture}
+    \caption{Fluxograma PRISMA 2020 da revisão conduzida (números reais da triagem
+    registada em \texttt{docs/slr/screening.csv}).}
+    \label{fig:prisma}
+\end{figure}

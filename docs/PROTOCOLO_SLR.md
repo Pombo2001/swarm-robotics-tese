@@ -46,6 +46,41 @@ sustentar com um corpo de literatura levantado de forma reproduzível.
   Approach* puro, campos potenciais clássicos, controlo geométrico). *Acrescentado a
   13 jul 2026, durante a triagem: os critérios I1–I5 não cobriam este caso, que se
   revelou frequente. A alteração fica registada em vez de retroativamente silenciada.*
+- E7. **Tarefa fora do âmbito** (fase de elegibilidade): alocação/escalonamento de
+  tarefas, SLAM/fusão de mapas, comunicações e redes, manipulação/montagem/soldadura,
+  ou plataformas/simuladores/benchmarks. A revisão cobre **navegação, exploração,
+  \textit{foraging}, formação e coordenação de movimento** em enxame — que é a
+  pergunta da §1.
+- E8. **Fora do núcleo da revisão** (fase de elegibilidade): não satisfaz I6.
+
+## 2.1 Critério de qualidade e relevância (I6) — fase de elegibilidade
+
+*Acrescentado a 13 jul 2026.* A triagem por título/resumo deixou 479 estudos, número
+incomportável para leitura integral numa dissertação individual. Restringiu-se o corpo
+a estudos que satisfaçam **(a) OU (b)**:
+
+**(a) Enxame + venue de referência.** O estudo trata de um enxame (declara-se
+*swarm*, ou avalia escalabilidade/*large-scale*/*flocking*) **e** está publicado num
+venue de referência de **qualquer um dos dois campos que a tese compara**:
+- *Robótica*: IEEE T-RO, RA-L, ICRA, IROS, MRS, Autonomous Robots, RAS, T-ASE
+- *MARL/IA*: AAMAS, IEEE T-Cybernetics, TNNLS, Artificial Intelligence, T-SMC
+- *Computação evolutiva / swarm intelligence*: GECCO, IEEE CEC, PPSN, Swarm
+  Intelligence, Swarm and Evolutionary Computation, Applied Soft Computing,
+  Frontiers in Robotics and AI, Philosophical Transactions B, BioSystems
+
+> ⚠️ **Nota metodológica importante.** A primeira versão desta lista continha apenas
+> venues de robótica e MARL. Isso teria excluído GECCO, o IEEE CEC e a *Swarm and
+> Evolutionary Computation* — ou seja, teria produzido uma revisão **enviesada contra
+> o paradigma bio-inspirado**, que é metade do objeto desta tese. O erro foi detetado
+> e corrigido antes de fixar o corpo. Fica registado porque é precisamente o tipo de
+> viés que uma revisão sistemática existe para evitar.
+
+**(b) Núcleo da pergunta**, independentemente do venue: estudos sobre
+*novelty search*, neuroevolução/NEAT, evolução de enxames, *foraging* em enxame, ou
+que **comparem diretamente** MARL com otimização bio-inspirada. São a resposta direta
+à pergunta da revisão e seria indefensável excluí-los por o venue ser modesto —
+inclui-se aqui, por exemplo, o único estudo encontrado que compara RL com PSO na
+navegação de enxames.
 
 ## 3. Bases de dados
 
