@@ -52,6 +52,19 @@ MOTIVOS = {
 }
 
 
+# rótulos curtos, para caberem nas caixas do fluxograma
+CURTO = {
+    'E1': 'Robô único (sem enxame)',
+    'E2': 'Revisão / sem validação experimental',
+    'E3': 'Sem dados quantitativos',
+    'E4': 'Sem revisão por pares / integridade',
+    'E5': 'Duplicado não detetado automaticamente',
+    'E6': 'Método fora do âmbito (nem MARL nem bio-inspirado)',
+    'E7': 'Tarefa fora do âmbito (alocação, SLAM, comunicações, manipulação)',
+    'E8': 'Fora do núcleo (não é enxame em venue de referência)',
+}
+
+
 def _norm(s):
     """Título normalizado para deteção de duplicados (sem acentos/pontuação)."""
     s = unicodedata.normalize('NFKD', (s or '').lower())
@@ -173,9 +186,11 @@ def _contas(regs):
     integral = [r for r in pesquisa if r['fase'] == 'texto_integral']
     excl_int = [r for r in integral if r['decisao'] == 'excluir']
     incluidos = [r for r in regs if r['decisao'] == 'incluir']
-    por_motivo = {}
+    por_motivo, por_motivo_tr = {}, {}
     for r in excl_int:
         por_motivo[r['motivo']] = por_motivo.get(r['motivo'], 0) + 1
+    for r in excl_tr:
+        por_motivo_tr[r['motivo']] = por_motivo_tr.get(r['motivo'], 0) + 1
     return {
         'unicos': unicos,
         'triados': len(tr) + len(integral),
@@ -184,6 +199,7 @@ def _contas(regs):
         'excluidos_integral': len(excl_int),
         'incluidos': len(incluidos),
         'por_motivo': por_motivo,
+        'por_motivo_triagem': por_motivo_tr,
         'lista': sorted(incluidos, key=lambda r: (r['ano'], r['autores'])),
         'por_decidir': [r for r in regs if not r['decisao']],
     }
@@ -293,9 +309,15 @@ def estado():
 
 
 def _esc(s):
-    for a, b in (('&', r'\&'), ('%', r'\%'), ('#', r'\#'), ('_', r'\_')):
-        s = (s or '').replace(a, b)
-    return s
+    s = s or ''
+    # o Scopus anexa a tradução do título no idioma original entre parênteses retos
+    # ("Título em inglês; [中文标题]"); o pdfLaTeX não sabe compor cirílico nem CJK
+    s = re.sub(r';?\s*\[[^\]]*\]\s*$', '', s)
+    s = ''.join(c for c in s if ord(c) < 0x250)   # deixa só latino + diacríticos
+    for a, b in (('&', r'\&'), ('%', r'\%'), ('#', r'\#'), ('_', r'\_'),
+                 ('~', r'\textasciitilde{}'), ('^', r'\textasciicircum{}')):
+        s = s.replace(a, b)
+    return re.sub(r'\s+', ' ', s).strip()
 
 
 def prisma():
@@ -306,9 +328,20 @@ def prisma():
               f"O PRISMA gerado seria incompleto — tria-os primeiro.")
         sys.exit(1)
 
-    motivos = ' \\\\ '.join(
-        f"$\\bullet$ {_esc(MOTIVOS.get(m, m))} (n={n})"
-        for m, n in sorted(c['por_motivo'].items())) or '---'
+    # fase de identificação: contam-se os registos EM BRUTO nos exports das bases
+    brutos, por_base = 0, {}
+    for caminho in sorted(glob.glob(os.path.join(DIR_RAW, '*.csv')) +
+                          glob.glob(os.path.join(DIR_RAW, '*.bib'))):
+        base = os.path.splitext(os.path.basename(caminho))[0]
+        n = len(_ler_bib(caminho) if caminho.endswith('.bib') else _ler_csv(caminho))
+        por_base[base] = n
+        brutos += n
+    duplicados = brutos - c['unicos']
+    fontes = ' + '.join(f'{b.capitalize()} {n}' for b, n in sorted(por_base.items()))
+
+    def _lista(dic):
+        return ' \\\\ '.join(f"$\\bullet$ {_esc(CURTO.get(m, m))}: {n}"
+                             for m, n in sorted(dic.items())) or '---'
 
     tex = os.path.join(RAIZ, 'Tese', 'prisma_gerado.tex')
     with open(tex, 'w', encoding='utf-8') as f:
@@ -316,26 +349,49 @@ def prisma():
 % NÃO editar à mão: os números vêm da triagem real. Ver docs/PROTOCOLO_SLR.md
 \\begin{{figure}}[H]
     \\centering
-    \\begin{{tikzpicture}}[node distance=1.5cm]
-    \\tikzstyle{{process}} = [rectangle, minimum width=4.5cm, minimum height=1.5cm,
-        text centered, draw=black, fill=white, text width=4.5cm, font=\\small]
+    \\begin{{tikzpicture}}[node distance=1.2cm]
+    \\tikzstyle{{process}} = [rectangle, minimum width=5.2cm, minimum height=1.1cm,
+        text centered, draw=black, fill=white, text width=5.2cm, font=\\small]
+    \\tikzstyle{{saida}} = [rectangle, minimum height=1.1cm, draw=black, fill=black!3,
+        text width=5.4cm, font=\\scriptsize, align=left]
     \\tikzstyle{{arrow}} = [thick,->,>=stealth]
+    \\tikzstyle{{lado}} = [rotate=90, anchor=south, font=\\bfseries\\footnotesize,
+        color=black!60]
 
-    \\node (id) [process] {{Registos identificados nas bases de dados: \\\\ \\textbf{{(n = {c['unicos']})}}}};
-    \\node (screen) [process, below=1.5cm of id] {{Registos triados (título/resumo) \\\\ \\textbf{{(n = {c['triados']})}}}};
-    \\node (exc1) [process, right=1.5cm of screen] {{Registos excluídos \\\\ \\textbf{{(n = {c['excluidos_triagem']})}}}};
-    \\node (full) [process, below=1.5cm of screen] {{Artigos avaliados em texto integral \\\\ \\textbf{{(n = {c['texto_integral']})}}}};
-    \\node (exc2) [process, right=1.5cm of full, text width=5cm] {{Artigos excluídos: \\textbf{{(n = {c['excluidos_integral']})}} \\\\ \\raggedright \\scriptsize {motivos}}};
-    \\node (inc) [process, below=1.5cm of full] {{Estudos incluídos na revisão \\\\ \\textbf{{(n = {c['incluidos']})}}}};
+    \\node (id) [process] {{Registos identificados nas bases de dados \\\\
+        \\scriptsize ({fontes}) \\\\ \\textbf{{(n = {brutos})}}}};
+    \\node (dup) [saida, right=1.3cm of id] {{Duplicados removidos \\\\
+        (DOI ou título normalizado) \\\\ \\textbf{{(n = {duplicados})}}}};
+
+    \\node (screen) [process, below=1.2cm of id] {{Registos únicos triados
+        (título e resumo) \\\\ \\textbf{{(n = {c['triados']})}}}};
+    \\node (exc1) [saida, right=1.3cm of screen] {{Excluídos na triagem
+        \\textbf{{(n = {c['excluidos_triagem']})}} \\\\ {_lista(c['por_motivo_triagem'])}}};
+
+    \\node (full) [process, below=2.1cm of screen] {{Avaliados em texto integral \\\\
+        \\textbf{{(n = {c['texto_integral']})}}}};
+    \\node (exc2) [saida, right=1.3cm of full] {{Excluídos na elegibilidade
+        \\textbf{{(n = {c['excluidos_integral']})}} \\\\ {_lista(c['por_motivo'])}}};
+
+    \\node (inc) [process, below=1.6cm of full, fill=black!5]
+        {{\\textbf{{Estudos incluídos na revisão}} \\\\ \\textbf{{(n = {c['incluidos']})}}}};
 
     \\draw [arrow] (id) -- (screen);
+    \\draw [arrow] (id) -- (dup);
     \\draw [arrow] (screen) -- (full);
     \\draw [arrow] (screen) -- (exc1);
     \\draw [arrow] (full) -- (inc);
     \\draw [arrow] (full) -- (exc2);
+
+    \\node [lado] at (-3.6, 0) {{Identificação}};
+    \\node [lado] at (-3.6, -2.4) {{Triagem}};
+    \\node [lado] at (-3.6, -5.4) {{Elegibilidade}};
+    \\node [lado] at (-3.6, -7.6) {{Inclusão}};
     \\end{{tikzpicture}}
-    \\caption{{Fluxograma PRISMA 2020 da revisão conduzida (números reais da triagem
-    registada em \\texttt{{docs/slr/screening.csv}}).}}
+    \\caption[Fluxograma PRISMA 2020 da revisão conduzida]{{Fluxograma PRISMA 2020 da
+    revisão conduzida. Os números são gerados automaticamente a partir do registo de
+    triagem (\\texttt{{docs/slr/screening.csv}} no repositório, Apêndice~\\ref{{apx:resources}}),
+    onde cada decisão está associada ao respetivo critério de exclusão.}}
     \\label{{fig:prisma}}
 \\end{{figure}}
 """)

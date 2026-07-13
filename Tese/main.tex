@@ -18,6 +18,7 @@
 \usepackage{url}
 \usepackage[printonlyused]{acronym}
 \usepackage{float} % Para posicionamento de figuras [H]
+\usepackage{longtable} % Tabelas que quebram entre páginas (Apêndice da revisão)
 \usepackage{tikz} % Para o gráfico PRISMA
 \usepackage{listings} % Excertos de código (apêndices)
 \usepackage{xcolor}
@@ -641,85 +642,47 @@ A motivação para esta análise sistemática reside na observação de que a co
 Desta forma, a estrutura desta SLR foca-se em identificar e mapear as lacunas de \textit{benchmarking} que justificam a necessidade desta dissertação. Através da taxonomia aqui apresentada, serão exploradas as tendências de escalabilidade via \textit{Graph Neural Networks} (GNNs), defendidas por Chen et al. (2024), e as abordagens de hibridização emergentes que tentam fundir a eficácia dos algoritmos evolutivos com a flexibilidade do RL \cite{sun2024graph, zheng2025lns2}. Ao finalizar este capítulo, será possível sustentar a validade da metodologia proposta no Capítulo 4 como a resposta necessária às limitações encontradas na literatura contemporânea \cite{kegeleirs2025towards}.
 
 \section{Metodologia da Revisão Sistemática}
-Para garantir o rigor científico, a reprodutibilidade e a transparência no processo de seleção da informação, foi adotada uma metodologia baseada no protocolo PRISMA (\textit{Preferred Reporting Items for Systematic Reviews and Meta-Analyses}, versão 2020). A adoção deste protocolo permite mitigar o viés de seleção e assegurar que a análise crítica das tecnologias MARL e de otimização bio-inspirada se fundamenta numa amostra representativa e qualificada da literatura contemporânea.
+\label{sec:slr_metodologia}
+Para garantir o rigor científico, a reprodutibilidade e a transparência no processo de seleção da informação, adotou-se uma metodologia baseada no protocolo PRISMA (\textit{Preferred Reporting Items for Systematic Reviews and Meta-Analyses}, versão 2020). O protocolo foi definido \emph{antes} de executar qualquer pesquisa e está integralmente disponível no repositório da dissertação (\texttt{docs/PROTOCOLO\_SLR.md}, Apêndice~\ref{apx:resources}), a par do registo completo da triagem; qualquer leitor pode, com esses ficheiros, reproduzir as pesquisas e reconstruir cada uma das decisões de inclusão e exclusão aqui reportadas.
 
-\subsection{Critérios de Seleção e Rigor Técnico}
-A pesquisa priorizou bases de dados com elevado fator de impacto na área da computação e robótica: \textbf{IEEE Xplore}, \textbf{ACM Digital Library} e \textbf{Scopus}. Fontes genéricas ou não indexadas foram descartadas para garantir a qualidade da \textit{baseline}.
+\subsection{Pergunta e Critérios de Elegibilidade}
+A revisão responde à pergunta que motiva a dissertação: \emph{como se comparam, no controlo descentralizado de enxames robóticos, os paradigmas de MARL e de otimização bio-inspirada quanto a desempenho de tarefa, escalabilidade e robustez --- e que lacunas de \textit{benchmarking} comparativo persistem?}
 
-O critério de inclusão principal focou-se na formalização matemática do problema: foram selecionados apenas estudos que modelassem o controlo de enxame como um \textbf{Processo de Decisão de Markov Parcialmente Observável Descentralizado (Dec-POMDP)} ou problemas de otimização equivalentes. Artigos anteriores a 2020 ou que apresentassem abordagens puramente teóricas sem validação em simulação dinâmica foram excluídos na fase de triagem, garantindo que o Estado da Arte reflete apenas as tecnologias de ponta atuais.
+Foram incluídos estudos que, cumulativamente: (I1) abordam o controlo, navegação ou coordenação de \textbf{sistemas multi-robô} (dois ou mais agentes, excluindo o robô isolado); (I2) aplicam \textbf{MARL/RL profundo} ou \textbf{otimização bio-inspirada} (PSO, ACO, algoritmos evolutivos, neuroevolução); (I3) apresentam \textbf{validação empírica quantitativa}; (I4) foram publicados entre \textbf{2020 e 2026} com revisão por pares; e (I5) têm texto integral acessível. Os critérios de exclusão, aplicados com registo do motivo em cada registo, foram: robô único (E1), ausência de validação experimental --- incluindo revisões e artigos conceptuais (E2), ausência de dados quantitativos (E3), falta de revisão por pares ou integridade da publicação em causa (E4), duplicação (E5), método fora do âmbito --- multi-robô mas controlado por teoria de jogos, \textit{Dynamic Window Approach} ou campos potenciais clássicos, isto é, nem MARL nem bio-inspirado (E6), e tarefa fora do âmbito --- alocação e escalonamento industrial, SLAM, comunicações ou manipulação (E7), uma vez que a revisão incide sobre \textbf{navegação, exploração, \textit{foraging}, formação e coordenação de movimento}.
 
 \subsection{Protocolo de Pesquisa e Bases de Dados}
-A fase de levantamento bibliográfico foi conduzida entre Setembro e Outubro de 2025, recorrendo a fontes de dados fidedignas e amplamente reconhecidas pela comunidade científica. O fluxo de trabalho, desde a captura inicial até à leitura técnica detalhada, foi centralizado na plataforma \textbf{Mendeley}. Esta ferramenta foi crucial não apenas para a organização dos artigos, mas também para a gestão automática de metadados, deteção de duplicados e anotação técnica, garantindo a integridade e a rastreabilidade da bibliografia apresentada ao longo da dissertação.
+As pesquisas foram executadas a \textbf{13 de julho de 2026} sobre o \textbf{Scopus} e o \textbf{IEEE Xplore}, com acesso institucional. A ACM Digital Library foi dispensada por decisão explícita: o Scopus indexa a maior parte das suas atas relevantes para esta pergunta e a sobreposição observada entre as duas bases utilizadas já era substancial (203 duplicados em 883 registos, $\approx$ 23\%), pelo que o retorno marginal de uma terceira base seria reduzido. O Google Scholar não foi usado como fonte primária por não ser reproduzível --- os seus resultados variam entre utilizadores e sessões --- nem exportável em bloco.
 
-As bases de dados científicas indexadas foram selecionadas estrategicamente para cobrir tanto a especificidade técnica da engenharia como o impacto global das publicações:
-\begin{itemize}
-    \item \textbf{IEEE Xplore e ACM Digital Library:} Consultadas pela sua especialização em computação, robótica e engenharia eletrotécnica, onde se encontram os principais desenvolvimentos em algoritmos de controlo descentralizado.
-    \item \textbf{Scopus e Google Scholar:} Utilizadas para garantir uma abrangência multidisciplinar e capturar artigos de alto impacto e revisões de literatura que estabelecem o estado da arte em inteligência artificial.
-\end{itemize}
+A \textit{string} de pesquisa exige o conceito de enxame no \textbf{título} e o paradigma de controlo em título, resumo ou palavras-chave:
 
-A \textit{string} de pesquisa foi desenhada utilizando operadores booleanos para capturar a interseção precisa entre o domínio da Robótica de Enxame e as soluções tecnológicas em análise:
-
-\begin{quote}
-    \textit{("Swarm Robotics" OR "Multi-Robot Systems") AND ("Reinforcement Learning" OR "MARL" OR "Bio-inspired Optimization" OR "PSO") AND ("Control" OR "Navigation").}
+\begin{quote}\small
+\texttt{TITLE ( "swarm robot*" OR "robot swarm*" OR "multi-robot" )}\\
+\texttt{AND TITLE-ABS-KEY ( "reinforcement learning" OR "MARL" OR "neuroevolution"}\\
+\texttt{\phantom{AND TITLE-ABS-KEY ( }OR "evolutionary algorithm" OR "particle swarm"}\\
+\texttt{\phantom{AND TITLE-ABS-KEY ( }OR "bio-inspired optimization" )}\\
+\texttt{AND TITLE-ABS-KEY ( control OR navigation OR coordination OR foraging}\\
+\texttt{\phantom{AND TITLE-ABS-KEY ( }OR "path planning" ) AND PUBYEAR > 2019}
 \end{quote}
 
-Esta combinação de termos permitiu filtrar estudos que abordassem simultaneamente o paradigma de controlo (MARL ou Otimização) e a aplicação prática em enxames (Navegação/Controlo), excluindo automaticamente literatura focada em agentes isolados ou aplicações puramente teóricas sem componente robótica.
+A calibração desta \textit{string} é ela própria um resultado metodológico que importa reportar. Numa primeira versão, o conceito de enxame era procurado também no resumo e nas palavras-chave, o que devolveu \textbf{7\,628 registos}: a expressão \textit{``multi-agent system''} num resumo captura toda a literatura de sistemas multiagente sem componente robótica. Restringir o conceito de enxame ao título --- decisão de âmbito, e não de conveniência --- concentra a pesquisa nos trabalhos cujo \emph{objeto de estudo} é o coletivo de robôs, devolvendo 456 registos no Scopus. Ambas as contagens ficam registadas no repositório, pela mesma razão que se regista tudo o resto: uma revisão só é sistemática se as suas escolhas forem auditáveis.
 
 \subsection{Processo de Seleção (Fluxo PRISMA)}
-O rigor do processo de seleção é fundamental para assegurar que o corpo de literatura analisado é robusto e diretamente relevante para os objetivos desta dissertação. O fluxo de trabalho seguiu três fases críticas, documentadas detalhadamente no fluxograma da Figura \ref{fig:prisma}:
+As duas pesquisas devolveram \textbf{883 registos} (456 no Scopus, 427 no IEEE Xplore). A desduplicação automática por DOI e por título normalizado removeu \textbf{203 duplicados}, restando \textbf{680 registos únicos}.
 
-\begin{enumerate}
-    \item \textbf{Identificação:} A pesquisa inicial nas bases de dados selecionadas retornou um total de \textbf{145 artigos}. Todos os registos foram importados para o software \textbf{Mendeley}, facilitando a triagem inicial e a deteção de duplicados. Após a remoção automática e manual de 25 duplicados, restaram 120 registos únicos para análise de mérito.
-    \item \textbf{Triagem (Screening):} Foram \textbf{excluídos 60 artigos após a leitura integral de títulos e resumos}. O principal critério de exclusão nesta fase residiu no desvio do âmbito técnico, nomeadamente estudos focados exclusivamente em biologia animal teórica ou sistemas robóticos de agente único, que não oferecem contributos para a problemática da coordenação descentralizada.
-    \item \textbf{Elegibilidade:} Dos restantes 60 artigos lidos na íntegra, 34 foram excluídos por apresentarem falta de dados comparativos quantitativos ou metodologias obsoletas que não consideravam ambientes dinâmicos e ruidosos. Esta fase foi crucial para garantir que apenas estudos com validade estatística e relevância para o controlo de enxames moderno fossem retidos.
-\end{enumerate}
+Na \textbf{triagem} por título e resumo foram excluídos \textbf{201 registos}. O motivo dominante foi, com igual peso (75 registos cada), o robô único (E1) e o método fora do âmbito (E6). O primeiro é um artefacto instrutivo da própria \textit{string}: a expressão \textit{particle swarm} designa um \emph{método} de otimização, pelo que a pesquisa recolhe abundante literatura de PSO aplicado a um único manipulador ou a um robô móvel isolado --- trabalhos legítimos, mas sem enxame. Excluíram-se ainda 42 revisões e artigos conceptuais (E2), quatro registos por integridade ou ausência de revisão por pares (E4) --- entre os quais um artigo formalmente retirado pelo IEEE por violação dos princípios de publicação --- e quatro duplicados que a deteção automática não apanhara (E5), por terem DOI numa base e não na outra.
 
-No final deste processo, \textbf{26 artigos} foram selecionados para a fase de análise qualitativa e extração de dados técnicos, servindo de base para a taxonomia apresentada de seguida.
+Os restantes \textbf{479 estudos} passaram à fase de \textbf{elegibilidade}. Este número, incomportável para leitura integral no âmbito de uma dissertação individual, é em si mesmo um dado sobre a maturidade do campo. Aplicaram-se então dois critérios adicionais, ambos registados no protocolo: a exclusão de tarefas fora do âmbito da pergunta (E7: alocação e escalonamento, SLAM, comunicações, manipulação, plataformas de simulação), que retirou 79 estudos; e a restrição do corpo a trabalhos que tratem efetivamente de \emph{enxames} e estejam publicados em \textbf{venues de referência} --- ou que, independentemente do venue, constituam o \emph{núcleo} da pergunta desta revisão, isto é, que apliquem \textit{novelty search}, neuroevolução ou \textit{foraging} evolutivo a enxames, ou que comparem \emph{diretamente} os dois paradigmas (E8, 342 estudos excluídos).
 
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}[node distance=1.5cm]
-    \tikzstyle{process} = [rectangle, minimum width=4.5cm, minimum height=1.5cm, text centered, draw=black, fill=white, text width=4.5cm, font=\small]
-    \tikzstyle{arrow} = [thick,->,>=stealth]
-    \tikzstyle{side_label} = [rotate=90, anchor=south, font=\bfseries\footnotesize, color=blue!70!black, fill=blue!10, minimum width=3cm, align=center]
+A lista de venues de referência cobre deliberadamente \emph{ambos} os campos em confronto: robótica (IEEE T-RO, RA-L, ICRA, IROS, \textit{Autonomous Robots}), MARL e IA (AAMAS, IEEE T-Cybernetics, TNNLS) e computação evolutiva e inteligência de enxame (GECCO, IEEE CEC, \textit{Swarm Intelligence}, \textit{Swarm and Evolutionary Computation}). Esta simetria não é acessória: uma lista restrita aos venues de robótica e MARL --- a tentação natural de quem parte da literatura de aprendizagem --- teria excluído sistematicamente a produção de qualidade do paradigma bio-inspirado, enviesando a revisão \emph{contra} um dos dois objetos que ela existe para comparar.
 
-    % FASE 1: IDENTIFICAÇÃO
-    \node (id_db) [process] {Registos identificados nas Bases de Dados (IEEE, ACM, Scopus): \\ \textbf{(n = 145)}};
-    \node (dup) [process, right=1.5cm of id_db, text width=5cm] {Registos removidos antes da triagem: \\ \raggedright • Duplicados (n = 25) \\ • Anteriores a 2020 (n = 0)};
+O processo fixou \textbf{58 estudos} para análise qualitativa e extração de dados (Figura~\ref{fig:prisma}; a lista completa consta do Apêndice~\ref{apx:slr}).
 
-    % FASE 2: TRIAGEM
-    \node (screen) [process, below=1.5cm of id_db] {Registos triados (Título/Resumo) \\ \textbf{(n = 120)}};
-    \node (excluded) [process, right=1.5cm of screen] {Registos excluídos \\ (Fora do âmbito técnico) \\ \textbf{(n = 60)}};
+\subsection{Ameaças à Validade da Revisão}
+Três limitações devem ser declaradas. Primeiro, a revisão foi conduzida por um \textbf{único revisor}, sem dupla triagem independente, o que não permite calcular concordância entre avaliadores --- uma restrição inerente a uma dissertação individual. Segundo, a triagem dos 680 registos foi \textbf{assistida por um modelo de linguagem}, que propôs para cada registo uma decisão e o respetivo motivo a partir do título e do resumo, cabendo ao autor a validação; o registo integral das decisões, publicado no repositório, permite a auditoria de qualquer uma delas. Terceiro, a restrição a duas bases, a publicações em inglês e ao recorte temporal 2020--2026 introduz um possível viés de cobertura, deliberado quanto ao recorte (o foco é o estado da arte posterior à adoção de GNNs) mas assumido quanto às bases.
 
-    % FASE 3: RECUPERAÇÃO
-    \node (sought) [process, below=1.5cm of screen] {Relatórios procurados para leitura integral \\ \textbf{(n = 60)}};
-    \node (not_retrieved) [process, right=1.5cm of sought] {Não recuperados \\ \textbf{(n = 0)}};
-
-    % FASE 4: ELEGIBILIDADE
-    \node (eligible) [process, below=1.5cm of sought] {Artigos avaliados para elegibilidade (Texto Completo) \\ \textbf{(n = 60)}};
-    \node (excluded_reason) [process, right=1.5cm of eligible, text width=5cm] {Artigos excluídos: \textbf{(n = 34)} \\ \raggedright \scriptsize • Sem comparação quantitativa (n=15) \\ • Simulação estática/simplista (n=10) \\ • Não utiliza Dec-POMDP/MARL (n=9)};
-
-    % FASE 5: INCLUSÃO
-    \node (included) [process, below=1.5cm of eligible] {Estudos incluídos na revisão \\ \textbf{(n = 26)}};
-
-    % LIGAÇÕES
-    \draw [arrow] (id_db) -- (screen);
-    \draw [arrow] (id_db) -- (dup);
-    \draw [arrow] (screen) -- (sought);
-    \draw [arrow] (screen) -- (excluded);
-    \draw [arrow] (sought) -- (eligible);
-    \draw [arrow] (sought) -- (not_retrieved);
-    \draw [arrow] (eligible) -- (included);
-    \draw [arrow] (eligible) -- (excluded_reason);
-
-    % LABELS LATERAIS
-    \node [side_label, minimum width=3cm] at (-5.5, 0) {Identificação};
-    \node [side_label, minimum width=4.5cm] at (-5.5, -3.7) {Triagem};
-    \node [side_label, minimum width=6cm] at (-5.5, -9.5) {Inclusão};
-    \end{tikzpicture}
-    \caption{Fluxograma PRISMA 2020: Seleção focada em estudos recentes e quantitativos.}
-    \label{fig:prisma}
-\end{figure}
+% Fluxograma PRISMA: gerado por scripts/slr_pipeline.py a partir do registo de
+% triagem (docs/slr/screening.csv). NÃO editar à mão — ver docs/PROTOCOLO_SLR.md
+\input{prisma_gerado}
 
 \section{Análise dos Melhores Resultados}
 
@@ -1651,6 +1614,16 @@ Para garantir a reprodutibilidade integral das experiências, este apêndice re�
  & Elitismo & $20\%$ ($e = 6$ genomas) \\ \hline
 \end{tabular}
 \end{table}
+
+\chapter{Estudos Incluídos na Revisão Sistemática}
+\label{apx:slr}
+Lista integral dos estudos que sobreviveram ao fluxo PRISMA descrito na
+Secção~\ref{sec:slr_metodologia} (Figura~\ref{fig:prisma}). A tabela é gerada
+automaticamente a partir do registo de triagem (\texttt{docs/slr/screening.csv}), onde
+constam também os 622 registos excluídos, cada um com o respetivo critério --- o que
+permite auditar qualquer decisão desta revisão, e não apenas as inclusões.
+
+\input{apendice_slr}
 
 \chapter{Excertos de Código Relevantes}
 \label{apx:code}

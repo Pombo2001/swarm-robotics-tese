@@ -2,25 +2,48 @@
 % NÃO editar à mão: os números vêm da triagem real. Ver docs/PROTOCOLO_SLR.md
 \begin{figure}[H]
     \centering
-    \begin{tikzpicture}[node distance=1.5cm]
-    \tikzstyle{process} = [rectangle, minimum width=4.5cm, minimum height=1.5cm,
-        text centered, draw=black, fill=white, text width=4.5cm, font=\small]
+    \begin{tikzpicture}[node distance=1.2cm]
+    \tikzstyle{process} = [rectangle, minimum width=5.2cm, minimum height=1.1cm,
+        text centered, draw=black, fill=white, text width=5.2cm, font=\small]
+    \tikzstyle{saida} = [rectangle, minimum height=1.1cm, draw=black, fill=black!3,
+        text width=5.4cm, font=\scriptsize, align=left]
     \tikzstyle{arrow} = [thick,->,>=stealth]
+    \tikzstyle{lado} = [rotate=90, anchor=south, font=\bfseries\footnotesize,
+        color=black!60]
 
-    \node (id) [process] {Registos identificados nas bases de dados: \\ \textbf{(n = 680)}};
-    \node (screen) [process, below=1.5cm of id] {Registos triados (título/resumo) \\ \textbf{(n = 680)}};
-    \node (exc1) [process, right=1.5cm of screen] {Registos excluídos \\ \textbf{(n = 201)}};
-    \node (full) [process, below=1.5cm of screen] {Artigos avaliados em texto integral \\ \textbf{(n = 479)}};
-    \node (exc2) [process, right=1.5cm of full, text width=5cm] {Artigos excluídos: \textbf{(n = 421)} \\ \raggedright \scriptsize $\bullet$ Tarefa fora do âmbito da revisão (alocação/escalonamento, SLAM, comunicações, manipulação — a revisão cobre navegação, exploração, foraging, formação e coordenação de movimento em enxame) (n=79) \\ $\bullet$ E8 (n=342)};
-    \node (inc) [process, below=1.5cm of full] {Estudos incluídos na revisão \\ \textbf{(n = 58)}};
+    \node (id) [process] {Registos identificados nas bases de dados \\
+        \scriptsize (Ieee 427 + Scopus 456) \\ \textbf{(n = 883)}};
+    \node (dup) [saida, right=1.3cm of id] {Duplicados removidos \\
+        (DOI ou título normalizado) \\ \textbf{(n = 203)}};
+
+    \node (screen) [process, below=1.2cm of id] {Registos únicos triados
+        (título e resumo) \\ \textbf{(n = 680)}};
+    \node (exc1) [saida, right=1.3cm of screen] {Excluídos na triagem
+        \textbf{(n = 201)} \\ $\bullet$ Robô único (sem enxame): 75 \\ $\bullet$ Revisão / sem validação experimental: 42 \\ $\bullet$ Sem dados quantitativos: 1 \\ $\bullet$ Sem revisão por pares / integridade: 4 \\ $\bullet$ Duplicado não detetado automaticamente: 4 \\ $\bullet$ Método fora do âmbito (nem MARL nem bio-inspirado): 75};
+
+    \node (full) [process, below=2.1cm of screen] {Avaliados em texto integral \\
+        \textbf{(n = 479)}};
+    \node (exc2) [saida, right=1.3cm of full] {Excluídos na elegibilidade
+        \textbf{(n = 421)} \\ $\bullet$ Tarefa fora do âmbito (alocação, SLAM, comunicações, manipulação): 79 \\ $\bullet$ Fora do núcleo (não é enxame em venue de referência): 342};
+
+    \node (inc) [process, below=1.6cm of full, fill=black!5]
+        {\textbf{Estudos incluídos na revisão} \\ \textbf{(n = 58)}};
 
     \draw [arrow] (id) -- (screen);
+    \draw [arrow] (id) -- (dup);
     \draw [arrow] (screen) -- (full);
     \draw [arrow] (screen) -- (exc1);
     \draw [arrow] (full) -- (inc);
     \draw [arrow] (full) -- (exc2);
+
+    \node [lado] at (-3.6, 0) {Identificação};
+    \node [lado] at (-3.6, -2.4) {Triagem};
+    \node [lado] at (-3.6, -5.4) {Elegibilidade};
+    \node [lado] at (-3.6, -7.6) {Inclusão};
     \end{tikzpicture}
-    \caption{Fluxograma PRISMA 2020 da revisão conduzida (números reais da triagem
-    registada em \texttt{docs/slr/screening.csv}).}
+    \caption[Fluxograma PRISMA 2020 da revisão conduzida]{Fluxograma PRISMA 2020 da
+    revisão conduzida. Os números são gerados automaticamente a partir do registo de
+    triagem (\texttt{docs/slr/screening.csv} no repositório, Apêndice~\ref{apx:resources}),
+    onde cada decisão está associada ao respetivo critério de exclusão.}
     \label{fig:prisma}
 \end{figure}
