@@ -36,6 +36,9 @@ def contrato(algos, scenarios):
     itens = [
         ('dados_historicos.csv',      True,  'curvas de treino'),
         ('dados_melhores_scores.csv', True,  'melhores scores'),
+        # a avaliação TEM de viver dentro da sessão: é o que a torna auto-contida e
+        # comparável no dashboard depois de a pasta global ser sobrescrita
+        ('eval_summary.csv',          True,  'avaliação determinística (auto-contida)'),
         ('info_treino.yaml',          False, 'metadados da sessão'),
         ('comparacao_barras_geral.png', True, 'barras globais'),
         ('recolhas_por_cenario.png',  True,  'recolhas por cenário'),

@@ -233,6 +233,28 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
         FALHAS.append(("relatório: gráficos + heatmaps + mapas", e))
         print(f"[!] Relatório (gráficos/heatmaps) FALHOU: {e}")
 
+    # ── A SESSÃO TEM DE SER AUTO-CONTIDA ─────────────────────────────────────
+    # A avaliação é escrita em results/evaluation/ (global), mas a pasta da sessão só
+    # levava gráficos e modelos. Consequência: o dashboard, que procura o eval DENTRO da
+    # pasta para poder comparar treinos, não encontrava nada — e as campanhas recentes
+    # (incluindo a de 7 dias) desapareciam da comparação, restando só as antigas. Copiar
+    # o eval para a sessão torna-a auto-contida: gráficos + modelos + avaliação, tudo
+    # junto e comparável, mesmo depois de a pasta global ser sobrescrita pela campanha
+    # seguinte.
+    try:
+        import shutil
+        from scripts.verificar_sessao import ultima_sessao
+        sess = ultima_sessao()
+        if sess:
+            for nome in ("eval_summary.csv", "eval_by_run.csv"):
+                orig = os.path.join(BASE_DIR, "results", "evaluation", nome)
+                if os.path.exists(orig):
+                    shutil.copy2(orig, os.path.join(sess, nome))
+                    print(f"    {nome} copiado para a sessão")
+    except Exception as e:
+        FALHAS.append(("cópia da avaliação para a sessão", e))
+        print(f"[!] Cópia do eval para a sessão FALHOU: {e}")
+
     # ── VÍDEOS dos episódios (GIF 2D top-down) ───────────────────────────────
     # Grava 1 GIF por (algoritmo × cenário) treinado, na pasta da sessão acabada
     # de gerar (results/graficos_tese/<sessao>/videos/). Robusto: falhas
