@@ -41,6 +41,11 @@ sustentar com um corpo de literatura levantado de forma reproduzível.
 - E4. Literatura cinzenta não revista por pares (preprints sem publicação, blogues,
   white papers). **Nota:** preprints do arXiv só entram se tiverem versão publicada.
 - E5. Duplicado de outro registo já incluído.
+- E6. **Método fora do âmbito**: o trabalho é multi-robô e empírico, mas o controlador
+  não é MARL nem otimização bio-inspirada (p. ex. teoria de jogos, *Dynamic Window
+  Approach* puro, campos potenciais clássicos, controlo geométrico). *Acrescentado a
+  13 jul 2026, durante a triagem: os critérios I1–I5 não cobriam este caso, que se
+  revelou frequente. A alteração fica registada em vez de retroativamente silenciada.*
 
 ## 3. Bases de dados
 

@@ -27,6 +27,10 @@ import re
 import sys
 import unicodedata
 
+# os títulos trazem caracteres que a consola cp1252 do Windows não sabe imprimir
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DIR_SLR = os.path.join(RAIZ, 'docs', 'slr')
 DIR_RAW = os.path.join(DIR_SLR, 'raw')
@@ -36,11 +40,12 @@ COLUNAS = ['origem', 'doi', 'titulo', 'autores', 'ano', 'venue',
            'fase', 'decisao', 'motivo', 'notas']
 
 MOTIVOS = {
-    'E1': 'Robô único / sem componente robótica',
-    'E2': 'Sem validação experimental',
+    'E1': 'Robô único / sem componente de enxame',
+    'E2': 'Sem validação experimental (revisão ou artigo conceptual)',
     'E3': 'Sem dados quantitativos comparáveis',
-    'E4': 'Não revisto por pares',
+    'E4': 'Não revisto por pares / integridade da publicação em causa',
     'E5': 'Duplicado',
+    'E6': 'Método fora do âmbito (nem MARL nem otimização bio-inspirada)',
 }
 
 
@@ -117,11 +122,14 @@ def ingest():
         lidos = _ler_bib(caminho) if caminho.endswith('.bib') else _ler_csv(caminho)
         brutos += len(lidos)
         for r in lidos:
-            chave = r['doi'].lower() or _norm(r['titulo'])
-            if chave in vistos:
+            # tem de verificar DOI *e* título: um registo com DOI numa base e sem DOI
+            # noutra escapava à deteção quando só se usava a primeira chave disponível
+            chaves = [k for k in (r['doi'].lower(), _norm(r['titulo'])) if k]
+            if any(k in vistos for k in chaves):
                 duplicados += 1
                 continue
-            vistos[chave] = True
+            for k in chaves:
+                vistos[k] = True
             anterior = ja.get(r['doi'].lower()) or ja.get(_norm(r['titulo'])) or {}
             registos.append({
                 'origem': anterior.get('origem') or base,
@@ -176,6 +184,72 @@ def _contas(regs):
         'lista': sorted(incluidos, key=lambda r: (r['ano'], r['autores'])),
         'por_decidir': [r for r in regs if not r['decisao']],
     }
+
+
+def _abstracts():
+    """Mapa {chave -> resumo} construído a partir dos exports em bruto.
+
+    O screening.csv não guarda os resumos (ficaria ilegível para edição manual);
+    vão-se buscar aos raw/ quando são precisos para triar.
+    """
+    mapa = {}
+    for caminho in sorted(glob.glob(os.path.join(DIR_RAW, '*.csv'))):
+        with open(caminho, encoding='utf-8-sig', errors='replace', newline='') as f:
+            for linha in csv.DictReader(f):
+                baixo = {(k or '').strip().lower(): (v or '').strip()
+                         for k, v in linha.items()}
+                titulo = baixo.get('title') or baixo.get('document title') or ''
+                doi = baixo.get('doi', '')
+                resumo = baixo.get('abstract', '')
+                if not resumo:
+                    continue
+                if doi:
+                    mapa[doi.lower()] = resumo
+                mapa[_norm(titulo)] = resumo
+    return mapa
+
+
+def lote():
+    """Mostra os próximos N registos por decidir, com resumo, para triagem."""
+    n = int(sys.argv[2]) if len(sys.argv) > 2 else 50
+    chars = int(sys.argv[3]) if len(sys.argv) > 3 else 700
+    regs = _carregar()
+    resumos = _abstracts()
+    pendentes = [(i, r) for i, r in enumerate(regs) if not r['decisao']][:n]
+    for i, r in pendentes:
+        chave = r['doi'].lower() if r['doi'] else _norm(r['titulo'])
+        resumo = resumos.get(chave) or resumos.get(_norm(r['titulo'])) or '(sem resumo)'
+        print(f"[{i}] {r['ano']} | {r['titulo']}")
+        print(f"    {resumo[:chars]}")
+    print(f"--- {len(pendentes)} registos mostrados; {len(regs) - len([r for r in regs if r['decisao']])} por decidir no total")
+
+
+def aplicar():
+    """Aplica decisões de um ficheiro 'idx|decisao|motivo' (uma por linha)."""
+    if len(sys.argv) < 3:
+        sys.exit('uso: aplicar <ficheiro_de_decisoes>')
+    regs = _carregar()
+    n = 0
+    for linha in open(sys.argv[2], encoding='utf-8'):
+        linha = linha.strip()
+        if not linha or linha.startswith('#'):
+            continue
+        partes = [p.strip() for p in linha.split('|')]
+        idx, decisao = int(partes[0]), partes[1]
+        motivo = partes[2] if len(partes) > 2 else ''
+        if decisao not in ('incluir', 'excluir'):
+            sys.exit(f'[!] decisão inválida na linha: {linha}')
+        if decisao == 'excluir' and not motivo:
+            sys.exit(f'[!] exclusão sem motivo (E1..E5): {linha}')
+        regs[idx]['decisao'] = decisao
+        regs[idx]['motivo'] = motivo
+        regs[idx]['fase'] = 'titulo_resumo'
+        n += 1
+    with open(SCREENING, 'w', encoding='utf-8', newline='') as f:
+        w = csv.DictWriter(f, fieldnames=COLUNAS)
+        w.writeheader()
+        w.writerows(regs)
+    print(f'{n} decisões aplicadas -> {SCREENING}')
 
 
 def estado():
@@ -273,6 +347,10 @@ if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else ''
     if cmd == 'ingest':
         ingest()
+    elif cmd == 'lote':
+        lote()
+    elif cmd == 'aplicar':
+        aplicar()
     elif cmd == 'estado':
         estado()
     elif cmd == 'prisma':
