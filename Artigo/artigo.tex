@@ -76,11 +76,22 @@ bio-inspirada} (por exemplo, algoritmos evolutivos e otimização por enxame de
 partículas) procura num espaço global de parâmetros, \emph{fora de linha},
 controladores robustos e estáticos \citep{kennedy1995pso}. A \emph{aprendizagem
 por reforço multiagente} (MARL) aprende, em alternativa, políticas adaptativas
-\emph{em linha} através da interação \citep{huh2023marl}. Apesar do extenso
-trabalho em cada uma, as comparações diretas e rigorosas entre paradigmas
-permanecem escassas \citep{majid2023deep, bettini2024benchmarl}: os estudos
-costumam refinar um único algoritmo contra variantes da sua própria família,
-descurando as referências cruzadas entre paradigmas.
+\emph{em linha} através da interação \citep{huh2023marl}.
+
+Que as comparações diretas entre os dois paradigmas sejam escassas é afirmação
+recorrente \citep{majid2023deep, bettini2024benchmarl}; é também, tanto quanto
+sabemos, uma afirmação que nunca foi medida. Conduzimos por isso uma revisão
+sistemática (PRISMA~2020; Scopus e IEEE~Xplore, 2020--2026; $883$ registos,
+$680$ únicos), cujo corpo final de $58$ estudos primários sobre controlo de
+enxames revela um equilíbrio notável: $21$ assentam exclusivamente em MARL e $23$
+em otimização bio-inspirada --- dois campos igualmente produtivos. Contudo,
+\textbf{apenas dois} os confrontam, e um deles fá-lo por hibridização. Existe,
+portanto, na literatura recuperada, \textbf{um único estudo} que compara
+empiricamente MARL com otimização bio-inspirada na navegação de enxames
+\citep{iskandar2024comparative} --- numa só tarefa, sem análise de escalabilidade,
+sem testes de robustez e sem inferência estatística. O isolamento metodológico
+entre as duas comunidades deixa assim de ser um diagnóstico intuitivo para passar
+a ser uma contagem: $1$ em $58$.
 
 Controlar um enxame é difícil por três razões que se reforçam. O espaço de ações
 conjuntas cresce exponencialmente com o número de agentes, tornando inviável tratar
@@ -111,12 +122,15 @@ o que permite tratar a \emph{execução de treino} --- e não o episódio --- co
 unidade estatística, distinguindo o desempenho atingível da fiabilidade da
 convergência.
 
-A nossa contribuição é tripla: (i) um protocolo de avaliação reprodutível e
-independente do paradigma, com significância aferida ao nível da execução; (ii) a
+A nossa contribuição é quádrupla: (i) a quantificação da lacuna, por revisão
+sistemática, que situa este trabalho como a segunda comparação empírica entre os
+dois paradigmas na navegação de enxames --- e a primeira com escalabilidade,
+robustez e inferência estatística; (ii) um protocolo de avaliação reprodutível e
+independente do paradigma, com significância aferida ao nível da execução; (iii) a
 demonstração de que o alegado colapso da neuroevolução em cenários de
 estrangulamento é um artefacto do \emph{desenho da aptidão}, e não uma limitação
 intrínseca do paradigma, corrigível por um \emph{shaping} de \emph{homing}
-terminal não farmável; e (iii) a evidência de que a escalabilidade \emph{zero-shot}
+terminal não farmável; e (iv) a evidência de que a escalabilidade \emph{zero-shot}
 é uma propriedade da representação (grafo com atenção), e não do otimizador. Uma
 versão preliminar deste trabalho, com um orçamento de treino mais curto e uma
 aptidão baseada no retorno acumulado, levava à conclusão oposta sobre o
@@ -130,16 +144,20 @@ A aprendizagem por reforço profunda tem sido aplicada a sistemas de enxame com
 partilha de parâmetros para domar a explosão do espaço de ações conjuntas
 \citep{huttenrauch2019deep}, em que uma única rede é partilhada por todos os
 agentes homogéneos. As redes neuronais de grafos (GNN) emergiram como o principal
-viabilizador da escalabilidade: ao modelar o enxame como um grafo e ao aplicar
-atenção sobre os vizinhos, uma política treinada com poucos agentes pode ser
-implantada com muitos \citep{sun2024graph}. O mecanismo de atenção
-\citep{vaswani2017attention, velickovic2018gat} é central nesta propriedade, por
-ser invariante à permutação e à cardinalidade do conjunto de vizinhos. Os
-controlos de enxames baseados em grafos têm-se multiplicado, com aplicações que
-vão da estimação distribuída em redes dinâmicas \citep{sun2024graph} ao controlo
-descentralizado de formação \citep{schmickl2025gnn, elrod2025gnn}, e revisões
-recentes consolidam a GNN como o substrato dominante para a escalabilidade em
-enxames \citep{lin2025survey}.
+viabilizador da escalabilidade. O mecanismo é estrutural: numa política definida
+sobre um grafo, o número de parâmetros treináveis não depende do número de
+agentes, pelo que a política aprendida se aplica diretamente a grafos maiores sem
+retreino --- propriedade caracterizada com clareza por \citet{sun2024graph}, ainda
+que em redes multi-salto sem fios e não em robótica. Em robótica de enxame, a
+invariância à dimensão da vizinhança é confirmada empiricamente na exploração
+multi-robô com GNN hierárquicas \citep{zhang2022h2gnn} e, por outra via, em
+aproximações de campo médio, nas quais o agente reage à distribuição estatística
+dos vizinhos em vez de a cada um individualmente, tornando o custo de coordenação
+independente de $N$ \citep{tang2023meanfield}. O mecanismo de atenção
+\citep{vaswani2017attention, velickovic2018gat} é central nesta família, por ser
+invariante à permutação e à cardinalidade do conjunto de vizinhos, e sustenta
+igualmente a manutenção de formações sob variação da escala do enxame
+\citep{li2024shape}.
 
 No paradigma de aprendizagem, o esquema de treino centralizado com execução
 descentralizada (CTDE) tornou-se padrão para domar a não-estacionariedade do
@@ -156,19 +174,42 @@ estratégias de evolução são atrativas pela simplicidade e pela paralelizaç�
 trivial, mas otimizam a partir de um único escalar de aptidão por episódio, sem
 atribuição de crédito temporal --- uma distinção que se revelará decisiva. Quando
 a recompensa de tarefa é esparsa, a aptidão fica refém do termo de modelação, e a
-escolha desse termo determina se a seleção discrimina ou fica cega. A procura por
-novidade \citep{lehman2011abandoning} propõe abandonar por completo o objetivo,
-selecionando comportamentos pela sua raridade --- uma resposta ao mesmo problema
-de deceção que aqui abordamos por via do desenho da aptidão.
+escolha desse termo determina se a seleção discrimina ou fica cega.
 
-Os estudos comparativos entre aprendizagem por reforço profunda e estratégias de
-evolução salientam a ausência de uma referência de desempenho comum entre as duas
-famílias \citep{majid2023deep}, enquanto os referenciais padronizados de MARL
-permanecem focados dentro da comunidade de aprendizagem \citep{bettini2024benchmarl}.
-As aplicações de aprendizagem por reforço profunda à navegação de enxames
-\citep{iskandar2023navigation} ilustram o tipo de estudo de paradigma único que
-este trabalho estende, com uma comparação sistemática e estatisticamente
-fundamentada contra a alternativa bio-inspirada.
+Que esta especificação seja difícil não é observação nova: é precisamente o que
+motiva a linha de \emph{desenho automático} de enxames, na qual se procura
+dispensar a função-objetivo. \citet{hasselmann2023novelty} geram, por procura por
+novidade \citep{lehman2011abandoning}, repertórios de comportamentos que são
+depois montados modularmente em controladores; \citet{szpirer2024composite}
+substituem a função-objetivo por demonstrações, recuperando-a por aprendizagem por
+reforço inversa; e a transferibilidade destes controladores da simulação para
+plataformas físicas distintas foi caracterizada por \citet{kegeleirs2024transfer}.
+Numa linha complementar, a evolução é tratada como processo \emph{em linha} e
+distribuído, propagando-se os controladores entre robôs durante a própria missão
+\citep{bredeche2022social, fontbonne2020online}. Na tarefa de \emph{foraging} ---
+a mesma que aqui se estuda --- a neuroevolução é aplicada com sucesso em arenas
+abertas com obstáculos dispersos \citep{zaman2025neat, biteng2025training} e a
+afinação multiobjetivo de regras de interação arbitra entre recolha e energia
+\citep{ordaz2026foraging}. É de notar que estes trabalhos empregam aptidões
+baseadas em retorno acumulado sem observar o colapso que aqui reportamos: uma
+divergência que atribuímos à ausência, nas suas arenas, de estrangulamentos
+decetivos onde o termo de modelação satura (Secção~\ref{sec:discussion}).
+
+Quanto ao confronto entre paradigmas, os estudos existentes salientam a ausência
+de uma referência de desempenho comum entre as duas famílias
+\citep{majid2023deep}, enquanto os referenciais padronizados de MARL permanecem
+focados dentro da comunidade de aprendizagem, sem qualquer \emph{baseline}
+evolutiva \citep{bettini2024benchmarl}. A única comparação empírica que a nossa
+revisão recuperou \citep{iskandar2024comparative} --- conduzida pelo grupo que
+havia antes aplicado aprendizagem por reforço profunda à navegação de enxames
+\citep{iskandar2023navigation} --- conclui que a aprendizagem se destaca em
+ambientes próximos das condições de treino, enquanto a otimização por enxame de
+partículas exibe consistência superior em cenários não treinados, sem
+reconfiguração. É uma conclusão convergente com a que aqui se obtém por um
+protocolo mais exigente; a diferença está em que a sustentamos em sete cenários,
+sete execuções independentes por combinação e testes não paramétricos ao nível da
+execução, acrescentando os eixos de escalabilidade e robustez que aquele estudo
+não aborda.
 
 \section{Metodologia}
 \label{sec:method}
@@ -556,6 +597,20 @@ não-decetivos, com magnitudes que igualam ou superam os métodos de gradiente. 
 uma limitação intrínseca do paradigma. A ressalva é que esta sensibilidade ao
 desenho é, em si mesma, um custo de engenharia que os métodos de gradiente, com
 atribuição de crédito passo a passo, não pagam na mesma medida.
+
+Este achado permite reconciliar um aparente desacordo com a literatura. Os
+trabalhos recentes que evoluem \emph{foraging} de enxames com aptidões baseadas em
+retorno acumulado reportam sucesso e escalabilidade, sem qualquer sinal do colapso
+aqui descrito \citep{zaman2025neat, biteng2025training}. A divergência não é
+contraditória: as suas arenas são espaços abertos com obstáculos dispersos, nos
+quais o termo de modelação permanece informativo em todo o percurso e o gradiente
+de seleção nunca se anula. O planalto de aptidão exige uma condição adicional que
+essas arenas não satisfazem --- um estrangulamento decetivo, no qual a direção que
+maximiza o termo de modelação é precisamente a que não conduz ao objetivo. É essa
+a razão pela qual o efeito só se manifesta em cenários como o labirinto em U, e
+pela qual pode ter passado despercebido a uma literatura que avalia
+maioritariamente em arenas abertas. A implicação prática é direta: a robustez de
+uma aptidão não se afere na tarefa fácil, mas na estrutura que a decompõe.
 
 A distribuição da variância pelos cenários é igualmente informativa. O controlador
 evolutivo é quase determinístico nos labirintos com gradiente geodésico informativo
