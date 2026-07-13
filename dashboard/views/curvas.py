@@ -51,10 +51,17 @@ def build():
                 .props("outlined dense").classes("w-72")
         ui.label("Lê os CSVs em results/logs*; cada algoritmo no seu eixo (escalas diferentes).") \
             .classes("text-xs text-gray-500")
+        # Estes CSVs são LOCAIS. Quando o treino corre no servidor — o caso normal
+        # neste projeto — ficam parados no último treino local, e a vista desenhava
+        # curvas antigas sem avisar, dando a impressão de que "algo está mal".
+        aviso = ui.label("").classes("text-xs")
         plot = ui.plotly(_build_fig({}, "score")).classes("w-full")
 
     def refresh(force=False):
         curves = data.training_curves()
+        vivo, msg = data.estado_curvas_locais()
+        aviso.text = ("" if vivo else "⚠ " + msg)
+        aviso.classes(replace="text-xs " + ("text-gray-500" if vivo else "text-amber-600"))
         metric = _METRICS[metric_sel.value]
         sig = (tuple(sorted((a, c["mtime"], len(c["x"])) for a, c in curves.items())), metric)
         if not force and sig == state["sig"]:

@@ -6,6 +6,7 @@ Não treina nem avalia — só lê o que os scripts já produziram.
 import os
 import re
 import glob
+import time
 import shutil
 import datetime
 
@@ -264,8 +265,37 @@ def training_curves():
             "score": df[scol].tolist() if scol in df.columns else [],
             "task": df[tcol].tolist() if tcol in df.columns else [],
             "mtime": _mtime(path),
+            "path": path,
+            "idade_h": (time.time() - os.path.getmtime(path)) / 3600.0,
         }
     return out
+
+
+# Um CSV que não é escrito há mais de meia hora não corresponde a um treino a decorrer.
+# Isto importa porque estes ficheiros são LOCAIS: quando o treino corre no servidor (o
+# caso normal neste projeto), ficam parados no último treino local — e a vista desenhava
+# curvas antigas como se fossem de agora.
+IDADE_OBSOLETA_H = 0.5
+
+
+def estado_curvas_locais():
+    """Diz se há treino LOCAL a decorrer, ou se os CSVs são apenas restos antigos.
+
+    Devolve (ha_treino_vivo, descrição).
+    """
+    curvas = training_curves()
+    if not curvas:
+        return False, ("Sem CSVs de treino locais. Se o treino está a correr no "
+                       "servidor, use a vista «Servidor».")
+    recente = min(c["idade_h"] for c in curvas.values())
+    if recente > IDADE_OBSOLETA_H:
+        dias = recente / 24.0
+        quando = f"{recente:.1f} h" if dias < 1 else f"{dias:.1f} dias"
+        return False, (f"Nenhum treino local a decorrer — o CSV mais recente não é "
+                       f"escrito há {quando}. As curvas abaixo são de um treino "
+                       f"antigo. O treino a decorrer no servidor vê-se na vista "
+                       f"«Servidor».")
+    return True, "Treino local a decorrer."
 
 
 # ── Vídeos dos episódios (vista Vídeos) ───────────────────────────────────────
