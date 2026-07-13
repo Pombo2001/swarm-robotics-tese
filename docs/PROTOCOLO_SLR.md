@@ -57,16 +57,22 @@ sustentar com um corpo de literatura levantado de forma reproduzível.
 
 ## 4. String de pesquisa
 
-Base (Scopus, sintaxe `TITLE-ABS-KEY`):
+Versão adotada (Scopus), após calibração registada em `docs/slr/00_pesquisas.md`:
 
 ```
-( "swarm robotics" OR "robot swarm" OR "multi-robot system" OR "multi-agent system" )
-AND ( "reinforcement learning" OR "MARL" OR "deep RL"
-      OR "evolutionary algorithm" OR "neuroevolution" OR "swarm optimization"
-      OR "bio-inspired optimization" OR "particle swarm" )
-AND ( control OR navigation OR coordination OR foraging OR "path planning" )
+TITLE ( "swarm robot*" OR "robot swarm*" OR "multi-robot" )
+AND TITLE-ABS-KEY ( "reinforcement learning" OR "MARL" OR "neuroevolution"
+                    OR "evolutionary algorithm" OR "particle swarm"
+                    OR "bio-inspired optimization" )
+AND TITLE-ABS-KEY ( control OR navigation OR coordination OR foraging OR "path planning" )
 AND PUBYEAR > 2019
 ```
+
+> O conceito de enxame é exigido no **título** (e não em título/resumo/palavras-chave):
+> a versão inicial devolvia 7 628 registos, porque `"multi-agent system"` no resumo
+> apanha toda a literatura multiagente sem componente robótica. A versão adotada
+> devolve **456**. As duas contagens estão registadas — calibrar a string é legítimo,
+> desde que fique o rasto de o ter feito por critério e não por conveniência.
 
 Adaptar a sintaxe a cada base (IEEE usa `("All Metadata":...)`, ACM usa a sua própria).
 **Registar a string EXATA usada em cada base**, tal como foi colada, em
