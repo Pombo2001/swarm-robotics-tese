@@ -1,3 +1,17 @@
+% =====================================================================
+% ESTADO DA AUDITORIA — 13 jul 2026
+% Este ficheiro foi originalmente povoado com entradas FABRICADAS (autores e/ou
+% títulos inventados). Todas as entradas abaixo foram verificadas contra a fonte
+% primária (arXiv / IEEE Xplore / MDPI / SciTePress / editor). Correções feitas nas
+% auditorias de 15 jun, 3 jul e 13 jul estão anotadas em comentário sobre cada entrada.
+% As CHAVES foram deliberadamente mantidas mesmo quando o nome já não corresponde ao
+% 1.º autor real (ex.: `sun2024graph` = Chen et al.; `he2024self` = Pina et al.;
+% `schmickl2025gnn` = Domini et al.; `heimann2024runtime` = Liu & Li; `lin2025survey`
+% = Ekechi et al.; `zheng2025lns2` = Wang et al.), para não partir as \cite do texto.
+% ⚠️ Ao corrigir uma entrada, corrigir TAMBÉM `Artigo/references.bib` (dessincronizou-se
+% uma vez: manteve `roveda2026hybrid`, inexistente, já removida da tese).
+% =====================================================================
+
 @inproceedings{kennedy1995pso,
   title={Particle swarm optimization},
   author={Kennedy, James and Eberhart, Russell},
@@ -51,6 +65,8 @@
   doi={10.3390/bdcc8050049}
 }
 
+% Verificado a 13 jul 2026 (MDPI Drones 9(7):484). Autores = Ekechi et al. (a chave
+% "lin" é herdada da entrada fabricada original; mantida para não partir as \cite).
 @article{lin2025survey,
   title={A Survey on UAV Control with Multi-Agent Reinforcement Learning},
   author={Ekechi, Chijioke C. and Elfouly, Tarek and Alouani, Ali and Khattab, Tamer},
@@ -90,22 +106,26 @@
   year={2019}
 }
 
+% Autores confirmados a 13 jul 2026 (arXiv:2312.10256): Dom Huh e Prasant Mohapatra.
 @article{huh2023marl,
   title={Multi-agent Reinforcement Learning: A Comprehensive Survey},
-  author={Huh, D. and Mohapatra, P.},
+  author={Huh, Dom and Mohapatra, Prasant},
   journal={arXiv preprint arXiv:2312.10256},
   year={2023}
 }
 
+% Corrigido a 13 jul 2026: o 2.º autor é Hussam Rostum (Univ. Miskolc), não "Haidar".
 @inproceedings{iskandar2023navigation,
   title={Using Deep Reinforcement Learning to Solve a Navigation Problem for a Swarm Robotics System},
-  author={Iskandar, Alaa and Rostum, Haidar and Kov{\'a}cs, B{\'e}la},
+  author={Iskandar, Alaa and Rostum, Hussam and Kov{\'a}cs, B{\'e}la},
   booktitle={2023 24th International Carpathian Control Conference (ICCC)},
   pages={185--189},
   year={2023},
   organization={IEEE}
 }
 
+% Verificado a 13 jul 2026 (IEEE TNNLS 35(9):11939-11957, 2024). A chave diz "2023"
+% mas o ano de publicação é 2024 — o texto cita corretamente "Majid et al. (2024)".
 @article{majid2023deep,
   title={Deep Reinforcement Learning Versus Evolution Strategies: A Comparative Survey},
   author={Majid, Amjad Yousef and Saaybi, Serge and Francois-Lavet, Vincent and Prasad, R. Venkatesha and Verhoeven, Chris},
@@ -113,7 +133,8 @@
   volume={35},
   number={9},
   pages={11939--11957},
-  year={2024}
+  year={2024},
+  doi={10.1109/TNNLS.2023.3264540}
 }
 
 @article{hassen2025hybrid,
@@ -156,14 +177,18 @@
   doi={10.3390/ai6110282}
 }
 
-% NOTA: paper de atas SciTePress 2024 (ID 124628). Confirmar a conferência exata
-% (ICAART/ICPRAM) e a lista completa de autores na pagina de detalhes do SciTePress.
+% Autores/venue verificados a 13 jul 2026 no PDF das atas (SciTePress ID 124628,
+% pp. 410-417): os autores são Pina, De Silva & Artaud (Loughborough Univ. London)
+% e a conferência é a ICPRAM 2024 — a entrada anterior atribuía a "He, J. and others"
+% e à ICAART, ambos ERRADOS. A chave manteve-se para não partir as \cite.
 @inproceedings{he2024self,
   title={Towards Self-Adaptive Resilient Swarms Using Multi-Agent Reinforcement Learning},
-  author={He, J. and others},
-  booktitle={Proceedings of the International Conference on Agents and Artificial Intelligence (ICAART)},
+  author={Pina, Rafael and De Silva, Varuna and Artaud, Corentin},
+  booktitle={Proceedings of the 13th International Conference on Pattern Recognition Applications and Methods (ICPRAM)},
+  pages={410--417},
+  year={2024},
   publisher={SciTePress},
-  year={2024}
+  doi={10.5220/0012462800003654}
 }
 
 @article{gupta2025influx,
@@ -173,9 +198,10 @@
   year={2025}
 }
 
+% Autores confirmados a 13 jul 2026 (IEEE Xplore, doc. 11364233).
 @article{xiao2026csper,
   title={CSPER: Curiosity-driven Safety-Prioritized Experience Replay for Mapless Navigation using Deep Reinforcement Learning},
-  author={Xiao, W. and Yuan, L. and Ran, T. and He, L. and Zhang, J. and Cui, J.},
+  author={Xiao, Wendong and Yuan, Liang and Ran, Teng and He, Li and Zhang, Jianbo and Cui, Jianping},
   journal={IEEE Transactions on Cognitive and Developmental Systems},
   year={2026},
   publisher={IEEE}
@@ -292,6 +318,33 @@
   year={2017}
 }
 
+
+% Adicionada a 13 jul 2026. O texto citava "Riviere et al. (2020)" SEM entrada no .bib
+% (referência fantasma). O artigo existe (arXiv:2002.11807, IEEE RA-L 5(3):4249-4256)
+% mas trata de síntese de políticas locais por imitação para planeamento de movimento
+% multi-robô — NÃO de estigmergia. Passou a ser citado apenas onde sustenta a afirmação
+% (controlo descentralizado a partir de informação local dos vizinhos).
+@article{riviere2020glas,
+  title={{GLAS}: Global-to-Local Safe Autonomy Synthesis for Multi-Robot Motion Planning with End-to-End Learning},
+  author={Rivi{\`e}re, Benjamin and H{\"o}nig, Wolfgang and Yue, Yisong and Chung, Soon-Jo},
+  journal={IEEE Robotics and Automation Letters},
+  volume={5},
+  number={3},
+  pages={4249--4256},
+  year={2020},
+  publisher={IEEE},
+  doi={10.1109/LRA.2020.2994035}
+}
+
+% Adicionada a 13 jul 2026: fonte canónica para comportamento emergente e estigmergia
+% (substitui a atribuição indevida dessas afirmações a Riviere et al.).
+@book{bonabeau1999swarm,
+  title={Swarm Intelligence: From Natural to Artificial Systems},
+  author={Bonabeau, Eric and Dorigo, Marco and Theraulaz, Guy},
+  publisher={Oxford University Press},
+  series={Santa Fe Institute Studies in the Sciences of Complexity},
+  year={1999}
+}
 
 @article{lehman2011abandoning,
   title={Abandoning Objectives: Evolution Through the Search for Novelty Alone},
