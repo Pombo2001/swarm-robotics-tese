@@ -320,6 +320,30 @@ def _esc(s):
     return re.sub(r'\s+', ' ', s).strip()
 
 
+def _autores(raw):
+    """'Silva A.; Costa R.' (Scopus) ou 'A. Silva; R. Costa' (IEEE) -> 'Silva et al.'
+
+    As duas bases exportam em formatos distintos: o Scopus põe o apelido primeiro
+    ('Hasselmann K.'), o IEEE põe as iniciais primeiro ('K. Hasselmann'). Distinguem-se
+    procurando qual dos tokens *não* é uma inicial (uma ou duas letras com ponto).
+    """
+    def apelido(a):
+        toks = [t for t in a.replace(',', ' ').split() if t]
+        reais = [t for t in toks if not re.fullmatch(r'[A-Z]\.?([A-Z]\.?)*', t)]
+        return reais[0] if reais else (toks[0] if toks else '')
+
+    autores = [a.strip() for a in re.split(r'\s+and\s+|;', raw or '') if a.strip()]
+    ape = [_esc(apelido(a)) for a in autores]
+    ape = [a for a in ape if a]
+    if not ape:
+        return '---'
+    if len(ape) == 1:
+        return ape[0]
+    if len(ape) == 2:
+        return f'{ape[0]} \\& {ape[1]}'
+    return f'{ape[0]} et al.'
+
+
 def prisma():
     regs = _carregar()
     c = _contas(regs)
@@ -409,10 +433,7 @@ def prisma():
         f.write(r'\hline \# & Autores & Ano & Título & Publicação \\ \hline \endhead'
                 + '\n')
         for i, r in enumerate(c['lista'], 1):
-            aut = [a.strip() for a in re.split(r'\s+and\s+|;', r['autores']) if a.strip()]
-            ape = [a.split(',')[0].strip() if ',' in a else a.split()[-1] for a in aut]
-            nome = (_esc(ape[0]) + ' et al.') if len(ape) > 2 else \
-                   (' \\& '.join(_esc(a) for a in ape) if ape else '---')
+            nome = _autores(r['autores'])
             f.write(f"{i} & {nome} & {r['ano']} & {_esc(r['titulo'])} & "
                     f"{_esc(r['venue'])} \\\\\n")
         f.write(r'\hline' + '\n' + r'\end{longtable}' + '\n')
