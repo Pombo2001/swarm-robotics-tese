@@ -237,7 +237,13 @@ data/
 .DS_Store
 
 # Artefactos de dados trazidos do servidor (grandes, regeneraveis)
-out/*.tar.gz
+out/
+
+# EXCECAO ao "*.csv" acima: o registo da revisao sistematica TEM de ser versionado.
+# A tese (Cap. 3) afirma que qualquer decisao de inclusao/exclusao e auditavel no
+# repositorio; sem estes ficheiros essa afirmacao seria falsa.
+!docs/slr/screening.csv
+!docs/slr/raw/*.csv
 
 # Config local do Claude Code (especifico da maquina)
 .claude/
