@@ -7,7 +7,48 @@
 > rumo, regista aqui a decisão e a data.
 
 **Tese**: "Aprendizagem por Reforço para Controlo de Enxames" — ISCTE, Mestrado em IA
-**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 | **Hoje**: 2026-07-01
+**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 (versão composta ao orientador: **15 set**) | **Atualizado**: 2026-07-13
+
+---
+
+# 📍 ESTADO — 13 jul 2026 (ler primeiro)
+
+**Reunião com o Prof. Nunes: sexta, 15h30.** Tese (115 págs) e artigo (9 págs) enviados
+para leitura; ambos compilam sem erros nem referências indefinidas.
+
+## A correr agora
+- **Semana de treino no `.14`** (2 streams em tmux, lançada 12 jul): Novelty **adaptativo**
+  ($w$ decai após a descoberta) nos 7 cenários @195 min + braços de controlo @390 min.
+  ⚠️ A ordem dos cenários é a **canónica** de `src/scenarios.py`, não a do argumento
+  `--scenarios` → `u_wall` ~14-15 jul, `bypass` ~16 jul; fins **19-20 jul**.
+  - Sinais preliminares (comida no *treino*, não eval): `cooperative_door` **7/7 runs
+    convergentes** (o adaptativo **não degrada** onde o objetivo já resolve — era o receio);
+    `none` continua bimodal (5/7) — a novidade não cura o vaguear em espaço aberto.
+- **Escalabilidade Zero-Shot nos 7 cenários** (local, com os modelos corretos): estava
+  avaliada **só no Sandbox** — lacuna da QI2. Primeiro resultado: no `u_wall` o GNN mantém
+  **100% de sucesso de N=10 a N=100** com recolha *per capita* quase intacta (3.69→3.03).
+
+## Feito hoje (13 jul)
+- **Revisão sistemática CONDUZIDA a sério** (o PRISMA do Cap. 3 era **fabricado**): 883
+  registos → 680 únicos → **58 estudos**. Protocolo, exports e as 680 decisões versionados
+  em `docs/slr/`. **A lacuna da tese passou a estar MEDIDA: 21 estudos de MARL, 23 de
+  bio-inspirado, mas só 1 os compara.** Cap. 3 reescrito; artigo alinhado.
+- **Bibliografia auditada** (autores *e* conteúdo): referência fantasma, autoria inventada,
+  números "98%/40%" que não existem nas fontes, e o Chen et al. — citado como prova de
+  escalabilidade em enxames — é afinal sobre **redes sem fios**. Ver `memory/bibliografia_auditoria.md`.
+- **Nova secção 4.5 "Estrutura e Extensibilidade"** (pedido do orientador).
+- **Pipeline de resultados corrigido** — ver `memory/pipeline_resultados.md`:
+  ⚠️ **ARMADILHA nº9**: `results/models/` tinha modelos de **junho**; tudo o que se corria
+  localmente usava modelos anteriores à *fitness* de homing (o `bottleneck` dava **0** em vez
+  de 137). **Ao trazer qualquer campanha: `python scripts/pos_campanha.py`.**
+
+## Próximo
+1. **O utilizador lê** os artigos-chave da revisão (Iskandar comparativo, um dos NEAT) —
+   tudo o que se escreveu sobre eles vem dos *resumos*.
+2. Fechar a escalabilidade nos 7 cenários → integrar na QI2.
+3. Fim da semana de treino (19-20 jul) → Mann-Whitney vs baselines; se o $w$ adaptativo
+   resultar, **deixa de ser "trabalho futuro" e passa a resultado** (muda a QI6).
+4. Repor os dois configs do servidor (`novelty_weight: 0.0`, `novelty_adaptive: false`).
 
 ---
 
