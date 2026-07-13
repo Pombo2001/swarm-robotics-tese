@@ -17,6 +17,12 @@ ALGORITHMS = {
 }
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# Falhas dos passos pós-treino (avaliação, gráficos, heatmaps, vídeos). São acumuladas
+# e reportadas em bloco no fim: antes, cada uma era engolida por um try/except com um
+# "(não crítico)" que se perdia no log — e a campanha ficava sem heatmaps sem ninguém
+# reparar. Uma campanha só está "OK" se esta lista ficar vazia.
+FALHAS = []
 CONFIG_PATH = os.path.join(BASE_DIR, 'configs', 'foraging.yaml')
 
 # Raiz do projeto no sys.path para o import 'from scripts.eval_suite import ...'
@@ -201,7 +207,8 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
             from scripts.eval_suite import evaluate_all
             evaluate_all(episodes=eval_episodes)  # scenarios=None => os 6 cenários
         except Exception as e:
-            print(f"[!] Avaliação automática falhou (não crítico): {e}")
+            FALHAS.append(("avaliação determinística", e))
+            print(f"[!] Avaliação automática FALHOU: {e}")
 
         # Avaliação POR RUN (modelos _run{n} preservados pelo fix da armadilha
         # nº8): gera eval_by_run.csv — boxplots de EVAL e testes estatísticos
@@ -212,7 +219,8 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
                             scenarios=scenarios,
                             algos=[a.lower() for a in algorithms.keys()])
         except Exception as e:
-            print(f"[!] Avaliação por run falhou (não crítico): {e}")
+            FALHAS.append(("avaliação por run", e))
+            print(f"[!] Avaliação por run FALHOU: {e}")
 
     # RELATÓRIO COMPLETO automático: gráficos da tese + gráficos de avaliação +
     # heatmaps + mapas 3D, tudo numa pasta datada (results/graficos_tese/<sessao>/).
@@ -222,7 +230,8 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
         from scripts.plot_results import create_thesis_plots_3d
         create_thesis_plots_3d()
     except Exception as e:
-        print(f"[!] Relatório não gerado (não crítico): {e}")
+        FALHAS.append(("relatório: gráficos + heatmaps + mapas", e))
+        print(f"[!] Relatório (gráficos/heatmaps) FALHOU: {e}")
 
     # ── VÍDEOS dos episódios (GIF 2D top-down) ───────────────────────────────
     # Grava 1 GIF por (algoritmo × cenário) treinado, na pasta da sessão acabada
@@ -240,7 +249,40 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
             else:
                 print("[!] Sem pasta de sessão para os vídeos.")
         except Exception as e:
-            print(f"[!] Vídeos não gerados (não crítico): {e}")
+            FALHAS.append(("vídeos", e))
+            print(f"[!] Vídeos FALHARAM: {e}")
+
+    # ── VERIFICAÇÃO DE COMPLETUDE ────────────────────────────────────────────
+    # A campanha só se considera bem sucedida se produziu TODOS os artefactos do
+    # contrato (scripts/verificar_sessao.py). Sem isto, uma falha a meio deixava a
+    # pasta incompleta e o problema só aparecia semanas depois, ao procurar um
+    # heatmap para a tese.
+    print("\n--- A VERIFICAR ARTEFACTOS DA SESSÃO ---")
+    try:
+        from scripts.verificar_sessao import verificar, ultima_sessao
+        sess = ultima_sessao()
+        if sess:
+            faltam, n_ok, n_tot, n_vid = verificar(
+                sess, algos=tuple(a.lower() for a in algorithms.keys()),
+                scenarios=scenarios)
+            print(f"    {os.path.basename(sess)}: {n_ok}/{n_tot} artefactos, {n_vid} vídeos")
+            if faltam:
+                FALHAS.append((f"{len(faltam)} artefactos essenciais em falta "
+                               f"(ver MANIFESTO.md)", None))
+    except Exception as e:
+        FALHAS.append(("verificação de artefactos", e))
+        print(f"[!] Verificação de artefactos FALHOU: {e}")
+
+    # ── RESUMO FINAL ─────────────────────────────────────────────────────────
+    print("\n" + "=" * 70)
+    if FALHAS:
+        print(f"[!!] CAMPANHA CONCLUÍDA COM {len(FALHAS)} PROBLEMA(S):")
+        for passo, err in FALHAS:
+            print(f"     - {passo}" + (f": {err}" if err else ""))
+        print("     A pasta da sessão está INCOMPLETA. Ver MANIFESTO.md.")
+    else:
+        print("[OK] Campanha concluída — todos os artefactos gerados.")
+    print("=" * 70)
 
     # Campanha completa → sentinela para o watchdog não relançar.
     os.makedirs(os.path.dirname(DONE_SENTINEL), exist_ok=True)
