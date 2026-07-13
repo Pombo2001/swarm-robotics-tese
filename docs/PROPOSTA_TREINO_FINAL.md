@@ -1,7 +1,49 @@
 # Proposta: o que treinar (e o que NÃO treinar) nos últimos 2 meses
 
 **Data**: 10 jul 2026 · **Prazo**: versão composta ao Prof. Nunes até **15 set** (entrega 30 set)
-**Estado**: campanha de 7 dias FECHADA; tese (99 págs) e artigo (8 págs) escritos e coerentes com os dados.
+**Estado**: campanha de 7 dias FECHADA; tese e artigo escritos e coerentes com os dados.
+
+---
+
+## 🔄 ATUALIZAÇÃO — 13 jul 2026
+
+**1. Semana de treino A CORRER** (lançada 12 jul 19:46 no `.14`, 2 streams em tmux).
+Novelty **adaptativo** (peso $w$ que decai após a descoberta) nos 7 cenários @195 min,
+mais braços de controlo @390 min. O anneal está confirmado a funcionar em produção
+(`w` observado a decair para ~0.005). ⚠️ A ordem dos cenários é a **canónica** de
+`src/scenarios.py`, e não a do argumento `--scenarios` — pelo que o `u_wall` fecha
+~14 jul e o `bypass` ~15 jul. Fins: stream A ~18 jul, stream B ~19 jul.
+Se o $w$ adaptativo resultar, a **dosagem adaptativa deixa de ser trabalho futuro e
+passa a resultado** (muda a QI6 e a secção de Trabalhos Futuros).
+
+**2. REVISÃO SISTEMÁTICA CONDUZIDA** (13 jul) — o Capítulo 3 descrevia um processo
+PRISMA que **nunca aconteceu** (145 registos, Mendeley, 26 incluídos: tudo fabricado
+pela IA que redigiu o capítulo). Foi executada a revisão a sério:
+
+| Fase | Real | Estava escrito |
+|---|---|---|
+| Identificados | **883** (Scopus 456 + IEEE 427) | 145 |
+| Duplicados | **203** | 25 |
+| Triados | **680** | 120 |
+| Incluídos | **58** | 26 |
+
+Protocolo em `docs/PROTOCOLO_SLR.md`; registo das 680 decisões (com motivo) em
+`docs/slr/screening.csv`; fluxograma e apêndice **gerados** por `scripts/slr_pipeline.py`.
+
+**O achado que muda o enquadramento**: dos 58 estudos, **21 são de MARL e 23 de
+otimização bio-inspirada** — dois campos igualmente produtivos — mas **apenas 2 os
+comparam**, e um por hibridização. Ou seja, existe **um único estudo** que confronta
+empiricamente os dois paradigmas na navegação de enxames (Iskandar et al. 2024), sem
+escalabilidade, robustez nem estatística. A lacuna da tese deixou de ser afirmada e
+passou a ser **medida: 1 em 58**. Já integrado na tese (Cap. 3 reescrito) e no artigo.
+
+**3. Bibliografia auditada**: apanhadas mais fabricações (uma referência *fantasma*
+citada sem existir no `.bib`; autoria inventada; números "98%/40%" atribuídos a um
+artigo que não os contém; e o Chen et al., citado como prova de *Zero-Shot* em enxames,
+é afinal sobre **redes sem fios**). Ver `memory/bibliografia_auditoria.md`.
+
+**Estado dos documentos**: tese 113 págs, artigo 9 págs, ambos compilam sem erros nem
+referências indefinidas.
 
 > Documento autónomo, para leitura por quem não acompanhou o projeto.
 > Contexto completo em `docs/PLANO_DE_ATAQUE.md` (secção "RESULTADOS FINAIS").
