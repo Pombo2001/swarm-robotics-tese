@@ -4,8 +4,10 @@ Fonte de verdade = results/evaluation/eval_summary.csv (1 linha por episódio).
 Não treina nem avalia — só lê o que os scripts já produziram.
 """
 import os
+import re
 import glob
 import shutil
+import datetime
 
 import pandas as pd
 
@@ -174,14 +176,37 @@ def scalability_table(scenario: str):
 
 
 # ── Galeria de resultados (vista Resultados) ──────────────────────────────────
+def _data_da_sessao(nome):
+    """Data da CAMPANHA, lida do nome da pasta ('09-07-2026_12h52m').
+
+    Não se usa o mtime da pasta: qualquer operação posterior (copiar, extrair um tar,
+    escrever um manifesto, um checkout) reescreve-o e atira campanhas antigas para o
+    topo da lista. Foi assim que a sessão do treino de 7 dias foi parar ao 25.º lugar
+    de 30, e o launcher passou a abrir por defeito uma campanha de junho — dando a
+    impressão de que os heatmaps de julho não existiam.
+    """
+    m = re.match(r'(\d{2})-(\d{2})-(\d{4})_(\d{2})h(\d{2})m', nome)
+    if not m:
+        return None
+    d, mo, y, h, mi = (int(x) for x in m.groups())
+    return datetime.datetime(y, mo, d, h, mi)
+
+
 def list_sessions():
-    """Pastas de sessão em results/graficos_tese/, mais recentes primeiro."""
+    """Pastas de resultados, campanhas mais recentes primeiro.
+
+    As pastas *curadas* (final_7d, eval_7d, estatisticas...) não têm data no nome e
+    vão para o fim da lista, depois das campanhas — continuam acessíveis, mas deixam
+    de disputar o topo com a campanha mais recente.
+    """
     if not os.path.isdir(GRAFICOS_DIR):
         return []
     dirs = [d for d in os.listdir(GRAFICOS_DIR)
             if os.path.isdir(os.path.join(GRAFICOS_DIR, d))]
-    return sorted(dirs, key=lambda d: os.path.getmtime(os.path.join(GRAFICOS_DIR, d)),
-                  reverse=True)
+    campanhas = [d for d in dirs if _data_da_sessao(d)]
+    curadas = [d for d in dirs if not _data_da_sessao(d)]
+    campanhas.sort(key=_data_da_sessao, reverse=True)
+    return campanhas + sorted(curadas)
 
 
 def list_pngs(session: str):
