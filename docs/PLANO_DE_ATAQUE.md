@@ -7,28 +7,44 @@
 > rumo, regista aqui a decisão e a data.
 
 **Tese**: "Aprendizagem por Reforço para Controlo de Enxames" — ISCTE, Mestrado em IA
-**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 (versão composta ao orientador: **15 set**) | **Atualizado**: 2026-07-13
+**Orientador**: Prof. Luís Nunes | **Prazo**: Outubro 2026 (versão composta ao orientador: **15 set**) | **Atualizado**: 2026-07-14
 
 ---
 
-# 📍 ESTADO — 13 jul 2026 (ler primeiro)
+# 📍 ESTADO — 14 jul 2026 (ler primeiro)
 
-**Reunião com o Prof. Nunes: sexta, 15h30.** Tese (115 págs) e artigo (9 págs) enviados
-para leitura; ambos compilam sem erros nem referências indefinidas.
+**Reunião com o Prof. Nunes: sexta, 15h30.** Enviar os PDFs de **14 jul**
+(`out/{Tese,Artigo}_Goncalo_Pombo_v14jul2026.pdf` — tese 117 págs, artigo 9): têm a
+escalabilidade completa, que os de 13 jul não têm. Ambos compilam sem erros nem
+referências indefinidas.
 
 ## A correr agora
 - **Semana de treino no `.14`** (2 streams em tmux, lançada 12 jul): Novelty **adaptativo**
   ($w$ decai após a descoberta) nos 7 cenários @195 min + braços de controlo @390 min.
   ⚠️ A ordem dos cenários é a **canónica** de `src/scenarios.py`, não a do argumento
-  `--scenarios` → `u_wall` ~14-15 jul, `bypass` ~16 jul; fins **19-20 jul**.
+  `--scenarios` → `u_wall` fecha ~14-15 jul, `bypass` ~16 jul; fins **19-20 jul**.
   - Sinais preliminares (comida no *treino*, não eval): `cooperative_door` **7/7 runs
     convergentes** (o adaptativo **não degrada** onde o objetivo já resolve — era o receio);
     `none` continua bimodal (5/7) — a novidade não cura o vaguear em espaço aberto.
-- **Escalabilidade Zero-Shot nos 7 cenários** (local, com os modelos corretos): estava
-  avaliada **só no Sandbox** — lacuna da QI2. Primeiro resultado: no `u_wall` o GNN mantém
-  **100% de sucesso de N=10 a N=100** com recolha *per capita* quase intacta (3.69→3.03).
 
-## Feito hoje (13 jul)
+## ✅ Feito a 14 jul
+- **Escalabilidade Zero-Shot FECHADA nos 7 cenários** (20 ep/célula, modelos campeões
+  do 7d): **100% de sucesso nas 28 combinações** (7 cenários × N∈{10,20,50,100}).
+  O padrão fino desarma a objeção do congestionamento: retenção per capita em N=100
+  quase total nos cenários COM estrutura (bypass **90%**, coop_door **88%**, u_wall
+  **78%**) e degradação concentrada nos abertos (Sandbox **39%**) — diluição de recurso,
+  não falha de coordenação. **Integrado**: tese (`tab:res_scale_all` + QI2 + Discussão,
+  117 págs), artigo (secção zero-shot + abstract), CSVs versionados
+  (`results/estatisticas/escalabilidade_*.csv`), tudo no GitHub (`f094aa7`).
+- **Dashboard — vista «Ao vivo (3D)»**: a simulação dos visualizadores Ursina agora
+  corre no browser (`dashboard/simlive.py` + `views/aovivo.py`, three.js). Mostra o
+  modelo carregado (proveniência) e grita em *fallback*. **O `launcher_dashboard.py`
+  deixa de ser necessário** (era só usado para isto); ainda não foi apagado.
+- **Galeria de Resultados reorganizada**: «Boxplots (avaliação)» separados de
+  «Boxplots (treino)» (a mistura era a receita da armadilha nº3); novas categorias
+  «Escalabilidade» e «Painéis de vídeo»; ordem = hierarquia da tese (avaliação primeiro).
+
+## Feito a 13 jul
 - **Revisão sistemática CONDUZIDA a sério** (o PRISMA do Cap. 3 era **fabricado**): 883
   registos → 680 únicos → **58 estudos**. Protocolo, exports e as 680 decisões versionados
   em `docs/slr/`. **A lacuna da tese passou a estar MEDIDA: 21 estudos de MARL, 23 de
@@ -44,11 +60,14 @@ para leitura; ambos compilam sem erros nem referências indefinidas.
 
 ## Próximo
 1. **O utilizador lê** os artigos-chave da revisão (Iskandar comparativo, um dos NEAT) —
-   tudo o que se escreveu sobre eles vem dos *resumos*.
-2. Fechar a escalabilidade nos 7 cenários → integrar na QI2.
-3. Fim da semana de treino (19-20 jul) → Mann-Whitney vs baselines; se o $w$ adaptativo
-   resultar, **deixa de ser "trabalho futuro" e passa a resultado** (muda a QI6).
-4. Repor os dois configs do servidor (`novelty_weight: 0.0`, `novelty_adaptive: false`).
+   tudo o que se escreveu sobre eles vem dos *resumos*. (O Yigit já foi lido na íntegra
+   e corrigido a 13 jul.)
+2. Fim da semana de treino (19-20 jul) → trazer com `python scripts/pos_campanha.py`
+   (⚠️ armadilha nº9) → Mann-Whitney vs baselines; se o $w$ adaptativo resultar,
+   **deixa de ser "trabalho futuro" e passa a resultado** (muda a QI6).
+3. Repor os dois configs do servidor (`novelty_weight: 0.0`, `novelty_adaptive: false`
+   — o de B fica em 0.5 pelo script, repor à mão!).
+4. Decidir se se apaga o `launcher_dashboard.py` (substituído pela vista «Ao vivo (3D)»).
 
 ---
 
