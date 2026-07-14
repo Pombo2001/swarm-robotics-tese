@@ -37,7 +37,13 @@ with open(config_path, 'r') as f:
 _ap = argparse.ArgumentParser(add_help=False)
 _ap.add_argument('--scenario', type=str, default=None)
 _ap.add_argument('--agents', type=int, default=None)
+# Raiz dos modelos: por omissão a pasta ATIVA (results/), mas pode apontar para os
+# modelos arquivados de uma campanha — results/graficos_tese/<sessão>/modelos —,
+# que têm a mesma estrutura (models/, models_ppo/, models_sac/). Evita ter de
+# restaurar modelos por cima dos ativos só para espreitar um treino antigo.
+_ap.add_argument('--models-root', type=str, default=None)
 _args, _ = _ap.parse_known_args()
+MODELS_ROOT = _args.models_root or os.path.join(base_dir, 'results')
 if _args.scenario:
     config['environment']['classic_scenario'] = _args.scenario
 if _args.agents:
@@ -60,9 +66,9 @@ obs_dict, _ = env.reset()
 # Fallback para o modelo sem sufixo se o do cenário ainda não tiver sido treinado.
 scenario = config['environment'].get('classic_scenario', 'none')
 suffix = f"_{scenario}" if scenario and scenario != "none" else ""
-model_path = os.path.join(base_dir, 'results', 'models_sac', f'sac_3d_final{suffix}')
+model_path = os.path.join(MODELS_ROOT, 'models_sac', f'sac_3d_final{suffix}')
 if not os.path.exists(model_path + ".zip"):
-    model_path = os.path.join(base_dir, 'results', 'models_sac', 'sac_3d_final')
+    model_path = os.path.join(MODELS_ROOT, 'models_sac', 'sac_3d_final')
 
 if os.path.exists(model_path + ".zip"):
     os.chmod(model_path + ".zip", 0o666)
