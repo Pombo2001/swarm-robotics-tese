@@ -19,10 +19,10 @@ window.title = 'Swarm 3D - GNN (Evolutivo)'
 window.borderless = False
 window.exit_button.visible = False
 window.fps_counter.enabled = True
-EditorCamera()
+_camera_editor = EditorCamera()   # rato: orbitar, roda: zoom
 
 DirectionalLight(y=2, z=3, shadows=False)  # sombras dinâmicas em ~140 entidades eram caras
-AmbientLight(color=color.rgba(100, 100, 100, 1.0))
+AmbientLight(color=color.rgba32(100, 100, 100, 255))
 
 base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 config_path = os.path.join(base_dir, 'configs', 'foraging.yaml')
@@ -80,7 +80,20 @@ else:
     print(f"[ERRO] {model_path} não encontrado!")
     sys.exit()
 
-Entity(model='cube', scale=env.arena_radius * 2, color=color.rgba(255, 255, 255, 30), double_sided=True)
+# Vista inicial: de cima e recuada o suficiente para a arena caber toda no ecrã — a
+# mesma perspetiva das figuras do relatório. Sem isto, a câmara arranca dentro dos
+# muros (que têm 30 de profundidade) e a primeira coisa que se vê é uma parede colada
+# à lente. O EditorCamera continua livre a partir daqui.
+_camera_editor.rotation_x = 89
+_camera_editor.position = (0, 0, 0)
+camera.z = -(env.arena_radius * 6)
+_camera_editor.target_z = camera.z   # o EditorCamera faz lerp de camera.z para target_z
+
+# ATENÇÃO ao rgba32: nesta versão do Ursina, color.rgba() recebe componentes 0–1 e é
+# color.rgba32() que recebe 0–255. Com rgba(255,255,255,30) o alfa 30 era saturado para
+# 1.0 — a "caixa" da arena ficava BRANCA OPACA e tapava a cena inteira, e era por isso
+# que só se via o mapa depois de carregar F10 (que passa para wireframe).
+Entity(model='cube', scale=env.arena_radius * 2, color=color.rgba32(255, 255, 255, 30), double_sided=True)
 nest_view = Entity(model='sphere', color=color.green, scale=env.nest_radius * 2, position=tuple(env.nest_pos))
 
 obs_views = []
@@ -94,7 +107,7 @@ for i, wall in enumerate(env.walls):
     is_door = getattr(env, 'classic_scenario', '') in ("cooperative_door", "cooperative_door_bypass") and hasattr(env,
                                                                                      'door_wall_index') and i == env.door_wall_index
 
-    wall_color = color.red if is_door else color.rgba(50, 50, 50, 180)
+    wall_color = color.red if is_door else color.rgba32(50, 50, 50, 180)
 
     wall_views.append(Entity(
         model='cube',
@@ -140,21 +153,7 @@ for r_pos in env.agent_positions:
 MAX_STEPS_PER_FRAME = 20
 
 
-# A janela abria BRANCA: o Panda3D só desenhava a cena depois de uma mudança de estado
-# de render — e era por isso que carregar F10 (que cicla window.render_mode e faz
-# wireframeOff()) "arranjava" a vista. Aqui força-se esse refresh na primeira frame,
-# automaticamente. Sem isto, é preciso carregar F10 sempre que se abre o visualizador.
-_primeiro_frame = [True]
-
-
-def _forcar_render_inicial():
-    if _primeiro_frame[0]:
-        _primeiro_frame[0] = False
-        window.render_mode = 'default'
-
-
 def update():
-    _forcar_render_inicial()
     global obs_dict, time_accumulator
 
     time_accumulator += time.dt
