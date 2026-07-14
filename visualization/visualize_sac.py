@@ -131,7 +131,21 @@ for r_pos in env.agent_positions:
 MAX_STEPS_PER_FRAME = 20
 
 
+# A janela abria BRANCA: o Panda3D só desenhava a cena depois de uma mudança de estado
+# de render — e era por isso que carregar F10 (que cicla window.render_mode e faz
+# wireframeOff()) "arranjava" a vista. Aqui força-se esse refresh na primeira frame,
+# automaticamente. Sem isto, é preciso carregar F10 sempre que se abre o visualizador.
+_primeiro_frame = [True]
+
+
+def _forcar_render_inicial():
+    if _primeiro_frame[0]:
+        _primeiro_frame[0] = False
+        window.render_mode = 'default'
+
+
 def update():
+    _forcar_render_inicial()
     global obs_dict, time_accumulator
 
     time_accumulator += time.dt
