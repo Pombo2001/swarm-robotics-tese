@@ -1,0 +1,13 @@
+Algorithm,N,mean_food,success_rate,food_per_agent,compatible
+GNN,10,38.35,1.0,3.835,True
+GNN,20,80.15,1.0,4.0075,True
+GNN,50,190.5,1.0,3.81,True
+GNN,100,314.4,1.0,3.144,True
+PPO,10,,,,False
+PPO,20,70.65,1.0,3.5325,True
+PPO,50,,,,False
+PPO,100,,,,False
+SAC,10,,,,False
+SAC,20,55.65,1.0,2.7825,True
+SAC,50,,,,False
+SAC,100,,,,False

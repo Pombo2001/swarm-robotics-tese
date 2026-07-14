@@ -1420,26 +1420,47 @@ Na \textbf{Porta com Alternativa}, o quadro inverte-se: ambos os braços converg
 
 \section{Análise de Escalabilidade (Zero-Shot Transfer)}
 \label{sec:res_scale}
-Para além do desempenho de tarefa, é na \textbf{escalabilidade} que reside o contributo distintivo do controlador evolutivo --- e a justificação arquitetural da abordagem por atenção sobre grafo. A Tabela~\ref{tab:res_scale} e a Figura~\ref{fig:res_escalabilidade} reportam o desempenho ao transferir, \emph{sem qualquer retreino}, a política aprendida com $N=20$ agentes para enxames de $N \in \{10, 50, 100\}$ (20 episódios determinísticos por dimensão, no cenário Sandbox).
+Para além do desempenho de tarefa, é na \textbf{escalabilidade} que reside o contributo distintivo do controlador evolutivo --- e a justificação arquitetural da abordagem por atenção sobre grafo. Avaliou-se a transferência, \emph{sem qualquer retreino}, da política aprendida com $N=20$ agentes para enxames de $N \in \{10, 50, 100\}$ --- e, ao contrário do que é prática comum na literatura (onde a escalabilidade, quando é medida, se limita a arenas abertas), a bateria cobre \textbf{os sete cenários}, incluindo os labirintos e as tarefas cooperativas. Em cada célula (cenário $\times$ dimensão) correram-se 20 episódios determinísticos com o modelo campeão da campanha final.
 
-O resultado é inequívoco: o GNN é o \textbf{único} algoritmo capaz de \textit{Zero-Shot Transfer}, mantendo \textbf{100\% de sucesso em todas as dimensões testadas}, de metade a cinco vezes o enxame de treino. As recolhas totais crescem monotonicamente com a dimensão do enxame ($38{,}2 \rightarrow 63{,}0 \rightarrow 98{,}5 \rightarrow 136{,}3$), sem qualquer colapso de coordenação por congestionamento; a recolha \emph{per capita} diminui ($3{,}82 \rightarrow 1{,}36$), refletindo a partilha de um recurso finito por mais agentes (com $N=100$, a densidade de agentes por unidade de comida disponível quintuplica), e não uma falha do controlador. As políticas MLP do PPO e do SAC, com dimensão de entrada fixa ($\mathbb{R}^{111}$, calibrada para $N=20$), são por construção incompatíveis com outras dimensões de enxame e marcadas como N/A. Este contraste corrobora diretamente a hipótese de que o mecanismo de atenção sobre vizinhança confere invariância à cardinalidade do enxame, sendo a propriedade que habilita o controlo escalável.
+O resultado é inequívoco: o controlador de grafo mantém \textbf{100\% de sucesso nas 28 combinações}, de metade a cinco vezes o enxame de treino, em todos os cenários (Tabela~\ref{tab:res_scale_all}). As políticas MLP do PPO e do SAC, com dimensão de entrada fixa ($\mathbb{R}^{111}$, calibrada para $N=20$), são por construção incompatíveis com outras dimensões de enxame (Tabela~\ref{tab:res_scale}); no tamanho de treino, os três algoritmos são comparáveis (Sandbox, $N=20$: GNN $65{,}8$, PPO $71{,}7$, SAC $71{,}3$ recolhas/ep). Este contraste corrobora diretamente a hipótese de que o mecanismo de atenção sobre a vizinhança confere invariância à cardinalidade do enxame, sendo a propriedade que habilita o controlo escalável.
 
 \begin{table}[H]
 \centering
 \footnotesize
-\caption{Escalabilidade Zero-Shot (cenário Sandbox, 20 episódios/dimensão): taxa de sucesso e recolhas por episódio ao transferir a política treinada com $N=20$, sem retreino.}
+\caption{Escalabilidade Zero-Shot do controlador de grafo nos sete cenários (20 episódios determinísticos por célula; modelo campeão da campanha final, treinado com $N=20$): recolhas \emph{por agente} e retenção da eficiência per capita em $N=100$ face a $N=20$. Taxa de sucesso: $100\%$ em todas as células.}
+\label{tab:res_scale_all}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Cenário} & \textbf{$N=10$} & \textbf{$N=20$} & \textbf{$N=50$} & \textbf{$N=100$} & \textbf{Retenção} \\ \hline
+Sandbox & $3{,}74$ & $3{,}29$ & $1{,}95$ & $1{,}27$ & $39\%$ \\ \hline
+Perceção Cooperativa & $1{,}64$ & $1{,}30$ & $0{,}83$ & $0{,}59$ & $45\%$ \\ \hline
+Gargalo & $6{,}92$ & $6{,}93$ & $5{,}96$ & $4{,}04$ & $58\%$ \\ \hline
+Quatro Salas & $3{,}60$ & $3{,}86$ & $3{,}25$ & $2{,}54$ & $66\%$ \\ \hline
+Beco Sem Saída (U) & $3{,}83$ & $4{,}01$ & $3{,}81$ & $3{,}14$ & $78\%$ \\ \hline
+Porta Cooperativa & $3{,}40$ & $3{,}54$ & $3{,}41$ & $3{,}12$ & $88\%$ \\ \hline
+Porta c/ Alternativa & $4{,}31$ & $4{,}50$ & $4{,}44$ & $4{,}06$ & $90\%$ \\ \hline
+\end{tabular}
+\end{table}
+
+O padrão da coluna de retenção merece leitura atenta, porque desarma a objeção mais natural a este resultado --- a de que um enxame cinco vezes maior colapsaria por congestionamento nas passagens estreitas. Observa-se o \emph{contrário}: a eficiência per capita é quase intacta precisamente nos cenários com estrutura física (Porta com Alternativa $90\%$, Porta Cooperativa $88\%$, Muro em U $78\%$), e a degradação concentra-se nos cenários abertos (Sandbox $39\%$, Perceção Cooperativa $45\%$), onde $N=100$ agentes partilham um recurso finito cuja densidade por agente quintuplica --- diluição de recurso, não falha de coordenação. Nos labirintos, o fluxo canalizado pelas paredes e a natureza repetível da recolha no ninho mantêm o rendimento individual: com $100$ agentes, a porta cooperativa e o desvio do Muro em U continuam a ser atravessados de forma ordeira. O congestionamento, a existir, teria assinatura inversa.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{O contraste arquitetural no cenário Sandbox (20 episódios/dimensão): taxa de sucesso e recolhas totais por episódio ao transferir a política treinada com $N=20$, sem retreino.}
 \label{tab:res_scale}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|l|c|c|c|c|}
 \hline
 \textbf{Algoritmo} & \textbf{$N=10$} & \textbf{$N=20$ (treino)} & \textbf{$N=50$} & \textbf{$N=100$} \\ \hline
-GNN (Evolutivo) & $100\%$ / $38{,}2$ & $100\%$ / $63{,}0$ & $100\%$ / $98{,}5$ & $100\%$ / $136{,}3$ \\ \hline
-PPO & N/A$^{\dagger}$ & $100\%$ / $70{,}5$ & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
-SAC & N/A$^{\dagger}$ & $100\%$ / $69{,}1$ & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
+GNN (Evolutivo) & $100\%$ / $37{,}4$ & $100\%$ / $65{,}8$ & $100\%$ / $97{,}5$ & $100\%$ / $127{,}3$ \\ \hline
+PPO & N/A$^{\dagger}$ & $100\%$ / $71{,}7$ & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
+SAC & N/A$^{\dagger}$ & $100\%$ / $71{,}3$ & N/A$^{\dagger}$ & N/A$^{\dagger}$ \\ \hline
 \end{tabular}
 
 \vspace{0.4em}
-{\footnotesize Cada célula: taxa de sucesso / recolhas por episódio. $^{\dagger}$ A política MLP do PPO/SAC tem dimensão de entrada fixa ($\mathbb{R}^{111}$, para $N=20$), sendo incompatível com outras dimensões de enxame. Só a arquitetura de atenção sobre grafo (controlador evolutivo) suporta a transferência \textit{Zero-Shot}.}
+{\footnotesize Cada célula: taxa de sucesso / recolhas por episódio. $^{\dagger}$ A política MLP do PPO/SAC tem dimensão de entrada fixa ($\mathbb{R}^{111}$, para $N=20$), sendo incompatível com outras dimensões de enxame. Só a arquitetura de atenção sobre grafo (controlador evolutivo) suporta a transferência \textit{Zero-Shot}. As recolhas totais do GNN crescem monotonicamente com $N$ ($37{,}4 \rightarrow 127{,}3$) sem qualquer colapso.}
 \end{table}
 
 \begin{figure}[H]
@@ -1532,7 +1553,7 @@ A leitura da tabela desfaz a narrativa simples de um paradigma dominante. O cont
 
 \paragraph{Custo computacional e eficiência.} A competitividade do evolutivo na tarefa tem um preço de cómputo: cada \textit{run} do GNN consumiu 195 minutos com $\approx 30$ núcleos (avaliação paralela da população), contra 48 minutos com 16 núcleos do PPO/SAC --- uma razão de $\approx 8\times$ em núcleos-hora. A comparação de desempenho atingível (Secção~\ref{sec:res_metodologia}) é válida porque ambos os regimes atingem o planalto; mas em \emph{eficiência amostral e computacional}, os métodos de gradiente mantêm uma vantagem clara, que deve pesar na escolha de paradigma quando o orçamento de treino é o recurso escasso.
 
-\paragraph{Escalabilidade.} No eixo da transferência \textit{Zero-Shot} (Secção~\ref{sec:res_scale}), o controlador evolutivo com atenção sobre grafo é o \emph{único} viável, mantendo 100\% de sucesso de $N=10$ a $N=100$ sem retreino, enquanto as políticas MLP do PPO/SAC são estruturalmente incompatíveis com $N \neq 20$. A adaptabilidade que a hipótese atribuía ao MARL manifesta-se, assim, não no algoritmo de otimização, mas na \emph{representação} (grafo com atenção vs.\ vetor de dimensão fixa).
+\paragraph{Escalabilidade.} No eixo da transferência \textit{Zero-Shot} (Secção~\ref{sec:res_scale}), o controlador evolutivo com atenção sobre grafo é o \emph{único} viável, mantendo 100\% de sucesso de $N=10$ a $N=100$ sem retreino \textbf{nos sete cenários} --- com eficiência per capita quase intacta nos labirintos e nas tarefas cooperativas ($78$--$90\%$ de retenção em $N=100$), onde um colapso por congestionamento seria a expectativa natural --- enquanto as políticas MLP do PPO/SAC são estruturalmente incompatíveis com $N \neq 20$. A adaptabilidade que a hipótese atribuía ao MARL manifesta-se, assim, não no algoritmo de otimização, mas na \emph{representação} (grafo com atenção vs.\ vetor de dimensão fixa).
 
 \paragraph{Robustez.} Perante falhas de 10\% dos agentes, todos os paradigmas exibem resiliência elevada (retenção de 92--106\%, Secção~\ref{sec:res_robustez}), sem o colapso que a hipótese poderia antecipar para o controlador estático --- o \textit{parameter sharing} confere redundância funcional transversal.
 
@@ -1554,7 +1575,7 @@ Retomam-se as questões de investigação enunciadas na Secção~\ref{sec:questo
 
 \begin{description}
     \item[QI1 --- Desempenho de tarefa.] Não há domínio de paradigma: com a \textit{fitness} de \textit{homing}, o controlador neuroevolutivo é estatisticamente superior aos métodos de gradiente em três dos sete cenários (incluindo os dois cooperativos com magnitude comparável) e indistinguível do PPO nos restantes cenários de gargalo; o PPO é o mais consistente entre \textit{runs} e os métodos de gradiente mantêm vantagem clara nos cenários abertos, onde o evolutivo ocasionalmente degenera. O único cenário por resolver de forma fiável --- por qualquer algoritmo --- é o de deceção espacial (Muro U) (Capítulo~\ref{ch:results}).
-    \item[QI2 --- Escalabilidade.] Sim, mas apenas para a arquitetura de grafo: o controlador com atenção transfere de $N=10$ a $N=100$ agentes sem retreino e sem degradação per capita, enquanto as políticas MLP de dimensão fixa do PPO/SAC são estruturalmente incompatíveis com $N\neq 20$. A capacidade de \textit{Zero-Shot Transfer} revelou-se, portanto, uma propriedade da \emph{representação} (invariância à permutação do grafo), e não do algoritmo de otimização.
+    \item[QI2 --- Escalabilidade.] Sim, mas apenas para a arquitetura de grafo: o controlador com atenção transfere de $N=10$ a $N=100$ agentes sem retreino, com \textbf{100\% de sucesso nas 28 combinações} cenário $\times$ dimensão --- incluindo os labirintos e as tarefas cooperativas, onde a objeção do congestionamento seria mais plausível. A eficiência per capita é quase intacta nos cenários estruturados (retenção de $78$--$90\%$ em $N=100$) e só se dilui nos abertos ($39\%$ no Sandbox), por partilha de um recurso finito e não por falha de coordenação. As políticas MLP de dimensão fixa do PPO/SAC são estruturalmente incompatíveis com $N\neq 20$. A capacidade de \textit{Zero-Shot Transfer} revelou-se, portanto, uma propriedade da \emph{representação} (invariância à permutação do grafo), e não do algoritmo de otimização.
     \item[QI3 --- Robustez a falhas.] Todos os paradigmas exibem resiliência elevada à falha súbita de 10\% dos agentes, com retenção de desempenho próxima da integral. Esta robustez é conferida pela partilha de parâmetros e pela observação local, que tornam o comportamento coletivo independente da identidade (e da sobrevivência) de agentes individuais.
     \item[QI4 --- Critério de escolha.] Não há um vencedor universal: em enxames de dimensão fixa e conhecida, com prioridade na eficiência da tarefa, o MARL por gradiente é preferível; quando a dimensão do enxame é variável ou desconhecida à partida, ou a missão exige escalar sem retreino, a arquitetura de grafo com atenção (aqui otimizada por neuroevolução) é a única opção viável entre as estudadas. A robustez a falhas, sendo transversal, não constitui critério discriminante.
     \item[QI5 --- Desenho da função de \textit{fitness}.] Sim, de forma decisiva: o desempenho da neuroevolução revelou-se mais sensível ao desenho da \textit{fitness} do que ao orçamento de treino. Com uma \textit{fitness} de tarefa pura, o controlador colapsa nos cenários de navegação complexa; a introdução de um \textit{shaping} de \textit{homing} (progresso geodésico em direção ao ninho) desbloqueou os quatro labirintos não-decetivos, elevando a taxa de sucesso de 0\% para 100\% na totalidade dos 28 \textit{runs} correspondentes e tornando o controlador evolutivo competitivo --- e, em cenários seleccionados, superior --- face aos métodos de gradiente (Capítulo~\ref{ch:results}). O ``colapso do evolutivo'' é, portanto, um artefacto do desenho da \textit{fitness}, e não uma limitação intrínseca do paradigma. A ressalva é o Muro em U: mesmo com o potencial geodésico a apontar corretamente para o desvio, o desempenho permanece bimodal (3/7 \textit{runs}), tal como sucede nos métodos de gradiente. O desenho da \textit{fitness} é, pois, condição necessária mas não suficiente --- resolve a atribuição de crédito, não a descoberta do desvio comprido, que veio a exigir pressão explícita por novidade (QI6).

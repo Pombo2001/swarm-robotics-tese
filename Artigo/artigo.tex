@@ -50,7 +50,9 @@ dois. Os métodos de gradiente conservam duas vantagens sólidas: fiabilidade em
 espaço aberto, onde o evolutivo ocasionalmente degenera, e uma eficiência
 computacional cerca de $8\times$ superior. Sob escalabilidade \emph{zero-shot},
 apenas o controlador baseado em atenção transita de $N=10$ para $N=100$ agentes
-sem retreino, mantendo $100\%$ de sucesso. A hibridização com procura por
+sem retreino, mantendo $100\%$ de sucesso nos sete cenários --- com eficiência
+por agente quase intacta precisamente nos labirintos, onde o congestionamento
+seria a expectativa. A hibridização com procura por
 novidade, sob orçamento igualado, resolve o único cenário que resistia aos três
 controladores ($7/7$ execuções no labirinto de deceção espacial), mas degrada o
 desempenho onde o gradiente da tarefa basta. A hipótese de que a inteligência
@@ -485,28 +487,37 @@ natural.
 
 \subsection{Escalabilidade \emph{zero-shot}}
 Apenas o controlador baseado em atenção é viável para $N\neq 20$: transferindo sem
-qualquer retreino a política aprendida com $N=20$, mantém $100\%$ de sucesso em
-todas as dimensões testadas, e as recolhas totais crescem monotonicamente
-($38.2 \rightarrow 63.0 \rightarrow 98.5 \rightarrow 136.3$ para
-$N=10,20,50,100$), sem colapso de coordenação por congestionamento
-(Figura~\ref{fig:escala}). A recolha \emph{per capita} diminui, refletindo a
-partilha de um recurso finito por mais agentes, e não uma falha do controlador. As
-políticas de perceptrão multicamada do PPO/SAC têm uma entrada de dimensão fixa
-($\mathbb{R}^{111}$, calibrada para $N=20$) e são estruturalmente incompatíveis
-com outros tamanhos de enxame. A adaptabilidade arquitetural --- a propriedade que
-a hipótese atribui ao MARL --- manifesta-se, assim, na \emph{representação} (grafo
-com atenção), e não no algoritmo de otimização.
+qualquer retreino a política aprendida com $N=20$ para $N\in\{10,50,100\}$, mantém
+$100\%$ de sucesso nas \textbf{28 combinações} cenário $\times$ dimensão --- a
+bateria cobre os sete cenários, incluindo labirintos e tarefas cooperativas, e não
+apenas a arena aberta (Figura~\ref{fig:escala}). O padrão da eficiência
+\emph{per capita} desarma a objeção natural do congestionamento: a retenção em
+$N=100$ (face a $N=20$) é quase total precisamente nos cenários com estrutura
+física (Porta com Alternativa $90\%$, Porta Cooperativa $88\%$, Muro em U $78\%$)
+e a degradação concentra-se nos cenários abertos (Sandbox $39\%$), onde cem
+agentes partilham um recurso finito --- diluição de recurso, não falha de
+coordenação; um colapso por congestionamento teria a assinatura inversa. As
+recolhas totais no Sandbox crescem monotonicamente
+($37.4 \rightarrow 65.8 \rightarrow 97.5 \rightarrow 127.3$ para
+$N=10,20,50,100$). As políticas de perceptrão multicamada do PPO/SAC têm uma
+entrada de dimensão fixa ($\mathbb{R}^{111}$, calibrada para $N=20$) e são
+estruturalmente incompatíveis com outros tamanhos de enxame. A adaptabilidade
+arquitetural --- a propriedade que a hipótese atribui ao MARL --- manifesta-se,
+assim, na \emph{representação} (grafo com atenção), e não no algoritmo de
+otimização.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{images/escalabilidade_zeroshot_none.png}
-\caption{Transferência \emph{zero-shot} para tamanhos de enxame nunca vistos
-($N\in\{10,20,50,100\}$), sem retreino. O eixo vertical é a recolha \emph{per
-capita}: a sua descida ($3.82 \rightarrow 1.36$) reflete a partilha de um recurso
-finito por mais agentes --- as recolhas \emph{totais} crescem
-($38.2 \rightarrow 136.3$) e a taxa de sucesso mantém-se em $100\%$ em todas as
-dimensões. O PPO/SAC, com entrada de dimensão fixa, são incompatíveis com
-$N\neq 20$ e surgem como pontos isolados.}
+\caption{Transferência \emph{zero-shot} no cenário Sandbox para tamanhos de
+enxame nunca vistos ($N\in\{10,20,50,100\}$), sem retreino. O eixo vertical é a
+recolha \emph{per capita}: a sua descida ($3.74 \rightarrow 1.27$) reflete a
+partilha de um recurso finito por mais agentes --- as recolhas \emph{totais}
+crescem ($37.4 \rightarrow 127.3$) e a taxa de sucesso mantém-se em $100\%$. Nos
+sete cenários da bateria o sucesso é $100\%$ em todas as 28 combinações, com
+retenção per capita de $78$--$90\%$ nos cenários estruturados. O PPO/SAC, com
+entrada de dimensão fixa, são incompatíveis com $N\neq 20$ e surgem como pontos
+isolados.}
 \label{fig:escala}
 \end{figure}
 

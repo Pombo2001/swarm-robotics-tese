@@ -229,7 +229,6 @@ __pycache__/
 venv/
 .vscode/
 .idea/
-results/
 data/
 *.h5
 *.csv
@@ -244,6 +243,16 @@ out/
 # repositorio; sem estes ficheiros essa afirmacao seria falsa.
 !docs/slr/screening.csv
 !docs/slr/raw/*.csv
+
+# EXCECAO: dados da analise de escalabilidade (tab:res_scale_all da tese deriva
+# diretamente destes ficheiros; pequenos e imutaveis por campanha).
+# NOTA: como "results/" esta ignorado por inteiro, o git nao desce ao diretorio a
+# menos que o proprio diretorio seja desbloqueado primeiro — dai as tres linhas.
+!results/
+results/*
+!results/estatisticas/
+results/estatisticas/*
+!results/estatisticas/escalabilidade_*.csv
 
 # Config local do Claude Code (especifico da maquina)
 .claude/
