@@ -1,6 +1,7 @@
 import torch
 from ursina import *
 import numpy as np
+import argparse
 import sys
 import os
 import yaml
@@ -29,6 +30,19 @@ config_path = os.path.join(base_dir, 'configs', 'foraging.yaml')
 with open(config_path, 'r') as f:
     config = yaml.safe_load(f)
 
+# Cenário/dimensão por ARGUMENTO, com override em memória. Antes, mudar de cenário
+# obrigava a reescrever configs/foraging.yaml (era o que o launcher antigo fazia) —
+# o ficheiro ficava alterado no disco e o config do repositório perdia-se.
+# parse_known_args: o Ursina também olha para o sys.argv e não queremos colidir.
+_ap = argparse.ArgumentParser(add_help=False)
+_ap.add_argument('--scenario', type=str, default=None)
+_ap.add_argument('--agents', type=int, default=None)
+_args, _ = _ap.parse_known_args()
+if _args.scenario:
+    config['environment']['classic_scenario'] = _args.scenario
+if _args.agents:
+    config['environment']['num_agents'] = _args.agents
+
 vis_config = config.get('visualization', {})
 speed_slider = Slider(min=vis_config.get('speed_slider_min', 1),
                       max=vis_config.get('speed_slider_max', 120),
@@ -38,7 +52,7 @@ speed_slider.position = (-0.85, 0.45)
 speed_slider.scale = 1.2
 time_accumulator = 0.0
 
-env = SwarmForagingEnv3D(config_path=config_path)
+env = SwarmForagingEnv3D(config=config)   # config já com o override do --scenario
 env.render_mode = None
 obs_dict, _ = env.reset()
 

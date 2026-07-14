@@ -1,133 +1,156 @@
-"""Vista «Ao vivo (3D)» — o enxame a mexer, no browser.
+"""Vista «Ao vivo (3D)» — lança os visualizadores Ursina que já existem.
 
-Substitui o único uso que restava ao launcher antigo (launcher_dashboard.py): abrir os
-visualizadores Ursina para ver um modelo treinado a agir. Aqui é a mesma simulação
-(dashboard/simlive.py: env real + modelo real, um forward por passo), desenhada com
-ui.scene (three.js) — arrasta para rodar, roda da frente para zoom.
+NÃO reimplementa nada. Abre exatamente `visualization/visualize_{gnn,ppo,sac}.py` —
+os mesmos mapas, as mesmas cores, a mesma câmara livre e o mesmo slider de velocidade
+que sempre usaste. É o que o launcher antigo (`launcher_dashboard.py`) fazia, e a
+única razão por que ele ainda era preciso.
 
-Convenções visuais herdadas do visualizador Ursina (para não desorientar):
-  laranja = robô · dourado e maior = a sinalizar comida · verde = ninho ·
-  cinza = obstáculos/paredes · vermelho = porta cooperativa (desaparece ao abrir).
+Duas diferenças face ao launcher antigo, ambas para melhor:
+  - o cenário vai por `--scenario`, em vez de o launcher REESCREVER o
+    configs/foraging.yaml antes de lançar (o ficheiro do repositório ficava alterado
+    no disco — já aconteceu, e perdeu os comentários todos);
+  - a vista diz que modelo vai ser carregado e avisa quando é fallback: um modelo do
+    Sandbox largado num labirinto parece treino mau e é só o modelo errado.
+
+Uma tentativa anterior de desenhar a simulação no browser (ui.scene/three.js) foi
+abandonada: não renderizava neste ambiente e, mesmo a renderizar, não teria a câmara
+livre do Ursina. O visualizador nativo é melhor — só faltava poder chamá-lo daqui.
 """
-from nicegui import run, ui
+import os
+import subprocess
+import sys
 
-from .. import config, data, theme
+from nicegui import ui
+
+from .. import config, theme
 
 CARD = theme.CARD + " p-4"
 _section_title = theme.section_title
 
 _ALGOS = {"gnn": "GNN (Evolutivo)", "ppo": "PPO", "sac": "SAC"}
-_COR_ROBOT = "#E65100"
-_COR_SINAL = "#FFD54F"
+_SCRIPT = {a: os.path.join(config.BASE_DIR, "visualization", f"visualize_{a}.py")
+           for a in _ALGOS}
+_LOG_DIR = os.path.join(config.BASE_DIR, "results", "logs")
+
+# (subpasta, prefixo, extensão) por algoritmo — a convenção de nomes do projeto:
+# Sandbox ("none") sem sufixo, restantes com "_{cenário}".
+_MODELO = {
+    "gnn": ("models", "gnn_3d_best", ".pth"),
+    "ppo": ("models_ppo", "ppo_3d_final", ".zip"),
+    "sac": ("models_sac", "sac_3d_final", ".zip"),
+}
+
+
+def _modelo_de(algo: str, scenario: str):
+    """(caminho_relativo, existe, é_fallback) do modelo que o visualizador vai abrir."""
+    sub, stem, ext = _MODELO[algo]
+    suf = f"_{scenario}" if scenario and scenario != "none" else ""
+    proprio = os.path.join(config.BASE_DIR, "results", sub, f"{stem}{suf}{ext}")
+    generico = os.path.join(config.BASE_DIR, "results", sub, f"{stem}{ext}")
+    if os.path.exists(proprio):
+        return os.path.relpath(proprio, config.BASE_DIR), True, False
+    if os.path.exists(generico):
+        return os.path.relpath(generico, config.BASE_DIR), True, True
+    return os.path.relpath(proprio, config.BASE_DIR), False, False
 
 
 def build():
-    st = {"runner": None, "scene": None, "robots": [], "obst": [], "walls": [],
-          "nest": None, "sinal_prev": [], "tick": 0}
+    procs = {}   # algo -> Popen (para saber o que está aberto)
 
-    with ui.column().classes("w-full gap-4 p-4 max-w-[1400px] mx-auto"):
+    with ui.column().classes("w-full gap-4 p-4 max-w-[1100px] mx-auto"):
         with ui.card().classes(CARD):
-            with ui.row().classes("w-full items-center justify-between no-wrap gap-4"):
-                _section_title("view_in_ar", "Ao vivo (3D)",
-                               "O modelo treinado a agir — mesma simulação do visualizador clássico, agora no browser.")
-            with ui.row().classes("items-center gap-4 mt-1"):
-                algo_sel = ui.select(_ALGOS, value="gnn", label="Algoritmo") \
-                    .props("outlined dense").classes("w-44")
+            _section_title("view_in_ar", "Ao vivo (3D)",
+                           "Abre o visualizador Ursina — câmara livre, velocidade ajustável.")
+
+            with ui.row().classes("items-center gap-4 mt-2"):
                 scen_sel = ui.select(
                     {k: config.SCENARIO_LABEL_SHORT.get(k, k) for k in config.SCENARIO_KEYS},
-                    value=config.SCENARIO_KEYS[0], label="Cenário") \
-                    .props("outlined dense").classes("w-56")
-                vel = ui.slider(min=1, max=8, value=3).props("label") \
-                    .classes("w-40").tooltip("passos de simulação por frame")
-                play = ui.switch("Simular", value=False)
-                ui.button("Reiniciar", icon="restart_alt",
-                          on_click=lambda: carregar()).props("outline dense")
-            estado = ui.label("Escolhe algoritmo e cenário, e liga «Simular».") \
-                .classes("text-xs text-gray-500")
-            fonte_lbl = theme.fonte("nenhum modelo carregado")
+                    value=config.SCENARIO_KEYS[0], label="Mapa") \
+                    .props("outlined dense").classes("w-64")
+                agents = ui.number(label="Agentes", value=20, min=2, max=200, step=1) \
+                    .props("outlined dense").classes("w-32") \
+                    .tooltip("Passa --agents ao visualizador (o GNN aceita qualquer N; "
+                             "o PPO/SAC só o N de treino)")
+
+            ui.label("A janela abre no computador onde o dashboard está a correr. "
+                     "Dentro dela: rato para orbitar e zoom, barra no canto para a "
+                     "velocidade.").classes("text-xs text-gray-500 mt-1")
+
+        # ── um cartão por algoritmo ──────────────────────────────────────────
+        with ui.row().classes("w-full gap-4 no-wrap"):
+            for algo, nome in _ALGOS.items():
+                with ui.card().classes(CARD + " flex-1"):
+                    with ui.row().classes("items-center gap-2"):
+                        ui.icon("smart_toy").style(
+                            f"color:{config.ALGO_META[algo.upper()]['color']}")
+                        ui.label(nome).classes("text-base font-bold mono-title")
+
+                    fonte = ui.label("").classes("text-xs mt-1")
+                    botao = ui.button("Abrir visualizador", icon="play_arrow") \
+                        .props("unelevated").classes("w-full mt-2")
+
+                    def atualizar(algo=algo, fonte=fonte, botao=botao):
+                        rel, existe, fb = _modelo_de(algo, scen_sel.value)
+                        if not existe:
+                            fonte.text = f"⚠ sem modelo: {rel}"
+                            fonte.style("color:#d97706")
+                            botao.disable()
+                        elif fb:
+                            fonte.text = (f"⚠ {rel} — este mapa não tem modelo próprio; "
+                                          f"abre o modelo genérico, fora do seu cenário")
+                            fonte.style("color:#d97706")
+                            botao.enable()
+                        else:
+                            fonte.text = f"modelo: {rel}"
+                            fonte.style(f"color:{theme.INK_MUTED}")
+                            botao.enable()
+
+                    def abrir(algo=algo, botao=botao):
+                        # -u: sem buffer. Sem isto, o "[OK] Modelo carregado" (ou o erro)
+                        # fica preso no buffer do processo enquanto a janela está aberta,
+                        # e o log só serviria depois de o visualizador fechar.
+                        cmd = [sys.executable, "-u", _SCRIPT[algo],
+                               "--scenario", scen_sel.value]
+                        if agents.value and int(agents.value) != 20:
+                            cmd += ["--agents", str(int(agents.value))]
+
+                        # CREATE_NO_WINDOW: sem a janela preta de consola a saltar
+                        # atrás do visualizador (só a janela 3D do Ursina aparece).
+                        # Mas o stdout deixaria de existir — e é lá que o script diz
+                        # "[OK] modelo carregado" ou porque falhou. Vai para ficheiro,
+                        # que a vista mostra se o processo morrer à nascença.
+                        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                        os.makedirs(_LOG_DIR, exist_ok=True)
+                        log = os.path.join(_LOG_DIR, f"viz_{algo}.log")
+                        with open(log, "w", encoding="utf-8") as fh:
+                            procs[algo] = subprocess.Popen(
+                                cmd, cwd=config.BASE_DIR, creationflags=flags,
+                                stdout=fh, stderr=subprocess.STDOUT)
+                        ui.notify(f"{_ALGOS[algo]} · {scen_sel.value} — a abrir a janela 3D "
+                                  f"(demora uns segundos)…", type="positive")
+
+                        def _verificar(algo=algo, log=log):
+                            p = procs.get(algo)
+                            if p is None or p.poll() is None:
+                                return          # ainda a correr: tudo bem
+                            try:
+                                erro = open(log, encoding="utf-8", errors="replace").read()
+                            except OSError:
+                                erro = ""
+                            cauda = [l for l in erro.strip().splitlines()
+                                     if l.strip()][-1:] or ["(sem detalhe)"]
+                            ui.notify(f"{_ALGOS[algo]} fechou logo ao arrancar: {cauda[0]}",
+                                      type="negative", timeout=10000)
+
+                        # o Ursina leva alguns segundos a abrir a janela; só se ainda
+                        # assim tiver morrido é que houve mesmo um erro
+                        ui.timer(8.0, _verificar, once=True)
+
+                    botao.on_click(abrir)
+                    scen_sel.on_value_change(lambda _e, f=atualizar: f())
+                    atualizar()
 
         with ui.card().classes(CARD):
-            scene = ui.scene(grid=False, background_color="#0b0b0d") \
-                .classes("w-full h-[560px] rounded")
-            st["scene"] = scene
-
-    # ── construção da cena para o runner atual ───────────────────────────────
-    def montar_cena():
-        r = st["runner"]
-        scene.clear()
-        with scene:
-            R = r.arena_radius
-            scene.cylinder(R, R, 0.05, 48).material("#17171a").move(z=-0.05)
-            snap = r.snapshot()
-            st["nest"] = scene.sphere(r.nest_radius).material("#2E7D32", opacity=0.55)
-            st["nest"].move(*snap["nest"])
-            st["obst"] = []
-            for p in snap["obstacles"]:
-                o = scene.sphere(r.obstacle_radius).material("#555")
-                o.move(*p)
-                st["obst"].append(o)
-            st["walls"] = []
-            porta = r.door_wall_index
-            for i, (pos, size) in enumerate(snap["walls"]):
-                w = scene.box(*size).material("#b71c1c" if i == porta else "#3a3a40")
-                w.move(*pos)
-                st["walls"].append(w)
-            st["robots"] = []
-            for p in snap["agents"]:
-                b = scene.sphere(r.robot_radius).material(_COR_ROBOT)
-                b.move(*p)
-                st["robots"].append(b)
-            st["sinal_prev"] = [False] * len(st["robots"])
-            scene.move_camera(x=0, y=-R * 1.35, z=R * 0.95,
-                              look_at_x=0, look_at_y=0, look_at_z=0, duration=0.0)
-
-    # ── (re)carregar modelo + env ────────────────────────────────────────────
-    async def carregar():
-        from ..simlive import SimRunner, model_path_for
-        play.value = False
-        estado.text = f"A carregar {_ALGOS[algo_sel.value]} / {scen_sel.value}…"
-        try:
-            st["runner"] = await run.io_bound(SimRunner, algo_sel.value, scen_sel.value)
-        except FileNotFoundError as e:
-            estado.text = str(e)
-            fonte_lbl.text = "⚠ sem modelo para esta combinação"
-            return
-        montar_cena()
-        r = st["runner"]
-        rel = r.model_path.replace(str(config.BASE_DIR), "").lstrip("\\/")
-        # proveniência: QUAL modelo está em cena. O fallback tem de ser gritante —
-        # um modelo do Sandbox num labirinto parece "treino mau" e é só modelo trocado.
-        if r.fallback:
-            fonte_lbl.text = (f"⚠ {rel} — o cenário {scen_sel.value} não tem modelo "
-                              f"próprio; isto é o modelo genérico fora do seu cenário")
-        else:
-            fonte_lbl.text = f"fonte: {rel}"
-        estado.text = "Pronto. Liga «Simular» (arrasta a cena para rodar; roda = zoom)."
-        play.value = True
-
-    # ── um frame ─────────────────────────────────────────────────────────────
-    def frame():
-        r = st["runner"]
-        if r is None or not play.value:
-            return
-        snap = r.step(int(vel.value))
-        for b, p in zip(st["robots"], snap["agents"]):
-            b.move(*p)
-        sinais = snap["signaling"] >= 1.0
-        for i, (b, s) in enumerate(zip(st["robots"], sinais)):
-            if s != st["sinal_prev"][i]:          # só mudar material quando muda
-                b.material(_COR_SINAL if s else _COR_ROBOT)
-                st["sinal_prev"][i] = bool(s)
-        st["nest"].move(*snap["nest"])
-        st["tick"] += 1
-        if st["tick"] % 2 == 0:                   # obstáculos/paredes a metade do ritmo
-            for o, p in zip(st["obst"], snap["obstacles"]):
-                o.move(*p)
-            for w, (pos, _s) in zip(st["walls"], snap["walls"]):
-                w.move(*pos)
-        estado.text = (f"passo {snap['steps']} · episódios {snap['episodes']} · "
-                       f"recolhas {snap['food']}")
-
-    ui.timer(0.12, frame)
-    algo_sel.on_value_change(carregar)
-    scen_sel.on_value_change(carregar)
+            ui.label("Podes abrir os três ao mesmo tempo: cada um corre na sua janela, "
+                     "com o mesmo mapa. Fecha a janela para terminar.") \
+                .classes("text-xs text-gray-500")
