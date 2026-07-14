@@ -15,15 +15,21 @@ SCEN_ORDER = config.MAIN_SCENARIO_KEYS
 SCEN_LABEL = config.SCENARIO_LABEL_SHORT
 
 # Ordem e ícone de cada secção da galeria (agrupa por tipo de gráfico).
+# AVALIAÇÃO primeiro (é a métrica da tese), treino depois — a mesma hierarquia que o
+# texto da dissertação usa. Os boxplots de treino ficam explicitamente rotulados para
+# ninguém os citar como se fossem a eval determinística.
 TYPE_ORDER = [
-    "Métricas de tarefa", "Curvas por algoritmo", "Curvas por mapa",
-    "Boxplots", "Heatmaps de ocupação", "Heatmaps geodésicos", "Outros",
+    "Métricas de tarefa", "Boxplots (avaliação)", "Escalabilidade",
+    "Heatmaps de ocupação", "Heatmaps geodésicos", "Painéis de vídeo",
+    "Curvas por mapa", "Curvas por algoritmo", "Boxplots (treino)", "Outros",
 ]
 TYPE_ICON = {
-    "Métricas de tarefa": "leaderboard", "Curvas por algoritmo": "show_chart",
-    "Curvas por mapa": "stacked_line_chart", "Boxplots": "candlestick_chart",
+    "Métricas de tarefa": "leaderboard", "Boxplots (avaliação)": "fact_check",
+    "Escalabilidade": "open_in_full",
     "Heatmaps de ocupação": "grid_view", "Heatmaps geodésicos": "route",
-    "Outros": "image",
+    "Painéis de vídeo": "theaters",
+    "Curvas por mapa": "stacked_line_chart", "Curvas por algoritmo": "show_chart",
+    "Boxplots (treino)": "candlestick_chart", "Outros": "image",
 }
 # Prefixos conhecidos dos nomes de ficheiro (removidos para gerar o título).
 _PREFIXES = ["comparacao_mapa", "comparacao_barras", "heatmap_ocupacao",

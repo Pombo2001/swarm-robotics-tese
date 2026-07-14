@@ -250,18 +250,31 @@ def list_pngs(session: str):
 
 
 def graph_type(filename: str) -> str:
-    """Categoria de um gráfico, derivada do prefixo do nome (para filtrar)."""
+    """Categoria de um gráfico, derivada do prefixo do nome (para filtrar).
+
+    A separação treino/avaliação NÃO é cosmética: os boxplots de treino usam o melhor
+    score do run (otimista, escala de fitness/recompensa) e os de avaliação usam a
+    eval determinística de 20 ep (a métrica da tese). Já foram confundidos uma vez —
+    a armadilha do "eval desfasado" nasceu daí — e a galeria misturava-os numa só
+    categoria "Boxplots".
+    """
     f = filename.lower()
+    if f.startswith("boxplot_eval"):
+        return "Boxplots (avaliação)"
+    if f.startswith("boxplot"):
+        return "Boxplots (treino)"
     if f.startswith("comparacao_mapa"):
         return "Curvas por mapa"
-    if f.startswith("boxplot"):
-        return "Boxplots"
     if f.startswith("desempenho_global"):
         return "Curvas por algoritmo"
     if f.startswith("heatmap_geodesico"):
         return "Heatmaps geodésicos"
     if f.startswith("heatmap_ocupacao"):
         return "Heatmaps de ocupação"
+    if f.startswith("painel_videos"):
+        return "Painéis de vídeo"
+    if f.startswith("escalabilidade"):
+        return "Escalabilidade"
     if f.startswith(("taxa_sucesso", "recolhas", "comparacao_barras")):
         return "Métricas de tarefa"
     return "Outros"
