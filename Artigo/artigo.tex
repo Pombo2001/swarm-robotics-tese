@@ -44,7 +44,7 @@ execução. O resultado central é que o desempenho do controlador evolutivo dep
 menos do orçamento de treino do que do \emph{desenho da função de aptidão}:
 substituindo o retorno acumulado --- que é farmável por deambulação --- por um
 \emph{shaping} de \emph{homing} terminal, o controlador converge nas $28$
-execuções dos quatro labirintos não-decetivos e torna-se estatisticamente superior
+execuções dos quatro cenários de gargalo e torna-se estatisticamente superior
 aos métodos de gradiente em três cenários, indistinguível do melhor deles em mais
 dois. Os métodos de gradiente conservam duas vantagens sólidas: fiabilidade em
 espaço aberto, onde o evolutivo ocasionalmente degenera, e uma eficiência
@@ -382,8 +382,9 @@ algoritmo--cenário atingem $100\%$ de sucesso em todas as execuções; as seis
 restantes escondem, sem exceção, esta distribuição tudo-ou-nada.
 
 O quadro que emerge não tem um vencedor universal. O \textbf{controlador
-evolutivo} resolve os quatro cenários de gargalo não-decetivos nas $28$ execuções
-correspondentes, destacando-se no Gargalo ($121.4$ recolhas/ep), no Quatro Salas
+evolutivo} resolve os quatro cenários de gargalo --- Gargalo, Quatro Salas e as
+duas Portas Cooperativas, incluindo portanto o cenário \emph{deceptive} --- nas
+$28$ execuções correspondentes, destacando-se no Gargalo ($121.4$ recolhas/ep), no Quatro Salas
 ($59.8$, cerca de $1.8\times$ o melhor método de gradiente) e na Porta Cooperativa
 com Alternativa ($86.7$); mas exibe execuções degeneradas precisamente nos
 cenários \emph{sem} paredes (Sandbox, $5/7$; Perceção Cooperativa, $6/7$), onde a
@@ -463,8 +464,11 @@ bloqueada e o caminho viável exige afastamento temporário do ninho ---, um
 controlador com \emph{blend} de novidade \citep{lehman2011abandoning} ($w=0.5$,
 $600$ minutos) obteve $81.3\pm1.9$ recolhas/ep contra $64.5$ do melhor controlador
 puramente objetivo então disponível ($+26\%$; Wilcoxon emparelhado
-$p=8.7\times10^{-5}$). A ressalva era incontornável: a execução com novidade
-dispôs de um orçamento $\approx 3\times$ superior. Para isolar o efeito,
+$p=8.7\times10^{-5}$). Duas ressalvas eram incontornáveis: a execução com novidade
+dispôs de um orçamento $\approx 3\times$ superior, e este é o único teste do artigo
+cuja unidade estatística é o episódio ($n=20$, um só modelo por braço) e não a
+execução de treino, pelo que o seu $p$ não é comparável com os restantes. Para
+isolar o efeito,
 corremos duas campanhas com \textbf{orçamento igualado} ao da campanha final
 (sete execuções de $195$ minutos por braço, mesmo protocolo e \emph{seeds}), nos
 dois cenários vulneráveis à deceção.
@@ -492,11 +496,15 @@ $100\%$ de sucesso nas \textbf{28 combinações} cenário $\times$ dimensão ---
 bateria cobre os sete cenários, incluindo labirintos e tarefas cooperativas, e não
 apenas a arena aberta (Figura~\ref{fig:escala}). O padrão da eficiência
 \emph{per capita} desarma a objeção natural do congestionamento: a retenção em
-$N=100$ (face a $N=20$) é quase total precisamente nos cenários com estrutura
-física (Porta com Alternativa $90\%$, Porta Cooperativa $88\%$, Muro em U $78\%$)
-e a degradação concentra-se nos cenários abertos (Sandbox $39\%$), onde cem
-agentes partilham um recurso finito --- diluição de recurso, não falha de
-coordenação; um colapso por congestionamento teria a assinatura inversa. As
+$N=100$ (face a $N=20$) é mais alta nos cenários com estrutura física (Porta com
+Alternativa $90\%$, Porta Cooperativa $88\%$, Muro em U $78\%$) e mais baixa nos
+cenários abertos (Sandbox $39\%$, Perceção Cooperativa $45\%$), onde cem agentes
+partilham um recurso finito --- diluição de recurso, não falha de coordenação; um
+colapso por congestionamento teria a assinatura inversa. Os casos intermédios
+matizam a leitura sem a inverter: o Quatro Salas retém $66\%$ e o Gargalo $58\%$
+--- o cenário de passagem única, onde a saturação do fluxo tem mais margem para
+morder ---, mas mesmo aí o sucesso permanece em $100\%$ e as recolhas totais
+crescem de $138.6$ ($N=20$) para $403.6$ ($N=100$). As
 recolhas totais no Sandbox crescem monotonicamente
 ($37.4 \rightarrow 65.8 \rightarrow 97.5 \rightarrow 127.3$ para
 $N=10,20,50,100$). As políticas de perceptrão multicamada do PPO/SAC têm uma
@@ -515,7 +523,7 @@ recolha \emph{per capita}: a sua descida ($3.74 \rightarrow 1.27$) reflete a
 partilha de um recurso finito por mais agentes --- as recolhas \emph{totais}
 crescem ($37.4 \rightarrow 127.3$) e a taxa de sucesso mantém-se em $100\%$. Nos
 sete cenários da bateria o sucesso é $100\%$ em todas as 28 combinações, com
-retenção per capita de $78$--$90\%$ nos cenários estruturados. O PPO/SAC, com
+retenção per capita de $58$--$90\%$ nos cenários com paredes. O PPO/SAC, com
 entrada de dimensão fixa, são incompatíveis com $N\neq 20$ e surgem como pontos
 isolados.}
 \label{fig:escala}
@@ -602,8 +610,8 @@ retorno acumulado --- converge para um valor comum a toda a população: um
 A cura não foi mais orçamento, mas \emph{melhor desenho da aptidão}. Substituir o
 retorno acumulado, farmável por deambulação, pelo \emph{homing} terminal, que só é
 maximizável terminando junto ao ninho, restaurou o gradiente de seleção nos
-labirintos: $28/28$ execuções convergentes nos quatro cenários de gargalo
-não-decetivos, com magnitudes que igualam ou superam os métodos de gradiente. O
+labirintos: $28/28$ execuções convergentes nos quatro cenários de gargalo, com
+magnitudes que igualam ou superam os métodos de gradiente. O
 ``colapso do evolutivo'' era, portanto, um artefacto do desenho da aptidão, e não
 uma limitação intrínseca do paradigma. A ressalva é que esta sensibilidade ao
 desenho é, em si mesma, um custo de engenharia que os métodos de gradiente, com

@@ -22,7 +22,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8080" ^| findstr LISTENING'
 )
 
 echo [INFO] A iniciar o servidor em http://localhost:8080
-echo [INFO] O browser abre automaticamente. Fecha esta janela para parar o servidor.
+echo [INFO] O browser abre automaticamente. Fecha esta janela para parar o servidor.bre
 echo.
 
 ".venv\Scripts\python.exe" -m dashboard.app

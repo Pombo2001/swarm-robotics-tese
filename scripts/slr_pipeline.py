@@ -325,11 +325,12 @@ def _autores(raw):
 
     As duas bases exportam em formatos distintos: o Scopus põe o apelido primeiro
     ('Hasselmann K.'), o IEEE põe as iniciais primeiro ('K. Hasselmann'). Distinguem-se
-    procurando qual dos tokens *não* é uma inicial (uma ou duas letras com ponto).
+    procurando qual dos tokens *não* é uma inicial. Uma inicial não tem minúsculas
+    ('K.', 'H.', '-S.' nos nomes compostos do IEEE, como em 'H. -S. Liu'), um apelido tem.
     """
     def apelido(a):
         toks = [t for t in a.replace(',', ' ').split() if t]
-        reais = [t for t in toks if not re.fullmatch(r'[A-Z]\.?([A-Z]\.?)*', t)]
+        reais = [t for t in toks if re.search(r'[a-zà-ÿ]', t)]
         return reais[0] if reais else (toks[0] if toks else '')
 
     autores = [a.strip() for a in re.split(r'\s+and\s+|;', raw or '') if a.strip()]
