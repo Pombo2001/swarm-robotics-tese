@@ -5,9 +5,46 @@
 > acionável; o `PLANO_DE_ATAQUE.md` continua a ser o registo histórico (armadilhas,
 > tutorial do servidor, resultados) e deve ser consultado, não reescrito.
 >
-> Escrito a **15 jul 2026** com o repositório no branch `feat/novelty-search`
-> (HEAD `cb9dcb9`). Se estiveres a ler isto semanas depois, verifica primeiro o que já
-> foi feito (checkboxes abaixo + `git log`) e NÃO refaças trabalho fechado.
+> Escrito a **15 jul 2026**. O repositório foi entretanto consolidado: **a `main` é
+> agora a fonte de verdade única** (ver o log de sessão abaixo). Se estiveres a ler isto
+> semanas depois, verifica primeiro o que já foi feito (checkboxes + `git log`) e NÃO
+> refaças trabalho fechado.
+
+---
+
+## 🔄 LOG DE SESSÃO — 15 jul 2026 (feito no PC do trabalho; para o Claude da torre)
+
+> Resumo do que mudou neste PC nesta sessão, para quem fizer `git pull` na torre de casa.
+> **Trabalha na `main`** — a `feat/novelty-search` foi consolidada para lá e está congelada.
+
+**Git / consolidação (P2 — FEITO):**
+- `main` avançada por *fast-forward* até à tese final: era 28 jun (`001ee24`) → agora inclui
+  campanha 7d, escalabilidade Zero-Shot, Novelty e este plano. `origin/main` = `main` local.
+- **4 branches de backup no GitHub** (nada se perde):
+  - `backup/main-pre-consolidacao-15jul` ← ponto de **ROLLBACK** da main.
+    Reverter tudo: `git push origin backup/main-pre-consolidacao-15jul:main --force`
+  - `backup/tese-final-graficos-15jul2026` ← 3 commits da galeria + figuras de 26 jun.
+  - `backup/main-local-mai2026` ← 16 commits antigos de Maio da main local.
+- **Decisões tomadas (não reabrir):**
+  - Figuras da tese: mantidas as canónicas de **10 jul** (campanha 7d). As de 26 jun NÃO
+    foram trazidas (eram pré-campanha-final → seria regressão). Ficam no backup.
+  - Galeria do dashboard: mantida a versão de **14 jul**. Os extras de 26 jun (pesquisa,
+    envio por-secção) ficam no backup, não integrados. O dashboard não é avaliado.
+- **Pendente:** apagar `launcher_dashboard.py` (decisão de 14 jul, por executar).
+
+**P0 — Iskandar 2024 (verificação FEITA; edições AINDA POR APLICAR):**
+- Confirmado **REAL** (DOI `10.17587/mau.25.471-478` resolve para a revista oficial;
+  indexado no Semantic Scholar; CC BY). Metadata do `.bib` correta. O flag "fabricado"
+  de 21 jun era **falso alarme**. O achado do artigo (RL rápido mas fraco a generalizar;
+  PSO robusto mas lento) até reforça a narrativa da tese.
+- **3 correções de precisão IDENTIFICADAS mas NÃO aplicadas** (a `main.tex` + `artigo.tex`):
+  1. "numa só tarefa" → "uma tarefa de navegação em **ambientes de complexidade crescente**".
+  2. "sem escalabilidade" → distinguir: eles testam generalização entre **ambientes**, não
+     entre **tamanhos de enxame** (o Zero-Shot para N não visto continua ausente lá).
+  3. "sem robustez" (linhas 698/717/760/771) → "sem testes de **robustez a falhas**" (o
+     abstract usa "robustness" noutro sentido; a linha 786 já está correta).
+- **Por fechar (tarefa do utilizador):** nome do 2.º autor (`.bib` diz "Ahmad"; fontes só
+  dão "A.", pode ser "Ali") + confirmar "sem inferência estatística" no PDF integral (pago).
 
 ---
 
