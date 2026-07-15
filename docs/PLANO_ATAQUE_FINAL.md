@@ -55,7 +55,9 @@
   significância e Novelty (`final_7d/`+`novelty_final/` não estão neste PC).
 
 **P1 — campanha Novelty adaptativo:** ⏳ **ainda a correr** no `.14` (fecha ~19-20 jul).
-NÃO está feita — só o pré-registo é que se faz agora. Ao trazer: `pos_campanha.py`.
+A campanha NÃO está feita. Mas o **pré-registo está FEITO** (`PRE_REGISTO_NOVELTY_ADAPTATIVO.md`,
+15 jul, antes dos dados): hipótese + testes T1-T4 + regra de decisão da QI6 + reporte.
+Ao trazer: `pos_campanha.py` → registar anneal/@390 no pré-registo → T1-T4 → regra de decisão.
 
 ---
 
@@ -97,16 +99,13 @@ a partir de números de TREINO (armadilha nº3 — só `eval_summary.csv`/`eval_
 
 ## P1 — Fecho da campanha adaptativa (~19-20 jul, quando o utilizador trouxer os dados)
 
-**Pré-registo (fazer ANTES de olhar para os resultados — escrever num commit):**
-- [ ] Teste: Mann-Whitney exato + δ de Cliff sobre **médias por run (n=7)**,
-      adaptativo vs objetivo puro (campanha 7d) e adaptativo vs Novelty fixo w=0.5
-      (P1/P2) nos cenários onde estes existem (u_wall, bypass).
-- [ ] Critério de sucesso pré-registado: o adaptativo **não degrada** os cenários que o
-      objetivo já resolve (δ≈0 nos 5 fáceis) **e** mantém o ganho do fixo no u_wall
-      (≥ taxa de convergência do w=0.5, 7/7). Se falhar qualquer metade → fica
-      "trabalho futuro com evidência preliminar", e a QI6 NÃO muda.
-- [ ] Reportar TODOS os runs; taxa de convergência como descritivo, magnitude como teste
-      (n=7 não dá significância em proporções — Fisher 7/7 vs 3/7 dá p=0.070).
+**Pré-registo — [x] FEITO (15 jul): [`docs/PRE_REGISTO_NOVELTY_ADAPTATIVO.md`](PRE_REGISTO_NOVELTY_ADAPTATIVO.md)**
+Escrito e commitado ANTES de os dados de avaliação existirem. Fixa hipótese, testes
+confirmatórios T1-T4 (Mann-Whitney + δ sobre médias por run, n=7), a **regra de decisão
+pré-comprometida** da QI6 (sobe a resultado sse: não-degrada os 5 fáceis + ganho no u_wall
++ sem custo no bypass) e os compromissos de reporte (todos os runs; convergência descritiva,
+magnitude como teste). ⚠️ Falta só **registar nesse ficheiro, antes do unblinding**, os
+parâmetros do anneal e a definição do braço @390 (vivem na config do servidor, não no repo).
 
 **Mecânica da chegada (armadilhas conhecidas):**
 - [ ] `python scripts/pos_campanha.py` ao trazer QUALQUER campanha (armadilha nº9:
