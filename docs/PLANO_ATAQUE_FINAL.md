@@ -32,17 +32,19 @@
     envio por-secção) ficam no backup, não integrados. O dashboard não é avaliado.
 - **Pendente:** apagar `launcher_dashboard.py` (decisão de 14 jul, por executar).
 
-**P0 — Iskandar 2024 (verificação FEITA; edições AINDA POR APLICAR):**
+**P0 — Iskandar 2024 (verificação FEITA; 3 correções APLICADAS):**
 - Confirmado **REAL** (DOI `10.17587/mau.25.471-478` resolve para a revista oficial;
   indexado no Semantic Scholar; CC BY). Metadata do `.bib` correta. O flag "fabricado"
   de 21 jun era **falso alarme**. O achado do artigo (RL rápido mas fraco a generalizar;
   PSO robusto mas lento) até reforça a narrativa da tese.
-- **3 correções de precisão IDENTIFICADAS mas NÃO aplicadas** (a `main.tex` + `artigo.tex`):
-  1. "numa só tarefa" → "uma tarefa de navegação em **ambientes de complexidade crescente**".
-  2. "sem escalabilidade" → distinguir: eles testam generalização entre **ambientes**, não
-     entre **tamanhos de enxame** (o Zero-Shot para N não visto continua ausente lá).
-  3. "sem robustez" (linhas 698/717/760/771) → "sem testes de **robustez a falhas**" (o
-     abstract usa "robustness" noutro sentido; a linha 786 já está correta).
+- **3 correções de precisão APLICADAS** a `main.tex` (~698/717/760/771/786) e `artigo.tex`
+  (~93/213), na mesma direção:
+  1. "numa só tarefa" → reconhece que é avaliada em **ambientes de complexidade crescente**.
+  2. "sem escalabilidade" → "sem transferência para **dimensões de enxame não vistas**
+     (Zero-Shot)" — eles testam generalização entre ambientes, não entre tamanhos de enxame.
+  3. "sem robustez" → "sem robustez **a falhas**" (o abstract usa "robustness" noutro sentido).
+  ⚠️ **Compilar na torre** para confirmar (não há LaTeX no PC do trabalho); edições seguras
+  por inspeção (só texto + `\textit{Zero-Shot}`, já usado noutros sítios).
 - **Por fechar (tarefa do utilizador):** nome do 2.º autor (`.bib` diz "Ahmad"; fontes só
   dão "A.", pode ser "Ali") + confirmar "sem inferência estatística" no PDF integral (pago).
 
