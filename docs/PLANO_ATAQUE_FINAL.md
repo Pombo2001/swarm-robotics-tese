@@ -48,6 +48,15 @@
 - **Por fechar (tarefa do utilizador):** nome do 2.º autor (`.bib` diz "Ahmad"; fontes só
   dão "A.", pode ser "Ali") + confirmar "sem inferência estatística" no PDF integral (pago).
 
+**P3 — REPRODUZIR.md (CRIADO; auditoria parcial FEITA):**
+- Novo `docs/REPRODUZIR.md`: mapa resultado→dados→script + pipeline + armadilhas.
+- **Auditado no PC (bate 100%):** SLR (456+427=883 → 680 → 58) e Sscale (retenções
+  90/88/78/39%, 28/28 células a 100%). **Falta na torre:** tabela de avaliação,
+  significância e Novelty (`final_7d/`+`novelty_final/` não estão neste PC).
+
+**P1 — campanha Novelty adaptativo:** ⏳ **ainda a correr** no `.14` (fecha ~19-20 jul).
+NÃO está feita — só o pré-registo é que se faz agora. Ao trazer: `pos_campanha.py`.
+
 ---
 
 ## Contexto em 10 linhas
@@ -129,13 +138,12 @@ Estado a 15 jul (verificado com `git cherry` / `rev-list`):
 
 ## P3 — Entregáveis e reprodutibilidade
 
-- [ ] **`docs/REPRODUZIR.md`**: tabela "cada número/figura da tese → CSV/script que o
-      gera". Fontes: `scripts/gerar_figuras_7d.py --install-oficial`,
-      `results/graficos_tese/final_7d/eval_by_run_7d.csv`,
-      `results/estatisticas/escalabilidade_*.csv`, `results/novelty_final/{uwall,bypass}/`,
-      `scripts/statistical_tests.py`, `docs/slr/screening.csv` + `scripts/slr_pipeline.py`.
-      Ao construí-la, VERIFICAR que cada número da tese bate certo com o CSV — é uma
-      auditoria disfarçada de documentação.
+- [x] **`docs/REPRODUZIR.md` CRIADO (15 jul)** — mapa "resultado da tese → dados → script",
+      com nota de onde vivem os dados (torre vs PC), pipeline de reprodução e armadilhas.
+      **2 itens da auditoria já VERIFICADOS aqui** (dados no PC): SLR (883/680/58 batem com
+      `screening.csv`) e Sscale (retenções 90/88/78/39% + 28/28 a 100% batem com
+      `escalabilidade_*.csv`). **Falta a parte que exige a torre**: `tab:res_eval`,
+      significância e Novelty (`final_7d/` + `novelty_final/` não estão no PC do trabalho).
 - [ ] **Revisão ponta-a-ponta da tese** (consistência número-texto-figura): fazer por
       capítulos, com os CSVs abertos ao lado. Cuidado especial: números antigos que
       sobreviveram a reescritas (73,3 / 67,7 / 0,77 são de campanhas pré-treino_fds).
