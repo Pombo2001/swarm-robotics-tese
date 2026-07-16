@@ -754,29 +754,29 @@ Desta fragmentação decorrem três consequências que esta dissertação procur
 A oportunidade que se abre é, assim, dupla: fornecer o \textit{benchmark} cruzado que falta, e fazê-lo sobre uma arquitetura --- o grafo dinâmico $G=(V,E)$ com atenção \cite{sun2024graph, velickovic2018gat} --- que confere invariância à permutação e escalabilidade, permitindo comparar não apenas algoritmos, mas os \emph{eixos} em que cada paradigma é preferível.
 
 \section{Artigos-Chave e Ligação ao Problema}
-Dos 58 estudos incluídos, destacam-se seis que delimitam com precisão o espaço que esta dissertação ocupa:
+Seis trabalhos delimitam com precisão o espaço que esta dissertação ocupa --- três provenientes dos 58 estudos incluídos (Iskandar; Hasselmann; Kegeleirs) e três de enquadramento complementar, externos ao corpus e assinalados como tal: Zhang, identificado pela pesquisa mas excluído na fase de elegibilidade (E8 --- fora do núcleo da revisão); Chen, doutro domínio de aplicação; e Yigit, não recuperado pelas cadeias de pesquisa (o título não contém nenhum dos termos de enxame robótico exigidos no título). A lacuna quantificada adiante (``um em 58'') refere-se exclusivamente ao corpus da revisão:
 
 \begin{enumerate}
     \item \textbf{Iskandar et al. (2024)} --- o \emph{único} estudo do corpo a comparar diretamente aprendizagem por reforço com PSO na navegação de enxames \cite{iskandar2024comparative}. Confirma que a comparação é possível e pertinente, mas fá-la numa só tarefa (em ambientes de complexidade crescente), sem transferência para dimensões de enxame não vistas, sem robustez a falhas e sem tratamento estatístico: exatamente as três dimensões que esta tese acrescenta.
     \item \textbf{Hasselmann, Ligot e Birattari (2023)} --- gera repertórios comportamentais por \textbf{\textit{novelty search}} para o desenho automático de enxames \cite{hasselmann2023novelty}. Estabelece a procura por novidade como mecanismo legítimo no desenho de enxames, fundamentando a hibridização testada na QI6.
-    \item \textbf{Zhang et al. (2022)} --- GNNs hierárquicas para exploração multi-robô, operando sobre vizinhanças de dimensão variável \cite{zhang2022h2gnn}; é a evidência \emph{robótica} de que a invariância à dimensão do enxame é uma propriedade da \emph{representação}, e não do otimizador (QI2).
+    \item \textbf{Zhang et al. (2022)} --- GNNs hierárquicas para exploração multi-robô, operando sobre vizinhanças de dimensão variável \cite{zhang2022h2gnn}; é a evidência \emph{robótica} de que a invariância à dimensão do enxame é uma propriedade da \emph{representação}, e não do otimizador (QI2). (Recuperado pela pesquisa mas excluído na elegibilidade --- E8, tarefa de exploração fora do núcleo da revisão; é citado pelo mecanismo de representação.)
     \item \textbf{Chen et al. (2024)} --- estabelece o mecanismo que sustenta essa invariância: numa política sobre grafo, o número de parâmetros treináveis é \emph{independente do número de agentes}, pelo que a política aprendida se aplica diretamente a grafos maiores sem retreino \cite{sun2024graph}. O trabalho é conduzido em redes multi-salto sem fios, e não em robótica --- é citado aqui pelo mecanismo, não pelo domínio.
     \item \textbf{Kegeleirs et al. (2024)} --- mede a \textbf{transferibilidade} do desenho automático \textit{off-line} de enxames, da simulação para o real e entre plataformas distintas \cite{kegeleirs2024transfer}; delimita o \textit{Deployment Gap} que esta dissertação antecipa no desenho mas não valida empiricamente (Secção~\ref{sec:limitacoes}).
-    \item \textbf{Yigit et al. (2026)} --- PPO descentralizado com \textit{parameter sharing} em navegação de enxame \cite{yigit2026marl}, da mesma família da \textit{baseline} aqui adotada; a sua avaliação --- contra políticas aleatórias, com vizinhança reduzida ao agente mais próximo, sem variação da dimensão do enxame e sem inferência estatística --- ilustra o défice de rigor comparativo que motiva este trabalho.
+    \item \textbf{Yigit et al. (2026)} --- PPO descentralizado com \textit{parameter sharing} em navegação de enxame \cite{yigit2026marl}, da mesma família da \textit{baseline} aqui adotada (identificado fora da pesquisa sistemática, cujas cadeias exigem termos de enxame robótico no título); a sua avaliação --- contra políticas aleatórias, com vizinhança reduzida ao agente mais próximo, sem variação da dimensão do enxame e sem inferência estatística --- ilustra o défice de rigor comparativo que motiva este trabalho.
 \end{enumerate}
 
 \section{Conclusão Parcial}
-A revisão sistemática confirma que os dois paradigmas em confronto estão, ambos, em desenvolvimento ativo: 21 dos 58 estudos incluídos assentam em MARL e 23 em otimização bio-inspirada. Confirma igualmente que a escalabilidade a dimensões de enxame não vistas é hoje resolvida pela \emph{representação} --- grafos com atenção \cite{sun2024graph, zhang2022h2gnn} ou aproximações de campo médio \cite{tang2023meanfield} --- e que o paradigma evolutivo dispõe de instrumentos maduros para tarefas decetivas, da procura por novidade \cite{hasselmann2023novelty} à aprendizagem social distribuída \cite{bredeche2022social}.
+A revisão sistemática confirma que os dois paradigmas em confronto estão, ambos, em desenvolvimento ativo: 21 dos 58 estudos incluídos assentam em MARL e 23 em otimização bio-inspirada. O enquadramento complementar mostra, por sua vez, que a escalabilidade a dimensões de enxame não vistas é hoje resolvida pela \emph{representação} --- grafos com atenção \cite{sun2024graph, zhang2022h2gnn} ou aproximações de campo médio \cite{tang2023meanfield} --- e que o paradigma evolutivo dispõe de instrumentos maduros para tarefas decetivas, da procura por novidade \cite{hasselmann2023novelty} à aprendizagem social distribuída \cite{bredeche2022social}.
 
 O que a revisão \emph{não} encontra é um confronto rigoroso entre os dois. Um único estudo em 58 compara empiricamente as duas famílias na navegação de enxames \cite{iskandar2024comparative}, e fá-lo sem transferência para dimensões de enxame não vistas, sem testes de robustez a falhas e sem inferência estatística. É este vazio --- medido, e não apenas alegado --- que o presente trabalho preenche: um \textit{benchmark} cruzado sob protocolo idêntico, que permite determinar quando o custo computacional da aprendizagem compensa a robustez da otimização, e que mostra, no processo, que a fronteira entre os dois paradigmas depende menos do algoritmo escolhido do que do desenho do sinal que o guia (Capítulo~\ref{ch:results}).
 
 \section{Síntese Comparativa da Literatura}
-A Tabela~\ref{tab:sota_summary} sintetiza os estudos do corpo que melhor delimitam a lacuna, organizados pelo paradigma que empregam.
+A Tabela~\ref{tab:sota_summary} sintetiza os estudos --- do corpo da revisão e do seu enquadramento complementar, com as entradas externas assinaladas --- que melhor delimitam a lacuna, organizados pelo paradigma que empregam.
 
 \begin{table}[H]
     \centering
     \footnotesize
-    \caption{Síntese dos estudos mais relevantes do corpo da revisão ($n=58$) e lacunas que motivam esta dissertação.}
+    \caption{Síntese dos estudos mais relevantes do corpo da revisão ($n=58$) e do seu enquadramento complementar (entradas externas ao corpus assinaladas), com as lacunas que motivam esta dissertação.}
     \label{tab:sota_summary}
     \renewcommand{\arraystretch}{1.25}
     \begin{tabular}{|p{2.6cm}|p{1.9cm}|p{4.4cm}|p{4.4cm}|}
@@ -793,13 +793,13 @@ A Tabela~\ref{tab:sota_summary} sintetiza os estudos do corpo que melhor delimit
 
         Chen et al. (2024) \cite{sun2024graph} & MARL (GNN) \newline \textit{(fora do corpus: redes sem fios)} & Estabelece o mecanismo da invariância: nº de parâmetros independente do nº de agentes $\Rightarrow$ transferência sem retreino. & Domínio não robótico (redes multi-salto); sem obstáculos físicos nem \textit{baseline} evolutiva. \\ \hline
 
-        Zhang et al. (2022) \cite{zhang2022h2gnn} & MARL (GNN) & GNNs hierárquicas para exploração com vizinhanças de dimensão variável. & Avaliado só contra métodos de aprendizagem; escalabilidade não isolada do otimizador. \\ \hline
+        Zhang et al. (2022) \cite{zhang2022h2gnn} & MARL (GNN) \newline \textit{(fora do corpus: excluído na elegibilidade, E8)} & GNNs hierárquicas para exploração com vizinhanças de dimensão variável. & Avaliado só contra métodos de aprendizagem; escalabilidade não isolada do otimizador. \\ \hline
 
         Tang et al. (2023) \cite{tang2023meanfield} & MARL (campo médio) & Custo de coordenação independente de $N$ por aproximação de campo médio. & Sem comparação com otimização bio-inspirada; sem testes de robustez a falhas. \\ \hline
 
         Kegeleirs et al. (2024) \cite{kegeleirs2024transfer} & Bio-inspirado (\textit{sim-to-real}) & Quantifica a transferibilidade do desenho automático entre simulação e plataformas reais. & Não avalia desempenho de tarefa face a MARL. \\ \hline
 
-        Yigit et al. (2026) \cite{yigit2026marl} & MARL (PPO) & PPO descentralizado com \textit{parameter sharing} em navegação de enxame; valida o \textit{baseline} aqui adotado. & Vizinhança reduzida ao agente mais próximo; $N$ fixo (escalabilidade não avaliada); compara-se apenas com políticas aleatórias. \\ \hline
+        Yigit et al. (2026) \cite{yigit2026marl} & MARL (PPO) \newline \textit{(fora do corpus: não recuperado pelas cadeias)} & PPO descentralizado com \textit{parameter sharing} em navegação de enxame; valida o \textit{baseline} aqui adotado. & Vizinhança reduzida ao agente mais próximo; $N$ fixo (escalabilidade não avaliada); compara-se apenas com políticas aleatórias. \\ \hline
     \end{tabular}
 \end{table}
 
