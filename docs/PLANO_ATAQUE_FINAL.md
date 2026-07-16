@@ -141,8 +141,10 @@ Estado a 15 jul (verificado com `git cherry` / `rev-list`):
       com nota de onde vivem os dados (torre vs PC), pipeline de reprodução e armadilhas.
       **2 itens da auditoria já VERIFICADOS aqui** (dados no PC): SLR (883/680/58 batem com
       `screening.csv`) e Sscale (retenções 90/88/78/39% + 28/28 a 100% batem com
-      `escalabilidade_*.csv`). **Falta a parte que exige a torre**: `tab:res_eval`,
-      significância e Novelty (`final_7d/` + `novelty_final/` não estão no PC do trabalho).
+      `escalabilidade_*.csv`). **Parte da torre FEITA (16 jul)**: `tab:res_eval` (21/21 células;
+      3 dp mal arredondados corrigidos no `main.tex`), `tab:res_signif` (21/21 linhas) e
+      §res_novelty (p e δ recalculados de raiz) — tudo confere. Pendente menor: trazer do
+      servidor o CSV do braço Novelty preliminar (81,3) de `~/swarm-novelty` (ver REPRODUZIR.md).
 - [ ] **Revisão ponta-a-ponta da tese** (consistência número-texto-figura): fazer por
       capítulos, com os CSVs abertos ao lado. Cuidado especial: números antigos que
       sobreviveram a reescritas (73,3 / 67,7 / 0,77 são de campanhas pré-treino_fds).

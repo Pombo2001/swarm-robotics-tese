@@ -100,10 +100,14 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
 Isto é o que falta para o `REPRODUZIR.md` deixar de ser mapa e passar a auditoria. **Correr
 na torre** (onde estão `final_7d/` e `novelty_final/`):
 
-- [ ] `tab:res_eval` (§1367) — cada célula (média±dp, sucesso, [runs a 100%]) confere com
-      `final_7d/eval_by_run_7d.csv`?
-- [ ] Tabela/frases de significância — os p-values e δ citados no Cap. 6 conferem com
-      `results/estatisticas/testes_significancia_*.csv`?
+- [x] **`tab:res_eval` — VERIFICADO (16 jul, torre)** contra `final_7d/eval_by_run_7d.csv`
+      e `resumo_por_cenario_7d.csv`: 21/21 células conferem em sucesso e média. **3 dp
+      estavam mal arredondados** (arredondamento duplo na transcrição) e foram CORRIGIDOS
+      no `main.tex`: u_wall GNN 32,7→**32,6**; Gargalo GNN 20,0→**19,9**; Porta Coop. GNN
+      1,0→**0,9**. O 32,7 repetia-se no texto (§res_novelty + QI6) — corrigido também. ✅
+- [x] **Significância — VERIFICADA (16 jul, torre)**: as 21 linhas da `tab:res_signif`
+      (médias, U, p, δ, veredicto) conferem com `testes_significancia_food_collected.csv`
+      (= `testes_significancia_runs_7d.csv`). Sem alterações. ✅
 - [x] **`tab:res_scale_all` / `tab:res_scale` — VERIFICADO (15 jul, PC do trabalho)** contra
       `escalabilidade_*.csv`: retenção per capita N=100 vs N=20 confere ao pormenor —
       bypass **90%**, coop_door **88%**, u_wall **78%**, none/Sandbox **39%** (+ bottleneck 58%,
@@ -112,12 +116,19 @@ na torre** (onde estão `final_7d/` e `novelty_final/`):
       Scopus **456** + IEEE **427** = **883** identificados; **203** duplicados; **680** únicos
       triados (linhas do CSV); **58** com `decisao=incluir`. Todos batem certo. ✅
       *(O split 21 MARL / 23 bio-inspirado NÃO é coluna do CSV — classificação manual, conferir no texto.)*
-- [ ] `tab:res_eval` (§1367) — cada célula (média±dp, sucesso, [runs a 100%]) confere com
-      `final_7d/eval_by_run_7d.csv`? **(exige torre)**
-- [ ] Significância — os p-values e δ do Cap. 6 conferem com `testes_significancia_*.csv`? **(torre)**
-- [ ] §res_novelty — os números do Novelty (Muro em U 7/7 a 100%, 69.8±5.9; p=0.026, δ=+0.71;
-      bypass p=0.0006, δ=−1.00) conferem com `novelty_final/`? **(exige torre)**
+- [x] **§res_novelty — VERIFICADO (16 jul, torre)** contra `novelty_final/{uwall,bypass}/
+      results/evaluation/eval_by_run.csv` + `final_7d/eval_by_run_7d.csv` (braço objetivo),
+      Mann-Whitney exato e δ **recalculados de raiz**: u_wall Novelty 69,8±5,9, 7/7 a 100%
+      vs obj 24,5±32,6, 3/7 (p=0,0262→"0,026" ✓, δ=+0,71 ✓); bypass Novelty 63,0±21,9, 7/7
+      vs obj 86,7±2,0 (p=0,0006 ✓, δ=−1,00 ✓). Tudo confere. ✅
+- [ ] ⚠️ **Comparação preliminar (§res_novelty, "indício")**: o braço objetivo (64,5±3,5,
+      20 ep) está coberto por `results/evaluation/eval_comparacao_cooperative_door_bypass.csv`,
+      mas o CSV por-episódio do braço Novelty preliminar (81,3±1,9, 600 min, 2 jul) **não está
+      na torre** — vive em `~/swarm-novelty` no servidor `.14`. Trazer
+      `~/swarm-novelty/results/evaluation/` antes de o servidor ser limpo, ou o Wilcoxon
+      p=8,7×10⁻⁵ fica sem fonte local (a tese já o despromove a indício, mas para a defesa
+      convém ter o CSV).
 
-> **Feito a 15 jul:** Sscale e SLR — os dados estavam no PC do trabalho e **conferem 100%**.
-> Falta a parte que exige a torre (`final_7d/` + `novelty_final/`): tabela de avaliação,
-> significância e Novelty. Trazer com `pos_campanha.py` ou correr lá.
+> **Feito a 15 jul (PC):** Sscale e SLR conferem 100%. **Feito a 16 jul (torre):**
+> `tab:res_eval` (3 dp corrigidos), `tab:res_signif` e §res_novelty — **auditoria
+> número-a-número COMPLETA**. Único buraco: o CSV do braço Novelty preliminar (ver ⚠️ acima).
