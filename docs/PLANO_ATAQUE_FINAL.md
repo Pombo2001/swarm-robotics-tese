@@ -45,8 +45,13 @@
   3. "sem robustez" → "sem robustez **a falhas**" (o abstract usa "robustness" noutro sentido).
   ✅ **Compilado na torre (16 jul)**: tese 117 págs (pdflatex+biber, 0 refs indefinidas) e
   artigo 9 págs (pdflatex+bibtex, 0 refs indefinidas). PDFs frescos commitados.
-- **Por fechar (tarefa do utilizador):** nome do 2.º autor (`.bib` diz "Ahmad"; fontes só
-  dão "A.", pode ser "Ali") + confirmar "sem inferência estatística" no PDF integral (pago).
+- ✅ **Fechado (16 jul, torre):** 2.º autor é **Ali** Hammoud — confirmado na FONTE PRIMÁRIA
+  (agradecimentos da tese de doutoramento do Alaa Iskandar, Miskolc 2025, DOI
+  10.14750/ME.2026.007, acesso livre no REAL-PhD) — corrigido nos DOIS `.bib`. A mesma tese
+  incorpora o estudo comparativo (publicação k2) e **não contém p-value/t-test/Wilcoxon**
+  (varrimento ao texto integral) → corrobora o "sem inferência estatística". PDF guardado
+  para leitura do utilizador em `Desktop/Tese/Iskandar_PhD_2025_DRL_Swarm_Robotics.pdf`
+  (81 págs; RL vs PSO ~págs 14-42) — substitui a compra do artigo (600 RUB).
 
 **P3 — REPRODUZIR.md (CRIADO; auditoria parcial FEITA):**
 - Novo `docs/REPRODUZIR.md`: mapa resultado→dados→script + pipeline + armadilhas.
