@@ -34,8 +34,12 @@ if [[ -z "$PASS" ]]; then
 fi
 
 ESTADO='tmux ls 2>&1; echo; echo "--- carga ---"; uptime; date
-echo; echo "--- week_A ---"; tail -3 ~/swarm-robotics-tese/week_A.log 2>/dev/null
-echo; echo "--- week_B ---"; tail -3 ~/swarm-robotics-tese/week_B.log 2>/dev/null'
+echo; echo "--- week_A (fase + últimas linhas) ---"
+grep -E "\[week" ~/week_A_master.log 2>/dev/null | tail -2
+tmux capture-pane -pt week_A -S -3 2>/dev/null | tail -3
+echo; echo "--- week_B (fase + últimas linhas) ---"
+grep -E "\[week" ~/week_B_master.log 2>/dev/null | tail -2
+tmux capture-pane -pt week_B -S -3 2>/dev/null | tail -3'
 
 exec "$PLINK" -ssh -batch -hostkey "$HOSTKEY" -pw "$PASS" \
      "$USER@$HOST" "${1:-$ESTADO}"
