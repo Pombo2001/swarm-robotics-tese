@@ -92,7 +92,14 @@ a partir de números de TREINO (armadilha nº3 — só `eval_summary.csv`/`eval_
         Iskandar (grep por `[Ii]skandar`) e confirmar frase a frase contra o PDF real.
       - Se o artigo fizer mais do que o abstract sugere (ex.: já medir escalabilidade),
         ajustar o enquadramento da lacuna ANTES de qualquer outra edição à tese.
-- [ ] Mesmo tratamento para **1 artigo NEAT** citado no Cap. 3 (também só lido por resumo).
+- [x] **Artigos NEAT verificados (16 jul, torre)** — `zaman2025neat` (IRCE 2025) e
+      `biteng2025training` (ICMA 2025) são REAIS (DOIs resolvem no Semantic Scholar; grupo
+      MARS/UTRGV de Qi Lu) e as afirmações da tese (§707) e do artigo (§194/§625) conferem
+      com os abstracts: fitness de retorno acumulado, arenas abertas c/ obstáculos dispersos,
+      escalabilidade, sem colapso. MAS os nomes próprios no `.bib` estavam FABRICADOS
+      ("Tanvir U."→**Tameem Uz** Zaman; "Preston"→**Pigar** Biteng) — corrigidos nos DOIS
+      `.bib`. Nota: a afirmação "arenas sem estrangulamentos decetivos" assenta no abstract;
+      confirmar no PDF integral quando o utilizador ler (risco baixo).
 - [ ] Contexto: a bibliografia já foi auditada 2× e apanharam-se referências fabricadas
       (ver `memory/bibliografia_auditoria.md`). O padrão a temer é sempre o mesmo:
       afirmação plausível sem fonte real por trás. Na dúvida, verificar contra o PDF.
@@ -126,14 +133,10 @@ Estado a 15 jul (verificado com `git cherry` / `rev-list`):
   `14085ff` — galeria do dashboard com pesquisa/A-B + gráficos por-cenário exportados
   para a tese) que NÃO estão em `feat/novelty-search`. Não perder.
 
-- [ ] **Passo 1**: trazer os 3 commits para `feat/novelty-search` (merge de
-      `tese-final-graficos` ou cherry-pick; mostrar o diff ao utilizador antes —
-      tocam em `dashboard/` e `Tese/images/`, pode haver conflitos com a galeria
-      reorganizada de 14 jul).
-- [ ] **Passo 2**: quando o utilizador aprovar, atualizar `main` (merge/ff de
-      `feat/novelty-search`) e push. A partir daí, `main` = fonte de verdade.
-- [ ] **Passo 3**: arrumar branches mortas (`backup-main-maio2026` mantém-se; as outras
-      apagar só com autorização).
+- [x] ~~Passos 1-3~~ **RESOLVIDO de outra forma a 15 jul (PC do trabalho)** — ver o log de
+      sessão no topo: `main` avançada por ff até à tese final; os 3 commits da galeria
+      ficaram no backup `backup/tese-final-graficos-15jul2026` por DECISÃO (não integrados);
+      branches antigas preservadas como `backup/*` no GitHub. P2 fechado.
 - [x] **Apagado `launcher_dashboard.py` (16 jul)** — substituído pela vista «Ao vivo (3D)»
       do dashboard; README atualizado (`python -m dashboard.app` / `iniciar_dashboard.bat`).
 
