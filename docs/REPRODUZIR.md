@@ -121,13 +121,16 @@ na torre** (onde estão `final_7d/` e `novelty_final/`):
       Mann-Whitney exato e δ **recalculados de raiz**: u_wall Novelty 69,8±5,9, 7/7 a 100%
       vs obj 24,5±32,6, 3/7 (p=0,0262→"0,026" ✓, δ=+0,71 ✓); bypass Novelty 63,0±21,9, 7/7
       vs obj 86,7±2,0 (p=0,0006 ✓, δ=−1,00 ✓). Tudo confere. ✅
-- [ ] ⚠️ **Comparação preliminar (§res_novelty, "indício")**: o braço objetivo (64,5±3,5,
-      20 ep) está coberto por `results/evaluation/eval_comparacao_cooperative_door_bypass.csv`,
-      mas o CSV por-episódio do braço Novelty preliminar (81,3±1,9, 600 min, 2 jul) **não está
-      na torre** — vive em `~/swarm-novelty` no servidor `.14`. Trazer
-      `~/swarm-novelty/results/evaluation/` antes de o servidor ser limpo, ou o Wilcoxon
-      p=8,7×10⁻⁵ fica sem fonte local (a tese já o despromove a indício, mas para a defesa
-      convém ter o CSV).
+- [x] ⚠️ **Comparação preliminar (§res_novelty, "indício") — FONTE PERDIDA (verificado
+      16 jul no servidor)**: o braço objetivo (64,5±3,5, 20 ep) está coberto por
+      `results/evaluation/eval_comparacao_cooperative_door_bypass.csv`, mas o CSV
+      por-episódio E o modelo do braço Novelty preliminar (81,3±1,9, 600 min, 2 jul)
+      foram **sobrescritos** em `~/swarm-novelty` pela fase 1 da week_B (14-15 jul) e
+      nunca tinham sido trazidos nem commitados. O Wilcoxon p=8,7×10⁻⁵ e o 81,3±1,9
+      ficam sem artefacto reprodutível — os números foram registados na altura (sessão
+      de 2 jul), mas não há CSV para mostrar na defesa. A tese JÁ despromove esta
+      comparação a "indício, não resultado" com as ressalvas certas; decidir com o
+      utilizador se se acrescenta uma nota de "dados não retidos" ou se fica como está.
 
 > **Feito a 15 jul (PC):** Sscale e SLR conferem 100%. **Feito a 16 jul (torre):**
 > `tab:res_eval` (3 dp corrigidos), `tab:res_signif` e §res_novelty — **auditoria
