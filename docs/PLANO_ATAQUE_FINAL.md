@@ -43,8 +43,8 @@
   2. "sem escalabilidade" → "sem transferência para **dimensões de enxame não vistas**
      (Zero-Shot)" — eles testam generalização entre ambientes, não entre tamanhos de enxame.
   3. "sem robustez" → "sem robustez **a falhas**" (o abstract usa "robustness" noutro sentido).
-  ⚠️ **Compilar na torre** para confirmar (não há LaTeX no PC do trabalho); edições seguras
-  por inspeção (só texto + `\textit{Zero-Shot}`, já usado noutros sítios).
+  ✅ **Compilado na torre (16 jul)**: tese 117 págs (pdflatex+biber, 0 refs indefinidas) e
+  artigo 9 págs (pdflatex+bibtex, 0 refs indefinidas). PDFs frescos commitados.
 - **Por fechar (tarefa do utilizador):** nome do 2.º autor (`.bib` diz "Ahmad"; fontes só
   dão "A.", pode ser "Ali") + confirmar "sem inferência estatística" no PDF integral (pago).
 
