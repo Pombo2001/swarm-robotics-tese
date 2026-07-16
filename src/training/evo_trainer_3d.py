@@ -20,7 +20,7 @@
 # Elitismo: os 20% melhores (elite_count=6 de 30) são preservados sem mutação.
 #   O restante da população é gerado a partir de cópias mutadas dos elites.
 #
-# Sigma decay: sigma começa em 0.1 e decai 0.5%/geração até mín. 0.01.
+# Sigma decay: sigma começa em 0.1 e decai 0.1%/geração (×0.999) até mín. 0.03.
 #   Exploração agressiva no início → refinamento gradual.
 #
 # Fitness: DOMINADA PELA TAREFA. Cada recolha (food) vale 10000 — muito acima
