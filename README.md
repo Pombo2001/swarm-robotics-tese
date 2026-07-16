@@ -44,7 +44,6 @@ ICM/curiosidade intrínseca).
 configs/foraging.yaml          Configuração única (ambiente, treino, visualização)
 dashboard/                     Dashboard NiceGUI (ponto de entrada: python -m dashboard.app)
   app.py / views/ / remote.py  Vistas (Treinar/Servidor/Ciência/Resultados) + ligação ao servidor
-launcher_dashboard.py          Launcher CustomTkinter antigo (mantido; migração incremental)
 src/
   environment/swarm_env_3d.py  Ambiente Gymnasium (física, LiDAR, recompensas)
   agents/gnn_agent_3d.py       Rede de grafos com atenção (política do GNN)
@@ -58,7 +57,7 @@ scripts/
   plot_results.py              Geração dos gráficos da tese
   run_treino24.sh / 48.sh      Lançadores de treino no servidor ISCTE (via tmux)
 visualization/
-  visualize_{gnn,ppo,sac}.py   Visualizadores 3D Ursina (usados pelo launcher)
+  visualize_{gnn,ppo,sac}.py   Visualizadores 3D Ursina (lançados pela vista «Ao vivo (3D)»)
   main_visualizer.py           Visualizador 3D unificado (--algo)
 tests/                         test_simulation.py (smoke) + test_dashboard_jobs.py
 Tese/                          Dissertação LaTeX (main.tex, references.bib, images/)
@@ -90,8 +89,10 @@ Requer Python 3.10+. O treino tira partido de GPU (CUDA) se disponível (`device
 ### Dashboard (recomendado)
 
 ```powershell
-python launcher_dashboard.py
+python -m dashboard.app
 ```
+
+(ou duplo clique em `iniciar_dashboard.bat`, que ativa o `.venv` e abre o browser)
 
 Permite editar a configuração, treinar cada algoritmo, lançar a **Rotina Noturna**
 (treina os 7 cenários × 3 algoritmos distribuindo um orçamento de horas), visualizar

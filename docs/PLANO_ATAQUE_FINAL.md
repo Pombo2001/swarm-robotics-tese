@@ -30,7 +30,7 @@
     foram trazidas (eram pré-campanha-final → seria regressão). Ficam no backup.
   - Galeria do dashboard: mantida a versão de **14 jul**. Os extras de 26 jun (pesquisa,
     envio por-secção) ficam no backup, não integrados. O dashboard não é avaliado.
-- **Pendente:** apagar `launcher_dashboard.py` (decisão de 14 jul, por executar).
+- ~~**Pendente:** apagar `launcher_dashboard.py`~~ ✅ apagado a 16 jul (torre), README limpo.
 
 **P0 — Iskandar 2024 (verificação FEITA; 3 correções APLICADAS):**
 - Confirmado **REAL** (DOI `10.17587/mau.25.471-478` resolve para a revista oficial;
@@ -134,8 +134,8 @@ Estado a 15 jul (verificado com `git cherry` / `rev-list`):
       `feat/novelty-search`) e push. A partir daí, `main` = fonte de verdade.
 - [ ] **Passo 3**: arrumar branches mortas (`backup-main-maio2026` mantém-se; as outras
       apagar só com autorização).
-- [ ] Decidir/executar: apagar `launcher_dashboard.py` (substituído pela vista
-      «Ao vivo (3D)» do dashboard — decisão já tomada a 14 jul, falta executar).
+- [x] **Apagado `launcher_dashboard.py` (16 jul)** — substituído pela vista «Ao vivo (3D)»
+      do dashboard; README atualizado (`python -m dashboard.app` / `iniciar_dashboard.bat`).
 
 ## P3 — Entregáveis e reprodutibilidade
 
