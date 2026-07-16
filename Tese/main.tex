@@ -604,7 +604,7 @@ A arquitetura implementada (\texttt{GNNAgent3D}) usa o mecanismo de \textbf{aten
     \mathbf{H} = \bigl[\mathbf{h}_i^{env};\, \mathbf{h}_1^{nbr};\, \ldots;\, \mathbf{h}_{N-1}^{nbr}\bigr] \in \mathbb{R}^{N \times d}
 \end{equation}
 
-As projeções de consulta, chave e valor são calculadas pelas matrizes treináveis $\mathbf{W}^Q, \mathbf{W}^K, \mathbf{W}^V \in \mathbb{R}^{d \times d}$:
+As projeções de consulta, chave e valor são calculadas pelas matrizes treináveis $\mathbf{W}^Q$, $\mathbf{W}^K$, $\mathbf{W}^V \in \mathbb{R}^{d \times d}$:
 \begin{equation}
     \mathbf{Q} = \mathbf{h}_i^{env}\,\mathbf{W}^Q \in \mathbb{R}^{1 \times d}, \quad
     \mathbf{K} = \mathbf{H}\,\mathbf{W}^K \in \mathbb{R}^{N \times d}, \quad
@@ -655,7 +655,7 @@ As pesquisas foram executadas a \textbf{13 de julho de 2026} sobre o \textbf{Sco
 
 A \textit{string} de pesquisa exige o conceito de enxame no \textbf{título} e o paradigma de controlo em título, resumo ou palavras-chave:
 
-\begin{quote}\small
+\begin{quote}\footnotesize
 \texttt{TITLE ( "swarm robot*" OR "robot swarm*" OR "multi-robot" )}\\
 \texttt{AND TITLE-ABS-KEY ( "reinforcement learning" OR "MARL" OR "neuroevolution"}\\
 \texttt{\phantom{AND TITLE-ABS-KEY ( }OR "evolutionary algorithm" OR "particle swarm"}\\
@@ -876,7 +876,7 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
  & Raio do Ninho ($r_{nest}$) & $1.5$\,m \\
  & Velocidade do Ninho ($v_{nest}$) & $0.015$\,m/s \\
  & Limite do Temporizador de Fome ($hunger$) & $250$ passos (só Sandbox) \\
- & Cooperação Mínima para Alimentar ($k_{min}$) & $3$ agentes ($1$ nos labirintos de navegação) \\
+ & Cooperação Mínima para Alimentar ($k_{min}$) & $3$ ag. ($1$ nos labirintos) \\
  & Alcance do LiDAR & $8.0$\,m \\
  & Fator de Progresso (PBRS) & $10.0$ \\
  & Resolução do Campo Geodésico & $0.4$\,m \\ \hline
@@ -1037,7 +1037,7 @@ Um dos objetivos declarados desta dissertação é entregar uma \emph{implementa
 O repositório separa quatro responsabilidades, com dependências num só sentido (a simulação não conhece o treino, o treino não conhece a análise):
 
 \begin{itemize}
-    \item \texttt{src/} ($\approx$2\,300 linhas) --- o núcleo. Contém o ambiente (\texttt{environment/swarm\_env\_3d.py}: física, LiDAR, geodésicas, recompensa), os controladores (\texttt{agents/}, sob uma interface comum \texttt{Agent.get\_action}), os treinadores (\texttt{training/}: um módulo por paradigma) e o \textbf{registo canónico de cenários} (\texttt{scenarios.py}).
+    \item \texttt{src/} ($\approx$2\,300 linhas) --- o núcleo. Contém o ambiente (\path{environment/swarm_env_3d.py}: física, LiDAR, geodésicas, recompensa), os controladores (\texttt{agents/}, sob uma interface comum \texttt{Agent.get\_action}), os treinadores (\texttt{training/}: um módulo por paradigma) e o \textbf{registo canónico de cenários} (\texttt{scenarios.py}).
     \item \texttt{scripts/} ($\approx$4\,100 linhas) --- a orquestração e a análise: \texttt{run\_experiments.py} (campanhas), a bateria de avaliação (\texttt{eval\_*.py}), os testes estatísticos e a geração de figuras.
     \item \texttt{dashboard/} ($\approx$2\,600 linhas) --- observabilidade: acompanhamento do treino, curvas ao vivo, matriz de resultados e ligação ao servidor remoto.
     \item \texttt{tests/} ($\approx$800 linhas) --- garantias de não-regressão, discutidas adiante.
@@ -1046,7 +1046,7 @@ O repositório separa quatro responsabilidades, com dependências num só sentid
 \subsection{Pontos de Extensão}
 \paragraph{Acrescentar um algoritmo é barato.} Um novo controlador exige (i) uma classe que implemente \texttt{Agent.get\_action}, (ii) um módulo de treino em \texttt{src/training/} e (iii) \emph{uma entrada} no dicionário \texttt{ALGORITHMS} de \texttt{run\_experiments.py}. A partir daí, o algoritmo é automaticamente incluído nas campanhas, na avaliação determinística, nos testes de significância e nas figuras --- porque toda a cadeia a jusante itera sobre esse registo, e não sobre nomes escritos à mão. A comparação MADDPG ou QMIX que a Secção~\ref{sec:limitacoes_trabalho_futuro} propõe é, neste sentido, um exercício de dias e não de semanas.
 
-\paragraph{Acrescentar uma métrica ou um teste é barato.} As métricas de avaliação são calculadas num único ponto (\texttt{scripts/eval\_suite.py}) e propagam-se por escrita em \texttt{results/evaluation/eval\_summary.csv}, do qual dependem, por leitura, a análise estatística, os gráficos e o painel. Uma métrica nova torna-se visível em toda a cadeia sem alterar nenhum consumidor.
+\paragraph{Acrescentar uma métrica ou um teste é barato.} As métricas de avaliação são calculadas num único ponto (\path{scripts/eval_suite.py}) e propagam-se por escrita em \path{results/evaluation/eval_summary.csv}, do qual dependem, por leitura, a análise estatística, os gráficos e o painel. Uma métrica nova torna-se visível em toda a cadeia sem alterar nenhum consumidor.
 
 \paragraph{Acrescentar um cenário é barato \emph{à superfície} e caro \emph{no fundo}.} Os \emph{metadados} de cenário --- lista canónica, rótulos longos e curtos, classificação como labirinto --- residem num único ficheiro (\texttt{src/scenarios.py}), do qual todos os consumidores importam. Esta centralização não é acidental: resultou da correção de um defeito real, em que o sétimo cenário foi treinado mas nunca avaliado, por a lista de cenários estar duplicada entre os módulos de treino e de avaliação. Com a fonte única, um cenário novo aparece automaticamente nas campanhas, nas tabelas e nas figuras.
 
@@ -1101,7 +1101,7 @@ A \textit{baseline} adotada assenta num processo de \textbf{Neuroevolução} \ci
 
 O treino evolutivo segue o ciclo \textit{avaliação} $\to$ \textit{seleção} $\to$ \textit{mutação}, implementado em \texttt{evo\_trainer\_3d.py}:
 \begin{enumerate}
-    \item \textbf{Avaliação Paralela:} Os $K=30$ genomas são avaliados em paralelo via \texttt{multiprocessing.Pool} com um processo por genoma (o número de processos é o mínimo entre o tamanho da população e o número de núcleos disponíveis; nos servidores de cálculo utilizados, com 64 núcleos, os 30 genomas são avaliados simultaneamente). Cada processo executa $E=4$ episódios independentes (com \textit{seeds} fixas ao longo da evolução) e devolve $J(\theta_k)$ (Equação~\ref{eq:fitness}).
+    \item \textbf{Avaliação Paralela:} Os $K=30$ genomas são avaliados em paralelo, com um processo por genoma, via \path{multiprocessing.Pool} (o número de processos é o mínimo entre o tamanho da população e o número de núcleos disponíveis; nos servidores de cálculo utilizados, com 64 núcleos, os 30 genomas são avaliados simultaneamente). Cada processo executa $E=4$ episódios independentes (com \textit{seeds} fixas ao longo da evolução) e devolve $J(\theta_k)$ (Equação~\ref{eq:fitness}).
     \item \textbf{Mecanismo de Guilhotina:} Se a recompensa acumulada após 150 passos for inferior ao limiar $J < -200$, o episódio é terminado prematuramente e o genoma recebe uma penalidade adicional de $-1000$. Este mecanismo evita desperdiçar ciclos de CPU em genomas claramente disfuncionais.
     \item \textbf{Seleção Elitista:} Os $e=6$ melhores genomas são copiados intactos. Os restantes 24 são gerados por mutação element-wise (Equação~\ref{eq:mutation}) de cópias aleatórias dos elites.
     \item \textbf{Anilamento de $\sigma$:} A cada geração, $\sigma$ é atualizado pela Equação~\ref{eq:sigma_decay}, com decaimento de 0.1\% por geração e patamar mínimo $\sigma_{\min}=0.03$.
@@ -1487,7 +1487,7 @@ O resultado evidencia uma resiliência elevada e \emph{transversal aos paradigma
 
 \section{Desempenho Computacional do Simulador}
 \label{sec:res_computacional}
-A viabilidade da campanha experimental depende do \textit{throughput} do simulador, medido em execução de referência \emph{single-thread} (uma arena, $N=20$ agentes, 3\,000 passos com ações aleatórias na máquina de desenvolvimento; protocolo automatizado em \texttt{scripts/benchmark\_sim.py}). A implementação original sustentava cerca de \textbf{139 passos de simulação por segundo} ($\approx$2\,770 atualizações de agente por segundo; $\approx$3,6\,s por episódio de 500 passos); após a vetorização descrita abaixo, a mesma medição sustenta $\approx$\textbf{420 passos/s} ($\approx$8\,400 agente-passos/s; $\approx$1,2\,s por episódio) --- um ganho de $\approx 3{,}0\times$, consistente com a aceleração de $2{,}58\times$ medida isoladamente no custo do passo (Tabela~\ref{tab:res_computacional}).
+A viabilidade da campanha experimental depende do \textit{throughput} do simulador, medido em execução de referência \emph{single-thread} (uma arena, $N=20$ agentes, 3\,000 passos com ações aleatórias na máquina de desenvolvimento; protocolo automatizado em \path{scripts/benchmark_sim.py}). A implementação original sustentava cerca de \textbf{139 passos de simulação por segundo} ($\approx$2\,770 atualizações de agente por segundo; $\approx$3,6\,s por episódio de 500 passos); após a vetorização descrita abaixo, a mesma medição sustenta $\approx$\textbf{420 passos/s} ($\approx$8\,400 agente-passos/s; $\approx$1,2\,s por episódio) --- um ganho de $\approx 3{,}0\times$, consistente com a aceleração de $2{,}58\times$ medida isoladamente no custo do passo (Tabela~\ref{tab:res_computacional}).
 
 O treino dos métodos de gradiente escapa a este limite por \textbf{paralelização}: PPO e SAC executam 16 clones independentes da arena em processos paralelos (\texttt{SubprocVecEnv}), recolhendo experiência concorrentemente nos vários núcleos dos servidores de cálculo; o controlador evolutivo, por sua vez, avalia os 30 genomas da população em paralelo. Adicionalmente, antes da campanha final o próprio simulador foi \textbf{vetorizado} com \texttt{NumPy}: o varrimento LiDAR em lote (todos os agentes $\times$ todos os raios numa única operação matricial, aceleração de $19{,}5\times$ nessa componente) e o cálculo em lote das observações egocêntricas ($2{,}58\times$ no custo total do passo de simulação). Ambas as otimizações foram validadas por testes de equivalência \emph{bit-exata} contra a implementação de referência (zero discrepâncias em dezenas de milhares de comparações), garantindo que aceleram a experimentação sem alterar a tarefa --- no caso do controlador evolutivo, o ganho no custo do passo de simulação ($2{,}58\times$) traduz-se num aumento aproximadamente proporcional do número de gerações avaliadas no mesmo orçamento de treino.
 
@@ -1635,7 +1635,7 @@ Para garantir a reprodutibilidade integral das experiências, este apêndice re�
 \renewcommand{\arraystretch}{1.15}
 \caption{Configuração do ambiente de simulação e da física.}
 \label{tab:apx_env}
-\begin{tabular}{|l|c|l|}
+\begin{tabular}{|l|c|p{6.6cm}|}
 \hline
 \textbf{Parâmetro} & \textbf{Valor} & \textbf{Descrição} \\ \hline
 \texttt{arena\_radius} & $15.0$\,m & Raio da arena circular \\
@@ -1704,7 +1704,7 @@ Para garantir a reprodutibilidade integral das experiências, este apêndice re�
 \label{apx:slr}
 Lista integral dos estudos que sobreviveram ao fluxo PRISMA descrito na
 Secção~\ref{sec:slr_metodologia} (Figura~\ref{fig:prisma}). A tabela é gerada
-automaticamente a partir do registo de triagem (\texttt{docs/slr/screening.csv}), onde
+automaticamente a partir do registo de triagem (\path{docs/slr/screening.csv}), onde
 constam também os 622 registos excluídos, cada um com o respetivo critério --- o que
 permite auditar qualquer decisão desta revisão, e não apenas as inclusões.
 
