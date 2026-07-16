@@ -69,8 +69,8 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
 | **Significância** (Mann-Whitney/Welch/rank-biserial) por cenário | CSVs de avaliação (mesma métrica p/ todos: `food_collected`/sucesso) | `statistical_tests.py` → `results/estatisticas/testes_significancia_*.{tex,csv}` | ⚠️ torre |
 | **Sscale** — Zero-Shot `tab:res_scale_all` (§1431), `tab:res_scale` (§1454), fig `escalabilidade_zeroshot_*` | `results/estatisticas/escalabilidade_*.csv` | `eval_scalability.py` (GNN invariante; PPO/SAC = "N/A" para N≠20) | ✅ PC |
 | **Novelty (QI6)** — §res_novelty (§1408) | `results/novelty_final/{uwall,bypass}/` (eval_by_run 7×20 ep) | `eval_by_run.py` + `statistical_tests.py` | ⚠️ torre |
-| **Rrobust** — §res_robustez (§1476) | saída de `run_eval.py --fail-frac 0.1` | `run_eval.py` + `plot_robustez.py` | ⚠️ confirmar |
-| **Custo computacional** — `tab:res_computacional` (§1498) | tempos dos logs de treino | (ver §res_computacional) | ⚠️ confirmar |
+| **Rrobust** — §res_robustez (§1476) | `results/evaluation/eval_{algo}_{cen}[_fail10].csv` (retenção = fail10/base) | `run_eval.py --fail-frac 0.1` | ✅ torre, VERIFICADO 16 jul: 21/21 células, retenção 92,4–105,8% (tese: 92–106% ✓); GNN 92,4–96,9% (✓); >100% só na Perceção Coop. (✓) |
+| **Custo computacional** — `tab:res_computacional` (§1498) | medição direta no simulador | `scripts/benchmark_sim.py` (novo, 16 jul) | ✅ torre, VERIFICADO+ATUALIZADO 16 jul: 139 passos/s era PRÉ-vetorização; medição atual ≈420 passos/s (3,0×, consistente c/ o 2,58× do passo); tabela da tese atualizada c/ ambos |
 | **Figuras** (mecanismo) | `Tese/images/resultados/*.png` | copiar o PNG com o nome que o `\figresultado` espera + recompilar (sem editar o `.tex`) | ✅ PC |
 
 > As 6 perguntas de investigação (QI1–QI6) mapeiam assim: QI1/QI3 Ptask+significância ·

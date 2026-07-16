@@ -1487,7 +1487,7 @@ O resultado evidencia uma resiliência elevada e \emph{transversal aos paradigma
 
 \section{Desempenho Computacional do Simulador}
 \label{sec:res_computacional}
-A viabilidade da campanha experimental depende do \textit{throughput} do simulador. Em execução de referência \emph{single-thread} (uma arena, $N=20$ agentes), o ambiente sustenta cerca de \textbf{139 passos de simulação por segundo} --- equivalente a aproximadamente 2\,770 atualizações de agente por segundo ---, medidos na máquina de desenvolvimento sobre 3\,000 passos com ações aleatórias (Tabela~\ref{tab:res_computacional}). A esta taxa, um episódio completo (500 passos) demora $\approx$3,6\,s.
+A viabilidade da campanha experimental depende do \textit{throughput} do simulador, medido em execução de referência \emph{single-thread} (uma arena, $N=20$ agentes, 3\,000 passos com ações aleatórias na máquina de desenvolvimento; protocolo automatizado em \texttt{scripts/benchmark\_sim.py}). A implementação original sustentava cerca de \textbf{139 passos de simulação por segundo} ($\approx$2\,770 atualizações de agente por segundo; $\approx$3,6\,s por episódio de 500 passos); após a vetorização descrita abaixo, a mesma medição sustenta $\approx$\textbf{420 passos/s} ($\approx$8\,400 agente-passos/s; $\approx$1,2\,s por episódio) --- um ganho de $\approx 3{,}0\times$, consistente com a aceleração de $2{,}58\times$ medida isoladamente no custo do passo (Tabela~\ref{tab:res_computacional}).
 
 O treino dos métodos de gradiente escapa a este limite por \textbf{paralelização}: PPO e SAC executam 16 clones independentes da arena em processos paralelos (\texttt{SubprocVecEnv}), recolhendo experiência concorrentemente nos vários núcleos dos servidores de cálculo; o controlador evolutivo, por sua vez, avalia os 30 genomas da população em paralelo. Adicionalmente, antes da campanha final o próprio simulador foi \textbf{vetorizado} com \texttt{NumPy}: o varrimento LiDAR em lote (todos os agentes $\times$ todos os raios numa única operação matricial, aceleração de $19{,}5\times$ nessa componente) e o cálculo em lote das observações egocêntricas ($2{,}58\times$ no custo total do passo de simulação). Ambas as otimizações foram validadas por testes de equivalência \emph{bit-exata} contra a implementação de referência (zero discrepâncias em dezenas de milhares de comparações), garantindo que aceleram a experimentação sem alterar a tarefa --- no caso do controlador evolutivo, o ganho no custo do passo de simulação ($2{,}58\times$) traduz-se num aumento aproximadamente proporcional do número de gerações avaliadas no mesmo orçamento de treino.
 
@@ -1500,8 +1500,9 @@ O treino dos métodos de gradiente escapa a este limite por \textbf{paralelizaç
 \begin{tabular}{|l|c|}
 \hline
 \textbf{Configuração} & \textbf{\textit{Throughput}} \\ \hline
-Single-thread (1 arena) & $\approx 139$ passos/s ($\approx 2\,770$ ag.-passo/s) \\ \hline
-Episódio completo (500 passos) & $\approx 3{,}6$\,s \\ \hline
+Single-thread, pré-vetorização (1 arena) & $\approx 139$ passos/s ($\approx 2\,770$ ag.-passo/s) \\ \hline
+Single-thread, \textbf{pós-vetorização} (1 arena) & $\approx 420$ passos/s ($\approx 8\,400$ ag.-passo/s) \\ \hline
+Episódio completo (500 passos), pós-vetorização & $\approx 1{,}2$\,s \\ \hline
 Treino vetorizado (\texttt{SubprocVecEnv}, 16 arenas) & paralelização $\approx$ n.º de núcleos \\ \hline
 \end{tabular}
 \end{table}
