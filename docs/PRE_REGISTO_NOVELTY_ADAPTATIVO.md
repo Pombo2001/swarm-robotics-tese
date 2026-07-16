@@ -41,10 +41,35 @@ sem a degradação que o `w=0.5` sofre no bypass.
   idêntico à campanha 7d e às P1/P2. Sem isto a comparação não é limpa.
 - **Braços de controlo @390 min:** existem (2 streams; stream A ~18 jul, stream B ~19 jul).
   São uma verificação de **sensibilidade ao orçamento** (dobro do tempo), classificada aqui
-  como análise **secundária/exploratória** (ponto 4). ⚠️ **A confirmar do log do servidor
-  antes do *unblinding*:** o que exatamente é o braço @390 (adaptativo @390? objetivo @390?),
-  e os parâmetros exatos do anneal (`w` inicial, taxa de decaimento, gatilho da descoberta).
-  Registá-los aqui **antes** de olhar para a avaliação.
+  como análise **secundária/exploratória** (ponto 4).
+
+### Parâmetros do anneal e braços @390 — REGISTADOS a 16 jul 2026, antes do *unblinding*
+
+Fontes verificadas no servidor `.14` (sem tocar em nenhum output de avaliação):
+`~/week_streamA.sh`, `~/week_streamB.sh`, `configs/foraging.yaml` dos dois dirs, e o código
+deployado (`evo_trainer_3d.py`, igual nos dois dirs, = commit `4e7e299`).
+
+**Anneal (máquina de estados em `_update_novelty_weight`):**
+- `w` inicial = **0,5** (`novelty_weight: 0.5` no config de ambos os dirs; `novelty_adaptive: true`).
+- **Gatilho da descoberta:** o melhor genoma *por objetivo* come (`best_food > 0`) durante
+  **10 gerações consecutivas** (`novelty_sustain_gens`, default do código — os configs não o
+  alteram). A streak reinicia a 0 se uma geração não comer.
+- **Decaimento:** a partir daí, `w ×= 0,98` por geração (`novelty_decay`, default); quando
+  `w < 10⁻³`, fecha em **0,0 exato** (seleção volta a objetivo puro, bit-idêntica ao histórico).
+  ≈ 308 gerações do gatilho até 0; **nunca re-arma**.
+- Atualização UMA vez por geração, DEPOIS da seleção (a geração corrente usa o `w` com que
+  foi selecionada). Confirmação ao vivo (16 jul, painéis tmux): stream A com `w=0,002`,
+  stream B com `w=0,006` — anneal ativo nos dois.
+
+**Definição exata dos braços @390 (dos scripts de lançamento):**
+- **Stream A, fase 2 = CONTROLO: u_wall OBJETIVO PURO @390min×7** (o script faz `sed` para
+  `novelty_weight: 0.0` + `novelty_adaptive: false` antes desta fase). Pergunta que responde:
+  o eventual ganho no u_wall é do *mecanismo* (novidade) ou bastaria *orçamento* (2×)?
+- **Stream B, fase 2 = u_wall ADAPTATIVO @390min×7** e **fase 3 = bypass ADAPTATIVO
+  @390min×7** (config fica `w=0,5` + adaptativo em todas as fases desta stream).
+- Fase 1 (condição primária @195): stream A = u_wall, none, bottleneck, four_rooms;
+  stream B = bypass, coop_door, perception. ⚠️ O `run_experiments.py` treina pela ordem
+  CANÓNICA de `src/scenarios.py`, não pela ordem do `--scenarios`.
 
 ## 3. Baselines de comparação (já existentes, fixos)
 
@@ -116,8 +141,9 @@ seeds emparelhadas), via `eval_by_run.py`. Sucesso reportado como descritivo, nu
 1. `python scripts/pos_campanha.py` (armadilha nº9 — modelos de junho contaminam eval local).
 2. Confirmar `_run{1..7}` por cenário (armadilha nº8 — save do último run).
 3. **Repor no servidor** `novelty_weight: 0.0` e o adaptativo desligado nos dois dirs.
-4. Registar neste ficheiro (ponto 2) os parâmetros do anneal e a definição do braço @390,
-   **antes** de correr a análise.
+4. ~~Registar neste ficheiro (ponto 2) os parâmetros do anneal e a definição do braço @390,
+   **antes** de correr a análise.~~ ✅ **FEITO a 16 jul** (ver ponto 2) — com a campanha
+   ainda a correr e sem olhar para nenhum output de avaliação.
 5. `eval_by_run.py` + `statistical_tests.py` → aplicar T1-T4 → aplicar a regra de decisão.
 
 ---

@@ -104,8 +104,10 @@ Escrito e commitado ANTES de os dados de avaliação existirem. Fixa hipótese, 
 confirmatórios T1-T4 (Mann-Whitney + δ sobre médias por run, n=7), a **regra de decisão
 pré-comprometida** da QI6 (sobe a resultado sse: não-degrada os 5 fáceis + ganho no u_wall
 + sem custo no bypass) e os compromissos de reporte (todos os runs; convergência descritiva,
-magnitude como teste). ⚠️ Falta só **registar nesse ficheiro, antes do unblinding**, os
-parâmetros do anneal e a definição do braço @390 (vivem na config do servidor, não no repo).
+magnitude como teste). ✅ Parâmetros do anneal (w₀=0,5; gatilho=10 gens a comer; decay
+×0,98/gen até 0) e braços @390 (A fase 2 = controlo u_wall OBJETIVO; B fases 2-3 = u_wall/
+bypass ADAPTATIVO) **registados a 16 jul, antes do unblinding** (fontes: scripts+configs+código
+do servidor). O pré-registo está completo; falta só a campanha fechar.
 
 **Mecânica da chegada (armadilhas conhecidas):**
 - [ ] `python scripts/pos_campanha.py` ao trazer QUALQUER campanha (armadilha nº9:
