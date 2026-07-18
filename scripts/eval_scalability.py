@@ -7,7 +7,7 @@ Mede a capacidade de generalização do controlador a enxames de outra dimensão
 Nota arquitetural (resultado relevante para a tese):
   - GNN: a política agrega os vizinhos por atenção, logo é INVARIANTE ao número
     de agentes — aceita qualquer N nativamente.
-  - PPO/SAC: usam uma MLP com entrada de dimensão FIXA (12 + (N_treino-1)*5).
+  - PPO/SAC: usam uma MLP com entrada de dimensão FIXA (16 + (N_treino-1)*5).
     Para N != N_treino a observação muda de tamanho e o modelo é incompatível.
     O script deteta isto e marca "N/A" — evidência empírica de que o MLP não
     escala e a GNN sim.

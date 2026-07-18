@@ -16,7 +16,9 @@
 \usepackage{etoolbox}
 \usepackage{csquotes}
 \usepackage{url}
-\usepackage[printonlyused]{acronym}
+% SEM a opção "printonlyused": o texto não usa \ac{} (os acrónimos são expandidos
+% manualmente), pelo que essa opção deixava a Lista de Acrónimos VAZIA no PDF.
+\usepackage{acronym}
 \usepackage{float} % Para posicionamento de figuras [H]
 \usepackage{longtable} % Tabelas que quebram entre páginas (Apêndice da revisão)
 \usepackage{tikz} % Para o gráfico PRISMA
@@ -567,7 +569,7 @@ O objetivo final inclui ainda um erro de regressão do crítico e um bónus de e
 \end{equation}
 
 \paragraph{SAC --- Maximização de Entropia:}
-O SAC (\textit{Soft Actor-Critic}) \cite{haarnoja2018sac} é um algoritmo \textit{off-policy} que augmenta o objetivo de RL com o termo de entropia de Shannon $H(\pi) = -\mathbb{E}[\log \pi(a\mid s)]$, promovendo a \textbf{exploração máxima} consistente com o desempenho na tarefa:
+O SAC (\textit{Soft Actor-Critic}) \cite{haarnoja2018sac} é um algoritmo \textit{off-policy} que acrescenta ao objetivo de RL o termo de entropia de Shannon $H(\pi) = -\mathbb{E}[\log \pi(a\mid s)]$, promovendo a \textbf{exploração máxima} consistente com o desempenho na tarefa:
 \begin{equation}
     J(\pi) = \mathbb{E}_{\rho_\pi}\!\left[\sum_{t=0}^{\infty} \gamma^t \Big(r_t + \alpha\, H(\pi(\cdot\mid s_t))\Big)\right]
     \label{eq:sac_objective}
@@ -1016,13 +1018,13 @@ A inspeção do comportamento é feita por um visualizador 3D implementado com o
 A viabilidade do RL depende de ciclos de simulação contínuos em ordem de milissegundos. Simular colisões dinâmicas para $N=20$ agentes e uma centena de obstáculos não-estáticos de forma ineficiente levaria a um aumento quadrático no custo computacional.
 \begin{itemize}
     \item \textbf{Deteção Geométrica de Colisões:} O motor resolve as colisões por testes geométricos diretos --- distância Euclidiana para os obstáculos esféricos e caixas envolventes alinhadas aos eixos (\textit{Axis-Aligned Bounding Boxes}, AABB) para os muros retangulares ---, recorrendo a operações vetoriais \textbf{NumPy} no cálculo de distâncias e profundidades de penetração. Um passo dedicado de \textbf{separação física} repele geometricamente qualquer par de agentes sobrepostos, assegurando a ausência de interpenetrações não-físicas no enxame.
-    \item \textbf{Wall-Sliding Cinemático:} Quando um robô entra em contacto com uma parede retangular, o motor não o imobiliza mecanicamente (o que penalizaria irreversivelmente a exploração do algoritmo MARL). Em vez disso, recorre à projeção ortogonal do vetor de velocidade ao longo da direção normal da superfície de colisão, reproduzindo matematicamente de forma realista o deslizamento (\textit{wall-sliding}) contínuo de um chassi móvel \textit{differential-drive}.
+    \item \textbf{Wall-Sliding Cinemático:} Quando um robô entra em contacto com uma parede retangular, o motor não o imobiliza mecanicamente (o que penalizaria irreversivelmente a exploração do algoritmo MARL). Em vez disso, recorre à projeção ortogonal do vetor de velocidade ao longo da direção normal da superfície de colisão, reproduzindo matematicamente de forma realista o deslizamento (\textit{wall-sliding}) contínuo de um chassis móvel \textit{differential-drive}.
 \end{itemize}
 
 \subsection{Mecanismo de Atenção sobre Vizinhos (GNN)}
 O extrator de relações entre robôs foi implementado de raiz em \textbf{PyTorch puro} (sem recurso a bibliotecas de grafos como o PyTorch Geometric), através de um mecanismo de \textbf{atenção de produto interno escalado} sobre o conjunto de vizinhos, conforme formalizado nas Equações~\ref{eq:qkv}--\ref{eq:msg_pool}.
 \begin{itemize}
-    \item \textbf{Representação Densa do Vizinhança:} A cada passo, cada agente $i$ observa os restantes $N-1$ agentes através de um vetor de \textit{features} de dimensão fixa (direção egocêntrica, distância normalizada e sinal de comunicação por vizinho). Diferentemente de uma abordagem baseada em arestas esparsas com raio de comunicação fixo, todos os vizinhos são apresentados ao módulo de atenção, sendo a \textbf{relevância de cada um aprendida} pelos coeficientes $\alpha_{ij}$ --- a rede atribui dinamicamente pesos próximos de zero aos vizinhos irrelevantes, dispensando um corte geométrico explícito.
+    \item \textbf{Representação Densa da Vizinhança:} A cada passo, cada agente $i$ observa os restantes $N-1$ agentes através de um vetor de \textit{features} de dimensão fixa (direção egocêntrica, distância normalizada e sinal de comunicação por vizinho). Diferentemente de uma abordagem baseada em arestas esparsas com raio de comunicação fixo, todos os vizinhos são apresentados ao módulo de atenção, sendo a \textbf{relevância de cada um aprendida} pelos coeficientes $\alpha_{ij}$ --- a rede atribui dinamicamente pesos próximos de zero aos vizinhos irrelevantes, dispensando um corte geométrico explícito.
     \item \textbf{Dimensão Fixa e \textit{Parameter Sharing}:} Como a representação tem dimensão fixa ($\mathbb{R}^{111}$), a integração em \textit{batches} de treino é direta, sem necessidade de \textit{padding} dinâmico ou conversão para listas de índices. As projeções \textit{Query}-\textit{Key}-\textit{Value} e o \textit{softmax} operam sobre o número de vizinhos presentes, pelo que a mesma rede processa enxames de qualquer dimensão --- viabilizando o \textit{Zero-Shot Transfer} para $N \in \{10, 50, 100\}$ sem retreino.
 \end{itemize}
 
@@ -1737,7 +1739,7 @@ action = self.actor(combined)                 # Tanh -> [-1, 1]^3
 \end{lstlisting}
 
 \section{Física de Deslizamento em Muros (\textit{Wall-Sliding})}
-Em vez de imobilizar o agente, o motor projeta o movimento ortogonalmente à normal da face atingida, reproduzindo o deslizamento contínuo de um chassi móvel.
+Em vez de imobilizar o agente, o motor projeta o movimento ortogonalmente à normal da face atingida, reproduzindo o deslizamento contínuo de um chassis móvel.
 \begin{lstlisting}[style=python, caption={Projecao ortogonal do movimento contra a normal do muro.}]
 for wall in self.walls:
     next_pos = self.agent_positions[idx] + move_global
