@@ -28,15 +28,17 @@ def main():
     import pandas as pd
     import seaborn as sns
 
-    base = pd.read_csv(os.path.join(EVAL_DIR, "eval_summary.csv"))
-
     rows = []
     for sc in ALL_SCENARIOS:
         for algo in ALGOS:
-            b = base[(base.Scenario == sc) & (base.Algorithm == algo)]
+            # Base = avaliação do MESMO modelo campeão sem falhas (mesmas seeds da
+            # fail10) — não o eval_summary.csv, que entretanto passou a agregar as
+            # 7 runs da campanha e deixaria de estar emparelhado com a fail10.
+            bp = os.path.join(EVAL_DIR, f"eval_{algo.lower()}_{sc}.csv")
             fp = os.path.join(EVAL_DIR, f"eval_{algo.lower()}_{sc}_fail10.csv")
-            if b.empty or not os.path.exists(fp):
+            if not (os.path.exists(bp) and os.path.exists(fp)):
                 continue
+            b = pd.read_csv(bp)
             f = pd.read_csv(fp)
             rows.append({
                 "Scenario": SCENARIO_LABELS[sc], "Algorithm": algo,
@@ -73,7 +75,7 @@ def main():
     fig.suptitle("Robustez a Falhas de Agentes (Rrobust) — 10% dos agentes falham a meio do episódio",
                  fontweight="bold")
     fig.text(0.5, 0.005,
-             "Avaliação determinística emparelhada (30 episódios, mesmas seeds); "
+             "Avaliação determinística emparelhada (20 episódios, mesmas seeds); "
              "rótulo = % de recolhas retidas face à avaliação sem falhas.",
              ha="center", fontsize=8, style="italic")
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])

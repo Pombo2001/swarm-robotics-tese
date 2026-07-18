@@ -71,12 +71,45 @@ def eval_at_size(algo, model, base_config, scenario, num_agents, n_episodes):
     }
 
 
+def plot_scalability(df, scenario, label, sizes):
+    """Gera o PNG a partir do DataFrame (mesmo formato do CSV escalabilidade_*.csv)."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+    for algo in df["Algorithm"].unique():
+        d = df[(df["Algorithm"] == algo) & (df["compatible"])].sort_values("N")
+        if d.empty:
+            continue
+        ax.plot(d["N"], d["food_per_agent"], "o-", linewidth=2.5, markersize=8,
+                color=PALETTE.get(algo, "#888"), label=algo)
+    ax.set_title(f"Escalabilidade Zero-Shot — {label}\n(treino com N=20, sem retreino)",
+                 fontsize=14, fontweight="bold")
+    ax.set_xlabel("Número de agentes (N)", fontsize=11)
+    ax.set_ylabel("Recolhas por agente (eficiência normalizada)", fontsize=11)
+    ax.set_xticks(sizes)
+    ax.grid(True, linestyle="--", alpha=0.5)
+    ax.legend(title="Algoritmo", fontsize=11)
+    incompat = df[~df["compatible"]]["Algorithm"].unique()
+    if len(incompat):
+        fig.text(0.5, 0.01,
+                 f"{', '.join(incompat)}: MLP de entrada fixa — incompatível com N≠20 "
+                 "(só a GNN faz transferência Zero-Shot).",
+                 ha="center", va="bottom", fontsize=8.5, color="#AA5500", style="italic")
+        fig.subplots_adjust(bottom=0.13)
+    plt.tight_layout(rect=[0, 0.06, 1, 1])
+    png_path = os.path.join(OUT_STATS, f"escalabilidade_zeroshot_{scenario}.png")
+    plt.savefig(png_path, dpi=300)
+    plt.close()
+    return png_path
+
+
 def main():
     parser = argparse.ArgumentParser(description="Sscale — Zero-Shot Transfer (N variavel)")
     parser.add_argument("--scenario", type=str, default="none")
     parser.add_argument("--episodes", type=int, default=20)
     parser.add_argument("--sizes", type=str, default="10,20,50,100",
                         help="Tamanhos de enxame separados por virgula")
+    parser.add_argument("--replot", action="store_true",
+                        help="Nao reavalia: regenera o PNG a partir do CSV existente "
+                             "(usar quando os modelos no disco ja nao sao os da campanha)")
     args = parser.parse_args()
 
     sizes = [int(s) for s in args.sizes.split(",")]
@@ -84,6 +117,16 @@ def main():
     with open(config_path) as f:
         base_config = yaml.safe_load(f)
     label = SCENARIO_LABELS.get(args.scenario, args.scenario)
+
+    if args.replot:
+        csv_path = os.path.join(OUT_STATS, f"escalabilidade_{args.scenario}.csv")
+        if not os.path.exists(csv_path):
+            print(f"[!] {csv_path} nao existe — corre primeiro sem --replot.")
+            sys.exit(1)
+        df = pd.read_csv(csv_path)
+        png_path = plot_scalability(df, args.scenario, label, sizes)
+        print(f"  [OK] Grafico regenerado do CSV: {png_path}")
+        return
 
     print(f"\n{'='*68}")
     print(f"  SSCALE — Zero-Shot Transfer  |  {label}")
@@ -124,31 +167,7 @@ def main():
     df.to_csv(csv_path, index=False)
 
     # Gráfico: recolhas por agente vs N (mede manutenção de eficiência ao escalar).
-    fig, ax = plt.subplots(figsize=(10, 6))
-    for algo in df["Algorithm"].unique():
-        d = df[(df["Algorithm"] == algo) & (df["compatible"])].sort_values("N")
-        if d.empty:
-            continue
-        ax.plot(d["N"], d["food_per_agent"], "o-", linewidth=2.5, markersize=8,
-                color=PALETTE.get(algo, "#888"), label=algo)
-    ax.set_title(f"Escalabilidade Zero-Shot — {label}\n(treino com N=20, sem retreino)",
-                 fontsize=14, fontweight="bold")
-    ax.set_xlabel("Número de agentes (N)", fontsize=11)
-    ax.set_ylabel("Recolhas por agente (eficiência normalizada)", fontsize=11)
-    ax.set_xticks(sizes)
-    ax.grid(True, linestyle="--", alpha=0.5)
-    ax.legend(title="Algoritmo", fontsize=11)
-    incompat = df[~df["compatible"]]["Algorithm"].unique()
-    if len(incompat):
-        fig.text(0.5, 0.01,
-                 f"{', '.join(incompat)}: MLP de entrada fixa — incompativel com N!=20 "
-                 "(so a GNN faz transferencia zero-shot).",
-                 ha="center", va="bottom", fontsize=8.5, color="#AA5500", style="italic")
-        fig.subplots_adjust(bottom=0.13)
-    plt.tight_layout(rect=[0, 0.06, 1, 1])
-    png_path = os.path.join(OUT_STATS, f"escalabilidade_zeroshot_{args.scenario}.png")
-    plt.savefig(png_path, dpi=300)
-    plt.close()
+    png_path = plot_scalability(df, args.scenario, label, sizes)
 
     print(f"\n{'='*68}")
     print(f"  [OK] CSV     : {csv_path}")

@@ -83,7 +83,7 @@
 \usepackage{hyperref}
 \usepackage{xcolor}
 \hypersetup{
-    pdftitle={Reinforcement Learning para Controlo de Enxames},
+    pdftitle={Aprendizagem por Reforço para Controlo de Enxames},
     pdfauthor={Gonçalo Santos},
     colorlinks=true,
     linkcolor=black,
@@ -193,6 +193,10 @@
 
 \setlength{\footskip}{30pt}
 
+% Última rede contra overfulls em parágrafos justificados (texto e bibliografia):
+% permite um alongamento de emergência dos espaços antes de transbordar a margem.
+\setlength{\emergencystretch}{1.5em}
+
 % --- INÍCIO DO DOCUMENTO ---
 \begin{document}
 
@@ -232,7 +236,7 @@ Iscte -- Instituto Universitário de Lisboa\\
 ~\\
 ~\\
 ~\\
-2025
+2026
 \end{flushleft}
 \thispagestyle{empty}
 
@@ -274,7 +278,7 @@ Iscte -- Instituto Universitário de Lisboa\\
 ~\\
 ~\\
 ~\\
-2025
+2026
   \end{flushleft}
   \thispagestyle{empty}
 \rmfamily
@@ -655,7 +659,7 @@ As pesquisas foram executadas a \textbf{13 de julho de 2026} sobre o \textbf{Sco
 
 A \textit{string} de pesquisa exige o conceito de enxame no \textbf{título} e o paradigma de controlo em título, resumo ou palavras-chave:
 
-\begin{quote}\footnotesize
+\begin{quote}\scriptsize
 \texttt{TITLE ( "swarm robot*" OR "robot swarm*" OR "multi-robot" )}\\
 \texttt{AND TITLE-ABS-KEY ( "reinforcement learning" OR "MARL" OR "neuroevolution"}\\
 \texttt{\phantom{AND TITLE-ABS-KEY ( }OR "evolutionary algorithm" OR "particle swarm"}\\
@@ -778,8 +782,8 @@ A Tabela~\ref{tab:sota_summary} sintetiza os estudos --- do corpo da revisão e 
     \footnotesize
     \caption{Síntese dos estudos mais relevantes do corpo da revisão ($n=58$) e do seu enquadramento complementar (entradas externas ao corpus assinaladas), com as lacunas que motivam esta dissertação.}
     \label{tab:sota_summary}
-    \renewcommand{\arraystretch}{1.25}
-    \begin{tabular}{|p{2.6cm}|p{1.9cm}|p{4.4cm}|p{4.4cm}|}
+    \renewcommand{\arraystretch}{1.1}
+    \begin{tabular}{|p{2.6cm}|p{2.3cm}|p{4.2cm}|p{4.2cm}|}
         \hline
         \textbf{Referência} & \textbf{Paradigma} & \textbf{Contributo principal} & \textbf{Limitação / lacuna} \\ \hline
 
@@ -892,7 +896,7 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
  & Arquitetura da Rede & MLP $[256, 256]$ \\ \hline
 \textbf{Evolutivo (AE)} & Tamanho da População ($K$) & $30$ genomas \\
  & Taxa de Mutação ($p_{mut}$) & $0.1$ \\
- & Desvio Padrão Inicial ($\sigma$) & $0.1$ (Decaimento: $\times 0.999$; $\sigma_{\min}=0.03$) \\
+ & Desvio Padrão Inicial ($\sigma$) & $0.1$ ($\times 0.999$/ger.; $\sigma_{\min}=0.03$) \\
  & Episódios de Avaliação por Genoma ($E$) & $4$ \\
  & Dimensão Oculta da Rede ($h$) & $32$ ($\approx 8$k pesos) \\ \hline
 \end{tabular}

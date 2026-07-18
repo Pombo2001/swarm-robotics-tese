@@ -182,7 +182,8 @@ def run_geodesic(scenario, config_path, out_dir=None):
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, f"heatmap_geodesico_{scenario}.png")
     fig.tight_layout(rect=[0, 0, 1, 0.95])
-    fig.savefig(out, dpi=150)
+    # bbox_inches="tight": o tight_layout com colorbars deixava o rótulo "x (m)" cortado
+    fig.savefig(out, dpi=150, bbox_inches="tight")
     plt.close(fig)
     print(f"[OK] Heatmap geodésico ({scenario})")
     return out

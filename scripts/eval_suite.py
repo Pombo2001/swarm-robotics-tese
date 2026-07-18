@@ -156,14 +156,16 @@ def plot_evaluation(summary=None, out_dir=None):
     ax.set_ylabel("Episódios com sucesso (%)", fontsize=11)
     ax.set_xlabel("Cenário", fontsize=11)
     ax.set_ylim(0, 105)
-    ax.legend(title="Algoritmo", loc="upper right")
+    # Legenda FORA dos eixos: dentro tapava as barras (todas chegam aos 100%).
+    ax.legend(title="Algoritmo", loc="upper left", bbox_to_anchor=(1.01, 1.0),
+              borderaxespad=0)
     plt.xticks(rotation=15, ha="right")
     fig.text(0.5, 0.005, "Sucesso = pelo menos 1 recolha no episódio. Métrica de tarefa, "
              "comparável entre algoritmos (ao contrário do reward de treino).",
              ha="center", fontsize=8.5, color="#555555", style="italic")
-    plt.tight_layout(rect=[0, 0.04, 1, 1])
+    plt.tight_layout(rect=[0, 0.04, 0.88, 1])
     p1 = os.path.join(out_dir, "taxa_sucesso_por_cenario.png")
-    fig.savefig(p1, dpi=300)
+    fig.savefig(p1, dpi=300, bbox_inches="tight")
     plt.close(fig)
     created.append(p1)
     print(f"[OK] Gráfico de taxa de sucesso: {p1}")
@@ -177,6 +179,7 @@ def plot_evaluation(summary=None, out_dir=None):
                  fontsize=15, fontweight="bold", pad=14)
     ax.set_ylabel("Recolhas por episódio (média ± desvio)", fontsize=11)
     ax.set_xlabel("Cenário", fontsize=11)
+    ax.set_ylim(bottom=0)  # recolhas nunca são negativas — corta os bigodes de sd abaixo de 0
     ax.legend(title="Algoritmo", loc="upper right")
     plt.xticks(rotation=15, ha="right")
     fig.text(0.5, 0.005, "Média de recolhas (food_collected) por episódio; barras de erro = "
@@ -184,7 +187,7 @@ def plot_evaluation(summary=None, out_dir=None):
              ha="center", fontsize=8.5, color="#555555", style="italic")
     plt.tight_layout(rect=[0, 0.04, 1, 1])
     p2 = os.path.join(out_dir, "recolhas_por_cenario.png")
-    fig.savefig(p2, dpi=300)
+    fig.savefig(p2, dpi=300, bbox_inches="tight")
     plt.close(fig)
     created.append(p2)
     print(f"[OK] Gráfico de recolhas/ep: {p2}")
