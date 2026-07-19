@@ -139,6 +139,12 @@ testes confirmatórios T1-T4, regra de decisão da QI6 (sobe a resultado sse: n�
 
 # 4. TAREFAS ABERTAS (por prioridade, depois do P1)
 
+## P1.5 — MEGA-TREINO DE 1 MÊS (pedido do utilizador a 19 jul)
+- [ ] Proposta completa em **[`PROPOSTA_MEGATREINO_1MES.md`](PROPOSTA_MEGATREINO_1MES.md)**:
+      2 streams — (A) poder estatístico no u_wall (n=7→28 nos 4 braços) + Sandbox/Gargalo;
+      (B) ablação do anneal adaptativo (sustain/decay/re-arm). Hard stop de integração:
+      **22 ago**. Escrever pré-registo v2 ANTES de lançar; utilizador aprova a composição.
+
 ## P2 — Draft cedo ao orientador (fim de julho, NÃO esperar por 15 set)
 - [ ] Enviar a versão pós-campanha-adaptativa ao Prof. Nunes.
 - [ ] **Confirmar com o utilizador a capa: 2025→2026** (mudada a 18 jul, por confirmar).
