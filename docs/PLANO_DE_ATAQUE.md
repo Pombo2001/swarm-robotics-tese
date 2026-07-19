@@ -1,5 +1,10 @@
 # PLANO DE ATAQUE — Tese de Mestrado (até Outubro 2026)
 
+> ⚠️ **ARQUIVO (19 jul 2026).** O ponto de re-entrada do projeto passou a ser o
+> **[`PLANO_MESTRE.md`](PLANO_MESTRE.md)** — lê esse primeiro e atualiza esse.
+> Este ficheiro fica como registo histórico (cronologia, armadilhas na origem,
+> tutorial completo do servidor na §4) e não deve voltar a ser editado.
+
 > **Para o Claude/assistente**: este documento é o ponto de re-entrada do projeto.
 > Lê isto primeiro; o histórico detalhado (decisões, bugs corrigidos, armadilhas) está
 > na memória persistente (`memory/project_thesis_swarm.md` e `server_training_setup.md`).

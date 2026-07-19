@@ -1,5 +1,10 @@
 # PLANO DE ATAQUE FINAL — prompt de execução (15 jul → 15 set 2026)
 
+> ⚠️ **ARQUIVO (19 jul 2026).** Este plano foi fundido com o `PLANO_DE_ATAQUE.md` no
+> **[`PLANO_MESTRE.md`](PLANO_MESTRE.md)**, que reflete o estado pós-revisão de 18 jul
+> e é o único plano vivo. Lê e atualiza ESSE; este fica como registo do que foi
+> decidido a 15-16 jul.
+
 > **Este documento é um PROMPT para o Claude/Opus.** Lê-o do princípio ao fim antes de
 > tocar em qualquer ficheiro. Ele substitui o topo do `PLANO_DE_ATAQUE.md` como lista
 > acionável; o `PLANO_DE_ATAQUE.md` continua a ser o registo histórico (armadilhas,
