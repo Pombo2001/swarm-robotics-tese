@@ -139,11 +139,18 @@ testes confirmatórios T1-T4, regra de decisão da QI6 (sobe a resultado sse: n�
 
 # 4. TAREFAS ABERTAS (por prioridade, depois do P1)
 
-## P1.5 — MEGA-TREINO DE 1 MÊS (pedido do utilizador a 19 jul)
-- [ ] Proposta completa em **[`PROPOSTA_MEGATREINO_1MES.md`](PROPOSTA_MEGATREINO_1MES.md)**:
-      2 streams — (A) poder estatístico no u_wall (n=7→28 nos 4 braços) + Sandbox/Gargalo;
-      (B) ablação do anneal adaptativo (sustain/decay/re-arm). Hard stop de integração:
-      **22 ago**. Escrever pré-registo v2 ANTES de lançar; utilizador aprova a composição.
+## P1.5 — MEGA-TREINO DE 1 MÊS ⏳ **LANÇADO 19 jul 19:23 UTC** (composição aprovada: «piores mapas»)
+- [x] Pré-registo v2 escrito ANTES dos dados: **[`PRE_REGISTO_MEGATREINO.md`](PRE_REGISTO_MEGATREINO.md)**
+      (proposta original: [`PROPOSTA_MEGATREINO_1MES.md`](PROPOSTA_MEGATREINO_1MES.md)).
+- [x] **A CORRER**: tmux `megaA` (`~/swarm-robotics-tese`, scripts `mega_streamA.sh`):
+      u_wall n=28 nos 4 braços (adapt→obj→PPO→SAC) + Sandbox adaptativo n=21, fim ~1 ago;
+      tmux `megaB` (`~/swarm-novelty`, `mega_streamB.sh`): ablação anneal (sustain 5/20,
+      decay 0,95/0,995 em u_wall+bypass ×7) + bypass adaptativo n=21 + SAC bottleneck n=21
+      + perception adaptativo n=21, fim ~3 ago. Arquivo por fase em `~/mega_{A,B}_fase*/`;
+      arranque confirmado (Gen 1 26s, w=0,500).
+- [ ] Na chegada: verificação `_run{n}` + instalar em `results/mega_1mes/` SEM tocar nos
+      modelos ativos; confirmar configs repostos (os scripts repõem no fim — verificar);
+      análise M1-M3 do pré-registo v2. **Hard stop de integração na tese: 22 ago.**
 
 ## P2 — Draft cedo ao orientador (fim de julho, NÃO esperar por 15 set)
 - [ ] Enviar a versão pós-campanha-adaptativa ao Prof. Nunes.
