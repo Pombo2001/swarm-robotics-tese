@@ -282,8 +282,9 @@ A observação de cada agente é um vetor egocêntrico que reúne a bússola de
 \emph{homing} (direção e distância ao ninho), os oito raios LiDAR e o estado
 relativo dos $N-1$ vizinhos; manter o vizinho como uma entidade explícita é o que
 permite à GNN atender sobre um conjunto de cardinalidade variável. O espaço de
-ação é discreto e egocêntrico: três translações (frente/recuo, esquerda/direita,
-cima/baixo) de passo fixo $0.2$\,m, resolvidas por uma ordem determinística de
+ação é contínuo e egocêntrico: três componentes de translação em $[-1,1]$
+(frontal, lateral e vertical), escaladas por um passo máximo de $0.2$\,m e
+resolvidas por uma ordem determinística de
 \emph{step} que aplica deslizamento ao longo das paredes (\emph{wall-sliding}) em
 caso de colisão, evitando que o agente fique imobilizado num canto.
 

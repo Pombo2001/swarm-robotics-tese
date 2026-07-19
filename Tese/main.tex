@@ -18,7 +18,9 @@
 \usepackage{url}
 % SEM a opção "printonlyused": o texto não usa \ac{} (os acrónimos são expandidos
 % manualmente), pelo que essa opção deixava a Lista de Acrónimos VAZIA no PDF.
-\usepackage{acronym}
+% "nohyperlinks": sem \ac{} no texto não existem âncoras de primeira utilização,
+% e os links da lista ficavam pendurados (35 avisos hyperref "acro:* undefined").
+\usepackage[nohyperlinks]{acronym}
 \usepackage{float} % Para posicionamento de figuras [H]
 \usepackage{longtable} % Tabelas que quebram entre páginas (Apêndice da revisão)
 \usepackage{tikz} % Para o gráfico PRISMA
@@ -1007,11 +1009,11 @@ Os valores exatos utilizados na campanha experimental final são os seguintes:
 \end{itemize}
 
 \section{Desafios de Engenharia e Otimização Computacional}
-A construção de um simulador de raiz capaz de suportar o treino de algoritmos de aprendizagem por reforço profundo exige um rigoroso esforço de engenharia de software. O ambiente desenvolvido (\texttt{swarm\_env\_3d.py} e o respetivo visualizador \texttt{launcher\_dashboard.py}) foi desenhado para mitigar estrangulamentos computacionais comuns em arquiteturas \textit{Multi-Agent}, focando-se na otimização matemática e abstração arquitetural.
+A construção de um simulador de raiz capaz de suportar o treino de algoritmos de aprendizagem por reforço profundo exige um rigoroso esforço de engenharia de software. O ambiente desenvolvido (\texttt{swarm\_env\_3d.py} e os visualizadores 3D associados) foi desenhado para mitigar estrangulamentos computacionais comuns em arquiteturas \textit{Multi-Agent}, focando-se na otimização matemática e abstração arquitetural.
 
 \subsection{Motor de Visualização Interativa (Dashboard)}
 Para permitir a inspeção do comportamento emergente do enxame sem comprometer o desempenho do treino, o sistema adota um padrão de arquitetura que desacopla rigorosamente a lógica de simulação física do motor de renderização gráfica.
-A inspeção do comportamento é feita por um visualizador 3D implementado com o motor \textbf{Ursina} (assente em Panda3D), que projeta a telemetria do motor contínuo interno num espaço tridimensional navegável, com representação do ninho, obstáculos móveis, muros e indicadores de proximidade. O controlo experimental --- lançamento de treinos, seleção de cenários e geração de gráficos --- é centralizado num \textit{dashboard} interativo construído em \textbf{CustomTkinter}. Esta separação permite que o simulador opere num modo \textit{headless} (sem sobrecarga gráfica) durante sessões de treino intensivo --- processando milhares de transições por segundo ---, enquanto oferece um modo interativo para demonstração e análise qualitativa das políticas aprendidas.
+A inspeção do comportamento é feita por um visualizador 3D implementado com o motor \textbf{Ursina} (assente em Panda3D), que projeta a telemetria do motor contínuo interno num espaço tridimensional navegável, com representação do ninho, obstáculos móveis, muros e indicadores de proximidade. O controlo experimental --- lançamento de treinos, seleção de cenários e geração de gráficos --- é centralizado num \textit{dashboard} interativo construído em \textbf{NiceGUI} (aplicação \textit{web} local). Esta separação permite que o simulador opere num modo \textit{headless} (sem sobrecarga gráfica) durante sessões de treino intensivo --- processando milhares de transições por segundo ---, enquanto oferece um modo interativo para demonstração e análise qualitativa das políticas aprendidas.
 
 \subsection{Otimização Matemática da Física e Deteção de Colisões}
 \label{sec:eng_fisica}
