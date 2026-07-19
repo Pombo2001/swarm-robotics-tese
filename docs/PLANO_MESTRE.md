@@ -102,18 +102,28 @@ testes confirmatórios T1-T4, regra de decisão da QI6 (sobe a resultado sse: n�
 5 fáceis + ganho no u_wall + sem custo no bypass), compromissos de reporte (TODOS os runs).
 **Segui-lo à letra; não escolher a conclusão depois de ver os dados.**
 
-## Checklist da chegada (P1 — a primeira tarefa do Opus)
-- [ ] Confirmar no servidor que as duas streams acabaram (`tmux ls`; sentinelas
-      `_campanha_concluida.txt`).
-- [ ] Trazer TUDO (sessões + evaluation + modelos `_run{1..7}` + logs + fases arquivadas
-      `~/week_{A,B}_fase*/`). Tutorial ssh/plink na secção 7.
-- [ ] **`python scripts/pos_campanha.py`** (armadilha nº9 — modelos antigos em
-      `results/models/` contaminam evals locais).
-- [ ] Verificar `_run{1..7}` por cenário (armadilha nº8 — save do último run).
-- [ ] **Repor nos DOIS dirs do servidor:** `novelty_weight: 0.0`, `novelty_adaptive: false`
-      (⚠️ o dir do stream B fica em 0.5 pelo script — repor à MÃO).
-- [ ] Registar anneal observado/@390 no pré-registo → correr T1-T4 (Mann-Whitney + δ,
-      médias por run, n=7) → aplicar a regra de decisão.
+## Checklist da chegada (P1) — passos 1-3 FECHADOS a 19 jul (Fable)
+- [x] **Confirmadas as duas streams CONCLUÍDAS** (19 jul): A fechou 18 jul 19:15 UTC,
+      B fechou 19 jul 12:56 UTC; sem tmux, load 0.00; sentinela + `eval_by_run.csv`
+      nas 5 fases.
+- [x] **Tudo trazido** (19 jul): tarball em `out/week_adaptativo_19jul.tar.gz` (11 MB),
+      extraído em `out/week_adaptativo_19jul/` e instalado em
+      **`results/novelty_adaptativo/`** (fora do git, como o `novelty_final/`).
+- [x] **Armadilha nº9 tratada por adaptação** — as fases NÃO são sessões `graficos_tese`
+      (são cópias de `results/{evaluation,models,logs}` por fase, já auto-contidas e
+      emparelhadas); o `pos_campanha.py` não se aplica e **os `results/models*` ativos
+      (campeões 7d da tese) ficaram INTACTOS de propósito** — instalar os modelos
+      adaptativos por cima criaria a armadilha inversa.
+- [x] **`_run{1..7}` verificados** (armadilha nº8): 175 `.pth`; 7 runs × 20 ep por
+      cenário nas 5 evals (A1: none/u_wall/bottleneck/four_rooms; B1: coop_door/
+      bypass/perception; A2: u_wall controlo objetivo @390; B2: u_wall adaptativo @390;
+      B3: bypass adaptativo @390) — bate com o pré-registo.
+- [x] **Configs do servidor repostos** (19 jul): os dois dirs (`~/swarm-robotics-tese` e
+      `~/swarm-novelty`) em `novelty_weight: 0.0`, `novelty_adaptive: false`
+      (B reposto à mão; backup `foraging.yaml.bak_19jul`).
+- [ ] **→ PRÓXIMO (Opus): a ANÁLISE.** Registar anneal observado/@390 no pré-registo →
+      correr T1-T4 (Mann-Whitney + δ, médias por run, n=7; braço de controlo @195 = GNN
+      objetivo do `final_7d/eval_by_run_7d.csv`) → aplicar a regra de decisão da QI6.
 - [ ] **SE passar:** o w adaptativo deixa de ser "trabalho futuro" e passa a RESULTADO —
       integrar em `sec:res_novelty` + QI6 (tese) + artigo. **SE não passar:** reportar na
       mesma (o pré-registo obriga) como resultado negativo honesto.
