@@ -142,6 +142,58 @@ h1,h2,h3,.font-extrabold,.font-bold,.q-tab__label,.mono-title {
 /* Separadores e tabelas discretos */
 .q-separator { background:var(--border) !important; }
 .q-table, .q-table__container { background:transparent !important; }
+
+/* ── Acabamento fino (passagem de 19 jul) ────────────────────────────────── */
+
+/* Linha de luz no topo de cada cartão — o toque editorial. */
+.q-card { position:relative; overflow:hidden; }
+.q-card::before {
+  content:''; position:absolute; left:0; right:0; top:0; height:1px;
+  background:linear-gradient(90deg, transparent 4%, rgba(255,255,255,.16) 50%, transparent 96%);
+  pointer-events:none;
+}
+
+/* Header com a mesma linha de luz em vez de um risco chapado. */
+.q-header::after {
+  content:''; position:absolute; left:0; right:0; bottom:-1px; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+  pointer-events:none;
+}
+
+/* Tabelas: cabeçalho tipográfico, linhas quase invisíveis, hover suave. */
+.q-table thead th {
+  color:var(--ink-muted) !important; text-transform:uppercase; font-size:11px;
+  letter-spacing:.8px; font-weight:600; border-color:var(--border) !important;
+}
+.q-table tbody td { border-color:#161616 !important; }
+.q-table tbody tr { transition:background .15s ease; }
+.q-table tbody tr:hover { background:rgba(255,255,255,.035); }
+
+/* Tooltips e menus a condizer com a casca (por defeito vinham claros). */
+.q-tooltip {
+  background:#111 !important; color:var(--ink) !important;
+  border:1px solid #2a2a2a; border-radius:8px; font-size:12px; letter-spacing:.2px;
+}
+.q-menu {
+  background:var(--surface2) !important; border:1px solid var(--border-hi) !important;
+  border-radius:12px !important; box-shadow:0 18px 44px rgba(0,0,0,.6) !important;
+}
+
+/* Badges, barras de progresso e campos: cantos e pesos coerentes. */
+.q-badge { border-radius:6px; font-weight:600; letter-spacing:.3px; }
+.q-linear-progress { border-radius:6px; overflow:hidden; }
+.q-field--outlined .q-field__control:hover:before { border-color:var(--border-hi) !important; }
+
+/* Números-herói (opt-in): gradiente branco→cinza, para KPIs grandes. */
+.mono-num-hero {
+  background:linear-gradient(180deg,#ffffff 20%,#8f8f8f);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+
+/* Micro-detalhes: seleção, foco acessível, scroll suave. */
+::selection { background:rgba(255,255,255,.22); color:#fff; }
+:focus-visible { outline:1px solid rgba(255,255,255,.45); outline-offset:2px; border-radius:4px; }
+html { scroll-behavior:smooth; }
 """
 
 # JS: contador animado (count-up) para KPIs e células numéricas.

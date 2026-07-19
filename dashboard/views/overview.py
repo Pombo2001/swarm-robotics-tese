@@ -84,8 +84,8 @@ def _kpi(label: str, value: float, decimals: int = 0, suffix: str = ""):
     el_id = f"kpi_{label.lower().replace(' ', '_').replace('.', '')}"
     with ui.card().classes(theme.CARD + " mono-card-hover items-start gap-0 p-4"):
         with ui.row().classes("items-baseline gap-1 no-wrap"):
-            ui.html(f'<span id="{el_id}" class="mono-num" '
-                    f'style="font-size:2rem;font-weight:600;color:{theme.INK}">0</span>')
+            ui.html(f'<span id="{el_id}" class="mono-num mono-num-hero" '
+                    f'style="font-size:2rem;font-weight:600">0</span>')
             if suffix:
                 ui.label(suffix).classes("text-sm").style(f"color:{theme.INK_MUTED}")
         ui.label(label).classes("text-xs uppercase tracking-widest") \
