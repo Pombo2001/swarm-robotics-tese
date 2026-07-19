@@ -121,9 +121,15 @@ testes confirmatórios T1-T4, regra de decisão da QI6 (sobe a resultado sse: n�
 - [x] **Configs do servidor repostos** (19 jul): os dois dirs (`~/swarm-robotics-tese` e
       `~/swarm-novelty`) em `novelty_weight: 0.0`, `novelty_adaptive: false`
       (B reposto à mão; backup `foraging.yaml.bak_19jul`).
-- [ ] **→ PRÓXIMO (Opus): a ANÁLISE.** Registar anneal observado/@390 no pré-registo →
-      correr T1-T4 (Mann-Whitney + δ, médias por run, n=7; braço de controlo @195 = GNN
-      objetivo do `final_7d/eval_by_run_7d.csv`) → aplicar a regra de decisão da QI6.
+- [x] **ANÁLISE T1-T4 FEITA e INTEGRADA (19 jul, Fable)** — `scripts/analise_adaptativo.py`;
+      unblinding registado no §7 do pré-registo. **Veredicto: SOBE A RESULTADO** (T1 sem
+      degradação, todos p≥0,21; T2 u_wall 7/7, 68,5±13,1, p=0,009, δ=+0,76; T3 bypass sem
+      custo, δ=−0,35 n.s.; T4 vs fixo: bypass δ=+0,59). Exploratório: objetivo puro @390
+      no u_wall CONTINUA bimodal (4/7) → o ganho é do mecanismo; bypass adaptativo @390 =
+      **88,7±0,6 [7/7] = melhor resultado da dissertação**. QI6 + sec:res_novelty +
+      Discussão + Conclusões + Trabalhos Futuros reescritos na tese; abstract +
+      contribuições (v) + §4.3 + conclusões no artigo. Tese 121 págs, artigo 10 págs,
+      ambos 0 undefined / 0 overfulls.
 - [ ] **SE passar:** o w adaptativo deixa de ser "trabalho futuro" e passa a RESULTADO —
       integrar em `sec:res_novelty` + QI6 (tese) + artigo. **SE não passar:** reportar na
       mesma (o pré-registo obriga) como resultado negativo honesto.

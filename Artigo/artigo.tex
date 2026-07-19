@@ -54,8 +54,11 @@ sem retreino, mantendo $100\%$ de sucesso nos sete cenários --- com eficiência
 por agente quase intacta precisamente nos labirintos, onde o congestionamento
 seria a expectativa. A hibridização com procura por
 novidade, sob orçamento igualado, resolve o único cenário que resistia aos três
-controladores ($7/7$ execuções no labirinto de deceção espacial), mas degrada o
-desempenho onde o gradiente da tarefa basta. A hipótese de que a inteligência
+controladores ($7/7$ execuções no labirinto de deceção espacial), mas, com peso
+fixo, degrada o desempenho onde o gradiente da tarefa basta; uma \emph{dosagem
+adaptativa} do peso de novidade, validada numa campanha pré-registada, elimina
+esse custo mantendo o ganho --- e o objetivo puro, mesmo com o dobro do
+orçamento, permanece incapaz de resolver o labirinto de forma fiável. A hipótese de que a inteligência
 adaptativa domina a robustez estática é, por isso, apenas \emph{parcialmente}
 confirmada: a vantagem decisiva reside na \emph{representação} e no desenho do
 sinal de treino, e não no algoritmo de otimização.
@@ -125,7 +128,7 @@ o que permite tratar a \emph{execução de treino} --- e não o episódio --- co
 unidade estatística, distinguindo o desempenho atingível da fiabilidade da
 convergência.
 
-A nossa contribuição é quádrupla: (i) a quantificação da lacuna, por revisão
+A nossa contribuição é quíntupla: (i) a quantificação da lacuna, por revisão
 sistemática, que situa este trabalho como a segunda comparação empírica entre os
 dois paradigmas na navegação de enxames --- e a primeira com escalabilidade,
 robustez e inferência estatística; (ii) um protocolo de avaliação reprodutível e
@@ -133,8 +136,12 @@ independente do paradigma, com significância aferida ao nível da execução; (
 demonstração de que o alegado colapso da neuroevolução em cenários de
 estrangulamento é um artefacto do \emph{desenho da aptidão}, e não uma limitação
 intrínseca do paradigma, corrigível por um \emph{shaping} de \emph{homing}
-terminal não farmável; e (iv) a evidência de que a escalabilidade \emph{zero-shot}
-é uma propriedade da representação (grafo com atenção), e não do otimizador. Uma
+terminal não farmável; (iv) a evidência de que a escalabilidade \emph{zero-shot}
+é uma propriedade da representação (grafo com atenção), e não do otimizador; e
+(v) a validação, sob protocolo \emph{pré-registado} (hipótese, testes e regra de
+decisão fixados antes dos dados), de uma dosagem adaptativa da pressão por
+novidade que retém o ganho desta onde a deceção morde sem o seu custo onde não
+morde. Uma
 versão preliminar deste trabalho, com um orçamento de treino mais curto e uma
 aptidão baseada no retorno acumulado, levava à conclusão oposta sobre o
 paradigma evolutivo --- circunstância que ilustra a importância metodológica do
@@ -487,11 +494,31 @@ pressão por novidade degradou a magnitude ($63.0\pm21.9$ vs.\ $86.7\pm2.0$;
 $p=0.0006$, $\delta=-1.00$), desmascarando o $+26\%$ preliminar como artefacto do
 orçamento triplo.
 
-A pressão por novidade é, pois, um instrumento direcionado, não um melhoramento
-universal: compra a descoberta do desvio onde a otimização objetiva é
+Com peso fixo, a pressão por novidade é, pois, um instrumento direcionado, não um
+melhoramento universal: compra a descoberta do desvio onde a otimização objetiva é
 inconsistente e desperdiça pressão seletiva onde o gradiente da tarefa basta. O
-peso fixo $w=0.5$ explica ambos os efeitos; a sua dosagem adaptativa é a extensão
-natural.
+peso fixo $w=0.5$ explica ambos os efeitos --- o que motivou o teste final desta
+linha: uma \textbf{dosagem adaptativa}, em que $w$ parte de $0.5$ e decai
+($\times 0.98$/geração, até $0$) assim que o melhor genoma por objetivo recolhe
+durante dez gerações consecutivas.
+
+Esta campanha foi \emph{pré-registada} --- hipótese, testes confirmatórios e regra
+de decisão fixados no repositório antes de existirem dados de avaliação --- e
+corrida nos sete cenários sob o protocolo integral do artigo (sete execuções de
+$195$ minutos, sementes $1$--$7$, inferência por execução). Os quatro testes
+confirmaram a hipótese: sem degradação significativa nos cinco cenários que o
+objetivo já resolve (todos $p\geq 0.21$); ganho mantido no Muro em U ($7/7$
+execuções a $100\%$, $68.5\pm13.1$ vs.\ $24.5\pm32.6$; $p=0.009$ unilateral,
+$\delta=+0.76$); custo do peso fixo no cenário \emph{deceptive} não reproduzido
+($77.2\pm16.7$ vs.\ $86.7\pm2.0$; $p=0.32$, $\delta=-0.35$, n.s., $7/7$ a
+$100\%$); e superioridade em magnitude sobre o peso fixo nesse cenário ($77.2$
+vs.\ $63.0$; $\delta=+0.59$). Dois braços exploratórios completam o quadro: o
+objetivo puro com o \emph{dobro} do orçamento ($390$ min) continua bimodal no
+Muro em U ($4/7$, $31.5\pm35.0$) --- o ganho é do mecanismo, não do orçamento
+--- e o adaptativo com esse orçamento atinge no cenário \emph{deceptive} o
+melhor resultado de todo o estudo ($88.7\pm0.6$, $7/7$). A dosagem adaptativa
+fecha, assim, a tensão do peso fixo: retém a exploração enquanto ela compra
+descoberta e devolve a seleção ao objetivo quando ele basta.
 
 \subsection{Escalabilidade \emph{zero-shot}}
 Apenas o controlador baseado em atenção é viável para $N\neq 20$: transferindo sem
@@ -689,11 +716,16 @@ indistinguível do melhor deles em mais dois, e é o único a escalar
 espaço aberto e uma vantagem de $\approx 8\times$ em núcleos-hora. A exploração
 sob deceção espacial, que nenhum dos paradigmas base resolveu de forma
 consistente, cedeu apenas à hibridização com procura por novidade ($7/7$
-execuções no Muro em U, sob orçamento igualado) --- um mecanismo que,
-simetricamente, degrada o desempenho onde o gradiente da tarefa basta. O trabalho
+execuções no Muro em U, sob orçamento igualado) --- um mecanismo que, com peso
+fixo, degrada simetricamente o desempenho onde o gradiente da tarefa basta, mas
+cuja dosagem adaptativa, validada numa campanha pré-registada, retém o ganho sem
+custo mensurável em nenhum dos sete cenários; com o dobro do orçamento, o
+objetivo puro permanece bimodal no Muro em U ($4/7$) e o adaptativo atinge o
+melhor resultado do estudo no cenário \emph{deceptive} ($88.7\pm0.6$). O trabalho
 futuro inclui uma política de atenção treinada por gradiente para separar o
 otimizador da arquitetura, o alargamento da bateria estatística nos cenários
-bimodais, a dosagem adaptativa da pressão por novidade, e a validação da
+bimodais, o refinamento do \emph{schedule} adaptativo (re-armamento sob
+estagnação), e a validação da
 transferência simulação-para-real \citep{tobin2017domain}.
 
 \section*{Agradecimentos}

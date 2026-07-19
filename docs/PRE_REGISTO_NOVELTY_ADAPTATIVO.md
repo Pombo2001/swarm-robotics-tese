@@ -151,3 +151,39 @@ seeds emparelhadas), via `eval_by_run.py`. Sucesso reportado como descritivo, nu
 *Assinatura temporal: este plano existe no git antes de a campanha fechar (commit datado de
 15 jul 2026). Qualquer desvio posterior a T1-T4 ou às regras de decisão deve ser justificado
 e datado abaixo, não silenciosamente incorporado.*
+
+---
+
+## 7. RESULTADOS DO UNBLINDING — 19 jul 2026 (análise: `scripts/analise_adaptativo.py`)
+
+A campanha fechou limpa (A: 18 jul 19:15 UTC; B: 19 jul 12:56 UTC; sentinelas + 7 runs ×
+20 ep em todas as células). Dados em `results/novelty_adaptativo/`. A análise seguiu este
+documento **sem desvios**; ninguém olhou para números de avaliação antes de a correr.
+
+**Adaptativo @195 (condição primária), todos os cenários [runs a 100%]:**
+none 47,5±28,1 [6/7] · bottleneck 113,7±50,2 [6/7, um run a 0] · four_rooms 62,7±10,2 [7/7] ·
+u_wall **68,5±13,1 [7/7]** · coop_door 65,9±8,0 [7/7] · perception 13,1±10,0 [5/7] ·
+bypass **77,2±16,7 [7/7]**.
+
+- **T1 — PASSA.** Nenhuma degradação significativa nos 5 fáceis (p: none 0,46; bottleneck
+  0,80; four_rooms 0,62; coop_door 0,21; perception 0,26). Desvios descritivos a reportar
+  com honestidade: coop_door δ=−0,45 e perception δ=−0,39 (ambos n.s.), 1 run degenerado
+  no bottleneck. `none` até sobe descritivamente (47,5 vs 38,3; 6/7 vs 5/7).
+- **T2 — PASSA (duplamente).** u_wall 68,5±13,1 vs 24,5±32,6; **p=0,0087 unilateral,
+  δ=+0,76**; convergência **7/7** (= fixo, vs 3/7 do objetivo).
+- **T3 — PASSA.** bypass 77,2±16,7 vs 86,7±2,0; p=0,32, δ=−0,35 (n.s.) — o custo do fixo
+  (δ=−1,00, p=0,0006) **não se reproduz**; 7/7 a 100%.
+- **T4.** vs fixo: u_wall indistinguível (p=0,80, δ=+0,10); bypass adaptativo **superior
+  em magnitude** (77,2 vs 63,0; p=0,073, δ=+0,59 — compromisso nº3: com n=7 o peso está
+  no δ, não em cruzar 0,05).
+
+**⇒ REGRA DE DECISÃO: SOBE A RESULTADO** (T1 ∧ T2 ∧ T3). QI6 e Trabalhos Futuros
+reescritos em conformidade (tese + artigo, commit de 19 jul).
+
+**Exploratório @390 (rotulado como tal, fora da decisão):**
+- u_wall **OBJETIVO** @390: 31,5±35,0 **[4/7]** — o dobro do orçamento NÃO cura a
+  bimodalidade ⇒ o ganho no u_wall é do MECANISMO, não do orçamento. (Responde à pergunta
+  do braço de controlo.)
+- u_wall adaptativo @390: 77,8±11,9 [7/7] — fiabilidade mantém-se com mais tempo.
+- bypass adaptativo @390: **88,7±0,6 [7/7]** — supera o objetivo puro @195 (86,7±2,0);
+  o melhor resultado do bypass em toda a dissertação, com a menor variância.
