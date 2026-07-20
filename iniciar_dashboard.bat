@@ -17,7 +17,7 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 for /f "tokens=5" %%a in ('netstat -ano ^| findstr ":8080" ^| findstr LISTENING') do (
-    echo [INFO] A fechar instancia anterior na porta 8080 ^(PID %%a^)...
+echo [INFO] A fechar instancia anterior na porta 8080 ^(PID %%a^)...
     taskkill /F /PID %%a >nul 2>&1
 )
 
