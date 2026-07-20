@@ -170,6 +170,25 @@
 \numberwithin{table}{chapter}
 \numberwithin{figure}{chapter}
 
+% Corrige "CAPíTULO" nos cabeçalhos: a amsbook usa \uppercase (primitivo do TeX),
+% que não converte o "í" acentuado do \chaptername do babel (fica minúsculo). Esta
+% redefinição é idêntica à da classe, trocando apenas \uppercase por \MakeUppercase,
+% que trata dos acentos. Não altera o layout/espaçamento do cabeçalho.
+\makeatletter
+\def\@makechapterhead#1{\global\topskip 7.5pc\relax
+  \begingroup
+  \fontsize{\@xivpt}{18}\bfseries\centering
+    \ifnum\c@secnumdepth>\m@ne
+      \leavevmode \hskip-\leftskip
+      \rlap{\vbox to\z@{\vss
+          \centerline{\normalsize\mdseries
+              \MakeUppercase{\chaptername}\enspace\thechapter}
+          \vskip 3pc}}\hskip\leftskip\fi
+     #1\par \endgroup
+  \skip@34\p@ \advance\skip@-\normalbaselineskip
+  \vskip\skip@ }
+\makeatother
+
 % Traduções manuais
 \addto\captionsportuguese{\renewcommand{\contentsname}{Índice}}
 \addto\captionsportuguese{\renewcommand{\listfigurename}{Lista de Figuras}}
