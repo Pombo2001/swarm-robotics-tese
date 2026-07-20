@@ -181,6 +181,9 @@ h1,h2,h3,.font-extrabold,.font-bold,.q-tab__label,.mono-title {
 
 /* Badges, barras de progresso e campos: cantos e pesos coerentes. */
 .q-badge { border-radius:6px; font-weight:600; letter-spacing:.3px; }
+/* Badges de fundo claro (primary/accent são quase-brancos): texto escuro, senão
+   ficava branco sobre branco e ilegível (ex.: o "16 gráficos" do Arquivo). */
+.q-badge.bg-primary, .q-badge.bg-accent { color:#0a0a0a !important; }
 .q-linear-progress { border-radius:6px; overflow:hidden; }
 .q-field--outlined .q-field__control:hover:before { border-color:var(--border-hi) !important; }
 
