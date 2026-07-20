@@ -14,7 +14,8 @@ from nicegui import ui, app
 
 from . import config, theme
 from .jobs import JobQueue
-from .views import overview, treinar, servidor, ciencia, resultados, curvas, videos, aovivo
+from .views import (overview, treinar, servidor, ciencia, resultados, curvas,
+                    videos, aovivo, arquivo)
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
@@ -65,6 +66,7 @@ def index():
                 t_result  = ui.tab("Resultados", icon="image")
                 t_videos  = ui.tab("Vídeos", icon="smart_display")
                 t_aovivo  = ui.tab("Ao vivo (3D)", icon="view_in_ar")
+                t_arquivo = ui.tab("Arquivo", icon="history_edu")
             ui.space()
             ui.separator()
             # Rodapé operacional: útil a trabalhar, ruído numa defesa (e no Modo
@@ -77,7 +79,7 @@ def index():
     # A Overview salta para outras vistas por nome (cartões de estado clicáveis).
     _by_name = {"treinar": t_treinar, "monitorizar": t_monitor,
                 "ciencia": t_ciencia, "resultados": t_result, "videos": t_videos,
-                "aovivo": t_aovivo}
+                "aovivo": t_aovivo, "arquivo": t_arquivo}
 
     def goto(name: str):
         tab = _by_name.get(name)
@@ -102,6 +104,8 @@ def index():
             videos.build()
         with ui.tab_panel(t_aovivo):
             aovivo.build()
+        with ui.tab_panel(t_arquivo):
+            arquivo.build()
 
     # Timer do estado live, criado no slot RAIZ da página (não dentro do header):
     # se o browser desligar e os elementos morrerem, cancela-se em vez de crashar

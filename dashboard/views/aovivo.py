@@ -52,8 +52,18 @@ _VIZ_MAPA = os.path.join(config.BASE_DIR, "visualization", "visualize_mapa_grand
 
 
 def _treinos():
-    """Origens de modelos: os ativos + as campanhas que arquivaram modelos."""
+    """Origens de modelos: os ativos + a campanha adaptativa + campanhas com modelos.
+
+    As fases da campanha adaptativa (results/novelty_adaptativo/) guardam os .pth do
+    GNN em models/ na raiz da fase — a mesma convenção de _modelo_de(). Só têm GNN
+    (o PPO/SAC do eval eram os campeões 7d reutilizados), por isso os botões desses
+    ficam desativados, como já acontece com campanhas que só treinaram um algoritmo.
+    """
     ops = {_ATIVOS: os.path.join(config.BASE_DIR, "results")}
+    for lbl, sub in data.ADAPT_FASES:
+        raiz = os.path.join(data.ADAPT_DIR, sub)
+        if os.path.isdir(os.path.join(raiz, "models")):
+            ops[lbl] = raiz
     for s in data.list_sessions():
         raiz = os.path.join(data.GRAFICOS_DIR, s, "modelos")
         if os.path.isdir(raiz) and os.listdir(raiz):

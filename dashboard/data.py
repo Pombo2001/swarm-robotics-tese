@@ -23,6 +23,22 @@ STATS_DIR = os.path.join(config.BASE_DIR, "results", "estatisticas")
 SIGNIF = os.path.join(STATS_DIR, "testes_significancia_food_collected.csv")
 MODEL_DIRS = ("models", "models_ppo", "models_sac")
 
+# Campanha Novelty adaptativa (19 jul): 5 fases GUARDADAS FORA de graficos_tese, em
+# results/novelty_adaptativo/, para não sobrescrever os modelos campeões 7d (que
+# continuam a ser os ativos, de propósito). Cada fase é auto-contida (evaluation/ +
+# models/), por isso não passa pelo list_sessions() normal — é enxertada à parte na
+# comparação de métricas e na vista Ao vivo. Os rótulos dizem o que cada fase avaliou
+# (ordem e semântica vêm do pré-registo docs/PRE_REGISTO_NOVELTY_ADAPTATIVO.md).
+ADAPT_DIR = os.path.join(config.BASE_DIR, "results", "novelty_adaptativo")
+ADAPT_FASES = [
+    ("◆ Adaptativo · 7 cenários @195 (A1)",                       "week_A_fase1"),
+    ("◆ Adaptativo · u_wall objetivo puro @390 (A2, controlo)",   "week_A_fase2"),
+    ("◆ Adaptativo · coop/bypass/perceção @195 (B1)",             "week_B_fase1"),
+    ("◆ Adaptativo · u_wall adaptativo @390 (B2)",                "week_B_fase2"),
+    ("◆ Adaptativo · bypass adaptativo @390 (B3)",                "week_B_fase3"),
+]
+ADAPT_LABEL_TO_DIR = {lbl: sub for lbl, sub in ADAPT_FASES}
+
 
 def _mtime(path: str) -> float:
     return os.path.getmtime(path) if os.path.exists(path) else 0.0
@@ -82,23 +98,45 @@ def oficial_label():
         return OFICIAL_PREFIXO
 
 
+def _adapt_eval_path(label: str):
+    """Caminho do eval_summary de uma fase da campanha adaptativa, ou None."""
+    sub = ADAPT_LABEL_TO_DIR.get(label)
+    if not sub:
+        return None
+    p = os.path.join(ADAPT_DIR, sub, "evaluation", "eval_summary.csv")
+    return p if os.path.exists(p) else None
+
+
+def adapt_sessions():
+    """Fases da campanha adaptativa com eval_summary (na ordem do pré-registo)."""
+    return [lbl for lbl in ADAPT_LABEL_TO_DIR if _adapt_eval_path(lbl)]
+
+
 def _session_eval_path(session: str):
     """Caminho do eval_summary de uma sessão (procura em subpastas) ou None.
 
-    A entrada oficial (prefixo OFICIAL_PREFIXO) aponta para results/evaluation/.
+    A entrada oficial (prefixo OFICIAL_PREFIXO) aponta para results/evaluation/;
+    as entradas ◆ Adaptativo apontam para results/novelty_adaptativo/<fase>/.
     """
     if session.startswith(OFICIAL_PREFIXO):
         return EVAL_SUMMARY if os.path.exists(EVAL_SUMMARY) else None
+    if session in ADAPT_LABEL_TO_DIR:
+        return _adapt_eval_path(session)
     base = os.path.join(GRAFICOS_DIR, session)
     hits = glob.glob(os.path.join(base, "**", "eval_summary.csv"), recursive=True)
     return hits[0] if hits else None
 
 
 def sessions_with_eval():
-    """Treinos que têm métricas de avaliação, prontos a comparar (oficial primeiro)."""
+    """Treinos que têm métricas de avaliação, prontos a comparar.
+
+    Ordem: oficial 7d primeiro, depois as fases da campanha adaptativa (19 jul), depois
+    as campanhas de graficos_tese que arquivaram eval_summary.
+    """
     out = []
     if os.path.exists(EVAL_SUMMARY):
         out.append(oficial_label())
+    out += adapt_sessions()
     for s in list_sessions():
         if glob.glob(os.path.join(GRAFICOS_DIR, s, "**", "eval_summary.csv"), recursive=True):
             out.append(s)
@@ -271,6 +309,49 @@ def list_pngs(session: str):
     if not os.path.isdir(p):
         return []
     return sorted(f for f in os.listdir(p) if f.lower().endswith(".png"))
+
+
+# ── Arquivo histórico de campanhas (vista Arquivo) ────────────────────────────
+# O registo cronológico de TODAS as campanhas datadas — das primeiras exploratórias
+# (maio/junho) às finais. Vive à parte da galeria de Resultados porque a maioria é
+# exploratória: só tem gráficos de treino, muitas com conclusões já refutadas (ver
+# armadilhas nº1/nº3). Guardá-las é transparência, não são fonte para a tese.
+def historical_sessions():
+    """Campanhas datadas por ordem CRONOLÓGICA (a mais antiga primeiro)."""
+    if not os.path.isdir(GRAFICOS_DIR):
+        return []
+    dirs = [d for d in os.listdir(GRAFICOS_DIR)
+            if os.path.isdir(os.path.join(GRAFICOS_DIR, d)) and _data_da_sessao(d)]
+    return sorted(dirs, key=_data_da_sessao)
+
+
+def session_datetime(session: str):
+    """datetime da campanha (lido do nome da pasta) ou None."""
+    return _data_da_sessao(session)
+
+
+def session_is_evaluated(session: str) -> bool:
+    """True se a campanha tem avaliação determinística ou modelos arquivados.
+
+    É o que separa as campanhas canónicas (julho em diante, alimentam a tese) das
+    primeiras campanhas exploratórias (só gráficos de treino).
+    """
+    if glob.glob(os.path.join(GRAFICOS_DIR, session, "**", "eval_summary.csv"),
+                 recursive=True):
+        return True
+    modelos = os.path.join(GRAFICOS_DIR, session, "modelos")
+    return os.path.isdir(modelos) and bool(os.listdir(modelos))
+
+
+def session_manifesto(session: str):
+    """Conteúdo do MANIFESTO.md da campanha (markdown), ou None."""
+    p = os.path.join(GRAFICOS_DIR, session, "MANIFESTO.md")
+    if not os.path.exists(p):
+        return None
+    try:
+        return open(p, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return None
 
 
 def graph_type(filename: str) -> str:
