@@ -570,7 +570,12 @@ que o geodésico existe para eliminar. Passou a derivar de `MAZE_SCENARIOS`.
       `main.tex`/`artigo.tex` e confirmar frase a frase.
 - [ ] Ler um dos artigos NEAT (a afirmação "arenas sem estrangulamentos decetivos" assenta
       no abstract; risco baixo).
-- [ ] Rever o PDF do artigo + decidir o título.
+- [ ] Rever o PDF do artigo.
+- [x] **Título DECIDIDO (20 jul): MANTER o atual** — "Aprendizagem Adaptativa versus
+      Robustez Estática: Comparação de Aprendizagem por Reforço e Neuroevolução para
+      Controlo de Enxames". A campanha adaptativa (19 jul) revalidou o contraste
+      adaptativo↔estático, pelo que o anexo de títulos da `PROPOSTA_TREINO_FINAL.md`
+      (16 jul, que recomendava trocar) está DESATUALIZADO — não reabrir.
 
 ## P4 — Agosto: ciclos de revisão
 - [ ] Incorporar feedback do orientador (esperar 1-2 ciclos).
