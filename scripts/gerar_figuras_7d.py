@@ -214,23 +214,38 @@ def main():
         print(f"[OK] comparacao_mapa_{scen}.png")
 
     # ── 2. "1 modelo, todos os mapas" ───────────────────────────────────────
+    # Pré-agregamos por bins de progresso (2%) porque a TrainingProgress é contínua
+    # e difere entre runs; sem isto, o lineplot ligava pontos de runs distintos e
+    # produzia uma mancha preenchida ilegível. A banda ±sd por run está nos painéis
+    # por cenário (comparacao_mapa_*); aqui interessa a tendência média por cenário.
     pal_scen = sns.color_palette("husl", len(scen_present))
     for algo in ALGOS:
         da = curves[curves['Algorithm'] == algo].copy()
         if da.empty:
             continue
-        da['Cenário'] = da['Scenario'].map(lambda s: SCENARIO_LABELS.get(s, s))
+        da['bin'] = (da['TrainingProgress'] / 2).round() * 2
+        agg = da.groupby(['Scenario', 'bin'])['Score'].mean().reset_index()
         fig, ax = plt.subplots(figsize=(12, 7))
-        sns.lineplot(data=da, x='TrainingProgress', y='Score', hue='Cenário',
-                     palette=pal_scen, linewidth=2.5, errorbar='sd', ax=ax)
+        for color, scen in zip(pal_scen, scen_present):
+            a = agg[agg['Scenario'] == scen].sort_values('bin')
+            if a.empty:
+                continue
+            ax.plot(a['bin'], a['Score'], color=color, linewidth=2.5,
+                    label=SCENARIO_LABELS.get(scen, scen))
         ax.set_title(f'Desempenho Global — {algo} ({da["Run"].nunique()} runs)',
                      fontsize=15, fontweight='bold', pad=14)
         ax.set_xlabel('Progresso do Treino (%)', fontsize=11)
         ax.set_ylabel(YLABEL_TREINO.get(algo, 'Score'), fontsize=11)
         ax.set_xlim(0, 100)
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0f}%'))
+        ax.legend(title='Cenário', fontsize=9, title_fontsize=10,
+                  loc='upper left', framealpha=0.9)
         ax.grid(True, linestyle='--', alpha=0.5)
-        plt.tight_layout()
+        fig.text(0.5, 0.005,
+                 "Linha = média entre os 7 runs por bin de progresso (2%). A dispersão "
+                 "por run está nos painéis por cenário (curvas de aprendizagem).",
+                 ha='center', va='bottom', fontsize=8.5, color='#555555', style='italic')
+        plt.tight_layout(rect=[0, 0.04, 1, 1])
         fig.savefig(os.path.join(OUT, f'desempenho_global_{algo.lower()}.png'), dpi=300, bbox_inches='tight')
         plt.close(fig)
         print(f"[OK] desempenho_global_{algo.lower()}.png")

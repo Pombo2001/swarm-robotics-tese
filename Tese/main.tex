@@ -384,7 +384,7 @@ No entanto, a implementação prática desta visão descentralizada enfrenta bar
 Neste contexto, a comunidade científica dividiu-se historicamente em duas abordagens principais para o desenho destes controladores descentralizados:
 
 \begin{enumerate}
-    \item \textbf{Otimização Bio-inspirada:} Métodos como o \textit{Particle Swarm Optimization} (PSO) e Algoritmos Evolutivos (AE) focam-se na robustez \textit{offline} \cite{kennedy1995pso}. Tratam o desenho do controlador como um problema de otimização estocástica, procurando os pesos ótimos de uma rede neural ou parâmetros de regras heurísticas antes da implantação real \cite{hassen2025hybrid, salimans2017es}. Embora robustos, estes métodos tendem a ser estáticos, podendo carecer de adaptabilidade perante mudanças dinâmicas e imprevistas no ambiente \cite{gupta2025influx}.
+    \item \textbf{Otimização Bio-inspirada:} Métodos como o \textit{Particle Swarm Optimization} (PSO) e Algoritmos Evolutivos (AE) focam-se na robustez \textit{offline} \cite{kennedy1995pso}. Tratam o desenho do controlador como um problema de otimização estocástica, procurando os pesos ótimos de uma rede neuronal ou parâmetros de regras heurísticas antes da implantação real \cite{hassen2025hybrid, salimans2017es}. Embora robustos, estes métodos tendem a ser estáticos, podendo carecer de adaptabilidade perante mudanças dinâmicas e imprevistas no ambiente \cite{gupta2025influx}.
     \item \textbf{Multi-Agent Reinforcement Learning (MARL):} Focado na adaptabilidade \textit{online}, o MARL utiliza o paradigma de aprendizagem sequencial para que os agentes descubram políticas cooperativas através da interação direta com o ambiente \cite{sutton2018reinforcement}. A grande promessa do MARL reside na sua capacidade de ajuste em tempo real e na aprendizagem de políticas complexas formalizadas como um \textit{Decentralized Partially Observable Markov Decision Process} (Dec-POMDP) \cite{huh2023marl}.
 \end{enumerate}
 
@@ -614,7 +614,7 @@ O SAC mantém dois críticos $Q_{\psi_1}, Q_{\psi_2}$ cujo mínimo é usado no a
 
 \paragraph{O Desafio da Não-Estacionaridade:} A principal barreira teórica na aplicação de MARL a enxames é a não-estacionaridade do ambiente. Num sistema multiagente, as transições de estado para um agente $i$ dependem das ações de todos os outros agentes. Como todos os robôs estão a aprender e a alterar as suas políticas simultaneamente, a dinâmica do ambiente é instável, o que viola a propriedade fundamental de Markov e dificulta a convergência dos algoritmos tradicionais de agente único.
 
-\paragraph{Arquitetura CTDE e Escalabilidade com GNNs:} Para mitigar a instabilidade, a literatura recorre frequentemente à arquitetura de \textbf{Treinamento Centralizado com Execução Descentralizada} (CTDE) \cite{lowe2017maddpg}. Nesta abordagem, um componente ``Crítico'' tem acesso ao estado global durante a fase de treino para estabilizar os sinais de recompensa, enquanto o ``Ator'' (controlador do robô) utiliza apenas observações locais durante a fase de execução \cite{sun2024graph}. Importa notar que a implementação desta tese adota uma variante mais estrita --- treino \emph{e} execução descentralizados, com o crítico a partir da mesma observação local do ator (Secção~\ref{sec:limitacoes}) ---, pelo que o CTDE é aqui apresentado como contexto da literatura, e não como a arquitetura utilizada.
+\paragraph{Arquitetura CTDE e Escalabilidade com GNNs:} Para mitigar a instabilidade, a literatura recorre frequentemente à arquitetura de \textbf{Treino Centralizado com Execução Descentralizada} (CTDE) \cite{lowe2017maddpg}. Nesta abordagem, um componente ``Crítico'' tem acesso ao estado global durante a fase de treino para estabilizar os sinais de recompensa, enquanto o ``Ator'' (controlador do robô) utiliza apenas observações locais durante a fase de execução \cite{sun2024graph}. Importa notar que a implementação desta tese adota uma variante mais estrita --- treino \emph{e} execução descentralizados, com o crítico a partir da mesma observação local do ator (Secção~\ref{sec:limitacoes}) ---, pelo que o CTDE é aqui apresentado como contexto da literatura, e não como a arquitetura utilizada.
 
 Contudo, para garantir que o enxame é verdadeiramente escalável, a investigação moderna tem integrado \textbf{Graph Neural Networks (GNNs)} e mecanismos de atenção espacial.
 
@@ -1358,34 +1358,27 @@ A leitura por cenário quantifica o que as secções anteriores anteciparam. Nos
 
 \section{Visão Global por Algoritmo}
 \label{sec:res_global}
-Consolidando o desempenho ao longo dos sete cenários (Figuras~\ref{fig:res_global_gnn}--\ref{fig:res_global_sac}), emergem três perfis bem definidos. O \textbf{GNN evolutivo com \textit{fitness} de \textit{homing}} é o especialista em \emph{navegação estruturada}: converge em \emph{todos} os 28 \textit{runs} dos quatro cenários de gargalo (Gargalo, Quatro Salas e as duas Portas Cooperativas --- incluindo, portanto, o cenário \textit{deceptive}, que o \textit{homing} resolve sem necessidade de pressão por novidade), lidera a magnitude de recolhas no Quatro Salas e na Porta Cooperativa e empata estatisticamente com o PPO no Gargalo e na Porta com Alternativa; o seu ponto fraco são os cenários abertos, onde ocasionalmente degenera. O \textbf{PPO} é o \emph{generalista fiável}: converge em todos os \textit{runs} de seis cenários com variância mínima, e é o menos afetado pelo Muro U (4/7). O \textbf{SAC} é fiável em espaço aberto e nos cooperativos, mas é o mais \emph{sensível aos gargalos físicos}: é o único que falha \textit{runs} no Gargalo e tem a pior taxa no Muro U (2/7). A Figura~\ref{fig:res_barras_geral} resume a comparação por barras na métrica de tarefa (recolhas/ep na avaliação determinística) --- ao contrário das versões preliminares deste gráfico, todas as barras estão na mesma unidade e são diretamente comparáveis.
+Consolidando o desempenho ao longo dos sete cenários (Figuras~\ref{fig:res_global_gnn}--\ref{fig:res_global_sac}), emergem três perfis bem definidos. O \textbf{GNN evolutivo com \textit{fitness} de \textit{homing}} é o especialista em \emph{navegação estruturada}: converge em \emph{todos} os 28 \textit{runs} dos quatro cenários de gargalo (Gargalo, Quatro Salas e as duas Portas Cooperativas --- incluindo, portanto, o cenário \textit{deceptive}, que o \textit{homing} resolve sem necessidade de pressão por novidade), lidera a magnitude de recolhas no Quatro Salas e na Porta Cooperativa e empata estatisticamente com o PPO no Gargalo e na Porta com Alternativa; o seu ponto fraco são os cenários abertos, onde ocasionalmente degenera. O \textbf{PPO} é o \emph{generalista fiável}: converge em todos os \textit{runs} de seis cenários com variância mínima, e é o menos afetado pelo Muro U (4/7). O \textbf{SAC} é fiável em espaço aberto e nos cooperativos, mas é o mais \emph{sensível aos gargalos físicos}: é o único que falha \textit{runs} no Gargalo e tem a pior taxa no Muro U (2/7).
 
 \begin{figure}[H]
     \centering
     \figresultado{0.8}{images/resultados/desempenho_global_gnn.png}{Desempenho global do GNN em todos os cenários}
-    \caption{Desempenho do GNN (evolutivo) nos sete cenários (média $\pm$ desvio padrão de 7 \textit{runs}).}
+    \caption{Desempenho do GNN (evolutivo) nos sete cenários (linha = média entre os 7 \textit{runs} por progresso de treino).}
     \label{fig:res_global_gnn}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \figresultado{0.8}{images/resultados/desempenho_global_ppo.png}{Desempenho global do PPO em todos os cenários}
-    \caption{Desempenho do PPO nos sete cenários (média $\pm$ desvio padrão de 7 \textit{runs}).}
+    \caption{Desempenho do PPO nos sete cenários (linha = média entre os 7 \textit{runs} por progresso de treino).}
     \label{fig:res_global_ppo}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \figresultado{0.8}{images/resultados/desempenho_global_sac.png}{Desempenho global do SAC em todos os cenários}
-    \caption{Desempenho do SAC nos sete cenários (média $\pm$ desvio padrão de 7 \textit{runs}).}
+    \caption{Desempenho do SAC nos sete cenários (linha = média entre os 7 \textit{runs} por progresso de treino).}
     \label{fig:res_global_sac}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \figresultado{0.9}{images/resultados/comparacao_barras_geral.png}{Comparação geral --- recolhas por episódio por algoritmo e cenário}
-    \caption{Resumo geral: recolhas por episódio (avaliação determinística) por algoritmo e cenário; barras de erro = desvio padrão sobre os 140 episódios.}
-    \label{fig:res_barras_geral}
 \end{figure}
 
 \section{Avaliação Determinística (Tarefa Pura)}

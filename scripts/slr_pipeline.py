@@ -330,8 +330,16 @@ def _autores(raw):
     """
     def apelido(a):
         toks = [t for t in a.replace(',', ' ').split() if t]
-        reais = [t for t in toks if re.search(r'[a-zà-ÿ]', t)]
-        return reais[0] if reais else (toks[0] if toks else '')
+        # Uma inicial é um só caráter, com hífen/ponto opcionais ('K.', 'H.', '-S.');
+        # o apelido é o primeiro token que NÃO é inicial (robusto a apelidos em
+        # maiúsculas como 'DUTCEAC', que o teste por minúsculas não apanhava).
+        def eh_inicial(t):
+            return bool(re.fullmatch(r'-?[A-Za-zÀ-ÿ]\.?', t))
+        reais = [t for t in toks if not eh_inicial(t)]
+        if not reais:
+            reais = [t for t in toks if re.search(r'[a-zà-ÿ]', t)] or toks
+        ape = reais[0] if reais else ''
+        return ape.title() if ape.isupper() else ape
 
     autores = [a.strip() for a in re.split(r'\s+and\s+|;', raw or '') if a.strip()]
     ape = [_esc(apelido(a)) for a in autores]
