@@ -24,7 +24,13 @@ environment:
   # Quatro Salas) -> precisa de episodios proporcionalmente maiores. A arena
   # tambem e maior, e SO neste cenario (arena_radius_mapa_grande): mexer no
   # arena_radius global alteraria os 7 cenarios das campanhas ja fechadas.
-  max_steps_mapa_grande: 1200
+  #
+  # 2000 passos, nao 1200. A velocidade maxima e 0,2 m/passo (move_local
+  # clipado a +-1 x 0,2), logo o pior spawn fica a ~629 passos do ninho SO DE
+  # IDA: com 1200 nem a ida-e-volta cabia (1259), e o agente teria de ir em
+  # linha reta a velocidade maxima sem explorar nem errar uma vez. 2000 da a
+  # mesma folga (3,2x sobre a ida) que o Quatro Salas tem com 500.
+  max_steps_mapa_grande: 2000
   arena_radius_mapa_grande: 60.0
   min_spread_distance: 1.0
   nest_radius: 1.5

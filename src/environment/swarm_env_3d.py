@@ -232,7 +232,13 @@ class SwarmForagingEnv3D(gym.Env):
 
         # required_to_eat por cenário: navegação pura = 1 agente basta (a tarefa é
         # chegar ao ninho); cooperação (porta/perceção) = valor do config (3).
-        _nav_scenarios = ("u_wall", "bottleneck", "four_rooms")
+        # mapa_grande entra aqui: a cooperação que ele mede está na PORTA (zona C).
+        # Exigir também 3 agentes simultâneos no ninho (raio 1,5 m) ao fim de
+        # ~143 m de labirinto empilharia uma segunda tarefa cooperativa por cima
+        # da navegação, e a métrica deixaria de isolar o que o mapa existe para
+        # medir. A recolha é, portanto, individual — como nos cenários de
+        # navegação pura.
+        _nav_scenarios = ("u_wall", "bottleneck", "four_rooms", "mapa_grande")
         self.required_to_eat = 1 if self.classic_scenario in _nav_scenarios else self.required_to_eat_coop
 
         base_max_steps = self.config['environment'].get('max_steps', 500)
