@@ -47,6 +47,7 @@ NUM_AGENTS = 20        # environment.num_agents
 ESPESSURA = 1.5        # espessura de parede usada no four_rooms
 ABERTURA = 2.5         # largura das passagens (alargada de 1.5 em 22 jun)
 ALTURA_Z = 30.0        # altura das paredes (igual aos outros cenários)
+OBSTACLE_RADIUS = 0.2  # environment.obstacle_radius
 
 C_PAREDE = "#3B4252"
 C_CHAO = "#EAEDF2"
@@ -65,13 +66,22 @@ def _parede(cx, cy, sx, sy):
 def build_walls(R):
     """Geometria do mapa grande, parametrizada pelo raio da arena.
 
-    Retângulo de proporção 2:1 inscrito no círculo de raio R (W=2H e W²+H²=(2R)²
-    dão H=2R/√5). Cinco zonas da esquerda para a direita, cada uma a citar uma
-    dificuldade já validada nos 7 cenários; o ninho fica no extremo oposto ao
-    spawn para maximizar a distância geodésica.
+    Retângulo de proporção 5:3 inscrito no círculo de raio R (W=5k, H=3k com
+    W²+H²=(2R)² dão k=2R/√34). Foi alargado de 2:1 para 5:3 para aproveitar
+    melhor a arena circular — a 2:1 sobrava muito espaço vazio a norte e a sul.
+
+    CINCO zonas de oeste para este, cada uma a citar uma dificuldade já validada
+    nos 7 cenários. O ninho fica no extremo oposto ao spawn, para maximizar a
+    distância geodésica:
+
+        S  sala de partida, aberta, com obstáculos dispersos (spawn)
+        A  gargalo + beco em U       (u_wall + bottleneck)
+        B  quatro salas              (four_rooms)
+        C  porta cooperativa + alternativa longa (cooperative_door + bypass)
+        D  câmara do ninho
     """
-    H = 2 * R / np.sqrt(5)          # altura do retângulo útil
-    W = 2 * H                       # largura
+    k = 2 * R / np.sqrt(34)
+    W, H = 5 * k, 3 * k
     t = ESPESSURA
     ab = ABERTURA
 
@@ -87,12 +97,26 @@ def build_walls(R):
         _parede(x1, 0, t, H),        # este
     ]
 
-    # === ZONA A (oeste): GARGALO + BECO EM U ================================
+    # === ZONA S (oeste): SALA DE PARTIDA, aberta e com obstáculos ===========
+    # Os robôs nascem aqui, espalhados. É a única zona sem paredes interiores:
+    # serve para o enxame se organizar antes de enfrentar o labirinto, e os
+    # obstáculos (ver obstaculos()) obrigam a desviar desde o primeiro passo.
+    # Saída ampla (2 x abertura) para não ser mais um gargalo.
+    xs = x0 + 0.20 * W
+    y_saida_s = 0.0
+    s_baixo = (y_saida_s - ab) - y0
+    s_cima = y1 - (y_saida_s + ab)
+    walls += [
+        _parede(xs, y0 + s_baixo / 2, t, s_baixo),
+        _parede(xs, y1 - s_cima / 2, t, s_cima),
+    ]
+
+    # === ZONA A: GARGALO + BECO EM U =======================================
     # Parede vertical que separa A de B, com UMA passagem estreita (gargalo).
     # A abertura fica DESLOCADA para sul (y=-H/4) e não a meio: a meio colidiria
     # com o braço horizontal da cruz das Quatro Salas, que arranca neste mesmo x
     # — as duas aberturas anular-se-iam e o mapa ficaria intransponível.
-    xa = x0 + 0.30 * W
+    xa = x0 + 0.42 * W
     y_gargalo = -H / 4
     b_baixo = (y_gargalo - ab / 2) - y0
     b_cima = y1 - (y_gargalo + ab / 2)
@@ -102,8 +126,8 @@ def build_walls(R):
     ]
     # Beco em U aberto para ESTE: o gradiente euclidiano aponta para lá (o ninho
     # está a este) mas é um saco — só se sai voltando para trás. Igual ao u_wall.
-    ux, uy = x0 + 0.15 * W, 0.0
-    uw, uh = 0.13 * W, 0.34 * H
+    ux, uy = x0 + 0.315 * W, H * 0.14
+    uw, uh = 0.085 * W, 0.30 * H
     walls += [
         _parede(ux - uw / 2, uy, t, uh),            # fundo do U (oeste)
         _parede(ux, uy + uh / 2, uw, t),            # topo
@@ -111,7 +135,7 @@ def build_walls(R):
     ]
 
     # === ZONA B: QUATRO SALAS (cruz com aberturas) ==========================
-    xb = x0 + 0.55 * W
+    xb = x0 + 0.63 * W
     yb = 0.0
     # Vertical da cruz: abertura deslocada para NORTE (mesma razão da zona A —
     # a meio colidiria com o braço horizontal). Ficando a norte, obriga o enxame
@@ -134,7 +158,7 @@ def build_walls(R):
     # === ZONA C: PORTA COOPERATIVA + ALTERNATIVA LONGA ======================
     # Parede vertical com uma "porta" central (a laranja no desenho) e uma
     # abertura permanente encostada a NORTE — o desvio mais longo, como o bypass.
-    xc = x0 + 0.78 * W
+    xc = x0 + 0.82 * W
     porta_h = 3.0                       # porta cooperativa (3 m, como no cenário)
     alt_h = 4.0                         # passagem alternativa livre (4 m)
     # de y0 até ao BORDO INFERIOR da porta (-porta_h/2). Usar +porta_h/2 aqui
@@ -146,12 +170,61 @@ def build_walls(R):
     b2 = y_alt0 - (porta_h / 2)
     walls.append(_parede(xc, porta_h / 2 + b2 / 2, t, b2))
     # Parede defletora: obriga quem usa a alternativa a afastar-se do ninho
-    walls.append(_parede(xc + 0.09 * W, y1 - alt_h - t, 0.18 * W, t))
+    walls.append(_parede(xc + 0.07 * W, y1 - alt_h - t, 0.14 * W, t))
 
     porta = {"pos": np.array([xc, 0.0, 0.0]),
              "size": np.array([t, porta_h, ALTURA_Z])}
 
     return walls, porta, (W, H)
+
+
+def obstaculos(R, walls, n=None, seed=11):
+    """Obstáculos dispersos (as esferas de 0,2 m que o ambiente já simula, com
+    colisão — `num_obstacles`/`obstacle_radius` em configs/foraging.yaml).
+
+    Concentram-se na sala de partida (zona S), que de outro modo seria espaço
+    aberto vazio, e espalham-se pelo resto do mapa. Nunca dentro de paredes nem
+    a tapar passagens: rejeita-se qualquer posição a menos de meia-abertura de
+    uma parede, senão um obstáculo podia selar um corredor de 2,5 m.
+    """
+    k = 2 * R / np.sqrt(34)
+    W, H = 5 * k, 3 * k
+    n = n if n is not None else int(60 * (R / 45.0) ** 2)
+    xs_lim = -W / 2 + 0.20 * W          # fronteira da sala de partida
+    folga = ABERTURA / 2 + OBSTACLE_RADIUS
+
+    # Clareira de spawn: os robôs nascem aqui, e um obstáculo em cima do spawn
+    # empurrava-os para fora logo no primeiro passo (a colisão do ambiente
+    # resolve a sobreposição deslocando o agente). Deixa-se o sítio livre.
+    spawn, _ = spawn_e_ninho(R)
+    raio_clareira = 0.085 * W
+
+    rng = np.random.default_rng(seed)
+    pts = []
+    tentativas = 0
+    while len(pts) < n and tentativas < n * 400:
+        tentativas += 1
+        # 40% na sala de partida (é onde o utilizador os quer), 60% espalhados
+        # pelo resto do labirinto.
+        if rng.random() < 0.40:
+            p = np.array([rng.uniform(-W / 2 + 1.5, xs_lim - 1.5),
+                          rng.uniform(-H / 2 + 1.5, H / 2 - 1.5)])
+        else:
+            p = np.array([rng.uniform(xs_lim + 1.5, W / 2 - 1.5),
+                          rng.uniform(-H / 2 + 1.5, H / 2 - 1.5)])
+        if np.hypot(*p) > R - 1.0:
+            continue
+        if np.linalg.norm(p - spawn) < raio_clareira:
+            continue
+        # longe de paredes (não selar corredores)
+        if any(np.all(np.abs(p - w["pos"][:2]) < w["size"][:2] / 2 + folga)
+               for w in walls):
+            continue
+        # não empilhados uns nos outros
+        if any(np.linalg.norm(p - q) < 1.2 for q in pts):
+            continue
+        pts.append(p)
+    return np.array(pts) if pts else np.zeros((0, 2))
 
 
 def walls_four_rooms():
@@ -207,11 +280,11 @@ def pior_percurso(walls, R, ninho):
 
 
 def spawn_e_ninho(R):
-    """Spawn a OESTE (dentro da zona A), ninho a ESTE (zona D)."""
-    H = 2 * R / np.sqrt(5)
-    W = 2 * H
-    ninho = np.array([W / 2 - 0.06 * W, 0.0])
-    centro_spawn = np.array([-W / 2 + 0.055 * W, -H / 2 + 0.12 * H])
+    """Spawn no meio da SALA DE PARTIDA (zona S, oeste), ninho a ESTE (zona D)."""
+    k = 2 * R / np.sqrt(34)
+    W, H = 5 * k, 3 * k
+    ninho = np.array([W / 2 - 0.05 * W, 0.0])
+    centro_spawn = np.array([-W / 2 + 0.10 * W, 0.0])
     return centro_spawn, ninho
 
 
@@ -306,13 +379,30 @@ def desenhar(R, out_path):
     ax.text(ninho[0], ninho[1] + 2.2, "NINHO", color="#166534", ha="center",
             fontsize=12, fontweight="bold", zorder=6)
 
+    # Obstáculos (as esferas que o ambiente já simula, com colisão)
+    obs = obstaculos(R, walls)
+    for p in obs:
+        ax.add_patch(Circle(p, OBSTACLE_RADIUS * 3, facecolor="#B45309",
+                            edgecolor="#78350F", lw=0.6, alpha=0.85, zorder=4))
+    if len(obs):
+        ax.plot([], [], "o", color="#B45309",
+                label=f"{len(obs)} obstáculos (r=0,2 m — ampliados)")
+
+    # Robôs bem separados pela sala de partida (não empilhados no mesmo ponto)
     rng = np.random.default_rng(7)
-    for _ in range(NUM_AGENTS):
-        p = centro_spawn + rng.uniform(-0.035 * W, 0.035 * W, 2)
+    postos = []
+    while len(postos) < NUM_AGENTS:
+        p = centro_spawn + rng.uniform(-0.075 * W, 0.075 * W, 2) * np.array([1.0, 1.6])
+        if any(np.linalg.norm(p - q) < 1.6 for q in postos):
+            continue
+        if len(obs) and min(np.linalg.norm(obs - p, axis=1)) < 1.2:
+            continue
+        postos.append(p)
+    for p in postos:
         ax.add_patch(Circle(p, 0.45, facecolor=C_ROBO, edgecolor="white",
                             lw=0.8, zorder=6))
-    ax.text(centro_spawn[0], centro_spawn[1] - 2.6,
-            f"{NUM_AGENTS} robôs\n(raio real 0,15 m — ampliados)",
+    ax.text(centro_spawn[0], -H / 2 + 1.8,
+            f"{NUM_AGENTS} robôs (raio real 0,15 m — ampliados)",
             color="#1D4ED8", ha="center", fontsize=9, zorder=6)
 
     # Alcance do LiDAR, à escala, a partir de um robô
@@ -323,10 +413,11 @@ def desenhar(R, out_path):
 
     # Rótulos das zonas
     zonas = [
-        (-W / 2 + 0.15 * W, H / 2 - 0.06 * H, "A · Gargalo + Beco em U"),
-        (-W / 2 + 0.42 * W, H / 2 - 0.06 * H, "B · Quatro Salas"),
-        (-W / 2 + 0.70 * W, H / 2 - 0.06 * H, "C · Porta coop. + alternativa"),
-        (-W / 2 + 0.92 * W, H / 2 - 0.06 * H, "D · Ninho"),
+        (-W / 2 + 0.10 * W, H / 2 - 0.05 * H, "S · Sala de partida"),
+        (-W / 2 + 0.32 * W, H / 2 - 0.05 * H, "A · Gargalo + Beco em U"),
+        (-W / 2 + 0.53 * W, H / 2 - 0.05 * H, "B · Quatro Salas"),
+        (-W / 2 + 0.73 * W, H / 2 - 0.05 * H, "C · Porta coop. + alternativa"),
+        (-W / 2 + 0.93 * W, H / 2 - 0.05 * H, "D · Ninho"),
     ]
     for zx, zy, txt in zonas:
         ax.text(zx, zy, txt, ha="center", fontsize=11, color="#0F172A",

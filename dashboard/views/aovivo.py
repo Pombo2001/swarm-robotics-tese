@@ -183,10 +183,10 @@ def build():
 
             with ui.row().classes("items-center gap-4 mt-2 no-wrap"):
                 raio_sel = ui.select(
-                    {30.0: "r=30 m — 54×27 m (2,0× o Quatro Salas)",
-                     45.0: "r=45 m — 80×40 m (3,0×)",
-                     60.0: "r=60 m — 107×54 m (4,1×)"},
-                    value=45.0, label="Tamanho da arena") \
+                    {45.0: "r=45 m — 77×46 m (3,1× o Quatro Salas)",
+                     60.0: "r=60 m — 103×62 m (4,2×)",
+                     75.0: "r=75 m — 129×77 m (5,2×)"},
+                    value=60.0, label="Tamanho da arena") \
                     .props("outlined dense").classes("w-80")
                 altura = ui.number(label="Altura das paredes (m)", value=3.0,
                                    min=0.4, max=30.0, step=0.5) \

@@ -43,6 +43,7 @@ if PROJECT_ROOT not in sys.path:
 # Constantes reais (configs/foraging.yaml) — iguais às do ambiente.
 NEST_RADIUS = 1.5
 ROBOT_RADIUS = 0.15
+OBSTACLE_RADIUS = 0.2
 NUM_AGENTS = 20
 
 
@@ -55,13 +56,14 @@ def _geometria(raio):
     spec.loader.exec_module(mod)
     walls, porta, (W, H) = mod.build_walls(raio)
     spawn, ninho = mod.spawn_e_ninho(raio)
-    return walls, porta, ninho, spawn, (W, H)
+    obs = mod.obstaculos(raio, walls)
+    return walls, porta, ninho, spawn, obs, (W, H)
 
 
 def main(args):
     raio = args.radius
     altura = max(0.4, args.wall_height)
-    walls, porta, ninho, spawn, (W, H) = _geometria(raio)
+    walls, porta, ninho, spawn, obs, (W, H) = _geometria(raio)
 
     app = Ursina()
     window.title = f'Swarm 3D - MAPA GRANDE (rascunho) - r={raio:.0f} m'
@@ -106,20 +108,37 @@ def main(args):
     Entity(model='circle', color=color.hsv(130, 0.8, 0.9, 0.3), scale=NEST_RADIUS * 4,
            position=(float(ninho[0]), float(ninho[1]), 0.01), unlit=True)
 
-    # Robôs parados no spawn. O main_visualizer usa model='cylinder', mas este
-    # Ursina (8.3.0) não traz esse modelo — dá "warning: missing model" e a
-    # entidade fica invisível. Usa-se 'sphere', que existe e lê melhor à escala
-    # real (0,15 m de raio é minúsculo ao lado de corredores de 2,5 m).
+    # Obstáculos dispersos — as MESMAS esferas que o ambiente já simula
+    # (num_obstacles/obstacle_radius), com a cor e a textura do main_visualizer.
+    for p in obs:
+        Entity(model='sphere', color=color.hsv(10, 0.8, 0.7),
+               scale=OBSTACLE_RADIUS * 2, texture='noise',
+               position=(float(p[0]), float(p[1]), -0.15))
+
+    # Robôs parados no spawn, BEM SEPARADOS (o utilizador pediu-os espalhados;
+    # e nascer empilhado faz a separação física do ambiente empurrá-los logo no
+    # primeiro passo). O main_visualizer usa model='cylinder', mas este Ursina
+    # (8.3.0) não traz esse modelo — dá "warning: missing model" e a entidade
+    # fica invisível. Usa-se 'sphere', que existe.
     if not args.sem_robos:
         rng = np.random.default_rng(7)
-        for _ in range(NUM_AGENTS):
-            p = spawn + rng.uniform(-0.03 * W, 0.03 * W, 2)
+        postos = []
+        while len(postos) < NUM_AGENTS:
+            p = spawn + rng.uniform(-0.075 * W, 0.075 * W, 2) * np.array([1.0, 1.6])
+            if any(np.linalg.norm(p - q) < 1.6 for q in postos):
+                continue
+            if len(obs) and min(np.linalg.norm(obs - p, axis=1)) < 1.2:
+                continue
+            postos.append(p)
+        for p in postos:
             Entity(model='sphere', color=color.hsv(210, 0.9, 0.9),
                    scale=ROBOT_RADIUS * 2,
                    position=(float(p[0]), float(p[1]), -0.15))
 
     Text(text=f'MAPA GRANDE (rascunho)  ·  arena r={raio:.0f} m  ·  '
               f'labirinto {W:.0f}x{H:.0f} m  ·  paredes {altura:.1f} m\n'
+              f'5 zonas: S partida · A gargalo+U · B 4 salas · C porta coop. · D ninho'
+              f'  ·  {len(obs)} obstaculos\n'
               f'{"sem robos" if args.sem_robos else f"{NUM_AGENTS} robos (raio real 0,15 m)"}'
               f'  ·  cena PARADA: so geometria, sem simulacao',
          position=(-0.86, 0.47), scale=0.7, color=color.hsv(0, 0, 0.75))
