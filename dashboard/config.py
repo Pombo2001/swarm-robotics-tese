@@ -1,41 +1,57 @@
-"""Constantes e caminhos partilhados do dashboard (fonte única de verdade).
+"""Constantes e caminhos partilhados do dashboard.
 
 Extraído do antigo launcher_dashboard.py. Os scripts em scripts/ continuam a ser
 o backend real — este módulo só descreve cenários, algoritmos e caminhos para o
 dashboard os orquestrar.
+
+⚠️ A lista de cenários NÃO se declara aqui: vem de `src/scenarios.py`, que é a
+fonte única do projeto. Havia aqui uma cópia própria, e já divergia nos rótulos
+("Beco Sem Saída (Muro U)" aqui vs "Beco Sem Saída (U)" em src). O docstring do
+`src/scenarios.py` conta o preço dessa duplicação: a lista esteve espalhada por
+~8 ficheiros e o 7.º cenário chegou a ser treinado mas NUNCA avaliado. Com um
+8.º mapa a caminho, manter cópia era repetir o erro de propósito.
 """
 import os
+import sys
 
 # Raiz do projeto (dois níveis acima deste ficheiro: dashboard/ -> projeto/)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
 
-# (label legível, chave interna) — inclui o 7º cenário (cooperative_door_bypass)
-SCENARIOS = [
-    ("Nenhum (Sandbox)",                 "none"),
-    ("Beco Sem Saída (Muro U)",          "u_wall"),
-    ("Gargalo (Porta Estreita)",         "bottleneck"),
-    ("Quatro Salas (Labirinto)",         "four_rooms"),
-    ("Porta Cooperativa (3 Robôs)",      "cooperative_door"),
-    ("Perceção Cooperativa (Alvo Móvel)", "cooperative_perception"),
-    ("Porta Coop. c/ Alternativa",       "cooperative_door_bypass"),
-]
+from src.scenarios import (  # noqa: E402  (precisa do sys.path acima)
+    SCENARIOS as _SRC_SCENARIOS,
+    SCENARIO_LABELS as _SRC_LABELS,
+    SCENARIO_LABELS_SHORT as _SRC_LABELS_SHORT,
+)
+
+# Todos os cenários que o simulador conhece, na ordem canónica de src/scenarios.py.
+SCENARIO_KEYS = list(_SRC_SCENARIOS)
+
+# (label legível, chave interna) — a forma que as vistas já consumiam.
+SCENARIOS = [(_SRC_LABELS.get(k, k), k) for k in SCENARIO_KEYS]
 SCENARIO_LABEL_BY_KEY = {k: lbl for lbl, k in SCENARIOS}
-SCENARIO_KEYS = [k for _, k in SCENARIOS]
 
-# Labels curtos (para tabelas/gráficos onde o nome completo não cabe) — fonte
-# única partilhada pelas vistas (evita SCEN_LABEL duplicados por ficheiro).
-SCENARIO_LABEL_SHORT = {
-    "none": "Sandbox",
+# Labels curtos. Partem dos de src/scenarios.py; o dashboard encurta alguns por
+# caber em tabelas/gráficos estreitos (só isso — as chaves são as mesmas).
+SCENARIO_LABEL_SHORT = dict(_SRC_LABELS_SHORT)
+SCENARIO_LABEL_SHORT.update({
     "u_wall": "Muro em U",
-    "bottleneck": "Gargalo",
     "four_rooms": "4 Salas",
     "cooperative_door": "Porta coop.",
     "cooperative_perception": "Perceção coop.",
     "cooperative_door_bypass": "Porta c/ alt.",
-}
-# Conjunto canónico de experiências da tese — os 7 cenários. O bypass deixou de ser
-# exploratório na campanha final (é o cenário deceptive, treinado e avaliado nos 7 runs).
-MAIN_SCENARIO_KEYS = list(SCENARIO_KEYS)
+})
+
+# Conjunto canónico de experiências DA TESE — os 7 cenários das campanhas
+# fechadas. Deliberadamente NÃO é `SCENARIO_KEYS`: um cenário novo (ex.: o mapa
+# grande) aparece nas vistas de operação, mas não deve entrar nas tabelas de
+# resultados enquanto não tiver campanha avaliada — apareceria como linha vazia
+# ou, pior, calada. Acrescentar aqui só quando os dados existirem.
+MAIN_SCENARIO_KEYS = [
+    "none", "u_wall", "bottleneck", "four_rooms",
+    "cooperative_door", "cooperative_perception", "cooperative_door_bypass",
+]
 
 ALGOS = ["GNN", "PPO", "SAC"]
 ALGO_META = {
