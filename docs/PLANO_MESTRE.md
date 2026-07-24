@@ -1,7 +1,7 @@
 # PLANO MESTRE — Tese de Mestrado (19 jul → Outubro 2026)
 
-> **Este é o ÚNICO ponto de re-entrada do projeto.** Escrito a **19 jul 2026** (última
-> sessão com o Fable; as próximas sessões serão com o Opus). Funde o
+> **Este é o ÚNICO ponto de re-entrada do projeto.** Escrito a **19 jul 2026**,
+> **atualizado a 24 jul** (mapa grande P1.6 + pacote do orientador P2). Funde o
 > `PLANO_ATAQUE_FINAL.md` (lista acionável de 15 jul) com o `PLANO_DE_ATAQUE.md`
 > (registo histórico) — ambos ficam como ARQUIVO; não os atualizes, atualiza ESTE.
 >
@@ -29,7 +29,13 @@
 
 ---
 
-# 2. ESTADO A 19 JUL 2026 (o que está FECHADO — não reabrir)
+# 2. ESTADO (o que está FECHADO — não reabrir)
+
+> **Atualização de 24 jul:** o mega-treino P1.5 está a meio e saudável (megaA na fase
+> A2, megaB na B3; durações reais batem com as estimadas ao décimo de dia; fim ~1-3 ago).
+> Acrescentou-se o **mapa grande** como 8.º cenário — código fechado e pré-registado,
+> por treinar (**P1.6**). O pacote para o orientador está pronto a enviar (**P2**).
+> O resto desta secção é de 19 jul e mantém-se válido.
 
 ## Entregáveis
 - **Tese: 117 págs**, compila limpa (pdflatex ×2 + biber), 0 refs indefinidas, **0 overfulls**.
@@ -130,10 +136,12 @@ testes confirmatórios T1-T4, regra de decisão da QI6 (sobe a resultado sse: n�
       Discussão + Conclusões + Trabalhos Futuros reescritos na tese; abstract +
       contribuições (v) + §4.3 + conclusões no artigo. Tese 121 págs, artigo 10 págs,
       ambos 0 undefined / 0 overfulls.
-- [ ] **SE passar:** o w adaptativo deixa de ser "trabalho futuro" e passa a RESULTADO —
-      integrar em `sec:res_novelty` + QI6 (tese) + artigo. **SE não passar:** reportar na
-      mesma (o pré-registo obriga) como resultado negativo honesto.
-- [ ] Recompilar tese+artigo; PDFs novos; commit.
+- [x] **Passou → o w adaptativo passou a RESULTADO** (integrado em `sec:res_novelty` +
+      QI6 na tese e no artigo, commit `704a36e` de 19 jul). A alternativa pré-registada
+      ("se não passar, reportar como resultado negativo honesto") não chegou a aplicar-se.
+- [x] **Recompilado e commitado** (19 jul, `704a36e`): tese 121 págs, artigo 10 págs,
+      ambos 0 refs indefinidas / 0 overfulls. *(Checkboxes fechadas a 24 jul — o trabalho
+      estava feito desde 19 jul, só faltava marcá-lo aqui.)*
 
 ---
 
@@ -152,8 +160,98 @@ testes confirmatórios T1-T4, regra de decisão da QI6 (sobe a resultado sse: n�
       modelos ativos; confirmar configs repostos (os scripts repõem no fim — verificar);
       análise M1-M3 do pré-registo v2. **Hard stop de integração na tese: 22 ago.**
 
+## P1.6 — MAPA GRANDE (8.º cenário) 🆕 **código FECHADO a 24 jul; treino só depois do mega-treino**
+
+Ideia do utilizador (24 jul): um mapa **muito maior e composto**, que junte as
+dificuldades dos 7 cenários num percurso único, para testar se as conclusões obtidas
+em cenários de dificuldade isolada transferem para um ambiente combinado. Desenhado a
+partir de um esboço do utilizador, **aprovado visualmente em planta 2D e em 3D antes
+de virar código** — e só depois integrado.
+
+**Estado: implementado, testado, NUNCA treinado.** Commits `da0c166` (geometria),
+`22922fb` (integração), `ce45b9c` (correções + pré-registo).
+
+- [x] **Geometria aprovada** (r=60): labirinto 103×62 m em 5 zonas — **S** sala de
+      partida (aberta, obstáculos, spawn) · **A** gargalo + beco em U · **B** quatro
+      salas · **C** porta cooperativa + alternativa longa · **D** câmara do ninho.
+      Pior percurso **143 m** (4,2× os 34 m do Quatro Salas). 106 obstáculos
+      **estáticos** (decisão do utilizador).
+- [x] **Integrado como `mapa_grande`** em `src/scenarios.py` + `swarm_env_3d.py`.
+      Verificado: `obs_dim=111` **igual aos 7 cenários** → os modelos GNN existentes
+      abrem o mapa sem alteração nenhuma (zero-shot de topologia já funciona).
+- [x] **Isolamento dos 7 cenários da tese** (campanhas fechadas, números já no texto):
+      `arena_radius_mapa_grande=60` e `max_steps_mapa_grande=2000` são overrides **por
+      cenário**; o `arena_radius` global fica em 15. Novo `THESIS_SCENARIOS` separa "os
+      7 da tese" de "todos os cenários" — o mapa aparece nas vistas de operação mas
+      **não** nas tabelas de resultados enquanto não tiver campanha avaliada.
+      Regressão verificada: os 7 mantêm arena, paredes, obstáculos, steps e geodésico.
+- [x] **Botão «Ver o mapa em 3D»** na vista Ao vivo, no MESMO visualizador Ursina dos
+      outros mapas (`visualize_mapa_grande.py`), a ler a geometria do **ambiente real**.
+- [x] **`dashboard/config.py` deixou de ter cópia dos cenários** — importa de
+      `src/scenarios.py`. Já divergia nos rótulos; com um 8.º mapa a entrar era repetir
+      o erro que fez o 7.º cenário ser treinado mas nunca avaliado.
+- [x] **Pré-registo escrito ANTES de qualquer treino**:
+      [`docs/PRE_REGISTO_MAPA_GRANDE.md`](PRE_REGISTO_MAPA_GRANDE.md) — QI7, desenho
+      congelado com justificação de cada parâmetro, fases F0/F1/F2, testes M1-M3, regra
+      de decisão e modos de falha antecipados.
+- [ ] **F0 — smoke test local** (~1 h, GNN, 1 run): só confirmar que arranca. **Não
+      produz resultado** e não entra em análise nenhuma.
+- [ ] **F1 — zero-shot de topologia**: avaliar os campeões dos 7 cenários neste mapa
+      sem retreino (custa horas, não dias; não precisa do servidor).
+- [ ] **F2 — treino nativo**: 3 algoritmos × 7 runs × seeds 1-7. **Só depois do
+      mega-treino fechar (~3 ago).** Hard stop de integração na tese: **22 ago**.
+
+### ⚠️ Dois bugs apanhados na auditoria de 24 jul (a pedido do utilizador)
+
+Ambos silenciosos — teriam produzido "os 3 algoritmos falham" sem sinal de que a culpa
+era do parâmetro. Ficam registados porque a lição é geral:
+
+1. **`max_steps` impossível de cumprir.** v_max = 0,2 m/passo (`move_local` clipado a
+   ±1 × 0,2) e o pior spawn está a 126 m ⇒ **629 passos só de ida**. Os 1200 iniciais
+   não davam sequer para ida-e-volta (1259). Corrigido para **2000** (folga 3,2× sobre
+   a ida — a mesma que o Quatro Salas tem com 500). **Lição: `max_steps` de um cenário
+   novo calcula-se a partir da distância geodésica e da velocidade máxima, não por
+   analogia com outro cenário.**
+2. **`required_to_eat` a 3.** O cenário caía no ramo `else` e exigia 3 agentes
+   simultâneos no ninho (raio 1,5 m) ao fim de 143 m — uma 2.ª tarefa cooperativa
+   acidental empilhada sobre a navegação. Corrigido para **1**. **Lição: acrescentar um
+   cenário obriga a rever TODAS as listas que discriminam cenários por nome**
+   (`_nav_scenarios`, `use_geodesic`, `DOOR_SCENARIOS`, `MAZE_SCENARIOS`).
+
+Um terceiro, apanhado antes por teste: `use_geodesic` era uma lista escrita à mão e o
+mapa ficou **sem campo geodésico** — num percurso de 143 m, exatamente o mínimo local
+que o geodésico existe para eliminar. Passou a derivar de `MAZE_SCENARIOS`.
+
+### Verificações que NÃO alteraram código (mas respondem a perguntas do utilizador)
+
+- **Os robôs saltam por cima das paredes?** **Não.** Forcei os 20 agentes contra a
+  parede central com ação +z e +y durante 400 passos: sobem até z≈14,7 m e
+  **atravessaram 0**. Colisão é AABB a 3D (paredes de z=−15 a +15) com deslizamento +
+  correção de penetração.
+- **A porta faz sentido?** **Sim.** Com o painel fechado o caminho custa 147,8 m contra
+  119,7 m com ela aberta: há **alternativa (+23%)**, não bloqueia. Cooperar é
+  vantajoso, não obrigatório — a estrutura do `cooperative_door_bypass`.
+- **A população chega?** **20 é o valor certo**, apesar de a densidade ser 9× mais
+  esparsa (318 vs 35 m²/agente; igualar exigiria 180 agentes). Razão: `obs_dim =
+  16+(N−1)×5` **muda com N** — com 20 fica em 111 (igual aos 7 cenários, modelos
+  existentes carregam); com 40 seria 211 e PPO/SAC precisariam de arquitetura nova,
+  matando a comparação emparelhada. O custo também é super-linear (20→40 = 2,8× o
+  tempo). A esparsidade é o problema que o mapa mede, não um defeito a corrigir.
+
 ## P2 — Draft cedo ao orientador (fim de julho, NÃO esperar por 15 set)
-- [ ] Enviar a versão pós-campanha-adaptativa ao Prof. Nunes.
+
+> ⚠️ **É o item mais atrasado do plano, e o único que não depende de servidor nenhum.**
+> O pacote está PRONTO desde 24 jul — falta só o utilizador confirmar 3 pontos e enviar.
+
+- [x] **Pacote preparado (24 jul)**: PDFs datados em `out/envio_orientador_24jul2026/`
+      (tese 121 págs + artigo 10 págs, do commit `704a36e` — fontes e PDF em sincronia)
+      e o corpo do e-mail em [`EMAIL_ORIENTADOR_24jul2026.md`](EMAIL_ORIENTADOR_24jul2026.md),
+      com anexo opcional de resultados. Todos os números verificados contra `main.tex`.
+      Na tabela do anexo só vão a negrito as superioridades **significativas** — o
+      Gargalo (p=0,21), o Muro em U e a Porta c/ Alternativa (p=0,85) são empates, e
+      destacar o maior valor reintroduziria o erro que o commit `0c25d9e` corrigiu.
+- [ ] **Enviar** (falta confirmar: qual foi a última versão que o Prof. viu de facto;
+      a capa 2026; e ler o Iskandar antes da reunião — ver P3).
 - [ ] **Confirmar com o utilizador a capa: 2025→2026** (mudada a 18 jul, por confirmar).
 - [ ] Perguntar o alvo do artigo (conferência vs submissão interna) — deadlines externos
       condicionam o resto. Modelo de formato: artigo IWSSIP em
@@ -250,6 +348,9 @@ testes confirmatórios T1-T4, regra de decisão da QI6 (sobe a resultado sse: n�
 | Arquivo histórico (armadilhas na origem, tutorial servidor, cronologia) | `docs/PLANO_DE_ATAQUE.md` |
 | Plano de 15 jul (superado por este) | `docs/PLANO_ATAQUE_FINAL.md` |
 | Pré-registo da campanha adaptativa | `docs/PRE_REGISTO_NOVELTY_ADAPTATIVO.md` |
+| Pré-registo do mega-treino (P1.5) | `docs/PRE_REGISTO_MEGATREINO.md` |
+| Pré-registo do mapa grande (P1.6) | `docs/PRE_REGISTO_MAPA_GRANDE.md` |
+| Draft do e-mail ao orientador (P2) | `docs/EMAIL_ORIENTADOR_24jul2026.md` |
 | Reprodutibilidade (número → CSV → script) | `docs/REPRODUZIR.md` |
 | Proposta/cautelas do treino final + títulos do artigo | `docs/PROPOSTA_TREINO_FINAL.md` |
 | SLR (protocolo, screening, pipeline) | `docs/PROTOCOLO_SLR.md`, `docs/slr/` |
