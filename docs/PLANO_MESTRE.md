@@ -15,6 +15,63 @@
 
 ---
 
+# 0. LOG DE SESSÃO — 24 jul 2026 (Opus, PC do trabalho)
+
+> Ponto de re-entrada rápido. O detalhe de cada item está nas secções próprias
+> (P1.6 para o mapa, P2 para o orientador).
+
+**Contexto ao começar:** este PC estava 9 dias desatualizado (25 commits por
+puxar). Feito `git pull --ff-only`. **Trabalhar sempre na `main`.**
+
+**Feito hoje (10 commits, todos em `origin/main`; o último é `e053a91`):**
+1. **MAPA GRANDE — 8.º cenário, código FECHADO** (ver P1.6). Desenhado a partir
+   de um esboço do utilizador, aprovado em planta 2D e em 3D **antes** de virar
+   código, integrado como `mapa_grande` (r=60, 103×62 m, 5 zonas, 143 m de pior
+   percurso). **Nunca treinado.**
+2. **4 bugs corrigidos** — dois deles teriam invalidado a campanha inteira:
+   - `max_steps` 1200→**2000** (a 0,2 m/passo o pior spawn está a 629 passos só
+     de ida; 1200 nem dava para ida-e-volta);
+   - orçamento do GNN **195→780 min/run** (a 57 min/geração, 195 min dariam 3,4
+     gerações contra as 14 das campanhas fechadas — seria "o evolutivo falha"
+     por artefacto do orçamento);
+   - `required_to_eat` 3→**1**; `use_geodesic` sem o mapa (ficava sem campo
+     geodésico).
+   - **Bónus que afeta TODAS as campanhas:** `set_scenario` apagava os 37
+     comentários do `foraging.yaml` a cada cenário. Agora é edição cirúrgica.
+3. **`tests/test_mapa_grande.py`** — 11 testes, todos a passar. Cada um cobre um
+   modo de falha que invalidaria a campanha (determinismo, fuga de estado entre
+   cenários, porta com alternativa, obstáculos a selar corredores, `obs_dim`=111).
+4. **Pré-registo** (`PRE_REGISTO_MAPA_GRANDE.md`) escrito **antes** de qualquer
+   treino: QI7, fases F0/F1/F2, testes M1-M3, regra de decisão, modos de falha.
+5. **Pipeline de figuras** do mapa + `eval_zeroshot_mapa.py` (F1).
+6. **Pacote para o orientador PRONTO** (ver P2) — só falta enviar.
+
+**Decisões tomadas (não reabrir):**
+- **20 agentes**, não mais: `obs_dim = 16+(N-1)×5`; com 20 fica em 111 (= aos 7
+  cenários) e os modelos existentes carregam. Com 40 seria 211 e PPO/SAC
+  precisariam de arquitetura nova.
+- **Obstáculos estáticos** (decisão do utilizador).
+- **NÃO lançar F2 em paralelo com o mega-treino.** Servidor medido: 64 vCPU,
+  load 38, 42% idle — mas um treino GNN pede sempre 30 workers, e 3 streams =
+  90 processos em 64 núcleos (1,4× sobre-subscrito). O GNN faria 9,8 gerações
+  em vez de 13,7 **e** o mega-treino renderia ~30% menos e atrasaria. Poupava 4
+  dias e arriscava duas campanhas. **Esperar por ~3 ago.**
+
+**Verificado (não alterou código):** os robôs **não** passam por cima das
+paredes (teste empírico: sobem a z≈14,7 m, atravessam 0); a porta **tem
+alternativa** (+23%, não bloqueia); os 7 cenários da tese ficaram intactos.
+
+**Primeiro sinal do zero-shot (F1, 2 de 21 células — NÃO é conclusão):** o GNN
+do **Sandbox** faz 14-20 recolhas/ep no mapa novo sem lá ter treinado (10/10
+episódios); o do **Quatro Salas** faz 0. Se se confirmar, é especialização vs
+generalização — boa matéria de discussão.
+
+**Próximo passo, por urgência:** (1) **enviar o draft ao orientador** — é o item
+mais atrasado e o único que não depende de servidor; (2) F1 zero-shot (local,
+opcional); (3) F2 no servidor depois de ~3 ago.
+
+---
+
 # 1. REGRAS INVIOLÁVEIS (do utilizador — não negociar)
 
 1. Responder e escrever sempre em **PT-PT** (com todos os acentos).
