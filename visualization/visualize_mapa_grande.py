@@ -66,7 +66,16 @@ def main(args):
     app = Ursina()
     window.title = f'Swarm 3D - MAPA GRANDE (rascunho) - r={raio:.0f} m'
     window.color = color.rgb(15, 18, 22)          # igual ao main_visualizer
-    EditorCamera()                                 # câmara livre, a de sempre
+
+    # Câmara livre — IGUAL à dos outros mapas. O EditorCamera é uma entidade-pivô:
+    # orbita à volta da SUA posição e o zoom aproxima/afasta ao longo de camera.z.
+    # Enquadra-se movendo o PIVÔ e definindo a distância; mexer em camera.position
+    # ou camera.rotation à mão descoordena-o do seu estado interno e os controlos
+    # ficam trocados (o zoom deixa de ampliar para onde se olha). Foi o que
+    # aconteceu na 1ª versão — daí só se passarem parâmetros ao construtor.
+    editor_cam = EditorCamera(rotation=(45, 0, 0))
+    editor_cam.position = (0, 0, 0)               # orbita à volta do centro do mapa
+    camera.z = -raio * 2.2                        # distância inicial: mapa todo à vista
 
     DirectionalLight(y=2, z=-3, shadows=True, rotation=(45, -45, 45))
     AmbientLight(color=color.rgba(120, 120, 120, 0.3))
@@ -109,16 +118,15 @@ def main(args):
                    scale=ROBOT_RADIUS * 2,
                    position=(float(p[0]), float(p[1]), -0.15))
 
-    # Vista de topo inicial: o mapa inteiro à vista (o EditorCamera assume a
-    # partir daqui — arrastar orbita, roda faz zoom).
-    camera.position = (0, -raio * 0.35, -raio * 1.9)
-    camera.rotation = (-70, 0, 0)
-
     Text(text=f'MAPA GRANDE (rascunho)  ·  arena r={raio:.0f} m  ·  '
               f'labirinto {W:.0f}x{H:.0f} m  ·  paredes {altura:.1f} m\n'
               f'{"sem robos" if args.sem_robos else f"{NUM_AGENTS} robos (raio real 0,15 m)"}'
               f'  ·  cena PARADA: so geometria, sem simulacao',
          position=(-0.86, 0.47), scale=0.7, color=color.hsv(0, 0, 0.75))
+
+    Text(text='BOTAO DIREITO arrasta = rodar  ·  RODA = zoom  ·  '
+              'BOTAO DO MEIO arrasta = deslocar  ·  F = focar onde o rato aponta',
+         position=(-0.86, -0.45), scale=0.65, color=color.hsv(0, 0, 0.55))
 
     print(f'[OK] mapa grande r={raio:.0f} | labirinto {W:.1f}x{H:.1f} | '
           f'{len(walls)} paredes | altura {altura:.1f} m')
