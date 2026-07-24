@@ -20,6 +20,12 @@ environment:
   max_steps: 500
   max_steps_cooperative_door: 800
   max_steps_cooperative_door_bypass: 1000
+  # mapa_grande: percurso ~4x mais longo (143 m de pior caso contra 34 m do
+  # Quatro Salas) -> precisa de episodios proporcionalmente maiores. A arena
+  # tambem e maior, e SO neste cenario (arena_radius_mapa_grande): mexer no
+  # arena_radius global alteraria os 7 cenarios das campanhas ja fechadas.
+  max_steps_mapa_grande: 1200
+  arena_radius_mapa_grande: 60.0
   min_spread_distance: 1.0
   nest_radius: 1.5
   nest_velocity: 0.015

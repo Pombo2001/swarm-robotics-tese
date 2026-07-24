@@ -5,6 +5,8 @@ import yaml
 import os
 import heapq
 
+from src.scenarios import MAZE_SCENARIOS
+
 # ── Porta cooperativa (cenários cooperative_door / cooperative_door_bypass) ──
 # A "porta" é um painel (parede normal para física/LiDAR) que fecha a abertura
 # de 3 m no centro da barreira em y=0. Abre-se quando DOOR_PUSHERS_REQUIRED
@@ -12,7 +14,7 @@ import heapq
 # abertura) — nesse momento o painel é removido e cada agente que empurrou
 # recebe DOOR_OPEN_REWARD. No campo geodésico a porta é sempre PASSÁVEL, para o
 # gradiente de progresso apontar para a push zone (o objetivo do cenário).
-DOOR_SCENARIOS = ("cooperative_door", "cooperative_door_bypass")
+DOOR_SCENARIOS = ("cooperative_door", "cooperative_door_bypass", "mapa_grande")
 DOOR_POS = (0.0, 0.0, 0.0)          # centro da abertura na barreira
 DOOR_SIZE = (3.0, 2.0, 30.0)        # painel: largura 3 m (= abertura) × espessura 2 m
 DOOR_PUSH_HALF_WIDTH = 1.5          # push zone: |x| < 1.5 (largura da porta)
@@ -74,6 +76,16 @@ class SwarmForagingEnv3D(gym.Env):
             self.max_steps_override['cooperative_door'] = env_config['max_steps_cooperative_door']
         if 'max_steps_cooperative_door_bypass' in env_config:
             self.max_steps_override['cooperative_door_bypass'] = env_config['max_steps_cooperative_door_bypass']
+        if 'max_steps_mapa_grande' in env_config:
+            self.max_steps_override['mapa_grande'] = env_config['max_steps_mapa_grande']
+
+        # O mapa_grande precisa de uma arena maior (r=60 vs 15). É um override
+        # POR CENÁRIO e não uma mudança do arena_radius global — mexer no global
+        # alteraria os 7 cenários das campanhas fechadas (spawn, normalização das
+        # observações, grelha geodésica), invalidando resultados já na tese.
+        self.arena_radius_base = self.arena_radius
+        self.arena_radius_mapa_grande = env_config.get(
+            'arena_radius_mapa_grande', self.MAPA_GRANDE_RADIUS)
 
         # ── Campo geodésico (BFS/Dijkstra) para o progress reward ────────────
         # Em cenários com paredes, a distância euclidiana ao ninho cria mínimos
@@ -128,6 +140,14 @@ class SwarmForagingEnv3D(gym.Env):
         self.door_wall_index = None    # índice do painel em self.walls (se fechada)
         self.door_pos = np.zeros(3, dtype=np.float32)
         self.door_size = np.array(DOOR_SIZE)
+        # Push zone POR INSTÂNCIA (x_min, x_max, y_min, y_max) + o seu centro.
+        # Era fixa nas constantes DOOR_PUSH_*, o que assumia a barreira horizontal
+        # em (0,0) dos cenários cooperativos. O mapa grande tem a porta numa parede
+        # VERTICAL e noutro sítio, logo a zona tem de acompanhar a porta. Os valores
+        # por omissão são exatamente os das constantes — os 7 cenários não mudam.
+        self.door_push_bounds = (-DOOR_PUSH_HALF_WIDTH, DOOR_PUSH_HALF_WIDTH,
+                                 DOOR_PUSH_Y_MIN, DOOR_PUSH_Y_MAX)
+        self.door_push_center = np.array(DOOR_PUSH_CENTER, dtype=np.float64)
 
     def _get_scenario_spawn_pos(self):
         max_attempts = 50
@@ -154,6 +174,14 @@ class SwarmForagingEnv3D(gym.Env):
                     pos = np.array([np.random.uniform(-10, -2), np.random.uniform(2, 10), 0.0])
                 else:              # SE
                     pos = np.array([np.random.uniform(2, 10), np.random.uniform(-10, -2), 0.0])
+            elif self.classic_scenario == "mapa_grande":
+                # Espalhados pela sala de partida (zona S, oeste). Nascem
+                # separados de propósito: amontoados, a separação física
+                # empurrava-os logo no primeiro passo.
+                W, H, x0, x1, y0, y1 = self._mapa_grande_dims()
+                cx = x0 + 0.10 * W
+                pos = np.array([np.random.uniform(cx - 0.075 * W, cx + 0.075 * W),
+                                np.random.uniform(-0.12 * H, 0.12 * H), 0.0])
             elif self.classic_scenario in DOOR_SCENARIOS:
                 # South of the horizontal barrier (barrier covers y -1 to 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
@@ -189,6 +217,12 @@ class SwarmForagingEnv3D(gym.Env):
         self.walls = []
 
         self.classic_scenario = self.config['environment'].get('classic_scenario', 'none')
+
+        # Arena por cenário: o mapa_grande corre a r=60, todos os outros ficam
+        # com o raio do config (15). Ver arena_radius_mapa_grande no __init__.
+        self.arena_radius = (self.arena_radius_mapa_grande
+                             if self.classic_scenario == "mapa_grande"
+                             else self.arena_radius_base)
 
         # Porta cooperativa: estado limpo a cada episódio (o spawn do cenário
         # volta a fechá-la via _add_cooperative_door).
@@ -239,6 +273,17 @@ class SwarmForagingEnv3D(gym.Env):
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
             self._spawn_obstacles_cooperative_door_bypass()
 
+        elif self.classic_scenario == "mapa_grande":
+            # Labirinto composto (5 zonas). Ninho na câmara D, a este; os agentes
+            # nascem na sala de partida S, a oeste — o percurso mais longo do
+            # projeto (~143 m contra 34 m do Quatro Salas).
+            W, H, x0, x1, y0, y1 = self._mapa_grande_dims()
+            self.nest_pos = np.array([x1 - 0.05 * W, 0.0, 0.0])
+            self.nest_velocity = np.zeros(3)
+            self.agent_positions = np.array([self._get_scenario_spawn_pos()
+                                             for _ in range(self.num_agents)])
+            self._spawn_obstacles_mapa_grande()
+
         elif self.classic_scenario == "cooperative_perception":
             # O "ninho" é o Alvo Móvel neste cenário
             self.nest_pos = self._random_spawn(max_radius=0.7)
@@ -256,9 +301,11 @@ class SwarmForagingEnv3D(gym.Env):
         # Cenários com paredes e ninho estático usam o campo geodésico no progress
         # reward (elimina o mínimo local). Os restantes (sandbox, perceção
         # cooperativa) têm ninho móvel e sem paredes → euclidiano basta.
-        self.use_geodesic = self.classic_scenario in (
-            "u_wall", "bottleneck", "four_rooms", "cooperative_door",
-            "cooperative_door_bypass")
+        # Lista vinda de src/scenarios.py (MAZE_SCENARIOS) em vez de escrita à
+        # mão: estava duplicada aqui e o mapa_grande, ao ser acrescentado, ficou
+        # SEM campo geodésico — os agentes cair-se-iam no mínimo local que o
+        # geodésico existe para eliminar, num mapa de 143 m de percurso.
+        self.use_geodesic = self.classic_scenario in MAZE_SCENARIOS
         if self.use_geodesic:
             self._build_geodesic_field()
 
@@ -354,6 +401,123 @@ class SwarmForagingEnv3D(gym.Env):
             {'pos': np.array([0.0, 12.8375, 0.0]), 'size': np.array([1.5, 4.325, 30.0])}
         ]
 
+    # ------------------------------------------------------------------
+    # MAPA GRANDE (mapa_grande) — labirinto composto, arena r=60
+    # ------------------------------------------------------------------
+    # Junta num só mapa as dificuldades já validadas nos 7 cenários, a uma escala
+    # ~4x maior (pior percurso 143 m vs 34 m do Quatro Salas). Cinco zonas de
+    # oeste para este: S sala de partida (aberta, com obstáculos) · A gargalo +
+    # beco em U · B quatro salas · C porta cooperativa + alternativa longa ·
+    # D câmara do ninho. Geometria desenhada e aprovada em planta 2D/3D antes de
+    # entrar aqui (scripts/preview_mapa_grande.py, visualize_mapa_grande.py).
+    #
+    # A proporção é 5:3 inscrita no círculo (W=5k, H=3k, W²+H²=(2R)² → k=2R/√34).
+    # As aberturas de zonas contíguas estão DESLOCADAS umas das outras de
+    # propósito: alinhadas, anulavam-se e o mapa ficava intransponível (bug
+    # apanhado na planta 2D antes de existir código).
+    MAPA_GRANDE_RADIUS = 60.0
+
+    def _mapa_grande_dims(self):
+        """(W, H, x0, x1, y0, y1) do retângulo útil, a partir do raio da arena."""
+        k = 2 * self.arena_radius / np.sqrt(34)
+        W, H = 5 * k, 3 * k
+        return W, H, -W / 2, W / 2, -H / 2, H / 2
+
+    def _spawn_obstacles_mapa_grande(self):
+        """Paredes das 5 zonas + obstáculos dispersos (com clareira no spawn)."""
+        t = 1.5      # espessura (a mesma do four_rooms)
+        ab = 2.5     # abertura das passagens (a mesma, alargada em 22 jun)
+        W, H, x0, x1, y0, y1 = self._mapa_grande_dims()
+
+        def parede(cx, cy, sx, sy):
+            return {'pos': np.array([cx, cy, 0.0]),
+                    'size': np.array([sx, sy, 30.0])}
+
+        self.walls = [
+            parede(0, y1, W, t), parede(0, y0, W, t),      # fronteira N/S
+            parede(x0, 0, t, H), parede(x1, 0, t, H),      # fronteira O/E
+        ]
+
+        # --- ZONA S: sala de partida (aberta) → saída ampla, 2x abertura -----
+        xs = x0 + 0.20 * W
+        s_baixo = -ab - y0
+        s_cima = y1 - ab
+        self.walls += [parede(xs, y0 + s_baixo / 2, t, s_baixo),
+                       parede(xs, y1 - s_cima / 2, t, s_cima)]
+
+        # --- ZONA A: gargalo (abertura a sul) + beco em U --------------------
+        xa = x0 + 0.42 * W
+        y_g = -H / 4
+        b_baixo = (y_g - ab / 2) - y0
+        b_cima = y1 - (y_g + ab / 2)
+        self.walls += [parede(xa, y0 + b_baixo / 2, t, b_baixo),
+                       parede(xa, y1 - b_cima / 2, t, b_cima)]
+        ux, uy = x0 + 0.315 * W, H * 0.14
+        uw, uh = 0.085 * W, 0.30 * H
+        self.walls += [parede(ux - uw / 2, uy, t, uh),
+                       parede(ux, uy + uh / 2, uw, t),
+                       parede(ux, uy - uh / 2, uw, t)]
+
+        # --- ZONA B: quatro salas (cruz; abertura vertical a norte) ----------
+        xb = x0 + 0.63 * W
+        y_pb = H / 4
+        c_baixo = (y_pb - ab / 2) - y0
+        c_cima = y1 - (y_pb + ab / 2)
+        self.walls += [parede(xb, y0 + c_baixo / 2, t, c_baixo),
+                       parede(xb, y1 - c_cima / 2, t, c_cima)]
+        segh = ((xb - xa) - ab) / 2
+        self.walls += [parede(xa + segh / 2, 0.0, segh, t),
+                       parede(xb - segh / 2, 0.0, segh, t)]
+
+        # --- ZONA C: porta cooperativa + alternativa longa a norte -----------
+        xc = x0 + 0.82 * W
+        porta_h, alt_h = 3.0, 4.0
+        b1 = (-porta_h / 2) - y0
+        self.walls.append(parede(xc, y0 + b1 / 2, t, b1))
+        b2 = (y1 - alt_h) - (porta_h / 2)
+        self.walls.append(parede(xc, porta_h / 2 + b2 / 2, t, b2))
+        self.walls.append(parede(xc + 0.07 * W, y1 - alt_h - t, 0.14 * W, t))
+
+        # A porta é VERTICAL e está em (xc, 0) — não a barreira horizontal em
+        # (0,0) dos cenários cooperativos. Por isso a push zone é redefinida:
+        # faixa imediatamente a OESTE da porta (o lado por onde o enxame chega).
+        self.door_pos = np.array([xc, 0.0, 0.0], dtype=np.float32)
+        self.door_size = np.array([2.0, porta_h, 30.0])
+        self.door_push_bounds = (xc - 2.0, xc - 0.1, -porta_h / 2, porta_h / 2)
+        self.door_push_center = np.array([xc - 1.0, 0.0, 0.0])
+
+        # --- Obstáculos dispersos (esferas com colisão, como nos outros) -----
+        self.obstacles = []
+        self.obstacle_velocities = []
+        n = int(60 * (self.arena_radius / 45.0) ** 2)
+        folga = ab / 2 + self.obstacle_radius
+        spawn_c = np.array([x0 + 0.10 * W, 0.0])
+        raio_clareira = 0.085 * W     # os robôs nascem aqui: deixar livre
+        tentativas = 0
+        while len(self.obstacles) < n and tentativas < n * 400:
+            tentativas += 1
+            if np.random.rand() < 0.40:      # 40% na sala de partida
+                p = np.array([np.random.uniform(x0 + 1.5, xs - 1.5),
+                              np.random.uniform(y0 + 1.5, y1 - 1.5), 0.0])
+            else:                            # 60% pelo resto do labirinto
+                p = np.array([np.random.uniform(xs + 1.5, x1 - 1.5),
+                              np.random.uniform(y0 + 1.5, y1 - 1.5), 0.0])
+            if np.linalg.norm(p[:2]) > self.arena_radius - 1.0:
+                continue
+            if np.linalg.norm(p[:2] - spawn_c) < raio_clareira:
+                continue
+            # Nunca dentro de paredes NEM encostado: um obstáculo a menos de
+            # meia-abertura podia selar um corredor de 2,5 m.
+            if any(np.all(np.abs(p - w['pos']) < w['size'] / 2 + folga)
+                   for w in self.walls):
+                continue
+            if any(np.linalg.norm(p - q) < 1.2 for q in self.obstacles):
+                continue
+            self.obstacles.append(p)
+            self.obstacle_velocities.append(np.zeros(3))  # estáticos
+
+        self._add_cooperative_door()
+
     def _add_cooperative_door(self):
         """Fecha a abertura da barreira com o painel da porta cooperativa.
 
@@ -361,8 +525,12 @@ class SwarmForagingEnv3D(gym.Env):
         _update_door quando DOOR_PUSHERS_REQUIRED agentes ocupam a push zone.
         """
         self.door_active = True
-        self.door_pos = np.array(DOOR_POS, dtype=np.float32)
-        self.door_size = np.array(DOOR_SIZE)
+        # O mapa_grande define door_pos/door_size (porta VERTICAL, noutro sítio)
+        # no seu próprio _spawn_obstacles_*; os cenários cooperativos usam as
+        # constantes de sempre — a barreira horizontal em (0,0).
+        if self.classic_scenario != "mapa_grande":
+            self.door_pos = np.array(DOOR_POS, dtype=np.float32)
+            self.door_size = np.array(DOOR_SIZE)
         self.door_wall_index = len(self.walls)
         self.walls.append({'pos': self.door_pos.copy(), 'size': self.door_size})
 
@@ -409,8 +577,8 @@ class SwarmForagingEnv3D(gym.Env):
             if self.failed[i]:
                 continue
             pos = self.agent_positions[i]
-            if (-DOOR_PUSH_HALF_WIDTH < pos[0] < DOOR_PUSH_HALF_WIDTH
-                    and DOOR_PUSH_Y_MIN < pos[1] < DOOR_PUSH_Y_MAX):
+            x_min, x_max, y_min, y_max = self.door_push_bounds
+            if x_min < pos[0] < x_max and y_min < pos[1] < y_max:
                 pushers.append(i)
 
         if len(pushers) < DOOR_PUSHERS_REQUIRED:
@@ -888,7 +1056,7 @@ class SwarmForagingEnv3D(gym.Env):
 
         coop_points = [self.nest_pos]
         if self.has_door:
-            coop_points.append(np.array(DOOR_PUSH_CENTER))  # centro da push zone
+            coop_points.append(self.door_push_center)  # centro da push zone
         coop_zone = 4.0
         in_coop_zone = np.zeros(self.num_agents, dtype=bool)
         for idx in range(self.num_agents):

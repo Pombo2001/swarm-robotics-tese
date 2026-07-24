@@ -30,6 +30,22 @@ with open(CONFIG, "r") as f:
 PUSH_SPOTS = np.array([[0.6, -1.0, 0.0], [0.0, -1.2, 0.0], [-0.6, -0.8, 0.0]])
 
 
+def push_spots(env, n=3):
+    """n pontos DENTRO da push zone do ambiente, derivados de door_push_bounds.
+
+    Antes o teste usava só os PUSH_SPOTS fixos acima, que assumem a barreira
+    horizontal em (0,0) dos cenários cooperativos. O mapa_grande tem a porta
+    numa parede VERTICAL e noutro sítio, logo esses pontos caem fora da zona e
+    a porta nunca abriria. Derivar da zona real testa qualquer cenário com porta.
+    """
+    x_min, x_max, y_min, y_max = env.door_push_bounds
+    cx, cy = (x_min + x_max) / 2, (y_min + y_max) / 2
+    dx, dy = (x_max - x_min) / 2, (y_max - y_min) / 2
+    # espalhados dentro da zona, com folga para a fronteira
+    offs = [(-0.4, 0.4), (0.0, 0.0), (0.4, -0.4)]
+    return np.array([[cx + ox * dx, cy + oy * dy, 0.0] for ox, oy in offs[:n]])
+
+
 def make_env(scenario):
     cfg = copy.deepcopy(BASE_CFG)
     cfg["environment"]["classic_scenario"] = scenario
@@ -65,8 +81,9 @@ def test_abre_remove_e_recompensa():
     for scen in DOOR_SCENARIOS:
         env = make_env(scen)
         n_walls = len(env.walls)
-        env.agent_positions[:3] = PUSH_SPOTS.copy()
-        env.agent_positions[3:, 1] = -8.0
+        env.agent_positions[:3] = push_spots(env)
+        # afastar os restantes da push zone (para lá do limite da zona)
+        env.agent_positions[3:, 1] = env.door_push_bounds[2] - 6.0
         _, rewards, *_ = env.step(zero_actions(env))
         assert not env.door_active, scen
         assert len(env.walls) == n_walls - 1, f"{scen}: painel não removido"

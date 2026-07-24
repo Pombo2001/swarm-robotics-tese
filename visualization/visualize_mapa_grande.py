@@ -1,19 +1,18 @@
 """
-visualize_mapa_grande.py — MAPA GRANDE (rascunho) no visualizador Ursina
-=======================================================================
+visualize_mapa_grande.py — MAPA GRANDE no visualizador Ursina
+=============================================================
 MESMO visualizador dos outros mapas: Ursina, `EditorCamera()` (câmara livre),
 as mesmas cores e a mesma convenção de eixos do `main_visualizer.py`. Um só
 visualizador = um só sítio onde pode haver bugs.
 
-Diferença face ao `main_visualizer.py`: aqui NÃO há modelo nem simulação — só a
-geometria, parada, para se julgar tamanho e aspeto. Os robôs estão pousados no
-spawn, o ninho está quieto e nada se mexe. É de propósito: o mapa ainda não
-existe no simulador (a geometria vive em `scripts/preview_mapa_grande.py` até
-ser aprovada), portanto não há nada para simular.
+A geometria vem do AMBIENTE (`classic_scenario: mapa_grande`), não de um
+rascunho à parte: paredes, porta, ninho, spawn e obstáculos são exatamente os
+que os robôs vão treinar.
 
-Quando o mapa for aprovado, isto deixa de ser preciso: a geometria passa a um
-`_spawn_obstacles_mapa_grande()` no ambiente e o mapa abre-se pelo visualizador
-normal, como qualquer outro cenário.
+Diferença face ao `main_visualizer.py`: aqui não se carrega modelo nem se
+simula — a cena está PARADA, para se inspecionar o mapa (é para isso que serve).
+Para ver agentes treinados a mexer neste mapa, usa o visualizador normal com
+`--scenario mapa_grande`, como em qualquer outro cenário.
 
 Uso:
     .venv/Scripts/python.exe visualization/visualize_mapa_grande.py
@@ -21,7 +20,7 @@ Uso:
     .venv/Scripts/python.exe visualization/visualize_mapa_grande.py --wall-height 8
 """
 import argparse
-import importlib.util
+
 import os
 import sys
 
@@ -48,25 +47,42 @@ NUM_AGENTS = 20
 
 
 def _geometria(raio):
-    """Importa a geometria do rascunho por caminho (scripts/ não é um pacote).
-    A fonte das paredes é UMA só — não se duplicam aqui."""
-    caminho = os.path.join(PROJECT_ROOT, 'scripts', 'preview_mapa_grande.py')
-    spec = importlib.util.spec_from_file_location('preview_mapa_grande', caminho)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    walls, porta, (W, H) = mod.build_walls(raio)
-    spawn, ninho = mod.spawn_e_ninho(raio)
-    obs = mod.obstaculos(raio, walls)
-    return walls, porta, ninho, spawn, obs, (W, H)
+    """Geometria vinda do AMBIENTE REAL (`classic_scenario: mapa_grande`).
+
+    Enquanto o mapa era rascunho, isto lia de `scripts/preview_mapa_grande.py`.
+    Agora que está integrado, lê do simulador: o que se vê aqui é exatamente o
+    que os robôs vão treinar — paredes, porta, ninho, spawn e obstáculos. Sem
+    duas fontes, não há divergência possível.
+    """
+    import copy
+    import yaml
+    from src.environment.swarm_env_3d import SwarmForagingEnv3D
+
+    with open(os.path.join(PROJECT_ROOT, 'configs', 'foraging.yaml')) as f:
+        cfg = yaml.safe_load(f)
+    cfg = copy.deepcopy(cfg)
+    cfg['environment']['classic_scenario'] = 'mapa_grande'
+    cfg['environment']['arena_radius_mapa_grande'] = raio
+
+    env = SwarmForagingEnv3D(config=cfg)
+    np.random.seed(7)
+    env.reset(seed=7)
+
+    W = 5 * (2 * raio / np.sqrt(34))
+    H = 3 * (2 * raio / np.sqrt(34))
+    porta = ({'pos': env.door_pos, 'size': env.door_size}
+             if env.door_active else None)
+    return (env.walls, porta, env.nest_pos[:2], env.agent_positions,
+            [o[:2] for o in env.obstacles], (W, H), env)
 
 
 def main(args):
     raio = args.radius
     altura = max(0.4, args.wall_height)
-    walls, porta, ninho, spawn, obs, (W, H) = _geometria(raio)
+    walls, porta, ninho, posicoes, obs, (W, H), env = _geometria(raio)
 
     app = Ursina()
-    window.title = f'Swarm 3D - MAPA GRANDE (rascunho) - r={raio:.0f} m'
+    window.title = f'Swarm 3D - MAPA GRANDE - r={raio:.0f} m'
     window.color = color.rgb(15, 18, 22)          # igual ao main_visualizer
 
     # Câmara livre — IGUAL à dos outros mapas. O EditorCamera é uma entidade-pivô:
@@ -92,15 +108,17 @@ def main(args):
     # Paredes. No main_visualizer são achatadas (0.4) porque a câmara olha de
     # cima para a simulação; aqui a altura é ajustável para se julgar o volume
     # do labirinto — no ambiente elas são intransponíveis de qualquer maneira.
-    for w in walls:
-        Entity(model='cube', color=color.hsv(215, 0.3, 0.6), texture='white_cube',
-               scale=(float(w['size'][0]), float(w['size'][1]), altura),
-               position=(float(w['pos'][0]), float(w['pos'][1]), -altura / 2))
-
-    # Porta cooperativa: amarela, como fica no main_visualizer ao abrir.
-    Entity(model='cube', color=color.hsv(45, 0.9, 1.0), texture='white_cube',
-           scale=(float(porta['size'][0]), float(porta['size'][1]), altura * 0.55),
-           position=(float(porta['pos'][0]), float(porta['pos'][1]), -altura * 0.275))
+    # O painel da porta JÁ vem dentro de env.walls (índice door_wall_index) —
+    # pinta-se de amarelo em vez de se desenhar uma segunda caixa por cima.
+    idx_porta = env.door_wall_index
+    for i, w in enumerate(walls):
+        e_porta = (i == idx_porta)
+        Entity(model='cube', texture='white_cube',
+               color=color.hsv(45, 0.9, 1.0) if e_porta else color.hsv(215, 0.3, 0.6),
+               scale=(float(w['size'][0]), float(w['size'][1]),
+                      altura * (0.55 if e_porta else 1.0)),
+               position=(float(w['pos'][0]), float(w['pos'][1]),
+                         -altura * (0.275 if e_porta else 0.5)))
 
     # Ninho (esfera + halo), igual ao main_visualizer.
     Entity(model='sphere', color=color.hsv(130, 0.8, 0.9), scale=NEST_RADIUS * 2,
@@ -120,27 +138,20 @@ def main(args):
     # primeiro passo). O main_visualizer usa model='cylinder', mas este Ursina
     # (8.3.0) não traz esse modelo — dá "warning: missing model" e a entidade
     # fica invisível. Usa-se 'sphere', que existe.
+    # Posições REAIS do spawn do ambiente (env.agent_positions após reset), não
+    # uma amostragem à parte: é onde os robôs vão mesmo nascer.
     if not args.sem_robos:
-        rng = np.random.default_rng(7)
-        postos = []
-        while len(postos) < NUM_AGENTS:
-            p = spawn + rng.uniform(-0.075 * W, 0.075 * W, 2) * np.array([1.0, 1.6])
-            if any(np.linalg.norm(p - q) < 1.6 for q in postos):
-                continue
-            if len(obs) and min(np.linalg.norm(obs - p, axis=1)) < 1.2:
-                continue
-            postos.append(p)
-        for p in postos:
+        for p in posicoes:
             Entity(model='sphere', color=color.hsv(210, 0.9, 0.9),
                    scale=ROBOT_RADIUS * 2,
                    position=(float(p[0]), float(p[1]), -0.15))
 
-    Text(text=f'MAPA GRANDE (rascunho)  ·  arena r={raio:.0f} m  ·  '
+    Text(text=f'MAPA GRANDE  ·  arena r={raio:.0f} m  ·  '
               f'labirinto {W:.0f}x{H:.0f} m  ·  paredes {altura:.1f} m\n'
               f'5 zonas: S partida · A gargalo+U · B 4 salas · C porta coop. · D ninho'
               f'  ·  {len(obs)} obstaculos\n'
               f'{"sem robos" if args.sem_robos else f"{NUM_AGENTS} robos (raio real 0,15 m)"}'
-              f'  ·  cena PARADA: so geometria, sem simulacao',
+              f'  ·  cena PARADA (geometria do ambiente real)',
          position=(-0.86, 0.47), scale=0.7, color=color.hsv(0, 0, 0.75))
 
     Text(text='BOTAO DIREITO arrasta = rodar  ·  RODA = zoom  ·  '

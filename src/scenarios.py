@@ -13,11 +13,22 @@ mas NUNCA avaliado nem aparecer em heatmaps/robustez. Importar SEMPRE daqui.
 SCENARIOS = [
     "none", "u_wall", "bottleneck", "four_rooms",
     "cooperative_door", "cooperative_perception", "cooperative_door_bypass",
+    "mapa_grande",
+]
+
+# Os 7 cenários das campanhas fechadas da tese. Deliberadamente separado de
+# SCENARIOS: o mapa_grande é o 8.º e ainda NÃO tem campanha avaliada, por isso
+# não deve entrar em tabelas de resultados nem em baterias de avaliação até ter
+# dados — apareceria como célula vazia (ou, pior, calada).
+THESIS_SCENARIOS = [
+    "none", "u_wall", "bottleneck", "four_rooms",
+    "cooperative_door", "cooperative_perception", "cooperative_door_bypass",
 ]
 
 # Cenários com paredes / campo geodésico (usados p.ex. no heatmap geodésico).
 MAZE_SCENARIOS = [
     "u_wall", "bottleneck", "four_rooms", "cooperative_door", "cooperative_door_bypass",
+    "mapa_grande",
 ]
 
 # Rótulos descritivos — para títulos de figuras e tabelas.
@@ -29,6 +40,7 @@ SCENARIO_LABELS = {
     "cooperative_door": "Porta Cooperativa (3 Robôs)",
     "cooperative_perception": "Perceção Cooperativa (Alvo Móvel)",
     "cooperative_door_bypass": "Porta Cooperativa c/ Alternativa",
+    "mapa_grande": "Mapa Grande (Labirinto Composto)",
 }
 
 # Rótulos curtos — para eixos/legendas apertadas.
@@ -40,6 +52,7 @@ SCENARIO_LABELS_SHORT = {
     "cooperative_door": "Porta Cooperativa",
     "cooperative_perception": "Perceção Cooperativa",
     "cooperative_door_bypass": "Porta Coop. c/ Alternativa",
+    "mapa_grande": "Mapa Grande",
 }
 
 ALGO_LABELS = {"gnn": "GNN (Evolutivo)", "ppo": "PPO", "sac": "SAC"}
