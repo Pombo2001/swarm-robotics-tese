@@ -45,6 +45,29 @@ puxar). Feito `git pull --ff-only`. **Trabalhar sempre na `main`.**
    treino: QI7, fases F0/F1/F2, testes M1-M3, regra de decisão, modos de falha.
 5. **Pipeline de figuras** do mapa + `eval_zeroshot_mapa.py` (F1).
 6. **Pacote para o orientador PRONTO** (ver P2) — só falta enviar.
+7. **Segunda auditoria ao mapa, ao fim do dia (Opus 5)** — o F1 tinha sido
+   interrompido por falha de energia (2 de 21 células); em vez de o repetir,
+   revisão estática do que ficou escrito. Emendas datadas na secção 7 do
+   `PRE_REGISTO_MAPA_GRANDE.md`:
+   - **Confundente da normalização da observação** (o único com consequência
+     científica): as distâncias são normalizadas pelo raio da arena, logo o
+     mesmo campeão vê tudo **comprimido 4×** no mapa (÷120 vs ÷30). Um zero no
+     zero-shot admitia duas causas — topologia difícil ou observação fora de
+     escala. F1 passa a correr em **duas condições** (`--norm-obs mapa|treino`),
+     com leitura pré-comprometida. Nos 7 cenários nada muda (bit-a-bit).
+   - **Obstáculo dentro da zona de recolha em 24% dos episódios** (o disco livre
+     à volta do ninho, que o `_spawn_obstacles` genérico tem, faltava aqui) e
+     **0,2% dos agentes a nascer dentro de um obstáculo** (a clareira de spawn
+     era um círculo menor que a diagonal da caixa). Ambos são variância de
+     layout sorteada por episódio, que a avaliação emparelhada não cancela.
+   - **`eval_zeroshot_mapa.py` dizia-se retomável e não era**: ao recomeçar
+     escrevia por cima do CSV. Agora salta as células completas e guarda uma
+     impressão digital do ambiente — dados de um mapa anterior nunca se
+     misturam com os novos.
+   - **`set_scenario` engolia exceções**: se a troca de cenário falhasse, a
+     campanha seguia a treinar o cenário **anterior** e a gravar com o sufixo do
+     novo, sem erro. Passa a rebentar.
+   - 14/14 testes do mapa (3 novos) e as 5 suites antigas a passar.
 
 **Decisões tomadas (não reabrir):**
 - **20 agentes**, não mais: `obs_dim = 16+(N-1)×5`; com 20 fica em 111 (= aos 7

@@ -32,6 +32,13 @@ environment:
   # mesma folga (3,2x sobre a ida) que o Quatro Salas tem com 500.
   max_steps_mapa_grande: 2000
   arena_radius_mapa_grande: 60.0
+  # obs_norm_radius (NAO definido de proposito): raio que normaliza as
+  # distancias da observacao. Por omissao e o raio da arena do cenario -- o que
+  # significa que o mapa_grande comprime todas as distancias 4x face aos 7
+  # cenarios (/120 em vez de /30). Isso e um CONFUNDENTE do zero-shot de
+  # topologia, tratado com uma condicao de controlo em
+  # scripts/eval_zeroshot_mapa.py --norm-obs treino (ver o pre-registo, sec. 3).
+  # Defini-lo aqui mudaria TODOS os cenarios: nao definir.
   min_spread_distance: 1.0
   nest_radius: 1.5
   nest_velocity: 0.015

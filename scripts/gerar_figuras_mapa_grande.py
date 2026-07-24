@@ -141,6 +141,18 @@ def figs_zeroshot(mapa):
         return
     df = pd.read_csv(fp)
 
+    # O CSV pode conter as DUAS condições de normalização da observação (ver
+    # eval_zeroshot_mapa.py --norm-obs). Misturá-las num só gráfico faria a média
+    # de duas experiências diferentes, e a figura não daria sinal disso.
+    if "NormObs" in df.columns:
+        cond = sorted(df["NormObs"].unique())
+        df = df[df["NormObs"] == "mapa"]
+        if df.empty:
+            print("[--] só há dados da condição de CONTROLO — figuras de zero-shot saltadas.")
+            return
+        if len(cond) > 1:
+            print(f"[i] condições no CSV: {cond} — as figuras usam a natural ('mapa').")
+
     piv = (df.groupby(["Origem", "Algorithm"])["food_collected"].mean()
            .unstack("Algorithm").reindex(columns=ALGOS))
     piv.index = [SCENARIO_LABELS_SHORT.get(i, i) for i in piv.index]

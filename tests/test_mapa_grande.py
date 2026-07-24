@@ -247,12 +247,78 @@ def test_robustez_ligavel():
     print(f"OK  Rrobust: {e.failed.sum()}/{e.num_agents} agentes falham a meio")
 
 
+def test_ninho_desimpedido():
+    """Nenhum obstáculo dentro da zona de recolha. Um obstáculo sorteado em cima
+    do ninho estorva a entrega em alguns episódios e não noutros: ruído entre
+    runs que a avaliação emparelhada NÃO cancela (o layout muda com a seed)."""
+    e = make_env()
+    piores = []
+    for seed in range(30):
+        e.reset(seed=seed)
+        d = min(np.linalg.norm(np.asarray(o) - e.nest_pos) for o in e.obstacles)
+        piores.append(d)
+    minimo = e.nest_radius + e.obstacle_radius
+    assert min(piores) > minimo, (
+        f"obstáculo a {min(piores):.2f} m do ninho (zona de recolha = "
+        f"{e.nest_radius:.1f} m) — entrega estorvada por sorteio")
+    print(f"OK  ninho desimpedido em 30 episódios (obstáculo mais próximo: "
+          f"{min(piores):.2f} m, zona de recolha {e.nest_radius:.1f} m)")
+
+
+def test_spawn_livre_de_obstaculos():
+    """Os agentes não podem nascer dentro de um obstáculo. A clareira é um
+    círculo e a caixa de spawn um retângulo: se a clareira não cobrir a
+    DIAGONAL, os cantos ficam de fora e o episódio começa com penalização e
+    empurrão — silenciosamente, e só para alguns agentes."""
+    e = make_env()
+    contacto = e.robot_radius + e.obstacle_radius
+    maus = 0
+    for seed in range(30):
+        e.reset(seed=seed)
+        O = np.asarray(e.obstacles)
+        d = np.linalg.norm(e.agent_positions[:, None, :] - O[None, :, :], axis=2)
+        maus += int((d < contacto).any(axis=1).sum())
+    assert maus == 0, f"{maus} agentes nasceram dentro de um obstáculo (30 episódios)"
+    print("OK  spawn livre: 0 em 600 agentes nasce dentro de um obstáculo")
+
+
+def test_normalizador_da_obs():
+    """O normalizador das distâncias é o raio da arena — logo o mapa_grande
+    comprime tudo 4x face ao treino. É um CONFUNDENTE do zero-shot, e por isso
+    tem de existir a condição de controlo (obs_norm_radius). Este teste fixa as
+    duas metades: por omissão nada muda; com override, muda só a escala."""
+    e = make_env()
+    e.reset(seed=1)
+    assert e.obs_norm_radius == e.arena_radius == 60.0, "omissão deixou de ser o raio da arena"
+    o_mapa = e._get_observations()["robot_0"]
+
+    c = make_env(obs_norm_radius=15.0)
+    c.reset(seed=1)
+    assert c.arena_radius == 60.0, "o controlo NÃO pode mexer na física da arena"
+    assert c.obs_norm_radius == 15.0
+    o_ctrl = c._get_observations()["robot_0"]
+
+    # Só as distâncias reescalam (4x); as direções egocêntricas ficam iguais.
+    assert np.allclose(o_mapa[:3], o_ctrl[:3]), "as direções não podiam mudar"
+    assert np.isclose(o_ctrl[3], o_mapa[3] * 4.0), "a distância ao ninho não reescalou 4x"
+
+    # E os 7 cenários da tese continuam bit-exactos sem override.
+    cfg = copy.deepcopy(BASE_CFG)
+    cfg["environment"]["classic_scenario"] = "four_rooms"
+    f = SwarmForagingEnv3D(config=cfg)
+    f.reset(seed=1)
+    assert f.obs_norm_radius == 15.0, "o four_rooms mudou de normalizador"
+    print("OK  normalizador: 120 no mapa vs 30 no treino (4x) e controlo isolado")
+
+
 if __name__ == "__main__":
     testes = [test_determinismo, test_resets_consecutivos, test_ninho_alcancavel,
               test_max_steps_suficiente, test_tarefa_cumprivel,
               test_porta_abre_e_tem_alternativa, test_obstaculos_nao_selam_passagens,
               test_escalabilidade_N, test_obs_dim_igual_aos_7,
-              test_sem_fuga_entre_cenarios, test_robustez_ligavel]
+              test_sem_fuga_entre_cenarios, test_robustez_ligavel,
+              test_ninho_desimpedido, test_spawn_livre_de_obstaculos,
+              test_normalizador_da_obs]
     for t in testes:
         t()
     print(f"\n{len(testes)}/{len(testes)} testes do mapa grande passaram ✅")

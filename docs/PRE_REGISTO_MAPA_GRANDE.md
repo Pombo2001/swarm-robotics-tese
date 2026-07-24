@@ -101,6 +101,37 @@ alcançado por run (o tempo é o limite, não as gerações) e o tempo real da 1
 F1 antes de F2 de propósito: o zero-shot é barato e a sua leitura não depende do
 treino nativo — e o contraste F1 vs F2 é, em si, um resultado.
 
+### ⚠️ F1 tem um confundente, e por isso corre em DUAS condições
+
+As distâncias da observação (ao ninho, à porta, a cada vizinho) são normalizadas
+pelo **raio da arena**. O mapa grande corre a r=60 e os 7 cenários a r=15, logo o
+mesmo modelo, sem nada mudar nele, recebe todas as distâncias **comprimidas 4×**
+(÷120 em vez de ÷30): um vizinho a 15 m, que no treino lia 0,50, passa a ler 0,125.
+
+Sem tratamento, um zero-shot a zero admite **duas** explicações que os dados não
+separam: (a) a topologia composta é demasiado difícil — a pergunta da QI7; ou (b) a
+observação chega fora da escala em que a política foi treinada — um artefacto de
+implementação. Atribuir (a) sem excluir (b) seria repetir, noutra roupagem, o erro
+do "colapso do evolutivo".
+
+**Pré-registado:** o F1 corre nas duas condições, com as mesmas seeds:
+
+| Condição | Normalizador | O que isola |
+|---|---|---|
+| **natural** (`--norm-obs mapa`) | r=60 ⇒ ÷120 | O que acontece de facto ao pegar num campeão e largá-lo no mapa novo. **É a condição principal.** |
+| **controlo** (`--norm-obs treino`) | r=15 ⇒ ÷30 | Distâncias na escala do treino, física do mapa inalterada. Isola a topologia da mudança de escala. |
+
+*Leitura pré-comprometida:* se as duas condições derem o mesmo, o efeito é de
+**topologia** e reporta-se só a natural (o controlo vai para apêndice). Se
+divergirem, o zero-shot de topologia está **confundido com a escala da observação**
+e é isso que se reporta — sem escolher a condição que der o número melhor.
+A condição fica na coluna `NormObs` do CSV; as figuras usam a natural.
+
+*Nota:* o controlo só muda o normalizador da observação (`obs_norm_radius`), não a
+arena, nem as paredes, nem a física — verificado em `tests/test_mapa_grande.py`
+(`test_normalizador_da_obs`). Nos 7 cenários o valor por omissão continua a ser o
+raio da arena, e as observações ficam bit-a-bit iguais às das campanhas fechadas.
+
 ---
 
 ## 4. Hipóteses e testes confirmatórios
@@ -168,6 +199,47 @@ seeds emparelhadas), via `eval_by_run.py`. Sucesso = descritivo, nunca teste.
    de 19 jul).
 4. Repor configs no servidor.
 5. `eval_by_run.py` → `statistical_tests.py` → M1-M3 → regra de decisão.
+
+---
+
+---
+
+## 7. Emendas (datadas — nada muda em silêncio)
+
+### 24 jul 2026, fim do dia — auditoria ao mapa antes de treinar (0 dados existentes)
+
+Segunda passagem ao código do mapa, ainda **antes de qualquer treino** e com **zero
+dados de F1/F2 no repositório** (a corrida de F1 tinha 2 de 21 células e foi
+interrompida por falha de energia; foi descartada, não analisada). Nada aqui foi
+decidido à vista de resultados.
+
+1. **Confundente da normalização da observação** — documentado acima; F1 passa a ter
+   condição de controlo. É a emenda com consequência científica.
+2. **Disco livre à volta do ninho** (`nest_radius + obstacle_radius + 0,5`). Faltava:
+   o `_spawn_obstacles` genérico tem esta regra desde sempre e o
+   `_spawn_obstacles_mapa_grande` não a herdou. Em **24% dos episódios** havia um
+   obstáculo dentro da zona de recolha (raio 1,5 m) e num deles a 0,36 m do centro —
+   um estorvo à entrega **sorteado por episódio**, isto é, variância entre runs que a
+   avaliação emparelhada não cancela. Sem a correção, parte do desvio-padrão de F2
+   seria layout, não algoritmo.
+3. **Clareira de spawn a cobrir a caixa toda.** A clareira era um círculo de raio
+   0,085·W e a caixa de spawn um retângulo cuja diagonal é maior — os cantos ficavam
+   de fora e **0,2% dos agentes nasciam dentro de um obstáculo** (penalização e
+   empurrão no passo 0). A caixa e a clareira passam a derivar da mesma função
+   (`_mapa_grande_spawn_box`), que era o que permitia as duas divergirem.
+4. **`max_steps=2000` mantém-se.** A tabela acima diz "v_max = 0,2 m/passo ⇒ 629
+   passos de ida": é o limite por eixo. O deslocamento é a soma vetorial de três
+   componentes ortogonais, pelo que o módulo máximo é 0,2·√3 = **0,346 m/passo** e a
+   ida mais longa custa ≥413 passos. **O número registado é conservador**, a folga
+   real é maior, e a decisão não muda.
+
+**Consequência operacional:** os pontos 2 e 3 alteram o sorteio dos obstáculos, logo
+o mapa gerado por cada seed. Qualquer avaliação anterior a esta data **não é
+comparável** com as que vierem — por isso o CSV do F1 passou a guardar uma impressão
+digital do ambiente (`env_hash`) e recusa-se a retomar por cima de dados de outro
+mapa. Os 7 cenários da tese ficam **bit-a-bit iguais** (verificado por comparação
+direta com a versão anterior do simulador, erro 0,0e+00 em observações, recompensas
+e posições).
 
 ---
 

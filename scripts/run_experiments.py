@@ -83,7 +83,12 @@ def set_scenario(scenario_name):
         assert lido['environment']['classic_scenario'] == scenario_name
         print(f"[*] Cenário configurado para: {scenario_name}")
     except Exception as e:
-        print(f"[!] Erro ao configurar cenário: {e}")
+        # NÃO engolir: se a troca de cenário falhar, tudo o que vem a seguir
+        # treina no cenário ANTERIOR e grava os modelos com o sufixo do novo.
+        # Numa campanha de dias isso não dá erro nenhum — dá resultados
+        # trocados. Rebentar aqui é a única leitura correta.
+        print(f"[!] Erro ao configurar cenário '{scenario_name}': {e}")
+        raise
 
 # Backup/retoma: regista cada treino (cenário|algo|run) já concluído, para
 # poder RETOMAR após um crash sem repetir o que já foi feito (treinos de dias).

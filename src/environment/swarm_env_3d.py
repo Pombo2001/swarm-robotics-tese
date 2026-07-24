@@ -87,6 +87,16 @@ class SwarmForagingEnv3D(gym.Env):
         self.arena_radius_mapa_grande = env_config.get(
             'arena_radius_mapa_grande', self.MAPA_GRANDE_RADIUS)
 
+        # Raio usado para NORMALIZAR as distâncias da observação (ninho, porta,
+        # vizinhos). Por omissão é o próprio raio da arena — o comportamento de
+        # sempre, bit-exacto nos 7 cenários. Pode ser fixado no config para
+        # desfazer um confundente do zero-shot de topologia: como o mapa_grande
+        # corre a r=60 e os 7 cenários a r=15, o MESMO modelo vê as distâncias
+        # comprimidas 4x (÷120 em vez de ÷30). Sem controlo, "o campeão do Quatro
+        # Salas faz 0 recolhas" confunde topologia nova com escala nova.
+        self.obs_norm_radius_cfg = env_config.get('obs_norm_radius', None)
+        self.obs_norm_radius = self.arena_radius
+
         # ── Campo geodésico (BFS/Dijkstra) para o progress reward ────────────
         # Em cenários com paredes, a distância euclidiana ao ninho cria mínimos
         # locais: contornar uma parede AFASTA do ninho (progress negativo) → os
@@ -177,11 +187,12 @@ class SwarmForagingEnv3D(gym.Env):
             elif self.classic_scenario == "mapa_grande":
                 # Espalhados pela sala de partida (zona S, oeste). Nascem
                 # separados de propósito: amontoados, a separação física
-                # empurrava-os logo no primeiro passo.
-                W, H, x0, x1, y0, y1 = self._mapa_grande_dims()
-                cx = x0 + 0.10 * W
-                pos = np.array([np.random.uniform(cx - 0.075 * W, cx + 0.075 * W),
-                                np.random.uniform(-0.12 * H, 0.12 * H), 0.0])
+                # empurrava-os logo no primeiro passo. A caixa vem de
+                # _mapa_grande_spawn_box (a MESMA que define a clareira sem
+                # obstáculos) — ver lá porquê.
+                c, hx, hy = self._mapa_grande_spawn_box()
+                pos = np.array([np.random.uniform(c[0] - hx, c[0] + hx),
+                                np.random.uniform(c[1] - hy, c[1] + hy), 0.0])
             elif self.classic_scenario in DOOR_SCENARIOS:
                 # South of the horizontal barrier (barrier covers y -1 to 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
@@ -223,6 +234,9 @@ class SwarmForagingEnv3D(gym.Env):
         self.arena_radius = (self.arena_radius_mapa_grande
                              if self.classic_scenario == "mapa_grande"
                              else self.arena_radius_base)
+        # Ver obs_norm_radius_cfg no __init__. Sem override no config isto é
+        # exatamente o raio da arena => observações inalteradas em todo o lado.
+        self.obs_norm_radius = self.obs_norm_radius_cfg or self.arena_radius
 
         # Porta cooperativa: estado limpo a cada episódio (o spawn do cenário
         # volta a fechá-la via _add_cooperative_door).
@@ -429,6 +443,18 @@ class SwarmForagingEnv3D(gym.Env):
         W, H = 5 * k, 3 * k
         return W, H, -W / 2, W / 2, -H / 2, H / 2
 
+    def _mapa_grande_spawn_box(self):
+        """(centro, meia-largura, meia-altura) da caixa de spawn na zona S.
+
+        FONTE ÚNICA: o spawn dos agentes e a clareira sem obstáculos derivam
+        daqui. Estavam escritos com as mesmas constantes em dois sítios e a
+        clareira era um CÍRCULO menor que a diagonal da caixa — os cantos
+        ficavam de fora e ~0,2% dos agentes nasciam dentro de um obstáculo
+        (penalização e empurrão no passo 0, sem qualquer erro visível).
+        """
+        W, H, x0, _, _, _ = self._mapa_grande_dims()
+        return np.array([x0 + 0.10 * W, 0.0]), 0.075 * W, 0.12 * H
+
     def _spawn_obstacles_mapa_grande(self):
         """Paredes das 5 zonas + obstáculos dispersos (com clareira no spawn)."""
         t = 1.5      # espessura (a mesma do four_rooms)
@@ -497,8 +523,16 @@ class SwarmForagingEnv3D(gym.Env):
         self.obstacle_velocities = []
         n = int(60 * (self.arena_radius / 45.0) ** 2)
         folga = ab / 2 + self.obstacle_radius
-        spawn_c = np.array([x0 + 0.10 * W, 0.0])
-        raio_clareira = 0.085 * W     # os robôs nascem aqui: deixar livre
+        spawn_c, hx, hy = self._mapa_grande_spawn_box()
+        # A clareira tem de cobrir a caixa de spawn INTEIRA (cantos incluídos)
+        # mais o contacto robô-obstáculo — ver _mapa_grande_spawn_box.
+        raio_clareira = np.hypot(hx, hy) + self.robot_radius + self.obstacle_radius
+        # Disco livre à volta do ninho: a mesma regra do _spawn_obstacles
+        # genérico, que aqui faltava. Sem ela, ~24% dos episódios tinham um
+        # obstáculo dentro da zona de recolha (raio 1,5 m) — um estorvo à
+        # entrega sorteado por episódio, ou seja, ruído entre runs que a
+        # avaliação emparelhada não consegue cancelar.
+        folga_ninho = self.nest_radius + self.obstacle_radius + 0.5
         tentativas = 0
         while len(self.obstacles) < n and tentativas < n * 400:
             tentativas += 1
@@ -511,6 +545,8 @@ class SwarmForagingEnv3D(gym.Env):
             if np.linalg.norm(p[:2]) > self.arena_radius - 1.0:
                 continue
             if np.linalg.norm(p[:2] - spawn_c) < raio_clareira:
+                continue
+            if np.linalg.norm(p - self.nest_pos) < folga_ninho:
                 continue
             # Nunca dentro de paredes NEM encostado: um obstáculo a menos de
             # meia-abertura podia selar um corredor de 2,5 m.
@@ -829,7 +865,7 @@ class SwarmForagingEnv3D(gym.Env):
         P = np.asarray(self.agent_positions, dtype=float)   # (A,3)
         H = np.asarray(self.agent_headings, dtype=float)    # (A,3)
         A = P.shape[0]
-        arena2 = self.arena_radius * 2
+        arena2 = self.obs_norm_radius * 2
         lidar_all = self._lidar_scan_batch(P, H, w_min_arr, w_max_arr, obs_arr)
 
         # ── Bases egocêntricas F/R/U de TODOS os agentes numa só passagem ──
