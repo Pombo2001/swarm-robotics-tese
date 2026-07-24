@@ -95,6 +95,12 @@ def avaliar(mapa="mapa_grande", origens=None, algos=None, episodes=20,
             df["Origem"] = origem
             df["Mapa"] = mapa
             linhas.append(df)
+            # Gravar a CADA célula, não só no fim: uma corrida destas leva ~1h e
+            # se for interrompida a meio (PC desligado, Ctrl+C) perde-se tudo o
+            # que já custou. Assim o CSV é sempre válido e retomável.
+            pd.concat(linhas, ignore_index=True).to_csv(
+                os.path.join(EVAL_DIR, f"zeroshot_{mapa}.csv"), index=False)
+            print(f"     [gravado: {sum(len(x) for x in linhas)} episódios acumulados]")
 
     if not linhas:
         print("\n[!] Nenhuma célula avaliada — não há campeões nos caminhos esperados.")
