@@ -58,9 +58,35 @@ decay=0,98) — não o objetivo puro: a QI6 mostrou que o adaptativo domina o ob
 onde há descoberta a fazer e não custa onde não há, e este mapa é o caso extremo de
 descoberta (LiDAR de 8 m numa arena de 120 m ⇒ o agente vê ~7% da largura).
 
-⚠️ **A registar aqui ANTES do unblinding:** o orçamento por run (min/run) e o
-`num_generations` efetivo, assim que o servidor estiver livre e o custo por geração
-for medido. Registar também o tempo real da primeira fase.
+### ⚠️ Orçamento por run — MEDIDO a 24 jul, antes de qualquer treino
+
+O custo por geração do GNN **não** é comparável ao dos 7 cenários, e isto muda o
+orçamento da campanha. Uma geração custa `pop_size × eval_episodes × max_steps`
+passos de simulação:
+
+| | `max_steps` | passos/geração | a 70 passos/s | 195 min/run dá |
+|---|---|---|---|---|
+| 7 cenários da tese | 500 | 60 000 | **14 min** | **14 gerações** |
+| **mapa_grande** | 2000 | 240 000 | **57 min** | **3,4 gerações** |
+
+**3,4 gerações não é evolução — é ruído de inicialização.** Com 195 min/run o GNN
+não teria hipótese, e a leitura "o evolutivo falha no mapa composto" seria um
+artefacto do orçamento, não um resultado. É exatamente o erro que a tese já
+identificou uma vez (o "colapso do evolutivo" que era artefacto da fitness).
+
+**Orçamento pré-registado para F2:** **780 min/run para o GNN** (≈13,7 gerações —
+equipara-se às 14 das campanhas fechadas) e **192 min/run para PPO e SAC** (mantém
+a proporção 4:1 usada em todas as campanhas anteriores). Custo total: **~3,8 dias
+num stream, ~1,9 em dois** — cabe na janela de 19 dias entre o fim do mega-treino
+(~3 ago) e o hard stop de 22 ago.
+
+*Fundamentação da equiparação:* o critério não é "igualar minutos" mas "igualar
+**gerações de evolução**", que é a unidade de otimização do GNN. Igualar minutos
+entre mapas com episódios 4× mais longos seria dar ao GNN 1/4 da otimização e
+chamar-lhe comparação justa.
+
+⚠️ **Ainda a registar aqui antes do unblinding:** o `num_generations` efetivamente
+alcançado por run (o tempo é o limite, não as gerações) e o tempo real da 1.ª fase.
 
 ---
 

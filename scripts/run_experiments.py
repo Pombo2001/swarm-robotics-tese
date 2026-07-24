@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import yaml
 import subprocess
@@ -52,14 +53,34 @@ STEP_COLS = {
 }
 
 def set_scenario(scenario_name):
+    """Troca o classic_scenario no config PRESERVANDO comentários e ordem.
+
+    Antes fazia yaml.safe_load + yaml.dump, o que reescrevia o ficheiro inteiro e
+    APAGAVA todos os comentários — incluindo os que justificam decisões
+    (porquê max_steps_mapa_grande=2000, porquê food_collected=300, porquê a
+    arena por cenário). Como isto corre a cada cenário de cada campanha, uma
+    campanha de 7 cenários destruía a documentação do config 7 vezes; o
+    ficheiro só voltava ao normal com um `git checkout`.
+
+    Agora é uma substituição cirúrgica da linha, com regex. O resto do ficheiro
+    fica byte a byte igual.
+    """
     try:
-        with open(CONFIG_PATH, 'r') as f:
-            config = yaml.safe_load(f)
-        
-        config['environment']['classic_scenario'] = scenario_name
-        
-        with open(CONFIG_PATH, 'w') as f:
-            yaml.dump(config, f)
+        with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+            texto = f.read()
+
+        padrao = re.compile(r'^(\s*classic_scenario:).*$', re.MULTILINE)
+        if not padrao.search(texto):
+            raise ValueError("classic_scenario não encontrado em configs/foraging.yaml")
+        novo = padrao.sub(rf'\1 {scenario_name}', texto, count=1)
+
+        with open(CONFIG_PATH, 'w', encoding='utf-8', newline='') as f:
+            f.write(novo)
+
+        # Verificação: o YAML continua válido e ficou com o valor certo?
+        with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+            lido = yaml.safe_load(f)
+        assert lido['environment']['classic_scenario'] == scenario_name
         print(f"[*] Cenário configurado para: {scenario_name}")
     except Exception as e:
         print(f"[!] Erro ao configurar cenário: {e}")
