@@ -42,6 +42,11 @@ _MODELO = {
 
 _ATIVOS = "★ Modelos ativos (results/models)"
 
+# --- Pré-visualização 3D do MAPA GRANDE (rascunho) --------------------------
+# A geometria ainda NÃO está no simulador: vive em scripts/preview_mapa_grande.py
+# até ser aprovada. O visualizador é o MESMO Ursina dos outros mapas.
+_VIZ_MAPA = os.path.join(config.BASE_DIR, "visualization", "visualize_mapa_grande.py")
+
 
 def _treinos():
     """Origens de modelos: os ativos + as campanhas que arquivaram modelos."""
@@ -169,6 +174,70 @@ def build():
             ui.label("Podes abrir os três ao mesmo tempo: cada um corre na sua janela, "
                      "com o mesmo mapa e o mesmo treino. Fecha a janela para terminar.") \
                 .classes("text-xs text-gray-500")
+
+        # ---------------- MAPA GRANDE (rascunho) — 3D no browser -------------
+        with ui.card().classes(CARD):
+            _section_title("construction", "Mapa grande (rascunho) — 3D",
+                           "Ainda NÃO está no simulador. Serve para aprovares tamanho "
+                           "e aspeto antes de se mexer no código.")
+
+            with ui.row().classes("items-center gap-4 mt-2 no-wrap"):
+                raio_sel = ui.select(
+                    {30.0: "r=30 m — 54×27 m (2,0× o Quatro Salas)",
+                     45.0: "r=45 m — 80×40 m (3,0×)",
+                     60.0: "r=60 m — 107×54 m (4,1×)"},
+                    value=45.0, label="Tamanho da arena") \
+                    .props("outlined dense").classes("w-80")
+                altura = ui.number(label="Altura das paredes (m)", value=3.0,
+                                   min=0.4, max=30.0, step=0.5) \
+                    .props("outlined dense").classes("w-48") \
+                    .tooltip("Só para veres o mapa: no simulador as paredes têm 30 m "
+                             "(intransponíveis). O visualizador Ursina desenha-as a 0,4.")
+                robos_chk = ui.checkbox("Robôs à escala real", value=True) \
+                    .tooltip("Raio 0,15 m — minúsculos de propósito. Aproxima a câmara "
+                             "para os veres e julgares a escala dos corredores.")
+
+            def _abrir_3d():
+                # MESMO visualizador Ursina dos outros mapas (visualization/), com
+                # --preview-mapa-grande: sem modelo, sem simulação, só a geometria.
+                # Um só visualizador = um só sítio onde pode haver bugs.
+                cmd = [sys.executable, "-u", _VIZ_MAPA,
+                       "--radius", str(float(raio_sel.value)),
+                       "--wall-height", str(float(altura.value or 3.0))]
+                if not robos_chk.value:
+                    cmd += ["--sem-robos"]
+
+                flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                os.makedirs(_LOG_DIR, exist_ok=True)
+                log = os.path.join(_LOG_DIR, "viz_mapa_grande.log")
+                with open(log, "w", encoding="utf-8") as fh:
+                    procs["mapa"] = subprocess.Popen(
+                        cmd, cwd=config.BASE_DIR, creationflags=flags,
+                        stdout=fh, stderr=subprocess.STDOUT)
+                ui.notify("Mapa grande — a abrir a janela 3D (demora uns segundos)…",
+                          type="positive")
+
+                def _verificar():
+                    p = procs.get("mapa")
+                    if p is None or p.poll() is None:
+                        return
+                    try:
+                        txt = open(log, encoding="utf-8", errors="replace").read()
+                    except OSError:
+                        txt = ""
+                    cauda = [l for l in txt.strip().splitlines() if l.strip()][-1:] \
+                        or ["(sem detalhe)"]
+                    ui.notify(f"A janela do mapa fechou ao arrancar: {cauda[0]}",
+                              type="negative", timeout=10000)
+
+                ui.timer(8.0, _verificar, once=True)
+
+            with ui.row().classes("items-center gap-3 mt-2"):
+                ui.button("Ver o mapa em 3D", icon="view_in_ar", on_click=_abrir_3d) \
+                    .props("unelevated")
+                ui.label("Abre a janela Ursina — a mesma dos outros mapas, "
+                         "com a câmara livre de sempre.") \
+                    .classes("text-xs text-gray-500")
 
         treino_sel.on_value_change(render)
         scen_sel.on_value_change(render)
