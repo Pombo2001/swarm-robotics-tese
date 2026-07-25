@@ -62,14 +62,45 @@
 
   Médias por algoritmo: SAC 5,12 · GNN 3,48 · PPO 3,08 — empate técnico, e os
   três puxados pelas mesmas duas linhas. **10 das 18 células a zero absoluto.**
-- **O padrão não é "algoritmo X transfere".** A divisão é pela **topologia de
-  treino**: as duas linhas dos cenários **sem paredes** (Sandbox e Perceção
-  Cooperativa) concentram tudo o que transfere, e as quatro linhas dos cenários
-  **com paredes** dão 0,0 em 11 das 12 células. Sugere que os campeões dos
-  labirintos aprenderam a geometria do seu cenário e não navegação transferível
-  — e que quem treinou em arena aberta, sem nada para decorar, é quem sobrevive
-  num labirinto novo. **Não escrever isto como resultado antes dos controlos:**
-  três confundentes por descartar e 3 células em falta na grelha.
+### 🛑 O F1 DE 25 JUL CORREU COM OS MODELOS ERRADOS — REPETIR
+
+Descoberto ao fim da noite de 25 jul, a verificar o plano. **Os `results/models*`
+DESTE PC são de 24 jun** — três semanas antes da campanha de 7 dias que a tese
+reporta (2-9 jul). O `eval_zeroshot_mapa.py` carrega o que estiver no caminho
+esperado e não tem opinião sobre a data; o pré-registo diz "campeões da campanha
+7d", e não foi isso que correu.
+
+O que torna isto indiscutível, e não uma questão de datas: os campeões GNN de
+24 jun dão **0,0 no seu PRÓPRIO cenário** (`eval_summary.csv` de 23 jun:
+Gargalo 0,0 · Quatro Salas 0,0 · Porta Cooperativa 0,0) enquanto a tese reporta
+**121,4 · 59,8 · 69,8** para essas células. São os campeões de **antes da fitness
+de homing** — o "colapso do evolutivo" que a tese descreve como curado.
+
+**Consequências:**
+- A linha do **GNN** nos labirintos não mede transferência nenhuma: mede modelos
+  que já estavam partidos. **Não usar.**
+- As linhas do **PPO e SAC** continuam de pé: os modelos de 24 jun funcionam bem
+  nos cenários deles (Gargalo 41,4 e 36,5; Porta Coop. 66,6 e 62,3) e mesmo
+  assim dão 0 no mapa novo. Isso é transferência a sério — com os confundentes
+  por descartar.
+- **A leitura "os campeões dos labirintos decoraram a geometria" fica SEM
+  suporte** e não deve ser escrita em lado nenhum. Era o que estava aqui escrito
+  às 22h; ficou refutado às 23h pelos próprios dados.
+
+**Onde estão os campeões certos** (verificado no servidor a 25 jul):
+- **NÃO** em `~/swarm-robotics-tese/results/models*` — esse dir está a ser
+  reescrito pelo MEGA-TREINO agora (16 `.pth` de 24 jul para cá; o `u_wall` é
+  de 24 jul e o `bottleneck` tem `meta.json` com `saved_at 2026-07-15`). É a
+  armadilha nº9 a acontecer em direto.
+- Nos arquivos da campanha: **`~/eval7d.tar.gz`** e **`~/run7d_mlp`** (PPO/SAC).
+- Trazer para uma pasta ISOLADA (ex.: `results/models_7d/`) e apontar o F1 lá —
+  **nunca** por cima de `results/models*`, ou perde-se a rastreabilidade do que
+  foi avaliado com o quê.
+
+**Guarda a acrescentar antes de repetir:** o `eval_zeroshot_mapa.py` devia
+gravar no CSV a data/`meta.json` de cada modelo que carrega e rebentar se forem
+anteriores à campanha de referência. O dashboard já grita isto na vista Ciência
+("Avaliação DESATUALIZADA face aos modelos") — o script não.
 - **Onde ver o estado:** `results/evaluation/zeroshot_mapa_grande_progresso.log`
   (escrito pela própria corrida, com flush; sobrevive à morte dela) e o ficheiro
   `.lock` com o estado atual. No PowerShell, `Get-Content ... -Encoding UTF8`.
