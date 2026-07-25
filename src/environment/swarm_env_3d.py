@@ -484,22 +484,52 @@ class SwarmForagingEnv3D(gym.Env):
         b_cima = y1 - (y_g + ab / 2)
         self.walls += [parede(xa, y0 + b_baixo / 2, t, b_baixo),
                        parede(xa, y1 - b_cima / 2, t, b_cima)]
+        # O beco em U: fundo a ESTE, boca virada a OESTE — para o lado por onde o
+        # enxame chega. A bússola do ninho é EUCLIDIANA, por isso um bolso só
+        # arma quando a linha reta agente→ninho lhe entra pela boca e bate no
+        # fundo. Com o fundo a oeste (como estava), os agentes chegavam-lhe pelas
+        # costas e contornavam-no: 0 de 60 pontos de entrada eram atraídos para
+        # dentro, e o caminho ótimo passava a 15 m — 162 m² de decoração. Virado
+        # ao contrário são 37%, e a zona A passa a compor de facto a dificuldade
+        # do u_wall (deceção sob observabilidade parcial), não só o gargalo.
         ux, uy = x0 + 0.315 * W, H * 0.14
         uw, uh = 0.085 * W, 0.30 * H
-        self.walls += [parede(ux - uw / 2, uy, t, uh),
+        self.walls += [parede(ux + uw / 2, uy, t, uh),
                        parede(ux, uy + uh / 2, uw, t),
                        parede(ux, uy - uh / 2, uw, t)]
 
         # --- ZONA B: quatro salas (cruz; abertura vertical a norte) ----------
+        # Parede que separa B de C, com a passagem a NORTE (y=+H/4).
         xb = x0 + 0.63 * W
         y_pb = H / 4
         c_baixo = (y_pb - ab / 2) - y0
         c_cima = y1 - (y_pb + ab / 2)
         self.walls += [parede(xb, y0 + c_baixo / 2, t, c_baixo),
                        parede(xb, y1 - c_cima / 2, t, c_cima)]
-        segh = ((xb - xa) - ab) / 2
-        self.walls += [parede(xa + segh / 2, 0.0, segh, t),
-                       parede(xb - segh / 2, 0.0, segh, t)]
+
+        # CRUZ interior: eixo horizontal (y=0) + eixo vertical (x=xm), como no
+        # four_rooms. Antes havia só o eixo horizontal com uma abertura ao meio,
+        # o que fazia DUAS salas — e a zona era rotulada "Quatro Salas" na planta,
+        # no pré-registo e na tese. Quatro salas exigem os dois eixos e quatro
+        # aberturas: NO-SO-SE-NE em ciclo, sem atalho pelo centro (os segmentos
+        # encostam no cruzamento, como no four_rooms).
+        # As aberturas ficam a 0,63 do meio-vão (a mesma proporção do four_rooms)
+        # e DESLOCADAS da entrada (y=-H/4) e da saída (y=+H/4) da zona: alinhadas,
+        # a travessia seria uma linha reta e as salas não custariam nada.
+        xm = (xa + xb) / 2
+        mv_x, mv_y = (xb - xa) / 2, H / 2
+        ax = 0.63 * mv_x          # aberturas do eixo horizontal, em x = xm ± ax
+        ay = 0.63 * mv_y          # aberturas do eixo vertical,   em y = ± ay
+
+        # Eixo horizontal em y=0: 3 segmentos, 2 aberturas (ligam N<->S).
+        for a, b in ((xa, xm - ax - ab / 2), (xm - ax + ab / 2, xm + ax - ab / 2),
+                     (xm + ax + ab / 2, xb)):
+            self.walls.append(parede((a + b) / 2, 0.0, b - a, t))
+        # Eixo vertical em x=xm: 4 segmentos, 2 aberturas (ligam O<->E). Os dois
+        # centrais encostam à barra horizontal — não abrir fresta no cruzamento.
+        for a, b in ((y0, -ay - ab / 2), (-ay + ab / 2, -t / 2),
+                     (t / 2, ay - ab / 2), (ay + ab / 2, y1)):
+            self.walls.append(parede(xm, (a + b) / 2, t, b - a))
 
         # --- ZONA C: porta cooperativa + alternativa longa a norte -----------
         xc = x0 + 0.82 * W

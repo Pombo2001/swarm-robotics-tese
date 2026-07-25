@@ -141,6 +141,26 @@ def figs_zeroshot(mapa):
         return
     df = pd.read_csv(fp)
 
+    # O CSV é de ESTE mapa? Uma figura publicada a partir de uma avaliação feita
+    # noutra geometria é pior do que figura nenhuma: parece um resultado. Sem
+    # env_hash o CSV é anterior à impressão digital e não se pode verificar.
+    import copy
+    import yaml
+    from scripts.eval_zeroshot_mapa import _impressao_digital
+    with open(os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")) as f:
+        _cfg = copy.deepcopy(yaml.safe_load(f))
+    _cfg["environment"]["classic_scenario"] = mapa
+    atual = _impressao_digital(_cfg, mapa)
+    if "env_hash" not in df.columns:
+        print("[--] o zeroshot_%s.csv não tem env_hash (é de uma versão anterior) — "
+              "não se pode confirmar que é deste mapa. Figuras de zero-shot saltadas." % mapa)
+        return
+    if (df["env_hash"] != atual).any():
+        print("[--] o zeroshot_%s.csv foi produzido NOUTRA geometria (%s != %s) — "
+              "figuras de zero-shot saltadas. Voltar a correr eval_zeroshot_mapa.py."
+              % (mapa, df["env_hash"].iloc[0], atual))
+        return
+
     # O CSV pode conter as DUAS condições de normalização da observação (ver
     # eval_zeroshot_mapa.py --norm-obs). Misturá-las num só gráfico faria a média
     # de duas experiências diferentes, e a figura não daria sinal disso.

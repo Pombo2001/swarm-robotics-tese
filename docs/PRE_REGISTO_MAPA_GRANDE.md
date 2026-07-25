@@ -35,15 +35,18 @@ robusto a composição".
 
 ## 2. Desenho (congelado antes dos dados)
 
-**Cenário** (geometria fixa, commit `22922fb`; ver `visualize_mapa_grande.py`):
-arena r=60 m; labirinto 103×62 m em 5 zonas de oeste para este — **S** sala de
-partida (aberta, obstáculos, spawn) · **A** gargalo + beco em U · **B** quatro salas
-· **C** porta cooperativa + alternativa longa · **D** câmara do ninho.
+**Cenário** (geometria fixa; ver `visualize_mapa_grande.py` e a planta em
+`results/graficos_tese/mapa_grande/`): arena r=60 m; labirinto 103×62 m em 5 zonas
+de oeste para este — **S** sala de partida (aberta, obstáculos, spawn) · **A**
+gargalo + beco em U (boca virada a oeste, para o lado de onde o enxame chega) ·
+**B** quatro salas (cruz completa, 4 aberturas) · **C** porta cooperativa +
+alternativa longa · **D** câmara do ninho. *Zonas A e B corrigidas a 24 jul — ver a
+emenda na secção 7; a geometria de `22922fb` não cumpria estes dois rótulos.*
 
 | Parâmetro | Valor | Porquê (decidido agora, não depois) |
 |---|---|---|
 | `num_agents` | **20** | Mantém `obs_dim=111`, **igual aos 7 cenários** → comparação emparelhada e os modelos existentes carregam sem alteração. Com N=40 a dimensão passa a 211 e PPO/SAC precisariam de arquitetura nova. |
-| `max_steps` | **2000** | v_max=0,2 m/passo → o pior spawn está a 629 passos **só de ida**. 2000 dá folga 3,2× sobre a ida — a mesma que o Quatro Salas tem com 500. |
+| `max_steps` | **2000** | A 0,2 m/passo (o limite **por eixo**) o pior ponto do mapa está a 777 passos **só de ida**: folga **2,6×** (2,9× a partir do pior spawn), acima do mínimo de 2,5× exigido. Conservador — o módulo máximo real do deslocamento é 0,2·√3 = 0,346 m/passo. |
 | `required_to_eat` | **1** | A cooperação que este mapa mede está na **porta**. Exigir 3 no ninho empilharia uma 2.ª tarefa cooperativa e a métrica deixaria de isolar a navegação. |
 | Obstáculos | **106, estáticos** | Estáticos, o mapa mede navegação+descoberta e é reprodutível. Móveis acrescentariam um eixo dinâmico que se confundiria com a dificuldade do labirinto. |
 | Porta | com alternativa | Verificado: fechada custa +28,1 m (+23%), **não bloqueia**. Cooperar é vantajoso, não obrigatório. |
@@ -227,11 +230,54 @@ decidido à vista de resultados.
    de fora e **0,2% dos agentes nasciam dentro de um obstáculo** (penalização e
    empurrão no passo 0). A caixa e a clareira passam a derivar da mesma função
    (`_mapa_grande_spawn_box`), que era o que permitia as duas divergirem.
-4. **`max_steps=2000` mantém-se.** A tabela acima diz "v_max = 0,2 m/passo ⇒ 629
+4. **`max_steps=2000` mantém-se.** A tabela original dizia "v_max = 0,2 m/passo ⇒ 629
    passos de ida": é o limite por eixo. O deslocamento é a soma vetorial de três
-   componentes ortogonais, pelo que o módulo máximo é 0,2·√3 = **0,346 m/passo** e a
-   ida mais longa custa ≥413 passos. **O número registado é conservador**, a folga
-   real é maior, e a decisão não muda.
+   componentes ortogonais, pelo que o módulo máximo é 0,2·√3 = **0,346 m/passo**.
+   **O número registado é conservador** e a decisão não muda.
+
+### 24 jul 2026, fim do dia (cont.) — duas zonas não cumpriam o rótulo
+
+Auditoria **topológica** ao desenho (a anterior era ao código). Ainda sem qualquer
+dado. Duas das cinco zonas não compunham a dificuldade que o nome anuncia — e é
+essa composição que fundamenta a QI7:
+
+5. **O beco em U não era armadilha nenhuma.** A bússola do ninho é **euclidiana**:
+   um bolso só arma quando a linha reta agente→ninho lhe entra pela boca e bate no
+   fundo. O U tinha a boca virada a **este** e o ninho está a este — os agentes
+   chegavam-lhe pelas costas e contornavam-no. Medido sobre 60 pontos de entrada na
+   zona A: **0% eram atraídos para dentro** do bolso, e o caminho ótimo passava a
+   **15,3 m** do interior. Eram 162 m² (3% do labirinto) sem função.
+   **Corrigido espelhando o U** (fundo a este, boca a oeste): passa a **37%**.
+   A zona A passa a compor de facto a deceção sob observabilidade parcial do
+   `u_wall`, e não só o gargalo. O desvio continua a existir e é livre — a rota
+   correta (para sul, até ao gargalo) não foi tocada.
+6. **A zona "Quatro Salas" eram duas salas.** Tinha **uma** parede horizontal com
+   **uma** abertura. O `four_rooms` original é uma **cruz** (eixo horizontal +
+   vertical) com **quatro** aberturas ligando NO-SO-SE-NE em ciclo, sem atalho pelo
+   centro. **Corrigido** com a cruz completa, aberturas a 0,63 do meio-vão (a
+   proporção do original) e **deslocadas** da entrada (y=−H/4) e da saída (y=+H/4)
+   da zona — alinhadas, a travessia seria uma linha reta. Verificado: selando a
+   cruz, o espaço da zona parte-se em **4 componentes de área igual** (251/251/250/250 m²).
+
+**Consequências medidas, todas verificadas depois da mudança:**
+
+| | antes | depois |
+|---|---|---|
+| Espaço livre / componentes ligadas | 5352 m² / **1**, 0 ilhas | 5252 m² / **1**, 0 ilhas |
+| Percurso ótimo spawn→ninho | 116,8 m | **128,8 m** (desvio 1,34× → **1,47×**) |
+| Pior percurso do mapa | 143,5 m | **155,4 m** |
+| Folga do `max_steps=2000` (a 0,2 m/passo) | 3,2× | **2,6×** (2,9× do pior spawn) — acima do mínimo 2,5× |
+| Porta: custo da alternativa | +24% | **+21%** (continua vantajosa e não obrigatória) |
+| Atração para o bolso do U | 0% | **37%** |
+| Salas na zona B | 2 | **4** |
+
+O mapa **continua a ser resolúvel**: teste local de fumo (25 jul, GNN campeão do
+Sandbox, zero-shot, 2 ep) dá **15,5 recolhas/ep, 100% de sucesso** na condição
+natural e 14,5 na de controlo. Não é resultado — é a confirmação de que a
+geometria mais dura não tornou a tarefa impossível antes de gastar servidor.
+
+`max_steps` **não** sobe: 2,6× cumpre o mínimo pré-registado, e subi-lo aumentaria
+proporcionalmente o custo por geração (já 57 min), que é o recurso escasso.
 
 **Consequência operacional:** os pontos 2 e 3 alteram o sorteio dos obstáculos, logo
 o mapa gerado por cada seed. Qualquer avaliação anterior a esta data **não é

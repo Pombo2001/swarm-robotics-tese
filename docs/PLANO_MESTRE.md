@@ -26,7 +26,7 @@ puxar). Feito `git pull --ff-only`. **Trabalhar sempre na `main`.**
 **Feito hoje (10 commits, todos em `origin/main`; o último é `e053a91`):**
 1. **MAPA GRANDE — 8.º cenário, código FECHADO** (ver P1.6). Desenhado a partir
    de um esboço do utilizador, aprovado em planta 2D e em 3D **antes** de virar
-   código, integrado como `mapa_grande` (r=60, 103×62 m, 5 zonas, 143 m de pior
+   código, integrado como `mapa_grande` (r=60, 103×62 m, 5 zonas, 155 m de pior
    percurso). **Nunca treinado.**
 2. **4 bugs corrigidos** — dois deles teriam invalidado a campanha inteira:
    - `max_steps` 1200→**2000** (a 0,2 m/passo o pior spawn está a 629 passos só
@@ -68,6 +68,24 @@ puxar). Feito `git pull --ff-only`. **Trabalhar sempre na `main`.**
      campanha seguia a treinar o cenário **anterior** e a gravar com o sufixo do
      novo, sem erro. Passa a rebentar.
    - 14/14 testes do mapa (3 novos) e as 5 suites antigas a passar.
+8. **Auditoria TOPOLÓGICA ao desenho — duas zonas não cumpriam o rótulo.** A
+   auditoria de cima era ao código; esta é à geometria. Corrigido (aprovado pelo
+   utilizador), ainda com **zero dados**:
+   - **O beco em U não era armadilha nenhuma.** A bússola do ninho é euclidiana,
+     logo um bolso só arma se a linha reta agente→ninho lhe entrar pela boca. O U
+     tinha a boca a **este** e o ninho está a este: os agentes chegavam-lhe pelas
+     costas e contornavam-no. **0 de 60** pontos de entrada eram atraídos, e o
+     caminho ótimo passava a 15,3 m. Espelhado (boca a oeste) → **37%**.
+   - **A zona "Quatro Salas" eram DUAS salas** (uma parede, uma abertura). Agora é
+     a cruz completa com 4 aberturas em ciclo, como o `four_rooms`; selando-a, a
+     zona parte-se em **4 componentes de área igual**.
+   - Consequências: pior percurso 143→**155 m**, desvio 1,34→**1,47×**, folga do
+     `max_steps` 3,2→**2,6×** (acima do mínimo 2,5× pré-registado, por isso
+     `max_steps` fica em 2000), porta +24→**+21%**. Espaço livre continua numa só
+     componente, **0 ilhas inacessíveis**.
+   - **O mapa continua resolúvel** (25 jul, teste de fumo local: campeão do
+     Sandbox em zero-shot faz **15,5 recolhas/ep, 100%**). Não é resultado — é a
+     garantia de não gastar servidor num mapa impossível.
 
 **Decisões tomadas (não reabrir):**
 - **20 agentes**, não mais: `obs_dim = 16+(N-1)×5`; com 20 fica em 111 (= aos 7
@@ -82,12 +100,17 @@ puxar). Feito `git pull --ff-only`. **Trabalhar sempre na `main`.**
 
 **Verificado (não alterou código):** os robôs **não** passam por cima das
 paredes (teste empírico: sobem a z≈14,7 m, atravessam 0); a porta **tem
-alternativa** (+23%, não bloqueia); os 7 cenários da tese ficaram intactos.
+alternativa** (+21%, não bloqueia); os 7 cenários da tese ficaram intactos
+(comparação bit-a-bit com a versão anterior do simulador: erro 0,0e+00 em
+observações, recompensas e posições).
 
-**Primeiro sinal do zero-shot (F1, 2 de 21 células — NÃO é conclusão):** o GNN
-do **Sandbox** faz 14-20 recolhas/ep no mapa novo sem lá ter treinado (10/10
-episódios); o do **Quatro Salas** faz 0. Se se confirmar, é especialização vs
-generalização — boa matéria de discussão.
+⚠️ **O "primeiro sinal do zero-shot" de 24 jul foi DESCARTADO.** Eram 2 de 21
+células (Sandbox 14-20 recolhas/ep, Quatro Salas 0), obtidas na geometria antes
+das correções das zonas A e B — não são comparáveis com nada do que vier. O CSV
+está em `results/evaluation/zeroshot_mapa_grande_ANTIGO.csv` e não entra em
+análise nenhuma. **F1 tem de correr de novo, nas duas condições de
+normalização.** A leitura "especialização vs generalização" fica como hipótese a
+testar, não como sinal.
 
 **Próximo passo, por urgência:** (1) **enviar o draft ao orientador** — é o item
 mais atrasado e o único que não depende de servidor; (2) F1 zero-shot (local,
@@ -252,10 +275,12 @@ de virar código** — e só depois integrado.
 `22922fb` (integração), `ce45b9c` (correções + pré-registo).
 
 - [x] **Geometria aprovada** (r=60): labirinto 103×62 m em 5 zonas — **S** sala de
-      partida (aberta, obstáculos, spawn) · **A** gargalo + beco em U · **B** quatro
-      salas · **C** porta cooperativa + alternativa longa · **D** câmara do ninho.
-      Pior percurso **143 m** (4,2× os 34 m do Quatro Salas). 106 obstáculos
-      **estáticos** (decisão do utilizador).
+      partida (aberta, obstáculos, spawn) · **A** gargalo + beco em U (**boca a
+      oeste**, virada ao lado por onde o enxame chega) · **B** quatro salas (**cruz
+      completa, 4 aberturas**) · **C** porta cooperativa + alternativa longa · **D**
+      câmara do ninho. Pior percurso **155 m** (4,5× os 34 m do Quatro Salas; era
+      143 m antes de as zonas A e B serem corrigidas a 24 jul — ver o log, ponto 8).
+      106 obstáculos **estáticos** (decisão do utilizador).
 - [x] **Integrado como `mapa_grande`** em `src/scenarios.py` + `swarm_env_3d.py`.
       Verificado: `obs_dim=111` **igual aos 7 cenários** → os modelos GNN existentes
       abrem o mapa sem alteração nenhuma (zero-shot de topologia já funciona).
@@ -277,7 +302,11 @@ de virar código** — e só depois integrado.
 - [ ] **F0 — smoke test local** (~1 h, GNN, 1 run): só confirmar que arranca. **Não
       produz resultado** e não entra em análise nenhuma.
 - [ ] **F1 — zero-shot de topologia**: avaliar os campeões dos 7 cenários neste mapa
-      sem retreino (custa horas, não dias; não precisa do servidor).
+      sem retreino (custa horas, não dias; não precisa do servidor). **Correr as DUAS
+      condições** de normalização (`--norm-obs mapa` e `--norm-obs treino`) — sem o
+      par, um zero confunde topologia com escala da observação. O script é retomável
+      (o PC caiu a meio a 24 jul): repetir o mesmo comando salta o que já está feito.
+      Fumo validado a 25 jul (Sandbox, 2 ep: 15,5 recolhas/ep nas duas condições).
 - [ ] **F2 — treino nativo**: 3 algoritmos × 7 runs × seeds 1-7. **Só depois do
       mega-treino fechar (~3 ago).** Hard stop de integração na tese: **22 ago**.
 
@@ -308,9 +337,10 @@ que o geodésico existe para eliminar. Passou a derivar de `MAZE_SCENARIOS`.
   parede central com ação +z e +y durante 400 passos: sobem até z≈14,7 m e
   **atravessaram 0**. Colisão é AABB a 3D (paredes de z=−15 a +15) com deslizamento +
   correção de penetração.
-- **A porta faz sentido?** **Sim.** Com o painel fechado o caminho custa 147,8 m contra
-  119,7 m com ela aberta: há **alternativa (+23%)**, não bloqueia. Cooperar é
-  vantajoso, não obrigatório — a estrutura do `cooperative_door_bypass`.
+- **A porta faz sentido?** **Sim.** Com o painel fechado o caminho custa 155,5 m contra
+  128,8 m com ela aberta: há **alternativa (+21%)**, não bloqueia. Cooperar é
+  vantajoso, não obrigatório — a estrutura do `cooperative_door_bypass`. (Era
+  147,8/119,7 = +24% antes da correção das zonas A e B.)
 - **A população chega?** **20 é o valor certo**, apesar de a densidade ser 9× mais
   esparsa (318 vs 35 m²/agente; igualar exigiria 180 agentes). Razão: `obs_dim =
   16+(N−1)×5` **muda com N** — com 20 fica em 111 (igual aos 7 cenários, modelos

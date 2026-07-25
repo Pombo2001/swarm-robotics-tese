@@ -20,16 +20,18 @@ environment:
   max_steps: 500
   max_steps_cooperative_door: 800
   max_steps_cooperative_door_bypass: 1000
-  # mapa_grande: percurso ~4x mais longo (143 m de pior caso contra 34 m do
+  # mapa_grande: percurso ~4,5x mais longo (155 m de pior caso contra 34 m do
   # Quatro Salas) -> precisa de episodios proporcionalmente maiores. A arena
   # tambem e maior, e SO neste cenario (arena_radius_mapa_grande): mexer no
   # arena_radius global alteraria os 7 cenarios das campanhas ja fechadas.
   #
-  # 2000 passos, nao 1200. A velocidade maxima e 0,2 m/passo (move_local
-  # clipado a +-1 x 0,2), logo o pior spawn fica a ~629 passos do ninho SO DE
-  # IDA: com 1200 nem a ida-e-volta cabia (1259), e o agente teria de ir em
-  # linha reta a velocidade maxima sem explorar nem errar uma vez. 2000 da a
-  # mesma folga (3,2x sobre a ida) que o Quatro Salas tem com 500.
+  # 2000 passos, nao 1200. Tomando 0,2 m/passo (o limite POR EIXO de
+  # move_local, clipado a +-1 x 0,2), o pior ponto do mapa fica a ~777 passos
+  # do ninho SO DE IDA: com 1200 nem a ida-e-volta cabia, e o agente teria de
+  # ir em linha reta sem explorar nem errar uma vez. 2000 da folga 2,6x sobre
+  # essa ida (2,9x a partir do pior spawn), acima do minimo de 2,5x pre-
+  # registado. E conservador: o deslocamento e a soma vetorial de tres
+  # componentes ortogonais, logo o modulo maximo real e 0,2*raiz(3)=0,346 m.
   max_steps_mapa_grande: 2000
   arena_radius_mapa_grande: 60.0
   # obs_norm_radius (NAO definido de proposito): raio que normaliza as
