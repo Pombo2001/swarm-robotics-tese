@@ -3,7 +3,7 @@
 > ✅ **CONCLUÍDO E SUPERADO (10 jul 2026).** O plano de reescrita descrito abaixo foi
 > executado: a tese e o artigo já refletem a campanha final de 7 dias. Os **números
 > deste documento são de 29 jun** (treino de 3 dias) e ficaram desatualizados — os
-> definitivos estão em `docs/PLANO_DE_ATAQUE.md` (secção "RESULTADOS FINAIS") e em
+> definitivos estão em `docs/arquivo/PLANO_DE_ATAQUE.md` (secção "RESULTADOS FINAIS") e em
 > `results/graficos_tese/final_7d/`. Mantém-se como registo do avanço metodológico,
 > que continua válido: a *fitness* de homing é a que está em produção.
 

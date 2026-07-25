@@ -46,7 +46,7 @@ artigo que não os contém; e o Chen et al., citado como prova de *Zero-Shot* em
 referências indefinidas.
 
 > Documento autónomo, para leitura por quem não acompanhou o projeto.
-> Contexto completo em `docs/PLANO_DE_ATAQUE.md` (secção "RESULTADOS FINAIS").
+> Contexto completo em `docs/arquivo/PLANO_DE_ATAQUE.md` (secção "RESULTADOS FINAIS").
 
 ---
 

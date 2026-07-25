@@ -1,7 +1,7 @@
 """Ligação ao servidor de treino ISCTE (SSH/SCP via PuTTY).
 
 Usa plink/pscp (já instalados) com a host key conhecida — como no procedimento manual
-documentado em docs/PLANO_DE_ATAQUE.md secção 4. Requer a VPN do ISCTE ligada.
+documentado em docs/arquivo/PLANO_DE_ATAQUE.md secção 4. Requer a VPN do ISCTE ligada.
 
 SEGURANÇA: a password NUNCA é guardada em disco nem em log — é passada em runtime
 e vive só na memória da sessão do browser. (É passada na linha de comando do plink,

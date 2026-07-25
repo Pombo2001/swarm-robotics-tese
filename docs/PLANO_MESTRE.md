@@ -1,9 +1,10 @@
 # PLANO MESTRE — Tese de Mestrado (19 jul → Outubro 2026)
 
 > **Este é o ÚNICO ponto de re-entrada do projeto.** Escrito a **19 jul 2026**,
-> **atualizado a 24 jul** (mapa grande P1.6 + pacote do orientador P2). Funde o
-> `PLANO_ATAQUE_FINAL.md` (lista acionável de 15 jul) com o `PLANO_DE_ATAQUE.md`
-> (registo histórico) — ambos ficam como ARQUIVO; não os atualizes, atualiza ESTE.
+> **atualizado a 25 jul**. Funde o `PLANO_ATAQUE_FINAL.md` (lista acionável de
+> 15 jul) com o `PLANO_DE_ATAQUE.md` (registo histórico) — ambos passaram para
+> `docs/arquivo/` a 25 jul; não os atualizes, atualiza ESTE.
+> O mapa do resto da pasta está em [`docs/README.md`](README.md).
 >
 > **Para o Claude/Opus:** lê este ficheiro do princípio ao fim antes de tocar em
 > qualquer coisa. Verifica `git log` e as checkboxes — NÃO refaças trabalho fechado.
@@ -42,26 +43,33 @@
   do Windows abriu sessão às 16:31 — um instalador a mandar fechar aplicações).
   Ninguém deu por isso: o log do shell estava a **0 bytes**. **Retomada às 16:46**
   e as 5 células já feitas foram saltadas, não repetidas.
-- **15 das 18 células fechadas às 20:30** (faltavam 3 do SAC, ~1 h). Grelha de
-  18 e não 21 porque **não há campeões do `cooperative_door_bypass` no disco** —
-  ver ponto próprio mais abaixo.
-- Resultado da condição natural (recolhas/ep, 20 ep/célula):
+- **COMPLETO às 21:56 — 18/18 células, 360 episódios.** Grelha de 18 e não 21
+  porque **não há campeões do `cooperative_door_bypass` no disco** — ver ponto
+  próprio mais abaixo.
+- Resultado da condição natural (recolhas/ep, 20 ep/célula; sucesso entre
+  parênteses). **Atenção à leitura da tabela:** as linhas são o cenário onde
+  cada campeão foi TREINADO no passado; os 360 episódios correram **todos** no
+  `mapa_grande`, e nenhum modelo foi treinado (é avaliação, não treino).
 
-  | origem do campeão | GNN | PPO | SAC |
+  | campeão treinado em | GNN | PPO | SAC |
   |---|---|---|---|
-  | Sandbox | **16,3** | 0,0 | 11,5 |
-  | Muro em U | 2,3 | 0,0 | 0,0 |
-  | Gargalo | 0,0 | 0,0 | (faltava) |
-  | Quatro Salas | 0,0 | 0,0 | (faltava) |
-  | Porta Cooperativa | 0,0 | 0,0 | (faltava) |
-  | Perceção Cooperativa | 2,3 | **18,4** | (faltava) |
+  | Sandbox | **16,3** (100%) | 0,0 (0%) | **11,5** (100%) |
+  | Muro em U | 2,3 (55%) | 0,0 | 0,0 |
+  | Gargalo | 0,0 | 0,0 | 0,1 (10%) |
+  | Quatro Salas | 0,0 | 0,0 | 0,0 |
+  | Porta Cooperativa | 0,0 | 0,0 | 0,8 (20%) |
+  | Perceção Cooperativa | 2,3 (100%) | **18,4** (100%) | **18,4** (100%) |
 
-- **O padrão não é "algoritmo X transfere".** É que **todos os campeões dos
-  cenários COM paredes dão 0** e só os dos dois cenários **sem paredes**
-  (Sandbox e Perceção Cooperativa) recolhem alguma coisa. Se as 3 células do SAC
-  confirmarem, esta é a leitura a testar — e é mais interessante do que a dos
-  obstáculos, porque aponta para especialização na topologia de treino.
-  **Não escrever isto como resultado antes dos controlos.**
+  Médias por algoritmo: SAC 5,12 · GNN 3,48 · PPO 3,08 — empate técnico, e os
+  três puxados pelas mesmas duas linhas. **10 das 18 células a zero absoluto.**
+- **O padrão não é "algoritmo X transfere".** A divisão é pela **topologia de
+  treino**: as duas linhas dos cenários **sem paredes** (Sandbox e Perceção
+  Cooperativa) concentram tudo o que transfere, e as quatro linhas dos cenários
+  **com paredes** dão 0,0 em 11 das 12 células. Sugere que os campeões dos
+  labirintos aprenderam a geometria do seu cenário e não navegação transferível
+  — e que quem treinou em arena aberta, sem nada para decorar, é quem sobrevive
+  num labirinto novo. **Não escrever isto como resultado antes dos controlos:**
+  três confundentes por descartar e 3 células em falta na grelha.
 - **Onde ver o estado:** `results/evaluation/zeroshot_mapa_grande_progresso.log`
   (escrito pela própria corrida, com flush; sobrevive à morte dela) e o ficheiro
   `.lock` com o estado atual. No PowerShell, `Get-Content ... -Encoding UTF8`.
@@ -585,8 +593,8 @@ que o geodésico existe para eliminar. Passou a derivar de `MAZE_SCENARIOS`.
 | O quê | Onde |
 |---|---|
 | **Este plano (único vivo)** | `docs/PLANO_MESTRE.md` |
-| Arquivo histórico (armadilhas na origem, tutorial servidor, cronologia) | `docs/PLANO_DE_ATAQUE.md` |
-| Plano de 15 jul (superado por este) | `docs/PLANO_ATAQUE_FINAL.md` |
+| Arquivo histórico (armadilhas na origem, tutorial servidor, cronologia) | `docs/arquivo/PLANO_DE_ATAQUE.md` |
+| Plano de 15 jul (superado por este) | `docs/arquivo/PLANO_ATAQUE_FINAL.md` |
 | Pré-registo da campanha adaptativa | `docs/PRE_REGISTO_NOVELTY_ADAPTATIVO.md` |
 | Pré-registo do mega-treino (P1.5) | `docs/PRE_REGISTO_MEGATREINO.md` |
 | Pré-registo do mapa grande (P1.6) | `docs/PRE_REGISTO_MAPA_GRANDE.md` |
