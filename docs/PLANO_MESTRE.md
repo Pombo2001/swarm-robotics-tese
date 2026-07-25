@@ -21,14 +21,47 @@
 > servidor. O que mudou de facto está em `docs/PRE_REGISTO_MAPA_GRANDE.md`,
 > secção 3 e emenda de 25 jul.
 
-**Estado do F1 (zero-shot de topologia), a correr LOCALMENTE:**
+## ⚠️ SE VAIS PARA A TORRE, É ISTO (por ordem)
+
+1. **`git pull`.** Estes commits estiveram 6 à frente do GitHub — incluindo os 3
+   do mapa, de 24 jul. A torre não tinha nada disto.
+2. **RECOMPILAR A TESE** (`pdflatex ×2 + biber`, em `Tese/`). O `main.tex` mudou
+   hoje (3 correções, ver abaixo) e o `main.pdf` que está no repo é de 24 jul,
+   logo **está desatualizado**. Confirmar 0 refs indefinidas e 0 overfulls, e
+   commitar o PDF novo. Não há LaTeX no PC do trabalho — só se pode fazer aí.
+3. **Ver o F1 fechado** em `results/evaluation/zeroshot_mapa_grande.csv` (as
+   células que faltavam ao sair do trabalho podem ter ficado por correr; o
+   `_progresso.log` diz onde parou e o script retoma sozinho).
+4. **Decidir onde correm os controlos** — a resposta provável é *no servidor*,
+   não em PC: são ~6 h por condição (×2 condições) e o servidor tem 64 vCPU.
+   Mas ver primeiro a regra de capacidade em [[servidor-iscte-treinos]]: com
+   megaA+megaB vivos, **não** lançar uma 3.ª stream pesada.
+
+**Estado do F1 (zero-shot de topologia), corrido LOCALMENTE:**
 - A corrida lançada às 13:28 **morreu por volta das 15:06** (o `RestartManager`
   do Windows abriu sessão às 16:31 — um instalador a mandar fechar aplicações).
   Ninguém deu por isso: o log do shell estava a **0 bytes**. **Retomada às 16:46**
-  e a andar; as 5 células já feitas foram saltadas, não repetidas.
-- Feito (GNN, condição natural, 20 ep/célula): Sandbox **16,3** · Muro em U 2,3 ·
-  Gargalo **0,0** · Quatro Salas **0,0** · Porta Coop. **0,0**.
-- Faltam ~13 células (GNN×1, PPO×6, SAC×6) a ~21 min cada.
+  e as 5 células já feitas foram saltadas, não repetidas.
+- **15 das 18 células fechadas às 20:30** (faltavam 3 do SAC, ~1 h). Grelha de
+  18 e não 21 porque **não há campeões do `cooperative_door_bypass` no disco** —
+  ver ponto próprio mais abaixo.
+- Resultado da condição natural (recolhas/ep, 20 ep/célula):
+
+  | origem do campeão | GNN | PPO | SAC |
+  |---|---|---|---|
+  | Sandbox | **16,3** | 0,0 | 11,5 |
+  | Muro em U | 2,3 | 0,0 | 0,0 |
+  | Gargalo | 0,0 | 0,0 | (faltava) |
+  | Quatro Salas | 0,0 | 0,0 | (faltava) |
+  | Porta Cooperativa | 0,0 | 0,0 | (faltava) |
+  | Perceção Cooperativa | 2,3 | **18,4** | (faltava) |
+
+- **O padrão não é "algoritmo X transfere".** É que **todos os campeões dos
+  cenários COM paredes dão 0** e só os dos dois cenários **sem paredes**
+  (Sandbox e Perceção Cooperativa) recolhem alguma coisa. Se as 3 células do SAC
+  confirmarem, esta é a leitura a testar — e é mais interessante do que a dos
+  obstáculos, porque aponta para especialização na topologia de treino.
+  **Não escrever isto como resultado antes dos controlos.**
 - **Onde ver o estado:** `results/evaluation/zeroshot_mapa_grande_progresso.log`
   (escrito pela própria corrida, com flush; sobrevive à morte dela) e o ficheiro
   `.lock` com o estado atual. No PowerShell, `Get-Content ... -Encoding UTF8`.
@@ -67,9 +100,46 @@ pré-comprometida no pré-registo. As condições convivem no mesmo CSV (colunas
 **Testes:** 17/17 no `test_mapa_grande.py` (3 novos: travessia **com**
 obstáculos — o campo geodésico do ambiente só conhece paredes —, e um por
 controlo, a provar que cada um muda **uma** coisa e deixa o resto bit-a-bit).
+`pytest tests/` também passou a correr (32 passed): um `sys.exit(0)` à
+importação abortava a coleção inteira e nenhum teste corria.
+
+## Releitura da TESE (25 jul) — 3 correções, tudo o resto confere
+
+Verificação estática + número-a-número contra os CSVs que existem neste PC.
+
+**Corrigido** (commit `6090748`):
+1. `tab:res_scale_all`: **duas células não batiam** com `escalabilidade_*.csv` —
+   Quatro Salas N=50 dizia 3,25 (CSV: 3,255 → **3,26**) e Muro U N=10 dizia 3,83
+   (CSV: 3,835 → **3,84**). Arredondamento para baixo em dois empates.
+2. Apêndice A dizia que o `hunger_timer_max` é **"só Sandbox"**; o código aplica-o
+   quando `not use_geodesic`, ou seja também na **Perceção Cooperativa**.
+3. `REPRODUZIR.md` trocava QI3 com QI4 no mapa resultado→dados.
+
+**Conferido e sem erros:** 0 refs indefinidas (135 usos/98 labels), 0 labels
+duplicados, 0 citações fora do `.bib`, `\begin`/`\end` equilibrados, as 30
+figuras de resultados existem em disco (nenhuma cai no placeholder), 0
+TODO/placeholder no corpo; `tab:res_eval` e `tab:res_signif` batem célula a
+célula com a tabela canónica da secção 2 deste ficheiro (21/21 e 21/21) e são
+coerentes entre si; Apêndice A bate com o `foraging.yaml` atual (24 parâmetros +
+hiperparâmetros dos 3 algoritmos); 15/21 a 100%, o 1,8× do Quatro Salas, o ≈8×
+de núcleos-hora e o 28/28 conferem; as outras 33 células do Sscale batem.
+
+**Não verificável neste PC** (dados na torre, auditados a 16-18 jul segundo o
+`REPRODUZIR.md`): Ptask por run, significância, novelty e Rrobust.
+
+**A tese não menciona o mapa grande em lado nenhum** — correto por agora (não
+tem campanha). Se o F2 fechar antes de 22 ago, a secção é escrita de raiz.
+
+## Servidor (verificado às 20:35 de 25 jul, com VPN)
+
+Ambas as campanhas **vivas e saudáveis**: megaA na FASE 2 (GNN objetivo `u_wall`
+@195×28, **Gen 132**), megaB na FASE 4 (ablação `decay=0.995`, **Gen 318**,
+comida 51,25). `load average 36,3` em 64 núcleos (42% livre) — o esperado para
+duas streams. Uptime 100 dias. **Nada a fazer; não lançar uma 3.ª stream.**
 
 **Próximo passo:** deixar o F1 fechar; só depois decidir se os controlos correm
-para todas as células ou só para as que derem 0 (custa ~6 h cada condição).
+para todas as células ou só para as que derem 0 (custa ~6 h cada condição, e
+**não neste PC**).
 
 ---
 
