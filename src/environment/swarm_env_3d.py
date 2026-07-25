@@ -97,6 +97,22 @@ class SwarmForagingEnv3D(gym.Env):
         self.obs_norm_radius_cfg = env_config.get('obs_norm_radius', None)
         self.obs_norm_radius = self.arena_radius
 
+        # ── Condições de CONTROLO do zero-shot de topologia (F1) ─────────────
+        # Um zero no zero-shot tem mais do que uma causa possível, e sem estas
+        # duas o `obs_norm_radius` sozinho não as separa. Ambas são no-op por
+        # omissão (os 7 cenários e a condição natural do mapa ficam bit-exactos).
+        #  · num_obstacles_mapa_grande: dos 8 cenários só o Sandbox e o
+        #    mapa_grande têm obstáculos dispersos — os 5 labirintos têm ZERO.
+        #    O campeão do Gargalo nunca viu um obstáculo na vida, logo "0
+        #    recolhas no mapa" pode ser a topologia composta OU só os 106
+        #    obstáculos. Pôr a 0 mede a diferença.
+        #  · obs_zero_door_feats: as 4 features da porta (obs[12:16]) são
+        #    identicamente 0 no treino de todos os cenários SEM porta e ficam
+        #    vivas no mapa_grande (que tem porta) — 4 entradas mortas que passam
+        #    a carregar sinal, o que é distribuição nova à entrada da rede.
+        self.num_obstacles_mapa_grande = env_config.get('num_obstacles_mapa_grande', None)
+        self.obs_zero_door_feats = env_config.get('obs_zero_door_feats', False)
+
         # ── Campo geodésico (BFS/Dijkstra) para o progress reward ────────────
         # Em cenários com paredes, a distância euclidiana ao ninho cria mínimos
         # locais: contornar uma parede AFASTA do ninho (progress negativo) → os
@@ -199,6 +215,27 @@ class SwarmForagingEnv3D(gym.Env):
             else:
                 pos = self._random_spawn()
 
+            # ⚠️ ARMADILHA CONHECIDA, deliberadamente NÃO corrigida (25 jul 2026).
+            # No reset, `self.walls` é esvaziada ANTES do spawn e só é preenchida
+            # DEPOIS (o `_spawn_obstacles_*` de cada cenário corre a seguir), logo
+            # esta verificação corre sempre sobre uma lista VAZIA: nunca deteta
+            # nada e o `for` de 50 tentativas termina sempre à primeira.
+            #
+            # Porque fica assim: hoje é inofensivo — as caixas de spawn de todos
+            # os cenários foram desenhadas longe das paredes e os testes
+            # confirmam-no episódio a episódio (`test_resets_consecutivos`,
+            # `test_escalabilidade_N`). Trocar a ordem para "paredes primeiro"
+            # mudaria a ORDEM DOS SORTEIOS de np.random e portanto o spawn de
+            # todos os cenários com a mesma seed: as campanhas fechadas (cujos
+            # números já estão na tese) deixavam de ser reproduzíveis, para
+            # corrigir código que não faz nada de errado.
+            #
+            # O que NÃO fazer sem pensar nisto: mexer na ordem, ou confiar que o
+            # fallback abaixo é seguro — o `_random_spawn()` sorteia em toda a
+            # arena e no mapa_grande 46% dessa área são bolsas seladas entre o
+            # retângulo do labirinto e o círculo r=60 (sem caminho ao ninho).
+            # Enquanto este `if` for vácuo, o fallback é inalcançável; a partir do
+            # momento em que deixar de o ser, passa a ser alcançável.
             colisao = False
             for wall in self.walls:
                 half_size = wall['size'] / 2.0
@@ -551,7 +588,12 @@ class SwarmForagingEnv3D(gym.Env):
         # --- Obstáculos dispersos (esferas com colisão, como nos outros) -----
         self.obstacles = []
         self.obstacle_velocities = []
-        n = int(60 * (self.arena_radius / 45.0) ** 2)
+        # Densidade fixa: o nº escala com a área da arena. Pode ser fixado no
+        # config (num_obstacles_mapa_grande) para a condição de controlo "sem
+        # obstáculos" do F1 — ver __init__. Sem override, o valor de sempre.
+        n = (int(60 * (self.arena_radius / 45.0) ** 2)
+             if self.num_obstacles_mapa_grande is None
+             else int(self.num_obstacles_mapa_grande))
         folga = ab / 2 + self.obstacle_radius
         spawn_c, hx, hy = self._mapa_grande_spawn_box()
         # A clareira tem de cobrir a caixa de spawn INTEIRA (cantos incluídos)
@@ -940,7 +982,10 @@ class SwarmForagingEnv3D(gym.Env):
         # sub-objetivo físico do cenário (como o ninho), não um waypoint de
         # planeamento. Nos restantes cenários fica a zeros (não revela o caminho
         # nos labirintos, o que seria batota). Mantém a dimensão da obs fixa.
-        if self.has_door:
+        # obs_zero_door_feats (controlo do F1): força os zeros do treino sem
+        # porta, mantendo a porta FÍSICA no mundo. Separa "a topologia é dura"
+        # de "estas 4 entradas nunca tinham sinal e agora têm". Ver __init__.
+        if self.has_door and not self.obs_zero_door_feats:
             dir_door, dist_door = ego_to(self.door_pos)
             norm_dist_door = dist_door / arena2
         else:

@@ -15,7 +15,65 @@
 
 ---
 
-# 0. LOG DE SESSÃO — 24 jul 2026 (Opus, PC do trabalho)
+# 0. LOG DE SESSÃO — 25 jul 2026 (Opus 5, PC do trabalho)
+
+> Sessão de **auditoria ao mapa + controlos do F1**. Zero treinos lançados no
+> servidor. O que mudou de facto está em `docs/PRE_REGISTO_MAPA_GRANDE.md`,
+> secção 3 e emenda de 25 jul.
+
+**Estado do F1 (zero-shot de topologia), a correr LOCALMENTE:**
+- A corrida lançada às 13:28 **morreu por volta das 15:06** (o `RestartManager`
+  do Windows abriu sessão às 16:31 — um instalador a mandar fechar aplicações).
+  Ninguém deu por isso: o log do shell estava a **0 bytes**. **Retomada às 16:46**
+  e a andar; as 5 células já feitas foram saltadas, não repetidas.
+- Feito (GNN, condição natural, 20 ep/célula): Sandbox **16,3** · Muro em U 2,3 ·
+  Gargalo **0,0** · Quatro Salas **0,0** · Porta Coop. **0,0**.
+- Faltam ~13 células (GNN×1, PPO×6, SAC×6) a ~21 min cada.
+- **Onde ver o estado:** `results/evaluation/zeroshot_mapa_grande_progresso.log`
+  (escrito pela própria corrida, com flush; sobrevive à morte dela) e o ficheiro
+  `.lock` com o estado atual. No PowerShell, `Get-Content ... -Encoding UTF8`.
+
+**Os zeros NÃO são do mapa** — auditoria independente feita antes de os
+interpretar: 0/20 agentes sem caminho ao ninho com os 106 obstáculos (e também
+com a **porta fechada**, pela alternativa); um oráculo que desce o gradiente
+geodésico faz **52 recolhas/ep**; folga do `max_steps` **2,89×**; folga lateral do
+caminho ótimo igual à dos 7 cenários. O mapa é resolúvel com margem.
+
+**Mas os zeros também não são interpretáveis ainda: encontrei DOIS confundentes
+novos** (com 5 células já medidas — está declarado no pré-registo):
+1. **Obstáculos.** Dos 8 cenários **só o Sandbox (100) e o mapa_grande (106) têm
+   obstáculos**; os outros 6 têm **zero**. O único campeão que treinou com
+   obstáculos é o único que recolhe alguma coisa (16,3 vs ≈0).
+2. **As 4 features da porta** (`obs[12:16]`): identicamente 0 no treino de quem
+   não tem porta, vivas no mapa (`[0,999 0,043 0 0,629]`).
+
+**Preparado (por correr):** `--controlo sem_obstaculos` e `--controlo
+sem_porta_obs`, cada um a desligar uma causa e mais nada, com leitura
+pré-comprometida no pré-registo. As condições convivem no mesmo CSV (colunas
+`NormObs` e `Controlo`, com impressão digital do ambiente **por condição**).
+
+**Outros estragos apanhados e tratados:**
+- O gerador de figuras recusava-se a fazer figuras assim que existisse uma
+  condição de controlo no CSV (validava o `env_hash` do ficheiro **inteiro**) e
+  misturava condições no heatmap. Corrigido: filtra `(mapa, base)` primeiro.
+- Duas corridas em simultâneo apagavam células uma à outra em silêncio (cada uma
+  reescreve o CSV inteiro a partir da sua memória) e partilhavam o mesmo config
+  temporário — lançar o controlo com a base a andar trocava-lhe o ambiente a
+  meio. Agora: config por condição + lock com PID (que se sabe órfão sozinho).
+- **Faltam os campeões do `cooperative_door_bypass`** (nenhum `.pth`/`.zip`
+  local, nos 3 algoritmos): o F1 salta 3 células e a grelha fica incompleta. O
+  script passa a repetir o aviso no fim, mas os modelos têm de vir do servidor.
+
+**Testes:** 17/17 no `test_mapa_grande.py` (3 novos: travessia **com**
+obstáculos — o campo geodésico do ambiente só conhece paredes —, e um por
+controlo, a provar que cada um muda **uma** coisa e deixa o resto bit-a-bit).
+
+**Próximo passo:** deixar o F1 fechar; só depois decidir se os controlos correm
+para todas as células ou só para as que derem 0 (custa ~6 h cada condição).
+
+---
+
+# 0-bis. LOG DE SESSÃO — 24 jul 2026 (Opus, PC do trabalho)
 
 > Ponto de re-entrada rápido. O detalhe de cada item está nas secções próprias
 > (P1.6 para o mapa, P2 para o orientador).
@@ -111,10 +169,12 @@ está em `results/evaluation/zeroshot_mapa_grande_ANTIGO.csv` e não entra em
 análise nenhuma. **F1 tem de correr de novo, nas duas condições de
 normalização.** A leitura "especialização vs generalização" fica como hipótese a
 testar, não como sinal.
+*(25 jul: o F1 foi relançado na geometria nova e está a meio — ver secção 0.
+As condições passaram de duas a quatro.)*
 
 **Próximo passo, por urgência:** (1) **enviar o draft ao orientador** — é o item
-mais atrasado e o único que não depende de servidor; (2) F1 zero-shot (local,
-opcional); (3) F2 no servidor depois de ~3 ago.
+mais atrasado e o único que não depende de servidor; (2) F1 zero-shot (local, **a
+correr desde 25 jul**); (3) F2 no servidor depois de ~3 ago.
 
 ---
 

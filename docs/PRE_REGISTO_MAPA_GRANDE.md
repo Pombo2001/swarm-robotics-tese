@@ -104,36 +104,80 @@ alcançado por run (o tempo é o limite, não as gerações) e o tempo real da 1
 F1 antes de F2 de propósito: o zero-shot é barato e a sua leitura não depende do
 treino nativo — e o contraste F1 vs F2 é, em si, um resultado.
 
-### ⚠️ F1 tem um confundente, e por isso corre em DUAS condições
+### ⚠️ F1 tem TRÊS confundentes, e por isso corre em QUATRO condições
 
-As distâncias da observação (ao ninho, à porta, a cada vizinho) são normalizadas
-pelo **raio da arena**. O mapa grande corre a r=60 e os 7 cenários a r=15, logo o
-mesmo modelo, sem nada mudar nele, recebe todas as distâncias **comprimidas 4×**
-(÷120 em vez de ÷30): um vizinho a 15 m, que no treino lia 0,50, passa a ler 0,125.
+> **Escrito em duas datas.** O confundente (b) — a escala da observação — foi
+> registado a **24 jul, com zero dados**. Os confundentes (c) e (d) foram
+> acrescentados a **25 jul, já com 5 células da condição natural medidas**
+> (GNN: Sandbox 16,3 · Muro em U 2,3 · Gargalo 0,0 · Quatro Salas 0,0 · Porta
+> 0,0). Não houve dados nenhuns das condições novas quando a leitura abaixo foi
+> pré-comprometida, mas **é honesto declarar que a suspeita nasceu de ver os
+> zeros** — e não antes. Ver a emenda datada na secção 7.
+
+**Resumo:** um zero no F1 tem quatro causas possíveis e só uma delas é a pergunta
+da QI7. Cada condição desliga uma causa e deixa tudo o resto igual.
+
+**(a) e (b) — texto original de 24 jul, mantido como foi escrito:** as distâncias
+da observação (ao ninho, à porta, a cada vizinho) são normalizadas pelo **raio da
+arena**. O mapa grande corre a r=60 e os 7 cenários a r=15, logo o mesmo modelo,
+sem nada mudar nele, recebe todas as distâncias **comprimidas 4×** (÷120 em vez de
+÷30): um vizinho a 15 m, que no treino lia 0,50, passa a ler 0,125.
 
 Sem tratamento, um zero-shot a zero admite **duas** explicações que os dados não
 separam: (a) a topologia composta é demasiado difícil — a pergunta da QI7; ou (b) a
 observação chega fora da escala em que a política foi treinada — um artefacto de
 implementação. Atribuir (a) sem excluir (b) seria repetir, noutra roupagem, o erro
-do "colapso do evolutivo".
+do "colapso do evolutivo". *(A 25 jul percebeu-se que as explicações não eram duas
+mas quatro — daí (c) e (d).)*
 
-**Pré-registado:** o F1 corre nas duas condições, com as mesmas seeds:
+**(c) Obstáculos — os campeões dos labirintos nunca viram um.** Medido a 25 jul,
+cenário a cenário: dos 8 cenários **só o Sandbox (100) e o mapa_grande (106) têm
+obstáculos dispersos**; `u_wall`, `bottleneck`, `four_rooms`, `cooperative_door`,
+`cooperative_door_bypass` e `cooperative_perception` têm **zero**. Um campeão do
+Gargalo nunca encontrou um obstáculo em toda a sua evolução, e no mapa encontra
+106 — o LiDAR passa a acusar coisas que nunca existiram no mundo dele. "0 recolhas"
+pode então ser a topologia composta **ou** só isto.
 
-| Condição | Normalizador | O que isola |
+**(d) As 4 features da porta na observação.** `obs[12:16]` (direção + distância
+egocêntricas à porta) são **identicamente 0** no treino de todos os cenários sem
+porta e ficam **vivas** no mapa_grande, que tem porta: medido `[0,999 0,043 0
+0,629]`. São quatro entradas mortas que passam a carregar sinal — distribuição
+nova à entrada da rede, sem relação com a dificuldade do labirinto.
+
+**Pré-registado:** o F1 corre nas quatro condições, com as mesmas seeds:
+
+| Condição | O que muda | O que isola |
 |---|---|---|
-| **natural** (`--norm-obs mapa`) | r=60 ⇒ ÷120 | O que acontece de facto ao pegar num campeão e largá-lo no mapa novo. **É a condição principal.** |
-| **controlo** (`--norm-obs treino`) | r=15 ⇒ ÷30 | Distâncias na escala do treino, física do mapa inalterada. Isola a topologia da mudança de escala. |
+| **natural** (`--norm-obs mapa`) | nada | O que acontece de facto ao pegar num campeão e largá-lo no mapa novo. **É a condição principal.** |
+| **escala** (`--norm-obs treino`) | `obs_norm_radius` = 15 ⇒ ÷30 | Distâncias na escala do treino, física do mapa inalterada. |
+| **obstáculos** (`--controlo sem_obstaculos`) | 106 ⇒ 0 obstáculos | O mundo passa a ser só paredes, como nos labirintos onde os campeões treinaram. |
+| **porta na obs** (`--controlo sem_porta_obs`) | `obs[12:16]` ⇒ 0 | Repõe os zeros do treino **sem tirar a porta do mundo** (continua a ser preciso abri-la ou contorná-la). |
 
-*Leitura pré-comprometida:* se as duas condições derem o mesmo, o efeito é de
-**topologia** e reporta-se só a natural (o controlo vai para apêndice). Se
-divergirem, o zero-shot de topologia está **confundido com a escala da observação**
-e é isso que se reporta — sem escolher a condição que der o número melhor.
-A condição fica na coluna `NormObs` do CSV; as figuras usam a natural.
+*Leitura pré-comprometida (idêntica para as três condições de controlo):* se a
+condição de controlo der **o mesmo** que a natural, essa causa está excluída e
+reporta-se só a natural (o controlo vai para apêndice). Se **divergir**, o
+zero-shot de topologia está confundido com essa causa e **é isso que se reporta** —
+sem escolher a condição que der o número melhor, e sem transformar a condição de
+controlo na condição principal. Um controlo que ressuscite os campeões **não**
+salva a leitura "a topologia é dura": desmente-a.
 
-*Nota:* o controlo só muda o normalizador da observação (`obs_norm_radius`), não a
-arena, nem as paredes, nem a física — verificado em `tests/test_mapa_grande.py`
-(`test_normalizador_da_obs`). Nos 7 cenários o valor por omissão continua a ser o
-raio da arena, e as observações ficam bit-a-bit iguais às das campanhas fechadas.
+*O que nenhuma destas condições resolve, e fica declarado como limitação:* na
+condição **escala** as distâncias passam a valer **mais de 1** (até ≈2,5 na
+bússola da porta), valor que nenhum modelo viu em treino. As duas condições de
+normalização estão fora da distribuição de treino de maneiras diferentes —
+comprimida (natural) ou fora de gama (controlo). Não há terceira hipótese sem
+retreinar, e retreinar é a fase F2.
+
+As condições ficam nas colunas `NormObs` e `Controlo` do CSV (convivem no mesmo
+ficheiro, com a impressão digital do ambiente por condição); as figuras usam
+sempre `(mapa, base)`.
+
+*Nota:* cada controlo muda **uma** coisa e mais nada — verificado em
+`tests/test_mapa_grande.py` (`test_normalizador_da_obs`,
+`test_controlo_sem_obstaculos`, `test_controlo_porta_na_obs`): as paredes, o
+ninho, o spawn e as restantes 107 dimensões da observação ficam bit-a-bit iguais.
+Nos 7 cenários todas as chaves são no-op por omissão, e as observações continuam
+bit-a-bit iguais às das campanhas fechadas.
 
 ---
 
@@ -286,6 +330,57 @@ digital do ambiente (`env_hash`) e recusa-se a retomar por cima de dados de outr
 mapa. Os 7 cenários da tese ficam **bit-a-bit iguais** (verificado por comparação
 direta com a versão anterior do simulador, erro 0,0e+00 em observações, recompensas
 e posições).
+
+### 25 jul 2026 — dois confundentes novos, encontrados **com 5 células já medidas**
+
+**Declaração de honestidade, primeiro.** Ao contrário das emendas de 24 jul, esta
+foi escrita **depois de ver dados**: a corrida oficial de F1 (condição natural)
+tinha 5 das 18 células fechadas, todas do GNN — Sandbox 16,3 · Muro em U 2,3 ·
+Gargalo 0,0 · Quatro Salas 0,0 · Porta Cooperativa 0,0 (20 ep/célula). Foram os
+três zeros que motivaram procurar mais causas. Nenhuma das condições novas tinha
+sido corrida quando a leitura foi pré-comprometida (secção 3), e nenhuma célula
+já medida foi apagada ou repetida — mas a ordem dos acontecimentos fica registada
+porque é ela que determina o peso que estes controlos podem ter num argumento.
+
+7. **Obstáculos (c).** Medição do nº de obstáculos por cenário: só o Sandbox (100)
+   e o mapa_grande (106) têm; os outros seis têm **zero**. O único campeão que
+   alguma vez treinou com obstáculos é **o único que recolhe alguma coisa** no
+   mapa (16,3 vs ≈0). A correlação é perfeita nas 5 células medidas e é uma
+   explicação alternativa completa para o resultado — que ninguém tinha visto
+   porque a lista de obstáculos por cenário nunca fora comparada.
+   **Controlo novo:** `--controlo sem_obstaculos` (`num_obstacles_mapa_grande: 0`).
+8. **Features da porta (d).** `obs[12:16]` medido a zero em `none`/`u_wall`/
+   `bottleneck`/`four_rooms` e a `[0,999 0,043 0 0,629]` no mapa_grande.
+   **Controlo novo:** `--controlo sem_porta_obs` (`obs_zero_door_feats: true`).
+   Zera **só** essas 4 dimensões; a porta continua no mundo, a ter de ser aberta
+   ou contornada.
+9. **Limitação declarada, sem correção possível dentro do F1:** na condição
+   `--norm-obs treino` as distâncias passam a >1 (até ≈2,5), fora da gama de
+   treino. As duas condições de normalização são ambas OOD, de maneiras opostas.
+   Fica escrito em vez de descoberto por um arguente.
+
+**O que NÃO mudou:** a condição natural continua a ser a principal; nenhuma célula
+foi repetida; a impressão digital da condição base mantém-se `267a7b547aed`
+(verificado depois das alterações ao ambiente — os dois controlos são no-op por
+omissão). A condição `sem_obstaculos` tem, de propósito, outra digital
+(`dd557291eaa5`): é outro mundo, e o CSV guarda a digital **por condição** para
+não confundir "controlo" com "o mapa mudou".
+
+**Auditoria independente do mapa feita no mesmo dia** (o mapa não tem culpa dos
+zeros, e isso teve de ser provado antes de os interpretar):
+
+| Verificação | Resultado |
+|---|---|
+| Caminho ao ninho **com** os 106 obstáculos, 8 seeds | 0/20 agentes sem caminho; idem com a **porta fechada** (alternativa +26 m) |
+| Componentes do espaço navegável do retângulo | 1 (as outras 4 são as bolsas seladas entre o retângulo e o círculo da arena, onde ninguém nasce nem entra) |
+| Oráculo (descer o gradiente geodésico) | **52 recolhas/ep** — o mapa é resolúvel com folga |
+| Pior percurso medido a partir dos spawns reais | 138,5 m ⇒ 692 passos de ida ⇒ folga **2,89×** |
+| Folga lateral do caminho ótimo | mín. 0,30 m, 20% do percurso <0,5 m — **igual aos 7 cenários** (u_wall 49%, four_rooms 11%) |
+
+Testes novos que fixam isto: `test_atravessavel_com_obstaculos` (o campo geodésico
+do ambiente só conhece paredes — um obstáculo a selar um corredor não dava erro
+nenhum), `test_controlo_sem_obstaculos`, `test_controlo_porta_na_obs`.
+17/17 a passar.
 
 ---
 

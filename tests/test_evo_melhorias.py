@@ -120,7 +120,11 @@ def _le_csv(path):
         return list(csv.reader(f))
 
 
-def test_cache_equivalencia(tmpdir, novelty_weight, novelty_adaptive, rotulo):
+def _cache_equivalencia(tmpdir, novelty_weight, novelty_adaptive, rotulo):
+    # Nome com `_` à frente, como os outros auxiliares deste ficheiro: chamava-se
+    # `test_...` e o pytest tentava tratá-lo como teste, pedindo os argumentos
+    # como fixtures ("fixture 'novelty_weight' not found"). Continua a ser
+    # chamado do __main__ com os parâmetros explícitos, que é como foi escrito.
     print(f"[2] equivalência elite_cache ON vs OFF ({rotulo})")
     canon_off, per_off = _run_mini(tmpdir, f"{rotulo}_off", novelty_weight,
                                    novelty_adaptive, elite_cache=False)
@@ -143,9 +147,9 @@ def test_cache_equivalencia(tmpdir, novelty_weight, novelty_adaptive, rotulo):
 if __name__ == "__main__":
     test_anneal_unit()
     with tempfile.TemporaryDirectory() as tmpdir:
-        test_cache_equivalencia(tmpdir, novelty_weight=0.0,
+        _cache_equivalencia(tmpdir, novelty_weight=0.0,
                                 novelty_adaptive=False, rotulo="objetivo")
-        test_cache_equivalencia(tmpdir, novelty_weight=0.5,
+        _cache_equivalencia(tmpdir, novelty_weight=0.5,
                                 novelty_adaptive=True, rotulo="novelty_adapt")
     print()
     if FALHAS:

@@ -141,9 +141,28 @@ def figs_zeroshot(mapa):
         return
     df = pd.read_csv(fp)
 
-    # O CSV é de ESTE mapa? Uma figura publicada a partir de uma avaliação feita
-    # noutra geometria é pior do que figura nenhuma: parece um resultado. Sem
-    # env_hash o CSV é anterior à impressão digital e não se pode verificar.
+    # ── PRIMEIRO filtrar a condição, SÓ DEPOIS validar a geometria ───────────
+    # O CSV tem várias condições a conviver (--norm-obs e --controlo). Misturá-las
+    # num gráfico faria a média de experiências diferentes sem dar sinal disso; e
+    # validar o env_hash do ficheiro INTEIRO rejeitava tudo por causa do controlo
+    # 'sem_obstaculos', que tem outra digital de propósito (muda o mundo).
+    if "Controlo" not in df.columns:
+        df["Controlo"] = "base"      # CSVs anteriores a 25 jul: só havia a base
+    if "NormObs" not in df.columns:
+        df["NormObs"] = "mapa"
+    presentes = sorted(set(zip(df["NormObs"], df["Controlo"])))
+    df = df[(df["NormObs"] == "mapa") & (df["Controlo"] == "base")]
+    if df.empty:
+        print("[--] só há dados de condições de CONTROLO — figuras de zero-shot "
+              "saltadas (a figura oficial é a condição natural).")
+        return
+    if len(presentes) > 1:
+        print(f"[i] condições no CSV: {presentes} — as figuras usam ('mapa','base'). "
+              f"O contraste com os controlos vive no pré-registo, não nestas figuras.")
+
+    # A condição natural é de ESTE mapa? Uma figura publicada a partir de uma
+    # avaliação feita noutra geometria é pior do que figura nenhuma: parece um
+    # resultado. Sem env_hash o CSV é anterior à digital e não se pode verificar.
     import copy
     import yaml
     from scripts.eval_zeroshot_mapa import _impressao_digital
@@ -160,18 +179,6 @@ def figs_zeroshot(mapa):
               "figuras de zero-shot saltadas. Voltar a correr eval_zeroshot_mapa.py."
               % (mapa, df["env_hash"].iloc[0], atual))
         return
-
-    # O CSV pode conter as DUAS condições de normalização da observação (ver
-    # eval_zeroshot_mapa.py --norm-obs). Misturá-las num só gráfico faria a média
-    # de duas experiências diferentes, e a figura não daria sinal disso.
-    if "NormObs" in df.columns:
-        cond = sorted(df["NormObs"].unique())
-        df = df[df["NormObs"] == "mapa"]
-        if df.empty:
-            print("[--] só há dados da condição de CONTROLO — figuras de zero-shot saltadas.")
-            return
-        if len(cond) > 1:
-            print(f"[i] condições no CSV: {cond} — as figuras usam a natural ('mapa').")
 
     piv = (df.groupby(["Origem", "Algorithm"])["food_collected"].mean()
            .unstack("Algorithm").reindex(columns=ALGOS))

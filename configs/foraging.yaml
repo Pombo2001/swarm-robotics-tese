@@ -41,6 +41,19 @@ environment:
   # topologia, tratado com uma condicao de controlo em
   # scripts/eval_zeroshot_mapa.py --norm-obs treino (ver o pre-registo, sec. 3).
   # Defini-lo aqui mudaria TODOS os cenarios: nao definir.
+  #
+  # num_obstacles_mapa_grande e obs_zero_door_feats (NAO definidos de proposito):
+  # as outras duas condicoes de CONTROLO do zero-shot (pre-registo, sec. 3). Um
+  # zero no F1 tem QUATRO causas possiveis e a normalizacao acima so separa uma:
+  #   (1) topologia composta -- o que o F1 quer medir;
+  #   (2) distancias comprimidas 4x     -> controlo --norm-obs treino;
+  #   (3) 106 obstaculos dispersos      -> controlo --controlo sem_obstaculos.
+  #       Dos 8 cenarios so o Sandbox e o mapa_grande tem obstaculos: os 5
+  #       labirintos tem ZERO, logo os seus campeoes nunca viram um obstaculo.
+  #   (4) as 4 features da porta (obs[12:16]), identicamente 0 no treino de
+  #       quem nao tem porta e vivas no mapa -> controlo --controlo sem_porta_obs.
+  # Sao no-op por omissao (os 7 cenarios ficam bit-a-bit iguais); quem os liga e
+  # o scripts/eval_zeroshot_mapa.py, num config temporario. Nao definir aqui.
   min_spread_distance: 1.0
   nest_radius: 1.5
   nest_velocity: 0.015

@@ -282,6 +282,135 @@ def test_spawn_livre_de_obstaculos():
     print("OK  spawn livre: 0 em 600 agentes nasce dentro de um obstáculo")
 
 
+def _grelha_livre(e, res=0.3, com_obstaculos=True, porta_fechada=False):
+    """bloq[i,j] do espaço navegável: paredes + obstáculos + bordo da arena.
+
+    O `_build_geodesic_field` do ambiente só bloqueia PAREDES — é o que ele
+    precisa para o gradiente. Para saber se o mapa é atravessável faltam os
+    obstáculos, que aqui são 106 e sorteados por episódio."""
+    R = e.arena_radius
+    n = int(2 * R / res) + 1
+    xs = -R + (np.arange(n) + 0.5) * res
+    X, Y = np.meshgrid(xs, xs, indexing="ij")
+    bloq = (X ** 2 + Y ** 2) > (R - e.robot_radius) ** 2
+    for k, w in enumerate(e.walls):
+        if (not porta_fechada) and e.door_wall_index is not None and k == e.door_wall_index:
+            continue
+        h = w["size"] / 2.0
+        bloq |= ((np.abs(X - w["pos"][0]) < h[0] + e.robot_radius) &
+                 (np.abs(Y - w["pos"][1]) < h[1] + e.robot_radius))
+    if com_obstaculos:
+        rr = (e.obstacle_radius + e.robot_radius) ** 2
+        for o in e.obstacles:
+            bloq |= ((X - o[0]) ** 2 + (Y - o[1]) ** 2) < rr
+    return bloq, n, res
+
+
+def _alcancavel(e, bloq, n, res):
+    """Células alcançáveis a partir do ninho (BFS 8-conexo)."""
+    from collections import deque
+    vis = np.zeros((n, n), bool)
+    c0 = (int((e.nest_pos[0] + e.arena_radius) / res),
+          int((e.nest_pos[1] + e.arena_radius) / res))
+    vis[c0] = True
+    fila = deque([c0])
+    while fila:
+        i, j = fila.popleft()
+        for di in (-1, 0, 1):
+            for dj in (-1, 0, 1):
+                a, b = i + di, j + dj
+                if 0 <= a < n and 0 <= b < n and not bloq[a, b] and not vis[a, b]:
+                    vis[a, b] = True
+                    fila.append((a, b))
+    return vis
+
+
+def test_atravessavel_com_obstaculos():
+    """Os 106 obstáculos não podem fechar o mapa — e o teste do campo geodésico
+    NÃO apanha isso, porque o campo do ambiente só conhece paredes.
+
+    Um obstáculo que sele um corredor de 2,5 m torna o mapa impossível a partir
+    de uma seed e possível na seguinte: uma campanha inteira com metade dos
+    episódios insolúveis, sem um único erro no log."""
+    e = make_env()
+    for seed in (1, 2):
+        e.reset(seed=seed)
+        for fechada in (False, True):
+            bloq, n, res = _grelha_livre(e, porta_fechada=fechada)
+            vis = _alcancavel(e, bloq, n, res)
+            maus = [q for q in e.agent_positions
+                    if not vis[int((q[0] + e.arena_radius) / res),
+                              int((q[1] + e.arena_radius) / res)]]
+            estado = "FECHADA" if fechada else "aberta"
+            assert not maus, (f"seed {seed}, porta {estado}: {len(maus)} agentes "
+                              f"sem caminho ao ninho depois dos obstáculos")
+    print("OK  mapa atravessável com os 106 obstáculos, de porta aberta E fechada")
+
+
+def test_controlo_sem_obstaculos():
+    """CONTROLO do F1: dos 8 cenários só o Sandbox e o mapa_grande têm
+    obstáculos — os 5 labirintos têm ZERO. Um campeão do Gargalo nunca viu um
+    obstáculo, logo '0 recolhas no mapa' pode ser a topologia OU só os
+    obstáculos. Este teste fixa as duas metades: por omissão nada muda; a 0, o
+    mundo perde os obstáculos e mais nada."""
+    e = make_env()
+    e.reset(seed=1)
+    assert len(e.obstacles) == 106, f"o mapa base deixou de ter 106 obstáculos ({len(e.obstacles)})"
+
+    c = make_env(num_obstacles_mapa_grande=0)
+    c.reset(seed=1)
+    assert len(c.obstacles) == 0, "o controlo não removeu os obstáculos"
+    # Só os obstáculos: paredes, ninho e spawn têm de ficar iguais.
+    assert np.allclose([w["pos"] for w in c.walls], [w["pos"] for w in e.walls]), \
+        "o controlo mexeu nas paredes"
+    assert np.allclose(c.nest_pos, e.nest_pos), "o controlo mexeu no ninho"
+    c.step({a: np.zeros(3, dtype=np.float32) for a in c.agents})
+
+    # E os 5 labirintos que o controlo imita continuam mesmo sem obstáculos.
+    for scen in ("u_wall", "bottleneck", "four_rooms", "cooperative_door"):
+        cfg = copy.deepcopy(BASE_CFG)
+        cfg["environment"]["classic_scenario"] = scen
+        f = SwarmForagingEnv3D(config=cfg)
+        f.reset(seed=1)
+        assert len(f.obstacles) == 0, \
+            f"{scen} passou a ter obstáculos — o controlo deixa de fazer sentido"
+    print("OK  controlo sem_obstaculos: 106 -> 0, resto do mundo intacto")
+
+
+def test_controlo_porta_na_obs():
+    """CONTROLO do F1: as 4 features da porta (obs[12:16]) são identicamente 0
+    no treino de quem não tem porta e ficam VIVAS no mapa_grande. São 4 entradas
+    mortas que passam a carregar sinal — causa possível de um zero que nada tem
+    a ver com a topologia. O controlo repõe os zeros SEM tirar a porta do mundo."""
+    e = make_env()
+    e.reset(seed=1)
+    o_base = e._get_observations()["robot_0"]
+    assert np.any(o_base[12:16] != 0), "o mapa_grande devia ter a bússola da porta viva"
+
+    c = make_env(obs_zero_door_feats=True)
+    c.reset(seed=1)
+    o_ctrl = c._get_observations()["robot_0"]
+    assert np.all(o_ctrl[12:16] == 0), "o controlo não zerou as features da porta"
+    assert c.has_door and c.door_active, "o controlo tirou a porta do MUNDO (só devia zerar a obs)"
+    assert len(c.walls) == len(e.walls), "o controlo mexeu nas paredes"
+    # Tudo o resto bit-a-bit igual: se mudar mais alguma coisa, o controlo mede
+    # duas coisas ao mesmo tempo e deixa de ser controlo.
+    assert np.array_equal(np.delete(o_base, np.s_[12:16]),
+                          np.delete(o_ctrl, np.s_[12:16])), \
+        "o controlo mexeu em features que não são as da porta"
+
+    # Nos cenários sem porta já era zero: o controlo não pode mudar nada lá.
+    for scen in ("u_wall", "four_rooms"):
+        for zerar in (False, True):
+            cfg = copy.deepcopy(BASE_CFG)
+            cfg["environment"]["classic_scenario"] = scen
+            cfg["environment"]["obs_zero_door_feats"] = zerar
+            f = SwarmForagingEnv3D(config=cfg)
+            f.reset(seed=1)
+            assert np.all(f._get_observations()["robot_0"][12:16] == 0)
+    print("OK  controlo sem_porta_obs: obs[12:16] a zero, porta física intacta")
+
+
 def test_normalizador_da_obs():
     """O normalizador das distâncias é o raio da arena — logo o mapa_grande
     comprime tudo 4x face ao treino. É um CONFUNDENTE do zero-shot, e por isso
@@ -318,7 +447,8 @@ if __name__ == "__main__":
               test_escalabilidade_N, test_obs_dim_igual_aos_7,
               test_sem_fuga_entre_cenarios, test_robustez_ligavel,
               test_ninho_desimpedido, test_spawn_livre_de_obstaculos,
-              test_normalizador_da_obs]
+              test_normalizador_da_obs, test_atravessavel_com_obstaculos,
+              test_controlo_sem_obstaculos, test_controlo_porta_na_obs]
     for t in testes:
         t()
     print(f"\n{len(testes)}/{len(testes)} testes do mapa grande passaram ✅")
