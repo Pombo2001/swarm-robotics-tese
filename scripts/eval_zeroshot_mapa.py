@@ -258,6 +258,21 @@ class _CorridaUnica:
                     break
         return None, texto
 
+    def _acabou_em_paz(self):
+        """A última corrida registada no diário fechou-se a si própria?
+
+        Distingue "acabou agora mesmo" de "está a correr". Sem isto, encadear
+        uma condição a seguir à outra era impossível: mal a primeira fecha, o
+        CSV tem minutos de idade e a guarda de mtime abaixo abortava a segunda
+        — e a saída fácil seria passar --ignorar-corrida-ativa sempre, que é
+        como se perde uma guarda a sério."""
+        try:
+            with open(self.diario, encoding="utf-8") as f:
+                linhas = [l for l in f.read().splitlines() if l.strip()]
+        except OSError:
+            return False
+        return bool(linhas) and ("FIM" in linhas[-1] or "MORREU" in linhas[-1])
+
     def __enter__(self):
         if not self.ignorar and os.path.exists(self.lock):
             pid, texto = self._dono()
@@ -268,15 +283,16 @@ class _CorridaUnica:
                     f"    (ou pára o pid {pid}) — o trabalho já feito não se perde: a\n"
                     f"    corrida seguinte retoma as células que faltam.")
             print(f"[=] Lock órfão de uma corrida que morreu ({texto}) — a assumir.")
-        if not self.ignorar and os.path.exists(self.dest):
+        if (not self.ignorar and not os.path.exists(self.lock)
+                and os.path.exists(self.dest) and not self._acabou_em_paz()):
             idade = (time.time() - os.path.getmtime(self.dest)) / 60
-            if idade < self.JANELA_MIN and not os.path.exists(self.lock):
+            if idade < self.JANELA_MIN:
                 raise SystemExit(
-                    f"[X] O CSV foi escrito há {idade:.0f} min mas não há lock — é capaz\n"
-                    f"    de estar a correr uma versão anterior deste script (uma célula\n"
-                    f"    demora ~20 min). Duas corridas apagam células uma à outra.\n"
-                    f"    Confirma com Get-Process python; se não houver nenhuma, usa\n"
-                    f"    --ignorar-corrida-ativa.")
+                    f"[X] O CSV foi escrito há {idade:.0f} min, não há lock e o diário não\n"
+                    f"    fecha com FIM — é capaz de estar a correr uma versão anterior\n"
+                    f"    deste script (uma célula demora ~20 min), e duas corridas apagam\n"
+                    f"    células uma à outra. Confirma com Get-Process python; se não\n"
+                    f"    houver nenhuma, usa --ignorar-corrida-ativa.")
         self.registar(f"ARRANQUE {self.etiqueta}")
         return self
 
