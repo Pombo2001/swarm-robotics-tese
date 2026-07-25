@@ -1450,8 +1450,8 @@ O resultado é inequívoco: o controlador de grafo mantém \textbf{100\% de suce
 Sandbox & $3{,}74$ & $3{,}29$ & $1{,}95$ & $1{,}27$ & $39\%$ \\ \hline
 Perceção Cooperativa & $1{,}64$ & $1{,}30$ & $0{,}83$ & $0{,}59$ & $45\%$ \\ \hline
 Gargalo & $6{,}92$ & $6{,}93$ & $5{,}96$ & $4{,}04$ & $58\%$ \\ \hline
-Quatro Salas & $3{,}60$ & $3{,}86$ & $3{,}25$ & $2{,}54$ & $66\%$ \\ \hline
-Beco Sem Saída (U) & $3{,}83$ & $4{,}01$ & $3{,}81$ & $3{,}14$ & $78\%$ \\ \hline
+Quatro Salas & $3{,}60$ & $3{,}86$ & $3{,}26$ & $2{,}54$ & $66\%$ \\ \hline
+Beco Sem Saída (U) & $3{,}84$ & $4{,}01$ & $3{,}81$ & $3{,}14$ & $78\%$ \\ \hline
 Porta Cooperativa & $3{,}40$ & $3{,}54$ & $3{,}41$ & $3{,}12$ & $88\%$ \\ \hline
 Porta c/ Alternativa & $4{,}31$ & $4{,}50$ & $4{,}44$ & $4{,}06$ & $90\%$ \\ \hline
 \end{tabular}
@@ -1660,7 +1660,7 @@ Para garantir a reprodutibilidade integral das experiências, este apêndice re�
 \texttt{nest\_radius} & $1.5$\,m & Raio do ninho \\
 \texttt{nest\_velocity} & $0.015$\,m/s & Velocidade do ninho móvel \\
 \texttt{required\_to\_eat} & $3$ & $k_{min}$ nos cenários cooperativos (forçado a $1$ nos labirintos de navegação) \\
-\texttt{hunger\_timer\_max} & $250$ & Limite de fome (só Sandbox) \\
+\texttt{hunger\_timer\_max} & $250$ & Limite de fome, com \textit{respawn} do agente (ativo apenas nos cenários \emph{sem} campo geodésico: Sandbox e Perceção Cooperativa) \\
 \texttt{lidar\_range} & $8.0$\,m & Alcance máximo do LiDAR \\
 \texttt{max\_steps} & $500$ & Horizonte temporal base \\
 \texttt{max\_steps\_cooperative\_door} & $800$ & Horizonte na Porta Cooperativa \\

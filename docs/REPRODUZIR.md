@@ -73,9 +73,12 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
 | **Custo computacional** — `tab:res_computacional` (§1498) | medição direta no simulador | `scripts/benchmark_sim.py` (novo, 16 jul) | ✅ torre, VERIFICADO+ATUALIZADO 16 jul: 139 passos/s era PRÉ-vetorização; medição atual ≈420 passos/s (3,0×, consistente c/ o 2,58× do passo); tabela da tese atualizada c/ ambos |
 | **Figuras** (mecanismo) | `Tese/images/resultados/*.png` | copiar o PNG com o nome que o `\figresultado` espera + recompilar (sem editar o `.tex`) | ✅ PC |
 
-> As 6 perguntas de investigação (QI1–QI6) mapeiam assim: QI1/QI3 Ptask+significância ·
-> QI2 Sscale (representação vs otimizador) · QI4 Rrobust · QI5 desenho da aptidão (homing)
-> · QI6 Novelty. Cada uma remete para uma linha acima.
+> As 6 perguntas de investigação (QI1–QI6) mapeiam assim: **QI1** Ptask+significância ·
+> **QI2** Sscale (representação vs otimizador) · **QI3** Rrobust · **QI4** síntese das três
+> (o "mapa de escolha" — não tem dados próprios) · **QI5** desenho da aptidão (homing) ·
+> **QI6** Novelty. Cada uma remete para uma linha acima.
+> *(Corrigido a 25 jul: dizia "QI1/QI3 Ptask" e "QI4 Rrobust", trocando as duas — na tese
+> a QI3 é a robustez e a QI4 é o critério de escolha.)*
 
 ---
 
