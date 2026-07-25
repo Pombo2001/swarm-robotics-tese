@@ -30,9 +30,11 @@
    hoje (3 correções, ver abaixo) e o `main.pdf` que está no repo é de 24 jul,
    logo **está desatualizado**. Confirmar 0 refs indefinidas e 0 overfulls, e
    commitar o PDF novo. Não há LaTeX no PC do trabalho — só se pode fazer aí.
-3. **Ver o F1 fechado** em `results/evaluation/zeroshot_mapa_grande.csv` (as
-   células que faltavam ao sair do trabalho podem ter ficado por correr; o
-   `_progresso.log` diz onde parou e o script retoma sozinho).
+3. **NÃO olhar para o F1 que está no CSV** — está anulado (modelos de 24 jun; ver
+   o bloco 🛑 abaixo). O que fazer é **trazer os campeões 7d** de `~/eval7d.tar.gz`
+   e `~/run7d_mlp` para `results/models_7d/` e repetir com `--models-dir`. A
+   guarda nova recusa-se a correr enquanto lá não estiverem, e o CSV velho vai
+   sozinho para `_ANTIGO` na primeira corrida boa.
 4. **Decidir onde correm os controlos** — a resposta provável é *no servidor*,
    não em PC: são ~6 h por condição (×2 condições) e o servidor tem 64 vCPU.
    Mas ver primeiro a regra de capacidade em [[servidor-iscte-treinos]]: com
@@ -97,10 +99,30 @@ de homing** — o "colapso do evolutivo" que a tese descreve como curado.
   **nunca** por cima de `results/models*`, ou perde-se a rastreabilidade do que
   foi avaliado com o quê.
 
-**Guarda a acrescentar antes de repetir:** o `eval_zeroshot_mapa.py` devia
-gravar no CSV a data/`meta.json` de cada modelo que carrega e rebentar se forem
-anteriores à campanha de referência. O dashboard já grita isto na vista Ciência
-("Avaliação DESATUALIZADA face aos modelos") — o script não.
+**Guarda posta no script (25 jul, 23h — FEITO).** O `eval_zeroshot_mapa.py` já
+não aceita avaliar o que lhe calhar à mão:
+- **`--models-dir`** — a raiz dos modelos deixa de estar em duro. Aponta-se à
+  pasta ISOLADA da campanha (`results/models_7d/`), nunca aos `results/models*`
+  ativos.
+- **Guarda de campanha** — a data de cada campeão (sidecar `.meta.json`, senão o
+  mtime) é verificada contra `--campanha-inicio`/`--campanha-fim` (por omissão
+  `2026-07-02`–`2026-07-10`, a campanha 7d) **antes da primeira célula**:
+  anterior **aborta**, posterior **avisa** (pode ser campanha repetida — mas é
+  também o aspeto de estar a ler uma pasta que um treino reescreve). Verificado
+  contra o disco real: aborta a apontar o `gnn_3d_best_u_wall.pth` de 24 jun.
+- **O CSV passa a dizer de que campanha é**: colunas `ModeloPath`, `ModeloData`,
+  `ModeloFonte`. Um CSV sem elas não é retomado (vai para `_ANTIGO`, agora com
+  carimbo temporal — o `_ANTIGO` anterior deixou de ser apagado por cima), e uma
+  célula avaliada com outro modelo **volta a correr mesmo estando completa**:
+  sem isto, repetir o F1 herdava em silêncio as 18 células erradas.
+- `--sem-guarda-data` para desligar tudo (as datas continuam a ir para o CSV).
+- **12 testes novos** (`tests/test_zeroshot_guarda.py`), **44/44** na suite.
+
+Comando da repetição, quando os campeões 7d estiverem no disco:
+```
+.venv/Scripts/python.exe scripts/eval_zeroshot_mapa.py --episodes 20 \
+    --models-dir results/models_7d
+```
 - **Onde ver o estado:** `results/evaluation/zeroshot_mapa_grande_progresso.log`
   (escrito pela própria corrida, com flush; sobrevive à morte dela) e o ficheiro
   `.lock` com o estado atual. No PowerShell, `Get-Content ... -Encoding UTF8`.

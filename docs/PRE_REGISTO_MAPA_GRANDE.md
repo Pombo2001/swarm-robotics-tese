@@ -382,6 +382,50 @@ do ambiente só conhece paredes — um obstáculo a selar um corredor não dava 
 nenhum), `test_controlo_sem_obstaculos`, `test_controlo_porta_na_obs`.
 17/17 a passar.
 
+### 25 jul 2026, 23h — o F1 desse dia é ANULADO: campeões da campanha errada
+
+Nada muda no desenho. Muda o que conta como dado: **a corrida de F1 de 25 jul
+(18 células, 360 episódios, ~6 h) não é evidência de nada e não é reportada.**
+
+**O que aconteceu.** O `eval_zeroshot_mapa.py` carregava os campeões de
+`results/models*` sem verificar de que campanha eram. Os desse PC são de **24
+jun**; a campanha que a tese reporta é a de **2-9 jul**. Foram avaliados os
+campeões de antes da fitness de *homing*.
+
+**Como se sabe que é isso, e não uma questão de datas:** os campeões GNN de 24
+jun dão **0,0 no seu próprio cenário de treino** (`eval_summary.csv` de 23 jun:
+Gargalo, Quatro Salas e Porta Cooperativa a zero) enquanto a tese reporta 121,4 ·
+59,8 · 69,8 nessas células. São modelos partidos, e um modelo partido dá zero no
+mapa_grande por razões que nada têm a ver com a topologia — que é precisamente o
+que o F1 mede.
+
+**Consequência para a leitura pré-comprometida da secção 3:** a linha do GNN sai
+inteira; as de PPO e SAC descrevem modelos que funcionam no cenário deles (41,4 e
+36,5 no Gargalo; 66,6 e 62,3 na Porta Cooperativa) e mesmo assim dão 0 no mapa —
+essas continuam de pé, sujeitas aos confundentes já declarados. **A leitura "os
+campeões dos labirintos decoraram a geometria" fica sem suporte** e não é escrita
+em lado nenhum.
+
+**Guarda posta no script antes de repetir** (é a razão de esta emenda existir em
+vez de a corrida ser só repetida em silêncio):
+- `--models-dir` — a raiz dos modelos deixa de estar em duro. Os campeões da
+  campanha 7d vêm de `~/eval7d.tar.gz` e `~/run7d_mlp` para uma pasta **isolada**
+  (`results/models_7d/`), nunca por cima dos `results/models*` ativos, que um
+  treino a decorrer reescreve (armadilha nº9).
+- **Guarda de campanha**: a data de cada campeão (sidecar `.meta.json`, senão o
+  mtime) é verificada contra a janela `2026-07-02`–`2026-07-10` **antes da
+  primeira célula**. Anterior aborta; posterior avisa. As datas vão para o CSV
+  (`ModeloPath`, `ModeloData`, `ModeloFonte`), por isso qualquer ficheiro de
+  resultados passa a saber dizer de que campanha é.
+- Um CSV **sem** essas colunas não é retomado (vai para `_ANTIGO`), e uma célula
+  avaliada com outro modelo volta a correr mesmo que esteja completa — senão a
+  repetição herdava em silêncio as células erradas.
+- 12 testes novos em `tests/test_zeroshot_guarda.py`; 44/44 na suite.
+
+**O que fica por fazer**, e é a condição para haver F1: trazer os campeões 7d do
+servidor. Enquanto não estiverem no disco, a guarda impede a corrida — que é o
+comportamento pretendido.
+
 ---
 
 *Assinatura temporal: este plano existe no git antes de o mapa ter sido treinado uma

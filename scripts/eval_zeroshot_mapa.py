@@ -35,9 +35,30 @@ mantendo tudo o resto igual:
 treinou com obstáculos — e é o único campeão que recolhe alguma coisa no mapa.
 A leitura de cada condição está pré-comprometida no pré-registo (secção 3).
 
+⚠️ QUAL CAMPANHA ESTÁS A AVALIAR? A corrida de 25 jul 2026 (18 células, 6 h)
+teve de ser DEITADA FORA por causa disto: o script carregava o que estivesse no
+caminho esperado e não tinha opinião nenhuma sobre a data. Os `results/models*`
+daquele PC eram de 24 jun — campeões de ANTES da fitness de homing, que dão 0,0
+no seu próprio cenário — enquanto a tese reporta a campanha de 2-9 jul. A linha
+do GNN não media transferência nenhuma: media modelos já partidos.
+
+Duas defesas, desde a noite de 25 jul:
+  · `--models-dir` — a raiz dos modelos deixa de ser `results/` em duro, para os
+    campeões de uma campanha poderem viver numa pasta ISOLADA (nunca por cima
+    dos `results/models*` ativos, que um treino a andar reescreve — armadilha
+    nº9). Ex.: `--models-dir results/models_7d`.
+  · guarda de data — a data de cada campeão (sidecar `.meta.json` se existir,
+    senão o mtime do ficheiro) é VERIFICADA contra a janela da campanha de
+    referência ANTES de correr a primeira célula, e vai para o CSV nas colunas
+    `ModeloPath` / `ModeloData` / `ModeloFonte`. Um modelo anterior à campanha
+    aborta a corrida; um posterior é avisado com estrondo (pode ser legítimo se
+    a campanha foi repetida — mas é também exatamente o aspeto de apontar sem
+    querer para um mega-treino a decorrer).
+
 Uso:
     .venv/Scripts/python.exe scripts/eval_zeroshot_mapa.py --episodes 5   # rápido
     .venv/Scripts/python.exe scripts/eval_zeroshot_mapa.py --episodes 20  # oficial
+    .venv/Scripts/python.exe scripts/eval_zeroshot_mapa.py --models-dir results/models_7d
     .venv/Scripts/python.exe scripts/eval_zeroshot_mapa.py --origens u_wall four_rooms
     .venv/Scripts/python.exe scripts/eval_zeroshot_mapa.py --norm-obs treino
     .venv/Scripts/python.exe scripts/eval_zeroshot_mapa.py --controlo sem_obstaculos
@@ -54,9 +75,11 @@ Saída: results/evaluation/zeroshot_<mapa>.csv  (1 linha por episódio)
 import argparse
 import copy
 import hashlib
+import json
 import os
 import sys
 import time
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -89,12 +112,116 @@ _CAMPEAO = {
     "sac": ("models_sac", "sac_3d_final{suf}.zip"),
 }
 
+# Raiz onde vivem os `models/`, `models_ppo/`, `models_sac/`. Por omissão a do
+# repositório — mas os campeões de uma campanha arquivada devem ser extraídos
+# para uma pasta própria e passados em `--models-dir`.
+MODELS_DIR_OMISSAO = "results"
 
-def _caminho_campeao(algo, origem):
+# Janela da campanha de referência: o mega-treino de 7 dias de 2-9 jul 2026, que
+# é a campanha que a TESE reporta. Um campeão anterior a isto é de outra era do
+# projeto (antes da fitness de homing) e não responde à pergunta do F1.
+# Datas, não versões, porque é a única marca que os `.zip` do PPO/SAC têm.
+CAMPANHA_INICIO = "2026-07-02"
+CAMPANHA_FIM = "2026-07-10"
+
+
+def _caminho_campeao(algo, origem, raiz=None):
     sub, padrao = _CAMPEAO[algo]
-    fp = os.path.join(PROJECT_ROOT, "results", sub,
-                      padrao.format(suf=scenario_suffix(origem)))
+    raiz = raiz or os.path.join(PROJECT_ROOT, MODELS_DIR_OMISSAO)
+    fp = os.path.join(raiz, sub, padrao.format(suf=scenario_suffix(origem)))
     return fp if os.path.exists(fp) else None
+
+
+def _data_modelo(fp):
+    """(datetime, fonte) de quando o modelo foi gravado. Nunca levanta.
+
+    Duas fontes, por esta ordem:
+      · `meta` — o sidecar `.meta.json` que o evo_trainer escreve ao lado do
+        campeão (`saved_at`). É a fonte fiável: viaja com o ficheiro e diz
+        quando o TREINO o gravou.
+      · `mtime` — a data do ficheiro. É o que resta para os `.zip` do PPO/SAC,
+        que não têm sidecar nenhum. Cuidado: uma cópia que não preserve
+        timestamps (pscp sem `-p`, arrastar no explorador) carimba os ficheiros
+        com a data de HOJE e a guarda deixa passar tudo. Extrair de `.tar.gz`
+        preserva; é essa a via recomendada para trazer campeões do servidor.
+    """
+    meta = os.path.splitext(fp)[0] + ".meta.json"
+    if os.path.exists(meta):
+        try:
+            with open(meta, encoding="utf-8") as f:
+                quando = json.load(f).get("saved_at")
+            if quando:
+                return datetime.fromisoformat(quando), "meta"
+        except (OSError, ValueError, json.JSONDecodeError):
+            pass  # sidecar ilegível: cai para o mtime, que existe sempre
+    return datetime.fromtimestamp(os.path.getmtime(fp)), "mtime"
+
+
+def _inventario(algos, origens, raiz):
+    """{(ALGO, origem): (caminho, datetime, fonte)} + as células sem campeão.
+
+    Feito de UMA VEZ antes de avaliar seja o que for: é o que permite abortar
+    por data ao segundo zero e não à sexta hora."""
+    inv, em_falta = {}, []
+    for algo in algos:
+        for origem in origens:
+            fp = _caminho_campeao(algo, origem, raiz)
+            if fp is None:
+                em_falta.append((algo.upper(), origem))
+                continue
+            quando, fonte = _data_modelo(fp)
+            inv[(algo.upper(), origem)] = (fp, quando, fonte)
+    return inv, em_falta
+
+
+def _verificar_campanha(inv, inicio, fim):
+    """Aborta se algum campeão for anterior à campanha de referência.
+
+    É a guarda que faltava a 25 jul: 6 h de avaliação e 18 células gastas em
+    modelos de 24 jun, três semanas anteriores à campanha que a tese reporta.
+    O sintoma nos dados era mudo — zeros, que é exatamente o que o F1 procura.
+
+    Anterior ao início da janela é ERRO (o modelo é de outra era do projeto).
+    Posterior ao fim é AVISO com estrondo, não erro: pode ser uma campanha
+    repetida de propósito, mas tem o aspeto exato de apontar sem querer para os
+    `results/models*` de um treino a decorrer (armadilha nº9)."""
+    if not inv:
+        return
+    d0 = datetime.fromisoformat(inicio) if inicio else None
+    d1 = datetime.fromisoformat(fim) if fim else None
+
+    def _linha(cel):
+        fp, quando, fonte = inv[cel]
+        return "      %-4s x %-26s %s  (%s)  %s" % (
+            cel[0], cel[1], quando.strftime("%Y-%m-%d %H:%M"), fonte,
+            os.path.relpath(fp, PROJECT_ROOT))
+
+    velhos = [c for c in inv if d0 and inv[c][1] < d0]
+    if velhos:
+        raise SystemExit(
+            "[X] %d campeões são ANTERIORES à campanha de referência (%s).\n"
+            "%s\n"
+            "    Foi assim que o F1 de 25 jul se perdeu: modelos de outra era do\n"
+            "    projeto, que dão 0,0 até no cenário deles, avaliados como se\n"
+            "    fossem os da tese. Aponta --models-dir à pasta da campanha certa\n"
+            "    (ex.: results/models_7d, extraída de ~/eval7d.tar.gz) ou ajusta\n"
+            "    --campanha-inicio se a referência mudou de propósito."
+            % (len(velhos), inicio,
+               "\n".join(_linha(c) for c in sorted(velhos))))
+
+    novos = [c for c in inv if d1 and inv[c][1] > d1]
+    if novos:
+        print("[!!] %d campeões são POSTERIORES à janela da campanha (%s).\n%s\n"
+              "     Se isto não era de propósito, é a armadilha nº9: estás a ler\n"
+              "     modelos de um treino que está a reescrever a pasta AGORA.\n"
+              "     A corrida continua — a data de cada modelo fica no CSV."
+              % (len(novos), fim, "\n".join(_linha(c) for c in sorted(novos))))
+
+    por_mtime = [c for c in inv if inv[c][2] == "mtime"]
+    if por_mtime:
+        print("[i] %d de %d campeões sem sidecar .meta.json — a data vem do mtime "
+              "do ficheiro.\n    Uma cópia que não preserve timestamps engana esta "
+              "guarda (usa .tar.gz)." % (len(por_mtime), len(inv)))
 
 
 def _impressao_digital(cfg, mapa):
@@ -122,7 +249,7 @@ def _impressao_digital(cfg, mapa):
     return hashlib.sha1("¬".join(partes).encode("utf-8")).hexdigest()[:12]
 
 
-def _carregar_parciais(dest, digitais, norm_obs, controlo, episodes):
+def _carregar_parciais(dest, digitais, norm_obs, controlo, episodes, esperado):
     """Lê o CSV de uma corrida interrompida e devolve (linhas, células feitas).
 
     A condição é o PAR (NormObs, Controlo) — as várias condições convivem no
@@ -134,13 +261,23 @@ def _carregar_parciais(dest, digitais, norm_obs, controlo, episodes):
     base — muda o mundo de propósito — e comparar cada linha com a digital da
     SUA condição é o que distingue "controlo" de "o mapa mudou". Basta uma
     linha fora do sítio para o ficheiro inteiro ir para `*_ANTIGO.csv` (nunca
-    apagado, nunca escrito por cima)."""
+    apagado, nunca escrito por cima).
+
+    Nem MODELO: uma célula só conta como feita se tiver sido avaliada com o
+    campeão que está agora no `--models-dir`, com a mesma data (`esperado`).
+    Sem isto, repetir o F1 com os modelos certos deixava lá dentro, dadas como
+    feitas, as células da corrida com os modelos errados."""
     if not os.path.exists(dest):
         return [], set()
     velho = pd.read_csv(dest)
 
     def _arquivar(porque):
+        # Nunca escrever por cima de um _ANTIGO que já exista: senão a segunda
+        # vez que isto acontece apaga em silêncio o arquivo da primeira (e é
+        # justamente aí que estão os dados que se quer poder reexaminar).
         bak = dest.replace(".csv", "_ANTIGO.csv")
+        if os.path.exists(bak):
+            bak = dest.replace(".csv", time.strftime("_ANTIGO_%Y%m%d_%H%M%S.csv"))
         os.replace(dest, bak)
         print("[!] %s\n    O CSV que lá estava foi guardado em %s; a começar do zero."
               % (porque, os.path.relpath(bak, PROJECT_ROOT)))
@@ -148,6 +285,12 @@ def _carregar_parciais(dest, digitais, norm_obs, controlo, episodes):
 
     if "env_hash" not in velho.columns or "NormObs" not in velho.columns:
         return _arquivar("CSV de uma versão anterior do script (sem env_hash).")
+    if "ModeloData" not in velho.columns or "ModeloPath" not in velho.columns:
+        # CSVs anteriores a esta guarda: não registam QUE modelo avaliaram, e o único
+        # que existe nesse estado é o do F1 de 25 jul — corrido com os campeões
+        # de 24 jun. Não há como validar linha a linha o que não foi gravado.
+        return _arquivar("CSV sem ModeloPath/ModeloData: não se sabe que modelos "
+                         "foram avaliados (anterior à guarda de campanha).")
     if "Controlo" not in velho.columns:
         # CSVs escritos antes de 25 jul: só existia a condição natural do mapa.
         # Preencher em vez de arquivar — senão a primeira corrida de controlo
@@ -166,8 +309,21 @@ def _carregar_parciais(dest, digitais, norm_obs, controlo, episodes):
         return n == norm_obs and c == controlo
 
     desta = velho[[_e_desta(n, c) for n, c in zip(velho["NormObs"], velho["Controlo"])]]
-    feitas = {(a, o) for (a, o), g in desta.groupby(["Algorithm", "Origem"])
-              if len(g) >= episodes} if not desta.empty else set()
+
+    def _modelo_bate(cel, g):
+        """Todos os episódios desta célula foram corridos com o campeão de agora?"""
+        esp = esperado.get(cel)
+        if esp is None:                       # o campeão desapareceu do disco
+            return False
+        return (set(g["ModeloPath"].astype(str)) == {esp[0]}
+                and set(g["ModeloData"].astype(str)) == {esp[1]})
+
+    feitas, trocadas = set(), []
+    if not desta.empty:
+        for cel, g in desta.groupby(["Algorithm", "Origem"]):
+            if len(g) < episodes:
+                continue
+            (feitas.add(cel) if _modelo_bate(cel, g) else trocadas.append(cel))
     # Descarta células a meio: um bloco incompleto não é comparável com os outros.
     incompletas = [(a, o) for a, o in zip(desta["Algorithm"], desta["Origem"])
                    if (a, o) not in feitas]
@@ -177,6 +333,14 @@ def _carregar_parciais(dest, digitais, norm_obs, controlo, episodes):
     if feitas:
         print("[=] Retomada: %d células já completas nesta condição — a saltar."
               % len(feitas))
+    if trocadas:
+        eps_troc = sum(1 for a, o in zip(desta["Algorithm"], desta["Origem"])
+                       if (a, o) in set(trocadas))
+        print("[!] %d células completas foram avaliadas com OUTRO modelo (ou outra "
+              "data)\n    e voltam a correr — %d episódios descartados: %s"
+              % (len(trocadas), eps_troc,
+                 ", ".join("%s x %s" % c for c in sorted(trocadas))))
+        incompletas = [c for c in incompletas if c not in set(trocadas)]
     if incompletas:
         print("[=] %d episódios de células incompletas descartados (voltam a correr)."
               % len(incompletas))
@@ -334,13 +498,32 @@ def _aplicar_controlo(cfg, controlo, mapa):
 
 def avaliar(mapa="mapa_grande", origens=None, algos=None, episodes=20,
             seed_base=1000, norm_obs="mapa", refazer=False, controlo="base",
-            ignorar_corrida_ativa=False):
+            ignorar_corrida_ativa=False, models_dir=None,
+            campanha_inicio=CAMPANHA_INICIO, campanha_fim=CAMPANHA_FIM):
     from scripts.eval_all import eval_algo
 
     origens = origens or THESIS_SCENARIOS
     algos = algos or ["gnn", "ppo", "sac"]
     if controlo not in CONTROLOS:
         raise SystemExit("[X] --controlo tem de ser um de %s" % (CONTROLOS,))
+
+    # ── Que modelos, de que campanha ─────────────────────────────────────────
+    # Antes de tudo o resto: o inventário completo dos campeões, com data, e a
+    # guarda de campanha. Uma corrida destas leva horas e falha em SILÊNCIO
+    # quando os modelos estão errados (dá zeros, que é um resultado possível) —
+    # por isso o momento de rebentar é aqui, não a meio.
+    raiz = os.path.abspath(os.path.join(PROJECT_ROOT,
+                                        models_dir or MODELS_DIR_OMISSAO))
+    if not os.path.isdir(raiz):
+        raise SystemExit("[X] --models-dir não existe: %s" % raiz)
+    inventario, em_falta = _inventario(algos, origens, raiz)
+    print("[i] modelos: %s" % os.path.relpath(raiz, PROJECT_ROOT))
+    _verificar_campanha(inventario, campanha_inicio, campanha_fim)
+    if inventario:
+        datas = sorted(v[1] for v in inventario.values())
+        print("[i] %d campeões, gravados entre %s e %s"
+              % (len(inventario), datas[0].strftime("%Y-%m-%d"),
+                 datas[-1].strftime("%Y-%m-%d")))
 
     # Config temporário com o cenário-alvo — o eval_algo lê o classic_scenario
     # do config, e não queremos tocar no configs/foraging.yaml do repositório.
@@ -400,27 +583,36 @@ def avaliar(mapa="mapa_grande", origens=None, algos=None, episodes=20,
         todo.to_csv(dest, index=False)
         return todo
 
-    sem_campeao = []
-    etiqueta = f"mapa={mapa} norm={norm_obs} controlo={controlo}"
+    # O que se espera encontrar no CSV para uma célula já feita: o caminho do
+    # campeão (relativo à raiz do projeto, para o ficheiro não depender de onde
+    # a pasta está montada) e a data desse modelo.
+    esperado = {cel: (os.path.relpath(fp, PROJECT_ROOT).replace("\\", "/"),
+                      quando.isoformat(timespec="seconds"))
+                for cel, (fp, quando, _f) in inventario.items()}
+
+    etiqueta = (f"mapa={mapa} norm={norm_obs} controlo={controlo} "
+                f"modelos={os.path.relpath(raiz, PROJECT_ROOT)}")
     with _CorridaUnica(dest, etiqueta, ignorar=ignorar_corrida_ativa) as corrida:
         if refazer and os.path.exists(dest):
             os.replace(dest, dest.replace(".csv", "_ANTIGO.csv"))
             linhas, feitas = [], set()
         else:
             linhas, feitas = _carregar_parciais(dest, digitais, norm_obs,
-                                                controlo, episodes)
+                                                controlo, episodes, esperado)
 
         for algo in algos:
             for origem in origens:
-                if (algo.upper(), origem) in feitas:
+                cel = (algo.upper(), origem)
+                if cel in feitas:
                     continue
-                fp = _caminho_campeao(algo, origem)
-                if fp is None:
+                if cel not in inventario:
                     print(f"[--] {algo.upper():4s} treinado em {origem}: sem campeão — saltar")
-                    sem_campeao.append((algo.upper(), origem))
                     continue
-                print(f"\n[>>] {algo.upper()} treinado em '{origem}' -> avaliado em '{mapa}'")
-                corrida.registar(f"a correr {algo.upper()} x {origem}")
+                fp, quando, fonte = inventario[cel]
+                print(f"\n[>>] {algo.upper()} treinado em '{origem}' -> avaliado em "
+                      f"'{mapa}'  [modelo de {quando:%Y-%m-%d}, {fonte}]")
+                corrida.registar(f"a correr {algo.upper()} x {origem} "
+                                 f"(modelo de {quando:%Y-%m-%d})")
                 df, _ = eval_algo(algo, mapa, tmp_cfg, episodes,
                                   seed_base=seed_base, model_path=fp)
                 if df is None or df.empty:
@@ -433,6 +625,12 @@ def avaliar(mapa="mapa_grande", origens=None, algos=None, episodes=20,
                 df["NormObs"] = norm_obs
                 df["Controlo"] = controlo
                 df["env_hash"] = digital
+                # QUE modelo produziu esta linha. É o que faltava ao CSV de 25
+                # jul: sem isto, um ficheiro de resultados não sabe dizer de que
+                # campanha é — e a resposta só aparece por arqueologia de datas
+                # de pastas, tarde de mais.
+                df["ModeloPath"], df["ModeloData"] = esperado[cel]
+                df["ModeloFonte"] = fonte
                 linhas.append(df)
                 # Gravar a CADA célula, não só no fim: uma corrida destas leva
                 # horas e se for interrompida a meio (PC desligado, Ctrl+C) o que
@@ -446,7 +644,9 @@ def avaliar(mapa="mapa_grande", origens=None, algos=None, episodes=20,
                     f"({total} episódios no ficheiro)")
 
     if not linhas:
-        print("\n[!] Nenhuma célula avaliada — não há campeões nos caminhos esperados.")
+        print("\n[!] Nenhuma célula avaliada — não há campeões em %s "
+              "(subpastas models/, models_ppo/, models_sac/)."
+              % os.path.relpath(raiz, PROJECT_ROOT))
         return pd.DataFrame()
 
     out = _gravar()
@@ -468,13 +668,22 @@ def avaliar(mapa="mapa_grande", origens=None, algos=None, episodes=20,
 
     # Um buraco na grelha é um resultado que não existe — e um "sem campeão"
     # perdido a meio de horas de log passa despercebido. Repetir no fim.
-    if sem_campeao:
-        print(f"\n[!] {len(sem_campeao)} células NÃO avaliadas por falta de "
+    if em_falta:
+        print(f"\n[!] {len(em_falta)} células NÃO avaliadas por falta de "
               f"campeão no disco (a grelha fica incompleta):")
-        for algo, origem in sem_campeao:
+        for algo, origem in em_falta:
             sub, padrao = _CAMPEAO[algo.lower()]
-            print(f"      {algo:4s} x {origem:26s} falta results/{sub}/"
+            print(f"      {algo:4s} x {origem:26s} falta "
+                  f"{os.path.relpath(raiz, PROJECT_ROOT)}/{sub}/"
                   f"{padrao.format(suf=scenario_suffix(origem))}")
+
+    # De que campanha são estes resultados — a pergunta que o CSV de 25 jul não
+    # sabia responder. Fica no fim do log, junto dos números.
+    print("\nMODELOS AVALIADOS (por data de gravação)")
+    for cel in sorted(inventario):
+        fp, quando, fonte = inventario[cel]
+        print("  %-4s x %-26s %s  (%s)" % (
+            cel[0], cel[1], quando.strftime("%Y-%m-%d %H:%M"), fonte))
 
     # Mapa do que já existe no ficheiro, por condição — para saber o que falta
     # correr sem ter de abrir o CSV.
@@ -511,10 +720,27 @@ def main():
     ap.add_argument("--ignorar-corrida-ativa", action="store_true",
                     help="salta a guarda que impede duas corridas em simultâneo "
                          "sobre o mesmo CSV (só se souberes que não há nenhuma)")
+    ap.add_argument("--models-dir", default=MODELS_DIR_OMISSAO,
+                    help="raiz com models/, models_ppo/ e models_sac/ (por "
+                         "omissão 'results'). Aponta-a à pasta ISOLADA da "
+                         "campanha a avaliar, ex.: results/models_7d")
+    ap.add_argument("--campanha-inicio", default=CAMPANHA_INICIO,
+                    help="data mínima dos campeões (AAAA-MM-DD). Um modelo "
+                         "anterior a isto ABORTA a corrida — foi assim que se "
+                         "perderam as 6 h do F1 de 25 jul 2026")
+    ap.add_argument("--campanha-fim", default=CAMPANHA_FIM,
+                    help="fim da janela da campanha (AAAA-MM-DD). Modelos "
+                         "posteriores são avisados, não abortam")
+    ap.add_argument("--sem-guarda-data", action="store_true",
+                    help="desliga a guarda de campanha por completo (as datas "
+                         "continuam a ir para o CSV)")
     a = ap.parse_args()
     avaliar(a.mapa, a.origens, a.algos, a.episodes, a.seed_base,
             norm_obs=a.norm_obs, refazer=a.refazer, controlo=a.controlo,
-            ignorar_corrida_ativa=a.ignorar_corrida_ativa)
+            ignorar_corrida_ativa=a.ignorar_corrida_ativa,
+            models_dir=a.models_dir,
+            campanha_inicio=None if a.sem_guarda_data else a.campanha_inicio,
+            campanha_fim=None if a.sem_guarda_data else a.campanha_fim)
 
 
 if __name__ == "__main__":
