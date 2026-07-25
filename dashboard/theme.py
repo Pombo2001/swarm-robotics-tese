@@ -194,6 +194,62 @@ h1,h2,h3,.font-extrabold,.font-bold,.q-tab__label,.mono-title {
 ::selection { background:rgba(255,255,255,.22); color:#fff; }
 :focus-visible { outline:1px solid rgba(255,255,255,.45); outline-offset:2px; border-radius:4px; }
 html { scroll-behavior:smooth; }
+
+/* ══ MODO DEFESA ═══════════════════════════════════════════════════════════
+   Um ecrã bonito ao pé do nariz não é um ecrã legível projetado numa sala.
+   Este modo trata das três coisas que um videoprojetor estraga:
+
+   1. TAMANHO — o texto de 10-12px (rodapés de fonte, rótulos de eixo, chips de
+      estado) é ilegível a partir da terceira fila. Sobe tudo com um piso.
+   2. CONTRASTE — os projetores achatam os pretos: #636363 sobre #050505 lê-se
+      no portátil e desaparece na parede. O cinza sobe, as bordas dos cartões
+      passam a ver-se, e o fundo fica preto CHAPADO (o gradiente de topo vira
+      uma mancha suja quando a lâmpada está gasta).
+   3. MOVIMENTO — o enxame de fundo e as entradas em cascata distraem quem está
+      a ouvir e comem CPU enquanto se fala. Ficam parados.
+
+   Não é um tema novo: é o mesmo, com os parâmetros corrigidos para a sala.
+   Liga-se no botão do cabeçalho e fica gravado no browser (localStorage), para
+   sobreviver a um F5 a meio da defesa.                                        */
+body.defesa {
+  --ink-soft:#e2e2e2; --ink-muted:#9a9a9a; --border:#2e2e2e; --border-hi:#4a4a4a;
+  background:#000 !important;             /* sem gradiente: projetor não o rende */
+  font-size:118%;
+}
+body.defesa .text-xs,
+body.defesa .text-\[11px\],
+body.defesa .text-\[10px\] { font-size:14px !important; line-height:1.45 !important; }
+body.defesa .text-sm  { font-size:15.5px !important; }
+body.defesa .text-lg  { font-size:22px !important; }
+body.defesa .text-xl  { font-size:26px !important; }
+body.defesa .text-2xl { font-size:32px !important; }
+body.defesa .text-3xl { font-size:42px !important; }
+body.defesa .text-4xl { font-size:54px !important; }
+/* Maiúsculas espaçadas (rótulos de secção) tornam-se ilegíveis em pequeno. */
+body.defesa .tracking-\[\.2em\] { font-size:13px !important; letter-spacing:.16em !important; }
+/* Cartões com aresta visível: na parede, 1px a #1f1f1f não existe. */
+body.defesa .mono-card, body.defesa .q-card { border-color:#2e2e2e !important; }
+/* Tabelas: cabeçalhos e células maiores, para ler de longe. */
+body.defesa .q-table thead th { font-size:13px !important; letter-spacing:.6px; }
+body.defesa .q-table tbody td { font-size:15px !important; }
+/* Sossego: sem enxame de fundo, sem entradas em cascata, sem brilhos. */
+body.defesa #boids-bg { display:none !important; }
+body.defesa .fade-up, body.defesa .fade-up-1, body.defesa .fade-up-2,
+body.defesa .fade-up-3, body.defesa .q-tab-panel > * { animation:none !important; }
+body.defesa .spin-slow { animation:none !important; }
+body.defesa .q-tab:hover { transform:none; }
+body.defesa .live-dot { animation:none !important; }
+/* O botão do modo assinala-se a si próprio quando está ligado. */
+body.defesa .defesa-btn { background:rgba(255,255,255,.14) !important; }
+/* Fora o ruído de operação: numa defesa ninguém quer saber do porto local. */
+body.defesa .op-footer { display:none !important; }
+
+/* Quem tiver "reduzir movimento" no sistema recebe o mesmo sossego, sempre. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important;
+                           transition-duration:.01ms !important; scroll-behavior:auto !important; }
+  #boids-bg { display:none !important; }
+}
 """
 
 # JS: contador animado (count-up) para KPIs e células numéricas.
@@ -278,6 +334,9 @@ def apply():
     ui.colors(primary="#fafafa", secondary="#a3a3a3", accent="#f5f5f5", dark="#050505")
     ui.add_head_html(f"<style>{CSS}</style>")
     ui.add_head_html(f"<script>{COUNTUP_JS}</script>")
+    # No <body>, não no <head>: o script repõe o Modo Defesa gravado e precisa
+    # que document.body já exista quando corre.
+    ui.add_body_html(f"<script>{DEFESA_JS}</script>")
     # Enxame de fundo (atrás de todas as vistas; .q-layout fica com z-index 1).
     ui.add_body_html(
         '<canvas id="boids-bg" style="position:fixed;inset:0;z-index:0;'
@@ -319,3 +378,84 @@ ECHART_BASE = {
         "textStyle": {"color": INK},
     },
 }
+
+# ── Cromo dos gráficos (eixos, grelha, legenda, tooltip) ─────────────────────
+# Os ECharts das vistas tinham as cores do tema ANTIGO cravadas à mão (o azul
+# "slate" #94a3b8/#cbd5e1, de antes da passagem monocromática): o dashboard era
+# preto e branco e os gráficos continuavam azulados, e mudar o tema não lhes
+# tocava. Passa tudo por aqui.
+#
+# Os tamanhos de letra são deliberadamente generosos (12-13px, não os 10-11px
+# por omissão do ECharts): o mesmo gráfico tem de servir o portátil e a parede,
+# e o Modo Defesa não consegue reescalar texto desenhado dentro de um <canvas>.
+GRID_LINE = "rgba(255,255,255,.08)"
+AXIS_LINE = "rgba(255,255,255,.18)"
+
+
+def echart_chrome(*, y_nome: str = "", rotacao_x: int = 0) -> dict:
+    """Eixos/grelha/legenda/tooltip coerentes com o tema, para juntar à opção.
+
+    Uso: `{**theme.echart_chrome(y_nome="Retenção (%)"), "series": [...]}`.
+    """
+    rotulo = {"color": INK_MUTED, "fontSize": 12, "fontFamily": "Inter"}
+    return {
+        "textStyle": {"fontFamily": "Inter", "fontSize": 12},
+        "tooltip": {
+            "trigger": "axis",
+            "backgroundColor": "rgba(12,12,12,.96)",
+            "borderColor": "#2a2a2a",
+            "textStyle": {"color": INK, "fontSize": 13},
+            "axisPointer": {"lineStyle": {"color": AXIS_LINE}},
+        },
+        "legend": {
+            "top": 0, "itemGap": 18, "icon": "roundRect",
+            "itemWidth": 14, "itemHeight": 10,
+            # A legenda está SEMPRE presente com ≥2 séries: a identidade da série
+            # nunca pode depender só da cor (regra de acessibilidade).
+            "textStyle": {"color": INK_SOFT, "fontSize": 13, "fontFamily": "Inter"},
+        },
+        "grid": {"left": 56, "right": 20, "top": 40, "bottom": 68},
+        "xAxis": {
+            "type": "category",
+            "axisLabel": {**rotulo, "rotate": rotacao_x},
+            "axisLine": {"lineStyle": {"color": AXIS_LINE}},
+            "axisTick": {"show": False},
+        },
+        "yAxis": {
+            "type": "value",
+            "name": y_nome,
+            "nameTextStyle": {"color": INK_MUTED, "fontSize": 12, "padding": [0, 0, 0, 6]},
+            "axisLabel": rotulo,
+            "axisLine": {"show": False},
+            "splitLine": {"lineStyle": {"color": GRID_LINE}},
+        },
+    }
+
+
+# JS do Modo Defesa: alterna a classe no <body> e grava a escolha no browser,
+# para um F5 a meio da apresentação não desligar o modo.
+DEFESA_JS = r"""
+window.monoDefesa = function (ligar) {
+  const b = document.body;
+  if (ligar === undefined) ligar = !b.classList.contains('defesa');
+  b.classList.toggle('defesa', ligar);
+  try { localStorage.setItem('swarm-defesa', ligar ? '1' : '0'); } catch (e) {}
+  window.dispatchEvent(new Event('resize'));   // ECharts re-mede o contentor
+  return ligar;
+};
+(function () {
+  try {
+    if (localStorage.getItem('swarm-defesa') === '1') document.body.classList.add('defesa');
+  } catch (e) {}
+})();
+"""
+
+
+def defesa_button():
+    """Botão do Modo Defesa (usar no header). Devolve o ui.button."""
+    b = ui.button(icon="present_to_all",
+                  on_click=lambda: ui.run_javascript("window.monoDefesa()")) \
+        .props("flat round dense color=white").classes("defesa-btn")
+    b.tooltip("Modo Defesa — texto maior, mais contraste e sem animações, "
+              "para projetar numa sala")
+    return b

@@ -23,7 +23,8 @@ def _ptask_color(p: float) -> str:
 
 
 def _echart_axis_label():
-    return {"color": "#94a3b8"}
+    """Rótulo de eixo com as cores do tema (era o azul 'slate' do tema antigo)."""
+    return {"color": theme.INK_MUTED, "fontSize": 12, "fontFamily": "Inter"}
 
 
 def _robustez_option(table: dict) -> dict:
@@ -48,21 +49,13 @@ def _robustez_option(table: dict) -> dict:
     if series:
         series[0]["markLine"] = {
             "silent": True, "symbol": "none",
-            "lineStyle": {"color": "#64748b", "type": "dashed"},
+            "lineStyle": {"color": theme.AXIS_LINE, "type": "dashed"},
             "data": [{"yAxis": 100,
-                      "label": {"formatter": "100% · imune", "color": "#94a3b8"}}]}
-    return {
-        "tooltip": {"trigger": "axis"},
-        "legend": {"textStyle": {"color": "#cbd5e1"}, "top": 0},
-        "grid": {"left": 48, "right": 16, "top": 36, "bottom": 64},
-        "xAxis": {"type": "category", "data": labels,
-                  "axisLabel": {"color": "#94a3b8", "rotate": 18}},
-        "yAxis": {"type": "value", "name": "Retenção (%)",
-                  "nameTextStyle": {"color": "#94a3b8"},
-                  "axisLabel": _echart_axis_label(),
-                  "splitLine": {"lineStyle": {"color": "rgba(148,163,184,.12)"}}},
-        "series": series,
-    }
+                      "label": {"formatter": "100% · imune",
+                                "color": theme.INK_MUTED, "fontSize": 12}}]}
+    base = theme.echart_chrome(y_nome="Retenção (%)", rotacao_x=18)
+    base["xAxis"]["data"] = labels
+    return {**base, "series": series}
 
 
 def _escala_option(tbl: dict) -> dict:
@@ -82,25 +75,31 @@ def _escala_option(tbl: dict) -> dict:
             p = by_n.get(n)
             ok = p and p["compatible"] and p["food_per_agent"] is not None
             pts.append(round(p["food_per_agent"], 3) if ok else None)
-        series.append({"name": a, "type": "line", "connectNulls": False,
-                       "symbolSize": 9, "lineStyle": {"width": 3},
-                       "itemStyle": {"color": config.ALGO_META[a]["color"]},
-                       "data": pts})
-    return {
-        "tooltip": {"trigger": "axis"},
-        "legend": {"textStyle": {"color": "#cbd5e1"}, "top": 0},
-        "grid": {"left": 56, "right": 20, "top": 36, "bottom": 44},
-        "xAxis": {"type": "category", "data": [str(n) for n in all_n],
-                  "name": "Nº de agentes (N)",
-                  "nameLocation": "middle", "nameGap": 28,
-                  "nameTextStyle": {"color": "#94a3b8"},
-                  "axisLabel": _echart_axis_label()},
-        "yAxis": {"type": "value", "name": "Recolhas / agente",
-                  "nameTextStyle": {"color": "#94a3b8"},
-                  "axisLabel": _echart_axis_label(),
-                  "splitLine": {"lineStyle": {"color": "rgba(148,163,184,.12)"}}},
-        "series": series,
-    }
+        s = {"name": a, "type": "line", "connectNulls": False,
+             "symbolSize": 10, "lineStyle": {"width": 3},
+             # Anel da cor do fundo à volta de cada marcador: o PPO e o SAC têm
+             # um único ponto, ambos em N=20 e a alturas quase iguais (3,59 vs
+             # 3,57) — sem o anel lê-se um ponto só.
+             "itemStyle": {"color": config.ALGO_META[a]["color"],
+                           "borderColor": theme.SURFACE, "borderWidth": 2},
+             "data": pts}
+        # Rótulo direto só nas séries com LINHA (≥2 pontos): assim a identidade
+        # não depende só da cor. Nas de ponto único os rótulos escreviam-se uns
+        # por cima dos outros no mesmo x — lia-se "BRO" em vez de PPO/SAC — e aí
+        # quem identifica são a legenda e o tooltip.
+        if sum(1 for p in pts if p is not None) >= 2:
+            s["endLabel"] = {"show": True, "formatter": a, "fontSize": 13,
+                             "color": config.ALGO_META[a]["color"],
+                             "fontWeight": "bold", "distance": 8}
+        series.append(s)
+    base = theme.echart_chrome(y_nome="Recolhas / agente")
+    base["xAxis"].update({
+        "data": [str(n) for n in all_n],
+        "name": "Nº de agentes (N)", "nameLocation": "middle", "nameGap": 30,
+        "nameTextStyle": {"color": theme.INK_MUTED, "fontSize": 12},
+    })
+    base["grid"] = {"left": 56, "right": 64, "top": 40, "bottom": 52}
+    return {**base, "series": series}
 
 
 _cell_seq = 0

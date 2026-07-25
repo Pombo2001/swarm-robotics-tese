@@ -40,6 +40,9 @@ def index():
             ui.label("Aprendizagem por Reforço para Controlo de Enxames · ISCTE") \
                 .classes("text-[11px] leading-tight").style(f"color:{theme.INK_MUTED}")
         ui.space()
+        # Modo Defesa: o mesmo dashboard, com os parâmetros de uma sala (texto
+        # maior, mais contraste, sem animações). Ver theme.py.
+        theme.defesa_button()
         # Estado vivo da fila local (ponto a pulsar quando há treino a correr)
         with ui.row().classes("items-center gap-2 no-wrap"):
             dot = ui.element("div").classes("live-dot live-dot--idle")
@@ -64,7 +67,9 @@ def index():
                 t_aovivo  = ui.tab("Ao vivo (3D)", icon="view_in_ar")
             ui.space()
             ui.separator()
-            with ui.row().classes("items-center gap-2 px-2 pt-2 no-wrap"):
+            # Rodapé operacional: útil a trabalhar, ruído numa defesa (e no Modo
+            # Defesa a letra maior partia-o em duas linhas). Ver theme.py.
+            with ui.row().classes("items-center gap-2 px-2 pt-2 no-wrap op-footer"):
                 ui.element("div").classes("live-dot live-dot--ok").style("width:6px;height:6px")
                 ui.label("servidor local · :8080").classes("text-[11px] mono-num") \
                     .style(f"color:{theme.INK_MUTED}")

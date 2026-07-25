@@ -63,24 +63,28 @@ _section_title = theme.section_title
 
 def _comparison_html(metrics_a: dict, metrics_b: dict) -> str:
     """Tabela HTML A vs B com Ptask% e recolhas/ep e delta colorido (maior=melhor)."""
+    # Cores de ESTADO (bom/mau), não de série: são as da paleta de status e ficam
+    # deliberadamente distintas das dos algoritmos, para um delta nunca se fazer
+    # passar por uma série. O sinal (+/−) leva a informação sozinho — a cor só
+    # reforça, que é o que a torna segura para daltonismo.
     def delta(va, vb, unit=""):
         if va is None or vb is None:
-            return "<span style='color:#64748b'>—</span>"
+            return f"<span style='color:{theme.INK_MUTED}'>—</span>"
         d = vb - va
         if abs(d) < 1e-9:
-            return "<span style='color:#64748b'>0</span>"
-        col = "#22c55e" if d > 0 else "#ef4444"
-        sign = "+" if d > 0 else ""
-        return f"<span style='color:{col};font-weight:600'>{sign}{d:.1f}{unit}</span>"
+            return f"<span style='color:{theme.INK_MUTED}'>0</span>"
+        col = "#0ca30c" if d > 0 else "#d03b3b"
+        sign = "+" if d > 0 else "−"
+        return f"<span style='color:{col};font-weight:600'>{sign}{abs(d):.1f}{unit}</span>"
 
     def cell(m, key, fmt):
         if m is None:
-            return "<span style='color:#475569'>n/d</span>"
+            return f"<span style='color:{theme.INK_MUTED}'>n/d</span>"
         return fmt.format(m[key])
 
-    th = ("padding:4px 10px;text-align:center;border-bottom:1px solid #334155;"
-          "font-weight:600;color:#cbd5e1")
-    td = "padding:3px 10px;text-align:center;border-bottom:1px solid #1e293b"
+    th = (f"padding:6px 12px;text-align:center;border-bottom:1px solid {theme.BORDER};"
+          f"font-weight:600;color:{theme.INK_SOFT};font-size:13px")
+    td = f"padding:5px 12px;text-align:center;border-bottom:1px solid #161616"
     rows = []
     algos = ["GNN", "PPO", "SAC"]
     for s in SCEN_ORDER:

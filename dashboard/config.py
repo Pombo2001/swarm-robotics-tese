@@ -55,10 +55,27 @@ SCENARIO_LABEL_SHORT.update({
 MAIN_SCENARIO_KEYS = list(_SRC_THESIS)
 
 ALGOS = ["GNN", "PPO", "SAC"]
+
+# ── Cores das séries (25 jul 2026) — MEDIDAS, não escolhidas a olho ──────────
+# Duas razões para as anteriores (#00C896 / #3D9EFF / #FF6B6B) terem saído:
+#
+# 1. CONTRADIZIAM AS FIGURAS DA TESE. Lá o PPO é LARANJA e o SAC é AZUL
+#    (src/scenarios.py: ALGO_COLORS); aqui o azul era o PPO e o SAC era vermelho.
+#    Numa defesa mostram-se as duas coisas seguidas, e a mesma cor a significar
+#    algoritmos diferentes em slides e ecrã é pior do que feio.
+# 2. NÃO ERAM SEGURAS PARA DALTONISMO: verde-água vs vermelho dava ΔE 6,2 em
+#    deuteranopia (~8% dos homens) — as duas séries colapsam numa só.
+#
+# Estas mantêm as FAMÍLIAS da tese (GNN verde · PPO laranja · SAC azul) e são os
+# degraus certos para fundo escuro. Verificadas com o validador de paletas
+# (surface #0e0e0e, modo escuro, todos os pares): banda de luminosidade PASSA,
+# croma PASSA, separação CVD **9,4** (alvo ≥8) PASSA, visão normal 20,9 PASSA,
+# contraste ≥3:1 PASSA. Se mexeres nestes hex, volta a correr o validador —
+# o verde "verdadeiro" (#22a34a) parece melhor e FALHA (ΔE 4,4 vs o laranja).
 ALGO_META = {
-    "GNN": {"color": "#00C896", "icon": "🧬", "label": "GNN (Evolutivo)"},
-    "PPO": {"color": "#3D9EFF", "icon": "🤖", "label": "PPO (Actor-Critic)"},
-    "SAC": {"color": "#FF6B6B", "icon": "🔥", "label": "SAC (Soft Actor-Critic)"},
+    "GNN": {"color": "#199e70", "icon": "🧬", "label": "GNN (Evolutivo)"},
+    "PPO": {"color": "#d95926", "icon": "🤖", "label": "PPO (Actor-Critic)"},
+    "SAC": {"color": "#3987e5", "icon": "🔥", "label": "SAC (Soft Actor-Critic)"},
 }
 
 # Script de backend que treina + avalia (aceita --runs/--time/--algo/--scenarios/...)
