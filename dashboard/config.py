@@ -21,6 +21,7 @@ if BASE_DIR not in sys.path:
 
 from src.scenarios import (  # noqa: E402  (precisa do sys.path acima)
     SCENARIOS as _SRC_SCENARIOS,
+    THESIS_SCENARIOS as _SRC_THESIS,
     SCENARIO_LABELS as _SRC_LABELS,
     SCENARIO_LABELS_SHORT as _SRC_LABELS_SHORT,
 )
@@ -47,11 +48,11 @@ SCENARIO_LABEL_SHORT.update({
 # fechadas. Deliberadamente NÃO é `SCENARIO_KEYS`: um cenário novo (ex.: o mapa
 # grande) aparece nas vistas de operação, mas não deve entrar nas tabelas de
 # resultados enquanto não tiver campanha avaliada — apareceria como linha vazia
-# ou, pior, calada. Acrescentar aqui só quando os dados existirem.
-MAIN_SCENARIO_KEYS = [
-    "none", "u_wall", "bottleneck", "four_rooms",
-    "cooperative_door", "cooperative_perception", "cooperative_door_bypass",
-]
+# ou, pior, calada.
+# Vem de `THESIS_SCENARIOS` (src/scenarios.py) e NÃO se escreve aqui: era uma
+# cópia à mão da mesma lista, exatamente o que o docstring deste ficheiro diz
+# para não fazer. Quando o mapa grande tiver campanha, promove-se num sítio só.
+MAIN_SCENARIO_KEYS = list(_SRC_THESIS)
 
 ALGOS = ["GNN", "PPO", "SAC"]
 ALGO_META = {

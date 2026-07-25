@@ -26,7 +26,7 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
-from src.environment.swarm_env_3d import SwarmForagingEnv3D
+from src.environment.swarm_env_3d import SwarmForagingEnv3D, DOOR_SCENARIOS
 from src.scenarios import SCENARIOS, SCENARIO_LABELS, ALGO_LABELS
 from scripts.heatmaps import _load_model, _policy_actions
 
@@ -111,7 +111,7 @@ def record(algo, scenario, config_path, seed=2024, seconds=15, fps=20,
         ax.add_patch(Circle((0, 0), R, fill=False, ec="#6B7280", lw=1.2, ls="--"))
         # paredes (a porta cooperativa nao e solida; paredes removidas vao p/ 999)
         for w_i, (wpos, wsize) in enumerate(f["walls"]):
-            if w_i == f["door_idx"] and scenario in ("cooperative_door", "cooperative_door_bypass"):
+            if w_i == f["door_idx"] and scenario in DOOR_SCENARIOS:
                 continue
             if np.any(np.abs(wpos) > R + 5):
                 continue

@@ -45,7 +45,11 @@ import pandas as pd
 import yaml
 
 try:
-    sys.stdout.reconfigure(encoding="utf-8")
+    # line_buffering: esta corrida leva horas e costuma ir para um ficheiro
+    # (`> log 2>&1`). Sem isto o stdout fica em buffer de 8 kB e o log aparece
+    # VAZIO durante quase todo o tempo — impossível saber se está a progredir ou
+    # pendurado, que é precisamente o que se quer saber num job destes.
+    sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
 except Exception:
     pass
 

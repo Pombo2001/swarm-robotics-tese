@@ -55,15 +55,39 @@ def science_table():
 
 
 # ── Comparação de métricas entre treinos (vista Resultados) ───────────────────
-OFICIAL_LABEL = "★ Oficial (9 jul · campanha 7 dias, 7 runs × 20 ep)"
+# A entrada "oficial" identifica-se por este PREFIXO (sentinela estável); o resto
+# do rótulo é DERIVADO do ficheiro que está de facto no disco.
+#
+# Estava escrito à mão — "★ Oficial (9 jul · campanha 7 dias, 7 runs × 20 ep)" —
+# e o `eval_summary.csv` desta máquina é de 23 jun, com 6 cenários (falta o
+# `cooperative_door_bypass`) e 20 ep/célula, não 140. O rótulo afirmava uma
+# proveniência que o ficheiro não tem, e num ecrã de defesa isso é uma afirmação
+# errada diante do júri. Descrever o ficheiro em vez de o anunciar torna a
+# discrepância impossível de esconder.
+OFICIAL_PREFIXO = "★ Oficial"
+
+
+def oficial_label():
+    """Rótulo do eval oficial, descrito a partir do PRÓPRIO ficheiro."""
+    if not os.path.exists(EVAL_SUMMARY):
+        return OFICIAL_PREFIXO
+    try:
+        df = pd.read_csv(EVAL_SUMMARY)
+        data_f = time.strftime("%d/%m", time.localtime(_mtime(EVAL_SUMMARY)))
+        n_cen = df["Scenario"].nunique()
+        por_cel = int(df.groupby(["Scenario", "Algorithm"]).size().median())
+        return (f"{OFICIAL_PREFIXO} ({data_f} · {n_cen} cenários · "
+                f"{por_cel} ep/célula)")
+    except Exception:
+        return OFICIAL_PREFIXO
 
 
 def _session_eval_path(session: str):
     """Caminho do eval_summary de uma sessão (procura em subpastas) ou None.
 
-    A entrada especial OFICIAL_LABEL aponta para o eval oficial em results/evaluation/.
+    A entrada oficial (prefixo OFICIAL_PREFIXO) aponta para results/evaluation/.
     """
-    if session == OFICIAL_LABEL:
+    if session.startswith(OFICIAL_PREFIXO):
         return EVAL_SUMMARY if os.path.exists(EVAL_SUMMARY) else None
     base = os.path.join(GRAFICOS_DIR, session)
     hits = glob.glob(os.path.join(base, "**", "eval_summary.csv"), recursive=True)
@@ -74,7 +98,7 @@ def sessions_with_eval():
     """Treinos que têm métricas de avaliação, prontos a comparar (oficial primeiro)."""
     out = []
     if os.path.exists(EVAL_SUMMARY):
-        out.append(OFICIAL_LABEL)
+        out.append(oficial_label())
     for s in list_sessions():
         if glob.glob(os.path.join(GRAFICOS_DIR, s, "**", "eval_summary.csv"), recursive=True):
             out.append(s)

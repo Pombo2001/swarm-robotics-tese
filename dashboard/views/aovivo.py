@@ -42,9 +42,12 @@ _MODELO = {
 
 _ATIVOS = "★ Modelos ativos (results/models)"
 
-# --- Pré-visualização 3D do MAPA GRANDE (rascunho) --------------------------
-# A geometria ainda NÃO está no simulador: vive em scripts/preview_mapa_grande.py
-# até ser aprovada. O visualizador é o MESMO Ursina dos outros mapas.
+# --- Vista 3D do MAPA GRANDE ------------------------------------------------
+# A geometria está no simulador desde 24 jul 2026 (`_spawn_obstacles_mapa_grande`
+# em src/environment/swarm_env_3d.py) e o visualizador lê-a de LÁ — o que se vê é
+# o que os robôs treinam. O rascunho scripts/preview_mapa_grande.py foi retirado
+# precisamente por ter ficado a ser uma segunda cópia da geometria, divergente.
+# O visualizador é o MESMO Ursina dos outros mapas.
 _VIZ_MAPA = os.path.join(config.BASE_DIR, "visualization", "visualize_mapa_grande.py")
 
 

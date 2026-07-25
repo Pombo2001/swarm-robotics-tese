@@ -19,7 +19,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from src.environment.swarm_env_3d import SwarmForagingEnv3D
+from src.environment.swarm_env_3d import SwarmForagingEnv3D, DOOR_SCENARIOS
 from src.agents.gnn_agent_3d import GNNAgent3D
 
 def main(args):
@@ -179,7 +179,7 @@ def main(args):
                 obs_e.position = (env.obstacles[i][0], env.obstacles[i][1], -0.15)
 
         # Porta cooperativa: animação de abertura (deslize para cima)
-        if scenario in ('cooperative_door', 'cooperative_door_bypass') and not state['door_animated']:
+        if scenario in DOOR_SCENARIOS and not state['door_animated']:
             door_idx = getattr(env, 'door_wall_index', None)
             if door_idx is not None and not getattr(env, 'door_active', True):
                 if door_idx < len(wall_entities):

@@ -10,7 +10,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from src.environment.swarm_env_3d import SwarmForagingEnv3D
+from src.environment.swarm_env_3d import SwarmForagingEnv3D, DOOR_SCENARIOS
 from src.agents.gnn_agent_3d import GNNAgent3D
 
 app = Ursina()
@@ -104,7 +104,7 @@ for obs_pos in env.obstacles:
 wall_views = []
 for i, wall in enumerate(env.walls):
     # Se estivermos no cenário da porta E este for o muro que serve de porta (o último)
-    is_door = getattr(env, 'classic_scenario', '') in ("cooperative_door", "cooperative_door_bypass") and hasattr(env,
+    is_door = getattr(env, 'classic_scenario', '') in DOOR_SCENARIOS and hasattr(env,
                                                                                      'door_wall_index') and i == env.door_wall_index
 
     wall_color = color.red if is_door else color.rgba32(50, 50, 50, 180)

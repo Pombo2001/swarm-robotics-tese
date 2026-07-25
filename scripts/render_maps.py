@@ -28,7 +28,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 import pyvista as pv
-from src.environment.swarm_env_3d import SwarmForagingEnv3D
+from src.environment.swarm_env_3d import SwarmForagingEnv3D, DOOR_SCENARIOS
 from src.scenarios import SCENARIOS, SCENARIO_LABELS
 
 ALL_SCENARIOS = list(SCENARIOS)
@@ -58,7 +58,7 @@ def _add_map(plotter, env):
         pos, size = wall["pos"], wall["size"]
         if np.any(np.abs(pos) > R + 5):
             continue  # parede removida (porta aberta)
-        is_door = (env.classic_scenario in ("cooperative_door", "cooperative_door_bypass") and w_i == door_idx)
+        is_door = (env.classic_scenario in DOOR_SCENARIOS and w_i == door_idx)
         cube = pv.Cube(center=(float(pos[0]), float(pos[1]), WALL_H / 2.0),
                        x_length=float(size[0]), y_length=float(size[1]), z_length=WALL_H)
         plotter.add_mesh(cube, color=C_DOOR if is_door else C_WALL,
