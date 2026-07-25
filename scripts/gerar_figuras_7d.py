@@ -31,7 +31,6 @@ matplotlib.rcParams['font.family'] = 'DejaVu Sans'
 matplotlib.rcParams['axes.unicode_minus'] = False
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy import stats
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -76,6 +75,82 @@ def cliffs_delta(a, b):
     gt = sum((x > b).sum() for x in a)
     lt = sum((x < b).sum() for x in a)
     return float(gt - lt) / n
+
+
+def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algorithm",
+                    col_sucesso="sucesso", unidade="run independente",
+                    nota_extra="", n_por_algo=None):
+    """Um ponto por RUN, em vez de uma caixa. Guarda o PNG em `caminho`.
+
+    PORQUÊ (e porque é que não é só estética): com n=7, os quartis de um boxplot
+    são ruído — e a caixa CHEIA sugere densidade onde não há nenhuma. No Muro em
+    U, o GNN tem 4 runs a ZERO e 3 entre 43 e 80: a caixa pinta os 0-46 como se
+    estivessem ocupados, quando ali não está um único run. O capítulo gasta um
+    parágrafo a explicar que o comportamento é BIMODAL e a figura ao lado
+    esconde-o. Sete pontos mostram-no de imediato.
+
+    Escolhas de desenho:
+    · faixa HORIZONTAL por algoritmo — o nome fica no eixo, logo a identidade da
+      série não depende da cor (nem do daltonismo de quem lê);
+    · a MÉDIA (que é o que a tese reporta, ±dp) é uma barra vertical; a mediana
+      não entra, porque em distribuição bimodal não descreve run nenhum;
+    · anel branco à volta de cada ponto — dois runs com o mesmo valor têm de se
+      ler como dois;
+    · a contagem de runs que resolvem (sucesso=100%) fica escrita à direita: é o
+      "3/7" que o texto cita, aqui visível em vez de calculado pelo leitor.
+    """
+    import textwrap
+
+    # A ordem de ALGOS lê-se de cima para baixo (o eixo y do matplotlib cresce
+    # ao contrário, daí a inversão): GNN em cima, como em todas as tabelas.
+    algos_presentes = [a for a in ALGOS if a in set(d[col_algo])]
+    fig, ax = plt.subplots(figsize=(9, 1.35 * len(algos_presentes) + 2.4))
+    rng = np.random.default_rng(7)          # jitter reprodutível
+
+    x_max = float(d[col_valor].max()) if len(d) else 1.0
+    for i, algo in enumerate(algos_presentes):
+        sub = d[d[col_algo] == algo]
+        vals = sub[col_valor].to_numpy(dtype=float)
+        y = i + rng.uniform(-0.16, 0.16, size=len(vals))
+        ax.scatter(vals, y, s=95, color=ALGO_COLORS.get(algo, "#666"),
+                   edgecolors="white", linewidths=1.6, zorder=3,
+                   alpha=.95, clip_on=False)
+        m = float(np.mean(vals)) if len(vals) else 0.0
+        ax.vlines(m, i - 0.30, i + 0.30, color="#222222", linewidth=2.4, zorder=4)
+        # O rótulo da média encosta-se ao lado que tiver espaço: com média 0 (um
+        # algoritmo que nunca resolve) ficava metade fora da figura.
+        perto_da_esquerda = m < 0.12 * max(x_max, 1e-9)
+        ax.text(m, i + 0.40, f"média {m:.1f}",
+                ha="left" if perto_da_esquerda else "center", va="bottom",
+                fontsize=9, color="#222222", fontweight="bold")
+        if col_sucesso in sub.columns:
+            n_ok = int((sub[col_sucesso] >= 1.0).sum())
+            ax.text(1.02, i, f"{n_ok}/{len(sub)} a 100%",
+                    transform=ax.get_yaxis_transform(), ha="left", va="center",
+                    fontsize=9.5, color="#444444")
+
+    ax.set_yticks(range(len(algos_presentes)))
+    ax.set_yticklabels(algos_presentes, fontsize=12, fontweight="bold")
+    ax.set_ylim(len(algos_presentes) - 0.45, -0.55)      # GNN no topo
+    ax.set_xlim(left=0)
+    ax.set_xlabel("Recolhas por episódio (média do run, 20 episódios)", fontsize=10)
+    ax.set_title(titulo, fontsize=14, fontweight="bold", pad=12)
+    ax.grid(True, axis="x", linestyle="--", alpha=.4)
+    ax.grid(False, axis="y")
+    ax.tick_params(axis="y", length=0)                   # sem traços de escala
+    for lado in ("top", "right", "left"):
+        ax.spines[lado].set_visible(False)
+
+    n = n_por_algo if n_por_algo is not None else int(
+        d.groupby(col_algo)[col_valor].size().max())
+    nota = (f"Cada ponto = 1 {unidade} ({n} por algoritmo). A barra vertical é a "
+            f"média reportada na tese.{nota_extra}")
+    # Quebrar a nota: numa linha só, saía pelos dois lados da figura.
+    fig.text(0.5, 0.015, "\n".join(textwrap.wrap(nota, 118)),
+             ha="center", va="bottom", fontsize=8.5, color="#555555", style="italic")
+    plt.tight_layout(rect=[0, 0.10, 0.86, 1])
+    fig.savefig(caminho, dpi=300)
+    plt.close(fig)
 
 
 def main():
@@ -190,6 +265,14 @@ def main():
         plt.close(fig)
         print(f"[OK] boxplot_eval_{scen}.png")
 
+        # Alternativa em DOT PLOT (um ponto por run). Gerada A PAR do boxplot,
+        # não em vez dele: a escolha de qual entra na tese é do autor, e nos
+        # cenários bimodais (Muro U, Sandbox, Gargalo) a diferença é grande.
+        dotplot_por_run(
+            d, f'Fiabilidade entre Runs — {SCENARIO_LABELS.get(scen, scen)}',
+            os.path.join(OUT, f'dotplot_eval_{scen}.png'), n_por_algo=nr)
+        print(f"[OK] dotplot_eval_{scen}.png")
+
     # ── 4. Barras agregadoras (recolhas/ep, avaliação) ──────────────────────
     dd = ev.copy()
     dd['Cenário'] = dd['Scenario'].map(lambda s: SCENARIO_LABELS.get(s, s))
@@ -245,6 +328,10 @@ def main():
               f"[{r['pior_run']:.2f}, {r['melhor_run']:.2f}]")
 
     # ── 7. Testes de significância sobre as médias por run (n=7 por grupo) ──
+    # Import LOCAL de propósito: o scipy só é preciso aqui, e tê-lo no topo do
+    # módulo impedia importar as FUNÇÕES DE FIGURA a partir de uma máquina sem
+    # scipy instalado (o PC de trabalho é uma delas).
+    from scipy import stats
     sig_rows = []
     for scen in scen_present:
         for a, b in itertools.combinations(ALGOS, 2):
