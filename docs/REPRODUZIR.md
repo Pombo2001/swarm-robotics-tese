@@ -124,6 +124,15 @@ na torre** (onde estão `final_7d/` e `novelty_final/`):
       Mann-Whitney exato e δ **recalculados de raiz**: u_wall Novelty 69,8±5,9, 7/7 a 100%
       vs obj 24,5±32,6, 3/7 (p=0,0262→"0,026" ✓, δ=+0,71 ✓); bypass Novelty 63,0±21,9, 7/7
       vs obj 86,7±2,0 (p=0,0006 ✓, δ=−1,00 ✓). Tudo confere. ✅
+- [x] ✅ **RESOLVIDO (27 jul): a tese já declara a perda de proveniência no corpo.**
+      A decisão que ficou pendente a 16 jul ("acrescentar nota ou deixar como
+      está") estava, afinal, tomada: o §res_novelty diz textualmente que *"os
+      artefactos brutos desta execução preliminar (avaliação por episódio e
+      modelo) não foram retidos --- foram entretanto sobrescritos no servidor de
+      treino por campanhas posteriores ---, pelo que os valores citados
+      constituem o registo da altura e não são reproduzíveis a partir dos dados
+      arquivados"*, e contrasta-o com as campanhas seguintes, que têm todos os
+      dados versionados. **Nada a fazer.** O detalhe original fica abaixo.
 - [x] ⚠️ **Comparação preliminar (§res_novelty, "indício") — FONTE PERDIDA (verificado
       16 jul no servidor)**: o braço objetivo (64,5±3,5, 20 ep) está coberto por
       `results/evaluation/eval_comparacao_cooperative_door_bypass.csv`, mas o CSV
@@ -138,3 +147,14 @@ na torre** (onde estão `final_7d/` e `novelty_final/`):
 > **Feito a 15 jul (PC):** Sscale e SLR conferem 100%. **Feito a 16 jul (torre):**
 > `tab:res_eval` (3 dp corrigidos), `tab:res_signif` e §res_novelty — **auditoria
 > número-a-número COMPLETA**. Único buraco: o CSV do braço Novelty preliminar (ver ⚠️ acima).
+>
+> **Feito a 27 jul (torre) — auditoria de PROVENIÊNCIA:** verificou-se que as
+> **17/17 fontes** prometidas por este mapa existem de facto neste PC (SLR bruta e
+> triada, `eval_by_run_7d.csv`, significância, os 7 CSV de escalabilidade,
+> Novelty final e adaptativo, os 21 CSV de `fail10` e 14 de base, o
+> `benchmark_sim.py` e as 37 figuras). Nenhuma linha do mapa aponta para um
+> ficheiro que só exista no servidor — na defesa, qualquer "de onde vem este
+> número?" tem resposta na hora, sem VPN. Acresce que os **campeões da campanha
+> 7d** passaram a estar no disco em `results/models_7d/` (21/21, datados de 3-9
+> jul, guarda de campanha a passar), o que também torna o F1 reproduzível
+> localmente.
