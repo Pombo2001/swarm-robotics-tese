@@ -173,8 +173,12 @@ def make_env(config_path, seed=None, rank=0):
     return _init
 
 
-def train_ppo_3d(time_limit_minutes, seed=None):
-    config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
+def train_ppo_3d(time_limit_minutes, seed=None, config_path=None):
+    # Ver a nota igual no train_sac_3d: sem config_path, correr isto noutro
+    # cenário obriga a editar o configs/foraging.yaml partilhado. Omitir mantém
+    # o caminho de sempre.
+    config_path = config_path or os.path.join(
+        os.path.dirname(__file__), '../../configs/foraging.yaml')
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
@@ -244,10 +248,15 @@ if __name__ == "__main__":
     parser.add_argument("--time_limit", type=float, default=120.0)
     parser.add_argument("--seed", type=int, default=None,
                         help="Semente de reprodutibilidade (omitir = aleatorio)")
+    parser.add_argument("--config", type=str, default=None,
+                        help="Caminho do config YAML (default: configs/foraging.yaml). "
+                             "Permite correr um treino isolado sem mexer no config "
+                             "partilhado — o mesmo que o evo_trainer_3d já aceitava.")
     args = parser.parse_args()
 
     from multiprocessing import freeze_support
 
     freeze_support()
 
-    train_ppo_3d(time_limit_minutes=args.time_limit, seed=args.seed)
+    train_ppo_3d(time_limit_minutes=args.time_limit, seed=args.seed,
+                 config_path=args.config)

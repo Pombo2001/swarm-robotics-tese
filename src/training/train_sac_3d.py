@@ -168,8 +168,13 @@ def make_env(config_path, seed=None, rank=0):
     return _init
 
 
-def train_sac_3d(time_limit_minutes, seed=None):
-    config_path = os.path.join(os.path.dirname(__file__), '../../configs/foraging.yaml')
+def train_sac_3d(time_limit_minutes, seed=None, config_path=None):
+    # config_path parametrizável: sem isto, correr o SAC noutro cenário obriga a
+    # editar o configs/foraging.yaml PARTILHADO — que é lido por tudo o resto e
+    # reescrito por sed pelas campanhas do servidor. Omitir mantém o caminho de
+    # sempre, portanto nada muda para quem já chamava esta função.
+    config_path = config_path or os.path.join(
+        os.path.dirname(__file__), '../../configs/foraging.yaml')
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
@@ -188,10 +193,21 @@ def train_sac_3d(time_limit_minutes, seed=None):
     env = FlattenMultiAgentVecEnv(env, config['environment'].get('num_agents', 25))
     env = VecMonitor(env)
 
-    log_dir = os.path.join(os.path.dirname(__file__), '../../results/logs_sac')
-    model_dir = os.path.join(os.path.dirname(__file__), '../../results/models_sac')
+    # `tag` (opcional, vindo do config): isola os artefactos de uma corrida
+    # exploratória em results/{logs,models}_sac_<tag>/, para poder correr
+    # variantes EM PARALELO sem que escrevam por cima umas das outras — e sem
+    # tocar nos artefactos da campanha. Sem tag, os caminhos são os de sempre.
+    tag = str(sac_config.get("tag", "") or "")
+    sufixo_dir = f"_{tag}" if tag else ""
+    log_dir = os.path.join(os.path.dirname(__file__),
+                           f'../../results/logs_sac{sufixo_dir}')
+    model_dir = os.path.join(os.path.dirname(__file__),
+                             f'../../results/models_sac{sufixo_dir}')
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(model_dir, exist_ok=True)
+    if tag:
+        print(f"[SAC] corrida marcada '{tag}' — artefactos isolados em "
+              f"results/{{logs,models}}_sac{sufixo_dir}/")
 
     log_file = os.path.join(log_dir, 'training_history_sac_3d.csv')
     with open(log_file, 'w', newline='') as f:
@@ -202,16 +218,31 @@ def train_sac_3d(time_limit_minutes, seed=None):
 
     ckpt_interval = int(sac_config.get('checkpoint_interval_min', 30) * 60)
 
+    # train_freq / gradient_steps: DEFAULTS DO SB3 (1 e 1), mantidos para que as
+    # campanhas fechadas continuem reproduzíveis. Ficam expostos no config porque
+    # o parameter sharing os torna enganadores: cada step() do VecEnv devolve
+    # num_cpu × num_agents transições (com 5 e 20, são 100) e o SB3 faz UM
+    # gradient step por step() — rácio de replay 0,01, quando o SAC é desenhado
+    # para ~1. Medido no F0 de 27 jul: n_updates=26 000 para 2,6M timesteps.
+    # Subir isto troca amostras por aprendizagem (menos timesteps/s, mais
+    # gradiente por transição); qual dos dois compensa é questão empírica — ver
+    # docs/AB_SAC_MAPA_GRANDE.md.
     model = SAC(
         "MlpPolicy", env,
         learning_rate=sac_config.get("learning_rate", 1e-4),
         buffer_size=sac_config.get("buffer_size", 500_000),
         ent_coef=sac_config.get("ent_coef", 0.1),
+        train_freq=sac_config.get("train_freq", 1),
+        gradient_steps=sac_config.get("gradient_steps", 1),
         policy_kwargs=dict(net_arch=sac_config.get("net_arch", [256, 256])),
         verbose=1,
         device="auto",
         seed=seed,
     )
+    print(f"[SAC] ent_coef={model.ent_coef} · buffer={model.buffer_size} · "
+          f"train_freq={sac_config.get('train_freq', 1)} · "
+          f"gradient_steps={sac_config.get('gradient_steps', 1)} · "
+          f"transicoes por step()={num_cpu * config['environment'].get('num_agents', 25)}")
     callback = TimeLimitAndLoggingCallback(
         log_file, time_limit_seconds, log_interval,
         checkpoint_dir=model_dir, checkpoint_interval_sec=ckpt_interval)
@@ -238,10 +269,15 @@ if __name__ == "__main__":
     parser.add_argument("--time_limit", type=float, default=120.0)
     parser.add_argument("--seed", type=int, default=None,
                         help="Semente de reprodutibilidade (omitir = aleatorio)")
+    parser.add_argument("--config", type=str, default=None,
+                        help="Caminho do config YAML (default: configs/foraging.yaml). "
+                             "Permite correr um treino isolado sem mexer no config "
+                             "partilhado — o mesmo que o evo_trainer_3d já aceitava.")
     args = parser.parse_args()
 
     from multiprocessing import freeze_support
 
     freeze_support()
 
-    train_sac_3d(time_limit_minutes=args.time_limit, seed=args.seed)
+    train_sac_3d(time_limit_minutes=args.time_limit, seed=args.seed,
+                 config_path=args.config)
