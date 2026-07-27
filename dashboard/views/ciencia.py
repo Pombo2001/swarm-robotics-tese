@@ -14,12 +14,34 @@ CARD = theme.CARD + " p-4"
 _section_title = theme.section_title
 
 
-def _ptask_color(p: float) -> str:
-    if p >= 80:
-        return "bg-emerald-700/60"
-    if p >= 40:
-        return "bg-amber-700/60"
-    return "bg-red-800/60"
+def _hex_rgb(h: str) -> tuple:
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _ptask_fundo(p: float, algo: str) -> str:
+    """Fundo da célula: HUE do algoritmo, INTENSIDADE = taxa de sucesso.
+
+    Antes eram três degraus fixos do Tailwind — `bg-emerald-700` (≥80%),
+    `bg-amber-700` (40-80%) e `bg-red-800` (<40%). Três problemas:
+
+    1. **Verde/vermelho é o pior par possível** para daltonismo (protanopia e
+       deuteranopia atingem ~8% dos homens): as duas pontas da escala, que são
+       precisamente o que se quer distinguir, colapsam na mesma cor.
+    2. **Três degraus numa métrica contínua** achatam 86% e 100% no mesmo verde,
+       e é entre esses dois que está a diferença que interessa ler.
+    3. Nenhuma das três cores pertence à paleta validada do projeto, ao
+       contrário das cores das séries (ver `config.ALGO_META`).
+
+    Agora a célula usa a cor do **próprio algoritmo** (identidade, coluna a
+    coluna) e a **opacidade** codifica a magnitude — o eixo que sobrevive a
+    qualquer daltonismo e à impressão a preto e branco. As células fracas
+    recuam para o fundo; as fortes destacam-se. O caso crítico (<40%) leva
+    ainda um ícone, porque estado nunca deve depender só de cor.
+    """
+    r, g, b = _hex_rgb(config.ALGO_META.get(algo, {}).get("color", "#7d7d7d"))
+    alfa = 0.10 + 0.52 * max(0.0, min(1.0, p / 100.0))
+    return f"background: rgba({r},{g},{b},{alfa:.3f})"
 
 
 def _echart_axis_label():
@@ -55,6 +77,33 @@ def _robustez_option(table: dict) -> dict:
                                 "color": theme.INK_MUTED, "fontSize": 12}}]}
     base = theme.echart_chrome(y_nome="Retenção (%)", rotacao_x=18)
     base["xAxis"]["data"] = labels
+
+    # Eixo limitado, com os fora-de-escala rotulados no topo da barra.
+    #
+    # A retenção é um RÁCIO, por isso um cenário cuja base é quase zero produz
+    # valores absurdos (um caso mediu ~570%: com falhas recolheu mais do que sem
+    # elas, porque o denominador era ~0). Com escala automática, esses um ou dois
+    # outliers levavam o eixo a 600% e esmagavam as outras ~19 barras — que estão
+    # todas à volta de 100%, que é exatamente onde a leitura interessa: quem
+    # resiste e quem não resiste à perda de 10% dos agentes.
+    #
+    # O corte não esconde nada: as barras que passam do teto levam o valor real
+    # escrito por cima, que é a recomendação para outliers (rótulo direto em vez
+    # de deixar a escala mentir).
+    TETO = 150
+    valores = [v for s in series for v in s["data"] if v is not None]
+    if valores and max(valores) > TETO:
+        base["yAxis"] = {**base.get("yAxis", {}), "max": TETO}
+        for s in series:
+            # Rótulo por PONTO (JSON puro, sem funções JS): só os que saem fora
+            # do teto o levam. Rotular todas as barras seria ruído.
+            s["data"] = [
+                v if (v is None or v <= TETO) else
+                {"value": v,
+                 "label": {"show": True, "position": "top", "fontSize": 11,
+                           "color": theme.INK_SOFT, "formatter": f"{v:.0f}%"}}
+                for v in s["data"]
+            ]
     return {**base, "series": series}
 
 
@@ -105,18 +154,26 @@ def _escala_option(tbl: dict) -> dict:
 _cell_seq = 0
 
 
-def _cell(info: dict):
+def _cell(info: dict, algo: str = ""):
     global _cell_seq
     if info is None:
-        with ui.element("div").classes("bg-slate-900/40 rounded-lg p-2 text-center"):
-            ui.label("—").classes("text-gray-600")
+        with ui.element("div").classes("rounded-lg p-2 text-center") \
+                .style("background: rgba(255,255,255,.03)"):
+            ui.label("—").style(f"color:{theme.INK_MUTED}")
         return
     _cell_seq += 1
     el_id = f"sci_cell_{_cell_seq}"
-    with ui.element("div").classes(f"{_ptask_color(info['ptask'])} rounded-lg p-2 text-center"):
+    p = info["ptask"]
+    with ui.element("div").classes("rounded-lg p-2 text-center") \
+            .style(_ptask_fundo(p, algo)):
         # Ptask com count-up (o efeito dos KPIs da Overview, agora na matriz).
         ui.html(f'<span id="{el_id}" class="text-lg font-bold leading-tight mono-num">'
-                f'{info["ptask"]:.0f}%</span>')
+                f'{p:.0f}%</span>')
+        # Estado crítico marcado por FORMA, não por cor: quem não distingue as
+        # cores continua a ver que esta célula é diferente.
+        if p < 40:
+            ui.html('<span class="text-[11px] leading-tight" title="abaixo de 40% '
+                    'de sucesso">▲ crítico</span>')
         ui.label(f"{info['recolhas']:.1f} rec/ep").classes("text-xs opacity-80 leading-tight")
         ui.label(f"n={info['n']}").classes("text-[10px] opacity-50 leading-tight")
     delay = 0.15 + (_cell_seq % 24) * 0.04          # cascata pela grelha
@@ -171,11 +228,18 @@ def build():
                             ui.label(config.SCENARIO_LABEL_BY_KEY[key]) \
                                 .classes("text-sm self-center")
                             for a in config.ALGOS:
-                                _cell(table[key].get(a))
-                    with ui.row().classes("gap-3 mt-2 text-xs text-gray-400"):
-                        ui.html('<span class="inline-block w-3 h-3 rounded bg-emerald-700"></span> ≥80%')
-                        ui.html('<span class="inline-block w-3 h-3 rounded bg-amber-700"></span> 40–80%')
-                        ui.html('<span class="inline-block w-3 h-3 rounded bg-red-800"></span> &lt;40%')
+                                _cell(table[key].get(a), a)
+                    # Legenda: a cor diz QUEM (coluna), a intensidade diz QUANTO.
+                    with ui.row().classes("gap-4 mt-3 items-center text-xs") \
+                            .style(f"color:{theme.INK_MUTED}"):
+                        ui.label("intensidade = taxa de sucesso")
+                        with ui.row().classes("items-center gap-1"):
+                            for frac in (0.0, 0.25, 0.5, 0.75, 1.0):
+                                ui.html('<span class="inline-block w-5 h-3 rounded-sm" '
+                                        f'style="{_ptask_fundo(frac * 100, config.ALGOS[0])}">'
+                                        '</span>')
+                            ui.label("0 → 100%").classes("ml-1")
+                        ui.label("▲ crítico = abaixo de 40%")
 
             # ── Significância estatística ────────────────────────────────────
             sig = data.significance()
