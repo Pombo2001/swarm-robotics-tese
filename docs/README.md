@@ -14,6 +14,7 @@ quais já estavam ultrapassados.
 |---|---|---|
 | [`PLANO_MESTRE.md`](PLANO_MESTRE.md) | Ponto de re-entrada único: estado, prazos, log de cada sessão, regras invioláveis. | **VIVO** — atualiza-se este |
 | [`REPRODUZIR.md`](REPRODUZIR.md) | De cada número/tabela/figura da tese até aos dados e ao script que os gera, com o que já foi auditado e em que máquina está. | **VIVO** |
+| [`INVENTARIO.md`](INVENTARIO.md) | O que existe e o que falta: campanhas com dados, modelos, documentos, ferramentas, e de quem depende cada coisa que falta. Verificado por leitura do disco. | **VIVO** — reverificar ao trazer campanhas |
 | [`ARQUITETURA.md`](ARQUITETURA.md) | Arquitetura do simulador e dos controladores; apoio ao capítulo de Implementação. | Referência |
 
 ## Pré-registos (escritos ANTES de existirem dados)
