@@ -59,7 +59,11 @@ def index():
                 ui.label("OPERAÇÃO").classes("text-[10px] font-bold tracking-[.2em] "
                                              "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
                 t_treinar = ui.tab("Treinar", icon="rocket_launch")
-                t_monitor = ui.tab("Monitorizar", icon="monitoring")
+                # "monitoring" só existe nos Material Symbols (conjunto novo); o
+                # NiceGUI carrega os Material Icons clássicos, onde esse nome não
+                # resolve — o separador ficava como o ÚNICO sem ícone. "insights"
+                # existe nos dois conjuntos.
+                t_monitor = ui.tab("Monitorizar", icon="insights")
                 ui.label("ANÁLISE").classes("text-[10px] font-bold tracking-[.2em] "
                                             "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
                 t_ciencia = ui.tab("Ciência", icon="science")

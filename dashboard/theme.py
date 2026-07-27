@@ -14,8 +14,15 @@ BG        = "#050505"   # fundo (quase preto)
 SURFACE   = "#0e0e0e"   # cartões
 BORDER    = "#1f1f1f"   # linhas finas
 INK       = "#f5f5f5"   # títulos / destaque
-INK_SOFT  = "#a3a3a3"   # texto corrente
-INK_MUTED = "#636363"   # legendas / secundário
+INK_SOFT  = "#a3a3a3"   # texto corrente          — 8,0:1 sobre o fundo (AAA)
+# Legendas/secundário. Estava #636363, que dá 3,5:1 sobre #050505 e reprova o
+# mínimo de 4,5:1 do WCAG AA para texto pequeno — e é precisamente aqui que vivem
+# os rótulos dos indicadores ("SESSÕES DE TREINO"), as datas da linha do tempo e
+# as legendas dos cartões, todos a 11-12 px em maiúsculas. #7d7d7d dá 4,9:1 e
+# mantém a distância para o texto corrente (4,9 vs 8,0), que é o que sustenta a
+# hierarquia visual. O modo defesa continua a subi-lo mais (projetores achatam
+# os pretos) — ver a secção body.defesa.
+INK_MUTED = "#7d7d7d"   # legendas / secundário   — 4,9:1 sobre o fundo (AA)
 
 # Classe padrão dos cartões (usar em todas as vistas)
 CARD = "mono-card w-full"
@@ -25,7 +32,7 @@ CSS = r"""
 
 :root {
   --bg:#050505; --surface:#0e0e0e; --surface2:#141414; --border:#1f1f1f;
-  --border-hi:#333; --ink:#f5f5f5; --ink-soft:#a3a3a3; --ink-muted:#636363;
+  --border-hi:#333; --ink:#f5f5f5; --ink-soft:#a3a3a3; --ink-muted:#7d7d7d;
 }
 
 html, body, .q-page, .nicegui-content {
