@@ -25,6 +25,16 @@
 
 ## ⚠️ SE VAIS PARA A TORRE, É ISTO (por ordem)
 
+> **✅ Passos 1 e 2 FEITOS na torre a 27 jul de manhã** (`e3d231b`). O rebase
+> apanhou tudo o que o PC do trabalho enviou (`8c189f6`, pushed 07:58; rebase às
+> 08:04) — verificado: guarda do zero-shot, `mapa_grande`, pré-registo, Modo
+> Defesa e dot plot todos na árvore, `pytest tests/` **44/44**. A tese foi
+> recompilada (**121 págs, 0 refs indefinidas, 0 overfulls**) e o PDF commitado.
+> A recompilação apanhou ainda uma contradição: o corpo do `main.tex` dizia que a
+> fome é "só Sandbox" enquanto o Apêndice A (corrigido a 25 jul) diz Sandbox **e**
+> Perceção Cooperativa — o corpo foi alinhado com o código (`not use_geodesic`).
+> **Restam os passos 3 e 4.**
+
 1. **`git pull`.** Tudo está em `origin/main` — o último é o `f8be1bb`
    (**guarda de campanha no `eval_zeroshot_mapa.py`**: `--models-dir`, data de
    cada campeão verificada antes da 1.ª célula, proveniência no CSV, 12 testes
