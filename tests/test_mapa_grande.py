@@ -484,24 +484,34 @@ def test_aperto_nao_atravessa_paredes():
     print("OK  aperto: nenhum agente atravessa parede, até 30 agentes empilhados")
 
 
-def test_fisica_dos_7_bit_a_bit():
+def test_fisica_dos_7_inalterada():
     """A correção do push-out é EXCLUSIVA do mapa_grande.
 
-    Assinaturas capturadas com o código anterior à correção (27 jul). Se alguma
-    mudar, uma alteração à física entrou nos cenários cujos números já estão na
-    tese — e as campanhas fechadas deixam de ser reproduzíveis.
+    Referência capturada com o código anterior à correção (27 jul): soma, média,
+    mínimo e máximo de posições+recompensas ao longo de 200 passos com ações
+    fixas. Se alguma mudar, uma alteração à física entrou nos cenários cujos
+    números já estão na tese, e as campanhas fechadas deixam de ser reproduzíveis.
+
+    **Porque é uma tolerância e não um hash:** a primeira versão deste teste
+    comparava um SHA-256 dos floats. Passava aqui e FALHAVA no servidor — não por
+    regressão, mas porque a ordem das somas em vírgula flutuante difere entre
+    plataformas (Python 3.13/numpy 2.4.2 vs 3.12/2.4.6): as duas máquinas dão
+    266,003105779438 e 266,003105779439. Um teste que acusa regressão por mudar
+    de máquina é pior do que não ter teste — ou faz perder tempo, ou ensina a
+    ignorá-lo. A tolerância de 1e-9 relativa engole esse ruído (que vive em
+    1e-12) e continua a apanhar qualquer alteração real da física, que move
+    estes valores em ordens de grandeza.
     """
-    import hashlib
-    esperado = {
-        "none": "318fdfe30040f773",
-        "u_wall": "1f5721ba885e5314",
-        "bottleneck": "542304e64378a9e0",
-        "four_rooms": "41be945f7c2385ba",
-        "cooperative_door": "d501714b8e271f94",
-        "cooperative_perception": "5e116074b6880950",
-        "cooperative_door_bypass": "d501714b8e271f94",
+    REFERENCIA = {
+        "none":                    (266.003105779, 0.831259706, -11.758723981, 12.292120540),
+        "u_wall":                  (-729.128611656, -2.278526911, -14.354598594, 9.752095924),
+        "bottleneck":              (-640.630318067, -2.001969744, -14.396867115, 9.752095924),
+        "four_rooms":              (-486.287732330, -1.519649164, -10.345279756, 10.380971855),
+        "cooperative_door":        (-551.198892680, -1.722496540, -14.396867115, 9.752095924),
+        "cooperative_perception":  (-340.497943678, -1.064056074, -13.130892904, 8.860656961),
+        "cooperative_door_bypass": (-551.198892680, -1.722496540, -14.396867115, 9.752095924),
     }
-    for cen, h_esp in esperado.items():
+    for cen, esperado in REFERENCIA.items():
         cfg = copy.deepcopy(BASE_CFG)
         cfg["environment"]["classic_scenario"] = cen
         e = SwarmForagingEnv3D(config=cfg)
@@ -514,10 +524,11 @@ def test_fisica_dos_7_bit_a_bit():
             if t % 50 == 0:
                 acc.append(e.agent_positions.copy().ravel())
                 acc.append(np.array([rew[a] for a in e.agents]))
-        v = np.ascontiguousarray(np.concatenate(acc), dtype=np.float64)
-        h = hashlib.sha256(v.tobytes()).hexdigest()[:16]
-        assert h == h_esp, f"{cen}: física alterada ({h} != {h_esp}) — regressão nos 7"
-    print("OK  os 7 cenários da tese continuam bit-a-bit iguais")
+        v = np.concatenate(acc)
+        obtido = (v.sum(), v.mean(), v.min(), v.max())
+        assert np.allclose(obtido, esperado, rtol=1e-9, atol=1e-9), (
+            f"{cen}: física alterada\n  esperado {esperado}\n  obtido   {obtido}")
+    print("OK  os 7 cenários da tese continuam com a física inalterada")
 
 
 if __name__ == "__main__":
@@ -529,7 +540,7 @@ if __name__ == "__main__":
               test_ninho_desimpedido, test_spawn_livre_de_obstaculos,
               test_normalizador_da_obs, test_atravessavel_com_obstaculos,
               test_controlo_sem_obstaculos, test_controlo_porta_na_obs,
-              test_aperto_nao_atravessa_paredes, test_fisica_dos_7_bit_a_bit]
+              test_aperto_nao_atravessa_paredes, test_fisica_dos_7_inalterada]
     for t in testes:
         t()
     print(f"\n{len(testes)}/{len(testes)} testes do mapa grande passaram ✅")
