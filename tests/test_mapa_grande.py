@@ -440,6 +440,86 @@ def test_normalizador_da_obs():
     print("OK  normalizador: 120 no mapa vs 30 no treino (4x) e controlo isolado")
 
 
+def test_aperto_nao_atravessa_paredes():
+    """Enxame amontoado contra uma parede não passa para o outro lado.
+
+    Antes da 2.ª passagem do push-out (27 jul), 20 agentes empurrados contra a
+    divisória B→C durante 120 passos punham 12 do outro lado, e contra o painel
+    da PORTA punham 4 — isto é, o enxame chegava ao ninho sem cooperar, o que
+    esvaziava a métrica M3 do pré-registo. O mecanismo: a separação inter-agente
+    corre DEPOIS do push-out e enterra agentes no painel; no passo seguinte o
+    push-out escolhia o eixo de menor penetração e expulsava-os pelo lado errado.
+    """
+    for n in (10, 20, 30):
+        env = make_env(num_agents=n)
+        env.reset(seed=1)
+        # Paredes longas (>3 m) — as curtas contornam-se legitimamente pela ponta.
+        alvos = [k for k, w in enumerate(env.walls)
+                 if max(w['size'][0], w['size'][1]) > 3.0]
+        alvos.append(env.door_wall_index)          # o painel da porta, sempre
+        for wi in alvos:
+            env.reset(seed=1)
+            wp = env.walls[wi]['pos'].copy()
+            ws = env.walls[wi]['size'].copy()
+            eixo = 0 if ws[0] < ws[1] else 1
+            base = wp.copy()
+            base[eixo] += ws[eixo] / 2 + env.robot_radius + 0.02
+            base[2] = 0.0
+            np.random.seed(0)
+            for i in range(n):
+                env.agent_positions[i] = base + np.random.uniform(-0.5, 0.5, 3) * np.array([1, 1, 0])
+                h = np.zeros(3)
+                h[eixo] = -1.0
+                env.agent_headings[i] = h
+            for _ in range(120):
+                env.step({a: np.array([1.0, 0.0, 0.0], dtype=np.float32) for a in env.agents})
+                for i in range(n):          # manter a pressão contra a parede
+                    h = np.zeros(3)
+                    h[eixo] = -1.0
+                    env.agent_headings[i] = h
+            do_outro_lado = int((np.sign(env.agent_positions[:, eixo] - wp[eixo]) < 0).sum())
+            assert do_outro_lado == 0, (
+                f"{do_outro_lado}/{n} agentes atravessaram a parede #{wi} "
+                f"(centro {wp[:2]}, tamanho {ws[:2]})")
+    print("OK  aperto: nenhum agente atravessa parede, até 30 agentes empilhados")
+
+
+def test_fisica_dos_7_bit_a_bit():
+    """A correção do push-out é EXCLUSIVA do mapa_grande.
+
+    Assinaturas capturadas com o código anterior à correção (27 jul). Se alguma
+    mudar, uma alteração à física entrou nos cenários cujos números já estão na
+    tese — e as campanhas fechadas deixam de ser reproduzíveis.
+    """
+    import hashlib
+    esperado = {
+        "none": "318fdfe30040f773",
+        "u_wall": "1f5721ba885e5314",
+        "bottleneck": "542304e64378a9e0",
+        "four_rooms": "41be945f7c2385ba",
+        "cooperative_door": "d501714b8e271f94",
+        "cooperative_perception": "5e116074b6880950",
+        "cooperative_door_bypass": "d501714b8e271f94",
+    }
+    for cen, h_esp in esperado.items():
+        cfg = copy.deepcopy(BASE_CFG)
+        cfg["environment"]["classic_scenario"] = cen
+        e = SwarmForagingEnv3D(config=cfg)
+        e.reset(seed=7)
+        np.random.seed(123)
+        acc = []
+        for t in range(200):
+            ac = {a: np.random.uniform(-1, 1, 3).astype(np.float32) for a in e.agents}
+            _, rew, _, _, _ = e.step(ac)
+            if t % 50 == 0:
+                acc.append(e.agent_positions.copy().ravel())
+                acc.append(np.array([rew[a] for a in e.agents]))
+        v = np.ascontiguousarray(np.concatenate(acc), dtype=np.float64)
+        h = hashlib.sha256(v.tobytes()).hexdigest()[:16]
+        assert h == h_esp, f"{cen}: física alterada ({h} != {h_esp}) — regressão nos 7"
+    print("OK  os 7 cenários da tese continuam bit-a-bit iguais")
+
+
 if __name__ == "__main__":
     testes = [test_determinismo, test_resets_consecutivos, test_ninho_alcancavel,
               test_max_steps_suficiente, test_tarefa_cumprivel,
@@ -448,7 +528,8 @@ if __name__ == "__main__":
               test_sem_fuga_entre_cenarios, test_robustez_ligavel,
               test_ninho_desimpedido, test_spawn_livre_de_obstaculos,
               test_normalizador_da_obs, test_atravessavel_com_obstaculos,
-              test_controlo_sem_obstaculos, test_controlo_porta_na_obs]
+              test_controlo_sem_obstaculos, test_controlo_porta_na_obs,
+              test_aperto_nao_atravessa_paredes, test_fisica_dos_7_bit_a_bit]
     for t in testes:
         t()
     print(f"\n{len(testes)}/{len(testes)} testes do mapa grande passaram ✅")

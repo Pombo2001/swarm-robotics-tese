@@ -16,7 +16,62 @@
 
 ---
 
-# 0. LOG DE SESSÃO — 25 jul 2026 (Opus 5, PC do trabalho)
+# 0. LOG DE SESSÃO — 27 jul 2026 (Opus 5, torre)
+
+> Rebase + tese recompilada de manhã; à tarde, **auditoria de física ao mapa
+> grande antes de comprometer a janela de servidor**. Uma falha crítica
+> encontrada (o servidor não tem o mapa) e um bug de colisão corrigido.
+
+## 🔴 O SERVIDOR NÃO TEM O MAPA — a campanha falhava no arranque
+
+`grep -c mapa_grande ~/swarm-robotics-tese/src/scenarios.py` = **0**; esse ficheiro
+é de **2 jul** e o mapa nasceu a 24 jul. O `run_experiments.py --scenarios
+mapa_grande` teria impresso `[!] Cenários desconhecidos ignorados` e treinado outra
+coisa. A máquina **não tem git** — o código vai por `pscp`.
+
+**Decidido (utilizador, 27 jul): não mexer no servidor até o mega-treino fechar.**
+A campanha do mapa corre de um **diretório isolado `~/swarm-mapa/`** (o padrão do
+`~/swarm-novelty`), enviado por `pscp` a ~3 ago. Enviar agora contaminava megaA/megaB,
+que reescrevem `configs/foraging.yaml` por `sed` a cada fase.
+
+## 🟡 Bug de colisão corrigido (só no mapa_grande)
+
+Push-out das paredes corre **antes** da separação inter-agente ⇒ com o enxame
+amontoado, um agente é enterrado no painel e no passo seguinte é expulso **pelo lado
+errado**. 20 agentes contra a divisória B→C: **12 passavam**; contra o painel da
+porta: **4** — o enxame chegaria ao ninho **sem cooperar**, esvaziando a M3.
+Corrigido com 2.ª passagem do push-out que devolve o agente ao lado de **onde veio**.
+Emenda #10 do `PRE_REGISTO_MAPA_GRANDE.md`. **Os 7 cenários ficam bit-a-bit iguais**
+(assinatura sha256 igual antes/depois — `test_fisica_dos_7_bit_a_bit`). 46/46.
+
+## ✅ O que a auditoria NÃO encontrou (não refazer)
+
+Sem *tunneling* (paredes 1,5 m vs 0,2 m/passo, margem 9×); retângulo exterior
+estanque; obstáculos com ≥1,45 m de folga às paredes; aberturas 5,0/2,5/2,5/4,75 m;
+caminho com a porta fechada (177 m vs 153 m); `obs_dim=(111,)` igual aos 7 ⇒ os
+modelos carregam; `eval_by_run`/`eval_suite` já incluem o mapa. Com política de
+*homing* (120 000 passos-agente): **0 travessias** mesmo antes da correção.
+
+## 📊 Calendário e orçamento (contas feitas sobre os arranques reais)
+
+- **megaA** fecha **~1-2 ago** (F2 hoje ~13h UTC → PPO 22 h → SAC 22 h → GNN none 68 h)
+- **megaB** fecha **~3 ago** (F4 hoje ~12h UTC → bypass 68 h → SAC 17 h → perception 68 h)
+- **F2 do mapa = ~3,8 dias em dois streams** (GNN 7×780 min = 91 h; PPO/SAC 7×192 min).
+  Entre 3 e 22 ago há 19 dias ⇒ **espaço para correr a campanha 4 vezes**. Não são 20 dias.
+- **Custo por geração medido no F0: 428 s** (16 núcleos, com PPO+SAC a competir) contra
+  os **57 min** estimados no pré-registo ⇒ os 780 min/run dão ~200 gerações, não 13,7.
+  Medir no servidor antes de decidir cortar o orçamento (emenda #12).
+
+## F0 local (3 algoritmos, 120 min, config isolado)
+
+GNN fitness a subir (750→1359 em 5 gerações), PPO 412 updates, SAC 200k timesteps
+`ep_rew_mean` 366. ⚠️ `configs/foraging.yaml` está temporariamente em `mapa_grande`
+com `num_cpu: 5` (PPO/SAC leem o caminho em duro) — **repor com `git checkout` quando
+os treinos acabarem**.
+
+---
+
+# 0-bis. LOG DE SESSÃO — 25 jul 2026 (Opus 5, PC do trabalho)
 
 > Sessão de **auditoria ao mapa + controlos do F1**, fechada às 23h com a
 > descoberta de que o F1 desse dia correu com os modelos errados e com a guarda

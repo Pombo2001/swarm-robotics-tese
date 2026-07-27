@@ -426,6 +426,66 @@ vez de a corrida ser só repetida em silêncio):
 servidor. Enquanto não estiverem no disco, a guarda impede a corrida — que é o
 comportamento pretendido.
 
+### 27 jul 2026 — auditoria de física antes de comprometer o servidor (ainda 0 dados de F2)
+
+Auditoria pedida antes de gastar a janela de servidor, com o F0 a correr localmente
+(3 algoritmos, 120 min) e **nenhum dado de F1 ou F2 no repositório**.
+
+10. **A física deixava atravessar paredes sob aglomeração — CORRIGIDO só no
+    `mapa_grande`.** No `step()`, o push-out das paredes corre **antes** da
+    separação inter-agente; a separação enterra um agente no painel e nada volta a
+    verificá-lo. No passo seguinte, o push-out escolhia o eixo de **menor
+    penetração** e, se o agente já tinha passado do meio, expulsava-o **pelo lado
+    errado**. Medido com o enxame empurrado contra a mesma parede 120 passos:
+
+    | parede | espessura | N=6 | N=10 | N=20 |
+    |---|---|---|---|---|
+    | divisória B→C | 1,5 m | 0 | 3 | 12/20 |
+    | **painel da porta** | 2,0 m | 0 | 0 | 4/20 |
+
+    Consequência se não fosse corrigido: o enxame chega ao ninho **sem abrir a
+    porta**, e a M3 (uso da porta cooperativa) mede um artefacto de colisão. A
+    evolução procura exatamente este tipo de atalho.
+
+    **Correção:** 2.ª passagem do push-out **depois** da separação, que devolve o
+    agente ao lado de **onde veio** (usa a posição no início do passo), em vez do
+    lado de menor penetração. **Ativa apenas quando `classic_scenario ==
+    "mapa_grande"`** — os 7 cenários das campanhas fechadas ficam intocados.
+    Provado por assinatura sha256 de posições+recompensas (200 passos, seed 7):
+    os 7 dão o **mesmo hash** antes e depois; ver `test_fisica_dos_7_bit_a_bit`.
+    Com ações aleatórias o próprio `mapa_grande` dá o mesmo hash — a correção é
+    no-op no regime normal e só intervém no caso patológico.
+    Depois: **0 travessias** em todas as paredes longas e no painel da porta, com
+    10, 20 e 30 agentes (`test_aperto_nao_atravessa_paredes`). 46/46 na suite.
+
+11. **O que a auditoria NÃO encontrou** (fica registado para não ser refeito):
+    espessura mínima de parede 1,5 m contra 0,2 m/passo por eixo (margem 9× — sem
+    *tunneling*); retângulo exterior estanque (BFS: sem caminho de fora ao ninho);
+    obstáculos a ≥1,45 m das paredes, ≥1,31 m entre si, ≥3,34 m do ninho, nenhum
+    dentro de parede; aberturas 5,0 / 2,5 / 2,5-1,5-2,5 / 2,5 / 4,75 m; caminho
+    spawn→ninho de 153 m com a porta aberta e **177 m com ela fechada**;
+    `obs_dim=(111,)` idêntica aos 7 cenários. Com política de *homing* (120 000
+    passos-agente, o pior caso realista) havia **0** travessias já antes da
+    correção — o risco era do regime de aglomeração, não do regime típico.
+
+12. **Custo por geração MEDIDO (F0), contra os 57 min estimados na secção 2.** O F0
+    local mede **428 s/geração** (7,1 min) com 16 núcleos e a competir com o PPO e
+    o SAC no mesmo PC — sobre 240 000 passos/geração, dá ~560 passos/s, contra os
+    70 passos/s assumidos. No servidor (30 workers, sem contenda) a extrapolação é
+    ~4 min/geração, ou seja **~200 gerações** nos 780 min/run pré-registados, e não
+    as 13,7 previstas. **O orçamento de F2 não é revisto aqui** — o número fica
+    registado antes do unblinding, como a secção 2 exige, e a decisão de o ajustar
+    (para baixo, poupando dias) toma-se com uma medição no próprio servidor, não
+    com esta extrapolação.
+
+13. **O servidor não tinha o mapa** (verificado a 27 jul, com VPN):
+    `grep -c mapa_grande ~/swarm-robotics-tese/src/scenarios.py` = **0**, e esse
+    ficheiro é de **2 jul**. Lançar F2 nesse estado fazia o `run_experiments.py`
+    ignorar o cenário como desconhecido. Nada foi enviado (o mega-treino está a
+    correr e reescreve o config a cada fase): a campanha do mapa correrá de um
+    **diretório isolado** `~/swarm-mapa/`, com envio por `pscp` depois de
+    megaA/megaB fecharem (~3 ago).
+
 ---
 
 *Assinatura temporal: este plano existe no git antes de o mapa ter sido treinado uma

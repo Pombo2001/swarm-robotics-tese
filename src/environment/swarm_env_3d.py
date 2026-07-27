@@ -1023,6 +1023,13 @@ class SwarmForagingEnv3D(gym.Env):
     def step(self, actions):
         self.steps += 1
 
+        # Posições ANTES de qualquer movimento deste passo: é a referência que diz
+        # de que lado de cada parede o agente estava. Usada pela 2.ª passagem do
+        # push-out (só mapa_grande) para o devolver ao lado de ONDE VEIO, em vez
+        # do lado de menor penetração — que, num agente já empurrado para além do
+        # meio do painel, é o lado errado. Ver o bloco no fim do step.
+        _pos_pre_step = self.agent_positions.copy()
+
         # Rrobust: a meio do episódio, uma fração dos agentes "falha" (fica inerte).
         if (self.agent_failure_fraction > 0 and not self._failure_injected
                 and self.steps >= self.max_steps // 2):
@@ -1209,6 +1216,47 @@ class SwarmForagingEnv3D(gym.Env):
                     pen = self.spreading_penalty_factor * (1.0 - dist / spread_dist)
                     self._spreading_penalties[i] += pen
                     self._spreading_penalties[j] += pen
+        # ---------------------------------------------------------------
+
+        # --- 2.ª passagem do push-out das paredes (SÓ mapa_grande) -------
+        # A separação inter-agente acima empurra sem saber onde estão as paredes.
+        # Com o enxame amontoado contra uma parede, ela enterra um agente no
+        # painel; no passo seguinte o push-out escolhe o eixo de MENOR penetração
+        # e, se o agente já passou do meio, expulsa-o PELO LADO ERRADO — ou seja,
+        # atravessa. Medido antes desta correção: 20 agentes empurrados contra a
+        # divisória B→C durante 120 passos => 12 do outro lado; contra o painel da
+        # porta => 4 do outro lado (com 6 agentes: 0). Numa política de homing
+        # (120 000 passos-agente) não acontecia — mas a evolução procura
+        # exatamente este tipo de atalho, e aqui custaria a métrica M3 (uso da
+        # porta) do pré-registo.
+        #
+        # Limitado ao mapa_grande DE PROPÓSITO: os 7 cenários das campanhas
+        # fechadas têm de continuar bit-a-bit reproduzíveis (os números já estão
+        # na tese). Ver test_fisica_bit_a_bit_nos_7 e test_aperto_nao_atravessa.
+        if self.classic_scenario == "mapa_grande":
+            for idx in range(self.num_agents):
+                for wall in self.walls:
+                    delta = self.agent_positions[idx] - wall['pos']
+                    half_size = wall['size'] / 2.0
+                    penetration = (half_size + self.robot_radius) - np.abs(delta)
+                    if not np.all(penetration > 0):
+                        continue
+                    # Eixos em que o agente estava FORA do painel no início do
+                    # passo: é para um desses lados que ele tem de voltar.
+                    delta_pre = _pos_pre_step[idx] - wall['pos']
+                    fora_antes = np.abs(delta_pre) >= (half_size + self.robot_radius)
+                    if np.any(fora_antes):
+                        cand = np.where(fora_antes, penetration, np.inf)
+                        eixo = int(np.argmin(cand))
+                        sign = np.sign(delta_pre[eixo])
+                    else:
+                        # Já estava dentro antes de se mexer (não devia acontecer):
+                        # cai no comportamento clássico, o lado mais próximo.
+                        eixo = int(np.argmin(penetration))
+                        sign = np.sign(delta[eixo])
+                    if sign == 0:
+                        sign = 1.0
+                    self.agent_positions[idx][eixo] += penetration[eixo] * sign
         # ---------------------------------------------------------------
 
         robots_in_nest = []
