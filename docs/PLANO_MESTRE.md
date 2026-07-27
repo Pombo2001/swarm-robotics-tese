@@ -22,6 +22,32 @@
 > grande antes de comprometer a janela de servidor**. Uma falha crítica
 > encontrada (o servidor não tem o mapa) e um bug de colisão corrigido.
 
+## ✅ CAMPEÕES 7d TRAZIDOS — o F1 está desbloqueado (27 jul, tarde)
+
+`results/models_7d/` tem os **21/21 campeões** (7 cenários × 3 algoritmos), datados
+de **3-9 jul**, e a guarda de campanha do `eval_zeroshot_mapa.py` **passa**. Só
+leitura no servidor (`pscp`); nada foi escrito lá. Script novo:
+[`scripts/trazer_do_servidor.sh`](../scripts/trazer_do_servidor.sh) — o par do
+`servidor.sh`, com `-p` para **preservar as datas** (sem isso a guarda deixa passar
+tudo, porque a data passa a ser a de hoje).
+
+⚠️ **A armadilha nº9 apanhada outra vez, e a guarda provou-se.** A primeira
+tentativa apontou à sessão auto-contida `graficos_tese/09-07-2026_12h52m/modelos/`,
+que tem os três algoritmos — mas os **PPO/SAC de lá são de 24-28 JUNHO**: essa
+sessão foi gerada no diretório do **GNN**, e ao arquivar copiou o que estivesse em
+`results/models_{ppo,sac}` desse diretório, que eram os MLP antigos. A campanha MLP
+de 7 dias correu noutro sítio. As fontes certas, por algoritmo:
+
+| algoritmo | fonte no servidor | datas |
+|---|---|---|
+| GNN | `~/swarm-robotics-tese/results/graficos_tese/09-07-2026_12h52m/modelos/models/` | 3-9 jul |
+| PPO | `~/run7d_mlp/results/models_ppo/` | 3-4 jul |
+| SAC | `~/run7d_mlp/results/models_sac/` | 4-6 jul |
+
+**A grelha do F1 passa de 18 para 21 células:** existem agora campeões do
+`cooperative_door_bypass` nos três algoritmos, que era a lacuna registada a 25 jul.
+Falta só **correr** o F1 (~6 h; não neste PC enquanto o A/B do SAC estiver a correr).
+
 ## 🔴 O SERVIDOR NÃO TEM O MAPA — a campanha falhava no arranque
 
 `grep -c mapa_grande ~/swarm-robotics-tese/src/scenarios.py` = **0**; esse ficheiro
