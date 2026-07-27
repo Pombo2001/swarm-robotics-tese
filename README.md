@@ -7,6 +7,12 @@ controladores descentralizados. Projeto de tese de mestrado em Inteligência Art
 **Hipótese central:** a inteligência adaptativa (MARL com redes de grafos) supera a
 robustez estática (bio-inspirada) em cenários de *stress* dinâmico.
 
+> **Por onde começar:** [`docs/PLANO_MESTRE.md`](docs/PLANO_MESTRE.md) é o **único
+> ponto de re-entrada** do projeto (estado, o que está fechado, o que falta,
+> armadilhas). O mapa do resto da documentação está em
+> [`docs/README.md`](docs/README.md); a proveniência de cada número da tese está em
+> [`docs/REPRODUZIR.md`](docs/REPRODUZIR.md).
+
 ---
 
 ## Algoritmos comparados
@@ -33,8 +39,13 @@ ICM/curiosidade intrínseca).
 | `cooperative_door` | Porta que só abre com 3 robôs a empurrar em simultâneo. |
 | `cooperative_perception` | Alvo móvel capturado quando rodeado por 3+ robôs a 360°. |
 | `cooperative_door_bypass` | Como a porta cooperativa, mas com um corredor lateral alternativo — cenário *deceptive*. |
+| `mapa_grande` | **8.º cenário (24 jul 2026).** Labirinto composto de 103×62 m numa arena r=60: sala de partida → gargalo + beco em U → quatro salas → porta cooperativa com alternativa → câmara do ninho. Percurso de ~155 m (pior caso) contra 34 m do Quatro Salas. **Ainda sem campanha avaliada.** |
 
 > Fonte única dos cenários e das etiquetas: `src/scenarios.py` (não duplicar noutros ficheiros).
+>
+> ⚠️ `SCENARIOS` (8) é **deliberadamente distinto** de `THESIS_SCENARIOS` (os 7 com
+> campanha fechada). O `mapa_grande` não entra nas tabelas de resultados da tese
+> enquanto não tiver dados — apareceria como célula vazia, ou pior, calada.
 
 ---
 
@@ -55,7 +66,11 @@ scripts/
   eval_scalability.py          Sscale: transferência Zero-Shot para N variável
   statistical_tests.py         Testes de significância (Mann-Whitney / t de Welch)
   plot_results.py              Geração dos gráficos da tese
-  run_treino24.sh / 48.sh      Lançadores de treino no servidor ISCTE (via tmux)
+  eval_by_run.py               Avaliação por run (unidade estatística da tese)
+  eval_zeroshot_mapa.py        F1: zero-shot dos campeões no mapa_grande (com guarda de campanha)
+  pos_campanha.py              Passo 1 obrigatório ao trazer uma campanha (armadilha nº9)
+  servidor.sh                  Ligação ao servidor ISCTE (host/user certos + estado das campanhas)
+  mega_stream{A,B}.sh          Campanhas longas em tmux, por fases, com config reposto no fim
 visualization/
   visualize_{gnn,ppo,sac}.py   Visualizadores 3D Ursina (lançados pela vista «Ao vivo (3D)»)
   main_visualizer.py           Visualizador 3D unificado (--algo)
@@ -143,24 +158,32 @@ contrário da recompensa de treino) e gera tabela CSV + LaTeX.
 
 ### Reproduzir os resultados da tese
 
+> ⚠️ **A sequência canónica está em [`docs/REPRODUZIR.md`](docs/REPRODUZIR.md)** — é
+> ela que diz de que ficheiro vem cada número da dissertação. O que está aqui é o
+> resumo; em caso de divergência, manda o `REPRODUZIR.md`.
+>
+> O protocolo **realmente usado** nas campanhas fechadas foi **7 runs × 20 episódios
+> com sementes emparelhadas**, e a unidade estatística é a **média por run** (não o
+> episódio — juntar episódios de runs diferentes inflaciona o n e é a armadilha nº3).
+> Uma versão anterior deste README dizia "30 runs" e listava só 6 dos 7 cenários.
+
 ```powershell
-# 1. Treinar (30 runs por cenário, via dashboard "Rotina Noturna" ou CLI)
-python scripts/run_experiments.py --runs 30 --time 60
+# 1. Treinar a campanha (7 runs por cenário; no servidor, via scripts/launch_7d.sh)
+python scripts/run_experiments.py --runs 7 --time-gnn 195 --eval-episodes 20
 
-# 2. Avaliar cada cenário (>=30 episódios para os testes terem poder estatístico)
-foreach ($s in "none","u_wall","bottleneck","four_rooms","cooperative_door","cooperative_perception") {
-    python scripts/eval_all.py --episodes 30 --scenario $s --no-pause
-}
+# 2. Ao TRAZER a campanha do servidor — sequência obrigatória (ver REPRODUZIR.md §2)
+python scripts/pos_campanha.py                      # sem isto, avalia-se a campanha ANTERIOR
+python scripts/gerar_figuras_7d.py --install-oficial # funde GNN + MLP; só este output é canónico
 
-# 3. Testes de significância (Mann-Whitney / t de Welch)
+# 3. Testes de significância (Mann-Whitney U + δ de Cliff, sobre médias por run)
 python scripts/statistical_tests.py --metric food_collected
 
 # 4. Resiliência (Rrobust): baseline vs 10% de falhas
-python scripts/run_eval.py --algo sac --scenario none --episodes 30
-python scripts/run_eval.py --algo sac --scenario none --episodes 30 --fail-frac 0.1
+python scripts/run_eval.py --algo sac --scenario none --episodes 20
+python scripts/run_eval.py --algo sac --scenario none --episodes 20 --fail-frac 0.1
 
 # 5. Escalabilidade Zero-Shot (Sscale)
-python scripts/eval_scalability.py --scenario none --sizes 10,20,50,100 --episodes 30
+python scripts/eval_scalability.py --episodes 20
 
 # 6. Gráficos finais
 python scripts/plot_results.py
