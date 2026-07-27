@@ -18,14 +18,18 @@
 
 # 0. LOG DE SESSÃO — 25 jul 2026 (Opus 5, PC do trabalho)
 
-> Sessão de **auditoria ao mapa + controlos do F1**. Zero treinos lançados no
-> servidor. O que mudou de facto está em `docs/PRE_REGISTO_MAPA_GRANDE.md`,
-> secção 3 e emenda de 25 jul.
+> Sessão de **auditoria ao mapa + controlos do F1**, fechada às 23h com a
+> descoberta de que o F1 desse dia correu com os modelos errados e com a guarda
+> que o impede de se repetir. Zero treinos lançados no servidor. O que mudou de
+> facto está em `docs/PRE_REGISTO_MAPA_GRANDE.md`, secção 3 e emendas de 25 jul.
 
 ## ⚠️ SE VAIS PARA A TORRE, É ISTO (por ordem)
 
-1. **`git pull`.** Estes commits estiveram 6 à frente do GitHub — incluindo os 3
-   do mapa, de 24 jul. A torre não tinha nada disto.
+1. **`git pull`.** Tudo está em `origin/main` — o último é o `f8be1bb`
+   (**guarda de campanha no `eval_zeroshot_mapa.py`**: `--models-dir`, data de
+   cada campeão verificada antes da 1.ª célula, proveniência no CSV, 12 testes
+   novos). A torre precisa dele antes de repetir o F1, senão repete-o com o
+   script velho, que aceita qualquer modelo.
 2. **RECOMPILAR A TESE** (`pdflatex ×2 + biber`, em `Tese/`). O `main.tex` mudou
    hoje (3 correções, ver abaixo) e o `main.pdf` que está no repo é de 24 jul,
    logo **está desatualizado**. Confirmar 0 refs indefinidas e 0 overfulls, e
