@@ -290,7 +290,7 @@ A observação de cada agente é um vetor egocêntrico que reúne a bússola de
 relativo dos $N-1$ vizinhos; manter o vizinho como uma entidade explícita é o que
 permite à GNN atender sobre um conjunto de cardinalidade variável. O espaço de
 ação é contínuo e egocêntrico: três componentes de translação em $[-1,1]$
-(frontal, lateral e vertical), escaladas por um passo máximo de $0.2$\,m e
+(frontal, lateral e vertical), escaladas por um passo máximo de $0{,}2$\,m e
 resolvidas por uma ordem determinística de
 \emph{step} que aplica deslizamento ao longo das paredes (\emph{wall-sliding}) em
 caso de colisão, evitando que o agente fique imobilizado num canto.
@@ -299,8 +299,8 @@ A recompensa foi deliberadamente \emph{simplificada} face a iterações anterior
 e reduz-se a quatro termos: (i) uma recompensa de tarefa de $+300$ por recolha,
 repetível ao longo do episódio e claramente dominante; (ii) o progresso geodésico
 descrito acima, com fator $10$ \citep{ng1999policy}; (iii) um bónus de exploração
-baseado em contagem ($+0.5$ por célula nova de $2\times2$\,m), pequeno de
-propósito; e (iv) um custo energético de $-0.05$ por passo, que impõe pressão
+baseado em contagem ($+0{,}5$ por célula nova de $2\times2$\,m), pequeno de
+propósito; e (iv) um custo energético de $-0{,}05$ por passo, que impõe pressão
 temporal. As penalizações secundárias de dispersão e de colisão foram anuladas no
 \emph{sinal de recompensa} (a física de colisão e separação mantém-se), depois de
 se verificar que competiam com a tarefa sem benefício mensurável. O número de
@@ -317,8 +317,8 @@ características egocêntricas e aplica auto-atenção de produto escalar normal
 sobre o conjunto de vizinhos \citep{vaswani2017attention}, produzindo uma ação
 invariante ao número de vizinhos. Os seus pesos são otimizados por uma estratégia
 de evolução com truncatura e elitismo (população $K=30$, $e=6$ elites preservados,
-mutação gaussiana esparsa com $\sigma$ inicial $0.1$, decaimento $0.999$ e piso
-$\sigma_{\min}=0.03$), guiada por uma aptidão em que a tarefa domina a seleção:
+mutação gaussiana esparsa com $\sigma$ inicial $0{,}1$, decaimento $0{,}999$ e piso
+$\sigma_{\min}=0{,}03$), guiada por uma aptidão em que a tarefa domina a seleção:
 \begin{equation}
 J(\theta_k) = \bar{f}_k \cdot \lambda_{\text{task}} \;+\; \beta \cdot \bar{h}_k,
 \qquad \lambda_{\text{task}} = 10^4,\; \beta = 5000,
@@ -372,7 +372,7 @@ falha de $10\%$ dos agentes a meio do episódio; a escalabilidade
 
 Um ponto metodológico merece ênfase: as diferenças par a par são avaliadas sobre
 as \textbf{médias por execução} ($n=7$ por grupo), com o teste $U$ de
-Mann--Whitney e o $\delta$ de Cliff como tamanho de efeito, a $\alpha=0.05$. A
+Mann--Whitney e o $\delta$ de Cliff como tamanho de efeito, a $\alpha=0{,}05$. A
 unidade estatística independente é a execução de treino, e não o episódio ---
 tratar os $140$ episódios como observações independentes inflacionaria
 artificialmente o poder do teste, pois episódios da mesma execução partilham o
@@ -393,16 +393,16 @@ restantes escondem, sem exceção, esta distribuição tudo-ou-nada.
 O quadro que emerge não tem um vencedor universal. O \textbf{controlador
 evolutivo} resolve os quatro cenários de gargalo --- Gargalo, Quatro Salas e as
 duas Portas Cooperativas, incluindo portanto o cenário \emph{deceptive} --- nas
-$28$ execuções correspondentes, igualando o PPO no Gargalo ($121.4$ recolhas/ep,
+$28$ execuções correspondentes, igualando o PPO no Gargalo ($121{,}4$ recolhas/ep,
 empate estatístico) e destacando-se no Quatro Salas
-($59.8$, cerca de $1.8\times$ o melhor método de gradiente) e na Porta Cooperativa
-com Alternativa ($86.7$); mas exibe execuções degeneradas precisamente nos
+($59{,}8$, cerca de $1{,}8\times$ o melhor método de gradiente) e na Porta Cooperativa
+com Alternativa ($86{,}7$); mas exibe execuções degeneradas precisamente nos
 cenários \emph{sem} paredes (Sandbox, $5/7$; Perceção Cooperativa, $6/7$), onde a
 paisagem de aptidão oferece ótimos locais de deambulação. O \textbf{PPO} é o mais
 consistente, com $100\%$ de sucesso em seis dos sete cenários e a menor variância
 entre execuções. O \textbf{SAC} é fiável em espaço aberto e nos cooperativos, mas
 o mais frágil nos estrangulamentos físicos: no Gargalo apenas $5/7$ execuções
-convergem, com magnitude muito dispersa ($41.4\pm36.8$).
+convergem, com magnitude muito dispersa ($41{,}4\pm36{,}8$).
 
 \begin{table*}[t]
 \centering
@@ -419,13 +419,13 @@ atinge $100\%$ recolhendo um único item. Melhor média por linha a negrito.}
 \toprule
 Cenário & GNN & PPO & SAC \\
 \midrule
-Sandbox                     & $38.3\pm31.0$ (86\%) [5/7] & $\mathbf{71.5\pm1.0}$ (100\%) [7/7] & $69.2\pm1.9$ (100\%) [7/7] \\
-Beco Sem Saída (U)          & $24.5\pm32.6$ (43\%) [3/7] & $\mathbf{39.6\pm36.7}$ (71\%) [4/7] & $9.0\pm15.1$ (34\%) [2/7] \\
-Gargalo                     & $121.4\pm19.9$ (100\%) [7/7] & $\mathbf{123.2\pm1.2}$ (100\%) [7/7] & $41.4\pm36.8$ (72\%) [5/7] \\
-Quatro Salas                & $\mathbf{59.8\pm13.2}$ (100\%) [7/7] & $33.6\pm3.8$ (100\%) [7/7] & $31.8\pm3.3$ (100\%) [7/7] \\
-Porta Cooperativa           & $\mathbf{69.8\pm0.9}$ (100\%) [7/7] & $67.1\pm3.7$ (100\%) [7/7] & $62.1\pm2.5$ (100\%) [7/7] \\
-Perceção Cooperativa        & $\mathbf{19.0\pm8.7}$ (91\%) [6/7] & $15.3\pm0.4$ (100\%) [7/7] & $16.1\pm0.8$ (100\%) [7/7] \\
-Porta c/ Alternativa        & $\mathbf{86.7\pm2.0}$ (100\%) [7/7] & $85.3\pm4.0$ (100\%) [7/7] & $68.6\pm3.4$ (100\%) [7/7] \\
+Sandbox                     & $38{,}3\pm31{,}0$ (86\%) [5/7] & $\mathbf{71{,}5\pm1{,}0}$ (100\%) [7/7] & $69{,}2\pm1{,}9$ (100\%) [7/7] \\
+Beco Sem Saída (U)          & $24{,}5\pm32{,}6$ (43\%) [3/7] & $\mathbf{39{,}6\pm36{,}7}$ (71\%) [4/7] & $9{,}0\pm15{,}1$ (34\%) [2/7] \\
+Gargalo                     & $121{,}4\pm19{,}9$ (100\%) [7/7] & $\mathbf{123{,}2\pm1{,}2}$ (100\%) [7/7] & $41{,}4\pm36{,}8$ (72\%) [5/7] \\
+Quatro Salas                & $\mathbf{59{,}8\pm13{,}2}$ (100\%) [7/7] & $33{,}6\pm3{,}8$ (100\%) [7/7] & $31{,}8\pm3{,}3$ (100\%) [7/7] \\
+Porta Cooperativa           & $\mathbf{69{,}8\pm0{,}9}$ (100\%) [7/7] & $67{,}1\pm3{,}7$ (100\%) [7/7] & $62{,}1\pm2{,}5$ (100\%) [7/7] \\
+Perceção Cooperativa        & $\mathbf{19{,}0\pm8{,}7}$ (91\%) [6/7] & $15{,}3\pm0{,}4$ (100\%) [7/7] & $16{,}1\pm0{,}8$ (100\%) [7/7] \\
+Porta c/ Alternativa        & $\mathbf{86{,}7\pm2{,}0}$ (100\%) [7/7] & $85{,}3\pm4{,}0$ (100\%) [7/7] & $68{,}6\pm3{,}4$ (100\%) [7/7] \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -471,10 +471,10 @@ por completo.}
 Numa experiência preliminar na Porta Cooperativa com Alternativa --- desenhada
 como armadilha \emph{deceptive}: o gradiente de \emph{homing} aponta para a porta
 bloqueada e o caminho viável exige afastamento temporário do ninho ---, um
-controlador com \emph{blend} de novidade \citep{lehman2011abandoning} ($w=0.5$,
-$600$ minutos) obteve $81.3\pm1.9$ recolhas/ep contra $64.5$ do melhor controlador
+controlador com \emph{blend} de novidade \citep{lehman2011abandoning} ($w=0{,}5$,
+$600$ minutos) obteve $81{,}3\pm1{,}9$ recolhas/ep contra $64{,}5$ do melhor controlador
 puramente objetivo então disponível ($+26\%$; Wilcoxon emparelhado
-$p=8.7\times10^{-5}$). Duas ressalvas eram incontornáveis: a execução com novidade
+$p=8{,}7\times10^{-5}$). Duas ressalvas eram incontornáveis: a execução com novidade
 dispôs de um orçamento $\approx 3\times$ superior, e este é o único teste do artigo
 cuja unidade estatística é o episódio ($n=20$, um só modelo por braço) e não a
 execução de treino, pelo que o seu $p$ não é comparável com os restantes (os
@@ -485,21 +485,21 @@ corremos duas campanhas com \textbf{orçamento igualado} ao da campanha final
 dois cenários vulneráveis à deceção.
 
 No Muro em U, a hibridização elevou a taxa de convergência de $3/7$ para
-$\mathbf{7/7}$ execuções a $100\%$ de sucesso, com $69.8\pm5.9$ recolhas/ep
-contra $24.5\pm32.6$ do objetivo puro (Mann--Whitney $p=0.026$, $\delta=+0.71$)
+$\mathbf{7/7}$ execuções a $100\%$ de sucesso, com $69{,}8\pm5{,}9$ recolhas/ep
+contra $24{,}5\pm32{,}6$ do objetivo puro (Mann--Whitney $p=0{,}026$, $\delta=+0{,}71$)
 --- tornando-se a única configuração estudada que resolve de forma fiável o
 cenário que resistia aos três controladores base. Na Porta com Alternativa, onde
 o \emph{homing} já convergia em $7/7$ execuções, o quadro inverte-se: a mesma
-pressão por novidade degradou a magnitude ($63.0\pm21.9$ vs.\ $86.7\pm2.0$;
-$p=0.0006$, $\delta=-1.00$), desmascarando o $+26\%$ preliminar como artefacto do
+pressão por novidade degradou a magnitude ($63{,}0\pm21{,}9$ vs.\ $86{,}7\pm2{,}0$;
+$p=0{,}0006$, $\delta=-1{,}00$), desmascarando o $+26\%$ preliminar como artefacto do
 orçamento triplo.
 
 Com peso fixo, a pressão por novidade é, pois, um instrumento direcionado, não um
 melhoramento universal: compra a descoberta do desvio onde a otimização objetiva é
 inconsistente e desperdiça pressão seletiva onde o gradiente da tarefa basta. O
-peso fixo $w=0.5$ explica ambos os efeitos --- o que motivou o teste final desta
-linha: uma \textbf{dosagem adaptativa}, em que $w$ parte de $0.5$ e decai
-($\times 0.98$/geração, até $0$) assim que o melhor genoma por objetivo recolhe
+peso fixo $w=0{,}5$ explica ambos os efeitos --- o que motivou o teste final desta
+linha: uma \textbf{dosagem adaptativa}, em que $w$ parte de $0{,}5$ e decai
+($\times 0{,}98$/geração, até $0$) assim que o melhor genoma por objetivo recolhe
 durante dez gerações consecutivas.
 
 Esta campanha foi \emph{pré-registada} --- hipótese, testes confirmatórios e regra
@@ -507,16 +507,16 @@ de decisão fixados no repositório antes de existirem dados de avaliação --- 
 corrida nos sete cenários sob o protocolo integral do artigo (sete execuções de
 $195$ minutos, sementes $1$--$7$, inferência por execução). Os quatro testes
 confirmaram a hipótese: sem degradação significativa nos cinco cenários que o
-objetivo já resolve (todos $p\geq 0.21$); ganho mantido no Muro em U ($7/7$
-execuções a $100\%$, $68.5\pm13.1$ vs.\ $24.5\pm32.6$; $p=0.009$ unilateral,
-$\delta=+0.76$); custo do peso fixo no cenário \emph{deceptive} não reproduzido
-($77.2\pm16.7$ vs.\ $86.7\pm2.0$; $p=0.32$, $\delta=-0.35$, n.s., $7/7$ a
-$100\%$); e superioridade em magnitude sobre o peso fixo nesse cenário ($77.2$
-vs.\ $63.0$; $\delta=+0.59$). Dois braços exploratórios completam o quadro: o
+objetivo já resolve (todos $p\geq 0{,}21$); ganho mantido no Muro em U ($7/7$
+execuções a $100\%$, $68{,}5\pm13{,}1$ vs.\ $24{,}5\pm32{,}6$; $p=0{,}009$ unilateral,
+$\delta=+0{,}76$); custo do peso fixo no cenário \emph{deceptive} não reproduzido
+($77{,}2\pm16{,}7$ vs.\ $86{,}7\pm2{,}0$; $p=0{,}32$, $\delta=-0{,}35$, n.s., $7/7$ a
+$100\%$); e superioridade em magnitude sobre o peso fixo nesse cenário ($77{,}2$
+vs.\ $63{,}0$; $\delta=+0{,}59$). Dois braços exploratórios completam o quadro: o
 objetivo puro com o \emph{dobro} do orçamento ($390$ min) continua bimodal no
-Muro em U ($4/7$, $31.5\pm35.0$) --- o ganho é do mecanismo, não do orçamento
+Muro em U ($4/7$, $31{,}5\pm35{,}0$) --- o ganho é do mecanismo, não do orçamento
 --- e o adaptativo com esse orçamento atinge no cenário \emph{deceptive} o
-melhor resultado de todo o estudo ($88.7\pm0.6$, $7/7$). A dosagem adaptativa
+melhor resultado de todo o estudo ($88{,}7\pm0{,}6$, $7/7$). A dosagem adaptativa
 fecha, assim, a tensão do peso fixo: retém a exploração enquanto ela compra
 descoberta e devolve a seleção ao objetivo quando ele basta.
 
@@ -535,9 +535,9 @@ colapso por congestionamento teria a assinatura inversa. Os casos intermédios
 matizam a leitura sem a inverter: o Quatro Salas retém $66\%$ e o Gargalo $58\%$
 --- o cenário de passagem única, onde a saturação do fluxo tem mais margem para
 morder ---, mas mesmo aí o sucesso permanece em $100\%$ e as recolhas totais
-crescem de $138.6$ ($N=20$) para $403.6$ ($N=100$). As
+crescem de $138{,}6$ ($N=20$) para $403{,}6$ ($N=100$). As
 recolhas totais no Sandbox crescem monotonicamente
-($37.4 \rightarrow 65.8 \rightarrow 97.5 \rightarrow 127.3$ para
+($37{,}4 \rightarrow 65{,}8 \rightarrow 97{,}5 \rightarrow 127{,}3$ para
 $N=10,20,50,100$). As políticas de perceptrão multicamada do PPO/SAC têm uma
 entrada de dimensão fixa ($\mathbb{R}^{111}$, calibrada para $N=20$) e são
 estruturalmente incompatíveis com outros tamanhos de enxame. A adaptabilidade
@@ -550,9 +550,9 @@ otimização.
 \includegraphics[width=\linewidth]{images/escalabilidade_zeroshot_none.png}
 \caption{Transferência \emph{zero-shot} no cenário Sandbox para tamanhos de
 enxame nunca vistos ($N\in\{10,20,50,100\}$), sem retreino. O eixo vertical é a
-recolha \emph{per capita}: a sua descida ($3.74 \rightarrow 1.27$) reflete a
+recolha \emph{per capita}: a sua descida ($3{,}74 \rightarrow 1{,}27$) reflete a
 partilha de um recurso finito por mais agentes --- as recolhas \emph{totais}
-crescem ($37.4 \rightarrow 127.3$) e a taxa de sucesso mantém-se em $100\%$. Nos
+crescem ($37{,}4 \rightarrow 127{,}3$) e a taxa de sucesso mantém-se em $100\%$. Nos
 sete cenários da bateria o sucesso é $100\%$ em todas as 28 combinações, com
 retenção per capita de $58$--$90\%$ nos cenários com paredes. O PPO/SAC, com
 entrada de dimensão fixa, são incompatíveis com $N\neq 20$ e surgem como pontos
@@ -586,13 +586,13 @@ significativamente superior a \emph{ambos} os métodos de gradiente em três
 cenários (Quatro Salas, Porta Cooperativa e Perceção Cooperativa) e superior ao
 SAC em mais dois (Gargalo e Porta com Alternativa), empatando com o PPO nesses
 dois. Os métodos de gradiente são superiores no Sandbox, onde as execuções
-degeneradas do evolutivo pesam ($\delta=\pm1.00$). No Muro em U nenhuma
+degeneradas do evolutivo pesam ($\delta=\pm1{,}00$). No Muro em U nenhuma
 comparação atinge significância.
 
 \begin{table*}[t]
 \centering
 \caption{Testes de significância sobre as \emph{médias de recolhas por execução}
-($n=7$ por grupo; teste $U$ de Mann--Whitney com $\delta$ de Cliff, $\alpha=0.05$).
+($n=7$ por grupo; teste $U$ de Mann--Whitney com $\delta$ de Cliff, $\alpha=0{,}05$).
 A unidade independente é a execução de treino, não o episódio. ``méd.~A'' e
 ``méd.~B'' são as médias de comida recolhida de cada elemento do par.}
 \label{tab:signif}
@@ -601,27 +601,27 @@ A unidade independente é a execução de treino, não o episódio. ``méd.~A'' 
 \toprule
 Cenário & Par & méd.~A & méd.~B & $p$ & $\delta$ & Significativo \\
 \midrule
-Sandbox              & GNN vs PPO & 38.31 & 71.46 & $0.0006$ & $-1.00$ & Sim \\
-Sandbox              & GNN vs SAC & 38.31 & 69.24 & $0.0021$ & $-1.00$ & Sim \\
-Sandbox              & PPO vs SAC & 71.46 & 69.24 & $0.0297$ & $+0.71$ & Sim \\
-Beco Sem Saída (U)   & GNN vs PPO & 24.54 & 39.62 & $0.1552$ & $-0.47$ & não \\
-Beco Sem Saída (U)   & GNN vs SAC & 24.54 & 8.99  & $0.5714$ & $+0.18$ & não \\
-Beco Sem Saída (U)   & PPO vs SAC & 39.62 & 8.99  & $0.0526$ & $+0.63$ & não \\
-Gargalo              & GNN vs PPO & 121.39 & 123.17 & $0.2086$ & $+0.43$ & não \\
-Gargalo              & GNN vs SAC & 121.39 & 41.44 & $0.0006$ & $+1.00$ & Sim \\
-Gargalo              & PPO vs SAC & 123.17 & 41.44 & $0.0006$ & $+1.00$ & Sim \\
-Quatro Salas         & GNN vs PPO & 59.76 & 33.58 & $0.0006$ & $+1.00$ & Sim \\
-Quatro Salas         & GNN vs SAC & 59.76 & 31.82 & $0.0006$ & $+1.00$ & Sim \\
-Quatro Salas         & PPO vs SAC & 33.58 & 31.82 & $0.3374$ & $+0.33$ & não \\
-Porta Cooperativa    & GNN vs PPO & 69.81 & 67.06 & $0.0262$ & $+0.71$ & Sim \\
-Porta Cooperativa    & GNN vs SAC & 69.81 & 62.09 & $0.0006$ & $+1.00$ & Sim \\
-Porta Cooperativa    & PPO vs SAC & 67.06 & 62.09 & $0.0175$ & $+0.76$ & Sim \\
-Perceção Cooperativa & GNN vs PPO & 18.98 & 15.33 & $0.0297$ & $+0.71$ & Sim \\
-Perceção Cooperativa & GNN vs SAC & 18.98 & 16.11 & $0.0297$ & $+0.71$ & Sim \\
-Perceção Cooperativa & PPO vs SAC & 15.33 & 16.11 & $0.0547$ & $-0.63$ & não \\
-Porta c/ Alternativa & GNN vs PPO & 86.70 & 85.25 & $0.8477$ & $+0.08$ & não \\
-Porta c/ Alternativa & GNN vs SAC & 86.70 & 68.61 & $0.0006$ & $+1.00$ & Sim \\
-Porta c/ Alternativa & PPO vs SAC & 85.25 & 68.61 & $0.0021$ & $+1.00$ & Sim \\
+Sandbox              & GNN vs PPO & 38{,}31 & 71{,}46 & $0{,}0006$ & $-1{,}00$ & Sim \\
+Sandbox              & GNN vs SAC & 38{,}31 & 69{,}24 & $0{,}0021$ & $-1{,}00$ & Sim \\
+Sandbox              & PPO vs SAC & 71{,}46 & 69{,}24 & $0{,}0297$ & $+0{,}71$ & Sim \\
+Beco Sem Saída (U)   & GNN vs PPO & 24{,}54 & 39{,}62 & $0{,}1552$ & $-0{,}47$ & não \\
+Beco Sem Saída (U)   & GNN vs SAC & 24{,}54 & 8{,}99  & $0{,}5714$ & $+0{,}18$ & não \\
+Beco Sem Saída (U)   & PPO vs SAC & 39{,}62 & 8{,}99  & $0{,}0526$ & $+0{,}63$ & não \\
+Gargalo              & GNN vs PPO & 121{,}39 & 123{,}17 & $0{,}2086$ & $+0{,}43$ & não \\
+Gargalo              & GNN vs SAC & 121{,}39 & 41{,}44 & $0{,}0006$ & $+1{,}00$ & Sim \\
+Gargalo              & PPO vs SAC & 123{,}17 & 41{,}44 & $0{,}0006$ & $+1{,}00$ & Sim \\
+Quatro Salas         & GNN vs PPO & 59{,}76 & 33{,}58 & $0{,}0006$ & $+1{,}00$ & Sim \\
+Quatro Salas         & GNN vs SAC & 59{,}76 & 31{,}82 & $0{,}0006$ & $+1{,}00$ & Sim \\
+Quatro Salas         & PPO vs SAC & 33{,}58 & 31{,}82 & $0{,}3374$ & $+0{,}33$ & não \\
+Porta Cooperativa    & GNN vs PPO & 69{,}81 & 67{,}06 & $0{,}0262$ & $+0{,}71$ & Sim \\
+Porta Cooperativa    & GNN vs SAC & 69{,}81 & 62{,}09 & $0{,}0006$ & $+1{,}00$ & Sim \\
+Porta Cooperativa    & PPO vs SAC & 67{,}06 & 62{,}09 & $0{,}0175$ & $+0{,}76$ & Sim \\
+Perceção Cooperativa & GNN vs PPO & 18{,}98 & 15{,}33 & $0{,}0297$ & $+0{,}71$ & Sim \\
+Perceção Cooperativa & GNN vs SAC & 18{,}98 & 16{,}11 & $0{,}0297$ & $+0{,}71$ & Sim \\
+Perceção Cooperativa & PPO vs SAC & 15{,}33 & 16{,}11 & $0{,}0547$ & $-0{,}63$ & não \\
+Porta c/ Alternativa & GNN vs PPO & 86{,}70 & 85{,}25 & $0{,}8477$ & $+0{,}08$ & não \\
+Porta c/ Alternativa & GNN vs SAC & 86{,}70 & 68{,}61 & $0{,}0006$ & $+1{,}00$ & Sim \\
+Porta c/ Alternativa & PPO vs SAC & 85{,}25 & 68{,}61 & $0{,}0021$ & $+1{,}00$ & Sim \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -721,7 +721,7 @@ fixo, degrada simetricamente o desempenho onde o gradiente da tarefa basta, mas
 cuja dosagem adaptativa, validada numa campanha pré-registada, retém o ganho sem
 custo mensurável em nenhum dos sete cenários; com o dobro do orçamento, o
 objetivo puro permanece bimodal no Muro em U ($4/7$) e o adaptativo atinge o
-melhor resultado do estudo no cenário \emph{deceptive} ($88.7\pm0.6$). O trabalho
+melhor resultado do estudo no cenário \emph{deceptive} ($88{,}7\pm0{,}6$). O trabalho
 futuro inclui uma política de atenção treinada por gradiente para separar o
 otimizador da arquitetura, o alargamento da bateria estatística nos cenários
 bimodais, o refinamento do \emph{schedule} adaptativo (re-armamento sob
