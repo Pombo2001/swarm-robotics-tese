@@ -22,6 +22,27 @@
 > grande antes de comprometer a janela de servidor**. Uma falha crítica
 > encontrada (o servidor não tem o mapa) e um bug de colisão corrigido.
 
+## 📝 SECÇÃO DO MAPA GRANDE — escrita e validada, à espera de números (27 jul)
+
+`Tese/seccao_mapa_grande.tex` tem a secção **inteira** nas partes que não dependem
+de resultados: motivação e QI7, as cinco zonas, os três parâmetros congelados com
+justificação, o protocolo F1/F2, a explicação dos quatro confundentes, as
+limitações e a nota metodológica sobre o desenho do mapa. A planta está instalada
+em `Tese/images/resultados/mapa_grande_planta.png`.
+
+**NÃO está incluída no `main.tex`** — de propósito: o mapa não tem campanha, e o
+pré-registo compromete-se a que só entre com dados. Validada por compilação
+isolada: **0 erros, 0 refs indefinidas, 0 overfulls; acrescenta 4 páginas** (121 →
+125).
+
+**16 marcadores `\PORPREENCHER{...}`** a vermelho marcam cada número em falta — se
+for compilada com buracos, saltam à vista. A Discussão tem **as duas leituras já
+escritas** (converge / não converge), pré-comprometidas no pré-registo: preenche-se
+uma e apaga-se a outra, sem escrever a interpretação depois de ver os números.
+
+Ao integrar (só até 22 ago): preencher, escolher a leitura, `\input` a seguir a
+`sec:res_novelty`, e acrescentar QI7 às Conclusões + uma frase ao Resumo/Abstract.
+
 ## ✅ CAMPEÕES 7d TRAZIDOS — o F1 está desbloqueado (27 jul, tarde)
 
 `results/models_7d/` tem os **21/21 campeões** (7 cenários × 3 algoritmos), datados

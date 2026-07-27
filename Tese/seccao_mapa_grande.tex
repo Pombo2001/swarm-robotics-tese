@@ -1,0 +1,239 @@
+% =============================================================================
+% SECÇÃO DO MAPA GRANDE (8.º cenário) — QI7
+%
+% ⚠️ NÃO ESTÁ INCLUÍDA no main.tex, e é de propósito: o mapa NÃO TEM CAMPANHA
+% avaliada. O `PRE_REGISTO_MAPA_GRANDE.md` compromete-se a que o mapa só entre
+% na dissertação com dados, e numa secção própria — nunca nas tabelas dos sete
+% cenários (`tab:res_eval`, `tab:res_signif`), cujas campanhas têm orçamento e
+% protocolo próprios.
+%
+% COMO USAR (quando o F1/F2 fecharem, e só até 22 ago — hard stop de integração):
+%   1. preencher todos os \PORPREENCHER{...} com os números dos CSV canónicos;
+%   2. escolher UMA das duas leituras da Discussão (estão as duas escritas,
+%      pré-comprometidas no pré-registo) e APAGAR a outra;
+%   3. acrescentar \input{seccao_mapa_grande} no main.tex, a seguir a
+%      sec:res_novelty;
+%   4. acrescentar QI7 às Conclusões e uma frase ao Resumo/Abstract.
+%
+% O texto abaixo — motivação, geometria, protocolo, limitações — não depende de
+% nenhum resultado e foi escrito com o mapa já auditado (27 jul 2026).
+% =============================================================================
+
+% Marcador bem visível: se isto for compilado por engano com buracos, salta à vista.
+\providecommand{\PORPREENCHER}[1]{\textcolor{red}{\textbf{[POR PREENCHER: #1]}}}
+
+\section{Composição de dificuldades: o mapa grande}
+\label{sec:res_mapa_grande}
+
+\subsection{Motivação e questão}
+
+Os sete cenários analisados até aqui têm uma propriedade comum: cada um isola
+\textbf{uma} dificuldade --- um gargalo, um beco decetivo, quatro salas, uma
+porta que exige cooperação. Essa escolha é o que torna a comparação
+interpretável, porque atribui cada diferença de desempenho a uma causa
+identificável. Mas levanta a objeção mais natural a qualquer \textit{benchmark}
+por cenários isolados: saber resolver cada exercício não é o mesmo que resolver
+o problema composto.
+
+Formula-se então a \textbf{QI7}: as conclusões obtidas em sete cenários de
+dificuldade isolada transferem-se para um ambiente que \textbf{combina} essas
+dificuldades a uma escala substancialmente maior, ou a composição faz emergir
+modos de falha que os cenários isolados não revelam?
+
+A pergunta é a extensão natural da contribuição mais forte desta dissertação. A
+transferência \textit{Zero-Shot} para dimensões de enxame não vistas
+(Secção~\ref{sec:res_scale}) mostra invariância à \textbf{cardinalidade} do
+enxame; o mapa grande estende a mesma pergunta à \textbf{topologia} não vista. Se
+o controlador de grafo transferir, o argumento da representação passa de
+``invariante a $N$'' a ``invariante a $N$ e robusto a composição''.
+
+\subsection{O ambiente}
+
+O oitavo cenário (\texttt{mapa\_grande}) é um labirinto composto de
+$103 \times 62$\,m inscrito numa arena de raio $60$\,m --- contra os $15$\,m de
+raio dos sete cenários anteriores. Está organizado em cinco zonas, de oeste para
+este, que o enxame tem de atravessar por ordem:
+
+\begin{enumerate}
+    \item \textbf{S --- sala de partida:} espaço aberto com obstáculos dispersos,
+          onde os agentes nascem. É a única zona com analogia direta ao Sandbox.
+    \item \textbf{A --- gargalo e beco em U:} uma passagem estreita seguida de um
+          bolso em U com a boca virada a \textbf{oeste}, isto é, para o lado de
+          onde o enxame chega. A orientação é deliberada: como a bússola de
+          \textit{homing} é euclidiana, um bolso só constitui armadilha quando a
+          linha reta entre agente e ninho lhe entra pela boca (ver a nota
+          metodológica no fim desta secção).
+    \item \textbf{B --- quatro salas:} uma cruz completa (eixos horizontal e
+          vertical) com quatro aberturas que ligam os quadrantes em ciclo, sem
+          atalho pelo centro, replicando a topologia do cenário
+          \textit{Quatro Salas} à escala do mapa.
+    \item \textbf{C --- porta cooperativa com alternativa:} o painel que só abre
+          com três agentes em simultâneo na zona de empurrão, e um corredor
+          alternativo mais longo. Cooperar é vantajoso, não obrigatório.
+    \item \textbf{D --- câmara do ninho:} o objetivo.
+\end{enumerate}
+
+O percurso ótimo do \textit{spawn} até ao ninho mede $128{,}8$\,m e o pior
+percurso do mapa $155{,}4$\,m, contra $34$\,m do \textit{Quatro Salas}. A
+Figura~\ref{fig:mapa_grande_planta} mostra a planta, gerada a partir da
+geometria do próprio simulador.
+
+\begin{figure}[H]
+    \centering
+    \figresultado{0.9}{images/resultados/mapa_grande_planta.png}{Planta do mapa grande}
+    \caption{Planta do mapa grande, lida da geometria do próprio simulador:
+      cinco zonas de oeste para este, $106$ obstáculos, ninho na câmara a este e
+      caixa de \textit{spawn} a oeste. O beco em U da zona A tem a boca virada a
+      oeste, para o lado de onde o enxame chega.}
+    \label{fig:mapa_grande_planta}
+\end{figure}
+
+Três parâmetros foram fixados antes de qualquer treino, e a justificação de cada
+um consta do pré-registo da campanha:
+
+\begin{itemize}
+    \item \textbf{$N = 20$ agentes}, como nos sete cenários. Mantém
+          $\text{obs\_dim} = 111$ e, com isso, a comparação emparelhada e a
+          possibilidade de avaliar os campeões existentes sem qualquer alteração
+          arquitetural. Com $N = 40$ a dimensão passaria a $211$ e as políticas
+          MLP do PPO e do SAC exigiriam uma rede nova.
+    \item \textbf{$\text{max\_steps} = 2000$}, contra os $500$ dos cenários
+          abertos. A $0{,}2$\,m por passo (o limite por eixo), o pior ponto do
+          mapa fica a $777$ passos apenas de ida; $2000$ passos deixam uma folga
+          de $2{,}6\times$ sobre essa ida ($2{,}9\times$ a partir do pior
+          \textit{spawn}), acima do mínimo de $2{,}5\times$ fixado a priori.
+    \item \textbf{$\text{required\_to\_eat} = 1$.} A cooperação que este mapa
+          mede está na \textbf{porta}; exigir também três agentes simultâneos no
+          ninho empilharia uma segunda tarefa cooperativa e a métrica deixaria de
+          isolar a navegação.
+\end{itemize}
+
+Tudo o resto --- recompensas, física, LiDAR, população, $\sigma$ --- é idêntico
+ao das campanhas anteriores. Sem isso, a comparação com os sete cenários não
+seria limpa.
+
+\subsection{Protocolo}
+
+A campanha decompõe-se em duas fases, de propósito por esta ordem, porque a
+leitura da primeira não depende da segunda e o contraste entre ambas é, em si,
+um resultado:
+
+\begin{description}
+    \item[F1 --- Zero-Shot de topologia.] Os campeões dos sete cenários
+          (Secção~\ref{sec:res_ptask}) são avaliados neste mapa \textbf{sem
+          qualquer retreino}, $20$ episódios por célula, com sementes
+          emparelhadas. Responde a ``o que já sabíamos transfere?''.
+    \item[F2 --- Treino nativo.] Os três algoritmos treinam de raiz no mapa,
+          $7$ execuções independentes com sementes $1$--$7$, e são avaliados no
+          mesmo protocolo determinístico das restantes campanhas.
+\end{description}
+
+O orçamento de F2 não iguala minutos, mas \textbf{gerações de evolução}, que é a
+unidade de otimização do controlador evolutivo. Uma geração custa
+$\text{pop\_size} \times \text{eval\_episodes} \times \text{max\_steps}$ passos
+de simulação; com episódios quatro vezes mais longos, igualar o número de
+minutos daria ao controlador evolutivo um quarto da otimização e chamar-lhe-ia
+comparação justa. O orçamento foi, por isso, fixado em
+\PORPREENCHER{minutos por execução do GNN e dos métodos de gradiente, e o número
+de gerações efetivamente alcançado} --- registado antes de qualquer análise.
+
+\subsection{Transferência sem retreino (F1)}
+
+\PORPREENCHER{tabela $7$ cenários de origem $\times$ $3$ algoritmos, com
+recolhas/ep e taxa de sucesso na condição natural}
+
+A leitura desta grelha exige cuidado, e o pré-registo fixa-a antes dos dados: um
+zero no F1 admite \textbf{quatro} causas e apenas uma é a pergunta da QI7. Além
+da topologia composta, a mesma célula a zero pode resultar de (i) a escala da
+observação --- as distâncias são normalizadas pelo raio da arena, que aqui é
+quatro vezes maior, pelo que o mesmo modelo recebe todas as distâncias
+comprimidas $4\times$; (ii) os \textbf{obstáculos} --- dos oito cenários, apenas
+o Sandbox e este têm obstáculos dispersos, pelo que um campeão de labirinto nunca
+encontrou um em toda a sua otimização; e (iii) as quatro dimensões da observação
+associadas à porta, identicamente nulas no treino de quem nunca teve porta e
+ativas neste mapa. Cada uma destas causas foi isolada numa condição de controlo
+que altera \textbf{uma} coisa e deixa o resto bit-a-bit igual:
+
+\PORPREENCHER{condição natural vs. escala vs. sem obstáculos vs. sem features da
+porta --- e a conclusão sobre qual das causas explica o resultado}
+
+\subsection{Treino nativo (F2)}
+
+\PORPREENCHER{tabela dos $3$ algoritmos $\times$ $7$ execuções: média $\pm$
+desvio-padrão das recolhas/ep, taxa de sucesso, execuções convergentes}
+
+\PORPREENCHER{M1 --- Mann-Whitney U bilateral sobre médias por execução, GNN vs
+PPO e GNN vs SAC, com $\delta$ de Cliff}
+
+\PORPREENCHER{M2 --- taxa de execuções que atingem pelo menos uma recolha, e
+execuções a $100\%$ (descritivo: com $n = 7$ não se faz inferência sobre
+proporções)}
+
+\PORPREENCHER{M3 --- fração de episódios em que a porta cooperativa é aberta,
+por algoritmo}
+
+\subsection{Discussão}
+
+% ─────────────────────────────────────────────────────────────────────────────
+% ESCOLHER UMA DAS DUAS E APAGAR A OUTRA. As duas leituras estão
+% pré-comprometidas no pré-registo: a regra de decisão é ≥5/7 execuções
+% convergentes em pelo menos um algoritmo E M1 interpretável.
+% ─────────────────────────────────────────────────────────────────────────────
+
+% ── LEITURA A: pelo menos um algoritmo converge ──────────────────────────────
+% A composição de dificuldades \PORPREENCHER{não impede / degrada mas não impede}
+% a resolução da tarefa: \PORPREENCHER{algoritmo} atinge \PORPREENCHER{valor}
+% recolhas por episódio em \PORPREENCHER{n}/$7$ execuções. O contraste com o F1 é
+% o resultado central desta secção: \PORPREENCHER{relação entre o que transfere
+% sem retreino e o que se aprende de raiz}. Note-se que este mapa não altera a
+% conclusão sobre a representação --- \PORPREENCHER{ler contra a Secção
+% \ref{sec:res_scale}} --- mas acrescenta-lhe uma dimensão: a invariância
+% demonstrada para a cardinalidade do enxame \PORPREENCHER{estende-se / não se
+% estende} à composição topológica.
+
+% ── LEITURA B: nenhum algoritmo converge ─────────────────────────────────────
+% Nenhum dos três controladores resolve o mapa composto dentro do orçamento
+% pré-registado. Este é um \textbf{resultado}, não uma campanha falhada, e é
+% reportado como tal: delimita o alcance dos três métodos sob composição e
+% escala, e reforça a limitação já declarada na Secção~\ref{sec:res_discussao}. Três
+% verificações independentes excluem que a causa seja o desenho do mapa: existe
+% caminho do \textit{spawn} ao ninho para todos os agentes, mesmo com a porta
+% fechada; um oráculo que desça o gradiente geodésico recolhe
+% \PORPREENCHER{valor} itens por episódio; e a folga do orçamento de passos é de
+% $2{,}9\times$ a partir do pior \textit{spawn}. O mapa é resolúvel; o que estes
+% algoritmos não fazem, com este sinal de treino e este orçamento, é aprendê-lo.
+
+\subsection{Limitações desta campanha}
+
+Três limitações ficam declaradas, todas fixadas antes dos dados.
+
+Primeiro, as duas condições de normalização da observação estão \textbf{ambas}
+fora da distribuição de treino, de maneiras opostas: na condição natural as
+distâncias chegam comprimidas $4\times$; na condição de controlo passam a valer
+mais de $1$ (até $\approx 2{,}5$), valor que nenhum modelo viu em treino. Não há
+terceira hipótese sem retreinar --- e retreinar é, precisamente, a fase F2.
+
+Segundo, com $n = 7$ execuções o peso da evidência está no tamanho de efeito
+($\delta$ de Cliff) e não em cruzar o limiar de $0{,}05$: um teste exato de
+Fisher sobre proporções de convergência não teria poder para distinguir
+$7/7$ de $3/7$.
+
+Terceiro, este cenário \textbf{não entra} nas tabelas comparativas dos sete
+cenários (Tabelas~\ref{tab:res_eval} e~\ref{tab:res_signif}). As campanhas
+daqueles têm orçamento, número de passos por episódio e protocolo próprios;
+juntá-los na mesma linha compararia coisas diferentes. É também a razão pela qual
+o código mantém a lista dos sete cenários da dissertação separada da lista de
+cenários ativos do simulador.
+
+\paragraph{Nota metodológica sobre o desenho do mapa.} Duas correções feitas
+durante a construção do cenário, ambas anteriores a qualquer treino, merecem
+registo porque ilustram um cuidado que se aplica a qualquer ambiente composto.
+A primeira: um bolso em U só funciona como armadilha se a bússola de
+\textit{homing} apontar para dentro dele --- com a boca virada para o lado
+oposto ao da chegada do enxame, medindo sobre sessenta pontos de entrada na zona,
+\textbf{nenhum} agente era atraído para o interior, e o bolso era espaço morto.
+A segunda: uma zona anunciada como ``quatro salas'' que tenha apenas uma parede e
+uma abertura são, de facto, duas salas; a cruz completa foi verificada por
+decomposição do espaço livre em quatro componentes de área equivalente. Um mapa
+composto não herda automaticamente as dificuldades dos cenários que diz compor:
+cada uma tem de ser verificada no ambiente construído.
