@@ -65,3 +65,43 @@ Por ordem — só se passa ao seguinte em caso de empate:
   tem de estar escrito na secção de resultados do mapa.
 - Um único braço, uma única seed: isto **não** é evidência publicável, é uma
   decisão de configuração. Não entra em tabelas da tese.
+
+---
+
+## 5. RESULTADO (27 jul, 13:30 — os dois braços fecharam)
+
+| braço | timesteps | `ep_task_mean` | desvio-padrão (últimas 6) | tendência |
+|---|---|---|---|---|
+| baseline | 2,6M | **0,000** | 415,8 *(ref.)* | +426 |
+| **A+B** (`gradient_steps=5`, buffer 2M) | 3,2M | **0,000** | **144,8 (−65%)** | −62 |
+| C (`ent_coef=auto`) | 10,6M | **0,000** | 746,7 (+80%) | +108 |
+
+**Critério 1 (recolhas):** nenhum braço recolheu — passa ao critério 2.
+**Critério 2 (estabilidade):** o A+B corta o desvio-padrão **65%**, acima do
+limiar de 30%; o C piora 80%. **Pelo critério escrito, vence o A+B.**
+
+O A+B fez 3,2M timesteps contra 10,6M do C — é ~3× mais lento em amostras porque
+faz 5× mais gradient steps. É o *trade-off* que o teste existia para medir, agora
+quantificado.
+
+## 6. DECISÃO (utilizador, 27 jul): **o F2 corre com o SAC INALTERADO**
+
+Contra o vencedor do critério, e a razão fica escrita: a evidência é fraca — uma
+seed, duas horas, **zero recolhas nos três braços** — e menor variância pode ser
+menos exploração, não melhor aprendizagem (o A+B nunca passa dos +355, enquanto o
+baseline chegou a +901 e o C a +2148). Além disso, nos sete cenários da tese o
+rácio de replay era ainda mais baixo (0,003) e o SAC produziu 62,1 na Porta
+Cooperativa e 68,6 no Bypass.
+
+Prevalece a comparabilidade: **o mesmo algoritmo em todos os cenários**, sem
+desvios ao pré-registo do mapa. Se o SAC não convergir no F2, reporta-se como
+está (§5 do `PRE_REGISTO_MAPA_GRANDE.md`) e **este documento fica como a
+explicação candidata já medida**, em vez de uma hipótese levantada depois de ver
+o resultado.
+
+O `configs/foraging.yaml` mantém `gradient_steps: 1` e `ent_coef: 0.1`. Os
+parâmetros continuam expostos no config (e o arranque continua a imprimir o
+rácio) — isso não é o mesmo que mudá-los, e a próxima pessoa a olhar para isto
+vê o número sem ter de o descobrir outra vez.
+
+Dados dos dois braços arquivados em `out/ab_sac_27jul/`.
