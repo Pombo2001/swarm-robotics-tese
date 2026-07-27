@@ -16,11 +16,48 @@
 
 ---
 
-# 0. LOG DE SESSÃO — 27 jul 2026 (Opus 5, torre)
+# 0. SE VAIS PARA O PC DO TRABALHO (28 jul) — LÊ ISTO PRIMEIRO
+
+1. **`git pull`.** Está tudo lá, incluindo os **dados** do dia: os CSV do mapa
+   grande foram versionados de propósito em `results/mapa_grande/` (92 KB, com
+   `LEIA-ME.md` próprio). O resto de `results/` continua fora do git.
+2. **O que NÃO viaja:** os modelos. Campeões 7d (`results/models_7d/`, 50 MB),
+   *smoke test* F0 (13 MB) e A/B do SAC (43 MB) ficam **na torre**. Se precisares
+   deles aí, tra-los do servidor com `scripts/trazer_do_servidor.sh` — os
+   comandos exatos estão no `results/mapa_grande/LEIA-ME.md`.
+3. **Não é preciso tocar no servidor.** O código do mapa já lá está, em
+   `~/swarm-mapa/` (isolado), com 19/19 testes a passar em Python 3.12.
+4. **O que falta para fechar o F1:** as **três condições de controlo**, ~6 h cada.
+   Correm em qualquer PC: `python scripts/eval_zeroshot_mapa.py --episodes 20
+   --models-dir results/models_7d --norm-obs treino` (e depois `--controlo
+   sem_obstaculos` e `--controlo sem_porta_obs`). **Precisam dos campeões 7d.**
+
+---
+
+# 0-A. LOG DE SESSÃO — 27 jul 2026 (Opus 5, torre)
 
 > Rebase + tese recompilada de manhã; à tarde, **auditoria de física ao mapa
 > grande antes de comprometer a janela de servidor**. Uma falha crítica
 > encontrada (o servidor não tem o mapa) e um bug de colisão corrigido.
+
+## 🔬 O QUE CORREU NESTE PC A 27 JUL (e o que deu)
+
+| corrida | duração | resultado |
+|---|---|---|
+| **F0 — smoke test**, 3 algoritmos no mapa grande | 2 h cada, em paralelo | GNN 19 gerações, fitness 750→2594; PPO 4,2M timesteps; SAC 2,6M. **Todos arrancam e treinam.** Comida 0,0 nos três — esperado em 2 h. |
+| **A/B do SAC**, 2 braços | 2 h cada | Nenhum recolheu. A+B corta o desvio-padrão 65%; C piora 80%. **Decisão: SAC inalterado no F2.** |
+| **F1 — zero-shot**, 21 células × 20 ep | ~5 h (morreu a meio, retomado) | **420 episódios, grelha completa.** GNN 3,86 · PPO 0,00 · SAC 11,03 |
+
+**Sinal mais forte do F1:** o **PPO dá zero nas 7 células** — e não é avaria: os
+mesmos ficheiros dão 68,3 recolhas/ep no Sandbox e 127,3 no Gargalo (a tese
+reporta 71,5 e 123,2). O SAC é o que mais transfere (4 de 7 células). Os três
+labirintos puros dão zero nos três algoritmos.
+
+⚠️ **Nada disto responde à QI7 ainda** — faltam as três condições de controlo.
+
+O F1 morreu às 17:47 sem causa conhecida (a 25 jul foi o RestartManager do
+Windows). **Não se perdeu nada**: o script grava célula a célula e a retoma saltou
+as 16 já feitas. Dados em `results/mapa_grande/` (versionados).
 
 ## 📝 SECÇÃO DO MAPA GRANDE — escrita e validada, à espera de números (27 jul)
 
