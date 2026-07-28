@@ -70,5 +70,16 @@ def build():
         plot.update_figure(_build_fig(curves, metric))
 
     metric_sel.on_value_change(lambda: refresh(force=True))
-    ui.timer(2.0, refresh)
+
+    # Quando o browser fecha, os elementos morrem mas o timer continua a disparar
+    # do lado do servidor — e cada disparo levanta "The parent slot of the element
+    # has been deleted", enchendo o log de tracebacks que não são avarias. O
+    # app.py já protege o seu timer assim; estes ficaram de fora.
+    def _tick():
+        try:
+            refresh()
+        except Exception:  # noqa: BLE001 — o browser desligou; não há nada a salvar
+            timer.cancel()
+
+    timer = ui.timer(2.0, _tick)
     refresh(force=True)

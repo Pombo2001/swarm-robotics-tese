@@ -15,7 +15,8 @@ from nicegui import ui, app
 from . import config, theme
 from .jobs import JobQueue
 from .views import (overview, treinar, servidor, ciencia, resultados, curvas,
-                    videos, aovivo, arquivo, proveniencia, prontidao)
+                    videos, aovivo, arquivo, proveniencia, prontidao,
+                    defesa)
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
@@ -72,6 +73,7 @@ def index():
                 t_proven  = ui.tab("Proveniência", icon="fact_check")
                 t_result  = ui.tab("Resultados", icon="image")
                 t_pronto  = ui.tab("Prontidão", icon="checklist")
+                t_defesa  = ui.tab("Defesa", icon="record_voice_over")
                 t_videos  = ui.tab("Vídeos", icon="smart_display")
                 t_aovivo  = ui.tab("Ao vivo (3D)", icon="view_in_ar")
                 t_arquivo = ui.tab("Arquivo", icon="history_edu")
@@ -88,6 +90,7 @@ def index():
     _by_name = {"treinar": t_treinar, "monitorizar": t_monitor,
                 "ciencia": t_ciencia, "proveniencia": t_proven,
                 "resultados": t_result, "prontidao": t_pronto,
+                "defesa": t_defesa,
                 "videos": t_videos,
                 "aovivo": t_aovivo, "arquivo": t_arquivo}
 
@@ -114,6 +117,8 @@ def index():
             resultados.build()
         with ui.tab_panel(t_pronto):
             prontidao.build()
+        with ui.tab_panel(t_defesa):
+            defesa.build()
         with ui.tab_panel(t_videos):
             videos.build()
         with ui.tab_panel(t_aovivo):

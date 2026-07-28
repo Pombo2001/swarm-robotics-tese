@@ -263,11 +263,19 @@ def build(queue: JobQueue):
 
     # Timer: drena o buffer de log e atualiza estados (poll evita problemas cross-thread)
     def tick():
-        for line in queue.drain_log():
-            log.push(line)
-        running = queue.is_running
-        status_lbl.text = "a treinar…" if running else "inativo"
-        status_dot.classes(remove="live-dot--idle", add="" if running else "live-dot--idle")
-        fila.refresh()
+        # O browser pode ter fechado: os elementos morrem, o timer não. Sem isto,
+        # cada disparo levanta "The parent slot of the element has been deleted"
+        # e o log enche-se de tracebacks que não são avarias — o treino em si
+        # corre noutro processo e não é afetado. Mesmo padrão do app.py.
+        try:
+            for line in queue.drain_log():
+                log.push(line)
+            running = queue.is_running
+            status_lbl.text = "a treinar…" if running else "inativo"
+            status_dot.classes(remove="live-dot--idle",
+                               add="" if running else "live-dot--idle")
+            fila.refresh()
+        except Exception:  # noqa: BLE001
+            timer.cancel()
 
-    ui.timer(0.5, tick)
+    timer = ui.timer(0.5, tick)
