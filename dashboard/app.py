@@ -16,7 +16,7 @@ from . import config, theme
 from .jobs import JobQueue
 from .views import (overview, treinar, servidor, ciencia, resultados, curvas,
                     videos, aovivo, arquivo, proveniencia, prontidao,
-                    defesa)
+                    defesa, mapa)
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
@@ -25,6 +25,11 @@ queue = JobQueue()
 _graficos = os.path.join(config.BASE_DIR, "results", "graficos_tese")
 if os.path.isdir(_graficos):
     app.add_static_files("/graficos", _graficos)
+
+# Figuras instaladas na tese (a vista Mapa usa a planta do mapa grande).
+_fig_tese = os.path.join(config.BASE_DIR, "Tese", "images", "resultados")
+if os.path.isdir(_fig_tese):
+    app.add_static_files("/figuras_tese", _fig_tese)
 
 
 @ui.page("/")
@@ -68,6 +73,7 @@ def index():
                 ui.label("ANÁLISE").classes("text-[10px] font-bold tracking-[.2em] "
                                             "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
                 t_ciencia = ui.tab("Ciência", icon="science")
+                t_mapa    = ui.tab("Mapa grande", icon="map")
                 # Defesa: "de onde vem este número?" respondido em dois cliques,
                 # em vez de procurado no REPRODUZIR.md com o júri à espera.
                 t_proven  = ui.tab("Proveniência", icon="fact_check")
@@ -88,7 +94,8 @@ def index():
 
     # A Overview salta para outras vistas por nome (cartões de estado clicáveis).
     _by_name = {"treinar": t_treinar, "monitorizar": t_monitor,
-                "ciencia": t_ciencia, "proveniencia": t_proven,
+                "ciencia": t_ciencia, "mapa": t_mapa,
+                "proveniencia": t_proven,
                 "resultados": t_result, "prontidao": t_pronto,
                 "defesa": t_defesa,
                 "videos": t_videos,
@@ -111,6 +118,8 @@ def index():
             servidor.build()
         with ui.tab_panel(t_ciencia):
             ciencia.build()
+        with ui.tab_panel(t_mapa):
+            mapa.build()
         with ui.tab_panel(t_proven):
             proveniencia.build()
         with ui.tab_panel(t_result):
