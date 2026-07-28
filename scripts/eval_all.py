@@ -5,6 +5,8 @@ Uso: python scripts/eval_all.py --episodes 20 --scenario none
 import argparse
 import os
 import sys
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 import torch
@@ -98,6 +100,34 @@ def run_episode(env, algo, model, seed=None):
     }
 
 
+# Janela da campanha que a tese reporta (o mega-treino de 7 dias, 2-9 jul 2026).
+# Um campeão de fora disto é de outra era do projeto — e as pastas ativas
+# `results/models_ppo|models_sac` deste PC ainda têm os MLP de 24-28 JUNHO, de
+# antes da fitness de homing, que dão 0 no seu próprio cenário de treino.
+CAMPANHA = ("2026-07-02", "2026-07-10")
+
+
+def _idade_modelo(path):
+    """'2026-07-03' ou '2026-06-24 ⚠ ANTERIOR À CAMPANHA DA TESE'.
+
+    Não aborta nada: o eval_all é usado para olhar para modelos de propósito
+    (checkpoints, smoke tests). O que não pode é carregar um campeão de junho
+    com o mesmo silêncio com que carrega um de julho — foi assim que se
+    perderam as 6 h do F1 de 25 jul, que correu a campanha errada sem um aviso.
+    O `eval_zeroshot_mapa.py` ganhou uma guarda que ABORTA; aqui basta ver.
+    """
+    try:
+        quando = datetime.fromtimestamp(os.path.getmtime(path))
+    except OSError:
+        return "data desconhecida"
+    d = quando.strftime("%Y-%m-%d")
+    if d < CAMPANHA[0]:
+        return f"{d} ⚠ ANTERIOR À CAMPANHA DA TESE ({CAMPANHA[0]})"
+    if d > CAMPANHA[1]:
+        return f"{d} ⚠ POSTERIOR à campanha da tese — é de outro treino?"
+    return d
+
+
 def eval_algo(algo, scenario, config_path, n_episodes, seed_base=1000,
               model_path=None):
     model, path = load_model(algo, scenario, config_path, model_path=model_path)
@@ -105,7 +135,7 @@ def eval_algo(algo, scenario, config_path, n_episodes, seed_base=1000,
         print(f"  [{algo.upper()}] ERRO: modelo nao encontrado — a saltar")
         return None, None
 
-    print(f"  [{algo.upper()}] {path}")
+    print(f"  [{algo.upper()}] {path}  [{_idade_modelo(path)}]")
     env = SwarmForagingEnv3D(config_path=config_path)
     if scenario:
         env.config["environment"]["classic_scenario"] = scenario
