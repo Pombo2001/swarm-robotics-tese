@@ -46,10 +46,20 @@ def _limpar(tex):
     t = re.sub(r"\$([^$]*)\$", r"\1", t)
     t = t.replace("\\times", "×").replace("\\pm", "±").replace("\\delta", "δ")
     t = t.replace("\\neq", "≠").replace("\\approx", "≈").replace("\\geq", "≥")
+    # `vs.\ MLP`: espaço escapado do LaTeX. Tem de sair ANTES de se comerem
+    # as barras soltas, senão fica "vs.MLP" colado.
+    t = t.replace("\\ ", " ")
     t = re.sub(r"\\[a-zA-Z]+", "", t)
     t = t.replace("{", "").replace("}", "")
     t = t.replace("---", "—").replace("--", "–").replace("``", "\u201c") \
          .replace("''", "\u201d")
+    # Tirar uma referência deixa a pontuação que a rodeava:
+    # `(Capítulo~\ref{...})` fica `()`, e `(ver \ref{...}, p. 3)` fica
+    # `(ver , p. 3)`. Sem isto a resposta à QI1 acabava em "(Muro U) ()." —
+    # que foi exatamente o que apareceu no primeiro ecrã desta vista.
+    t = re.sub(r"\(\s*[,;.]?\s*\)", "", t)
+    t = re.sub(r"\(\s*,\s*", "(", t)
+    t = re.sub(r"\s+([,.;:])", r"\1", t)
     return re.sub(r"\s+", " ", t).strip()
 
 

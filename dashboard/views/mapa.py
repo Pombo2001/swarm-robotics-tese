@@ -81,7 +81,13 @@ def build():
                 caminho = os.path.join(_RAIZ, "Tese", "images", "resultados",
                                        "mapa_grande_planta.png")
                 if os.path.exists(caminho):
-                    ui.image(PLANTA).classes("w-full rounded")
+                    # A planta é uma figura de tese (quadrada e de alta
+                    # resolução): a tamanho natural ocupa dois ecrãs e empurra as
+                    # fases e a grelha do F1 para fora de vista. Limitada em
+                    # altura, com `contain` para não deformar a geometria — que é
+                    # o ponto da figura.
+                    ui.image(PLANTA).classes("w-full rounded").style(
+                        "max-height:52vh; object-fit:contain")
                 else:
                     ui.label("planta não encontrada em Tese/images/resultados/") \
                         .classes("text-xs").style(f"color:{theme.INK_MUTED}")
