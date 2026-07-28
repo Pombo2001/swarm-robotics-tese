@@ -8,7 +8,7 @@ Essa verificação foi feita **à mão** a 18, 25 e 27 de julho de 2026. É a me
 comparação de cada vez, e vai ser precisa outra vez em agosto (mega-treino e
 mapa grande) e em setembro (versão composta, 15 set). Isto fá-la em segundos.
 
-O que compara — **203 valores**:
+O que compara — **203 valores** e **4 afirmações em prosa**:
 
   · `tab:res_eval` (63) — a tabela principal: 21 células (7 cenários × 3
     algoritmos) × (sucesso, média, desvio) contra `final_7d/eval_by_run_7d.csv`,
@@ -16,7 +16,11 @@ O que compara — **203 valores**:
   · `tab:res_scale_all` (35) — eficiência per capita do GNN a N∈{10,20,50,100} e
     a retenção, contra `estatisticas/escalabilidade_*.csv`;
   · `tab:res_signif` (105) — as 21 comparações emparelhadas (médias, p, δ e a
-    coluna "Signif.") contra `testes_significancia_food_collected.csv`.
+    coluna "Signif.") contra `testes_significancia_food_collected.csv`;
+  · `§res_robustez` — os INTERVALOS afirmados em prosa ("entre 92% e 106% nas 21
+    combinações", "o evolutivo retém 92--97%") contra os `eval_*_fail10.csv`.
+    Uma afirmação de intervalo em texto é mais frágil do que uma tabela: ninguém
+    a regenera com um script, e sobrevive a dados novos sem dar sinal.
 
 ⚠️ A tabela de significância é comparada com o **CSV que o `statistical_tests.py`
 produziu**, não recalculada. Ter aqui uma segunda implementação do Mann-Whitney
@@ -294,6 +298,93 @@ def verificar_significancia(tolerancia):
     return problemas
 
 
+def verificar_robustez():
+    """§res_robustez — os INTERVALOS afirmados no texto, não uma tabela.
+
+    A robustez não tem tabela: tem uma figura e duas afirmações em prosa —
+    *"entre 92% e 106% em todas as 21 combinações"* e *"o controlador evolutivo
+    (…) retém 92--97%"*. Uma afirmação de intervalo em prosa é **mais** fácil de
+    ficar para trás do que uma tabela: ninguém a regenera com um script, e
+    sobrevive a mudanças de dados sem dar sinal.
+
+    Retenção = recolhas/ep com 10% de falhas ÷ recolhas/ep de base, por célula.
+    Células com base a zero ficam de fora (a divisão não tem significado) — é o
+    que o texto quer dizer com *"com desempenho de base"*.
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: §res_robustez (afirmações em prosa)  vs  eval_*_fail10.csv")
+    print("=" * 72)
+
+    d_eval = os.path.join(PROJECT_ROOT, "results", "evaluation")
+    retencoes = {}
+    for algo in ("gnn", "ppo", "sac"):
+        for cen in ROTULO_PARA_CENARIO.values():
+            base = os.path.join(d_eval, "eval_%s_%s.csv" % (algo, cen))
+            fail = os.path.join(d_eval, "eval_%s_%s_fail10.csv" % (algo, cen))
+            if not (os.path.exists(base) and os.path.exists(fail)):
+                continue
+            b = pd.read_csv(base)["food_collected"].mean()
+            f = pd.read_csv(fail)["food_collected"].mean()
+            if b > 0:
+                retencoes[(algo.upper(), cen)] = 100.0 * f / b
+
+    if not retencoes:
+        print("[!] sem CSV de robustez — a saltar.")
+        return []
+
+    problemas = []
+    lo, hi = min(retencoes.values()), max(retencoes.values())
+    print("%d células com base > 0 | retenção de %.1f%% a %.1f%%"
+          % (len(retencoes), lo, hi))
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = f.read()
+
+    # "entre \textbf{92\% e 106\%} em todas as 21 combinações"
+    m = re.search(r"retenção de recolhas situa-se entre\s*\\textbf\{(\d+)\\%\s*"
+                  r"e\s*(\d+)\\%\}", tex)
+    if not m:
+        problemas.append("não encontrei a frase do intervalo global no main.tex "
+                         "(mudou a redação? actualizar este verificador)")
+    else:
+        t_lo, t_hi = float(m.group(1)), float(m.group(2))
+        # o texto arredonda para fora: 92 tem de ser <= mínimo real < 93, etc.
+        if not (t_lo <= lo < t_lo + 1):
+            problemas.append("mínimo: texto diz %.0f%%, medido %.1f%%"
+                             % (t_lo, lo))
+        if not (t_hi - 1 < hi <= t_hi):
+            problemas.append("máximo: texto diz %.0f%%, medido %.1f%%"
+                             % (t_hi, hi))
+
+    m = re.search(r"n.º de combinações|em todas as (\d+) combinações", tex)
+    if m and int(m.group(1)) != len(retencoes):
+        problemas.append("o texto diz %s combinações, contei %d com base > 0"
+                         % (m.group(1), len(retencoes)))
+
+    # "O controlador evolutivo (…) retém 92--97\%"
+    m = re.search(r"controlador evolutivo[^.]*?retém\s*(\d+)--(\d+)\\%", tex)
+    gnn = [v for (a, _), v in retencoes.items() if a == "GNN"]
+    if m and gnn:
+        t_lo, t_hi = float(m.group(1)), float(m.group(2))
+        g_lo, g_hi = min(gnn), max(gnn)
+        print("GNN (%d células): %.1f%% a %.1f%%  | texto: %.0f--%.0f%%"
+              % (len(gnn), g_lo, g_hi, t_lo, t_hi))
+        if not (t_lo <= g_lo < t_lo + 1) or not (t_hi - 1 < g_hi <= t_hi):
+            problemas.append("intervalo do GNN: texto %.0f--%.0f%%, medido "
+                             "%.1f--%.1f%%" % (t_lo, t_hi, g_lo, g_hi))
+    elif not m:
+        problemas.append("não encontrei a frase do intervalo do GNN")
+
+    if problemas:
+        print("DIVERGÊNCIAS:")
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("As afirmações de §res_robustez batem com os CSV.")
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tolerancia", type=float, default=0.05,
@@ -374,6 +465,7 @@ def main():
 
     problemas += verificar_escalabilidade(a.tolerancia)
     problemas += verificar_significancia(a.tolerancia)
+    problemas += verificar_robustez()
 
     print()
     print("=" * 72)
