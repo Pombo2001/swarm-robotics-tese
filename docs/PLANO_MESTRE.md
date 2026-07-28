@@ -89,6 +89,71 @@ pior spawn (696 passos, 2,87×).
 Compilação isolada com a secção inserida: **125 págs, 0 refs indefinidas, 0
 overfulls, 0 erros** — e revertida a seguir, porque o mapa só entra com dados.
 
+## ✅ O M1 do mega-treino já está respondido (sem integrar nada)
+
+O `analise_megatreino.py` foi escrito a 27 jul **antes dos dados** e nunca tinha
+visto um CSV real. Correu-se contra as **6 fases já arquivadas** no servidor
+(trazidos só os `eval_by_run.csv`): **zero erros**. E como as fases 1 e 2 do
+megaA estão completas (28/28 runs cada), o **M1 — o teste principal — está de
+facto respondido**:
+
+| u_wall, n=28 | recolhas/ep | convergentes |
+|---|---|---|
+| GNN **adaptativo** | **67,4 ± 13,4** | **28/28** |
+| GNN objetivo | 32,5 ± 32,5 | 15/28 |
+
+Mann-Whitney unilateral **p < 0,0001**, δ **+0,61**; Fisher 28/28 vs 15/28,
+**p < 0,0001**. Contra os n=7 da tese (68,5 ± 13,1 e 7/7 vs 24,5 ± 32,6 e 3/7,
+p = 0,009, δ = +0,76): **replica-se com o quádruplo do n**. O objetivo puro sai
+menos mau do que sete runs sugeriam — parte do contraste de 19 jul era ruído de
+amostragem pequena, e o δ desce por isso, não por o efeito enfraquecer.
+
+E a ablação do *annealing* (exploratória): as 4 variantes dão **7/7 nos dois
+cenários** (59,7-69,1 no Muro U; 74,8-82,4 no bypass) ⇒ o mecanismo **não depende
+de acertar nos hiperparâmetros**, que é uma objeção previsível na defesa para a
+qual a tese não tem hoje resposta.
+
+⚠️ **Nada disto entra na tese agora** — o pré-registo manda analisar com a
+campanha fechada, e faltam 6 fases. Guardado em
+`results/mega_1mes/ANALISE_PARCIAL_28jul_NAO_OFICIAL.txt`. O que se edita quando
+fechar está mapeado, com números de linha, em
+[`IMPACTO_MEGATREINO_NA_TESE.md`](IMPACTO_MEGATREINO_NA_TESE.md) — incluindo a
+regra que é fácil violar por pressa: as células n=28 são **autocontidas**, não
+substituem os n=7.
+
+## ✅ A regra 6(b) deixou de ser feita à mão
+
+*"Os números citados batem com o CSV fonte?"* — verificado à mão a 18, 25 e 27
+jul. Agora é `scripts/verificar_numeros_tese.py`, e cobre **as quatro peças de
+resultados**: `tab:res_eval` (63 valores), `tab:res_scale_all` (35),
+`tab:res_signif` (105) e as **afirmações em prosa** da §res_robustez. **203
+valores + 4 afirmações, todos batem.**
+
+Um `pre-commit` (instalar com `scripts/instalar_hooks.sh`) corre-o sozinho quando
+o commit toca na tese ou nos CSV canónicos, e recusa o commit se algo divergir.
+Testado nos dois sentidos, incluindo com um número sabotado. Escape: `--no-verify`.
+
+⚠️ **Duas vezes o verificador acusou a tese e o enganado era ele** — os desvios
+são amostrais (ddof=1, √(7/6)=1,08) e a retenção da escalabilidade é face a
+**N=20**, a dimensão de treino. Ambas as convenções da tese são as defensáveis, e
+ficaram comentadas no código para não se repetir a suspeita.
+
+## ✅ Arrumação e salvaguardas
+
+- **Armadilha nº9:** o `eval_all.py` (carregador comum do `eval_by_run` e do
+  `eval_suite`) passa a **imprimir a data de cada modelo** e a marcar os de fora
+  da janela da campanha. Renomear as pastas partia o dashboard e o `run_eval`.
+- **11 testes** ao `analise_f1_controlos.py` prendem os três veredictos e as
+  verificações de integridade. **59/59 na suite.**
+- **7 acrónimos** em falta (22 → 29): a lista tinha `POMDP` sem `MDP`, `PSO` sem
+  `ACO`, `PPO` sem `MAPPO`/`MADDPG`/`DQN` da mesma frase. `QMIX` fica **de fora**
+  de propósito: não tem expansão estabelecida e inventar-lhe uma era pior.
+- 4 figuras mortas do artigo removidas (3 eram heatmaps de **10 jun**, de modelos
+  que a tese descreve como partidos). As 12 usadas são idênticas às da tese.
+- `PLANO_MESTRE` 897 → 478 linhas; `INVENTARIO` e `REPRODUZIR` em dia.
+
+**13 commits, de `f24cc30` a `7fb8556`.**
+
 ---
 
 # 0-B. Sessões anteriores (24, 25 e 27 jul)
