@@ -26,7 +26,10 @@ tem um subconjunto. Antes de tentar reproduzir/verificar, confirma onde estás.
 | **Figuras canónicas 7d** | `results/graficos_tese/final_7d/` | ❌ | ✅ |
 | **Tabelas de significância** | `results/estatisticas/testes_significancia_*.{tex,csv}` | ❌ | ✅ |
 | **Novelty (QI6)** | `results/novelty_final/{uwall,bypass}/` | ❌ | ✅ |
-| Campanha Novelty adaptativo | (no servidor `.14`, fecha ~19-20 jul) | ❌ | ⏳ |
+| Campanha Novelty adaptativo | `results/novelty_adaptativo/` (trazida a 19 jul) | ❌ | ✅ |
+| **F1 do mapa grande** (QI7) | `results/mapa_grande/f1_zeroshot/` — **versionado**, exceção deliberada ao `.gitignore` | ✅ | ✅ |
+| Campeões da campanha 7d | `results/models_7d/` (21 modelos, 3-9 jul) | ❌ | ✅ + servidor |
+| Mega-treino (12 fases) | `results/mega_1mes/` — 6 fases trazidas a 28 jul, 6 por fechar | ❌ | ⏳ |
 
 > A auditoria número-a-número (última secção) faz-se **na torre**, ou depois de trazer
 > `final_7d/` + `novelty_final/` para cá com `python scripts/pos_campanha.py`.
@@ -71,8 +74,15 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
 | **Novelty (QI6)** — §res_novelty (§1408) | `results/novelty_final/{uwall,bypass}/` (eval_by_run 7×20 ep) | `eval_by_run.py` + `statistical_tests.py` | ⚠️ torre |
 | **Rrobust** — §res_robustez (§1476) | `results/evaluation/eval_{algo}_{cen}[_fail10].csv` (retenção = fail10/base) | `run_eval.py --fail-frac 0.1` | ✅ torre, VERIFICADO 16 jul: 21/21 células, retenção 92,4–105,8% (tese: 92–106% ✓); GNN 92,4–96,9% (✓); >100% só na Perceção Coop. (✓) |
 | **Custo computacional** — `tab:res_computacional` (§1498) | medição direta no simulador | `scripts/benchmark_sim.py` (novo, 16 jul) | ✅ torre, VERIFICADO+ATUALIZADO 16 jul: 139 passos/s era PRÉ-vetorização; medição atual ≈420 passos/s (3,0×, consistente c/ o 2,58× do passo); tabela da tese atualizada c/ ambos |
+| **QI7 — F1 do mapa grande** (zero-shot de topologia), `seccao_mapa_grande.tex` §Transferência | `results/mapa_grande/f1_zeroshot/zeroshot_mapa_grande.csv` (**versionado**; 1 linha por episódio, com `NormObs`/`Controlo`/`env_hash`/`ModeloPath`/`ModeloData`) | `eval_zeroshot_mapa.py` (produz) → `analise_f1_controlos.py` (lê as 4 condições e aplica o veredicto do pré-registo §3) | ✅ PC — natural fechada 27 jul; controlos no servidor |
+| **QI7 — F2 do mapa grande** (treino nativo) | `results/mapa_grande/f2/` (não existe: campanha por lançar) | `mapa_streamF2.sh {gnn\|grad}` no servidor → `analise_mapa_grande.py` | ❌ por correr (~3 ago) |
 | **Figuras** (mecanismo) | `Tese/images/resultados/*.png` | copiar o PNG com o nome que o `\figresultado` espera + recompilar (sem editar o `.tex`) | ✅ PC |
 
+> A **QI7** (composição de dificuldades) é a única cujas duas fases se leem em
+> conjunto: o contraste entre o que transfere sem retreino (F1) e o que se aprende
+> de raiz (F2) é, ele próprio, o resultado. Nenhuma delas entra nas tabelas dos
+> sete cenários — ver `PRE_REGISTO_MAPA_GRANDE.md`, compromisso 3.
+>
 > As 6 perguntas de investigação (QI1–QI6) mapeiam assim: **QI1** Ptask+significância ·
 > **QI2** Sscale (representação vs otimizador) · **QI3** Rrobust · **QI4** síntese das três
 > (o "mapa de escolha" — não tem dados próprios) · **QI5** desenho da aptidão (homing) ·
@@ -95,6 +105,18 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
    têm escalas incompatíveis. O veredicto oficial é a **avaliação** (`eval_*`), nunca o log
    de treino. Não concluir nada no Cap. 6 a partir de scores de treino.
 5. **Windows**: não escrever YAML/`.tex` com `Set-Content`/`Out-File` PS5.1 (mete BOM).
+6. **Validar um script de análise escreve por cima dos resultados reais** (28 jul):
+   ao testar o `analise_f1_controlos.py` com um CSV sintético, o veredicto **falso**
+   foi escrito na pasta que a tese cita. Apagado no minuto seguinte, mas o padrão
+   é geral — um script de análise cujo destino é fixo não distingue um ensaio de
+   uma corrida boa. O `analise_f1_controlos.py` passou a **exigir `--saida`**
+   quando algum CSV de entrada vem de fora da pasta canónica; os outros scripts de
+   análise **não têm essa guarda** — ao ensaiá-los, redirigir a saída à mão.
+7. **Hashes de floats não atravessam máquinas** (27 jul): um teste que comparava
+   SHA-256 de somas de floats falhou no servidor sem ser regressão (266,003105779438
+   aqui vs ...439 lá). Comparar com tolerância. A impressão digital do ambiente do
+   mapa não sofre disto **porque arredonda a 4 casas antes de encadear** — e por
+   isso dá `267a7b547aed` nas duas máquinas.
 
 ---
 
@@ -158,3 +180,9 @@ na torre** (onde estão `final_7d/` e `novelty_final/`):
 > 7d** passaram a estar no disco em `results/models_7d/` (21/21, datados de 3-9
 > jul, guarda de campanha a passar), o que também torna o F1 reproduzível
 > localmente.
+>
+> **Feito a 28 jul (torre):** acrescentadas as duas linhas da **QI7** ao mapa. O
+> F1 é a primeira fonte de resultados **versionada no git** (`results/mapa_grande/`,
+> exceção deliberada ao `.gitignore`) — decidida precisamente por causa do buraco
+> do braço Novelty preliminar, que é o único número da tese sem artefacto. As
+> armadilhas 6 e 7 são novas e vieram de erros desta semana.
