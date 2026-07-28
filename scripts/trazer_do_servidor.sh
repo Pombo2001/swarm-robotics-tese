@@ -20,6 +20,15 @@
 # campanha 7d de qualquer outra coisa — que é exatamente o que ela existe para
 # apanhar (ver a emenda de 25 jul no PRE_REGISTO_MAPA_GRANDE.md).
 #
+# ⚠️ AVISA ANTES DE SOBRESCREVER. A 28 jul trouxe-se o CSV de um controlo do F1
+# e, como o ficheiro remoto se chama `zeroshot_mapa_grande.csv` — o mesmo nome
+# que a condição natural já tinha no destino —, o pscp escreveu-lhe por cima sem
+# uma palavra. A condição natural (420 episódios, 6 h de servidor) só se salvou
+# por estar versionada no git. Cada corrida guarda o resultado com o MESMO nome
+# no SEU diretório, por isso este caso repete-se sempre que se traz mais do que
+# uma; o remédio é trazer para nomes distintos, e este aviso é o que obriga a
+# pensar nisso.
+#
 # Requisitos: VPN do ISCTE ligada + PuTTY instalado (pscp).
 set -euo pipefail
 
@@ -47,6 +56,23 @@ if [[ -z "$PASS" ]]; then
 fi
 
 mkdir -p "$LOCAL"
+
+# O que vai chegar chama-se como o último elemento do caminho remoto. Se já
+# existir no destino, o pscp sobrescreve em silêncio — ver a nota no cabeçalho.
+NOME="$(basename "$REMOTO")"
+ALVO="$LOCAL/$NOME"
+if [[ -e "$ALVO" && "$NOME" != *"*"* ]]; then
+    echo "[trazer] ⚠️  JÁ EXISTE: $ALVO"
+    echo "[trazer]     ($(du -h "$ALVO" 2>/dev/null | cut -f1), modificado $(date -r "$ALVO" '+%d %b %H:%M' 2>/dev/null))"
+    echo "[trazer]     Trazer por cima APAGA-O. Se for um resultado de horas de"
+    echo "[trazer]     servidor, traz para outro nome ou renomeia este primeiro."
+    if [[ "${TRAZER_FORCAR:-}" != "1" ]]; then
+        echo "[trazer] abortado. Para forçar: TRAZER_FORCAR=1 $0 ..." >&2
+        exit 3
+    fi
+    echo "[trazer]     TRAZER_FORCAR=1 — a sobrescrever a pedido."
+fi
+
 echo "[trazer] $USER@$HOST:$REMOTO  ->  $LOCAL"
 exec "$PSCP" -r -p -batch -hostkey "$HOSTKEY" -pw "$PASS" \
      "$USER@$HOST:$REMOTO" "$LOCAL"

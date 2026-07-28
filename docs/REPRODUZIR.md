@@ -115,7 +115,17 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
    `analise_mapa_grande.py` **não escrevem ficheiro nenhum** — só imprimem, e
    guarda-se a saída com `>` quando se quer. Não têm este problema nem precisam
    da guarda; o `analise_f1_controlos.py` é o único que grava.)*
-7. **Hashes de floats não atravessam máquinas** (27 jul): um teste que comparava
+7. **Trazer do servidor sobrescreve em silêncio** (28 jul): cada corrida grava o
+   resultado com o **mesmo nome** no **seu** diretório (`zeroshot_mapa_grande.csv`
+   em `~/swarm-mapa-c{1,2,3}/`). Ao trazer o segundo para a pasta onde já estava
+   o primeiro, o `pscp` escreveu por cima sem uma palavra — e o que se perdeu foi
+   a **condição natural do F1**, 420 episódios e 6 h de servidor. Recuperou-se com
+   `git checkout` **porque esses CSV estão versionados de propósito** (a exceção
+   ao `.gitignore` decidida a 27 jul pagou-se no dia seguinte). Desde então o
+   `trazer_do_servidor.sh` **avisa e aborta** se o alvo já existir
+   (`TRAZER_FORCAR=1` para forçar). Ao trazer várias corridas da mesma campanha:
+   nomes distintos, sempre.
+8. **Hashes de floats não atravessam máquinas** (27 jul): um teste que comparava
    SHA-256 de somas de floats falhou no servidor sem ser regressão (266,003105779438
    aqui vs ...439 lá). Comparar com tolerância. A impressão digital do ambiente do
    mapa não sofre disto **porque arredonda a 4 casas antes de encadear** — e por
