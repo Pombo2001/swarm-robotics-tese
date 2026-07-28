@@ -12,8 +12,17 @@
 
 | Ficheiro | O que é | Vale como |
 |---|---|---|
-| `f1_zeroshot/zeroshot_mapa_grande.csv` | **F1 — zero-shot de topologia**: 21 células (7 cenários de origem × 3 algoritmos) × 20 episódios = **420 episódios** | **resultado**, condição natural do pré-registo |
+| `f1_zeroshot/zeroshot_mapa_grande.csv` | **F1 — condição NATURAL**: 21 células (7 cenários de origem × 3 algoritmos) × 20 episódios = **420 episódios** | **resultado**, condição principal do pré-registo |
+| `f1_zeroshot/zeroshot_c1_escala.csv` | F1 — controlo **escala da observação** (`--norm-obs treino`), 420 ep | controlo |
+| `f1_zeroshot/zeroshot_c2_sem_obstaculos.csv` | F1 — controlo **sem obstáculos**, 420 ep | controlo |
+| `f1_zeroshot/zeroshot_c3_sem_porta_obs.csv` | F1 — controlo **sem features da porta**, 420 ep | controlo |
+| `f1_zeroshot/f1_grelha_por_condicao.csv` + `f1_veredicto.txt` + `f1_condicoes.png` | saída do `scripts/analise_f1_controlos.py` — a grelha das 4 condições, o veredicto e a figura | análise |
 | `f1_zeroshot/zeroshot_mapa_grande_progresso.log` | registo célula a célula, com data do modelo usado em cada uma | proveniência |
+
+> ⚠️ **Ao trazer mais corridas do servidor: nomes distintos.** Cada uma grava em
+> `zeroshot_mapa_grande.csv` no seu diretório, e a 28 jul um `pscp` para a pasta
+> onde já estava a natural apagou-a (recuperada do git). O
+> `trazer_do_servidor.sh` passou a avisar e abortar.
 | `ab_sac/braco_AB_gradsteps5_buffer2M.csv` | A/B do SAC, braço `gradient_steps=5` + buffer 2M | decisão de configuração |
 | `ab_sac/braco_C_entcoef_auto.csv` | A/B do SAC, braço `ent_coef=auto` | idem |
 | `f0_gnn_curva.csv` | curva do GNN no *smoke test* de 2 h (19 gerações) | **nada** — o F0 não produz resultado |
@@ -34,11 +43,27 @@
 **14 das 21 células a zero absoluto.** Modelos da campanha 7d (3-9 jul), guarda de
 campanha a passar, impressão digital do ambiente `267a7b547aed`.
 
-⚠️ **Isto ainda não responde à QI7.** O pré-registo fixa que um zero no F1 tem
-**quatro** causas possíveis e só uma é a pergunta da tese; faltam as **três
-condições de controlo** (escala da observação, sem obstáculos, sem *features* da
-porta), cada uma ~6 h. Ler `docs/PRE_REGISTO_MAPA_GRANDE.md` §3 antes de
-interpretar seja o que for.
+## As quatro condições — F1 COMPLETO (28 jul)
+
+Os três controlos correram no servidor a 28 jul (~8,5 h cada, em paralelo). Médias
+por condição, sobre as mesmas 21 células emparelhadas:
+
+| condição | recolhas/ep | veredicto pré-registado (§3) |
+|---|---|---|
+| **natural** | 4,96 | — é a condição principal |
+| escala da observação | 3,15 | **DIVERGE** — 6 células ressuscitam, 4 morrem |
+| sem obstáculos | 4,91 | **MESMO** ⇒ causa **excluída** (p=0,93) |
+| sem *features* da porta | 4,13 | **DIVERGE** — 2 células ressuscitam |
+
+⚠️ **Um controlo que ressuscita células NÃO salva a leitura "a topologia é dura":
+desmente-a.** É o que o pré-registo fixou antes de haver dados, e é o que se
+reporta. O veredicto integral está em `f1_zeroshot/f1_veredicto.txt`; reproduz-se
+com `python scripts/analise_f1_controlos.py`.
+
+Notar que a escala **não melhora** o resultado — redistribui-o: mata o Sandbox e a
+Perceção do GNN (7,2→0 e 17,3→0) e acende o Gargalo e a Perceção do PPO. É
+consistente com a limitação declarada no pré-registo: as duas normalizações estão
+fora da distribuição de treino, de maneiras opostas.
 
 **Sanidade verificada:** o zero do PPO não é avaria — os mesmos ficheiros dão
 68,3 recolhas/ep no Sandbox e 127,3 no Gargalo, contra 71,5 e 123,2 na tese.

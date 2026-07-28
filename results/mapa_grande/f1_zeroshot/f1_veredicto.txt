@@ -1,0 +1,92 @@
+==========================================================================
+F1 — ZERO-SHOT DE TOPOLOGIA: as 4 condições  (2026-07-28 21:47)
+==========================================================================
+
+CONDIÇÕES PRESENTES: natural, escala, sem obstáculos, sem features da porta
+
+--------------------------------------------------------------------------
+NATURAL  (420 episódios, 21 células)
+--------------------------------------------------------------------------
+campeão treinado em                   GNN            PPO            SAC
+Sandbox                        7.2 (100%)     0.0 (  0%)    19.6 (100%)
+Beco Sem Saída (U)             0.0 (  0%)     0.0 (  0%)     0.0 (  0%)
+Gargalo                        0.0 (  0%)     0.0 (  0%)     0.0 (  0%)
+Quatro Salas                   0.0 (  0%)     0.0 (  0%)     0.0 (  0%)
+Porta Cooperativa              0.0 (  0%)     0.0 (  0%)    21.6 (100%)
+Perceção Cooperativa          17.3 (100%)     0.0 (  0%)    15.8 ( 90%)
+Porta Coop. c/ Alternativa     2.5 ( 55%)     0.0 (  0%)    20.2 (100%)
+MÉDIA                                3.86           0.00          11.03
+células a zero                          4              7              3
+
+--------------------------------------------------------------------------
+ESCALA  (420 episódios, 21 células)
+--------------------------------------------------------------------------
+campeão treinado em                   GNN            PPO            SAC
+Sandbox                        0.0 (  0%)     0.0 (  0%)    15.6 (100%)
+Beco Sem Saída (U)             0.0 (  0%)     0.5 ( 10%)     0.0 (  0%)
+Gargalo                        0.9 ( 10%)     0.0 (  0%)     0.0 (  0%)
+Quatro Salas                   0.0 (  0%)     1.1 ( 55%)     0.1 (  5%)
+Porta Cooperativa              0.2 ( 20%)     0.0 (  0%)    19.1 (100%)
+Perceção Cooperativa           0.0 (  0%)    11.5 ( 50%)     0.0 (  0%)
+Porta Coop. c/ Alternativa     0.0 (  0%)     0.0 (  0%)    17.2 (100%)
+MÉDIA                                0.16           1.86           7.42
+células a zero                          5              4              3
+
+--------------------------------------------------------------------------
+SEM OBSTÁCULOS  (420 episódios, 21 células)
+--------------------------------------------------------------------------
+campeão treinado em                   GNN            PPO            SAC
+Sandbox                        9.0 (100%)     0.0 (  0%)    16.2 (100%)
+Beco Sem Saída (U)             0.0 (  0%)     0.0 (  0%)     0.0 (  0%)
+Gargalo                        0.0 (  0%)     0.0 (  0%)     0.0 (  0%)
+Quatro Salas                   0.0 (  0%)     0.0 (  0%)     0.0 (  0%)
+Porta Cooperativa              0.0 (  0%)     0.0 (  0%)    20.9 (100%)
+Perceção Cooperativa          18.1 (100%)     0.0 (  0%)    14.5 ( 70%)
+Porta Coop. c/ Alternativa     3.5 ( 55%)     0.0 (  0%)    20.9 (100%)
+MÉDIA                                4.37           0.00          10.36
+células a zero                          4              7              3
+
+--------------------------------------------------------------------------
+SEM FEATURES DA PORTA  (420 episódios, 21 células)
+--------------------------------------------------------------------------
+campeão treinado em                   GNN            PPO            SAC
+Sandbox                        0.1 (  5%)     0.0 (  0%)    13.2 (100%)
+Beco Sem Saída (U)             0.0 (  0%)     0.0 (  0%)     0.0 (  0%)
+Gargalo                        0.8 ( 10%)     0.0 (  0%)     0.0 (  0%)
+Quatro Salas                   0.7 ( 55%)     0.0 (  0%)     0.0 (  0%)
+Porta Cooperativa              0.0 (  0%)     0.0 (  0%)     6.2 ( 95%)
+Perceção Cooperativa          20.9 (100%)     0.0 (  0%)    13.2 ( 80%)
+Porta Coop. c/ Alternativa    17.7 ( 60%)     0.0 (  0%)    14.1 ( 95%)
+MÉDIA                                5.73           0.00           6.66
+células a zero                          2              7              3
+
+==========================================================================
+LEITURA PRÉ-COMPROMETIDA (pré-registo §3) — controlo vs natural
+==========================================================================
+
+ESCALA:
+   natural 4.96  →  controlo 3.15 recolhas/ep (21 células emparelhadas)
+   Wilcoxon p=0.1728 | δ de Cliff +0.00 | 6 ressuscitadas | 4 mortas
+      GNN  × Gargalo                    0.0 →   0.9
+      GNN  × Porta Cooperativa          0.0 →   0.2
+      GNN  × Porta Coop. c/ Alternativa   2.5 →   0.0
+      GNN  × Perceção Cooperativa      17.3 →   0.0
+      GNN  × Sandbox                    7.2 →   0.0
+      PPO  × Perceção Cooperativa       0.0 →  11.5
+   ⇒ DIVERGE — 6 célula(s) a zero na condição natural passam a recolher. O zero-shot de topologia está CONFUNDIDO com esta causa, e é isto que se reporta: o controlo não salva a leitura 'a topologia é dura', desmente-a.
+
+SEM OBSTÁCULOS:
+   natural 4.96  →  controlo 4.91 recolhas/ep (21 células emparelhadas)
+   Wilcoxon p=0.9325 | δ de Cliff -0.00 | 0 ressuscitadas | 0 mortas
+   (14 das 21 células estão a zero nas DUAS condições: o δ fica limitado por empates e lê-se com o nº de ressuscitadas, não sozinho)
+   ⇒ MESMO resultado (p=0.933, δ=-0.00, 0 células ressuscitadas) ⇒ causa EXCLUÍDA. Reporta-se só a condição natural; esta vai para apêndice.
+
+SEM FEATURES DA PORTA:
+   natural 4.96  →  controlo 4.13 recolhas/ep (21 células emparelhadas)
+   Wilcoxon p=0.3743 | δ de Cliff +0.03 | 2 ressuscitadas | 0 mortas
+   (12 das 21 células estão a zero nas DUAS condições: o δ fica limitado por empates e lê-se com o nº de ressuscitadas, não sozinho)
+      GNN  × Gargalo                    0.0 →   0.8
+      GNN  × Quatro Salas               0.0 →   0.7
+   ⇒ DIVERGE — 2 célula(s) a zero na condição natural passam a recolher. O zero-shot de topologia está CONFUNDIDO com esta causa, e é isto que se reporta: o controlo não salva a leitura 'a topologia é dura', desmente-a.
+
+[OK] grelhas -> results\mapa_grande\f1_zeroshot\f1_grelha_por_condicao.csv
