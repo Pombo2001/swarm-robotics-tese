@@ -8,18 +8,24 @@ Essa verificação foi feita **à mão** a 18, 25 e 27 de julho de 2026. É a me
 comparação de cada vez, e vai ser precisa outra vez em agosto (mega-treino e
 mapa grande) e em setembro (versão composta, 15 set). Isto fá-la em segundos.
 
-O que compara, hoje:
+O que compara — **203 valores**:
 
-  · `tab:res_eval` — a tabela principal do Capítulo de Resultados: 21 células
-    (7 cenários × 3 algoritmos) × (taxa de sucesso, média ± desvio-padrão das
-    recolhas/ep) = **63 valores** contra `final_7d/eval_by_run_7d.csv`;
-  · a contagem de episódios que sustenta a tabela (2940 = 3 × 7 × 7 × 20).
+  · `tab:res_eval` (63) — a tabela principal: 21 células (7 cenários × 3
+    algoritmos) × (sucesso, média, desvio) contra `final_7d/eval_by_run_7d.csv`,
+    mais a contagem de episódios que a sustenta (2940 = 3 × 7 × 7 × 20);
+  · `tab:res_scale_all` (35) — eficiência per capita do GNN a N∈{10,20,50,100} e
+    a retenção, contra `estatisticas/escalabilidade_*.csv`;
+  · `tab:res_signif` (105) — as 21 comparações emparelhadas (médias, p, δ e a
+    coluna "Signif.") contra `testes_significancia_food_collected.csv`.
 
-O que NÃO compara (e porquê): as tabelas de significância saem do
-`statistical_tests.py` e reproduzi-las aqui seria escrever o teste duas vezes —
-a verificação delas é correr esse script. A §res_novelty e a campanha adaptativa
-vivem noutros CSV, com protocolos próprios; entram aqui quando alguém precisar
-de as verificar duas vezes.
+⚠️ A tabela de significância é comparada com o **CSV que o `statistical_tests.py`
+produziu**, não recalculada. Ter aqui uma segunda implementação do Mann-Whitney
+seria ter duas respostas possíveis para a mesma pergunta; e a pergunta que
+interessa não é "o teste está bem feito?" mas "a tabela impressa é a que o teste
+produziu?" — que é onde entram as gralhas de transcrição.
+
+O que fica de fora: a §res_novelty e a campanha adaptativa, que vivem noutros CSV
+com protocolos próprios. Entram quando alguém precisar de as verificar duas vezes.
 
 ⚠️ A unidade da tese é a **média por run**: cada célula é a média das 7 médias
 por execução, não a média dos 140 episódios. Com runs desequilibrados dariam
@@ -62,9 +68,13 @@ ROTULO_PARA_CENARIO = {
     "Porta Cooperativa": "cooperative_door",
     "Perceção Coop.": "cooperative_perception",
     "Porta c/ Alternativa": "cooperative_door_bypass",
-    # A tabela da escalabilidade escreve dois destes por extenso
+    # O mesmo cenário aparece com rótulos diferentes conforme a tabela (e o CSV
+    # do statistical_tests usa outros ainda). Comparar por rótulo literal dava
+    # falsas divergências; a chave de comparação é sempre o nome do cenário.
     "Perceção Cooperativa": "cooperative_perception",
     "Beco Sem Saída (U)": "u_wall",
+    "Porta Coop. c/ Alternativa": "cooperative_door_bypass",
+    "Porta Cooperativa com Alternativa": "cooperative_door_bypass",
 }
 ALGOS = ("GNN", "PPO", "SAC")
 DIR_ESCALA = os.path.join(PROJECT_ROOT, "results", "estatisticas")
@@ -197,6 +207,93 @@ def verificar_escalabilidade(tolerancia):
     return problemas
 
 
+def verificar_significancia(tolerancia):
+    """tab:res_signif — as 21 comparações emparelhadas contra o CSV do teste.
+
+    ⚠️ Isto **não** repete os testes: compara a tabela da tese com o CSV que o
+    `statistical_tests.py` produziu. Reproduzir aqui o Mann-Whitney seria ter
+    duas implementações a poder discordar, e a pergunta que interessa não é "o
+    teste está bem feito?" mas "a tabela impressa é a que o teste produziu?" —
+    que é onde entram as gralhas de transcrição.
+
+    Verifica ainda a coerência interna que uma tabela dessas tem de ter: a coluna
+    "Signif." e o p têm de concordar em torno de 0,05.
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: tab:res_signif  vs  estatisticas/testes_significancia_*.csv")
+    print("=" * 72)
+
+    fp = os.path.join(DIR_ESCALA, "testes_significancia_food_collected.csv")
+    if not os.path.exists(fp):
+        print("[!] sem %s — a saltar." % os.path.basename(fp))
+        return []
+    csv = pd.read_csv(fp, encoding="utf-8", encoding_errors="replace")
+    # chave: (cenário, "A vs B")
+    # chave canónica: (cenário, "A vs B") — nunca o rótulo escrito
+    do_csv = {(r["Scenario"], "%s vs %s" % (r["A"], r["B"])): r
+              for _, r in csv.iterrows()}
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = f.read()
+    i = tex.find("\\label{tab:res_signif}")
+    corpo = tex[i:tex.find("\\end{tabular}", i)]
+
+    problemas, conferidos, linhas_lidas = [], 0, 0
+    for bruta in corpo.split("\\\\"):
+        campos = [c.strip() for c in bruta.replace("\\hline", "").split("&")]
+        if len(campos) < 7:
+            continue
+        rotulo = re.sub(r"\\[a-zA-Z]+\{|\}|\$", "", campos[0]).strip()
+        par = re.sub(r"\\[a-zA-Z]+\{|\}|\$", "", campos[1]).strip()
+        cen = ROTULO_PARA_CENARIO.get(rotulo)
+        if cen is None or (cen, par) not in do_csv:
+            if rotulo and "vs" in par:
+                problemas.append("%s / %s: não está no CSV do teste (cenário %r)"
+                                 % (rotulo, par, cen))
+            continue
+        linhas_lidas += 1
+        r = do_csv[(cen, par)]
+
+        for k, nome, esperado in ((2, "média A", float(r["mean_A"])),
+                                  (3, "média B", float(r["mean_B"])),
+                                  (4, "p", float(r["p_value"])),
+                                  (5, "δ", float(r["cliffs_delta"]))):
+            conferidos += 1
+            tese = numero(campos[k])
+            # o p vem com 4 casas na tese; as médias com 2
+            tol = 0.0001 if nome == "p" else tolerancia
+            if tese is None:
+                problemas.append("%s / %s %s: não consegui ler (%r)"
+                                 % (rotulo, par, nome, campos[k]))
+            elif abs(tese - esperado) > tol:
+                problemas.append("%-22s %-12s %-8s tese=%9.4f  csv=%9.4f"
+                                 % (rotulo, par, nome, tese, esperado))
+
+        # coerência entre a coluna "Signif." e o p
+        conferidos += 1
+        diz_sim = campos[6].strip().lower().startswith("sim")
+        if diz_sim != bool(r["significant"]):
+            problemas.append("%s / %s: coluna Signif.=%r mas o CSV diz %s "
+                             "(p=%.4f)" % (rotulo, par, campos[6],
+                                           r["significant"], r["p_value"]))
+
+    if linhas_lidas != 21:
+        problemas.append("li %d linhas da tabela, esperava 21 (7 cenários × 3 pares)"
+                         % linhas_lidas)
+
+    if problemas:
+        print("DIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("Os %d valores de tab:res_signif (21 comparações) batem com o CSV."
+              % conferidos)
+    print("NOTA: compara a tabela com o CSV do statistical_tests.py; não repete")
+    print("      os testes — duas implementações podiam discordar.")
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tolerancia", type=float, default=0.05,
@@ -276,6 +373,7 @@ def main():
     print("      duas vezes e arriscar duas respostas.")
 
     problemas += verificar_escalabilidade(a.tolerancia)
+    problemas += verificar_significancia(a.tolerancia)
 
     print()
     print("=" * 72)
