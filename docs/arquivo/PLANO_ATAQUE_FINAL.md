@@ -1,7 +1,7 @@
 # PLANO DE ATAQUE FINAL — prompt de execução (15 jul → 15 set 2026)
 
 > ⚠️ **ARQUIVO (19 jul 2026).** Este plano foi fundido com o `PLANO_DE_ATAQUE.md` no
-> **[`PLANO_MESTRE.md`](PLANO_MESTRE.md)**, que reflete o estado pós-revisão de 18 jul
+> **[`PLANO_MESTRE.md`](../PLANO_MESTRE.md)**, que reflete o estado pós-revisão de 18 jul
 > e é o único plano vivo. Lê e atualiza ESSE; este fica como registo do que foi
 > decidido a 15-16 jul.
 
@@ -116,7 +116,7 @@ a partir de números de TREINO (armadilha nº3 — só `eval_summary.csv`/`eval_
 
 ## P1 — Fecho da campanha adaptativa (~19-20 jul, quando o utilizador trouxer os dados)
 
-**Pré-registo — [x] FEITO (15 jul): [`docs/PRE_REGISTO_NOVELTY_ADAPTATIVO.md`](PRE_REGISTO_NOVELTY_ADAPTATIVO.md)**
+**Pré-registo — [x] FEITO (15 jul): [`docs/PRE_REGISTO_NOVELTY_ADAPTATIVO.md`](../PRE_REGISTO_NOVELTY_ADAPTATIVO.md)**
 Escrito e commitado ANTES de os dados de avaliação existirem. Fixa hipótese, testes
 confirmatórios T1-T4 (Mann-Whitney + δ sobre médias por run, n=7), a **regra de decisão
 pré-comprometida** da QI6 (sobe a resultado sse: não-degrada os 5 fáceis + ganho no u_wall

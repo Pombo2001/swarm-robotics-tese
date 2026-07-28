@@ -187,7 +187,17 @@ python scripts/eval_scalability.py --episodes 20
 
 # 6. Gráficos finais
 python scripts/plot_results.py
+
+# 7. VERIFICAR que a tese e o artigo dizem o que os CSV dizem (308 valores)
+python scripts/verificar_numeros_tese.py
 ```
+
+> **O passo 7 não é opcional.** É a regra 6(b) do `PLANO_MESTRE.md` — *"os números
+> citados batem com o CSV fonte?"* — e foi cumprida à mão três vezes antes de ser
+> automatizada. Cobre `tab:res_eval`, `tab:res_scale_all`, `tab:res_signif`, as
+> afirmações em prosa da §res_robustez e a `tab:task` do artigo. Devolve código de
+> saída, e `scripts/instalar_hooks.sh` põe-no a correr como `pre-commit` sempre que
+> um commit toca na tese ou nos CSV canónicos.
 
 > **Nota arquitetural (Sscale):** só a **GNN** é invariante ao número de agentes
 > (agrega vizinhos por atenção). O PPO e o SAC usam uma MLP de entrada fixa, pelo que

@@ -2,7 +2,7 @@
 
 Mapa de uma página do que está aqui. Escrito a 25 jul 2026, quando esta pasta
 tinha 15 ficheiros lado a lado sem nada a dizer qual era o ponto de entrada nem
-quais já estavam ultrapassados.
+quais já estavam ultrapassados. **Revisto a 28 jul** (17 ficheiros).
 
 > **Se só vais ler um ficheiro, lê o [`PLANO_MESTRE.md`](PLANO_MESTRE.md).**
 > É o único ponto de re-entrada do projeto; tudo o resto é detalhe que ele
@@ -16,6 +16,7 @@ quais já estavam ultrapassados.
 | [`REPRODUZIR.md`](REPRODUZIR.md) | De cada número/tabela/figura da tese até aos dados e ao script que os gera, com o que já foi auditado e em que máquina está. | **VIVO** |
 | [`INVENTARIO.md`](INVENTARIO.md) | O que existe e o que falta: campanhas com dados, modelos, documentos, ferramentas, e de quem depende cada coisa que falta. Verificado por leitura do disco. | **VIVO** — reverificar ao trazer campanhas |
 | [`ARQUITETURA.md`](ARQUITETURA.md) | Arquitetura do simulador e dos controladores; apoio ao capítulo de Implementação. | Referência |
+| [`IMPACTO_MEGATREINO_NA_TESE.md`](IMPACTO_MEGATREINO_NA_TESE.md) | O que se edita na tese quando o mega-treino fechar, com números de linha — escrito **antes** de integrar, para a janela até 22 ago ser de escrita e não de procura. | **VIVO** — usar a ~3 ago |
 
 ## Pré-registos (escritos ANTES de existirem dados)
 
@@ -25,7 +26,7 @@ silenciosas** — é isso que os torna pré-registos e não relatórios.
 
 | Ficheiro | Campanha | Estado |
 |---|---|---|
-| [`PRE_REGISTO_MAPA_GRANDE.md`](PRE_REGISTO_MAPA_GRANDE.md) | 8.º cenário (mapa grande): F0/F1/F2, QI7. | **VIVO** — F1 fechado a 25 jul; controlos e F2 por correr |
+| [`PRE_REGISTO_MAPA_GRANDE.md`](PRE_REGISTO_MAPA_GRANDE.md) | 8.º cenário (mapa grande): F0/F1/F2, QI7. **15 emendas datadas.** | **VIVO** — F1 natural fechado a **27 jul** (o de 25 jul foi **anulado**: campeões da campanha errada); 3 controlos a correr desde 28 jul; F2 por lançar |
 | [`PRE_REGISTO_MEGATREINO.md`](PRE_REGISTO_MEGATREINO.md) | Mega-treino de 1 mês nos «piores mapas» (megaA/megaB). | **VIVO** — a correr no servidor |
 | [`PRE_REGISTO_NOVELTY_ADAPTATIVO.md`](PRE_REGISTO_NOVELTY_ADAPTATIVO.md) | QI6: dosagem adaptativa da novidade. | Fechado — resultados já na tese (§res_novelty) |
 | [`PROTOCOLO_SLR.md`](PROTOCOLO_SLR.md) + [`slr/`](slr/) | Protocolo e dados da revisão sistemática (PRISMA, screening). | Fechado — Cap. 3 e Apêndice |
@@ -40,6 +41,7 @@ frases da tese apoiam-se neles. Não são para atualizar.
 | [`PROPOSTA_MEGATREINO_1MES.md`](PROPOSTA_MEGATREINO_1MES.md) | Proposta que deu origem ao mega-treino de 1 mês (19 jul). |
 | [`PROPOSTA_TREINO_FINAL.md`](PROPOSTA_TREINO_FINAL.md) | O que treinar e o que não treinar nos últimos 2 meses (10 jul). |
 | [`AVANCO_GNN_HOMING.md`](AVANCO_GNN_HOMING.md) | O episódio da *fitness* de homing — a cura do «colapso do evolutivo» (28-29 jun). Concluído e superado. |
+| [`AB_SAC_MAPA_GRANDE.md`](AB_SAC_MAPA_GRANDE.md) | O A/B que decidiu manter o SAC inalterado no F2 do mapa (27 jul): A+B corta o desvio 65%, C piora 80%. |
 
 ## Correspondência com o orientador
 

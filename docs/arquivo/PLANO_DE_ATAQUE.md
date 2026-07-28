@@ -1,7 +1,7 @@
 # PLANO DE ATAQUE — Tese de Mestrado (até Outubro 2026)
 
 > ⚠️ **ARQUIVO (19 jul 2026).** O ponto de re-entrada do projeto passou a ser o
-> **[`PLANO_MESTRE.md`](PLANO_MESTRE.md)** — lê esse primeiro e atualiza esse.
+> **[`PLANO_MESTRE.md`](../PLANO_MESTRE.md)** — lê esse primeiro e atualiza esse.
 > Este ficheiro fica como registo histórico (cronologia, armadilhas na origem,
 > tutorial completo do servidor na §4) e não deve voltar a ser editado.
 
@@ -127,7 +127,7 @@ bypass, empatando com o PPO).
   a "mecanismo de robustez para orçamento curto / deceção mais severa".
 
 > 📋 **Decisão em aberto — o que treinar nos últimos 2 meses:** ver
-> **[`docs/PROPOSTA_TREINO_FINAL.md`](PROPOSTA_TREINO_FINAL.md)** (proposta autónoma, com custos,
+> **[`docs/PROPOSTA_TREINO_FINAL.md`](../PROPOSTA_TREINO_FINAL.md)** (proposta autónoma, com custos,
 > cautelas metodológicas e títulos alternativos para o artigo). Resumo: correr o **Novelty Search
 > no Muro em U e no bypass com orçamento igualado** (~2 dias, fecha as duas lacunas que restam);
 > **não** repetir a campanha 7×7 nem tentar a política de atenção por gradiente.

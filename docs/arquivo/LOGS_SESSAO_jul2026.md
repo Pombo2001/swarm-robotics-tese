@@ -62,7 +62,7 @@ Ao integrar (só até 22 ago): preencher, escolher a leitura, `\input` a seguir 
 `results/models_7d/` tem os **21/21 campeões** (7 cenários × 3 algoritmos), datados
 de **3-9 jul**, e a guarda de campanha do `eval_zeroshot_mapa.py` **passa**. Só
 leitura no servidor (`pscp`); nada foi escrito lá. Script novo:
-[`scripts/trazer_do_servidor.sh`](../scripts/trazer_do_servidor.sh) — o par do
+[`scripts/trazer_do_servidor.sh`](../../scripts/trazer_do_servidor.sh) — o par do
 `servidor.sh`, com `-p` para **preservar as datas** (sem isso a guarda deixa passar
 tudo, porque a data passa a ser a de hoje).
 
