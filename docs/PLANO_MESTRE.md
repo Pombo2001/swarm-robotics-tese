@@ -16,25 +16,81 @@
 
 ---
 
-# 0. SE VAIS PARA O PC DO TRABALHO (28 jul) — LÊ ISTO PRIMEIRO
+# 0. ONDE ISTO ESTÁ (28 jul, fim da sessão da manhã) — LÊ ISTO PRIMEIRO
 
-1. **`git pull`.** Está tudo lá, incluindo os **dados** do dia: os CSV do mapa
-   grande foram versionados de propósito em `results/mapa_grande/` (92 KB, com
-   `LEIA-ME.md` próprio). O resto de `results/` continua fora do git.
-2. **O que NÃO viaja:** os modelos. Campeões 7d (`results/models_7d/`, 50 MB),
-   *smoke test* F0 (13 MB) e A/B do SAC (43 MB) ficam **na torre**. Se precisares
-   deles aí, tra-los do servidor com `scripts/trazer_do_servidor.sh` — os
-   comandos exatos estão no `results/mapa_grande/LEIA-ME.md`.
-3. **Não é preciso tocar no servidor.** O código do mapa já lá está, em
-   `~/swarm-mapa/` (isolado), com 19/19 testes a passar em Python 3.12.
-4. **O que falta para fechar o F1:** as **três condições de controlo**, ~6 h cada.
-   Correm em qualquer PC: `python scripts/eval_zeroshot_mapa.py --episodes 20
-   --models-dir results/models_7d --norm-obs treino` (e depois `--controlo
-   sem_obstaculos` e `--controlo sem_porta_obs`). **Precisam dos campeões 7d.**
+1. **Os três controlos do F1 estão A CORRER NO SERVIDOR** desde 28 jul 07:38 UTC,
+   em tmux `mapaC1/2/3` (decisão do utilizador: nada de treinos no PC local).
+   Cada condição no seu diretório (`~/swarm-mapa-c{1,2,3}`) porque partilham CSV e
+   o eval tem lock por ficheiro. ETA ~3,7 h a 0,5 min/episódio ⇒ **fecham ~11h30
+   UTC de 28 jul**. Ver: `scripts/servidor.sh` (lê `~/mapa_C{1,2,3}_master.log`).
+2. **Ao chegar:** trazer os 3 CSV (um por condição, colunas `NormObs`/`Controlo`
+   dizem qual é qual), juntá-los ao `base` que já está em
+   `results/mapa_grande/f1_zeroshot/`, e só então ler o F1 — **antes disto o F1
+   não responde à QI7**. A interpretação de cada condição está pré-comprometida
+   no `PRE_REGISTO_MAPA_GRANDE.md` §3: lê-a **antes** de ver os números.
+3. **O F2 está pronto a disparar**, mas só depois de megaA/megaB fecharem
+   (~1-3 ago): `scripts/mapa_streamF2.sh {gnn|grad}`, já no servidor. Avisa e
+   espera 120 s se apanhar o mega-treino vivo, em vez de bloquear.
+4. **O que NÃO viaja para outro PC:** os modelos. Campeões 7d
+   (`results/models_7d/`, 50 MB), F0 (13 MB) e A/B do SAC (43 MB) ficam **na
+   torre** — mas já não são precisos em PC nenhum: estão instalados no servidor,
+   em `~/swarm-mapa/results/models_7d/`, com as datas de 3-9 jul preservadas.
 
 ---
 
-# 0-A. LOG DE SESSÃO — 27 jul 2026 (Opus 5, torre)
+# 0-A. LOG DE SESSÃO — 28 jul 2026, manhã (Opus 5, torre)
+
+> Sessão curta e operacional: tirar os controlos do F1 de cima do PC local e
+> pô-los no servidor, deixar o F2 pronto, e rever texto enquanto isso corre.
+
+## ✅ Os controlos do F1 arrancaram no servidor (07:38 UTC)
+
+O custo real foi medido antes de comprometer nada: **1 episódio = 1m34s num core**
+do servidor ⇒ 21 células × 20 ep = ~11 h por condição, 33 h em sequência. Daí as
+três correrem **em paralelo, uma por diretório** (`~/swarm-mapa-c{1,2,3}`, cópias
+`cp -rp`). Não podiam partilhar diretório: as condições convivem no mesmo CSV e o
+`eval_zeroshot_mapa.py` tem lock por ficheiro destino, por isso a segunda
+abortava. Com `nice 10` e uma thread cada, a carga passou de 47 para 52 em 64
+vCPU — megaA/megaB não dão por isso. **O ritmo observado é melhor que o estimado**
+(~0,5 min/ep; o 1m34s do smoke era quase todo arranque): fim previsto ~11h30 UTC.
+
+Validado **antes** de lançar: a impressão digital do ambiente no servidor dá
+`267a7b547aed`, **igual à da torre** (a digital é geometria arredondada a 4 casas,
+por isso é estável entre plataformas — ao contrário dos hashes de floats que
+falharam a 27 jul); e só o controlo `sem_obstaculos` a altera (`dd557291eaa5`),
+que é o único que mexe no mundo. A guarda de campanha passa: 21 campeões
+instalados em `~/swarm-mapa/results/models_7d/` com as datas de **3-9 jul**
+preservadas (`cp -p` — sem isso a guarda deixaria passar qualquer coisa).
+
+## ✅ O F2 fica escrito antes de haver janela
+
+`scripts/mapa_streamF2.sh {gnn|grad}` — 780 min/run para o GNN (91 h) e 192 para
+PPO/SAC (45 h), como o pré-registo fixou, em dois streams. Já no servidor.
+
+## 🔍 Revisão de texto: uma imprecisão real na secção do mapa
+
+Verificações que **não** encontraram nada (não repetir): as 10 citações nominais
+do `main.tex` batem todas com o primeiro autor do `.bib` — incluindo a
+`sun2024graph`, cuja chave engana mas cujo primeiro autor **é** Chen, Xingran; os
+dois `.bib` estão sincronizados nas 46 chaves comuns; e nenhum número do
+Resumo/Abstract/Conclusões deixou de ter eco no corpo.
+
+O que **estava** errado (emendas #14 e #15 do pré-registo, commit `ed90c50`):
+os `128,8 m` chamados "percurso ótimo spawn→ninho" são a distância do **centro**
+da caixa de partida — os spawns reais vão de **121-124 m** (melhor) a **138-139 m**
+(pior). E o custo da alternativa é **+20%** (razão 1,205 medida sobre as posições
+de partida), não os +21% que saíam de dividir o máximo do campo (155,4 m) pelo
+percurso do centro do spawn — dois números que medem coisas diferentes. Nenhuma
+conclusão muda; a descrição é que passa a dizer o que mede. Confirmados ao
+centímetro: 155,4 m de máximo do campo (777 passos, folga 2,57×) e 139,2 m no
+pior spawn (696 passos, 2,87×).
+
+Compilação isolada com a secção inserida: **125 págs, 0 refs indefinidas, 0
+overfulls, 0 erros** — e revertida a seguir, porque o mapa só entra com dados.
+
+---
+
+# 0-B. LOG DE SESSÃO — 27 jul 2026 (Opus 5, torre)
 
 > Rebase + tese recompilada de manhã; à tarde, **auditoria de física ao mapa
 > grande antes de comprometer a janela de servidor**. Uma falha crítica
@@ -643,16 +699,18 @@ de virar código** — e só depois integrado.
       [`docs/PRE_REGISTO_MAPA_GRANDE.md`](PRE_REGISTO_MAPA_GRANDE.md) — QI7, desenho
       congelado com justificação de cada parâmetro, fases F0/F1/F2, testes M1-M3, regra
       de decisão e modos de falha antecipados.
-- [ ] **F0 — smoke test local** (~1 h, GNN, 1 run): só confirmar que arranca. **Não
+- [x] **F0 — smoke test local** (~1 h, GNN, 1 run): só confirmar que arranca. **Não
       produz resultado** e não entra em análise nenhuma.
-- [ ] **F1 — zero-shot de topologia**: avaliar os campeões dos 7 cenários neste mapa
-      sem retreino (custa horas, não dias; não precisa do servidor). **Correr as DUAS
-      condições** de normalização (`--norm-obs mapa` e `--norm-obs treino`) — sem o
-      par, um zero confunde topologia com escala da observação. O script é retomável
-      (o PC caiu a meio a 24 jul): repetir o mesmo comando salta o que já está feito.
-      Fumo validado a 25 jul (Sandbox, 2 ep: 15,5 recolhas/ep nas duas condições).
+- [~] **F1 — zero-shot de topologia**: condição **natural FECHADA** (27 jul, 420 ep,
+      21 células, em `results/mapa_grande/f1_zeroshot/`); as **3 condições de
+      controlo a correr no servidor** desde 28 jul 07:38 UTC (tmux `mapaC1/2/3`,
+      ETA ~11h30 UTC). Sem o par de condições, um zero confunde topologia com
+      escala da observação, obstáculos ou features da porta. O script é retomável:
+      repetir o mesmo comando salta o que já está feito.
 - [ ] **F2 — treino nativo**: 3 algoritmos × 7 runs × seeds 1-7. **Só depois do
       mega-treino fechar (~3 ago).** Hard stop de integração na tese: **22 ago**.
+      **Script pronto e já no servidor** (28 jul): `scripts/mapa_streamF2.sh gnn`
+      e `... grad`, em dois tmux. 780 min/run no GNN, 192 em PPO/SAC.
 
 ### ⚠️ Dois bugs apanhados na auditoria de 24 jul (a pedido do utilizador)
 
