@@ -15,7 +15,7 @@ from nicegui import ui, app
 from . import config, theme
 from .jobs import JobQueue
 from .views import (overview, treinar, servidor, ciencia, resultados, curvas,
-                    videos, aovivo, arquivo, proveniencia)
+                    videos, aovivo, arquivo, proveniencia, prontidao)
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
@@ -71,6 +71,7 @@ def index():
                 # em vez de procurado no REPRODUZIR.md com o júri à espera.
                 t_proven  = ui.tab("Proveniência", icon="fact_check")
                 t_result  = ui.tab("Resultados", icon="image")
+                t_pronto  = ui.tab("Prontidão", icon="checklist")
                 t_videos  = ui.tab("Vídeos", icon="smart_display")
                 t_aovivo  = ui.tab("Ao vivo (3D)", icon="view_in_ar")
                 t_arquivo = ui.tab("Arquivo", icon="history_edu")
@@ -86,7 +87,8 @@ def index():
     # A Overview salta para outras vistas por nome (cartões de estado clicáveis).
     _by_name = {"treinar": t_treinar, "monitorizar": t_monitor,
                 "ciencia": t_ciencia, "proveniencia": t_proven,
-                "resultados": t_result, "videos": t_videos,
+                "resultados": t_result, "prontidao": t_pronto,
+                "videos": t_videos,
                 "aovivo": t_aovivo, "arquivo": t_arquivo}
 
     def goto(name: str):
@@ -110,6 +112,8 @@ def index():
             proveniencia.build()
         with ui.tab_panel(t_result):
             resultados.build()
+        with ui.tab_panel(t_pronto):
+            prontidao.build()
         with ui.tab_panel(t_videos):
             videos.build()
         with ui.tab_panel(t_aovivo):
