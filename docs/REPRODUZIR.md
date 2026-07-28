@@ -110,8 +110,11 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
    foi escrito na pasta que a tese cita. Apagado no minuto seguinte, mas o padrão
    é geral — um script de análise cujo destino é fixo não distingue um ensaio de
    uma corrida boa. O `analise_f1_controlos.py` passou a **exigir `--saida`**
-   quando algum CSV de entrada vem de fora da pasta canónica; os outros scripts de
-   análise **não têm essa guarda** — ao ensaiá-los, redirigir a saída à mão.
+   quando algum CSV de entrada vem de fora da pasta canónica.
+   *(Verificado a seguir: o `analise_adaptativo.py`, o `analise_megatreino.py` e o
+   `analise_mapa_grande.py` **não escrevem ficheiro nenhum** — só imprimem, e
+   guarda-se a saída com `>` quando se quer. Não têm este problema nem precisam
+   da guarda; o `analise_f1_controlos.py` é o único que grava.)*
 7. **Hashes de floats não atravessam máquinas** (27 jul): um teste que comparava
    SHA-256 de somas de floats falhou no servidor sem ser regressão (266,003105779438
    aqui vs ...439 lá). Comparar com tolerância. A impressão digital do ambiente do

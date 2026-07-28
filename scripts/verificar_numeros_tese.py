@@ -62,8 +62,12 @@ ROTULO_PARA_CENARIO = {
     "Porta Cooperativa": "cooperative_door",
     "Perceção Coop.": "cooperative_perception",
     "Porta c/ Alternativa": "cooperative_door_bypass",
+    # A tabela da escalabilidade escreve dois destes por extenso
+    "Perceção Cooperativa": "cooperative_perception",
+    "Beco Sem Saída (U)": "u_wall",
 }
 ALGOS = ("GNN", "PPO", "SAC")
+DIR_ESCALA = os.path.join(PROJECT_ROOT, "results", "estatisticas")
 
 
 def numero(s):
@@ -122,6 +126,75 @@ def esperado_do_csv(csv):
         # do que não ter verificador nenhum.
         saida[(cen, algo)] = (sucesso, por_run.mean(), por_run.std(ddof=1))
     return saida, len(d)
+
+
+def verificar_escalabilidade(tolerancia):
+    """tab:res_scale_all — eficiência per capita do GNN por N, e a retenção.
+
+    A tabela é só do GNN: as políticas MLP do PPO/SAC têm entrada de dimensão
+    fixa e são incompatíveis com N≠20 (é o ponto da QI2, não uma omissão).
+
+    Retenção = food_per_agent(N=100) / food_per_agent(**N=20**) — o denominador é
+    a dimensão de **treino**, não o menor N da bateria. É a leitura certa para
+    zero-shot: mede quanto se perde ao afastar-se do ponto onde a política foi
+    aprendida. (A primeira versão desta função dividiu por N=10 e acusou 6 das 7
+    retenções de estarem erradas; estava errada ela. É o segundo caso hoje em que
+    este verificador acusou a tese e o enganado era o verificador.)
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: tab:res_scale_all  vs  estatisticas/escalabilidade_*.csv")
+    print("=" * 72)
+
+    tabela = ler_tabela(MAIN_TEX, "tab:res_scale_all")
+    problemas, conferidos = [], 0
+
+    for rotulo, campos in tabela.items():
+        cen = ROTULO_PARA_CENARIO[rotulo]
+        fp = os.path.join(DIR_ESCALA, "escalabilidade_%s.csv" % cen)
+        if not os.path.exists(fp):
+            problemas.append("%s: sem %s" % (rotulo, os.path.basename(fp)))
+            continue
+        d = pd.read_csv(fp)
+        gnn = d[d["Algorithm"] == "GNN"].set_index("N")
+
+        percapita = {}
+        for k, n in enumerate((10, 20, 50, 100)):
+            conferidos += 1
+            tese = numero(campos[k]) if k < len(campos) else None
+            if n not in gnn.index:
+                problemas.append("%s: o CSV não tem N=%d" % (rotulo, n))
+                continue
+            csv_ = float(gnn.loc[n, "food_per_agent"])
+            percapita[n] = csv_
+            if tese is None:
+                problemas.append("%s N=%d: não consegui ler a tese (%r)"
+                                 % (rotulo, n, campos[k] if k < len(campos) else ""))
+            elif abs(tese - csv_) > tolerancia:
+                problemas.append("%-22s N=%-4d tese=%7.2f  csv=%7.2f  (Δ=%+.2f)"
+                                 % (rotulo, n, tese, csv_, tese - csv_))
+
+        # retenção (a última coluna), em pontos percentuais
+        conferidos += 1
+        tese_ret = numero(campos[4]) if len(campos) > 4 else None
+        if 20 in percapita and 100 in percapita and percapita[20]:
+            csv_ret = 100.0 * percapita[100] / percapita[20]
+            if tese_ret is None:
+                problemas.append("%s retenção: não consegui ler a tese" % rotulo)
+            elif abs(tese_ret - csv_ret) > 1.0:   # a tese arredonda ao inteiro
+                problemas.append("%-22s retenção tese=%5.1f%%  csv=%5.1f%%  "
+                                 "(Δ=%+.1f pp)" % (rotulo, tese_ret, csv_ret,
+                                                   tese_ret - csv_ret))
+
+    if problemas:
+        print("DIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("Os %d valores de tab:res_scale_all batem com os CSV." % conferidos)
+    print("NOTA: a tabela é só do GNN — as MLP do PPO/SAC são incompatíveis com")
+    print("      N≠20 por construção, que é o resultado da QI2 e não uma falta.")
+    return problemas
 
 
 def main():
@@ -201,6 +274,14 @@ def main():
     print("      As tabelas de significância verificam-se correndo o")
     print("      statistical_tests.py — reproduzir os testes aqui era escrevê-los")
     print("      duas vezes e arriscar duas respostas.")
+
+    problemas += verificar_escalabilidade(a.tolerancia)
+
+    print()
+    print("=" * 72)
+    print("TOTAL: %s" % ("%d divergência(s) — ver acima" % len(problemas)
+                         if problemas else "tudo bate ✓"))
+    print("=" * 72)
     return 1 if problemas else 0
 
 
