@@ -8,7 +8,8 @@ Essa verificação foi feita **à mão** a 18, 25 e 27 de julho de 2026. É a me
 comparação de cada vez, e vai ser precisa outra vez em agosto (mega-treino e
 mapa grande) e em setembro (versão composta, 15 set). Isto fá-la em segundos.
 
-O que compara — **203 valores** e **4 afirmações em prosa**:
+O que compara — **308 valores** e **4 afirmações em prosa**, na tese
+e no artigo:
 
   · `tab:res_eval` (63) — a tabela principal: 21 células (7 cenários × 3
     algoritmos) × (sucesso, média, desvio) contra `final_7d/eval_by_run_7d.csv`,
@@ -20,7 +21,11 @@ O que compara — **203 valores** e **4 afirmações em prosa**:
   · `§res_robustez` — os INTERVALOS afirmados em prosa ("entre 92% e 106% nas 21
     combinações", "o evolutivo retém 92--97%") contra os `eval_*_fail10.csv`.
     Uma afirmação de intervalo em texto é mais frágil do que uma tabela: ninguém
-    a regenera com um script, e sobrevive a dados novos sem dar sinal.
+    a regenera com um script, e sobrevive a dados novos sem dar sinal;
+  · `Artigo/artigo.tex`, `tab:task` (105) — o artigo é o que vai ser submetido e
+    as suas tabelas são cópias reformatadas das da tese, que sobrevivem a
+    correções da tese sem darem sinal (foi assim que 8 figuras dele ficaram
+    desatualizadas até 21 jul).
 
 ⚠️ A tabela de significância é comparada com o **CSV que o `statistical_tests.py`
 produziu**, não recalculada. Ter aqui uma segunda implementação do Mann-Whitney
@@ -385,6 +390,89 @@ def verificar_robustez():
     return problemas
 
 
+def verificar_artigo(tolerancia):
+    """Artigo/artigo.tex, tab:task — a mesma campanha, outra apresentação.
+
+    O artigo é o que vai ser submetido, e as suas tabelas são **cópias
+    reformatadas** das da tese: sobrevivem a correções da tese sem darem sinal.
+    Foi assim que 8 figuras do artigo ficaram desatualizadas até 21 jul.
+
+    Cada célula é `média ± dp (sucesso%) [runs a 100%]`. O `[n/7]` **não existe na
+    tese** — é o número de execuções cuja taxa de sucesso é 100%, e não a taxa de
+    sucesso média. São coisas diferentes: no Muro U o PPO tem 71% de sucesso mas
+    só 4 execuções em 7 chegam aos 100%.
+    """
+    fp_tex = os.path.join(PROJECT_ROOT, "Artigo", "artigo.tex")
+    if not os.path.exists(fp_tex) or not os.path.exists(CSV_7D):
+        return []
+
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: Artigo tab:task  vs  final_7d/eval_by_run_7d.csv")
+    print("=" * 72)
+
+    d = pd.read_csv(CSV_7D)
+    esperado = {}
+    for (cen, algo), g in d.groupby(["Scenario", "Algorithm"]):
+        por_run = g.groupby("Run")["food_collected"].mean()
+        cheios = g.groupby("Run")["success"].mean()
+        esperado[(cen, algo)] = (por_run.mean(), por_run.std(ddof=1),
+                                 100.0 * g["success"].mean(),
+                                 int((cheios == 1.0).sum()), len(por_run))
+
+    with open(fp_tex, encoding="utf-8") as f:
+        tex = f.read()
+    i = tex.find("\\label{tab:task}")
+    corpo = tex[i:tex.find("\\bottomrule", i)]
+
+    problemas, conferidos, celulas = [], 0, 0
+    for bruta in corpo.split("\\\\"):
+        campos = [c.strip() for c in bruta.replace("\\midrule", "").split("&")]
+        if len(campos) < 4:
+            continue
+        rotulo = re.sub(r"\\[a-zA-Z]+\{|\}|\$", "", campos[0]).strip()
+        cen = ROTULO_PARA_CENARIO.get(rotulo)
+        if cen is None:
+            continue
+        for k, algo in enumerate(ALGOS):
+            txt = campos[k + 1]
+            m = re.search(r"([\d{},.\\]+)\s*\\pm\s*([\d{},.\\]+).*?\((\d+)\\%\)"
+                          r".*?\[(\d+)/(\d+)\]", txt)
+            if not m:
+                problemas.append("%s/%s: não consegui ler a célula (%r)"
+                                 % (rotulo, algo, txt[:60]))
+                continue
+            celulas += 1
+            e_med, e_dp, e_suc, e_cheios, e_runs = esperado[(cen, algo)]
+            for nome, tese, csv_, tol in (
+                    ("média", numero(m.group(1)), e_med, tolerancia),
+                    ("desvio", numero(m.group(2)), e_dp, tolerancia),
+                    # o artigo arredonda a taxa ao inteiro
+                    ("sucesso", float(m.group(3)), e_suc, 0.5),
+                    ("runs a 100%", float(m.group(4)), float(e_cheios), 0.01),
+                    ("nº de runs", float(m.group(5)), float(e_runs), 0.01)):
+                conferidos += 1
+                if tese is None:
+                    problemas.append("%s/%s %s: ilegível" % (rotulo, algo, nome))
+                elif abs(tese - csv_) > tol:
+                    problemas.append("%-22s %-4s %-12s artigo=%7.2f  csv=%7.2f"
+                                     % (rotulo, algo, nome, tese, csv_))
+
+    if celulas != 21:
+        problemas.append("li %d células, esperava 21" % celulas)
+
+    if problemas:
+        print("DIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("Os %d valores de tab:task (21 células) batem com o CSV da tese."
+              % conferidos)
+    print("NOTA: o [n/7] do artigo é 'execuções com 100%% de sucesso', que NÃO é")
+    print("      a taxa de sucesso média — a tese não reporta esta métrica.")
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tolerancia", type=float, default=0.05,
@@ -466,6 +554,7 @@ def main():
     problemas += verificar_escalabilidade(a.tolerancia)
     problemas += verificar_significancia(a.tolerancia)
     problemas += verificar_robustez()
+    problemas += verificar_artigo(a.tolerancia)
 
     print()
     print("=" * 72)
