@@ -8,6 +8,8 @@ de treino, e várias chegaram a conclusões que o trabalho posterior refutou (o
 sobre o percurso, não são fonte de números para a tese. Só de leitura: não exporta
 para a tese nem lança nada.
 """
+import os
+
 from nicegui import ui
 
 from .. import config, data, theme
@@ -44,10 +46,87 @@ def _zoom(session: str, filename: str):
     dlg.open()
 
 
+# ── Campanhas CANÓNICAS ──────────────────────────────────────────────────────
+# As que sustentam números da dissertação vivem FORA de results/graficos_tese/,
+# cada uma na sua pasta, porque nenhuma podia sobrescrever os modelos campeões
+# 7d (que continuam a ser os ativos, de propósito — ver a armadilha nº9). O
+# resultado colateral era esta vista mostrar 31 campanhas exploratórias e
+# nenhuma das quatro que a tese cita. Aqui estão, com o que cada uma produziu.
+CANONICAS = [
+    ("Campanha final — 7 dias", "graficos_tese/final_7d",
+     "3 algoritmos × 7 cenários × 7 execuções × 20 episódios = 2940 episódios",
+     "tab:res_eval, tab:res_signif, e a base de tudo o resto"),
+    ("Novelty · peso fixo w=0,5", "novelty_final",
+     "2 cenários (Muro U, bypass) × 7 execuções, orçamento igualado",
+     "QI6 — os 7/7 no Muro U e o custo simétrico no bypass"),
+    ("Novelty · dosagem adaptativa", "novelty_adaptativo",
+     "5 fases pré-registadas (T1-T4 + controlo de orçamento)",
+     "QI6 — a campanha que fechou a tensão do peso fixo"),
+    ("Mega-treino de 1 mês", "mega_1mes",
+     "12 fases (u_wall a n=28 nos 4 braços + ablações)",
+     "replicação da QI6 com 4× o n — A CORRER no servidor"),
+    ("Mapa grande — F1", "mapa_grande",
+     "zero-shot de topologia: 21 células × 20 episódios por condição",
+     "QI7 — por fechar (faltam condições de controlo)"),
+]
+
+
+def _conta(rel):
+    """(nº de CSV, nº de PNG) de uma campanha canónica; (0,0) se não existir."""
+    raiz = os.path.join(config.BASE_DIR, "results", rel)
+    if not os.path.isdir(raiz):
+        return 0, 0
+    csv = png = 0
+    for _, _, fs in os.walk(raiz):
+        for f in fs:
+            if f.endswith(".csv"):
+                csv += 1
+            elif f.endswith(".png"):
+                png += 1
+    return csv, png
+
+
+def _canonicas():
+    """A secção que faltava: o que produziu os números da tese."""
+    with ui.card().classes(CARD):
+        _section_title("verified", "Campanhas canónicas",
+                       "as que sustentam números da dissertação")
+        ui.label(
+            "Vivem fora de results/graficos_tese/ — cada uma na sua pasta, para "
+            "nenhuma sobrescrever os campeões da campanha de 7 dias, que "
+            "continuam a ser os modelos ativos. É por isso que não aparecem no "
+            "registo cronológico em baixo."
+        ).classes("text-xs mb-3").style(f"color:{theme.INK_MUTED}")
+
+        for nome, rel, desenho, produziu in CANONICAS:
+            csv, png = _conta(rel)
+            existe = csv or png
+            with ui.row().classes("w-full gap-3 no-wrap items-start py-2 "
+                                  "border-t border-white/5"):
+                ui.element("div").style(
+                    "width:8px;height:8px;border-radius:50%%;margin-top:6px;"
+                    "flex:none;background:%s"
+                    % ("#4ade80" if existe else theme.INK_MUTED))
+                with ui.column().classes("gap-0 grow"):
+                    ui.label(nome).classes("text-sm font-bold")
+                    ui.label(desenho).classes("text-xs") \
+                        .style(f"color:{theme.INK_MUTED}")
+                    ui.label("→ " + produziu).classes("text-xs mt-1")
+                with ui.column().classes("gap-0 items-end shrink-0"):
+                    ui.label("results/" + rel).classes("text-[11px] mono-num") \
+                        .style(f"color:{theme.INK_MUTED}")
+                    ui.label(("%d CSV · %d gráficos" % (csv, png)) if existe
+                             else "não está neste disco") \
+                        .classes("text-[11px] mono-num") \
+                        .style(f"color:{theme.INK_MUTED}")
+
+
 def build():
     campanhas = data.historical_sessions()
 
     with ui.column().classes("w-full gap-4 p-4"):
+        _canonicas()
+
         # ── Contexto: o que é este arquivo ───────────────────────────────────
         with ui.card().classes(CARD):
             _section_title("history_edu", "Arquivo de campanhas — o percurso do projeto")
