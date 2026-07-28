@@ -16,7 +16,7 @@ from . import config, theme
 from .jobs import JobQueue
 from .views import (overview, treinar, servidor, ciencia, resultados, curvas,
                     videos, aovivo, arquivo, proveniencia, prontidao,
-                    defesa, mapa)
+                    defesa, mapa, escala)
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
@@ -74,6 +74,7 @@ def index():
                                             "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
                 t_ciencia = ui.tab("Ciência", icon="science")
                 t_mapa    = ui.tab("Mapa grande", icon="map")
+                t_escala  = ui.tab("Escalabilidade", icon="groups")
                 # Defesa: "de onde vem este número?" respondido em dois cliques,
                 # em vez de procurado no REPRODUZIR.md com o júri à espera.
                 t_proven  = ui.tab("Proveniência", icon="fact_check")
@@ -95,6 +96,7 @@ def index():
     # A Overview salta para outras vistas por nome (cartões de estado clicáveis).
     _by_name = {"treinar": t_treinar, "monitorizar": t_monitor,
                 "ciencia": t_ciencia, "mapa": t_mapa,
+                "escala": t_escala,
                 "proveniencia": t_proven,
                 "resultados": t_result, "prontidao": t_pronto,
                 "defesa": t_defesa,
@@ -120,6 +122,8 @@ def index():
             ciencia.build()
         with ui.tab_panel(t_mapa):
             mapa.build()
+        with ui.tab_panel(t_escala):
+            escala.build()
         with ui.tab_panel(t_proven):
             proveniencia.build()
         with ui.tab_panel(t_result):

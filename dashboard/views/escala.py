@@ -1,0 +1,207 @@
+"""Vista «Escalabilidade» — a QI2 demonstrada, em vez de explicada.
+
+O contributo distintivo da tese é este: a política de grafo com atenção transfere
+de N=20 para N∈{10,50,100} **sem retreino**, e as MLP de entrada fixa do PPO/SAC
+nem sequer carregam. Na dissertação isso são dois parágrafos e uma tabela; aqui
+mexe-se no N e vê-se acontecer — incluindo o que é o ponto principal, que é o
+PPO e o SAC ficarem **indisponíveis** fora do N de treino.
+
+A incompatibilidade não é uma opinião desta vista: vem da coluna `compatible` dos
+`results/estatisticas/escalabilidade_*.csv`, escrita pelo `eval_scalability.py`
+quando tenta carregar o modelo e a dimensão da observação não bate certo.
+
+Duas leituras que a tese faz e que o gráfico tem de deixar ver:
+  · a **taxa de sucesso** mantém-se a 100% em todas as células do GNN — escalar
+    não parte a tarefa;
+  · a **eficiência per capita** cai, e cai mais nos cenários abertos (Sandbox,
+    Perceção) do que nos estruturados (Portas Cooperativas) — o que a tese
+    atribui à partilha de um recurso finito, não a falha de coordenação.
+"""
+import os
+
+import pandas as pd
+from nicegui import ui
+
+from .. import config, theme
+
+CARD = theme.CARD + " p-4"
+_RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+DIR_EST = os.path.join(_RAIZ, "results", "estatisticas")
+
+ALGOS = ("GNN", "PPO", "SAC")
+DIMENSOES = (10, 20, 50, 100)
+N_TREINO = 20
+
+ROTULOS = {"none": "Sandbox", "u_wall": "Muro U", "bottleneck": "Gargalo",
+           "four_rooms": "Quatro Salas",
+           "cooperative_door": "Porta Cooperativa",
+           "cooperative_perception": "Perceção Coop.",
+           "cooperative_door_bypass": "Porta c/ Alternativa"}
+
+
+def _dados():
+    """{cenário: DataFrame} — um por ficheiro de escalabilidade."""
+    saida = {}
+    if not os.path.isdir(DIR_EST):
+        return saida
+    for f in sorted(os.listdir(DIR_EST)):
+        if f.startswith("escalabilidade_") and f.endswith(".csv"):
+            cen = f[len("escalabilidade_"):-len(".csv")]
+            try:
+                saida[cen] = pd.read_csv(os.path.join(DIR_EST, f))
+            except Exception:  # noqa: BLE001
+                pass
+    return saida
+
+
+def _cor(algo):
+    return config.ALGO_META.get(algo, {}).get("color", "#7d7d7d")
+
+
+def build():
+    dados = _dados()
+    if not dados:
+        with ui.column().classes("w-full p-4"):
+            ui.label("Sem CSV de escalabilidade em results/estatisticas/.") \
+                .classes("text-sm font-bold")
+        return
+
+    cenarios = [c for c in ROTULOS if c in dados]
+    estado = {"n": N_TREINO}
+
+    with ui.column().classes("w-full gap-4 p-4"):
+        theme.section_title(
+            "groups", "Escalabilidade (Zero-Shot)",
+            "QI2 — a mesma política, enxames de dimensão diferente, sem retreino")
+
+        # ── o seletor de N ────────────────────────────────────────────────────
+        with ui.card().classes(CARD + " w-full"):
+            ui.label("Dimensão do enxame").classes("text-sm font-bold")
+            ui.label("Todos os controladores foram treinados com N=20. "
+                     "Mover daqui é pedir-lhes uma dimensão que nunca viram.") \
+                .classes("text-xs mb-3").style(f"color:{theme.INK_MUTED}")
+            with ui.row().classes("items-center gap-2 flex-wrap"):
+                botoes = {}
+                for n in DIMENSOES:
+                    b = ui.button("N = %d" % n,
+                                  on_click=lambda x=n: escolher(x)) \
+                        .props("flat no-caps").classes("mono-num")
+                    botoes[n] = b
+
+        # ── um cartão por algoritmo ───────────────────────────────────────────
+        cartoes = ui.row().classes("w-full gap-3 flex-wrap")
+        # ── e o gráfico ───────────────────────────────────────────────────────
+        grafico = ui.column().classes("w-full")
+
+        def escolher(n):
+            estado["n"] = n
+            for k, b in botoes.items():
+                b.props(remove="outline")
+                b.style("background: rgba(255,255,255,%.2f)"
+                        % (0.14 if k == n else 0.04))
+            desenhar()
+
+        def desenhar():
+            n = estado["n"]
+            cartoes.clear()
+            grafico.clear()
+
+            with cartoes:
+                for algo in ALGOS:
+                    linhas = [(cen, d[(d["Algorithm"] == algo) & (d["N"] == n)])
+                              for cen, d in dados.items() if cen in ROTULOS]
+                    compat = [(cen, g) for cen, g in linhas
+                              if len(g) and bool(g["compatible"].iloc[0])]
+                    with ui.card().classes(CARD).style("min-width:250px;flex:1"):
+                        with ui.row().classes("items-center gap-2 no-wrap"):
+                            ui.element("div").style(
+                                "width:10px;height:10px;border-radius:2px;"
+                                "background:%s" % _cor(algo))
+                            ui.label(algo).classes("text-sm font-bold mono-title")
+                        if not compat:
+                            ui.label("indisponível").classes(
+                                "text-3xl font-bold mt-2") \
+                                .style(f"color:{theme.INK_MUTED}")
+                            ui.label(
+                                "A política é uma MLP de entrada fixa: a "
+                                "observação tem 16+(N−1)×5 valores, logo só "
+                                "carrega com N=%d. Não é um resultado fraco — "
+                                "é uma incompatibilidade de arquitetura, e é "
+                                "essa a resposta à QI2." % N_TREINO
+                            ).classes("text-xs mt-2") \
+                                .style(f"color:{theme.INK_MUTED}")
+                            continue
+
+                        pc = sum(float(g["food_per_agent"].iloc[0])
+                                 for _, g in compat) / len(compat)
+                        suc = sum(float(g["success_rate"].iloc[0])
+                                  for _, g in compat) / len(compat)
+                        ui.label("%.2f" % pc).classes(
+                            "text-3xl font-bold mono-num mt-2")
+                        ui.label("recolhas por agente · média de %d cenários"
+                                 % len(compat)).classes("text-xs") \
+                            .style(f"color:{theme.INK_MUTED}")
+                        ui.label("%.0f%% de sucesso" % (100 * suc)).classes(
+                            "text-xs mono-num mt-1") \
+                            .style(f"color:{theme.INK_MUTED}")
+
+                        # retenção face ao N de treino
+                        if n != N_TREINO:
+                            base = []
+                            for cen, _ in compat:
+                                b = dados[cen][(dados[cen]["Algorithm"] == algo)
+                                               & (dados[cen]["N"] == N_TREINO)]
+                                if len(b) and pd.notna(b["food_per_agent"].iloc[0]):
+                                    base.append(float(b["food_per_agent"].iloc[0]))
+                            if base:
+                                r = 100.0 * pc / (sum(base) / len(base))
+                                ui.label("%.0f%% do que rende a N=%d"
+                                         % (r, N_TREINO)).classes(
+                                    "text-xs mono-num mt-1") \
+                                    .style("color:%s" % (
+                                        "#4ade80" if r >= 80 else "#ffb020"))
+
+            # gráfico: per capita por cenário, no N escolhido
+            with grafico:
+                with ui.card().classes(CARD + " w-full"):
+                    ui.label("Eficiência per capita por cenário, com N=%d" % n) \
+                        .classes("text-sm font-bold mb-2")
+                    series = []
+                    for algo in ALGOS:
+                        valores = []
+                        for cen in cenarios:
+                            g = dados[cen][(dados[cen]["Algorithm"] == algo)
+                                           & (dados[cen]["N"] == n)]
+                            v = (float(g["food_per_agent"].iloc[0])
+                                 if len(g) and pd.notna(g["food_per_agent"].iloc[0])
+                                 else None)
+                            valores.append(v)
+                        if any(v is not None for v in valores):
+                            series.append({
+                                "name": algo, "type": "bar", "data": valores,
+                                "itemStyle": {"color": _cor(algo),
+                                              "borderRadius": [3, 3, 0, 0]}})
+                    if not series:
+                        ui.label(
+                            "Nenhum controlador é compatível com N=%d além do "
+                            "de grafo — e o de grafo não tem dados aqui." % n
+                        ).classes("text-xs").style(f"color:{theme.INK_MUTED}")
+                    else:
+                        base = theme.echart_chrome(
+                            y_nome="Recolhas por agente", rotacao_x=18)
+                        ui.echart({
+                            **base,
+                            "xAxis": {**base.get("xAxis", {}), "type": "category",
+                                      "data": [ROTULOS[c] for c in cenarios]},
+                            "yAxis": {**base.get("yAxis", {}), "type": "value"},
+                            "series": series,
+                        }).classes("w-full h-72")
+                    em_falta = [a for a in ALGOS
+                                if not any(s["name"] == a for s in series)]
+                    if em_falta:
+                        ui.label(
+                            "Sem barras para %s: a MLP de entrada fixa não "
+                            "carrega com N≠%d." % (" e ".join(em_falta), N_TREINO)
+                        ).classes("text-xs mt-2").style(f"color:{theme.INK_MUTED}")
+
+        escolher(N_TREINO)
