@@ -54,6 +54,11 @@ FICHEIROS=(
     "scripts/eval_by_run.py            scripts"
     "scripts/eval_suite.py             scripts"
     "scripts/pos_campanha.py           scripts"
+    # F1 (zero-shot) — o eval_zeroshot importa o eval_algo do eval_all
+    "scripts/eval_zeroshot_mapa.py     scripts"
+    "scripts/eval_all.py               scripts"
+    "scripts/controlos_f1.sh           scripts"
+    "scripts/mapa_streamF2.sh          scripts"
     "configs/foraging.yaml             configs"
     "tests/test_mapa_grande.py         tests"
     "requirements.txt                  ."
