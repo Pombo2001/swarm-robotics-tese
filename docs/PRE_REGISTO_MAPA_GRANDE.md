@@ -486,6 +486,36 @@ Auditoria pedida antes de gastar a janela de servidor, com o F0 a correr localme
     **diretório isolado** `~/swarm-mapa/`, com envio por `pscp` depois de
     megaA/megaB fecharem (~3 ago).
 
+### 28 jul 2026 — o "percurso ótimo" não era o ótimo (geometria, não resultados)
+
+Verificação da secção da tese contra o simulador, **antes de a integrar**. Nada
+aqui toca em dados de F1 ou F2: mede-se geometria, que é determinística.
+
+14. **`128,8 m` é o percurso do CENTRO da caixa de spawn, não o ótimo.** A tabela
+    da emenda de 24 jul e a secção da tese chamavam-lhe "percurso ótimo
+    spawn→ninho". Medido agora sobre os **spawns reais** (campo geodésico com a
+    porta aberta, 4 seeds): o melhor agente nasce a **121--124 m**, o médio a
+    **129--132 m** e o pior a **138--139 m**; o centro da caixa está a
+    **129,8 m**. O `128,8` é, portanto, a distância do ponto central da zona de
+    partida — próxima da média, não do mínimo. **O número não muda**; muda a
+    descrição, que passa a dizer o que mede. Consequência nenhuma para o desenho:
+    o desvio de 1,47× face à linha reta continua a ser o que motivou a correção
+    das zonas A e B.
+
+    As outras duas linhas da mesma tabela **confirmam-se** ao centímetro:
+    `155,4 m` é o máximo do campo geodésico (777 passos de ida, folga
+    **2,57×**) e o pior spawn real fica a 139,2 m (696 passos, folga **2,87×**)
+    — os `2,6×` e `2,9×` registados.
+
+15. **O custo da alternativa é `+20%`, medido sobre os spawns reais** (razão
+    fechada/aberta 1,205; min 1,192, máx 1,216), e não os `+21%` da tabela de
+    24 jul, que saíram de dividir dois números que medem coisas diferentes
+    (o máximo do campo com a porta aberta, 155,4 m, pelo percurso do centro do
+    spawn, 128,8 m). Com a porta fechada os spawns ficam a **150,6--166,0 m**.
+    A conclusão pré-registada **não muda** — a alternativa continua a existir e a
+    ser mais cara, logo cooperar é vantajoso e não obrigatório —, mas o número
+    citado passa a vir da medição direta.
+
 ---
 
 *Assinatura temporal: este plano existe no git antes de o mapa ter sido treinado uma
