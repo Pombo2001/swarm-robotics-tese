@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# pre-commit — a regra 6(b) do PLANO_MESTRE, aplicada sozinha.
+#
+# *"Antes de dar qualquer sessão por concluída: os números citados batem com o
+# CSV fonte?"* — verificado à mão a 18, 25 e 27 de julho de 2026. Este hook corre
+# o `verificar_numeros_tese.py` quando o commit mexe na tese ou nos dados que a
+# sustentam, e recusa o commit se algum dos 98 valores deixar de bater.
+#
+# SÓ CORRE quando é relevante: um commit que toca em scripts, docs ou no artigo
+# passa sem esperar. Um hook que corre sempre é um hook que se desliga.
+#
+# ESCAPE: `git commit --no-verify`. É legítimo em pelo menos dois casos —
+# escrever números de uma campanha cujo CSV ainda não chegou, ou commitar um
+# trabalho a meio. O que o hook impede é o caso que interessa: **entregar** com a
+# tabela dessincronizada dos dados e não dar por isso.
+#
+# Instalação (não é automática — .git/hooks não é versionado):
+#     scripts/instalar_hooks.sh
+set -uo pipefail
+
+RAIZ="$(git rev-parse --show-toplevel)"
+ALVOS='^(Tese/main\.tex|results/graficos_tese/final_7d/|results/estatisticas/escalabilidade_)'
+
+if ! git diff --cached --name-only | grep -qE "$ALVOS"; then
+    exit 0
+fi
+
+PY="$RAIZ/.venv/Scripts/python.exe"
+[ -x "$PY" ] || PY="$RAIZ/.venv/bin/python"
+[ -x "$PY" ] || PY=python
+
+echo "[pre-commit] a tese ou os dados mudaram — a verificar os números..."
+if "$PY" "$RAIZ/scripts/verificar_numeros_tese.py"; then
+    exit 0
+fi
+
+cat >&2 <<'FIM'
+
+[pre-commit] COMMIT RECUSADO: há números na tese que não batem com os CSV.
+
+  · Se os CSV é que são os novos, regenera as tabelas antes de commitar.
+  · Se estás a escrever números de uma campanha que ainda não chegou, ou a
+    guardar trabalho a meio, passa com:  git commit --no-verify
+
+FIM
+exit 1
