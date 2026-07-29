@@ -16,22 +16,24 @@
 
 ---
 
-# 0. ONDE ISTO ESTÁ (28 jul, fim da sessão da manhã) — LÊ ISTO PRIMEIRO
+# 0. ONDE ISTO ESTÁ (29 jul, manhã) — LÊ ISTO PRIMEIRO
 
-1. **Os três controlos do F1 estão A CORRER NO SERVIDOR** desde 28 jul 07:38 UTC,
-   em tmux `mapaC1/2/3` (decisão do utilizador: nada de treinos no PC local).
-   Cada condição no seu diretório (`~/swarm-mapa-c{1,2,3}`) porque partilham CSV e
-   o eval tem lock por ficheiro. Ritmo medido em corrida: **~18 min/célula** ⇒
-   21 células ≈ 6,5 h ⇒ **fecham ~14h UTC de 28 jul**. Ver:
-   `scripts/servidor.sh` (lê `~/mapa_C{1,2,3}_master.log`).
-2. **Ao chegar:** trazer os 3 CSV (um por condição, colunas `NormObs`/`Controlo`
-   dizem qual é qual), juntá-los ao `base` que já está em
-   `results/mapa_grande/f1_zeroshot/`, e só então ler o F1 — **antes disto o F1
-   não responde à QI7**. A interpretação de cada condição está pré-comprometida
-   no `PRE_REGISTO_MAPA_GRANDE.md` §3: lê-a **antes** de ver os números.
-3. **O F2 está pronto a disparar**, mas só depois de megaA/megaB fecharem
-   (~1-3 ago): `scripts/mapa_streamF2.sh {gnn|grad}`, já no servidor. Avisa e
-   espera 120 s se apanhar o mega-treino vivo, em vez de bloquear.
+1. **O F1 do mapa grande está FECHADO** — as 4 condições, 1680 episódios
+   (28 jul, commit `87ead6d`). O veredicto pré-comprometido está em
+   `results/mapa_grande/f1_zeroshot/f1_veredicto.txt`: a **escala da observação**
+   e, marginalmente, as **features da porta** DIVERGEM (ressuscitam células que
+   estavam a zero) ⇒ o zero-shot de topologia está **confundido** com elas; os
+   **obstáculos ficam excluídos** (p=0,93, 0 ressuscitadas). **Nada disto entra na
+   tese antes do F2** — a secção do mapa continua fora do `main.tex`.
+2. **O mega-treino continua a correr** (verificado 29 jul 08:50 UTC, load 49,6/64):
+   **megaA na fase 4/5** (SAC u_wall @48×28, desde 28 jul 20:12) e **megaB na
+   fase 5/7** (adaptativo bypass @195×21, desde 27 jul 12:55). Pelo ritmo real
+   medido (GNN @195×28 levou 95-96 h; PPO @48×28 levou 27,5 h): **megaA fecha
+   ~1 ago à noite, megaB ~3 ago de manhã** — como o pré-registo previu.
+3. **O F2 está pronto a disparar**, mas só depois de megaA/megaB fecharem:
+   `scripts/mapa_streamF2.sh {gnn|grad}`, já no servidor. Avisa e espera 120 s se
+   apanhar o mega-treino vivo, em vez de bloquear. Hard stop de integração na
+   tese: **22 ago**.
 4. **O que NÃO viaja para outro PC:** os modelos. Campeões 7d
    (`results/models_7d/`, 50 MB), F0 (13 MB) e A/B do SAC (43 MB) ficam **na
    torre** — mas já não são precisos em PC nenhum: estão instalados no servidor,
@@ -39,7 +41,109 @@
 
 ---
 
-# 0-A. LOG DE SESSÃO — 28 jul 2026, manhã (Opus 5, torre)
+# 0-A. LOG DE SESSÃO — 28 jul 2026, tarde/noite (Opus 5, torre)
+
+> A manhã pôs os controlos do F1 a correr; a tarde recebeu-os, e usou a espera
+> para dar ao dashboard as cinco vistas que faltavam para ele servir a defesa.
+
+## ✅ O F1 fechou — e o veredicto sai de uma regra escrita antes dos dados
+
+Os três controlos correram **~8,5 h cada, em paralelo** (previsto 6,5 h; a
+estimativa da manhã pecava por otimista). Com a condição natural de 27 jul são
+**1680 episódios em 4 condições × 21 células**. O `analise_f1_controlos.py`
+aplica a regra do `PRE_REGISTO_MAPA_GRANDE.md` §3 sem a interpretar:
+
+| condição | recolhas/ep | leitura pré-comprometida |
+|---|---|---|
+| natural (principal) | **4,96** | — |
+| escala da observação | 3,15 | **DIVERGE** — 6 células ressuscitam, 4 morrem |
+| sem obstáculos | 4,91 | **MESMO** (p=0,93) ⇒ causa **EXCLUÍDA**, vai para apêndice |
+| sem features da porta | 4,13 | **DIVERGE** — 2 células ressuscitam |
+
+O pré-registo é explícito em como se lê isto: *«um controlo que ressuscite os
+campeões NÃO salva a leitura ‘a topologia é dura’: desmente-a»*. Detalhe que a
+média esconde e o `LEIA-ME.md` regista: a escala **não melhora, redistribui** —
+mata o Sandbox e a Perceção do GNN (7,2→0 e 17,3→0) e acende o Gargalo e a
+Perceção do PPO. É consistente com a limitação já declarada: as duas
+normalizações estão fora da distribuição de treino, de maneiras opostas.
+
+Os 4 CSV estão **versionados** (`git add -f`, 432 KB) — são a única cópia.
+
+## ⚠️ Um `pscp` apagou 420 episódios em silêncio (e o git salvou-os)
+
+Cada corrida dos controlos grava em `zeroshot_mapa_grande.csv` **no seu
+diretório**; trazer o segundo para a pasta onde já estava o primeiro fez o `pscp`
+escrever por cima sem uma palavra. Perdeu-se a condição **natural** — quase 6 h
+de servidor. Recuperou-se com um `git checkout`, e **só** porque esses CSV estão
+versionados de propósito (a exceção ao `.gitignore` decidida a 27 jul, para não
+repetir o buraco do braço Novelty preliminar, pagou-se no dia seguinte).
+
+O `trazer_do_servidor.sh` passa a **avisar e ABORTAR** se o alvo já existir,
+dizendo o tamanho e a data do que ia apagar (`TRAZER_FORCAR=1` força). Testado: o
+mesmo comando que destruiu o ficheiro recusa-se agora a correr. Ficou como
+**armadilha nº7** do `REPRODUZIR.md`, com a regra: ao trazer várias corridas da
+mesma campanha, **nomes distintos, sempre**.
+
+## ✅ O dashboard passou a servir a defesa (5 vistas novas)
+
+- **Proveniência** — clica-se numa célula da tabela principal e vê-se, no mesmo
+  ecrã: o valor impresso no `main.tex`, o valor medido no CSV, se concordam, as
+  **sete médias por execução** em barras, o ficheiro, o modelo **com a data**, e o
+  comando que reproduz aquela célula. Não recalcula a tese — lê os dois lados e
+  mostra-os; a lógica vem importada do `verificar_numeros_tese.py`, nunca uma
+  segunda cópia. Avisa a vermelho se o modelo cair fora da janela de 2-9 jul (foi
+  um caso desses que anulou o F1 de 25 jul). É a resposta ao *«de onde vem este
+  número?»* que o plano mandava ensaiar com um Markdown — numa sala ninguém abre
+  um Markdown e procura a linha.
+- **Prontidão** — cada linha é uma alínea da regra 6, verificada de facto: o
+  verificador dos 308 valores corre **agora** (~2 s, nunca um resultado guardado);
+  a compilação não é refeita mas compara-se a data do `.tex` com a do `.pdf` (o
+  caso perigoso é enviar ao orientador um PDF anterior à última edição); os testes
+  levam 3 min, por isso mostram o último resultado **com a hora** e só correm a
+  pedido.
+- **Defesa** — o **F4** que faltava no plano: um ecrã por questão de investigação,
+  navegável com as setas. O texto **não** é escrito aqui, vem do `main.tex`
+  (`sec:questoes_investigacao` e `sec:resposta_qi`), para não haver uma segunda
+  narrativa que possa divergir da tese. QI4 e QI7 aparecem **sem número e a dizer
+  porquê**.
+- **Mapa grande** e **Escalabilidade** — a QI7 era a única questão sem
+  representação; a QI2 passa a ser demonstrada em vez de explicada.
+- **Arquivo** — apanhado por uma pergunta do utilizador (*«o arquivo não devia ter
+  mais coisas?»*): listava 25 campanhas **exploratórias** e nenhuma das **cinco
+  canónicas** (7d, Novelty fixo, Novelty adaptativo, mega-treino, mapa F1). Vivem
+  fora de `graficos_tese/` por uma boa razão — nenhuma podia sobrescrever os
+  campeões 7d (armadilha nº9) — e o efeito colateral foi ficarem invisíveis.
+
+Dois defeitos vistos no browser e corrigidos na hora (parênteses vazios, planta
+gigante), e **dois timers** que enchiam o log de tracebacks quando o browser
+fechava (`curvas.py` e `treinar.py` não se protegiam como o `app.py`).
+
+## ✅ O verificador passou a cobrir também o artigo (308 valores)
+
+O artigo é o que vai ser submetido, e as suas tabelas são cópias reformatadas das
+da tese: sobrevivem a correções da tese sem darem sinal — foi assim que 8 figuras
+dele ficaram desatualizadas até 21 jul. A `tab:task` do artigo (105 valores)
+passa a ser verificada contra o mesmo `eval_by_run_7d.csv`. Todos batem.
+
+⚠️ Nota útil para quem ler as duas: o **`[n/7]` do artigo NÃO é a taxa de
+sucesso** — é o número de execuções cuja taxa é 100%. No Muro U divergem muito
+(PPO tem 71% de sucesso mas só 4 execuções em 7 chegam aos 100%). A tese não
+reporta esta métrica.
+
+## ✅ Documentação sobre si própria
+
+O índice do `docs/` não listava dois ficheiros e dizia que o F1 do mapa estava
+*«fechado a 25 jul»* — precisamente a corrida **anulada** por ter corrido com os
+campeões da campanha errada. Um índice que diz isso manda alguém ler dados que não
+valem. Mais 5 links partidos (todos em `docs/arquivo/`, de ficheiros movidos) e o
+**passo 7** na sequência de reprodução do README: correr o verificador.
+Verificação dos 39 links relativos: 0 partidos.
+
+**12 commits, de `a926e1a` a `87ead6d`.**
+
+---
+
+# 0-B. LOG DE SESSÃO — 28 jul 2026, manhã (Opus 5, torre)
 
 > Sessão curta e operacional: tirar os controlos do F1 de cima do PC local e
 > pô-los no servidor, deixar o F2 pronto, e rever texto enquanto isso corre.
@@ -156,7 +260,7 @@ ficaram comentadas no código para não se repetir a suspeita.
 
 ---
 
-# 0-B. Sessões anteriores (24, 25 e 27 jul)
+# 0-C. Sessões anteriores (24, 25 e 27 jul)
 
 Arquivadas em [`arquivo/LOGS_SESSAO_jul2026.md`](arquivo/LOGS_SESSAO_jul2026.md)
 — ocupavam 428 linhas aqui e empurravam as regras e as tarefas para o fim. Vale
@@ -310,6 +414,10 @@ testes confirmatórios T1-T4, regra de decisão da QI6 (sobe a resultado sse: n�
       decay 0,95/0,995 em u_wall+bypass ×7) + bypass adaptativo n=21 + SAC bottleneck n=21
       + perception adaptativo n=21, fim ~3 ago. Arquivo por fase em `~/mega_{A,B}_fase*/`;
       arranque confirmado (Gen 1 26s, w=0,500).
+      **Verificado 29 jul 08:50 UTC**: megaA na **fase 4/5** (SAC u_wall @48×28, desde
+      28 jul 20:12), megaB na **fase 5/7** (adaptativo bypass @195×21, desde 27 jul
+      12:55), load 49,6/64. Pelo ritmo real (GNN @195×28 = 95-96 h; PPO @48×28 =
+      27,5 h): **megaA ~1 ago à noite, megaB ~3 ago de manhã**.
 - [ ] Na chegada: verificação `_run{n}` + instalar em `results/mega_1mes/` SEM tocar nos
       modelos ativos; confirmar configs repostos (os scripts repõem no fim — verificar);
       análise M1-M3 do pré-registo v2. **Hard stop de integração na tese: 22 ago.**
@@ -352,12 +460,15 @@ de virar código** — e só depois integrado.
       de decisão e modos de falha antecipados.
 - [x] **F0 — smoke test local** (~1 h, GNN, 1 run): só confirmar que arranca. **Não
       produz resultado** e não entra em análise nenhuma.
-- [~] **F1 — zero-shot de topologia**: condição **natural FECHADA** (27 jul, 420 ep,
-      21 células, em `results/mapa_grande/f1_zeroshot/`); as **3 condições de
-      controlo a correr no servidor** desde 28 jul 07:38 UTC (tmux `mapaC1/2/3`,
-      ETA ~11h30 UTC). Sem o par de condições, um zero confunde topologia com
-      escala da observação, obstáculos ou features da porta. O script é retomável:
-      repetir o mesmo comando salta o que já está feito.
+- [x] **F1 — zero-shot de topologia: FECHADO a 28 jul** (commit `87ead6d`). As **4
+      condições**, 1680 episódios, em `results/mapa_grande/f1_zeroshot/` (CSV
+      versionados — são a única cópia). Veredicto pré-comprometido em
+      `f1_veredicto.txt`: natural 4,96 · escala **3,15 DIVERGE** (6 células
+      ressuscitam) · sem obstáculos **4,91 MESMO** (p=0,93) ⇒ causa **excluída** ·
+      sem features da porta **4,13 DIVERGE** (2 ressuscitam). Ou seja: o zero-shot
+      de topologia está **confundido** com a escala da observação e, marginalmente,
+      com as features da porta. **Não integrado na tese** — o pré-registo compromete
+      o mapa a só entrar com a campanha avaliada (F2).
 - [ ] **F2 — treino nativo**: 3 algoritmos × 7 runs × seeds 1-7. **Só depois do
       mega-treino fechar (~3 ago).** Hard stop de integração na tese: **22 ago**.
       **Script pronto e já no servidor** (28 jul): `scripts/mapa_streamF2.sh gnn`
