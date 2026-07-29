@@ -16,7 +16,8 @@ from src.scenarios import MAZE_SCENARIOS
 # gradiente de progresso apontar para a push zone (o objetivo do cenário).
 DOOR_SCENARIOS = ("cooperative_door", "cooperative_door_bypass", "mapa_grande")
 DOOR_POS = (0.0, 0.0, 0.0)          # centro da abertura na barreira
-DOOR_SIZE = (3.0, 2.0, 30.0)        # painel: largura 3 m (= abertura) × espessura 2 m
+DOOR_SIZE = (3.0, 2.0, None)        # painel: largura 3 m (= abertura) × espessura 2 m
+                                    # altura None => _altura_paredes (ver abaixo)
 DOOR_PUSH_HALF_WIDTH = 1.5          # push zone: |x| < 1.5 (largura da porta)
 DOOR_PUSH_Y_MIN, DOOR_PUSH_Y_MAX = -2.0, 0.0   # faixa a sul da barreira
 DOOR_PUSH_CENTER = (0.0, -1.0, 0.0)  # centro da push zone (isenção de spreading)
@@ -405,9 +406,44 @@ class SwarmForagingEnv3D(gym.Env):
                     self.obstacle_velocities.append(vel * self.obstacle_velocity_magnitude)
                     valid = True
 
+    @property
+    def _altura_paredes(self):
+        """Altura (em z) das caixas das paredes = DIÂMETRO da arena.
+
+        O mundo é 3D: `move_local[2]` dá aos agentes uma componente vertical, e a
+        arena é uma ESFERA de raio `arena_radius`. Uma parede só veda de facto se
+        for tão alta quanto o espaço onde os agentes podem estar — senão passa-se
+        por cima dela, que é um atalho que a evolução encontra e explora.
+
+        Estava `30.0` em duro em todas as paredes. Nos 7 cenários da tese isso é
+        exatamente 2×15 = o diâmetro, por isso vedavam (e continuam bit-a-bit
+        iguais: esta property devolve 30.0 para eles). No `mapa_grande`, porém,
+        `arena_radius_mapa_grande: 60` fez a esfera crescer 4× sem as paredes
+        crescerem: sobravam **45 m de espaço livre por cima de todas elas**, e um
+        agente a subir a 0,2 m/passo chegava lá em 75 passos de 2000 (medido) e
+        atravessava o mapa inteiro em linha reta, sem porta nem labirinto.
+
+        Ligar a altura ao raio faz a invariante valer para qualquer arena futura,
+        que é o ponto: o literal 30.0 só estava certo por coincidência com r=15.
+
+        Nota: o LiDAR é horizontal (raios com z=0, slab só em X/Y — ver
+        `_lidar_scan`), por isso a altura das paredes não entra em observação
+        nenhuma. Esta mudança é no-op para os sensores e só toca na colisão.
+        """
+        return 2.0 * self.arena_radius
+
+    def _parede(self, pos, size):
+        """Caixa de parede com a altura correta. `size` leva (sx, sy) ou (sx, sy, sz);
+        sem sz — ou com sz None — usa `_altura_paredes`."""
+        size = tuple(size)
+        sz = size[2] if len(size) > 2 and size[2] is not None else self._altura_paredes
+        return {'pos': np.array(pos, dtype=float),
+                'size': np.array([size[0], size[1], sz], dtype=float)}
+
     def _spawn_obstacles_u_wall(self):
         self.obstacles = []
         self.obstacle_velocities = []
+        H_PAREDE = self._altura_paredes
         # Classic U-wall trap: opening faces SOUTH (toward agents).
         # Agents approach from y=-12, walk north into the open bowl, hit the top bar at y=3,
         # and must discover the detour around the legs at |x| > 8 (7m of free space per side).
@@ -416,14 +452,15 @@ class SwarmForagingEnv3D(gym.Env):
         # Right leg: x 6 to 8,  y -5 to 5
         # Bypass space at |x| > 8 is ≈7m wide — discoverable but not trivial.
         self.walls = [
-            {'pos': np.array([0.0,  4.0, 0.0]), 'size': np.array([14.0, 2.0, 30.0])},  # top bar
-            {'pos': np.array([-7.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, 30.0])},  # left leg
-            {'pos': np.array([ 7.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, 30.0])},  # right leg
+            {'pos': np.array([0.0,  4.0, 0.0]), 'size': np.array([14.0, 2.0, H_PAREDE])},  # top bar
+            {'pos': np.array([-7.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, H_PAREDE])},  # left leg
+            {'pos': np.array([ 7.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, H_PAREDE])},  # right leg
         ]
 
     def _spawn_obstacles_bottleneck(self):
         self.obstacles = []
         self.obstacle_velocities = []
+        H_PAREDE = self._altura_paredes
         # PORTAS ALARGADAS: Passagem central de 1.5 metros de largura.
         # Barreira horizontal (y=0, espessura 8m) com uma ABERTURA central.
         # Antes: paredes de 40m (saíam 25m fora da arena r=15) e abertura de 1.5m
@@ -431,13 +468,14 @@ class SwarmForagingEnv3D(gym.Env):
         # alargada para 2.5m (22 jun, a pedido — reduz o congestionamento).
         # Esq tapa x[-16,-1.25]; dir tapa x[1.25,16]; abertura = x[-1.25,1.25].
         self.walls = [
-            {'pos': np.array([-8.625, 0.0, 0.0]), 'size': np.array([14.75, 8.0, 30.0])},
-            {'pos': np.array([ 8.625, 0.0, 0.0]), 'size': np.array([14.75, 8.0, 30.0])}
+            {'pos': np.array([-8.625, 0.0, 0.0]), 'size': np.array([14.75, 8.0, H_PAREDE])},
+            {'pos': np.array([ 8.625, 0.0, 0.0]), 'size': np.array([14.75, 8.0, H_PAREDE])}
         ]
 
     def _spawn_obstacles_maze(self):
         self.obstacles = []
         self.obstacle_velocities = []
+        H_PAREDE = self._altura_paredes
         # Cruz com 4 quadrantes. Espessura das paredes 1.5m. As passagens entre
         # salas foram ALARGADAS de 1.5m → 2.5m (22 jun, a pedido): cada segmento
         # adjacente a uma abertura foi encurtado 0.5m no lado da abertura, mantendo
@@ -445,17 +483,17 @@ class SwarmForagingEnv3D(gym.Env):
         # no eixo vertical em y≈±9.4 e no cruzamento central (y≈0).
         self.walls = [
             # Eixo Horizontal Y=0  (aberturas em x[-10.675,-8.175] e x[8.175,10.675])
-            {'pos': np.array([-12.8375, 0.0, 0.0]), 'size': np.array([4.325, 1.5, 30.0])},
-            {'pos': np.array([0.0, 0.0, 0.0]), 'size': np.array([16.35, 1.5, 30.0])},
-            {'pos': np.array([12.8375, 0.0, 0.0]), 'size': np.array([4.325, 1.5, 30.0])},
+            {'pos': np.array([-12.8375, 0.0, 0.0]), 'size': np.array([4.325, 1.5, H_PAREDE])},
+            {'pos': np.array([0.0, 0.0, 0.0]), 'size': np.array([16.35, 1.5, H_PAREDE])},
+            {'pos': np.array([12.8375, 0.0, 0.0]), 'size': np.array([4.325, 1.5, H_PAREDE])},
 
             # Eixo Vertical X=0  (aberturas exteriores em y≈±9.4 alargadas para 2.5m).
             # Os 2 segmentos centrais SÓ encurtam no lado exterior — o lado interior
             # encosta à barra horizontal central (não criar frestas no cruzamento).
-            {'pos': np.array([0.0, -12.8375, 0.0]), 'size': np.array([1.5, 4.325, 30.0])},
-            {'pos': np.array([0.0, -4.4625, 0.0]), 'size': np.array([1.5, 7.425, 30.0])},
-            {'pos': np.array([0.0, 4.4625, 0.0]), 'size': np.array([1.5, 7.425, 30.0])},
-            {'pos': np.array([0.0, 12.8375, 0.0]), 'size': np.array([1.5, 4.325, 30.0])}
+            {'pos': np.array([0.0, -12.8375, 0.0]), 'size': np.array([1.5, 4.325, H_PAREDE])},
+            {'pos': np.array([0.0, -4.4625, 0.0]), 'size': np.array([1.5, 7.425, H_PAREDE])},
+            {'pos': np.array([0.0, 4.4625, 0.0]), 'size': np.array([1.5, 7.425, H_PAREDE])},
+            {'pos': np.array([0.0, 12.8375, 0.0]), 'size': np.array([1.5, 4.325, H_PAREDE])}
         ]
 
     # ------------------------------------------------------------------
@@ -497,10 +535,13 @@ class SwarmForagingEnv3D(gym.Env):
         t = 1.5      # espessura (a mesma do four_rooms)
         ab = 2.5     # abertura das passagens (a mesma, alargada em 22 jun)
         W, H, x0, x1, y0, y1 = self._mapa_grande_dims()
+        H_PAREDE = self._altura_paredes   # = 2×arena_radius (120 m aqui), não 30 m:
+                                          # ver _altura_paredes — com 30 m sobravam
+                                          # 45 m de céu aberto por cima das paredes.
 
         def parede(cx, cy, sx, sy):
             return {'pos': np.array([cx, cy, 0.0]),
-                    'size': np.array([sx, sy, 30.0])}
+                    'size': np.array([sx, sy, H_PAREDE])}
 
         self.walls = [
             parede(0, y1, W, t), parede(0, y0, W, t),      # fronteira N/S
@@ -581,7 +622,7 @@ class SwarmForagingEnv3D(gym.Env):
         # (0,0) dos cenários cooperativos. Por isso a push zone é redefinida:
         # faixa imediatamente a OESTE da porta (o lado por onde o enxame chega).
         self.door_pos = np.array([xc, 0.0, 0.0], dtype=np.float32)
-        self.door_size = np.array([2.0, porta_h, 30.0])
+        self.door_size = np.array([2.0, porta_h, H_PAREDE])
         self.door_push_bounds = (xc - 2.0, xc - 0.1, -porta_h / 2, porta_h / 2)
         self.door_push_center = np.array([xc - 1.0, 0.0, 0.0])
 
@@ -644,21 +685,26 @@ class SwarmForagingEnv3D(gym.Env):
         # constantes de sempre — a barreira horizontal em (0,0).
         if self.classic_scenario != "mapa_grande":
             self.door_pos = np.array(DOOR_POS, dtype=np.float32)
-            self.door_size = np.array(DOOR_SIZE)
+            # DOOR_SIZE[2] é None: a altura do painel é a das paredes que ele
+            # fecha (2×arena_radius). Um painel mais baixo que a parede deixaria
+            # passar por cima da porta — ver _altura_paredes.
+            self.door_size = np.array([DOOR_SIZE[0], DOOR_SIZE[1],
+                                       self._altura_paredes])
         self.door_wall_index = len(self.walls)
         self.walls.append({'pos': self.door_pos.copy(), 'size': self.door_size})
 
     def _spawn_obstacles_cooperative_door(self):
         self.obstacles = []
         self.obstacle_velocities = []
+        H_PAREDE = self._altura_paredes
         # Redesigned as HORIZONTAL (east-west) barrier at y=0.
         # Previous design was a vertical wall (N-S) that could be bypassed at y≈±14
         # (arena boundary left a gap). A horizontal wall spanning x=-15 to x=15
         # truly blocks all south-to-north passage — the ends are at the arena boundary.
         # Door: 3m gap at x=0 center. Push zone: directly south of the door (y -2 to 0).
         self.walls = [
-            {'pos': np.array([-8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, 30.0])},  # x -15 to -1.5
-            {'pos': np.array([ 8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, 30.0])},  # x  1.5 to  15
+            {'pos': np.array([-8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, H_PAREDE])},  # x -15 to -1.5
+            {'pos': np.array([ 8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, H_PAREDE])},  # x  1.5 to  15
         ]
         self._add_cooperative_door()
 
@@ -674,10 +720,11 @@ class SwarmForagingEnv3D(gym.Env):
         #    que a porta. Assim cooperar (porta) tem MAIOR fitness do que o bypass.
         self.obstacles = []
         self.obstacle_velocities = []
+        H_PAREDE = self._altura_paredes
         self.walls = [
-            {'pos': np.array([-8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, 30.0])},  # esq: x -15 a -1.5
-            {'pos': np.array([ 6.25, 0.0, 0.0]), 'size': np.array([ 9.5, 2.0, 30.0])},  # dir: x  1.5 a  11
-            {'pos': np.array([10.0,  8.0, 0.0]), 'size': np.array([10.0, 2.0, 30.0])},  # defletor: x 5 a 15 @ y=8
+            {'pos': np.array([-8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, H_PAREDE])},  # esq: x -15 a -1.5
+            {'pos': np.array([ 6.25, 0.0, 0.0]), 'size': np.array([ 9.5, 2.0, H_PAREDE])},  # dir: x  1.5 a  11
+            {'pos': np.array([10.0,  8.0, 0.0]), 'size': np.array([10.0, 2.0, H_PAREDE])},  # defletor: x 5 a 15 @ y=8
         ]
         self._add_cooperative_door()
 
