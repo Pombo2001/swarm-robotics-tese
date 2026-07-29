@@ -16,15 +16,19 @@
 
 ---
 
-# 0. ONDE ISTO ESTÁ (29 jul, manhã) — LÊ ISTO PRIMEIRO
+# 0. ONDE ISTO ESTÁ (29 jul, meio-dia) — LÊ ISTO PRIMEIRO
 
-1. **O F1 do mapa grande está FECHADO** — as 4 condições, 1680 episódios
-   (28 jul, commit `87ead6d`). O veredicto pré-comprometido está em
-   `results/mapa_grande/f1_zeroshot/f1_veredicto.txt`: a **escala da observação**
-   e, marginalmente, as **features da porta** DIVERGEM (ressuscitam células que
-   estavam a zero) ⇒ o zero-shot de topologia está **confundido** com elas; os
-   **obstáculos ficam excluídos** (p=0,93, 0 ressuscitadas). **Nada disto entra na
-   tese antes do F2** — a secção do mapa continua fora do `main.tex`.
+1. ⛔ **O F1 do mapa grande foi ANULADO** (29 jul) — pela **segunda** vez. Os
+   robôs **voavam por cima das paredes**: o mundo é 3D, a arena é uma esfera de
+   r=60 e as paredes tinham 30 m de altura em duro, deixando **45 m de céu
+   aberto**. Medido: os campeões andaram a **59 m** durante o episódio inteiro —
+   as células que recolheram, recolheram **a voar**. Corrigido em `4b8a26a` (a
+   altura passa a ser `2×arena_radius`); os 7 cenários da tese ficam bit-a-bit
+   iguais e **nenhum número da dissertação é afetado**. O veredicto de 28 jul
+   («escala DIVERGE, obstáculos excluídos») **não se sustenta e não é citado**.
+   Detalhe: emenda 16 do `PRE_REGISTO_MAPA_GRANDE.md`; aviso em
+   `results/mapa_grande/f1_zeroshot/ANULADO_29jul.md`.
+   **O F1 repete-se de raiz nas 4 condições, e o F2 não arranca antes disso.**
 2. **O mega-treino continua a correr** (verificado 29 jul 08:50 UTC, load 49,6/64):
    **megaA na fase 4/5** (SAC u_wall @48×28, desde 28 jul 20:12) e **megaB na
    fase 5/7** (adaptativo bypass @195×21, desde 27 jul 12:55). Pelo ritmo real
@@ -460,15 +464,13 @@ de virar código** — e só depois integrado.
       de decisão e modos de falha antecipados.
 - [x] **F0 — smoke test local** (~1 h, GNN, 1 run): só confirmar que arranca. **Não
       produz resultado** e não entra em análise nenhuma.
-- [x] **F1 — zero-shot de topologia: FECHADO a 28 jul** (commit `87ead6d`). As **4
-      condições**, 1680 episódios, em `results/mapa_grande/f1_zeroshot/` (CSV
-      versionados — são a única cópia). Veredicto pré-comprometido em
-      `f1_veredicto.txt`: natural 4,96 · escala **3,15 DIVERGE** (6 células
-      ressuscitam) · sem obstáculos **4,91 MESMO** (p=0,93) ⇒ causa **excluída** ·
-      sem features da porta **4,13 DIVERGE** (2 ressuscitam). Ou seja: o zero-shot
-      de topologia está **confundido** com a escala da observação e, marginalmente,
-      com as features da porta. **Não integrado na tese** — o pré-registo compromete
-      o mapa a só entrar com a campanha avaliada (F2).
+- [ ] ⛔ **F1 — zero-shot de topologia: ANULADO a 29 jul, POR REPETIR.** A corrida
+      de 27-28 jul (4 condições, 1680 ep, ~34 h de servidor) correu num mundo com
+      **45 m de céu aberto por cima das paredes** — medido que os agentes voavam a
+      59 m o episódio inteiro. Nenhum número dela vale, incluindo o veredicto.
+      Corrigido em `4b8a26a` + emenda 16 do pré-registo. **Repetir de raiz nas 4
+      condições** (~8,5 h cada, em paralelo, no servidor). O script recusa-se a
+      retomar por cima do CSV antigo — a impressão digital do ambiente mudou.
 - [ ] **F2 — treino nativo**: 3 algoritmos × 7 runs × seeds 1-7. **Só depois do
       mega-treino fechar (~3 ago).** Hard stop de integração na tese: **22 ago**.
       **Script pronto e já no servidor** (28 jul): `scripts/mapa_streamF2.sh gnn`

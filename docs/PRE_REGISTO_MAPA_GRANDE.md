@@ -516,6 +516,73 @@ aqui toca em dados de F1 ou F2: mede-se geometria, que é determinística.
     ser mais cara, logo cooperar é vantajoso e não obrigatório —, mas o número
     citado passa a vir da medição direta.
 
+### 29 jul 2026 — o F1 de 28 jul é ANULADO: os agentes voavam por cima das paredes
+
+Nada muda no desenho. Muda outra vez o que conta como dado: **as quatro condições
+do F1 corridas a 27-28 jul (1680 episódios, 21 células × 4, ~34 h de servidor)
+não são evidência de nada e não são reportadas.**
+
+**O que aconteceu.** O mundo é 3D — `move_local[2]` dá aos agentes uma componente
+vertical — e a arena é uma **esfera** de raio `arena_radius`. Todas as paredes
+tinham `size[2] = 30.0` em duro, cobrindo z ∈ [−15, +15]. Nos 7 cenários da tese
+isso é exatamente o diâmetro da arena (2×15) e por isso vedam. No `mapa_grande`,
+`arena_radius_mapa_grande: 60` fez a esfera crescer 4× sem as paredes crescerem:
+**sobravam 45 m de céu aberto por cima de todas elas.**
+
+16. **Medido a 29 jul, empurrando um agente contra a divisória mais longa:**
+    bloqueado a z = 0 / 5 / 10 / 14 m, **atravessa a z = 16 / 20 / 30 / 45 m**. E
+    chegar lá é trivial: a subir 0,2 m/passo, **z = 15,2 m ao passo 75** — de
+    2000, ou seja 3,75% do episódio para ficar acima de tudo e depois cruzar os
+    129 m em linha reta, sem labirinto, sem gargalo e sem porta.
+
+**Que o F1 usou o buraco, e não apenas que ele existia.** Reproduzindo o ambiente
+antigo e registando a altura dos agentes (2 ep/célula):
+
+| célula | F1 reportava | max \|z\| | passos com os 20 agentes acima de 15 m |
+|---|---|---|---|
+| SAC × Porta Cooperativa | 21,6 | **59,3 m** | 3821 de 4000 |
+| SAC × Sandbox | 19,6 | **40,2 m** | 3620 |
+| GNN × Perceção Coop. | 17,3 | **59,4 m** | 3864 |
+| GNN × Sandbox | 7,2 | **35,0 m** | 3811 |
+| GNN × Gargalo | 0,0 | 16,0 m | 139 |
+
+Os agentes passaram o episódio **inteiro** acima do topo das paredes, a 59 m de
+altura (a esfera acaba aos 60). **As células que recolheram, recolheram a voar**;
+a que deu zero foi a que não descobriu o atalho. Nenhuma delas mede topologia.
+
+**Consequência para a leitura pré-comprometida da secção 3:** o veredicto de 28
+jul — *escala DIVERGE, obstáculos EXCLUÍDOS, features da porta DIVERGEM* — foi
+calculado sobre estes dados e **não se sustenta**. Não é reportado em lado nenhum,
+e a regra de leitura da secção 3 mantém-se por cumprir: aplica-se ao F1 repetido,
+tal como está escrita, sem alteração. Os CSV ficam no repositório (com aviso) só
+como registo do que foi anulado — a impressão digital do ambiente mudou com a
+correção, por isso o script recusa-se a retomar por cima deles, que é o
+comportamento pretendido.
+
+**O que a auditoria de 27 jul (emendas 10 e 11) não podia ter apanhado, e porquê:**
+verificou o atravessamento **lateral** — espessura contra *tunneling*, aglomeração
+com 10/20/30 agentes, e um BFS de estanqueidade do retângulo. O BFS é **planar**:
+por construção nunca veria um caminho por cima. A lição a reter é que "estanque"
+foi verificado em 2D num mundo que é 3D.
+
+**Correção (commit `4b8a26a`):** a altura das paredes passa a ser `2 ×
+arena_radius` — a invariante que faltava, válida para qualquer arena futura, em
+vez de um literal certo por coincidência. Os 7 cenários ficam **bit-a-bit iguais**
+(`test_fisica_dos_7_inalterada` passa sem alteração da referência: para eles a
+property devolve 30,0 exato) e **nenhuma observação muda**, porque o LiDAR é
+horizontal (raios com z=0, slab só em X/Y). O painel da porta herdava o mesmo
+literal e ficava mais baixo que a parede que fecha — passava-se por cima da porta
+fechada, o que esvaziaria a M3; corrigido pela mesma invariante.
+
+Dois testes novos prendem isto para não voltar: `test_paredes_tao_altas_como_a_arena`
+(nenhum cenário deixa céu aberto + travessia tentada a 6 alturas) e
+`test_porta_fechada_veda_a_toda_a_altura` (inclui as juntas do painel com as
+paredes vizinhas). **61/61 na suite.**
+
+**O que fica por fazer:** repetir o F1 nas quatro condições (~8,5 h por condição,
+em paralelo, no servidor). O F2 **não** arranca antes disso — o contraste F1 vs F2
+é, por desenho, parte do resultado.
+
 ---
 
 *Assinatura temporal: este plano existe no git antes de o mapa ter sido treinado uma

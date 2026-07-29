@@ -531,6 +531,102 @@ def test_fisica_dos_7_inalterada():
     print("OK  os 7 cenários da tese continuam com a física inalterada")
 
 
+def _empurra_contra(env, plano, eixo, transv, valor_transv, z, passos=250):
+    """Põe o agente 1,5 m antes de um plano e empurra-o contra ele. True = passou."""
+    p = np.zeros(3, dtype=np.float32)
+    p[eixo] = plano - 1.5
+    p[transv] = valor_transv
+    p[2] = z
+    env.agent_positions[0] = p
+    direcao = np.zeros(3, dtype=np.float32)
+    direcao[eixo] = 1.0
+    nome = env.agents[0]
+    for _ in range(passos):
+        env.agent_headings[0] = direcao.copy()
+        ac = zero_actions(env)
+        ac[nome] = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        env.step(ac)
+        if env.agent_positions[0][eixo] > plano + 1.5:
+            return True
+    return False
+
+
+def test_paredes_tao_altas_como_a_arena():
+    """Não pode haver céu aberto por cima das paredes, em cenário nenhum.
+
+    O mundo é 3D (`move_local[2]` dá componente vertical) e a arena é uma ESFERA
+    de raio `arena_radius`. Uma parede só veda se for tão alta quanto o espaço
+    onde os agentes podem estar.
+
+    Estava `30.0` em duro em todas as paredes — certo por coincidência, porque
+    2×15 é o diâmetro da arena dos 7 cenários. O `mapa_grande` corre a r=60 e
+    ficava com **45 m de espaço livre por cima de todas as paredes**: medido a
+    29 jul, um agente atravessava a divisória mais longa a z≥16 m, e chegava lá
+    em 75 passos dos 2000 do episódio. Os campeões do F1 andaram a 59 m de
+    altura durante o episódio inteiro — o F1 de 28 jul foi anulado por isto.
+    """
+    for cen in ["u_wall", "bottleneck", "four_rooms", "cooperative_door",
+                "cooperative_door_bypass", MAPA]:
+        cfg = copy.deepcopy(BASE_CFG)
+        cfg["environment"]["classic_scenario"] = cen
+        e = SwarmForagingEnv3D(config=cfg)
+        e.reset(seed=1)
+        for w in e.walls:
+            assert w["size"][2] / 2 >= e.arena_radius - 1e-9, (
+                f"{cen}: parede em {w['pos'][:2]} vai a z={w['size'][2]/2:.1f} mas a "
+                f"arena vai a {e.arena_radius:.1f} — passa-se por cima")
+
+    # E a prova empírica no mapa grande, que é onde o buraco existiu: a divisória
+    # mais longa bloqueia a TODAS as alturas alcançáveis, não só a z≈0.
+    env = make_env()
+    env.reset(seed=1)
+    divisorias = [w for w in env.walls if w["size"][1] > w["size"][0]]
+    parede = max(divisorias, key=lambda w: w["size"][1])
+    for z in (0.0, 10.0, 16.0, 30.0, 45.0, 55.0):
+        env.reset(seed=1)
+        assert not _empurra_contra(env, float(parede["pos"][0]), 0, 1,
+                                   float(parede["pos"][1]), z), (
+            f"mapa_grande: atravessou a divisória a z={z} m")
+    print("OK  nenhuma parede deixa céu aberto (6 cenários + travessia a 6 alturas)")
+
+
+def test_porta_fechada_veda_a_toda_a_altura():
+    """A porta fechada é uma parede a sério: em toda a altura e sem frestas.
+
+    O painel herdava a altura de `DOOR_SIZE` (30 m) e, no mapa_grande, ficava
+    mais baixo que a parede que fecha — passava-se por cima da porta fechada
+    sem a abrir, o que esvaziaria a M3 (uso da porta cooperativa) do pré-registo.
+    Testa-se também as JUNTAS com as paredes vizinhas: uma fresta de 20 cm ali
+    dava o mesmo resultado sem se notar na planta.
+    """
+    for cen, eixo in [(MAPA, 0), ("cooperative_door", 1),
+                      ("cooperative_door_bypass", 1)]:
+        cfg = copy.deepcopy(BASE_CFG)
+        cfg["environment"]["classic_scenario"] = cen
+        e = SwarmForagingEnv3D(config=cfg)
+        e.reset(seed=1)
+        transv = 1 - eixo
+        assert e.door_active, f"{cen}: a porta devia começar fechada"
+        assert e.door_size[2] >= 2 * e.arena_radius - 1e-9, (
+            f"{cen}: painel da porta com {e.door_size[2]/2:.1f} m de meia-altura "
+            f"numa arena de raio {e.arena_radius:.1f}")
+
+        plano = float(e.door_pos[eixo])
+        y_porta = float(e.door_pos[transv])
+        alturas = [z for z in (0.0, 5.0, 16.0, 30.0, 55.0) if z < e.arena_radius - 2]
+        for z in alturas:
+            e.reset(seed=1)
+            assert not _empurra_contra(e, plano, eixo, transv, y_porta, z), (
+                f"{cen}: passou pela porta FECHADA a z={z} m")
+        # Juntas: o painel tem de encostar às paredes que fecha.
+        meio = float(e.door_size[transv]) / 2
+        for d in (meio - 0.1, meio + 0.1, meio + 0.4):
+            e.reset(seed=1)
+            assert not _empurra_contra(e, plano, eixo, transv, y_porta + d, 0.0), (
+                f"{cen}: fresta na junta do painel, a {d:.2f} m do centro")
+    print("OK  a porta fechada veda em toda a altura e sem frestas (3 cenários)")
+
+
 if __name__ == "__main__":
     testes = [test_determinismo, test_resets_consecutivos, test_ninho_alcancavel,
               test_max_steps_suficiente, test_tarefa_cumprivel,
@@ -540,7 +636,9 @@ if __name__ == "__main__":
               test_ninho_desimpedido, test_spawn_livre_de_obstaculos,
               test_normalizador_da_obs, test_atravessavel_com_obstaculos,
               test_controlo_sem_obstaculos, test_controlo_porta_na_obs,
-              test_aperto_nao_atravessa_paredes, test_fisica_dos_7_inalterada]
+              test_aperto_nao_atravessa_paredes, test_fisica_dos_7_inalterada,
+              test_paredes_tao_altas_como_a_arena,
+              test_porta_fechada_veda_a_toda_a_altura]
     for t in testes:
         t()
     print(f"\n{len(testes)}/{len(testes)} testes do mapa grande passaram ✅")
