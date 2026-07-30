@@ -15,8 +15,18 @@
 %      sec:res_novelty;
 %   4. acrescentar QI7 às Conclusões e uma frase ao Resumo/Abstract.
 %
+% ⚠️ ESTADO DOS DADOS a 29 jul 2026: NÃO HÁ NENHUM. O F1 corrido a 27-28 jul
+% (4 condições, 1680 episódios) foi ANULADO: as paredes tinham 30 m de altura
+% numa arena esférica de raio 60, sobravam 45 m de céu aberto e os agentes
+% atravessavam o labirinto POR CIMA — medido a 59 m de altura, o episódio quase
+% inteiro. Quem vier preencher os \PORPREENCHER{} NÃO pode usar os CSV de
+% `results/mapa_grande/f1_zeroshot/` que tenham env_hash 267a7b547aed. Corrigido
+% em 4b8a26a; detalhe na emenda 16 do pré-registo. O F1 vai ser repetido.
+%
 % O texto abaixo — motivação, geometria, protocolo, limitações — não depende de
-% nenhum resultado e foi escrito com o mapa já auditado (27 jul 2026).
+% nenhum resultado e foi escrito com o mapa já auditado (27 jul 2026). Continua
+% válido: a anulação foi de DADOS, não de desenho, e a geometria descrita aqui
+% (que a correção não alterou em x,y) mantém-se ao centímetro.
 % =============================================================================
 
 % Marcador bem visível: se isto for compilado por engano com buracos, salta à vista.
@@ -210,7 +220,7 @@ por algoritmo}
 
 \subsection{Limitações desta campanha}
 
-Três limitações ficam declaradas, todas fixadas antes dos dados.
+Quatro limitações ficam declaradas, todas fixadas antes dos dados.
 
 Primeiro, as duas condições de normalização da observação estão \textbf{ambas}
 fora da distribuição de treino, de maneiras opostas: na condição natural as
@@ -223,22 +233,46 @@ Segundo, com $n = 7$ execuções o peso da evidência está no tamanho de efeito
 Fisher sobre proporções de convergência não teria poder para distinguir
 $7/7$ de $3/7$.
 
-Terceiro, este cenário \textbf{não entra} nas tabelas comparativas dos sete
+Terceiro, o simulador é tridimensional e este mapa é, na prática, planar: as
+paredes vedam toda a altura da arena, e tanto o bónus de exploração como o campo
+geodésico que suporta a recompensa de progresso são calculados na projeção
+horizontal. Subir não oferece, portanto, atalho nem recompensa --- mas também não
+é penalizado, e um controlador que o faça consome orçamento de episódio sem
+ganho. Como a arena deste cenário tem quatro vezes o raio da dos sete, o volume
+que não contribui para a tarefa é aqui substancialmente maior, o que se soma à
+dificuldade de exploração sem acrescentar dificuldade de navegação.
+
+Quarto, este cenário \textbf{não entra} nas tabelas comparativas dos sete
 cenários (Tabelas~\ref{tab:res_eval} e~\ref{tab:res_signif}). As campanhas
 daqueles têm orçamento, número de passos por episódio e protocolo próprios;
 juntá-los na mesma linha compararia coisas diferentes. É também a razão pela qual
 o código mantém a lista dos sete cenários da dissertação separada da lista de
 cenários ativos do simulador.
 
-\paragraph{Nota metodológica sobre o desenho do mapa.} Duas correções feitas
-durante a construção do cenário, ambas anteriores a qualquer treino, merecem
-registo porque ilustram um cuidado que se aplica a qualquer ambiente composto.
+\paragraph{Nota metodológica sobre o desenho do mapa.} Três correções feitas
+antes de existir qualquer resultado válido neste cenário merecem registo, porque
+ilustram um cuidado que se aplica a qualquer ambiente composto.
 A primeira: um bolso em U só funciona como armadilha se a bússola de
 \textit{homing} apontar para dentro dele --- com a boca virada para o lado
 oposto ao da chegada do enxame, medindo sobre sessenta pontos de entrada na zona,
 \textbf{nenhum} agente era atraído para o interior, e o bolso era espaço morto.
 A segunda: uma zona anunciada como ``quatro salas'' que tenha apenas uma parede e
 uma abertura são, de facto, duas salas; a cruz completa foi verificada por
-decomposição do espaço livre em quatro componentes de área equivalente. Um mapa
-composto não herda automaticamente as dificuldades dos cenários que diz compor:
-cada uma tem de ser verificada no ambiente construído.
+decomposição do espaço livre em quatro componentes de área equivalente.
+
+A terceira é a mais instrutiva. O simulador é tridimensional e a arena é uma
+esfera, pelo que uma parede só veda o que a sua altura cobre. A altura das
+paredes era uma constante herdada dos sete cenários, onde coincide exatamente com
+o diâmetro da arena; neste mapa, cuja arena tem quatro vezes o raio, sobravam
+quarenta e cinco metros de espaço livre acima de todas elas. Um agente que subisse
+--- o que custa setenta e cinco dos dois mil passos do episódio --- percorria o
+mapa inteiro em linha reta, sem gargalo, sem salas e sem porta. Verificou-se, ao
+medir a altitude dos agentes, que os controladores o faziam de facto, e que a
+primeira avaliação conduzida neste cenário media isso e não a topologia; foi
+descartada. A altura das paredes passou a derivar do raio da arena.
+
+A lição é comum às três, e a terceira é o seu caso extremo: um mapa composto não
+herda as dificuldades dos cenários que diz compor, e cada uma tem de ser
+verificada no ambiente construído --- incluindo as que parecem garantidas pela
+geometria. A conectividade do labirinto tinha sido validada por decomposição do
+espaço livre, mas num plano, e o espaço em que os agentes se movem não é planar.

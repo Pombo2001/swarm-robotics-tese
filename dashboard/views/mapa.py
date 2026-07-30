@@ -53,6 +53,58 @@ def _carregar():
     return pd.concat(partes, ignore_index=True) if partes else None
 
 
+def _digital_do_mapa_agora():
+    """Impressão digital do ambiente ATUAL, pela mesma função que a escreve no CSV.
+
+    Importada do `eval_zeroshot_mapa`, nunca reimplementada: uma segunda cópia
+    acabaria por discordar da primeira e ninguém saberia qual estava certa — é a
+    regra que a vista Proveniência já segue.
+    """
+    try:
+        import copy
+        import sys
+        import yaml
+        if _RAIZ not in sys.path:
+            sys.path.insert(0, _RAIZ)
+        from scripts.eval_zeroshot_mapa import _impressao_digital
+        with open(os.path.join(_RAIZ, "configs", "foraging.yaml"),
+                  encoding="utf-8") as f:
+            cfg = yaml.safe_load(f)
+        cfg = copy.deepcopy(cfg)
+        cfg["environment"]["classic_scenario"] = "mapa_grande"
+        return _impressao_digital(cfg, "mapa_grande")
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _dados_de_outro_mundo(d):
+    """(anulado?, digitais_do_csv, digital_atual) — os CSV são deste simulador?
+
+    Existe por causa de 29 jul: as quatro condições do F1 (1680 episódios, ~34 h
+    de servidor) tinham sido medidas num mundo em que as paredes deixavam 45 m de
+    céu aberto por cima, e os agentes atravessavam o labirinto por VOO. O
+    dashboard mostrava a grelha com um ✓ verde e «as quatro condições estão no
+    disco» — exatamente a leitura que não se podia fazer.
+
+    A verificação não é um aviso escrito à mão (que envelhece e mente): compara-se
+    a impressão digital gravada em cada CSV com a do simulador de agora. Se o mapa
+    mudar outra vez, esta vista diz sozinha que os dados são de outro mundo, sem
+    depender de alguém se lembrar de vir cá escrever.
+    """
+    if d is None or "env_hash" not in d.columns:
+        return False, set(), None
+    agora = _digital_do_mapa_agora()
+    if agora is None:
+        return False, set(), None
+    # A condição «sem obstáculos» muda o mundo DE PROPÓSITO e por isso tem outra
+    # digital — não conta como divergência. Só se olha para as condições que
+    # correm no mapa tal como ele é.
+    natural = d[d.get("Controlo").isin(["base", "sem_porta_obs"])] \
+        if "Controlo" in d.columns else d
+    do_csv = {h for h in natural.get("env_hash", pd.Series(dtype=str)).dropna().unique()}
+    return (bool(do_csv) and agora not in do_csv), do_csv, agora
+
+
 def _grelha(d, cond):
     (n, c) = cond
     g = d[(d["NormObs"] == n) & (d["Controlo"] == c)]
@@ -123,6 +175,28 @@ def build():
         d = _carregar()
         presentes = [n for c, n in CONDICOES if d is not None and _grelha(d, c)]
         faltam = [n for c, n in CONDICOES if n not in presentes]
+        anulado, dig_csv, dig_agora = _dados_de_outro_mundo(d)
+
+        if anulado:
+            with ui.card().classes(CARD + " w-full") \
+                    .style("border-left:4px solid #ef4444"):
+                ui.label("⛔ Os dados do F1 no disco são de OUTRO simulador — "
+                         "estão anulados.").classes("text-sm font-bold") \
+                    .style("color:#ef4444")
+                ui.label(
+                    "A impressão digital do ambiente gravada nos CSV (%s) não é a "
+                    "do simulador de agora (%s). Foram medidos num mundo em que as "
+                    "paredes tinham 30 m de altura numa arena esférica de raio 60: "
+                    "sobravam 45 m de céu aberto e os agentes atravessavam o "
+                    "labirinto por cima — a 59 m de altura, o episódio quase "
+                    "inteiro. As células que recolheram, recolheram a voar."
+                    % (", ".join(sorted(dig_csv)) or "—", dig_agora)
+                ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
+                ui.label(
+                    "Corrigido a 29 jul (altura da parede = 2×raio da arena). O F1 "
+                    "repete-se de raiz; a grelha abaixo fica só como registo. "
+                    "Detalhe: emenda 16 do PRE_REGISTO_MAPA_GRANDE.md."
+                ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
 
         with ui.card().classes(CARD + " w-full"):
             ui.label("Fases").classes("text-sm font-bold mb-2")
@@ -130,10 +204,14 @@ def build():
                 ("F0 — smoke test", "concluído (27 jul, 3 algoritmos, 2 h cada)",
                  "#4ade80"),
                 ("F1 — zero-shot de topologia",
+                 ("ANULADO (29 jul) — as 4 condições correram com o simulador "
+                  "antigo; por repetir de raiz")
+                 if anulado else
                  "%d de 4 condições no disco: %s%s"
                  % (len(presentes), ", ".join(presentes) or "nenhuma",
                     ("; faltam " + ", ".join(faltam)) if faltam else ""),
-                 "#4ade80" if len(presentes) == 4 else "#ffb020"),
+                 "#ef4444" if anulado
+                 else ("#4ade80" if len(presentes) == 4 else "#ffb020")),
                 ("F2 — treino nativo",
                  "por lançar — só depois de o mega-treino libertar o servidor "
                  "(~3 ago); script pronto em scripts/mapa_streamF2.sh",
@@ -159,13 +237,15 @@ def build():
             g = _grelha(d, cond)
             if not g:
                 continue
-            with ui.card().classes(CARD + " w-full"):
+            with ui.card().classes(CARD + " w-full") \
+                    .style("opacity:0.45" if anulado else ""):
                 sub = d[(d["NormObs"] == cond[0]) & (d["Controlo"] == cond[1])]
                 zeros = sum(1 for v in g.values() if v == 0)
-                ui.label("%s — %d episódios, %d células, %d a zero"
-                         % (nome, len(sub),
+                ui.label("%s%s — %d episódios, %d células, %d a zero"
+                         % ("ANULADO · " if anulado else "", nome, len(sub),
                             sum(1 for v in g.values() if v is not None), zeros)) \
-                    .classes("text-sm font-bold mb-2")
+                    .classes("text-sm font-bold mb-2") \
+                    .style("color:#ef4444" if anulado else "")
                 with ui.grid(columns=4).classes("w-full gap-px"):
                     ui.label("campeão treinado em").classes("text-[10px] py-1") \
                         .style(f"color:{theme.INK_MUTED}")
@@ -188,7 +268,17 @@ def build():
                                 lbl.style(f"color:{theme.INK_MUTED}")
 
         with ui.card().classes(CARD + " w-full"):
-            if faltam:
+            if anulado:
+                ui.label("⚠ A QI7 continua sem resposta — e não é por faltarem "
+                         "condições.").classes("text-sm font-bold") \
+                    .style("color:#ffb020")
+                ui.label(
+                    "As quatro condições foram medidas, mas num mapa que não é "
+                    "este. Repetir o F1 (~8,5 h por condição, em paralelo no "
+                    "servidor) é o passo seguinte, e o F2 não arranca antes: o "
+                    "contraste F1 vs F2 é, por desenho, parte do resultado."
+                ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
+            elif faltam:
                 ui.label("⚠ Isto ainda não responde à QI7.") \
                     .classes("text-sm font-bold").style("color:#ffb020")
                 ui.label(
