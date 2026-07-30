@@ -34,6 +34,15 @@ environment:
   # componentes ortogonais, logo o modulo maximo real e 0,2*raiz(3)=0,346 m.
   max_steps_mapa_grande: 2000
   arena_radius_mapa_grande: 60.0
+  # O bonus de exploracao paga por CELULA nova (2x2 m), logo o seu tecto cresce
+  # com a area navegavel. Medido a 30 jul: 200-256 celulas nos 7 cenarios (tecto
+  # 100-128) contra 1506 no mapa_grande (tecto 753, 6,5x). A razao "recompensa de
+  # uma entrega / tecto da exploracao" e 2,34-3,00 nos sete e ficava em 0,40 aqui
+  # -- ou seja, VAGUEAR pagava melhor que recolher, o que desfaz a decisao de
+  # 22 jun de subir a comida 100->300 (ver o comentario em rewards). Escala-se o
+  # bonus, e nao o tamanho da celula: 2 m e a resolucao certa para corredores de
+  # 2,5 m. Com 0.08 o tecto fica em 120,5 e a razao em 2,49, dentro dos sete.
+  exploration_bonus_mapa_grande: 0.08
   # obs_norm_radius (NAO definido de proposito): raio que normaliza as
   # distancias da observacao. Por omissao e o raio da arena do cenario -- o que
   # significa que o mapa_grande comprime todas as distancias 4x face aos 7

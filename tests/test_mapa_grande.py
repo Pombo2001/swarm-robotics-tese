@@ -685,6 +685,68 @@ def test_teto_e_shaping_telescopico():
           f"(0 passos sem pagamento)")
 
 
+def test_exploracao_nao_paga_melhor_que_a_tarefa():
+    """Vaguear não pode pagar melhor do que recolher — em nenhum cenário.
+
+    O bónus de exploração paga por CÉLULA nova (2×2 m), logo o seu tecto cresce
+    com a área navegável. O mapa_grande tem uma arena com 4× o raio dos outros:
+    1 506 células contra 200-256, ou seja um tecto de 753 contra 100-128 (6,5×).
+    A razão «uma entrega de comida / tecto da exploração» era 2,34-3,00 nos sete
+    e caía para 0,40 aqui — invertia-se.
+
+    Isso desfazia a decisão de 22 jun (comida 100 → 300, a pedido do orientador),
+    cuja razão está escrita no foraging.yaml: a comida tem de dominar claramente
+    o shaping para a política convergir para recolher e não para vaguear. E o
+    mapa_grande é justamente o cenário com mais espaço para vaguear.
+
+    Este teste fixa a propriedade, não o valor: se alguém mexer no raio da arena,
+    no tamanho da célula ou no bónus, o teste diz se a economia continua de pé.
+    """
+    from src.scenarios import SCENARIOS
+
+    razoes = {}
+    for cen in SCENARIOS:
+        cfg = copy.deepcopy(BASE_CFG)
+        cfg["environment"]["classic_scenario"] = cen
+        e = SwarmForagingEnv3D(config=cfg)
+        e.reset(seed=1)
+        cs, R = e.exploration_cell_size, e.arena_radius
+
+        celulas = set()
+        if e.use_geodesic and e.geo_field is not None:
+            ii, jj = np.where(np.isfinite(e.geo_field))
+            for x, y in zip(ii * e.geo_res - R, jj * e.geo_res - R):
+                celulas.add((int(x // cs), int(y // cs)))
+        else:
+            passo = cs / 4.0
+            for x in np.arange(-R, R, passo):
+                for y in np.arange(-R, R, passo):
+                    if np.hypot(x, y) > R:
+                        continue
+                    p = np.array([x, y, 0.0])
+                    if any(np.all(np.abs(p - w["pos"]) < w["size"] / 2)
+                           for w in e.walls):
+                        continue
+                    celulas.add((int(x // cs), int(y // cs)))
+
+        tecto = len(celulas) * e.exploration_bonus
+        comida = e.config["rewards"]["food_collected"]
+        razoes[cen] = comida / tecto
+        assert razoes[cen] >= 2.0, (
+            f"{cen}: uma entrega vale {comida:.0f} mas explorar o mapa inteiro "
+            f"vale {tecto:.1f} (razão {razoes[cen]:.2f}) — vaguear compete com a "
+            f"tarefa. {len(celulas)} células × bónus {e.exploration_bonus}")
+
+    mg = razoes["mapa_grande"]
+    sete = [v for k, v in razoes.items() if k != "mapa_grande"]
+    assert min(sete) - 0.5 <= mg <= max(sete) + 0.5, (
+        f"mapa_grande com razão {mg:.2f}, fora do intervalo dos sete "
+        f"[{min(sete):.2f}, {max(sete):.2f}] — a economia do cenário deixou de "
+        f"ser comparável com a dos outros")
+    print(f"OK  explorar nunca paga melhor que recolher (razão nos 7: "
+          f"{min(sete):.2f}-{max(sete):.2f}; mapa grande: {mg:.2f})")
+
+
 if __name__ == "__main__":
     testes = [test_determinismo, test_resets_consecutivos, test_ninho_alcancavel,
               test_max_steps_suficiente, test_tarefa_cumprivel,
@@ -697,7 +759,8 @@ if __name__ == "__main__":
               test_aperto_nao_atravessa_paredes, test_fisica_dos_7_inalterada,
               test_paredes_tao_altas_como_a_arena,
               test_porta_fechada_veda_a_toda_a_altura,
-              test_teto_e_shaping_telescopico]
+              test_teto_e_shaping_telescopico,
+              test_exploracao_nao_paga_melhor_que_a_tarefa]
     for t in testes:
         t()
     print(f"\n{len(testes)}/{len(testes)} testes do mapa grande passaram ✅")

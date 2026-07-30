@@ -72,6 +72,29 @@ class SwarmForagingEnv3D(gym.Env):
         self.min_spread_distance = env_config.get('min_spread_distance', 1.0)
         self.exploration_bonus = env_config.get('exploration_bonus', 2.0)
         self.exploration_cell_size = env_config.get('exploration_cell_size', 2.0)
+        # O bónus paga por CÉLULA nova, logo o seu tecto cresce com a área
+        # navegável — e o mapa_grande tem uma arena com 4× o raio dos outros.
+        # Medido a 30 jul (células de exploração com espaço navegável, pelo campo
+        # geodésico do próprio ambiente):
+        #
+        #   os 7 cenários da tese   200-256 células   tecto 100-128
+        #   mapa_grande             1 506 células     tecto  753   (6,5×)
+        #
+        # A razão «recompensa de uma entrega / tecto da exploração» é 2,34-3,00 nos
+        # sete e ficava em 0,40 no mapa: INVERTIA-SE. Isso desfaz precisamente a
+        # decisão de 22 jun (food 100 -> 300, a pedido do Prof. Nunes), cuja razão
+        # está no comentário do foraging.yaml: «a comida tem de dominar claramente
+        # o shaping de progresso para a política convergir para recolher, não para
+        # vaguear». Com 753 de exploração contra 300 por entrega, vaguear paga
+        # melhor — e o mapa_grande é o cenário onde há mais espaço para o fazer.
+        #
+        # Corrigido escalando o bónus para BAIXO, não o tamanho da célula: células
+        # de 2 m são a resolução certa para corredores de 2,5 m, e agravá-las
+        # cegaria a exploração onde ela é mais precisa. Com 0,08 o tecto fica em
+        # 120,5 — dentro do intervalo dos sete (100-128) — e a razão em 2,49.
+        self.exploration_bonus_base = self.exploration_bonus
+        self.exploration_bonus_mapa_grande = env_config.get(
+            'exploration_bonus_mapa_grande', 0.08)
         self.max_steps_override = {}
         if 'max_steps_cooperative_door' in env_config:
             self.max_steps_override['cooperative_door'] = env_config['max_steps_cooperative_door']
@@ -295,6 +318,12 @@ class SwarmForagingEnv3D(gym.Env):
 
         base_max_steps = self.config['environment'].get('max_steps', 500)
         self.max_steps = self.max_steps_override.get(self.classic_scenario, base_max_steps)
+
+        # Bónus de exploração por cenário (ver __init__): no-op nos 7, escalado
+        # para baixo no mapa_grande para o tecto da exploração ficar comparável.
+        self.exploration_bonus = (self.exploration_bonus_mapa_grande
+                                  if self.classic_scenario == "mapa_grande"
+                                  else self.exploration_bonus_base)
 
         if self.classic_scenario == "u_wall":
             self.nest_pos = np.array([0.0, 10.0, 0.0])
