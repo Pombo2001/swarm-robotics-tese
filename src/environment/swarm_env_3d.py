@@ -189,7 +189,12 @@ class SwarmForagingEnv3D(gym.Env):
         self.door_active = False       # a porta está fechada (painel presente)?
         self.door_wall_index = None    # índice do painel em self.walls (se fechada)
         self.door_pos = np.zeros(3, dtype=np.float32)
-        self.door_size = np.array(DOOR_SIZE)
+        # Só (largura, espessura): a ALTURA vem de _altura_paredes no
+        # _add_cooperative_door, porque depende do raio da arena do cenário, que
+        # aqui ainda não está resolvido. `np.array(DOOR_SIZE)` com o None do
+        # terceiro elemento daria um array dtype=object e rebentava na primeira
+        # divisão (size/2, em toda a física de colisão).
+        self.door_size = np.array([DOOR_SIZE[0], DOOR_SIZE[1], 0.0], dtype=float)
         # Push zone POR INSTÂNCIA (x_min, x_max, y_min, y_max) + o seu centro.
         # Era fixa nas constantes DOOR_PUSH_*, o que assumia a barreira horizontal
         # em (0,0) dos cenários cooperativos. O mapa grande tem a porta numa parede
@@ -460,14 +465,6 @@ class SwarmForagingEnv3D(gym.Env):
         nenhuma. Esta mudança é no-op para os sensores e só toca na colisão.
         """
         return 2.0 * self.arena_radius
-
-    def _parede(self, pos, size):
-        """Caixa de parede com a altura correta. `size` leva (sx, sy) ou (sx, sy, sz);
-        sem sz — ou com sz None — usa `_altura_paredes`."""
-        size = tuple(size)
-        sz = size[2] if len(size) > 2 and size[2] is not None else self._altura_paredes
-        return {'pos': np.array(pos, dtype=float),
-                'size': np.array([size[0], size[1], sz], dtype=float)}
 
     def _spawn_obstacles_u_wall(self):
         self.obstacles = []
