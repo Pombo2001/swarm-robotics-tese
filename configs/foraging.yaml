@@ -10,7 +10,6 @@ environment:
   # (que acontecia porque o ninho exigia 3 agentes; agora exige 1 na navegacao).
   exploration_bonus: 0.5
   exploration_cell_size: 2.0
-  forbidden_area: 2.2
   geodesic_cell_size: 0.4
   hunger_timer_max: 250
   # Alcance do LiDAR: subido de 5->8m para o agente "ver" o desvio dos labirintos
