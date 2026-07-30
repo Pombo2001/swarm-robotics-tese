@@ -57,8 +57,21 @@ CONDICOES=(
 if [ "${1:-}" = "preparar" ]; then
     for i in 1 2 3; do
         d="$HOME/swarm-mapa-c$i"
+        # "já existe" não basta: existir com o código ERRADO é pior que não
+        # existir. A 29 jul as três cópias tinham o simulador de 27 jul, em que
+        # as paredes deixavam 45 m de céu aberto e os agentes voavam por cima do
+        # labirinto — e este `preparar` tê-las-ia reutilizado sem uma palavra,
+        # repetindo o F1 anulado. Compara-se o simulador com o do BASE.
+        if [ -d "$d" ] && ! cmp -s "$BASE/src/environment/swarm_env_3d.py" \
+                                   "$d/src/environment/swarm_env_3d.py"; then
+            echo "[preparar] ⚠️  $d tem um SIMULADOR DIFERENTE do de $BASE."
+            echo "[preparar]     Uma campanha com dois simuladores não é comparável."
+            echo "[preparar]     Arquiva-o (mv $d ~/ANULADO_\$(date +%d%b)_$(basename "$d"))"
+            echo "[preparar]     e volta a correr: esta cópia é recriada do BASE."
+            exit 3
+        fi
         if [ -d "$d" ]; then
-            echo "[preparar] $d já existe — não toco"
+            echo "[preparar] $d já existe, com o mesmo simulador — não toco"
         else
             cp -rp "$BASE" "$d"
             rm -f "$d"/results/evaluation/zeroshot_*.csv \
