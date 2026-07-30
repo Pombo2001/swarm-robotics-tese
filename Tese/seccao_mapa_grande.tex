@@ -233,14 +233,15 @@ Segundo, com $n = 7$ execuções o peso da evidência está no tamanho de efeito
 Fisher sobre proporções de convergência não teria poder para distinguir
 $7/7$ de $3/7$.
 
-Terceiro, o simulador é tridimensional e este mapa é, na prática, planar: as
-paredes vedam toda a altura da arena, e tanto o bónus de exploração como o campo
-geodésico que suporta a recompensa de progresso são calculados na projeção
-horizontal. Subir não oferece, portanto, atalho nem recompensa --- mas também não
-é penalizado, e um controlador que o faça consome orçamento de episódio sem
-ganho. Como a arena deste cenário tem quatro vezes o raio da dos sete, o volume
-que não contribui para a tarefa é aqui substancialmente maior, o que se soma à
-dificuldade de exploração sem acrescentar dificuldade de navegação.
+Terceiro, o simulador é tridimensional e este mapa é, por construção, planar: o
+labirinto vive num plano, o \textit{LiDAR} varre na horizontal, e tanto o bónus de
+exploração como o campo geodésico que suporta a recompensa de progresso são
+calculados na projeção horizontal. A dimensão vertical não contribui, portanto,
+para nada do que a QI7 mede --- e por isso o movimento dos agentes é limitado a
+$\pm 2$\,m em $z$ neste cenário, uma folga de treze raios de robô que permite
+manobra local e não permite abandonar o plano do labirinto. A nota metodológica
+adiante explica porque é que essa restrição foi necessária e não apenas
+conveniente.
 
 Quarto, este cenário \textbf{não entra} nas tabelas comparativas dos sete
 cenários (Tabelas~\ref{tab:res_eval} e~\ref{tab:res_signif}). As campanhas
@@ -271,8 +272,27 @@ medir a altitude dos agentes, que os controladores o faziam de facto, e que a
 primeira avaliação conduzida neste cenário media isso e não a topologia; foi
 descartada. A altura das paredes passou a derivar do raio da arena.
 
-A lição é comum às três, e a terceira é o seu caso extremo: um mapa composto não
-herda as dificuldades dos cenários que diz compor, e cada uma tem de ser
-verificada no ambiente construído --- incluindo as que parecem garantidas pela
+A quarta é a consequência da terceira, e a mais subtil. Vedar as paredes em toda
+a altura impede o atalho, mas não retira ao agente a possibilidade de subir --- e
+subir era \emph{lucrativo}. Um agente encostado ao limite superior da arena
+esférica passa a ser tratado pelo simulador como estando fora dos limites e é
+reposicionado para dentro; nesse passo não lhe é cobrado o custo energético, e a
+variação de potencial resultante do reposicionamento não lhe é imputada. Como o
+reposicionamento aponta para o centro da arena, e o potencial se mede na projeção
+horizontal, a aproximação ao ninho era creditada sem custo. O resultado é um
+estado em que a pressão temporal desaparece: medido no controlador do ensaio de
+integração, os agentes estabilizavam entre quarenta e cinquenta e sete metros de
+altitude, com $10{,}7\%$ dos passos sem qualquer recompensa e uma aproximação
+acumulada nunca creditada. A correção foi restringir o movimento vertical ao plano
+do labirinto, como descrito nas limitações.
+
+A lição é comum às quatro, e as duas últimas são o seu caso extremo: um mapa
+composto não herda as dificuldades dos cenários que diz compor, e cada uma tem de
+ser verificada no ambiente construído --- incluindo as que parecem garantidas pela
 geometria. A conectividade do labirinto tinha sido validada por decomposição do
-espaço livre, mas num plano, e o espaço em que os agentes se movem não é planar.
+espaço livre, mas num plano, e o espaço em que os agentes se moviam não era
+planar. Vale a pena registar que ambas as falhas foram encontradas porque o
+controlador as explorou: uma otimização suficientemente livre trata qualquer
+imprecisão do ambiente como parte do espaço de soluções, e é essa a razão pela
+qual o comportamento aprendido é, em si, um instrumento de auditoria do
+simulador.

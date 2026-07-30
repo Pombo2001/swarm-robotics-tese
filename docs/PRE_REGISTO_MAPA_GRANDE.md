@@ -583,6 +583,64 @@ paredes vizinhas). **61/61 na suite.**
 em paralelo, no servidor). O F2 **não** arranca antes disso — o contraste F1 vs F2
 é, por desenho, parte do resultado.
 
+### 30 jul 2026 — teto vertical no mapa, e o shaping que deixara de ser telescópico
+
+Duas alterações ao ambiente, ambas **só no `mapa_grande`**, ambas encontradas no
+*shakedown* local de 30 jul (1 run por algoritmo, um teste de integração que **não
+produz resultado nenhum** e não entra em análise). Continua a não existir um único
+dado válido de F1 ou F2.
+
+17. **Teto de ±2 m em z.** Corrigir a altura das paredes (emenda 16) fechou o
+    atalho, mas **não tirou o incentivo a subir** — e o incentivo era grande. Um
+    agente encostado ao limite da esfera cai no ramo do empurrão da arena, que faz
+    `continue`: nesse passo **não paga o custo de energia** e a variação de
+    potencial é **engolida**. Como o empurrão aponta ao centro e o potencial
+    geodésico é da **projeção horizontal**, a aproximação ao ninho era creditada de
+    graça. Medido no controlador do *shakedown* — que fez **25 gerações**, o que diz
+    quão depressa a evolução acha isto:
+
+    | | medido |
+    |---|---|
+    | altitude dos agentes | **40 a 57 m** |
+    | passos-agente sem recompensa nenhuma | **10,7%** (4 289 de 40 000) |
+    | aproximação nunca creditada | **+47 887** |
+    | *shaping* pago vs telescópico | **−38 278** contra **+9 609** |
+
+    A pressão temporal desaparecia: subir era um **estado absorvente sem custo**.
+    Com o teto: **0% de passos sem recompensa, 0 de potencial engolido, e o
+    *shaping* volta a ser exatamente telescópico** (`test_teto_e_shaping_telescopico`).
+
+    Os ±2 m são 13 raios de robô — manobra local sim, fuga não — e 1,3% dos 155 m
+    do percurso. A dimensão vertical nunca fez parte do que a QI7 mede: o labirinto
+    é planar, o LiDAR varre na horizontal, as células de exploração são 2D e o campo
+    geodésico é 2D. **Nenhum número da geometria pré-registada muda** (o mapa em
+    x,y é o mesmo).
+
+18. **O *signaling* também quebrava o telescópio — corrigido por prevenção.** Um
+    agente a empurrar a porta fica inerte e o bloco de recompensa é saltado: não
+    recebe nada, nem o custo de energia, mas o `prev_pot` é atualizado. Se os
+    vizinhos o empurrarem, essa variação é engolida. Medido: **4,7%** dos
+    passos-agente no `cooperative_door` e **4,5%** no `bypass`, com desvios de
+    2 400-3 100 numa recompensa que a comida domina (+24 000 num episódio) — **e
+    0,0% no `mapa_grande`**, onde o problema era o outro. Corrigido só aqui porque
+    a porta deste mapa é o **único** ponto de passagem de um percurso de 129 m: o
+    mapa expõe o defeito muito mais, e um sinal que penalize estar junto à porta
+    esvaziaria a **M3**. Isentar de energia quem sinaliza tornaria também «parar o
+    relógio» na *push zone* gratuito.
+
+**Sobre os 7 cenários da tese:** ficam **bit-a-bit iguais** — `test_fisica_dos_7_inalterada`
+passa sem alterar a referência, **62/62 na suite**. O desvio do *signaling* existe
+lá (4,5-4,7% nos dois com porta, 0% nos outros cinco) e **não se corrige**: as
+campanhas estão fechadas, os números estão na dissertação, e o efeito é pequeno
+face à recompensa de tarefa. Fica **declarado** aqui em vez de silenciado.
+
+**Nota metodológica que vale a pena reter:** as duas falhas — atravessar paredes
+por cima e estabilizar no teto — foram encontradas porque **o controlador as
+explorou**. Uma otimização suficientemente livre trata qualquer imprecisão do
+ambiente como parte do espaço de soluções, o que faz do comportamento aprendido um
+instrumento de auditoria do simulador. Ambas foram apanhadas *antes* de haver
+resultados; nenhuma teria sido apanhada por inspeção de código.
+
 ---
 
 *Assinatura temporal: este plano existe no git antes de o mapa ter sido treinado uma

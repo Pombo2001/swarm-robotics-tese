@@ -627,6 +627,64 @@ def test_porta_fechada_veda_a_toda_a_altura():
     print("OK  a porta fechada veda em toda a altura e sem frestas (3 cenários)")
 
 
+def test_teto_e_shaping_telescopico():
+    """No mapa_grande os agentes não saem do plano, e o shaping fecha a soma.
+
+    Duas propriedades ligadas, e a segunda é a razão de ser da primeira.
+
+    O teto: o mapa é um labirinto planar numa arena esférica de r=60, que abria
+    45 m de altura sem labirinto nenhum. Não era espaço morto — era uma fuga à
+    economia da tarefa: encostado ao limite da esfera, o agente cai no ramo do
+    empurrão da arena, que faz `continue`, e nesse passo NÃO paga energia e a
+    variação de potencial é engolida. Medido a 30 jul no modelo do shakedown
+    (25 gerações): agentes a |z| 40-57 m, 10,7% dos passos-agente sem recompensa
+    nenhuma, 47 887 de aproximação nunca creditada.
+
+    O shaping: sendo potential-based (Ng et al., 1999), a soma ao longo do
+    episódio TEM de ser (Φ_0 − Φ_T)·factor e nada mais — é isso que garante que
+    não altera a política ótima. Qualquer passo que atualize `prev_pot` sem pagar
+    quebra essa igualdade, e é assim que aparecem bombas de recompensa.
+    """
+    env = make_env()
+    env.reset(seed=3)
+    teto = env.MAPA_GRANDE_TETO
+
+    # Ações que empurram todos os agentes para cima o episódio inteiro.
+    rng = np.random.default_rng(0)
+    phi0 = np.array(env.prev_pot, dtype=float).copy()
+    soma_shaping = 0.0
+    sem_pagamento = 0
+    for _ in range(400):
+        antes = np.array(env.prev_pot, dtype=float).copy()
+        ac = {}
+        for a in env.agents:
+            env.agent_headings[list(env.agents).index(a)] = np.array(
+                [1.0, 0.0, 0.0], dtype=np.float32)
+            ac[a] = np.array([0.0, 0.0, 1.0], dtype=np.float32)   # U = +z
+        _, rew, terms, truncs, _ = env.step(ac)
+        assert np.all(np.abs(env.agent_positions[:, 2]) <= teto + 1e-9), (
+            f"agente acima do teto: |z| max = "
+            f"{np.abs(env.agent_positions[:, 2]).max():.2f} > {teto}")
+        depois = np.array(env.prev_pot, dtype=float)
+        soma_shaping += float(((antes - depois) * env.progress_reward_factor).sum())
+        sem_pagamento += sum(1 for a in env.agents if rew[a] == 0.0)
+        if any(terms.values()) or any(truncs.values()):
+            break
+
+    assert sem_pagamento == 0, (
+        f"{sem_pagamento} passos-agente sem recompensa nenhuma — cada um deles "
+        f"atualiza prev_pot sem pagar e quebra o telescópio do shaping")
+
+    phiT = np.array(env.prev_pot, dtype=float)
+    telescopico = float(((phi0 - phiT) * env.progress_reward_factor).sum())
+    assert abs(soma_shaping - telescopico) < 1e-6, (
+        f"shaping não telescópico: somado {soma_shaping:.2f} vs "
+        f"(Φ_0−Φ_T)·factor {telescopico:.2f} — diferença "
+        f"{soma_shaping - telescopico:.2f} injetada de algum lado")
+    print(f"OK  teto de ±{teto} m respeitado e shaping telescópico "
+          f"(0 passos sem pagamento)")
+
+
 if __name__ == "__main__":
     testes = [test_determinismo, test_resets_consecutivos, test_ninho_alcancavel,
               test_max_steps_suficiente, test_tarefa_cumprivel,
@@ -638,7 +696,8 @@ if __name__ == "__main__":
               test_controlo_sem_obstaculos, test_controlo_porta_na_obs,
               test_aperto_nao_atravessa_paredes, test_fisica_dos_7_inalterada,
               test_paredes_tao_altas_como_a_arena,
-              test_porta_fechada_veda_a_toda_a_altura]
+              test_porta_fechada_veda_a_toda_a_altura,
+              test_teto_e_shaping_telescopico]
     for t in testes:
         t()
     print(f"\n{len(testes)}/{len(testes)} testes do mapa grande passaram ✅")

@@ -512,6 +512,11 @@ class SwarmForagingEnv3D(gym.Env):
     # apanhado na planta 2D antes de existir código).
     MAPA_GRANDE_RADIUS = 60.0
 
+    # Teto vertical do mapa_grande, em metros (|z| <= este valor). Ver o bloco
+    # "TETO" no step(): sem ele, subir era uma fuga à economia da tarefa, e a
+    # evolução descobria-a em 25 gerações. Só se aplica a este cenário.
+    MAPA_GRANDE_TETO = 2.0
+
     def _mapa_grande_dims(self):
         """(W, H, x0, x1, y0, y1) do retângulo útil, a partir do raio da arena."""
         k = 2 * self.arena_radius / np.sqrt(34)
@@ -1306,6 +1311,33 @@ class SwarmForagingEnv3D(gym.Env):
                     self.agent_positions[idx][eixo] += penetration[eixo] * sign
         # ---------------------------------------------------------------
 
+        # --- TETO: o mapa_grande é um labirinto PLANAR ---------------------
+        # O simulador é 3D (`move_local[2]` dá componente vertical) e a arena é
+        # uma esfera. No mapa_grande, r=60 abre 45 m de altura acima das paredes
+        # onde não existe labirinto nenhum — e onde o agente também não é visto
+        # pelo LiDAR (raios horizontais) nem ganha exploração (células 2D).
+        #
+        # Isso não é só espaço morto: é uma FUGA À ECONOMIA DA TAREFA. Um agente
+        # encostado ao limite da esfera entra no ramo do empurrão da arena, que
+        # faz `continue` — nesse passo não paga o custo de energia e a variação
+        # de potencial é engolida. Como o empurrão é sempre na direção do centro
+        # e o potencial geodésico é da PROJEÇÃO horizontal, ser empurrado
+        # aproxima-o do ninho de graça.
+        #
+        # Medido a 30 jul, no modelo do shakedown local (25 gerações, o que
+        # mostra que a evolução acha isto depressa): agentes a |z| de 40 a 57 m,
+        # 10,7% dos passos-agente sem recompensa nenhuma, 47 887 de aproximação
+        # nunca creditada, e um shaping de −38 278 quando o telescópico é +9 609.
+        #
+        # O teto de ±2 m dá 13 raios de robô de folga vertical — manobra local
+        # sim, fuga não. É 1,3% dos 155 m do percurso, portanto irrelevante para
+        # a tarefa que a QI7 mede. SÓ no mapa_grande: os 7 cenários das campanhas
+        # fechadas ficam bit-a-bit iguais (ver test_fisica_dos_7_inalterada).
+        if self.classic_scenario == "mapa_grande":
+            np.clip(self.agent_positions[:, 2], -self.MAPA_GRANDE_TETO,
+                    self.MAPA_GRANDE_TETO, out=self.agent_positions[:, 2])
+        # ---------------------------------------------------------------
+
         robots_in_nest = []
         for idx in range(self.num_agents):
             if self.failed[idx]:
@@ -1350,7 +1382,36 @@ class SwarmForagingEnv3D(gym.Env):
                 self.prev_pot[idx] = self._potential(self.agent_positions[idx])
                 continue
 
-            if self.signaling[idx] == 1.0:
+            # Um agente a SINALIZAR (a empurrar a porta) fica inerte e, nos 7
+            # cenários, o bloco de recompensa é saltado: não recebe nada, nem o
+            # custo de energia. Mas o `prev_pot` é atualizado no fim do passo — e
+            # se os vizinhos o empurrarem entretanto, a variação de potencial é
+            # ENGOLIDA: nunca é paga nem cobrada. Isso quebra a propriedade que dá
+            # validade ao shaping (Ng et al., 1999): a soma deixa de ser
+            # Φ_0 − Φ_T e passa a acumular sem limite.
+            #
+            # Medido a 30 jul, num episódio de cada cenário:
+            #   cooperative_door    4,7% dos passos-agente sem pagamento,
+            #   bypass              4,5%   desvio de 2 400-3 100 numa recompensa
+            #                              que a comida domina (+24 000/episódio)
+            #   os 5 sem porta      0,0%   telescópico ao oitavo decimal
+            #   mapa_grande         0,0%   — aqui o signaling NÃO era a causa dos
+            #                              zeros; era a fuga pela vertical, ver o
+            #                              bloco "TETO" mais acima no step()
+            #
+            # Corrigido SÓ no mapa_grande (como a 2.ª passagem do push-out a 27
+            # jul): quem sinaliza é pago como qualquer outro agente, o que repõe
+            # o telescópio exato. É prevenção, não a cura de um sintoma medido —
+            # com a porta a ser o único ponto de passagem de um percurso de 129 m,
+            # o mapa expõe este defeito muito mais do que os 7 cenários, e um
+            # sinal que penalize estar junto à porta esvaziaria a M3 do
+            # pré-registo (uso da porta cooperativa). Isentar de energia quem
+            # sinaliza também tornaria «parar o relógio» na push zone gratuito.
+            # Os 7 cenários ficam bit-a-bit iguais — as campanhas deles estão
+            # fechadas e os números estão na dissertação.
+            _paga_shaping = (self.signaling[idx] != 1.0
+                             or self.classic_scenario == "mapa_grande")
+            if not _paga_shaping:
                 pass
             else:
                 # ── Reward Structure ─────────────────────────────────────────
