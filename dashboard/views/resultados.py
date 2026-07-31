@@ -22,7 +22,7 @@ TYPE_ORDER = [
     # Dot plots antes dos boxplots: com n pequeno é a leitura honesta (uma caixa
     # cheia sugere densidade onde não há execução nenhuma).
     "Métricas de tarefa", "Dot plots (avaliação)", "Boxplots (avaliação)", "Escalabilidade",
-    "Heatmaps de ocupação", "Heatmaps geodésicos", "Painéis de vídeo",
+    "Heatmaps de ocupação", "Heatmaps geodésicos", "Plantas dos cenários", "Painéis de vídeo",
     "Curvas por mapa", "Curvas por algoritmo", "Boxplots (treino)", "Outros",
 ]
 TYPE_ICON = {
@@ -30,6 +30,7 @@ TYPE_ICON = {
     "Boxplots (avaliação)": "fact_check",
     "Escalabilidade": "open_in_full",
     "Heatmaps de ocupação": "grid_view", "Heatmaps geodésicos": "route",
+    "Plantas dos cenários": "map",
     "Painéis de vídeo": "theaters",
     "Curvas por mapa": "stacked_line_chart", "Curvas por algoritmo": "show_chart",
     "Boxplots (treino)": "candlestick_chart", "Outros": "image",

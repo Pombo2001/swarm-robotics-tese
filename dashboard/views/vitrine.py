@@ -51,9 +51,14 @@ def _cartao_figura(campanha: str, figura: str, nota: str, abrir):
     # que aconteceu ao Monitorizar assim que esta vista entrou.
     with ui.column().classes("gap-1 w-full").style("min-width:0"):
         if _existe(campanha, figura):
+            # `loading=lazy`: só se descarrega o que está no ecrã. São 15 PNG a
+            # 300 dpi e, todos de uma vez, a vista levava ~25 s a aparecer — numa
+            # sala, isso é tempo a olhar para um ecrã vazio. Com lazy, o primeiro
+            # bloco aparece de imediato e o resto chega ao rolar.
             ui.image(f"/graficos/{campanha}/{figura}") \
                 .classes("w-full max-w-full rounded cursor-pointer") \
                 .style("height:auto") \
+                .props('loading=lazy') \
                 .on("click", lambda c=campanha, f=figura: abrir(c, f))
         else:
             with ui.column().classes("w-full items-center justify-center py-8 rounded") \

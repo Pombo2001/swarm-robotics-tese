@@ -423,6 +423,13 @@ def graph_type(filename: str) -> str:
         return "Escalabilidade"
     if f.startswith(("taxa_sucesso", "recolhas", "comparacao_barras")):
         return "Métricas de tarefa"
+    if f.startswith(("mapa_3d", "mapa_grande_planta", "mapa_topo", "scen_")):
+        return "Plantas dos cenários"
+    # `comparacao_<cenário>` é o nome da PRIMEIRA geração das curvas por mapa
+    # (antes de `comparacao_mapa_`). Vem no fim de propósito: acima está
+    # `comparacao_barras_geral`, que é outra coisa e tem de ser apanhado antes.
+    if f.startswith("comparacao_"):
+        return "Curvas por mapa"
     return "Outros"
 
 
