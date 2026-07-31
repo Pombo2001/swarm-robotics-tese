@@ -75,17 +75,17 @@ def index():
                 # NiceGUI carrega os Material Icons clássicos, onde esse nome não
                 # resolve — o separador ficava como o ÚNICO sem ícone. "insights"
                 # existe nos dois conjuntos.
-                t_monitor = ui.tab("Monitorizar", icon="insights")
+                t_monitor = ui.tab("Servidor", icon="dns")
                 ui.label("ANÁLISE").classes("text-[10px] font-bold tracking-[.2em] "
                                             "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
                 t_ciencia = ui.tab("Ciência", icon="science")
                 t_mapa    = ui.tab("Mapa grande", icon="map")
-                t_escala  = ui.tab("Escalabilidade", icon="groups")
+                t_escala  = ui.tab("Escala e robustez", icon="groups")
                 # Defesa: "de onde vem este número?" respondido em dois cliques,
                 # em vez de procurado no REPRODUZIR.md com o júri à espera.
                 t_proven  = ui.tab("Proveniência", icon="fact_check")
                 t_vitrine = ui.tab("Vitrine", icon="slideshow")
-                t_result  = ui.tab("Resultados", icon="image")
+                t_result  = ui.tab("Galeria", icon="image")
                 t_pronto  = ui.tab("Prontidão", icon="checklist")
                 t_defesa  = ui.tab("Defesa", icon="record_voice_over")
                 t_videos  = ui.tab("Vídeos", icon="smart_display")
@@ -124,12 +124,17 @@ def index():
             with ui.tab_panel(t_treinar):
                 treinar.build(queue)
         with ui.tab_panel(t_monitor):
-            with ui.column().classes("w-full gap-4 p-4"):
-                curvas.build()
+            # O servidor PRIMEIRO: é onde os treinos correm de facto (a regra do
+            # projeto é essa). As curvas locais vinham em cima e estavam sempre
+            # obsoletas — o CSV mais recente tinha 4 dias —, o que fazia a vista
+            # parecer avariada quando só estava a dizer a verdade sobre uma
+            # máquina onde não se treina.
             # O painel do servidor pede a password SSH do ISCTE. Numa cópia
             # publicada isso é uma caixa de credenciais num site aberto — não vai.
             if not config.READONLY:
                 servidor.build()
+            with ui.column().classes("w-full gap-4 p-4"):
+                curvas.build()
         with ui.tab_panel(t_ciencia):
             ciencia.build()
         with ui.tab_panel(t_mapa):

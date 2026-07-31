@@ -13,6 +13,11 @@ from .. import config, data, theme
 CARD = theme.CARD + " p-4"
 _section_title = theme.section_title
 
+# Vieram com a comparação de treinos, que estava na Galeria. Da fonte única
+# (config), como lá estavam — não são cópias de listas escritas à mão.
+SCEN_ORDER = config.MAIN_SCENARIO_KEYS
+SCEN_LABEL = config.SCENARIO_LABEL_SHORT
+
 
 def _hex_rgb(h: str) -> tuple:
     h = h.lstrip("#")
@@ -47,64 +52,6 @@ def _ptask_fundo(p: float, algo: str) -> str:
 def _echart_axis_label():
     """Rótulo de eixo com as cores do tema (era o azul 'slate' do tema antigo)."""
     return {"color": theme.INK_MUTED, "fontSize": 12, "fontFamily": "Inter"}
-
-
-def _robustez_option(table: dict) -> dict:
-    """Barras de retenção (%) por cenário, uma série por algoritmo.
-
-    Retenção = recolhas com 10% de falhas / recolhas sem falhas. 100% = imune.
-    """
-    scen_keys = [k for k in config.SCENARIO_KEYS if k in table]
-    labels = [config.SCENARIO_LABEL_SHORT[k] for k in scen_keys]
-    series = []
-    for a in config.ALGOS:
-        pts = []
-        for k in scen_keys:
-            info = table[k].get(a)
-            pts.append(round(info["retencao"], 1)
-                       if info and info["retencao"] is not None else None)
-        s = {"name": a, "type": "bar", "barMaxWidth": 26,
-             "itemStyle": {"color": config.ALGO_META[a]["color"],
-                           "borderRadius": [4, 4, 0, 0]},
-             "data": pts}
-        series.append(s)
-    if series:
-        series[0]["markLine"] = {
-            "silent": True, "symbol": "none",
-            "lineStyle": {"color": theme.AXIS_LINE, "type": "dashed"},
-            "data": [{"yAxis": 100,
-                      "label": {"formatter": "100% · imune",
-                                "color": theme.INK_MUTED, "fontSize": 12}}]}
-    base = theme.echart_chrome(y_nome="Retenção (%)", rotacao_x=18)
-    base["xAxis"]["data"] = labels
-
-    # Eixo limitado, com os fora-de-escala rotulados no topo da barra.
-    #
-    # A retenção é um RÁCIO, por isso um cenário cuja base é quase zero produz
-    # valores absurdos (um caso mediu ~570%: com falhas recolheu mais do que sem
-    # elas, porque o denominador era ~0). Com escala automática, esses um ou dois
-    # outliers levavam o eixo a 600% e esmagavam as outras ~19 barras — que estão
-    # todas à volta de 100%, que é exatamente onde a leitura interessa: quem
-    # resiste e quem não resiste à perda de 10% dos agentes.
-    #
-    # O corte não esconde nada: as barras que passam do teto levam o valor real
-    # escrito por cima, que é a recomendação para outliers (rótulo direto em vez
-    # de deixar a escala mentir).
-    TETO = 150
-    valores = [v for s in series for v in s["data"] if v is not None]
-    if valores and max(valores) > TETO:
-        base["yAxis"] = {**base.get("yAxis", {}), "max": TETO}
-        for s in series:
-            # Rótulo por PONTO (JSON puro, sem funções JS): só os que saem fora
-            # do teto o levam. Rotular todas as barras seria ruído.
-            s["data"] = [
-                v if (v is None or v <= TETO) else
-                {"value": v,
-                 "label": {"show": True, "position": "top", "fontSize": 11,
-                           "color": theme.INK_SOFT, "formatter": f"{v:.0f}%"}}
-                for v in s["data"]
-            ]
-    return {**base, "series": series}
 
 
 def _escala_option(tbl: dict) -> dict:
@@ -152,6 +99,63 @@ def _escala_option(tbl: dict) -> dict:
 
 
 _cell_seq = 0
+
+
+def _comparison_html(metrics_a: dict, metrics_b: dict) -> str:
+    """Tabela HTML A vs B com Ptask% e recolhas/ep e delta colorido (maior=melhor)."""
+    # Cores de ESTADO (bom/mau), não de série: são as da paleta de status e ficam
+    # deliberadamente distintas das dos algoritmos, para um delta nunca se fazer
+    # passar por uma série. O sinal (+/−) leva a informação sozinho — a cor só
+    # reforça, que é o que a torna segura para daltonismo.
+    def delta(va, vb, unit=""):
+        if va is None or vb is None:
+            return f"<span style='color:{theme.INK_MUTED}'>—</span>"
+        d = vb - va
+        if abs(d) < 1e-9:
+            return f"<span style='color:{theme.INK_MUTED}'>0</span>"
+        col = "#0ca30c" if d > 0 else "#d03b3b"
+        sign = "+" if d > 0 else "−"
+        return f"<span style='color:{col};font-weight:600'>{sign}{abs(d):.1f}{unit}</span>"
+
+    def cell(m, key, fmt):
+        if m is None:
+            return f"<span style='color:{theme.INK_MUTED}'>n/d</span>"
+        return fmt.format(m[key])
+
+    th = (f"padding:6px 12px;text-align:center;border-bottom:1px solid {theme.BORDER};"
+          f"font-weight:600;color:{theme.INK_SOFT};font-size:13px")
+    td = f"padding:5px 12px;text-align:center;border-bottom:1px solid #161616"
+    rows = []
+    algos = ["GNN", "PPO", "SAC"]
+    for s in SCEN_ORDER:
+        a_s = metrics_a.get(s, {}) if metrics_a else {}
+        b_s = metrics_b.get(s, {}) if metrics_b else {}
+        for i, alg in enumerate(algos):
+            ma, mb = a_s.get(alg), b_s.get(alg)
+            scen_cell = (f"<td style='{td};text-align:left;font-weight:600;color:#93c5fd' "
+                         f"rowspan='3'>{SCEN_LABEL.get(s, s)}</td>") if i == 0 else ""
+            rows.append(
+                f"<tr>{scen_cell}"
+                f"<td style='{td};text-align:left;color:#e2e8f0'>{alg}</td>"
+                f"<td style='{td}'>{cell(ma, 'ptask', '{:.0f}%')}</td>"
+                f"<td style='{td}'>{cell(mb, 'ptask', '{:.0f}%')}</td>"
+                f"<td style='{td}'>{delta(ma['ptask'] if ma else None, mb['ptask'] if mb else None, '%')}</td>"
+                f"<td style='{td}'>{cell(ma, 'recolhas', '{:.1f}')}</td>"
+                f"<td style='{td}'>{cell(mb, 'recolhas', '{:.1f}')}</td>"
+                f"<td style='{td}'>{delta(ma['recolhas'] if ma else None, mb['recolhas'] if mb else None)}</td>"
+                f"</tr>")
+    return (
+        "<table style='border-collapse:collapse;width:100%;font-size:13px'>"
+        "<thead><tr>"
+        f"<th style='{th};text-align:left'>Cenário</th>"
+        f"<th style='{th};text-align:left'>Algo</th>"
+        f"<th style='{th}' colspan='3'>Ptask (sucesso %)</th>"
+        f"<th style='{th}' colspan='3'>Recolhas / ep</th>"
+        "</tr><tr>"
+        f"<th style='{th}'></th><th style='{th}'></th>"
+        f"<th style='{th}'>A</th><th style='{th}'>B</th><th style='{th}'>Δ</th>"
+        f"<th style='{th}'>A</th><th style='{th}'>B</th><th style='{th}'>Δ</th>"
+        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table>")
 
 
 def _cell(info: dict, algo: str = ""):
@@ -256,90 +260,51 @@ def build():
                             {"name": k, "label": k, "field": k, "align": "left"}
                             for k in rows[0]]).classes("w-full").props("dense")
 
-            # ── Robustez a falhas (Rrobust) ──────────────────────────────────
-            rob = data.robustness_table()
+            # ── Comparar treinos ─────────────────────────────────────────────
+            # Veio da Galeria. A matriz cenário×algoritmo aparecia em TRÊS vistas
+            # (aqui, na Galeria e na Proveniência); a comparação entre campanhas
+            # pertence ao pé da matriz oficial, não ao pé das imagens.
+            eval_sessions = data.sessions_with_eval()
+            if len(eval_sessions) >= 1:
+                with ui.card().classes(CARD):
+                    _section_title("compare_arrows", "Comparar treinos (métricas de avaliação)")
+                    ui.label("Escolhe dois treinos para comparar Ptask e recolhas por cenário. "
+                             "Δ verde = B melhor que A.").classes("text-xs text-gray-400")
+                    default_a = eval_sessions[0]
+                    default_b = eval_sessions[1] if len(eval_sessions) > 1 else eval_sessions[0]
+                    with ui.row().classes("w-full gap-2 no-wrap items-center mt-1"):
+                        cmp_a = ui.select(eval_sessions, value=default_a, label="Treino A") \
+                            .props("outlined dense").classes("flex-1")
+                        ui.icon("arrow_forward").classes("text-gray-500")
+                        cmp_b = ui.select(eval_sessions, value=default_b, label="Treino B") \
+                            .props("outlined dense").classes("flex-1")
+
+                    @ui.refreshable
+                    def tabela_cmp():
+                        ma = data.session_metrics(cmp_a.value)
+                        mb = data.session_metrics(cmp_b.value)
+                        if ma is None and mb is None:
+                            ui.label("Sem métricas para os treinos escolhidos.") \
+                                .classes("text-gray-500")
+                            return
+                        ui.html(_comparison_html(ma or {}, mb or {})).classes("w-full mt-2")
+
+                    for el in (cmp_a, cmp_b):
+                        el.on_value_change(lambda: tabela_cmp.refresh())
+                    tabela_cmp()
+
+            # A escalabilidade VIVIA aqui e também na vista Escalabilidade, com os
+            # mesmos CSV — duas respostas para a mesma pergunta, que é como se
+            # começa a ter duas respostas DIFERENTES. Fica só na vista dedicada,
+            # que a mostra melhor (por tamanho de enxame e com a retenção per
+            # capita). Aqui deixa-se o ponteiro.
             with ui.card().classes(CARD):
-                _section_title("health_and_safety",
-                               "Robustez a falhas de agentes (Rrobust)")
-                ui.label("Recolhas retidas quando 10% dos agentes falham a meio do "
-                         "episódio (avaliação emparelhada, mesmas seeds). 100% = imune.") \
-                    .classes("text-xs text-gray-400")
-                if not rob:
-                    with ui.row().classes("items-center gap-2 mt-2"):
-                        ui.icon("info").classes("text-sky-400")
-                        ui.label("Ainda sem avaliações com falhas.").classes("text-gray-400")
-                    ui.label("Gera com:  python scripts/run_eval.py --algo sac "
-                             "--scenario none --episodes 30 --fail-frac 0.1") \
-                        .classes("text-xs font-mono text-gray-500")
-                else:
-                    ui.echart(_robustez_option(rob)).classes("w-full").style("height:340px")
-                    with ui.expansion("Tabela (recolhas: base → com falhas)",
-                                      icon="table_view").classes("w-full"):
-                        rrows = []
-                        for k in config.SCENARIO_KEYS:
-                            if k not in rob:
-                                continue
-                            for a in config.ALGOS:
-                                info = rob[k].get(a)
-                                if not info:
-                                    continue
-                                rrows.append({
-                                    "Cenário": config.SCENARIO_LABEL_SHORT[k], "Algo": a,
-                                    "Base": f"{info['base']:.1f}",
-                                    "10% falhas": f"{info['fail']:.1f}",
-                                    "Retenção": (f"{info['retencao']:.0f}%"
-                                                 if info["retencao"] is not None else "—"),
-                                    "n": info["n"],
-                                })
-                        if rrows:
-                            ui.table(rows=rrows, columns=[
-                                {"name": c, "label": c, "field": c, "align": "left"}
-                                for c in rrows[0]]).classes("w-full").props("dense")
-
-            # ── Escalabilidade Zero-Shot (Sscale) ────────────────────────────
-            scen_scale = data.scalability_scenarios()
-            with ui.card().classes(CARD):
-                _section_title("open_in_full", "Escalabilidade Zero-Shot (Sscale)")
-                ui.label("Eficiência (recolhas/agente) ao transferir, sem retreino, a "
-                         "política de N=20 para outros tamanhos de enxame. A linha do "
-                         "PPO/SAC interrompe-se em N≠20 (MLP de entrada fixa); só a GNN "
-                         "(atenção sobre vizinhos) é invariante a N.") \
-                    .classes("text-xs text-gray-400")
-                # Cada cenário só aparece aqui se tiver sido AVALIADO. Um cenário em
-                # falta não significa "não escala" — significa "ainda não foi corrido";
-                # a distinção tem de ser visível, senão o silêncio parece resultado.
-                em_falta = [s for s in config.SCENARIO_KEYS if s not in scen_scale]
-                if em_falta:
-                    rot = ", ".join(config.SCENARIO_LABEL_SHORT.get(s, s) for s in em_falta)
-                    theme.fonte(f"Sem dados de escalabilidade em: {rot}. "
-                                f"Correr:  python scripts/eval_scalability.py "
-                                f"--scenario <cenário> --sizes 10,20,50,100 --episodes 20",
-                                aviso=True)
-                if not scen_scale:
-                    with ui.row().classes("items-center gap-2 mt-2"):
-                        ui.icon("info").classes("text-sky-400")
-                        ui.label("Ainda sem dados de escalabilidade.").classes("text-gray-400")
-                    ui.label("Gera com:  python scripts/eval_scalability.py --scenario none "
-                             "--sizes 10,20,50,100 --episodes 30") \
-                        .classes("text-xs font-mono text-gray-500")
-                else:
-                    sel = ui.select({k: config.SCENARIO_LABEL_SHORT[k] for k in scen_scale},
-                                    value=scen_scale[0], label="Cenário") \
-                        .props("outlined dense").classes("w-60 mt-1")
-                    holder = ui.column().classes("w-full")
-
-                    def draw_scale():
-                        holder.clear()
-                        tbl = data.scalability_table(sel.value)
-                        with holder:
-                            if not tbl:
-                                ui.label("Sem dados para este cenário.").classes("text-gray-500")
-                            else:
-                                ui.echart(_escala_option(tbl)).classes("w-full") \
-                                    .style("height:340px")
-
-                    sel.on_value_change(draw_scale)
-                    draw_scale()
+                _section_title("open_in_full", "Escalabilidade e robustez",
+                               "estão na sua própria vista")
+                ui.label("A transferência sem retreino para N ∈ {10, 50, 100} e a "
+                         "retenção sob falha de agentes vivem na vista "
+                         "«Escalabilidade e robustez» — as duas são propriedades do "
+                         "MESMO modelo já treinado, e lêem-se melhor juntas.")                     .classes("text-xs").style(f"color:{theme.INK_MUTED}")
 
     with ui.column().classes("w-full gap-4 p-4"):
         with ui.row().classes("w-full items-center justify-between"):

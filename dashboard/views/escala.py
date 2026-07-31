@@ -22,9 +22,10 @@ import os
 import pandas as pd
 from nicegui import ui
 
-from .. import config, theme
+from .. import config, data, theme
 
 CARD = theme.CARD + " p-4"
+_section_title = theme.section_title   # veio com o bloco da robustez, da Ciência
 _RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 DIR_EST = os.path.join(_RAIZ, "results", "estatisticas")
 
@@ -56,6 +57,69 @@ def _dados():
 
 def _cor(algo):
     return config.ALGO_META.get(algo, {}).get("color", "#7d7d7d")
+
+
+def _echart_axis_label():
+    """Rótulo de eixo com as cores do tema (era o azul 'slate' do tema antigo)."""
+    return {"color": theme.INK_MUTED, "fontSize": 12, "fontFamily": "Inter"}
+
+
+def _robustez_option(table: dict) -> dict:
+    """Barras de retenção (%) por cenário, uma série por algoritmo.
+
+    Retenção = recolhas com 10% de falhas / recolhas sem falhas. 100% = imune.
+    """
+    scen_keys = [k for k in config.SCENARIO_KEYS if k in table]
+    labels = [config.SCENARIO_LABEL_SHORT[k] for k in scen_keys]
+    series = []
+    for a in config.ALGOS:
+        pts = []
+        for k in scen_keys:
+            info = table[k].get(a)
+            pts.append(round(info["retencao"], 1)
+                       if info and info["retencao"] is not None else None)
+        s = {"name": a, "type": "bar", "barMaxWidth": 26,
+             "itemStyle": {"color": config.ALGO_META[a]["color"],
+                           "borderRadius": [4, 4, 0, 0]},
+             "data": pts}
+        series.append(s)
+    if series:
+        series[0]["markLine"] = {
+            "silent": True, "symbol": "none",
+            "lineStyle": {"color": theme.AXIS_LINE, "type": "dashed"},
+            "data": [{"yAxis": 100,
+                      "label": {"formatter": "100% · imune",
+                                "color": theme.INK_MUTED, "fontSize": 12}}]}
+    base = theme.echart_chrome(y_nome="Retenção (%)", rotacao_x=18)
+    base["xAxis"]["data"] = labels
+
+    # Eixo limitado, com os fora-de-escala rotulados no topo da barra.
+    #
+    # A retenção é um RÁCIO, por isso um cenário cuja base é quase zero produz
+    # valores absurdos (um caso mediu ~570%: com falhas recolheu mais do que sem
+    # elas, porque o denominador era ~0). Com escala automática, esses um ou dois
+    # outliers levavam o eixo a 600% e esmagavam as outras ~19 barras — que estão
+    # todas à volta de 100%, que é exatamente onde a leitura interessa: quem
+    # resiste e quem não resiste à perda de 10% dos agentes.
+    #
+    # O corte não esconde nada: as barras que passam do teto levam o valor real
+    # escrito por cima, que é a recomendação para outliers (rótulo direto em vez
+    # de deixar a escala mentir).
+    TETO = 150
+    valores = [v for s in series for v in s["data"] if v is not None]
+    if valores and max(valores) > TETO:
+        base["yAxis"] = {**base.get("yAxis", {}), "max": TETO}
+        for s in series:
+            # Rótulo por PONTO (JSON puro, sem funções JS): só os que saem fora
+            # do teto o levam. Rotular todas as barras seria ruído.
+            s["data"] = [
+                v if (v is None or v <= TETO) else
+                {"value": v,
+                 "label": {"show": True, "position": "top", "fontSize": 11,
+                           "color": theme.INK_SOFT, "formatter": f"{v:.0f}%"}}
+                for v in s["data"]
+            ]
+    return {**base, "series": series}
 
 
 def build():
@@ -205,3 +269,48 @@ def build():
                         ).classes("text-xs mt-2").style(f"color:{theme.INK_MUTED}")
 
         escolher(N_TREINO)
+
+        # ── Robustez a falhas (Rrobust) ─────────────────────────────────────
+        # Veio da vista Ciência. Escalabilidade e robustez sao a mesma pergunta
+        # feita de duas maneiras — o que acontece ao modelo JA TREINADO quando o
+        # mundo muda: mais agentes (N) ou menos agentes (falhas). Separadas, cada
+        # uma parecia um detalhe; juntas, sao o argumento da tese sobre
+        # generalizacao.
+        rob = data.robustness_table()
+        with ui.card().classes(CARD):
+            _section_title("health_and_safety",
+                           "Robustez a falhas de agentes (Rrobust)")
+            ui.label("Recolhas retidas quando 10% dos agentes falham a meio do "
+                     "episódio (avaliação emparelhada, mesmas seeds). 100% = imune.") \
+                .classes("text-xs text-gray-400")
+            if not rob:
+                with ui.row().classes("items-center gap-2 mt-2"):
+                    ui.icon("info").classes("text-sky-400")
+                    ui.label("Ainda sem avaliações com falhas.").classes("text-gray-400")
+                ui.label("Gera com:  python scripts/run_eval.py --algo sac "
+                         "--scenario none --episodes 30 --fail-frac 0.1") \
+                    .classes("text-xs font-mono text-gray-500")
+            else:
+                ui.echart(_robustez_option(rob)).classes("w-full").style("height:340px")
+                with ui.expansion("Tabela (recolhas: base → com falhas)",
+                                  icon="table_view").classes("w-full"):
+                    rrows = []
+                    for k in config.SCENARIO_KEYS:
+                        if k not in rob:
+                            continue
+                        for a in config.ALGOS:
+                            info = rob[k].get(a)
+                            if not info:
+                                continue
+                            rrows.append({
+                                "Cenário": config.SCENARIO_LABEL_SHORT[k], "Algo": a,
+                                "Base": f"{info['base']:.1f}",
+                                "10% falhas": f"{info['fail']:.1f}",
+                                "Retenção": (f"{info['retencao']:.0f}%"
+                                             if info["retencao"] is not None else "—"),
+                                "n": info["n"],
+                            })
+                    if rrows:
+                        ui.table(rows=rrows, columns=[
+                            {"name": c, "label": c, "field": c, "align": "left"}
+                            for c in rrows[0]]).classes("w-full").props("dense")
