@@ -46,7 +46,13 @@ def contrato(algos, scenarios):
     ]
     for s in scenarios:
         itens.append((f'comparacao_mapa_{s}.png', True, f'curvas — {s}'))
-        itens.append((f'boxplot_{s}.png', False, f'boxplot — {s}'))
+        # O nome canónico do boxplot é `boxplot_eval_<cenário>` — o que a tese e o
+        # artigo citam no \includegraphics. Este contrato exigia `boxplot_<cenário>`
+        # (o nome antigo, do gerador de junho), e por isso dava a campanha CANÓNICA
+        # da tese como incompleta enquanto aceitava figuras de uma campanha morta.
+        # Ver scripts/figuras_campanha.py:NOMES, a fonte única.
+        itens.append((f'boxplot_eval_{s}.png', False, f'boxplot — {s}'))
+        itens.append((f'dotplot_eval_{s}.png', False, f'dot plot por run — {s}'))
         # heatmap de ocupação: um por algoritmo × cenário
         for a in algos:
             itens.append((f'heatmap_ocupacao_{a}_{s}.png', True,
