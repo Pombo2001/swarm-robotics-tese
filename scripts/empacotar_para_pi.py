@@ -136,11 +136,15 @@ def empacotar(sem_videos: bool, so_canonicas: bool) -> None:
     print("[5/5] tar.gz")
     tar = os.path.join(RAIZ, "out", "dashboard_pi.tar.gz")
     with tarfile.open(tar, "w:gz") as t:
-        t.add(DESTINO, arcname="swarm-dashboard")
+        # O nome de topo do tar é o da pasta no Pi: extrai-se com
+        # --strip-components=1 -C ~/TeseRobotics e fica tudo no sítio.
+        t.add(DESTINO, arcname="TeseRobotics")
     print(f"\n[v] {DESTINO}  ({total/1048576:.0f} MB)")
     print(f"[v] {tar}  ({os.path.getsize(tar)/1048576:.0f} MB comprimido)")
-    print("\nNo Pi:  tar xzf dashboard_pi.tar.gz && cd swarm-dashboard "
-          "&& SWARM_DASH_READONLY=1 python3 -m dashboard.app")
+    print("\nNo Pi:  tar xzf dashboard_pi.tar.gz -C ~/          "
+          "# fica em ~/TeseRobotics")
+    print("        cd ~/TeseRobotics && SWARM_DASH_READONLY=1 PORT=8090 "
+          "python3 -m dashboard.app")
 
 
 LEIAME = """# Dashboard da tese — cópia de leitura (Raspberry Pi)
@@ -174,10 +178,10 @@ Homepage, 3001 é o dizquesim, 8080/8081/8096/9001/9443 estão ocupados).
 
     [Service]
     User=pi5
-    WorkingDirectory=/home/pi5/swarm-dashboard
+    WorkingDirectory=/home/pi5/TeseRobotics
     Environment=SWARM_DASH_READONLY=1
     Environment=PORT=8090
-    ExecStart=/home/pi5/swarm-dashboard/.venv/bin/python -m dashboard.app
+    ExecStart=/home/pi5/TeseRobotics/.venv/bin/python -m dashboard.app
     Restart=always
 
     [Install]
