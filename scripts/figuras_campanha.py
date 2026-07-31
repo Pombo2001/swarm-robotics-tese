@@ -122,11 +122,25 @@ _RE_LOG = re.compile(r"gnn_3d_training_(?P<cen>.+?)_run(?P<run>\d+)\.csv$")
 def carregar_curvas(origem: str) -> pd.DataFrame:
     """Curvas de treino no formato canónico (Scenario, Algorithm, Run, Step, Score).
 
-    As campanhas trazidas do servidor não têm `all_curves_data.csv` (esse vive na
-    pasta de gráficos, que é justamente a que não veio) — mas têm um CSV por run
-    em `logs/`, que é a mesma informação em cru. Reconstrói-se daí.
+    Três fontes, por ordem de preferência:
+      1. um CSV já no formato canónico (`dados_historicos.csv`,
+         `all_curves_data*.csv`) — é o que as campanhas ANTIGAS têm;
+      2. um CSV por run em `logs/` — é o que vem do servidor;
+      3. os `training_history_*` do PPO/SAC.
+    A primeira faltava, e era por isso que as campanhas de maio ficavam com seis
+    figuras e mais nada: tinham as curvas todas num ficheiro que ninguém lia.
     """
     linhas = []
+    for nome in ("dados_historicos.csv", "all_curves_data.csv", "all_curves_data_7d.csv"):
+        for caminho in glob.glob(os.path.join(origem, "**", nome), recursive=True):
+            try:
+                d = pd.read_csv(caminho)
+            except Exception:
+                continue
+            if {"Scenario", "Algorithm", "Run", "Step", "Score"}.issubset(d.columns):
+                linhas.append(d[["Scenario", "Algorithm", "Run", "Step", "Score"]])
+    if linhas:
+        return pd.concat(linhas, ignore_index=True).drop_duplicates()
     for caminho in glob.glob(os.path.join(origem, "**", "gnn_3d_training_*.csv"), recursive=True):
         m = _RE_LOG.search(os.path.basename(caminho))
         if not m:
@@ -292,37 +306,43 @@ def gerar(origem: str, nome: str, rotulo: str = "", heatmaps: bool = False) -> i
     destino = os.path.join(GRAFICOS, nome)
     print(f"\n=== {nome} ===\n    origem:  {os.path.relpath(origem, RAIZ)}")
     ev = carregar_eval(origem)
-    if ev is None or ev.empty:
-        print("    [X] sem eval_by_run*.csv — nada a desenhar (campanha só com modelos?)")
-        return 1
+    # Uma campanha SEM avaliação não é uma campanha sem figuras: as antigas (maio,
+    # início de junho) só guardaram curvas de treino, e ficavam com meia dúzia de
+    # imagens porque este script desistia à primeira. Sem eval não há boxplots
+    # nem barras — mas há curvas, e é isso que essas campanhas têm para mostrar.
+    so_curvas = ev is None or ev.empty
+    if so_curvas:
+        print("    [i] sem avaliação — só as curvas de treino (campanha exploratória)")
     os.makedirs(destino, exist_ok=True)
     sns.set_theme(style="whitegrid")
 
-    cen_presentes = [s for s in SCENARIOS if s in set(ev["Scenario"])]
-    n_runs = ev.groupby("Algorithm")["Run"].nunique().to_dict()
-    print(f"    dados:   {len(ev)} episódios · {len(cen_presentes)} cenários · runs {n_runs}")
-
     feitas = []
-    # Auto-contida: a avaliação vive DENTRO da campanha, senão perde-se quando a
-    # pasta global for sobrescrita pela campanha seguinte (contrato do pos_campanha).
-    ev.to_csv(os.path.join(destino, "eval_by_run.csv"), index=False)
-    for extra in ("eval_summary.csv",):
-        hit = glob.glob(os.path.join(origem, "**", extra), recursive=True)
-        if hit:
-            shutil.copy2(hit[0], os.path.join(destino, extra))
+    cen_presentes = []
+    if not so_curvas:
+        cen_presentes = [s for s in SCENARIOS if s in set(ev["Scenario"])]
+        n_runs = ev.groupby("Algorithm")["Run"].nunique().to_dict()
+        print(f"    dados:   {len(ev)} episódios · {len(cen_presentes)} cenários · runs {n_runs}")
 
-    run_means = (ev.groupby(["Scenario", "ScenarioLabel", "Algorithm", "Run"])
-                 .agg(recolhas=("food_collected", "mean"), sucesso=("success", "mean"))
-                 .reset_index())
-    run_means.to_csv(os.path.join(destino, "eval_medias_por_run.csv"), index=False)
+        # Auto-contida: a avaliação vive DENTRO da campanha, senão perde-se quando a
+        # pasta global for sobrescrita pela campanha seguinte (contrato do pos_campanha).
+        ev.to_csv(os.path.join(destino, "eval_by_run.csv"), index=False)
+        for extra in ("eval_summary.csv",):
+            hit = glob.glob(os.path.join(origem, "**", extra), recursive=True)
+            if hit:
+                shutil.copy2(hit[0], os.path.join(destino, extra))
 
-    for scen in cen_presentes:
-        if figura_boxplot(run_means, scen, destino):
-            feitas.append(NOMES["boxplot"].format(cenario=scen))
+        run_means = (ev.groupby(["Scenario", "ScenarioLabel", "Algorithm", "Run"])
+                     .agg(recolhas=("food_collected", "mean"), sucesso=("success", "mean"))
+                     .reset_index())
+        run_means.to_csv(os.path.join(destino, "eval_medias_por_run.csv"), index=False)
 
-    feitas.append(os.path.basename(figura_barras(ev, destino)))
-    plot_evaluation(summary=ev, out_dir=destino)   # recolhas_ / taxa_sucesso_por_cenario
-    feitas += [NOMES["recolhas"], NOMES["sucesso"]]
+        for scen in cen_presentes:
+            if figura_boxplot(run_means, scen, destino):
+                feitas.append(NOMES["boxplot"].format(cenario=scen))
+
+        feitas.append(os.path.basename(figura_barras(ev, destino)))
+        plot_evaluation(summary=ev, out_dir=destino)   # recolhas_ / taxa_sucesso_por_cenario
+        feitas += [NOMES["recolhas"], NOMES["sucesso"]]
 
     curvas = carregar_curvas(origem)
     if curvas.empty:
@@ -358,20 +378,27 @@ def gerar(origem: str, nome: str, rotulo: str = "", heatmaps: bool = False) -> i
         # cá "só para gerar as figuras" é a armadilha n.º 9 à espera de acontecer.
         tem_modelos = os.path.isdir(os.path.join(origem, "models"))
         raiz_modelos = origem if tem_modelos else None
-        algos_aqui = tuple(a.lower() for a in ALGOS if a in set(ev["Algorithm"]))
+        algos_aqui = (tuple(a.lower() for a in ALGOS) if so_curvas
+                      else tuple(a.lower() for a in ALGOS if a in set(ev["Algorithm"])))
         print(f"    heatmaps: a correr {len(algos_aqui)}×{len(cen_presentes)} modelos de "
               f"{'da campanha' if tem_modelos else 'results/ (campanha sem models/)'} — lento...")
         hm.generate_all(out_dir=destino, episodes=4, algos=algos_aqui,
-                        scenarios=cen_presentes, models_root=raiz_modelos)
+                        scenarios=cen_presentes or None, models_root=raiz_modelos)
 
     with open(os.path.join(destino, "CAMPANHA.md"), "w", encoding="utf-8") as f:
         f.write(f"# {rotulo or nome}\n\n"
-                f"- Origem dos dados: `{os.path.relpath(origem, RAIZ)}`\n"
-                f"- Episódios avaliados: {len(ev)}\n"
-                f"- Cenários: {', '.join(cen_presentes)}\n"
-                f"- Runs por algoritmo: {n_runs}\n"
-                f"- Figuras geradas por `scripts/figuras_campanha.py` "
-                f"(nomes canónicos = os que a tese cita)\n")
+                f"- Origem dos dados: `{os.path.relpath(origem, RAIZ)}`\n")
+        if so_curvas:
+            f.write("- **Sem avaliação determinística** — esta campanha só guardou "
+                    "curvas de treino, por isso não tem boxplots nem barras. As "
+                    "curvas dizem como o treino evoluiu; não dizem o que o modelo "
+                    "final recolhe.\n")
+        else:
+            f.write(f"- Episódios avaliados: {len(ev)}\n"
+                    f"- Cenários: {', '.join(cen_presentes)}\n"
+                    f"- Runs por algoritmo: {n_runs}\n")
+        f.write("- Figuras geradas por `scripts/figuras_campanha.py` "
+                "(nomes canónicos = os que a tese cita)\n")
 
     n_png = len(glob.glob(os.path.join(destino, "*.png")))
     print(f"    [v] {n_png} figuras em results/graficos_tese/{nome}/")

@@ -318,6 +318,21 @@ def _data_da_sessao(nome):
     return datetime.datetime(y, mo, d, h, mi)
 
 
+def _tem_conteudo(pasta: str) -> bool:
+    """A pasta tem algum artefacto além do MANIFESTO que o verificador escreve?
+
+    Uma sessão VAZIA no disco (a de 06-06-2026_10h35m, de um treino que não
+    deixou dados) aparecia no seletor como se fosse uma campanha e abria um ecrã
+    em branco — que se lê como "o dashboard não carregou" e não como "não há nada
+    para carregar". Não é uma sessão: é um diretório.
+    """
+    for _, _, ficheiros in os.walk(pasta):
+        for f in ficheiros:
+            if f not in ("MANIFESTO.md",):
+                return True
+    return False
+
+
 def list_sessions():
     """Pastas de resultados, campanhas mais recentes primeiro.
 
@@ -331,7 +346,8 @@ def list_sessions():
     # figuras de junho retiradas da tese) — existem para consulta, não são
     # sessões e não devem aparecer em seletores nem em contagens.
     dirs = [d for d in os.listdir(GRAFICOS_DIR)
-            if os.path.isdir(os.path.join(GRAFICOS_DIR, d)) and not d.startswith("_")]
+            if os.path.isdir(os.path.join(GRAFICOS_DIR, d)) and not d.startswith("_")
+            and _tem_conteudo(os.path.join(GRAFICOS_DIR, d))]
     campanhas = [d for d in dirs if _data_da_sessao(d)]
     curadas = [d for d in dirs if not _data_da_sessao(d)]
     campanhas.sort(key=_data_da_sessao, reverse=True)
