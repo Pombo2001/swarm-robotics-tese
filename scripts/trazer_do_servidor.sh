@@ -55,12 +55,23 @@ if [[ -z "$PASS" ]]; then
     exit 2
 fi
 
-mkdir -p "$LOCAL"
-
-# O que vai chegar chama-se como o último elemento do caminho remoto. Se já
-# existir no destino, o pscp sobrescreve em silêncio — ver a nota no cabeçalho.
+# O destino pode ser uma PASTA (o caso comum) ou um FICHEIRO com nome próprio —
+# que é como se cumpre a regra da armadilha nº7: ao trazer várias corridas da
+# mesma campanha, nomes distintos, porque o ficheiro remoto chama-se igual em
+# todas. Sem esta distinção o `mkdir -p` criava uma PASTA chamada
+# `zeroshot_c1_escala.csv` com o CSV lá dentro (aconteceu a 31 jul).
+# Heurística: se o destino não existe e o seu nome tem extensão, é ficheiro.
+if [[ ! -d "$LOCAL" && "$(basename "$LOCAL")" == *.* ]]; then
+    DESTINO_E_FICHEIRO=1
+    mkdir -p "$(dirname "$LOCAL")"
+    ALVO="$LOCAL"
+else
+    DESTINO_E_FICHEIRO=0
+    mkdir -p "$LOCAL"
+    # O que chega chama-se como o último elemento do caminho remoto.
+    ALVO="$LOCAL/$(basename "$REMOTO")"
+fi
 NOME="$(basename "$REMOTO")"
-ALVO="$LOCAL/$NOME"
 if [[ -e "$ALVO" && "$NOME" != *"*"* ]]; then
     echo "[trazer] ⚠️  JÁ EXISTE: $ALVO"
     echo "[trazer]     ($(du -h "$ALVO" 2>/dev/null | cut -f1), modificado $(date -r "$ALVO" '+%d %b %H:%M' 2>/dev/null))"
@@ -73,6 +84,12 @@ if [[ -e "$ALVO" && "$NOME" != *"*"* ]]; then
     echo "[trazer]     TRAZER_FORCAR=1 — a sobrescrever a pedido."
 fi
 
-echo "[trazer] $USER@$HOST:$REMOTO  ->  $LOCAL"
+echo "[trazer] $USER@$HOST:$REMOTO  ->  $ALVO"
+# `-r` só quando o destino é pasta: com destino-ficheiro, o -r do pscp também
+# funciona, mas manter a simetria torna o comando legível no log.
+if [[ "$DESTINO_E_FICHEIRO" == "1" ]]; then
+    exec "$PSCP" -p -batch -hostkey "$HOSTKEY" -pw "$PASS" \
+         "$USER@$HOST:$REMOTO" "$ALVO"
+fi
 exec "$PSCP" -r -p -batch -hostkey "$HOSTKEY" -pw "$PASS" \
      "$USER@$HOST:$REMOTO" "$LOCAL"
