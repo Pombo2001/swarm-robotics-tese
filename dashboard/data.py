@@ -219,6 +219,9 @@ def eval_freshness():
     for d in MODEL_DIRS:
         files += glob.glob(os.path.join(config.BASE_DIR, "results", d, "*"))
     model_t = max((_mtime(f) for f in files), default=0.0)
+    # model_t == 0 significa que NÃO HÁ modelos nesta cópia (é o caso do pacote
+    # de leitura que corre no Pi). Dizer "em dia" aí seria afirmar uma comparação
+    # que não se fez — a vista tem de poder distinguir os dois casos.
     return eval_t, model_t, (model_t > eval_t + 60)
 
 

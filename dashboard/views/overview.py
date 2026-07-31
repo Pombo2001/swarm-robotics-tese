@@ -214,11 +214,16 @@ def build(queue: JobQueue, goto=None):
                     ui.label("sem avaliação local").classes("text-sm") \
                         .style(f"color:{theme.INK_MUTED}")
                 else:
+                    # Sem modelos no disco (o caso da cópia de leitura no Pi) não
+                    # se comparou nada — e dizer "em dia" seria afirmar uma
+                    # verificação que não houve.
+                    sem_modelos = model_t == 0
                     ok = not stale
                     with ui.row().classes("items-center gap-2 no-wrap"):
                         ui.element("div").classes(
-                            "live-dot " + ("live-dot--ok" if ok else ""))
-                        ui.label("em dia" if ok else "DESFASADA dos modelos") \
+                            "live-dot " + ("live-dot--ok" if ok and not sem_modelos else ""))
+                        ui.label("sem modelos nesta cópia" if sem_modelos
+                                 else ("em dia" if ok else "DESFASADA dos modelos")) \
                             .classes("text-sm").style(f"color:{theme.INK_SOFT}")
                     ui.label("eval: " + datetime.fromtimestamp(eval_t).strftime("%d %b %H:%M")) \
                         .classes("text-xs mono-num").style(f"color:{theme.INK_MUTED}")

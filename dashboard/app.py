@@ -62,9 +62,15 @@ def index():
             with ui.tabs().props("vertical active-color=white indicator-color=white") \
                     .classes("w-full") as tabs:
                 t_overview = ui.tab("Overview", icon="public")
-                ui.label("OPERAÇÃO").classes("text-[10px] font-bold tracking-[.2em] "
-                                             "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
-                t_treinar = ui.tab("Treinar", icon="rocket_launch")
+                # Em modo leitura (a cópia publicada) não existe secção de
+                # OPERAÇÃO: nem separador, nem painel, nem rota. Esconder só o
+                # botão deixaria o painel construído e o trabalho a poder ser
+                # lançado por quem soubesse o nome da vista.
+                t_treinar = t_aovivo = None
+                if not config.READONLY:
+                    ui.label("OPERAÇÃO").classes("text-[10px] font-bold tracking-[.2em] "
+                                                 "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
+                    t_treinar = ui.tab("Treinar", icon="rocket_launch")
                 # "monitoring" só existe nos Material Symbols (conjunto novo); o
                 # NiceGUI carrega os Material Icons clássicos, onde esse nome não
                 # resolve — o separador ficava como o ÚNICO sem ícone. "insights"
@@ -83,7 +89,8 @@ def index():
                 t_pronto  = ui.tab("Prontidão", icon="checklist")
                 t_defesa  = ui.tab("Defesa", icon="record_voice_over")
                 t_videos  = ui.tab("Vídeos", icon="smart_display")
-                t_aovivo  = ui.tab("Ao vivo (3D)", icon="view_in_ar")
+                if not config.READONLY:
+                    t_aovivo = ui.tab("Ao vivo (3D)", icon="view_in_ar")
                 t_arquivo = ui.tab("Arquivo", icon="history_edu")
             ui.space()
             ui.separator()
@@ -113,12 +120,16 @@ def index():
     with ui.tab_panels(tabs, value=t_overview).classes("w-full bg-transparent"):
         with ui.tab_panel(t_overview).classes("p-0"):
             overview.build(queue, goto)
-        with ui.tab_panel(t_treinar):
-            treinar.build(queue)
+        if t_treinar is not None:
+            with ui.tab_panel(t_treinar):
+                treinar.build(queue)
         with ui.tab_panel(t_monitor):
             with ui.column().classes("w-full gap-4 p-4"):
                 curvas.build()
-            servidor.build()
+            # O painel do servidor pede a password SSH do ISCTE. Numa cópia
+            # publicada isso é uma caixa de credenciais num site aberto — não vai.
+            if not config.READONLY:
+                servidor.build()
         with ui.tab_panel(t_ciencia):
             ciencia.build()
         with ui.tab_panel(t_mapa):
@@ -137,8 +148,9 @@ def index():
             defesa.build()
         with ui.tab_panel(t_videos):
             videos.build()
-        with ui.tab_panel(t_aovivo):
-            aovivo.build()
+        if t_aovivo is not None:
+            with ui.tab_panel(t_aovivo):
+                aovivo.build()
         with ui.tab_panel(t_arquivo):
             arquivo.build()
 
@@ -161,7 +173,13 @@ def index():
 
 
 def main():
-    ui.run(title="Swarm Observatory", port=8080, reload=False, show=True)
+    # A porta vem do ambiente: no Pi a 8080 já está ocupada (Pi-hole) e o serviço
+    # corre na 8090. `show` abre o browser — o que faz sentido na torre e nenhum
+    # num serviço systemd sem ecrã.
+    ui.run(title="Swarm Observatory",
+           port=int(os.environ.get("PORT", "8080")),
+           reload=False,
+           show=not config.READONLY)
 
 
 if __name__ in {"__main__", "__mp_main__"}:

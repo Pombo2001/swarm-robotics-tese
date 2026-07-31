@@ -15,6 +15,18 @@ import os
 import sys
 
 # Raiz do projeto (dois níveis acima deste ficheiro: dashboard/ -> projeto/)
+# ── MODO LEITURA ─────────────────────────────────────────────────────────────
+# Ligado com SWARM_DASH_READONLY=1. Serve a cópia que corre no Raspberry Pi, à
+# qual o orientador acede pela internet: ali o dashboard é para VER, e as vistas
+# de OPERAÇÃO não podem sequer existir —
+#   · Treinar    lança processos na máquina;
+#   · Servidor   pede a password SSH do servidor do ISCTE (não a expor num site);
+#   · Ao vivo    abre o visualizador Ursina no ecrã de quem CORRE o servidor, o
+#                que num Pi remoto não faz sentido nenhum.
+# Não é uma questão de arrumação: é a diferença entre publicar resultados e
+# publicar um controlo remoto da máquina de treino.
+READONLY = os.environ.get("SWARM_DASH_READONLY", "") == "1"
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
