@@ -71,10 +71,14 @@ def _draw_walls_and_nest(ax, env, nest_marker=True):
     ax.set_ylabel("y (m)")
 
 
-def _load_model(algo, scenario, config_path):
-    """Reutiliza o carregador do run_eval (mesma convenção de sufixos)."""
+def _load_model(algo, scenario, config_path, models_root=None):
+    """Reutiliza o carregador do run_eval (mesma convenção de sufixos).
+
+    `models_root` permite desenhar os heatmaps de OUTRA campanha sem tocar nos
+    modelos ativos (que são os campeões 7d da tese). Ver run_eval.load_model.
+    """
     from scripts.run_eval import load_model
-    return load_model(algo, scenario, config_path)
+    return load_model(algo, scenario, config_path, models_root=models_root)
 
 
 def _policy_actions(env, algo, model, obs_dict):
@@ -92,9 +96,9 @@ def _policy_actions(env, algo, model, obs_dict):
     return actions
 
 
-def run_occupancy(algo, scenario, episodes, bins, config_path, out_dir=None):
+def run_occupancy(algo, scenario, episodes, bins, config_path, out_dir=None, models_root=None):
     try:
-        model = _load_model(algo, scenario, config_path)
+        model = _load_model(algo, scenario, config_path, models_root=models_root)
     except FileNotFoundError:
         print(f"[--] Sem modelo {algo.upper()} para '{scenario}' — heatmap de ocupação saltado.")
         return None
@@ -190,7 +194,8 @@ def run_geodesic(scenario, config_path, out_dir=None):
 
 
 def generate_all(out_dir=None, episodes=6, algos=("sac", "ppo", "gnn"),
-                 scenarios=None, config_path=None, progress_base=0.0, progress_span=1.0):
+                 scenarios=None, config_path=None, progress_base=0.0, progress_span=1.0,
+                 models_root=None):
     """Gera TODOS os heatmaps (ocupação por algo×cenário + geodésico por labirinto).
     Robusto: falhas individuais (modelo em falta, etc.) não abortam o conjunto.
     progress_base/span: mapeia o progresso local [0,1] para uma fatia da barra global
@@ -230,7 +235,8 @@ def generate_all(out_dir=None, episodes=6, algos=("sac", "ppo", "gnn"),
         for algo in algos:
             _p(f"Heatmap de ocupação — {algo.upper()}/{sc}")
             try:
-                if run_occupancy(algo, sc, episodes, 120, config_path, out_dir=out_dir):
+                if run_occupancy(algo, sc, episodes, 120, config_path, out_dir=out_dir,
+                                 models_root=models_root):
                     n_ok += 1
             except Exception as e:
                 print(f"[!] Falha no heatmap de ocupação {algo}/{sc}: {e}")

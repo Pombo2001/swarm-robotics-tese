@@ -259,6 +259,12 @@ def main():
 
     for scen in scen_present:
         d = run_means[run_means['Scenario'] == scen]
+        # O jitter do stripplot vem do RNG GLOBAL do numpy: sem semente, a mesma
+        # figura sai diferente a cada geração (mesmos dados, pontos noutro sítio).
+        # Isso quebra a comparação bit-a-bit entre a figura instalada na tese e a
+        # que o gerador produz hoje — e faz parecer que os dados mudaram quando
+        # não mudaram. O dot plot ao lado já usava um rng semeado.
+        np.random.seed(7)
         fig, ax = plt.subplots(figsize=(8, 6))
         sns.boxplot(data=d, x='Algorithm', y='recolhas', order=ALGOS,
                     palette=ALGO_COLORS, ax=ax)

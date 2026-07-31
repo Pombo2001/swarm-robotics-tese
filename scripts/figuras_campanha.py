@@ -54,6 +54,7 @@ matplotlib.use("Agg")
 matplotlib.rcParams["font.family"] = "DejaVu Sans"
 matplotlib.rcParams["axes.unicode_minus"] = False
 import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import seaborn as sns  # noqa: E402
 
@@ -239,6 +240,8 @@ def figura_boxplot(run_means, scen, destino):
     d = run_means[run_means["Scenario"] == scen]
     if d.empty:
         return None
+    # Jitter reprodutível: o stripplot usa o RNG global (ver gerar_figuras_7d).
+    np.random.seed(7)
     fig, ax = plt.subplots(figsize=(8, 6))
     sns.boxplot(data=d, x="Algorithm", y="recolhas", order=ALGOS, palette=ALGO_COLORS, ax=ax)
     sns.stripplot(data=d, x="Algorithm", y="recolhas", order=ALGOS,
@@ -327,6 +330,13 @@ def gerar(origem: str, nome: str, rotulo: str = "", heatmaps: bool = False) -> i
     else:
         curvas = _progresso(curvas)
         com_curva = set(curvas["Scenario"])
+        # Os dados por trás das figuras ficam ao lado delas, com os nomes que o
+        # contrato conhece: uma figura sem o CSV que a gerou não se pode auditar,
+        # e a auditoria é o que se pede numa defesa.
+        curvas.to_csv(os.path.join(destino, "all_curves_data.csv"), index=False)
+        (curvas.groupby(["Scenario", "Algorithm", "Run"])["Score"].max()
+               .reset_index().rename(columns={"Score": "BestScore"})
+               .to_csv(os.path.join(destino, "all_best_scores.csv"), index=False))
         for scen in [s for s in SCENARIOS if s in com_curva]:
             if figura_curvas(curvas, scen, destino):
                 feitas.append(NOMES["curvas"].format(cenario=scen))
@@ -343,8 +353,16 @@ def gerar(origem: str, nome: str, rotulo: str = "", heatmaps: bool = False) -> i
 
     if heatmaps:
         from scripts import heatmaps as hm
-        print("    heatmaps: a correr os modelos (lento)...")
-        hm.generate_all(out_dir=destino, episodes=4)
+        # Os modelos vêm da PRÓPRIA campanha (`<origem>/models*`), nunca de
+        # results/models — os ativos são os campeões 7d da tese, e copiá-los para
+        # cá "só para gerar as figuras" é a armadilha n.º 9 à espera de acontecer.
+        tem_modelos = os.path.isdir(os.path.join(origem, "models"))
+        raiz_modelos = origem if tem_modelos else None
+        algos_aqui = tuple(a.lower() for a in ALGOS if a in set(ev["Algorithm"]))
+        print(f"    heatmaps: a correr {len(algos_aqui)}×{len(cen_presentes)} modelos de "
+              f"{'da campanha' if tem_modelos else 'results/ (campanha sem models/)'} — lento...")
+        hm.generate_all(out_dir=destino, episodes=4, algos=algos_aqui,
+                        scenarios=cen_presentes, models_root=raiz_modelos)
 
     with open(os.path.join(destino, "CAMPANHA.md"), "w", encoding="utf-8") as f:
         f.write(f"# {rotulo or nome}\n\n"

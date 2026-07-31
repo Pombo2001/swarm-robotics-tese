@@ -1,0 +1,68 @@
+# A VITRINE — que treinos se mostram numa sala, com o relógio a andar.
+#
+# Fonte única da seleção: lida pela vista "Vitrine" do dashboard. A REGRA que
+# justifica cada escolha está em docs/VITRINE_DEFESA.md — este ficheiro é só a
+# lista, para não haver duas listas que divirjam.
+#
+# Regra, em três linhas (o detalhe está no documento):
+#   1. a unidade é a CAMPANHA, nunca a execução — nada de "o melhor run";
+#   2. quando os três algoritmos correram, aparecem os três (um colapso é um
+#      resultado, não um problema de figura);
+#   3. métrica comparável (recolhas/episódio), nunca a fitness ao lado da
+#      recompensa no mesmo eixo.
+#
+# `figura` usa os nomes canónicos (scripts/figuras_campanha.py:NOMES).
+
+blocos:
+  - titulo: "O retrato principal — campanha de 7 dias"
+    campanha: final_7d
+    subtitulo: "3 algoritmos × 7 cenários × 7 execuções × 20 episódios"
+    # Cinco cenários escolhidos para cobrir os QUATRO desfechos possíveis, não
+    # os cinco melhores: vitória, derrota, empate e falha geral.
+    itens:
+      - figura: dotplot_eval_cooperative_door.png
+        nota: "Vitória limpa do GNN — 69,8 ± 0,9, o desvio mais pequeno da tese"
+      - figura: dotplot_eval_four_rooms.png
+        nota: "Vitória grande — 59,8 contra 33,6 (PPO) e 31,8 (SAC)"
+      - figura: dotplot_eval_none.png
+        nota: "DERROTA do GNN para o PPO (38,3 vs 71,5) — não se escolheu o favorito"
+      - figura: dotplot_eval_bottleneck.png
+        nota: "Empate GNN/PPO (p=0,21) com o SAC a colapsar"
+      - figura: dotplot_eval_u_wall.png
+        nota: "Ninguém resolve: bimodal nos três, nenhuma diferença significativa a n=7"
+      - figura: comparacao_barras_geral.png
+        nota: "Os sete cenários de uma vez, mesma unidade para os três algoritmos"
+
+  - titulo: "O remate — Muro em U a n=28 (mega-treino)"
+    subtitulo: "quatro braços, 28 execuções cada, 560 episódios por braço"
+    itens:
+      - campanha: mega_A1
+        figura: dotplot_eval_u_wall.png
+        nota: "GNN com novidade ADAPTATIVA — 67,4 rec/ep, 28/28 a 100%"
+      - campanha: mega_A2
+        figura: dotplot_eval_u_wall.png
+        nota: "GNN objetivo puro — 32,5 rec/ep, 15/28. O mesmo algoritmo sem o mecanismo"
+      - campanha: mega_A3
+        figura: dotplot_eval_u_wall.png
+        nota: "PPO — 35,6 rec/ep, 14/28"
+      - campanha: mega_A4
+        figura: dotplot_eval_u_wall.png
+        nota: "SAC — 10,1 rec/ep, 14/28"
+
+  - titulo: "Se houver tempo"
+    itens:
+      - campanha: adaptativo_A1
+        figura: dotplot_eval_u_wall.png
+        nota: "QI6 à escala pequena: 68,5 rec/ep, 7/7 a 100%"
+      - campanha: adaptativo_A2
+        figura: dotplot_eval_u_wall.png
+        nota: "O controlo do mesmo desenho: objetivo puro, 31,5 e 4/7"
+      - campanha: mega_B5
+        figura: dotplot_eval_cooperative_door_bypass.png
+        nota: "Porta com Alternativa a n=21 — 80,9 rec/ep, 21/21 a 100%"
+      - campanha: final_7d
+        figura: heatmap_ocupacao_gnn_u_wall.png
+        nota: "Onde os agentes passam: o contorno do beco, aprendido"
+      - campanha: final_7d
+        figura: heatmap_geodesico_u_wall.png
+        nota: "O campo geodésico que dá o shaping — a figura que explica a fitness"

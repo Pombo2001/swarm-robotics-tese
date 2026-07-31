@@ -39,7 +39,18 @@ def _incompat(path, detalhe):
         f"Foi treinado antes da mudança B1 (observação 107->111) / GNN. É preciso RETREINAR.")
 
 
-def load_model(algo, scenario, config_path):
+def load_model(algo, scenario, config_path, models_root=None):
+    """Carrega o campeão de `algo` para `scenario`.
+
+    `models_root` é a pasta que CONTÉM models/, models_ppo/ e models_sac/. Por
+    omissão é `results/` — os modelos ATIVOS, que são os campeões da campanha de
+    7 dias e a base de tudo o que a tese reporta. Apontá-la para a pasta de outra
+    campanha permite avaliá-la (heatmaps, vídeos) **sem lhe tocar**: a alternativa
+    óbvia — copiar os modelos da campanha para results/models e repor no fim — é
+    a armadilha n.º 9, que já deu uma semana de números errados quando o restauro
+    não aconteceu.
+    """
+    raiz = models_root or os.path.join(PROJECT_ROOT, "results")
     suffix = f"_{scenario}" if scenario and scenario != "none" else ""
 
     if algo == "gnn":
@@ -47,8 +58,8 @@ def load_model(algo, scenario, config_path):
         env_tmp = SwarmForagingEnv3D(config_path=config_path)
         agent = GNNAgent3D("eval", env_tmp.action_space("robot_0"), config_path)
         for path in [
-            os.path.join(PROJECT_ROOT, "results", "models", f"gnn_3d_best{suffix}.pth"),
-            os.path.join(PROJECT_ROOT, "results", "models", "gnn_3d_best.pth"),
+            os.path.join(raiz, "models", f"gnn_3d_best{suffix}.pth"),
+            os.path.join(raiz, "models", "gnn_3d_best.pth"),
         ]:
             if os.path.exists(path):
                 try:
@@ -58,7 +69,7 @@ def load_model(algo, scenario, config_path):
                 agent.eval()
                 print(f"[OK] GNN carregado: {path}")
                 return agent
-        raise FileNotFoundError("Modelo GNN nao encontrado em results/models/")
+        raise FileNotFoundError(f"Modelo GNN nao encontrado em {os.path.join(raiz, 'models')}/")
 
     elif algo in ("ppo", "sac"):
         from stable_baselines3 import PPO, SAC
@@ -66,8 +77,8 @@ def load_model(algo, scenario, config_path):
         sub = "models_ppo" if algo == "ppo" else "models_sac"
         exp_obs = SwarmForagingEnv3D(config_path=config_path).observation_space_val.shape[0]
         for path in [
-            os.path.join(PROJECT_ROOT, "results", sub, f"{algo}_3d_final{suffix}.zip"),
-            os.path.join(PROJECT_ROOT, "results", sub, f"{algo}_3d_final.zip"),
+            os.path.join(raiz, sub, f"{algo}_3d_final{suffix}.zip"),
+            os.path.join(raiz, sub, f"{algo}_3d_final.zip"),
         ]:
             if os.path.exists(path):
                 model = cls.load(path)

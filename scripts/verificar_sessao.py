@@ -31,14 +31,22 @@ from src.scenarios import SCENARIOS, MAZE_SCENARIOS  # noqa: E402
 SESSOES = os.path.join(BASE, 'results', 'graficos_tese')
 
 # ── CONTRATO: o que uma sessão completa TEM de conter ────────────────────────
-# (padrão, é_essencial, descrição)
+# (padrão, é_essencial, descrição). O padrão pode ser um TUPLO de nomes
+# equivalentes — basta um existir. Não é laxismo: o mesmo conteúdo tem nomes
+# diferentes conforme o gerador (`dados_historicos.csv` no pipeline de treino,
+# `all_curves_data_7d.csv` no gerador da tese), e um contrato que só conhece um
+# deles dá a campanha CANÓNICA por incompleta — foi o que aconteceu ao final_7d,
+# que aparecia com 13 de 56 artefactos tendo-os quase todos.
 def contrato(algos, scenarios):
     itens = [
-        ('dados_historicos.csv',      True,  'curvas de treino'),
-        ('dados_melhores_scores.csv', True,  'melhores scores'),
+        (('dados_historicos.csv', 'all_curves_data_7d.csv', 'all_curves_data.csv'),
+         True,  'curvas de treino'),
+        (('dados_melhores_scores.csv', 'all_best_scores_7d.csv', 'all_best_scores.csv'),
+         True,  'melhores scores'),
         # a avaliação TEM de viver dentro da sessão: é o que a torna auto-contida e
         # comparável no dashboard depois de a pasta global ser sobrescrita
-        ('eval_summary.csv',          True,  'avaliação determinística (auto-contida)'),
+        (('eval_summary.csv', 'eval_by_run.csv', 'eval_by_run_7d.csv'),
+         True,  'avaliação determinística (auto-contida)'),
         ('info_treino.yaml',          False, 'metadados da sessão'),
         ('comparacao_barras_geral.png', True, 'barras globais'),
         ('recolhas_por_cenario.png',  True,  'recolhas por cenário'),
@@ -71,8 +79,12 @@ def verificar(pasta, algos=('gnn', 'ppo', 'sac'), scenarios=None):
     itens = contrato(algos, scenarios)
 
     existentes, faltam, faltam_essenciais = [], [], []
-    for nome, essencial, desc in itens:
-        if os.path.exists(os.path.join(pasta, nome)):
+    for padrao, essencial, desc in itens:
+        alternativas = (padrao,) if isinstance(padrao, str) else padrao
+        achado = next((n for n in alternativas
+                       if os.path.exists(os.path.join(pasta, n))), None)
+        nome = achado or alternativas[0]   # ao falhar, cita-se o nome canónico
+        if achado:
             existentes.append(nome)
         else:
             faltam.append((nome, essencial, desc))
