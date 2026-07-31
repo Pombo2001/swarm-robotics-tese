@@ -12,7 +12,7 @@ O que VAI (medido a 31 jul):
     · código do dashboard + src/ + scripts/ + configs/          ~4 MB
     · CSV e PNG de todas as campanhas (inclui as exploratórias,
       para se ver a evolução do projeto)                        ~285 MB
-    · GIFs SÓ da campanha de 7 dias (os 21 da tese)             ~35 MB
+    · GIFs de todas as campanhas que os têm                    ~265 MB
     · results/{evaluation,estatisticas,heatmaps,mapa_grande}    ~11 MB
     · os .tex da tese e do artigo (a vista Defesa lê o main.tex)  <1 MB
 
@@ -94,7 +94,11 @@ def empacotar(sem_videos: bool, so_canonicas: bool) -> None:
             for f in ficheiros:
                 ext = os.path.splitext(f)[1].lower()
                 if e_video:
-                    if sem_videos or ext not in EXT_VIDEOS or "09-07-2026" not in camp:
+                    # TODOS os GIFs, não só os da campanha da tese. A restrição
+                    # poupava 230 MB, mas deixava o Pi com 16 campanhas com vídeo
+                    # contra 22 na torre — e a diferença não era explicável a
+                    # quem lá fosse ver. Em LAN, 230 MB são 30 segundos.
+                    if sem_videos or ext not in EXT_VIDEOS:
                         continue
                 elif ext not in EXT_DADOS + EXT_FIGURAS:
                     continue
