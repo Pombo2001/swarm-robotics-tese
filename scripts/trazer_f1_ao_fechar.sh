@@ -17,8 +17,12 @@ set -u
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DESTINO="$RAIZ/results/mapa_grande/f1_zeroshot_v2/zeroshot_natural.csv"
 REMOTO="/home/goncalo/swarm-mapa/results/evaluation/zeroshot_mapa_grande.csv"
-INTERVALO=600           # 10 min
-FALHAS_MAX=18           # 3 h de SSH mudo => desiste e diz porquê
+INTERVALO=600                        # 10 min
+# 3 h por omissão; mais quando se sabe que a VPN vai estar em baixo um bocado
+# (a 31 jul desligou-se o GlobalProtect para chegar ao Pi — o Pi e o servidor do
+# ISCTE não se alcançam ao mesmo tempo — e o esperador desistiu a meio da tarde,
+# com o F1 ainda por fechar).
+FALHAS_MAX=${F1_FALHAS_MAX:-18}
 
 falhas=0
 echo "[f1] a vigiar a condição natural (sessão tmux mapaNat) — $(date '+%d %b %H:%M')"

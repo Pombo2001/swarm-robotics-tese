@@ -16,7 +16,46 @@
 
 ---
 
-# 0. ONDE ISTO ESTÁ (29 jul, meio-dia) — LÊ ISTO PRIMEIRO
+# 0. ONDE ISTO ESTÁ (31 jul, fim do dia) — LÊ ISTO PRIMEIRO
+
+1. **O mapa grande é RESOLÚVEL, e o zero é das políticas.** Os 3 controlos do F1
+   fecharam a **0,00 recolhas/ep** (420 ep cada) e a condição natural ia no mesmo
+   caminho. `scripts/sanidade_mapa_grande.py` separou as duas leituras possíveis
+   com um navegador que não aprendeu nada (descida do campo geodésico): **54,0
+   rec/ep** no mapa grande, 86,5 no Quatro Salas. Há caminho, o ninho é
+   alcançável, cabe no episódio ⇒ **o zero mede transferência**, que é o que a
+   QI7 pergunta, e passa a ter um teto contra o qual se lê (a GNN faz 69% do
+   navegador no Quatro Salas e 0% no mapa grande).
+   ⏳ A condição natural fecha na noite de 31 jul; `scripts/trazer_f1_ao_fechar.sh`
+   traz o CSV sozinho **assim que a VPN do ISCTE voltar** (está desligada desde
+   as 14:52 para se chegar ao Pi — as duas redes não se alcançam ao mesmo tempo).
+
+2. **O dashboard foi revisto de cima a baixo** (14 → 15 vistas, sem duplicações):
+   a escalabilidade deixou de viver em dois sítios e juntou-se à robustez
+   («Escala e robustez»); a comparação de campanhas passou para o pé da matriz
+   oficial (Ciência); «Monitorizar» passou a **Servidor** (é lá que se treina) e
+   «Resultados» a **Galeria**. Vistas novas: **Vitrine** (o que se mostra na
+   defesa, `configs/vitrine.yaml`) e **Episódio 3D** (Canvas 2D no browser, sem
+   three.js — o Ursina abre janela no ecrã do servidor e é inútil no Pi).
+
+3. **Todas as campanhas têm figuras**: 1060 em 44 campanhas, 140 GIFs em 22.
+   Faltavam porque `week_stream*.sh`/`mega_stream*.sh` arquivam
+   `results/{evaluation,models,logs}` e **não** `graficos_tese/` — erro de
+   transporte, não de geração. `scripts/figuras_campanha.py` regenera do que cá
+   está, com os nomes que a tese cita.
+
+4. **O dashboard corre no Raspberry Pi** para o orientador:
+   `https://swarmroboticsgs.duckdns.org` (Let's Encrypt válido, websockets OK).
+   ⚠️ **SEM PASSWORD** à data desta escrita — falta a Access List no Nginx Proxy
+   Manager. Pacote e instruções: `scripts/empacotar_para_pi.py`, atualizações
+   incrementais com `scripts/atualizar_pi.sh`.
+
+5. **Mega-treino**: megaA na fase 5/5, megaB na **fase 7/7** (a última). Fins
+   ~2-3 ago, como o pré-registo previa.
+
+---
+
+# 0-Z. ONDE ISTO ESTAVA (29 jul, meio-dia)
 
 1. ⛔ **O F1 do mapa grande foi ANULADO** (29 jul) — pela **segunda** vez. Os
    robôs **voavam por cima das paredes**: o mundo é 3D, a arena é uma esfera de
