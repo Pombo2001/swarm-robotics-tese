@@ -302,7 +302,8 @@ def figura_barras(ev, destino):
 
 
 # ── UMA CAMPANHA ─────────────────────────────────────────────────────────────
-def gerar(origem: str, nome: str, rotulo: str = "", heatmaps: bool = False) -> int:
+def gerar(origem: str, nome: str, rotulo: str = "", heatmaps: bool = False,
+          videos: bool = False) -> int:
     destino = os.path.join(GRAFICOS, nome)
     print(f"\n=== {nome} ===\n    origem:  {os.path.relpath(origem, RAIZ)}")
     ev = carregar_eval(origem)
@@ -371,6 +372,15 @@ def gerar(origem: str, nome: str, rotulo: str = "", heatmaps: bool = False) -> i
         if sem_curva:
             print(f"    [!] avaliados mas sem curva de treino nos logs: {', '.join(sem_curva)}")
 
+    if videos:
+        from scripts import record_episode as rec
+        tem_modelos_v = os.path.isdir(os.path.join(origem, "models"))
+        algos_v = (tuple(a.lower() for a in ALGOS) if so_curvas
+                   else tuple(a.lower() for a in ALGOS if a in set(ev["Algorithm"])))
+        print(f"    vídeos: {len(algos_v)}×{len(cen_presentes)} episódios a gravar...")
+        rec.generate_all(destino, algos=algos_v, scenarios=cen_presentes or None,
+                         models_root=origem if tem_modelos_v else None)
+
     if heatmaps:
         from scripts import heatmaps as hm
         # Os modelos vêm da PRÓPRIA campanha (`<origem>/models*`), nunca de
@@ -416,6 +426,8 @@ def main() -> int:
     p.add_argument("--rotulo", default="", help="descrição legível")
     p.add_argument("--heatmaps", action="store_true",
                    help="também os heatmaps de ocupação (corre os modelos, lento)")
+    p.add_argument("--videos", action="store_true",
+                   help="também os GIFs por algoritmo×cenário (corre os modelos, lento)")
     args = p.parse_args()
 
     camp = _campanhas()
@@ -427,18 +439,18 @@ def main() -> int:
 
     if args.origem:
         return gerar(args.origem, args.nome or os.path.basename(args.origem.rstrip("/\\")),
-                     args.rotulo, args.heatmaps)
+                     args.rotulo, args.heatmaps, args.videos)
     if args.campanha:
         if args.campanha not in camp:
             print(f"[X] campanha desconhecida: {args.campanha} (usa --listar)")
             return 2
         origem, rotulo = camp[args.campanha]
-        return gerar(origem, args.campanha, rotulo, args.heatmaps)
+        return gerar(origem, args.campanha, rotulo, args.heatmaps, args.videos)
     if args.todas:
         falhas = 0
         for slug, (origem, rotulo) in camp.items():
             if os.path.isdir(origem):
-                falhas += gerar(origem, slug, rotulo, args.heatmaps)
+                falhas += gerar(origem, slug, rotulo, args.heatmaps, args.videos)
         return 1 if falhas else 0
 
     p.print_help()

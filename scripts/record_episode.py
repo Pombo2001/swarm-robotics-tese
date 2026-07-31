@@ -56,16 +56,21 @@ def _default_videos_dir():
     return os.path.join(PROJECT_ROOT, "results", "videos")
 
 
-def _capture_episode(algo, scenario, config_path, seed, n_frames):
-    """Corre 1 episodio determinista e devolve snapshots da cena por frame."""
+def _capture_episode(algo, scenario, config_path, seed, n_frames, models_root=None):
+    """Corre 1 episodio determinista e devolve snapshots da cena por frame.
+
+    `models_root` permite gravar a partir dos modelos de OUTRA campanha sem tocar
+    nos ativos (ver run_eval.load_model).
+    """
     env = SwarmForagingEnv3D(config_path=config_path)
     env.config["environment"]["classic_scenario"] = scenario
 
-    model = None
-    try:
-        model = _load_model(algo, scenario, config_path)
-    except Exception as e:
-        print(f"[aviso] sem modelo para {algo}/{scenario} ({e}); uso acoes aleatorias.")
+    # Sem modelo NAO se grava. Antes caia-se em acoes aleatorias com um aviso na
+    # consola — e o que ficava no disco era um GIF chamado `gnn_u_wall.gif`, com
+    # o rotulo do algoritmo por cima, de robos a andar ao calhas. Ninguem que o
+    # visse no dashboard tinha como saber; o aviso morre no terminal e o
+    # ficheiro fica la para sempre a parecer um resultado.
+    model = _load_model(algo, scenario, config_path, models_root=models_root)
 
     obs, _ = env.reset(seed=seed)
     n_steps = env.max_steps
@@ -97,9 +102,10 @@ def _capture_episode(algo, scenario, config_path, seed, n_frames):
 
 
 def record(algo, scenario, config_path, seed=2024, seconds=15, fps=20,
-           trails=False, out=None, out_dir=None):
+           trails=False, out=None, out_dir=None, models_root=None):
     n_frames = max(10, seconds * fps)
-    frames, R, n_steps = _capture_episode(algo, scenario, config_path, seed, n_frames)
+    frames, R, n_steps = _capture_episode(algo, scenario, config_path, seed, n_frames,
+                                          models_root=models_root)
     print(f"[ok] {len(frames)} frames capturados ({n_steps} passos do episodio).")
 
     fig, ax = plt.subplots(figsize=(6, 6), dpi=100)
@@ -195,7 +201,7 @@ def _build_panels(videos_dir, panels_dir, scenarios, algos, frac=0.85):
 
 def generate_all(out_dir, algos=("sac", "ppo", "gnn"), scenarios=None,
                  config_path=None, seconds=12, fps=15, trails=False,
-                 progress_base=0.0, progress_span=1.0):
+                 progress_base=0.0, progress_span=1.0, models_root=None):
     """Grava um GIF 2D por algoritmo x cenario para out_dir/videos/.
     Robusto: falhas individuais (sem modelo, etc.) nao abortam o conjunto."""
     if config_path is None:
@@ -218,7 +224,7 @@ def generate_all(out_dir, algos=("sac", "ppo", "gnn"), scenarios=None,
                          f"Video 2D — {algo.upper()}/{sc}")
             try:
                 record(algo, sc, config_path, seconds=seconds, fps=fps,
-                       trails=trails, out_dir=videos_dir)
+                       trails=trails, out_dir=videos_dir, models_root=models_root)
                 n_ok += 1
             except Exception as e:
                 print(f"[!] Falha no video {algo}/{sc}: {e}")

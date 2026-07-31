@@ -85,6 +85,14 @@ def build():
     st = {"session": sessions[0], "mode": "Comparar algoritmos",
           "scenario": (data.scenarios_with_video(sessions[0]) or [config.SCENARIO_KEYS[0]])[0]}
 
+    # Quantas campanhas ficam DE FORA deste seletor, e porquê. Sem esta linha, a
+    # lista curta lia-se como "faltam vídeos" — quando o que falta são os
+    # MODELOS: as campanhas antigas foram sobrescritas pelas seguintes (só a
+    # partir de julho é que cada uma passou a arquivar os seus), e sem modelo não
+    # há episódio para gravar. Não é uma lacuna que se possa fechar.
+    todas = data.list_sessions()
+    sem_video = [s for s in todas if s not in sessions]
+
     with ui.column().classes("w-full gap-4 p-4 max-w-[1400px] mx-auto"):
         # ── Barra de controlo ────────────────────────────────────────────────
         with ui.card().classes(CARD):
@@ -100,6 +108,14 @@ def build():
             # escrito, a ausência parece um bug do dashboard em vez de uma consequência
             # de como a campanha foi lançada.
             fonte_lbl = theme.fonte("")
+            if sem_video:
+                ui.label(
+                    f"{len(sem_video)} das {len(todas)} campanhas não aparecem aqui: são "
+                    "as antigas, cujos modelos foram sobrescritos pelos treinos "
+                    "seguintes. Sem modelo não há episódio para gravar — e um vídeo "
+                    "de ações aleatórias com o nome do algoritmo seria pior do que "
+                    "vídeo nenhum."
+                ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
 
         body = ui.column().classes("w-full gap-4")
 
