@@ -44,10 +44,16 @@ def _existe(campanha: str, figura: str) -> bool:
 
 
 def _cartao_figura(campanha: str, figura: str, nota: str, abrir):
-    with ui.column().classes("gap-1 w-full"):
+    # `min-width:0` não é cosmético: sem ele, uma célula de grelha assume a
+    # largura NATURAL do conteúdo (a imagem a 2400 px) em vez de encolher. A
+    # página cresce para a direita e — como todas as vistas partilham o mesmo
+    # `ui.tab_panels` — os outros separadores ficam espremidos num canto. Foi o
+    # que aconteceu ao Monitorizar assim que esta vista entrou.
+    with ui.column().classes("gap-1 w-full").style("min-width:0"):
         if _existe(campanha, figura):
             ui.image(f"/graficos/{campanha}/{figura}") \
-                .classes("w-full rounded cursor-pointer") \
+                .classes("w-full max-w-full rounded cursor-pointer") \
+                .style("height:auto") \
                 .on("click", lambda c=campanha, f=figura: abrir(c, f))
         else:
             with ui.column().classes("w-full items-center justify-center py-8 rounded") \
@@ -110,7 +116,8 @@ def build():
                 if n_falta:
                     ui.label(f"{n_falta} de {len(itens)} figuras em falta neste bloco") \
                         .classes("text-xs mb-2").style("color:#f0a04b")
-                with ui.grid(columns=2).classes("w-full gap-4"):
+                with ui.grid(columns=2).classes("w-full gap-4") \
+                        .style("grid-template-columns:repeat(2,minmax(0,1fr))"):
                     for it in itens:
                         _cartao_figura(it.get("campanha", campanha_bloco) or "",
                                        it.get("figura", ""), it.get("nota", ""), abrir)

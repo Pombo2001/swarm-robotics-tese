@@ -49,6 +49,21 @@ def _build_fig(curves: dict, metric: str) -> go.Figure:
                        line=dict(color=config.ALGO_META[a]["color"], width=2)),
             row=i, col=1)
         fig.update_yaxes(title_text=rotulo_y, row=i, col=1)
+        # Uma linha colada ao zero e um painel sem dados desenham-se igual, e
+        # ambos se leem como "o grafico nao carregou". Dizer qual dos dois e:
+        # "0 recolhas em 20 registos" é um RESULTADO (treino que ainda não come);
+        # "sem coluna no CSV" é uma limitação do log, não do algoritmo.
+        if not y:
+            nota = ("sem coluna de tarefa neste CSV"
+                    if metric == "task" else "sem dados neste CSV")
+        elif max(y) == 0:
+            nota = f"{len(y)} registos, todos a zero — ainda não recolhe"
+        else:
+            nota = None
+        if nota:
+            fig.add_annotation(text=nota, row=i, col=1, xref="x domain", yref="y domain",
+                               x=0.5, y=0.5, showarrow=False,
+                               font=dict(color="#9aa5ad", size=12))
     if partilhar:
         topo = max((max(curves[a].get(metric, [0]) or [0]) for a in algos), default=0)
         for i in range(1, len(algos) + 1):

@@ -52,11 +52,26 @@ def _aggregate_eval(path: str):
     if not path or not os.path.exists(path):
         return None
     df = pd.read_csv(path)
-    agg = df.groupby(["Scenario", "Algorithm"]).agg(
-        ptask=("success", lambda s: 100.0 * s.mean()),
-        recolhas=("food_collected", "mean"),
-        n=("success", "size"),
-    ).reset_index()
+    # Quando o ficheiro tem a coluna Run, a unidade estatística é a EXECUÇÃO e
+    # não o episódio: agrega-se primeiro dentro de cada run. Sem isto, uma
+    # campanha de 7 execuções pesava igual a uma de 1 e a média deslizava para
+    # quem tivesse mais episódios gravados.
+    if "Run" in df.columns:
+        por_run = (df.groupby(["Scenario", "Algorithm", "Run"])
+                     .agg(ptask=("success", lambda s: 100.0 * s.mean()),
+                          recolhas=("food_collected", "mean"),
+                          n=("success", "size"))
+                     .reset_index())
+        agg = (por_run.groupby(["Scenario", "Algorithm"])
+                      .agg(ptask=("ptask", "mean"), recolhas=("recolhas", "mean"),
+                           n=("n", "sum"))
+                      .reset_index())
+    else:
+        agg = df.groupby(["Scenario", "Algorithm"]).agg(
+            ptask=("success", lambda s: 100.0 * s.mean()),
+            recolhas=("food_collected", "mean"),
+            n=("success", "size"),
+        ).reset_index()
     out = {}
     for _, r in agg.iterrows():
         out.setdefault(r["Scenario"], {})[r["Algorithm"]] = {
@@ -103,8 +118,18 @@ def _adapt_eval_path(label: str):
     sub = ADAPT_LABEL_TO_DIR.get(label)
     if not sub:
         return None
-    p = os.path.join(ADAPT_DIR, sub, "evaluation", "eval_summary.csv")
-    return p if os.path.exists(p) else None
+    # eval_by_run PRIMEIRO. O eval_summary destas fases é o resíduo da pasta
+    # global do servidor: traz só a ÚLTIMA execução (20 episódios) e, nas fases
+    # A1/A2, traz PPO e SAC que esta campanha nunca treinou (não há models_ppo/
+    # models_sac na fase — são modelos de outra campanha que ficaram na pasta).
+    # Media pelo eval_summary, o Muro em U do adaptativo aparecia a 80,8 (uma
+    # execução feliz) em vez de 68,5 (as sete), com um PPO ao lado que não é dele.
+    dir_eval = os.path.join(ADAPT_DIR, sub, "evaluation")
+    for nome in ("eval_by_run.csv", "eval_summary.csv"):
+        p = os.path.join(dir_eval, nome)
+        if os.path.exists(p):
+            return p
+    return None
 
 
 def adapt_sessions():
@@ -123,8 +148,12 @@ def _session_eval_path(session: str):
     if session in ADAPT_LABEL_TO_DIR:
         return _adapt_eval_path(session)
     base = os.path.join(GRAFICOS_DIR, session)
-    hits = glob.glob(os.path.join(base, "**", "eval_summary.csv"), recursive=True)
-    return hits[0] if hits else None
+    # Mesma preferência: o ficheiro por execução manda sobre o resumo (ver acima).
+    for padrao in ("eval_by_run*.csv", "eval_summary.csv"):
+        hits = sorted(glob.glob(os.path.join(base, "**", padrao), recursive=True))
+        if hits:
+            return hits[0]
+    return None
 
 
 def sessions_with_eval():
@@ -295,8 +324,11 @@ def list_sessions():
     """
     if not os.path.isdir(GRAFICOS_DIR):
         return []
+    # Pastas com "_" à cabeça são arquivo interno (ex.: _orfaos_junho2026, as
+    # figuras de junho retiradas da tese) — existem para consulta, não são
+    # sessões e não devem aparecer em seletores nem em contagens.
     dirs = [d for d in os.listdir(GRAFICOS_DIR)
-            if os.path.isdir(os.path.join(GRAFICOS_DIR, d))]
+            if os.path.isdir(os.path.join(GRAFICOS_DIR, d)) and not d.startswith("_")]
     campanhas = [d for d in dirs if _data_da_sessao(d)]
     curadas = [d for d in dirs if not _data_da_sessao(d)]
     campanhas.sort(key=_data_da_sessao, reverse=True)

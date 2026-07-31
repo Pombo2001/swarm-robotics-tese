@@ -190,9 +190,15 @@ def build():
 
         # ---------------- MAPA GRANDE (rascunho) — 3D no browser -------------
         with ui.card().classes(CARD):
-            _section_title("construction", "Mapa grande (rascunho) — 3D",
-                           "Ainda NÃO está no simulador. Serve para aprovares tamanho "
-                           "e aspeto antes de se mexer no código.")
+            # O texto dizia "ainda NÃO está no simulador" — verdade quando foi
+            # escrito (23 jul), falso desde 24 jul: o mapa_grande é o 8.º cenário
+            # do simulador e já correu campanhas. Ficava aqui a desmentir a vista
+            # Mapa grande, ao lado.
+            _section_title("construction", "Mapa grande — pré-visualização 3D",
+                           "O cenário está no simulador desde 24 jul; isto é só a "
+                           "planta, para ver tamanho e aspeto. A altura das paredes "
+                           "aqui é da PRÉ-VISUALIZAÇÃO — no simulador é 2× o raio da "
+                           "arena, para vedarem mesmo.")
 
             with ui.row().classes("items-center gap-4 mt-2 no-wrap"):
                 raio_sel = ui.select(

@@ -187,7 +187,10 @@ def build(queue: JobQueue, goto=None):
         total_h = sum(h for _, h in _CAMPANHAS)
         longest_name, longest_h = max(_CAMPANHAS, key=lambda c: c[1])
         with ui.grid(columns=3).classes("w-full gap-4 fade-up-1"):
-            _kpi("Sessões de treino", len(sessions))
+            # Só as sessões DATADAS: as pastas curadas (final_7d, adaptativo_*,
+            # mega_*) são vistas das campanhas, não treinos que aconteceram — e
+            # contá-las fazia o número saltar de 31 para 46 sem ter corrido nada.
+            _kpi("Sessões de treino", len(data.historical_sessions()))
             _kpi("Cenários de estudo", len(config.SCENARIO_KEYS))
             _kpi("Episódios avaliados", n_epis)
             best = max(covered.items(), key=lambda kv: kv[1])[0] if table else "—"

@@ -52,38 +52,54 @@ def _zoom(session: str, filename: str):
 # 7d (que continuam a ser os ativos, de propósito — ver a armadilha nº9). O
 # resultado colateral era esta vista mostrar 31 campanhas exploratórias e
 # nenhuma das quatro que a tese cita. Aqui estão, com o que cada uma produziu.
+# (nome, pasta de DADOS, desenho, o que produziu, padrão das pastas de FIGURAS)
+# A quinta coluna existe porque os dados e as figuras vivem separados: os CSV
+# ficam na pasta da campanha e as figuras em results/graficos_tese/<slug>/
+# (geradas por scripts/figuras_campanha.py). Sem ela, esta vista dizia
+# "0 gráficos" para o adaptativo e para o mega-treino — que têm 22 e 12 cada.
 CANONICAS = [
     ("Campanha final — 7 dias", "graficos_tese/final_7d",
      "3 algoritmos × 7 cenários × 7 execuções × 20 episódios = 2940 episódios",
-     "tab:res_eval, tab:res_signif, e a base de tudo o resto"),
+     "tab:res_eval, tab:res_signif, e a base de tudo o resto", None),
     ("Novelty · peso fixo w=0,5", "novelty_final",
      "2 cenários (Muro U, bypass) × 7 execuções, orçamento igualado",
-     "QI6 — os 7/7 no Muro U e o custo simétrico no bypass"),
+     "QI6 — os 7/7 no Muro U e o custo simétrico no bypass", None),
     ("Novelty · dosagem adaptativa", "novelty_adaptativo",
      "5 fases pré-registadas (T1-T4 + controlo de orçamento)",
-     "QI6 — a campanha que fechou a tensão do peso fixo"),
+     "QI6 — a campanha que fechou a tensão do peso fixo", "graficos_tese/adaptativo_*"),
     ("Mega-treino de 1 mês", "mega_1mes",
      "12 fases (u_wall a n=28 nos 4 braços + ablações)",
-     "replicação da QI6 com 4× o n — A CORRER no servidor"),
+     "replicação da QI6 com 4× o n — A CORRER no servidor", "graficos_tese/mega_*"),
     ("Mapa grande — F1", "mapa_grande",
      "zero-shot de topologia: 21 células × 20 episódios por condição",
-     "QI7 — por fechar (faltam condições de controlo)"),
+     "QI7 — repetido a 29 jul (o 1.º correu com paredes atravessáveis); "
+     "3 controlos fechados a 0,00 e a condição natural a correr", None),
 ]
 
 
-def _conta(rel):
-    """(nº de CSV, nº de PNG) de uma campanha canónica; (0,0) se não existir."""
-    raiz = os.path.join(config.BASE_DIR, "results", rel)
-    if not os.path.isdir(raiz):
-        return 0, 0
+def _conta(rel, figuras=None):
+    """(nº de CSV, nº de PNG) de uma campanha canónica; (0,0) se não existir.
+
+    `figuras` é um padrão glob para as pastas de figuras, quando estas vivem
+    fora da pasta de dados (ver CANONICAS).
+    """
+    import glob as _glob
+    raizes = [os.path.join(config.BASE_DIR, "results", rel)]
+    if figuras:
+        raizes += _glob.glob(os.path.join(config.BASE_DIR, "results", figuras))
     csv = png = 0
-    for _, _, fs in os.walk(raiz):
-        for f in fs:
-            if f.endswith(".csv"):
-                csv += 1
-            elif f.endswith(".png"):
-                png += 1
-    return csv, png
+    achou = False
+    for raiz in raizes:
+        if not os.path.isdir(raiz):
+            continue
+        achou = True
+        for _, _, fs in os.walk(raiz):
+            for f in fs:
+                if f.endswith(".csv"):
+                    csv += 1
+                elif f.endswith(".png"):
+                    png += 1
+    return (csv, png) if achou else (0, 0)
 
 
 def _canonicas():
@@ -98,8 +114,8 @@ def _canonicas():
             "registo cronológico em baixo."
         ).classes("text-xs mb-3").style(f"color:{theme.INK_MUTED}")
 
-        for nome, rel, desenho, produziu in CANONICAS:
-            csv, png = _conta(rel)
+        for nome, rel, desenho, produziu, figuras in CANONICAS:
+            csv, png = _conta(rel, figuras)
             existe = csv or png
             with ui.row().classes("w-full gap-3 no-wrap items-start py-2 "
                                   "border-t border-white/5"):
