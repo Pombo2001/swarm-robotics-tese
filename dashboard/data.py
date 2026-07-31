@@ -364,11 +364,20 @@ def graph_type(filename: str) -> str:
     categoria "Boxplots".
     """
     f = filename.lower()
+    # O dot plot é a figura PREFERIDA nos cenários bimodais (com n=7 os quartis
+    # de uma caixa são ruído). Não tinha regra nenhuma aqui e caía em "Outros" —
+    # a figura recomendada para a defesa era a única sem categoria.
+    if f.startswith("dotplot"):
+        return "Dot plots (avaliação)"
     if f.startswith("boxplot_eval"):
         return "Boxplots (avaliação)"
     if f.startswith("boxplot"):
         return "Boxplots (treino)"
-    if f.startswith("comparacao_mapa"):
+    # `curva_aprendizagem_X` é o nome ANTIGO de `comparacao_mapa_X` — a mesma
+    # figura, gerada pelo pipeline de treino em vez do gerador da tese. As
+    # campanhas antigas ficaram com ele, e sem esta linha apareciam em "Outros",
+    # o que fazia a mesma figura mudar de secção conforme a campanha aberta.
+    if f.startswith(("comparacao_mapa", "curva_aprendizagem")):
         return "Curvas por mapa"
     if f.startswith("desempenho_global"):
         return "Curvas por algoritmo"

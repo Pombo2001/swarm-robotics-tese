@@ -19,12 +19,15 @@ SCEN_LABEL = config.SCENARIO_LABEL_SHORT
 # texto da dissertação usa. Os boxplots de treino ficam explicitamente rotulados para
 # ninguém os citar como se fossem a eval determinística.
 TYPE_ORDER = [
-    "Métricas de tarefa", "Boxplots (avaliação)", "Escalabilidade",
+    # Dot plots antes dos boxplots: com n pequeno é a leitura honesta (uma caixa
+    # cheia sugere densidade onde não há execução nenhuma).
+    "Métricas de tarefa", "Dot plots (avaliação)", "Boxplots (avaliação)", "Escalabilidade",
     "Heatmaps de ocupação", "Heatmaps geodésicos", "Painéis de vídeo",
     "Curvas por mapa", "Curvas por algoritmo", "Boxplots (treino)", "Outros",
 ]
 TYPE_ICON = {
-    "Métricas de tarefa": "leaderboard", "Boxplots (avaliação)": "fact_check",
+    "Métricas de tarefa": "leaderboard", "Dot plots (avaliação)": "scatter_plot",
+    "Boxplots (avaliação)": "fact_check",
     "Escalabilidade": "open_in_full",
     "Heatmaps de ocupação": "grid_view", "Heatmaps geodésicos": "route",
     "Painéis de vídeo": "theaters",
@@ -32,9 +35,10 @@ TYPE_ICON = {
     "Boxplots (treino)": "candlestick_chart", "Outros": "image",
 }
 # Prefixos conhecidos dos nomes de ficheiro (removidos para gerar o título).
-_PREFIXES = ["comparacao_mapa", "comparacao_barras", "heatmap_ocupacao",
-             "heatmap_geodesico", "boxplot_por_algo", "desempenho_global",
-             "taxa_sucesso", "recolhas", "boxplot"]
+_PREFIXES = ["comparacao_mapa", "curva_aprendizagem", "comparacao_barras",
+             "heatmap_ocupacao", "heatmap_geodesico", "boxplot_por_algo",
+             "desempenho_global", "taxa_sucesso", "recolhas", "dotplot_eval",
+             "boxplot_eval", "boxplot"]
 
 
 def _pretty_title(f: str) -> str:

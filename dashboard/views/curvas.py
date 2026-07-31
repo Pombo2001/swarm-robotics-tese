@@ -12,7 +12,13 @@ from .. import config, data, theme
 
 CARD = theme.CARD + " p-4"
 _section_title = theme.section_title
-_METRICS = {"Score (fitness / recompensa)": "score", "Tarefa (recolhas)": "task"}
+# Ordem = predefinição: a métrica de TAREFA primeiro. O "score" mistura duas
+# grandezas — fitness evolutiva (~10^5, porque é comida×10000 + shaping) e
+# recompensa episódica (~10^2) — e ao ficar por omissão dava a impressão de que
+# o GNN é "gigante" ao lado do PPO/SAC quando o que difere é a unidade. Os
+# painéis já são separados; a predefinição faltava.
+_METRICS = {"Tarefa (recolhas) — comparável": "task",
+            "Score (fitness / recompensa) — escalas diferentes": "score"}
 
 
 def _build_fig(curves: dict, metric: str) -> go.Figure:
@@ -25,7 +31,16 @@ def _build_fig(curves: dict, metric: str) -> go.Figure:
         return fig
     titles = [f"{a} — {'fitness' if a == 'GNN' and metric == 'score' else ('recompensa' if metric == 'score' else 'recolhas')}"
               for a in algos]
-    fig = make_subplots(rows=len(algos), cols=1, subplot_titles=titles, vertical_spacing=0.14)
+    # Com a métrica de TAREFA os três medem a mesma coisa na mesma unidade, por
+    # isso partilham o eixo Y: é a comparação que se quer ver, e com eixos
+    # próprios um algoritmo que recolhe 5 desenha-se tão alto como um que recolhe
+    # 120. Com o "score" NUNCA se partilha — a fitness (~10^5) esmagaria as
+    # curvas do PPO/SAC (~10^2) contra o eixo, que é o efeito de "o GNN é
+    # gigante" que não é resultado nenhum, é a unidade.
+    partilhar = (metric == "task")
+    fig = make_subplots(rows=len(algos), cols=1, subplot_titles=titles,
+                        vertical_spacing=0.14, shared_yaxes=partilhar)
+    rotulo_y = "recolhas / episódio" if metric == "task" else "fitness / recompensa"
     for i, a in enumerate(algos, start=1):
         c = curves[a]
         y = c.get(metric, [])
@@ -33,7 +48,11 @@ def _build_fig(curves: dict, metric: str) -> go.Figure:
             go.Scatter(x=c["x"], y=y, mode="lines+markers", name=a,
                        line=dict(color=config.ALGO_META[a]["color"], width=2)),
             row=i, col=1)
-        fig.update_yaxes(title_text=metric, row=i, col=1)
+        fig.update_yaxes(title_text=rotulo_y, row=i, col=1)
+    if partilhar:
+        topo = max((max(curves[a].get(metric, [0]) or [0]) for a in algos), default=0)
+        for i in range(1, len(algos) + 1):
+            fig.update_yaxes(range=[0, topo * 1.08 if topo else 1], row=i, col=1)
     fig.update_xaxes(title_text="timesteps", row=len(algos), col=1)
     fig.update_layout(template="plotly_dark", showlegend=False,
                       height=240 * len(algos), margin=dict(l=50, r=20, t=30, b=40),
