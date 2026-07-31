@@ -16,7 +16,7 @@ from . import config, theme
 from .jobs import JobQueue
 from .views import (overview, treinar, servidor, ciencia, resultados, curvas,
                     videos, aovivo, arquivo, proveniencia, prontidao,
-                    defesa, mapa, escala, vitrine)
+                    defesa, mapa, escala, vitrine, viz3d)
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
@@ -25,6 +25,16 @@ queue = JobQueue()
 _graficos = os.path.join(config.BASE_DIR, "results", "graficos_tese")
 if os.path.isdir(_graficos):
     app.add_static_files("/graficos", _graficos)
+
+# JS do visualizador 3D e episódios exportados. O 3D do Ursina abre uma janela
+# no ecrã de QUEM CORRE o servidor — inútil no Pi, que não tem monitor e serve
+# pela internet. Estes dois caminhos deixam o desenho acontecer no browser.
+_estatico = os.path.join(os.path.dirname(__file__), "estatico")
+if os.path.isdir(_estatico):
+    app.add_static_files("/estatico", _estatico)
+_episodios = os.path.join(config.BASE_DIR, "results", "episodios_3d")
+if os.path.isdir(_episodios):
+    app.add_static_files("/episodios", _episodios)
 
 # Figuras instaladas na tese (a vista Mapa usa a planta do mapa grande).
 _fig_tese = os.path.join(config.BASE_DIR, "Tese", "images", "resultados")
@@ -89,6 +99,9 @@ def index():
                 t_pronto  = ui.tab("Prontidão", icon="checklist")
                 t_defesa  = ui.tab("Defesa", icon="record_voice_over")
                 t_videos  = ui.tab("Vídeos", icon="smart_display")
+                # Existe TAMBÉM em modo leitura: ao contrário do Ursina,
+                # desenha no browser de quem vê, não no ecrã do servidor.
+                t_viz3d   = ui.tab("Episódio 3D", icon="view_in_ar")
                 if not config.READONLY:
                     t_aovivo = ui.tab("Ao vivo (3D)", icon="view_in_ar")
                 t_arquivo = ui.tab("Arquivo", icon="history_edu")
@@ -108,7 +121,7 @@ def index():
                 "proveniencia": t_proven,
                 "resultados": t_result, "prontidao": t_pronto,
                 "defesa": t_defesa,
-                "videos": t_videos,
+                "videos": t_videos, "viz3d": t_viz3d,
                 "aovivo": t_aovivo, "arquivo": t_arquivo}
 
     def goto(name: str):
@@ -153,6 +166,8 @@ def index():
             defesa.build()
         with ui.tab_panel(t_videos):
             videos.build()
+        with ui.tab_panel(t_viz3d):
+            viz3d.build()
         if t_aovivo is not None:
             with ui.tab_panel(t_aovivo):
                 aovivo.build()
