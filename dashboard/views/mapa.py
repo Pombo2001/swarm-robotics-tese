@@ -23,7 +23,12 @@ from .. import theme
 
 CARD = theme.CARD + " p-4"
 _RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-DIR_F1 = os.path.join(_RAIZ, "results", "mapa_grande", "f1_zeroshot")
+# ⚠️ `f1_zeroshot/` é a corrida ANULADA a 29 jul (paredes de 30 m numa arena de
+# raio 60: os agentes voavam por cima do labirinto, env_hash 267a7b547aed). Esta
+# vista lia-a — mostrava 4,96 recolhas/ep como se fosse o resultado do mapa. O F1
+# que vale é a repetição de 31 jul, `f1_zeroshot_v2/` (env_hash e930abe4d992).
+DIR_F1 = os.path.join(_RAIZ, "results", "mapa_grande", "f1_zeroshot_v2")
+DIR_F1_ANULADO = os.path.join(_RAIZ, "results", "mapa_grande", "f1_zeroshot")
 PLANTA = "/figuras_tese/mapa_grande_planta.png"
 
 ALGOS = ("GNN", "PPO", "SAC")
@@ -213,8 +218,9 @@ def build():
                  "#ef4444" if anulado
                  else ("#4ade80" if len(presentes) == 4 else "#ffb020")),
                 ("F2 — treino nativo",
-                 "por lançar — só depois de o mega-treino libertar o servidor "
-                 "(~3 ago); script pronto em scripts/mapa_streamF2.sh",
+                 "arranca 3 ago, quando o megaB largar a máquina: 3 algoritmos × "
+                 "21 runs (emenda 19) + braço exploratório @2340 min × 3 "
+                 "(emenda 20); diretórios já preparados no servidor",
                  theme.INK_MUTED),
             ]
             for nome, estado, cor in fases:
@@ -290,11 +296,25 @@ def build():
                     % (len(faltam), ", ".join(faltam))
                 ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
             else:
-                ui.label("As quatro condições estão no disco.") \
-                    .classes("text-sm font-bold")
+                ui.label("As quatro condições estão no disco — o F1 está fechado.") \
+                    .classes("text-sm font-bold").style("color:#4ade80")
                 ui.label(
-                    "O veredicto formal — que causa está excluída e qual "
-                    "confunde o resultado — sai de "
-                    "`python scripts/analise_f1_controlos.py`, que aplica a "
-                    "regra pré-comprometida em vez de a interpretar aqui."
+                    "1680 episódios, e as 84 células a 0,00 nas quatro condições: "
+                    "nenhum controlo ressuscita uma única célula, por isso as três "
+                    "causas alternativas ficam EXCLUÍDAS e reporta-se a natural — "
+                    "é a regra do pré-registo §3, escrita antes dos dados."
+                ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
+                ui.label(
+                    "O zero não é um mapa impossível: um navegador que não aprendeu "
+                    "nada (descida do campo geodésico) faz 54,0 recolhas/ep neste "
+                    "mesmo mapa, contra 86,5 no Quatro Salas. Há caminho e cabe no "
+                    "episódio ⇒ o que o zero mede é transferência, que é o que a "
+                    "QI7 pergunta."
+                ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
+                ui.label(
+                    "Veredicto integral: results/mapa_grande/f1_zeroshot_v2/"
+                    "f1_veredicto.txt — reproduz-se com "
+                    "`python scripts/analise_f1_controlos.py --csv "
+                    "results/mapa_grande/f1_zeroshot_v2/*.csv --saida "
+                    "results/mapa_grande/f1_zeroshot_v2`."
                 ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")

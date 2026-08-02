@@ -140,6 +140,16 @@ _TIMELINE = [
     ("19 jul", "Mega-treino de 1 mês", "u_wall n=28 nos 4 braços + ablação do anneal (megaA/megaB)."),
     ("24–25 jul", "Mapa grande (8.º cenário)", "Labirinto composto de 103×62 m; pré-registo da QI7."),
     ("27 jul", "Auditoria de física ao mapa", "Enxame amontoado atravessava a porta — corrigido antes de treinar."),
+    ("29–30 jul", "Os robôs voavam por cima das paredes",
+     "Arena r=60 com paredes de 30 m: 45 m de céu aberto. O F1 é anulado e repetido; "
+     "teto de ±2 m tira o incentivo a subir."),
+    ("31 jul", "O dashboard sai da torre",
+     "Publicado no Raspberry Pi para o orientador; o 3D passa a ser desenhado no browser."),
+    ("01–02 ago", "F1 do mapa grande fecha",
+     "1680 episódios, 84 de 84 células a 0,00: as três causas alternativas excluídas. "
+     "O zero mede transferência (o navegador geodésico faz 54 rec/ep no mesmo mapa)."),
+    ("02 ago", "megaA concluído; F2 pronto",
+     "5 fases arquivadas. O F2 arranca a 3 ago com 21 runs por algoritmo (emenda 19)."),
 ]
 
 

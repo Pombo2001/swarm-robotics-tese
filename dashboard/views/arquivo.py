@@ -70,10 +70,11 @@ CANONICAS = [
     ("Mega-treino de 1 mês", "mega_1mes",
      "12 fases (u_wall a n=28 nos 4 braços + ablações)",
      "replicação da QI6 com 4× o n — A CORRER no servidor", "graficos_tese/mega_*"),
-    ("Mapa grande — F1", "mapa_grande",
-     "zero-shot de topologia: 21 células × 20 episódios por condição",
-     "QI7 — repetido a 29 jul (o 1.º correu com paredes atravessáveis); "
-     "3 controlos fechados a 0,00 e a condição natural a correr", None),
+    ("Mapa grande — F1 (fechado)", "mapa_grande",
+     "zero-shot de topologia: 4 condições × 21 células × 20 ep = 1680 episódios",
+     "QI7 — 84 de 84 células a 0,00 recolhas/ep; os 3 confundentes EXCLUÍDOS. "
+     "Repetido de raiz a 31 jul (o 1.º correu com paredes atravessáveis e está "
+     "anulado em f1_zeroshot/; o que vale é f1_zeroshot_v2/)", None),
 ]
 
 

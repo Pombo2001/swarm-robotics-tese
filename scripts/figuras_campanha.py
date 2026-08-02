@@ -119,7 +119,10 @@ def carregar_eval(origem: str) -> pd.DataFrame | None:
 _RE_LOG = re.compile(r"gnn_3d_training_(?P<cen>.+?)_run(?P<run>\d+)\.csv$")
 
 
-def carregar_curvas(origem: str) -> pd.DataFrame:
+_RE_LOG_ANON = re.compile(r"gnn_3d_training_run(?P<run>\d+)\.csv$")
+
+
+def carregar_curvas(origem: str, cen_avaliados=None) -> pd.DataFrame:
     """Curvas de treino no formato canónico (Scenario, Algorithm, Run, Step, Score).
 
     Três fontes, por ordem de preferência:
@@ -141,9 +144,12 @@ def carregar_curvas(origem: str) -> pd.DataFrame:
                 linhas.append(d[["Scenario", "Algorithm", "Run", "Step", "Score"]])
     if linhas:
         return pd.concat(linhas, ignore_index=True).drop_duplicates()
+    anonimos = []          # gnn_3d_training_run<N>.csv — sem cenário no nome
     for caminho in glob.glob(os.path.join(origem, "**", "gnn_3d_training_*.csv"), recursive=True):
-        m = _RE_LOG.search(os.path.basename(caminho))
-        if not m:
+        base = os.path.basename(caminho)
+        m = _RE_LOG.search(base)
+        m_anon = None if m else _RE_LOG_ANON.search(base)
+        if not m and not m_anon:
             continue                      # ex.: gnn_3d_training.csv (o log corrente)
         try:
             d = pd.read_csv(caminho)
@@ -151,13 +157,34 @@ def carregar_curvas(origem: str) -> pd.DataFrame:
             continue
         if d.empty or "best_fitness" not in d.columns:
             continue
-        linhas.append(pd.DataFrame({
-            "Scenario": m.group("cen"),
+        curva = pd.DataFrame({
+            "Scenario": m.group("cen") if m else None,
             "Algorithm": "GNN",
-            "Run": int(m.group("run")),
+            "Run": int((m or m_anon).group("run")),
             "Step": d["timestep"].astype(float),
             "Score": d["best_fitness"].astype(float),
-        }))
+        })
+        (linhas if m else anonimos).append(curva)
+
+    # O treinador só põe o cenário no nome a partir do SEGUNDO cenário da sessão:
+    # o primeiro grava `gnn_3d_training_run<N>.csv`. Estas curvas existem e são
+    # reais — ficavam de fora por causa do nome, e com elas a campanha inteira do
+    # Sandbox (mega_A5: 21 runs) aparecia "sem curva de treino". Atribuem-se ao
+    # único cenário avaliado que ficou por explicar; com mais do que um candidato
+    # não se adivinha, avisa-se.
+    if anonimos:
+        com_nome = {c["Scenario"].iloc[0] for c in linhas if c["Scenario"].iloc[0]}
+        candidatos = [s for s in (cen_avaliados or []) if s not in com_nome]
+        if len(candidatos) == 1:
+            for c in anonimos:
+                c["Scenario"] = candidatos[0]
+            linhas += anonimos
+            print(f"    [i] {len(anonimos)} curvas sem cenário no nome atribuídas "
+                  f"a '{candidatos[0]}' (é o único avaliado sem curva)")
+        else:
+            print(f"    [!] {len(anonimos)} curvas em `gnn_3d_training_run*.csv` sem "
+                  f"cenário no nome e {len(candidatos)} candidatos "
+                  f"({', '.join(candidatos) or 'nenhum'}) — não se adivinha, ficam de fora")
     # PPO/SAC: uma curva por cenário (não por run) no formato do SB3.
     for algo, padrao in (("PPO", "training_history_ppo*.csv"), ("SAC", "training_history_sac*.csv")):
         for caminho in glob.glob(os.path.join(origem, "**", padrao), recursive=True):
@@ -345,7 +372,7 @@ def gerar(origem: str, nome: str, rotulo: str = "", heatmaps: bool = False,
         plot_evaluation(summary=ev, out_dir=destino)   # recolhas_ / taxa_sucesso_por_cenario
         feitas += [NOMES["recolhas"], NOMES["sucesso"]]
 
-    curvas = carregar_curvas(origem)
+    curvas = carregar_curvas(origem, cen_presentes)
     if curvas.empty:
         print("    [!] sem logs de treino: as curvas ficam por fazer (só a avaliação veio do servidor)")
     else:
