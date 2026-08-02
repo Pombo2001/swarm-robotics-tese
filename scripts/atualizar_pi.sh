@@ -23,9 +23,21 @@ if [ $# -gt 0 ]; then
 else
     # Por omissão: o código todo (é pequeno) e as pastas de figuras tocadas nas
     # últimas 24 h. `find -newermt` evita reenviar 1 GB de campanhas antigas.
-    mapfile -t FIGS < <(find results/graficos_tese -maxdepth 1 -mindepth 1 -type d \
-                        -newermt '-1 day' 2>/dev/null)
-    CAMINHOS=(dashboard scripts src configs "${FIGS[@]}")
+    # A data que conta é a dos FICHEIROS, não a das pastas: regenerar figuras
+    # por cima das antigas não mexe no mtime da pasta (só criar ou apagar o faz),
+    # e por isso o critério antigo via 2 campanhas alteradas onde havia 15 — as
+    # outras 13 ficavam no Pi com as figuras da véspera, sem sinal nenhum.
+    mapfile -t FIGS < <(find results/graficos_tese -mindepth 2 -type f \
+                        -newermt '-1 day' -printf '%h\n' 2>/dev/null \
+                        | sed 's|\(results/graficos_tese/[^/]*\).*|\1|' | sort -u)
+    # Duas pastas de RESULTADOS que não são figuras e o delta não levava:
+    #   · episodios_3d — a vista «Episódio 3D» lê-os do disco. Ficaram 13 no Pi
+    #     quando cá já havia 21: os oito do PPO e do SAC não chegavam lá.
+    #   · mapa_grande  — os CSV do F1 que a vista «Mapa grande» lê. Sem isto, o
+    #     Pi mostrava a corrida ANULADA (ou nada), que é pior do que não mostrar.
+    # São ~2 MB as duas; não é por elas que o delta engorda.
+    CAMINHOS=(dashboard scripts src configs
+              results/episodios_3d results/mapa_grande "${FIGS[@]}")
 fi
 
 echo "[pi] a enviar:"
