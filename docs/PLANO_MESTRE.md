@@ -35,7 +35,17 @@
 3. ⏳ **megaB na última fase** (7/7, perception adaptativo ×21). Medido a 2 ago
    15:46 UTC: 19 runs de 21, ritmo estável de 3h15/run ⇒ **treino fecha ~3 ago
    00:57 UTC**, máquina livre depois da avaliação (~03:00-05:00 UTC).
-4. 🚀 **F2 do mapa grande: pronto a disparar a 3 ago.** Emendas 19 e 20 do
+4. 🧰 **AMANHÃ (3 ago) SÃO DOIS COMANDOS, por esta ordem:**
+
+       bash scripts/receber_megaB.sh     # traz as fases 6-7, verifica, gera figuras
+       bash scripts/lancar_f2.sh         # 13 verificações e só depois lança
+
+   Ambos recusam-se a agir se alguma condição falhar, e ambos dizem porquê. O
+   `--verificar` corre só o diagnóstico. Ensaiados a 2 ago contra o servidor: o
+   do F2 passa 12 de 13 (a que falha é o megaB vivo, que é a que tem de o
+   impedir); o do megaB diz corretamente que a fase 7 ainda não arquivou.
+
+5. 🚀 **F2 do mapa grande: pronto a disparar a 3 ago.** Emendas 19 e 20 do
    pré-registo (escritas a 2 ago, **com zero dados de F2**): n=7 → **21 runs**
    nos três algoritmos, mais um braço **exploratório** GNN @2340 min × 3. O
    acréscimo vai todo para runs, nunca para minutos/run — são os minutos que
