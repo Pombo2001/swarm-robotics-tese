@@ -73,15 +73,31 @@ for d in f2g f2r f2l; do
     fi
 done
 
-# 3. configs sem novidade
+# 3. sem novidade — por config OU por omissão
+#
+# O `~/swarm-mapa` não tem as chaves `novelty_*` no config: só os diretórios do
+# mega-treino as têm, porque são os `mega_stream*.sh` que lhes mexem com sed. A
+# ausência é o estado correto para o F2 — mas «não está lá» só é seguro se o
+# DEFAULT do código for desligado, e isso verifica-se em vez de se assumir (a
+# primeira versão desta verificação exigia a chave presente e dava três falsos
+# alarmes).
 for d in f2g f2r f2l; do
     linha=$(remoto "grep -E 'novelty_(weight|adaptive)' ~/swarm-mapa-$d/configs/foraging.yaml 2>/dev/null | tr -d ' \n'")
-    case "$linha" in
-        *novelty_adaptive:false*novelty_weight:0.0*|*novelty_weight:0.0*novelty_adaptive:false*)
-            ok "config de $d sem novidade (0.0 / false)" ;;
-        "") mal "não consegui ler o config de $d" ;;
-        *)  mal "config de $d com novidade LIGADA: $linha" ;;
-    esac
+    if [ -z "$linha" ]; then
+        defaults=$(remoto "grep -E \"novelty_(weight|adaptive)'\, \" ~/swarm-mapa-$d/src/training/evo_trainer_3d.py | tr -d ' \n'")
+        case "$defaults" in
+            *novelty_weight*0.0*novelty_adaptive*False*|*novelty_adaptive*False*novelty_weight*0.0*)
+                ok "$d sem novidade (chaves ausentes; defaults do código = 0.0/False)" ;;
+            "") mal "$d: não li nem o config nem os defaults do evo_trainer" ;;
+            *)  mal "$d: chaves ausentes e defaults do código NÃO são 0.0/False: $defaults" ;;
+        esac
+    else
+        case "$linha" in
+            *novelty_adaptive:false*novelty_weight:0.0*|*novelty_weight:0.0*novelty_adaptive:false*)
+                ok "config de $d sem novidade (0.0 / false)" ;;
+            *)  mal "config de $d com novidade LIGADA: $linha" ;;
+        esac
+    fi
 done
 
 # 4. a geometria do mapa
