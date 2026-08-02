@@ -22,14 +22,19 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-SCENARIO_LABELS_PT = {
-    "none":                    "Sandbox (Arena Aberta)",
-    "u_wall":                  "Beco Sem Saída (Muro U)",
-    "bottleneck":              "Gargalo (Porta Estreita)",
-    "four_rooms":              "Quatro Salas (Labirinto)",
-    "cooperative_door":        "Porta Cooperativa (3 Robôs)",
-    "cooperative_perception":  "Perceção Cooperativa (Alvo Móvel)",
-}
+# Rótulos e ordem vêm da FONTE ÚNICA (src/scenarios.py). Estavam aqui em duas
+# listas escritas à mão, ambas paradas nos 6 primeiros cenários: sem o
+# `cooperative_door_bypass` e sem o `mapa_grande`. Consequência medida no smoke
+# do F2 (2 ago): numa campanha só do mapa grande, a ordem dos boxplots ficava
+# VAZIA e o seaborn rebentava com "List of boxplot statistics and positions
+# values must have same the length" — a campanha inteira acabava sem gráficos.
+# É a terceira vez que uma lista de cenários escrita à mão morde (7.º cenário
+# treinado e nunca avaliado; `use_geodesic` sem o mapa grande).
+from src.scenarios import (  # noqa: E402
+    SCENARIOS, SCENARIO_LABELS, SCENARIO_LABELS_SHORT,
+)
+
+SCENARIO_LABELS_PT = dict(SCENARIO_LABELS)
 
 MAP_DESCRIPTIONS = {
     "none":
@@ -255,14 +260,12 @@ def create_thesis_plots_3d():
 
         # 3b. Boxplots por Algoritmo (um por algo, cenários lado a lado)
         # Comparação intra-algoritmo: qual cenário é mais difícil para cada modelo?
-        scenario_order = [s for s in
-            ['none','u_wall','bottleneck','four_rooms','cooperative_door','cooperative_perception']
-            if s in df_best['Scenario'].unique()]
-        scenario_labels_short = {
-            'none': 'Sandbox', 'u_wall': 'U-Wall', 'bottleneck': 'Gargalo',
-            'four_rooms': '4 Salas', 'cooperative_door': 'Porta Coop.',
-            'cooperative_perception': 'Percepcao',
-        }
+        # Ordem canónica de src/scenarios.py, mais o que apareça nos dados e lá
+        # não esteja (um cenário novo dá figura em vez de desaparecer calado).
+        presentes = list(df_best['Scenario'].unique())
+        scenario_order = [s for s in SCENARIOS if s in presentes]
+        scenario_order += [s for s in presentes if s not in scenario_order]
+        scenario_labels_short = dict(SCENARIO_LABELS_SHORT)
         algo_ylabels = {
             'GNN': 'Fitness Evolutiva (melhor genoma)',
             'PPO': 'Recompensa Episodica (melhor run)',
@@ -276,6 +279,13 @@ def create_thesis_plots_3d():
                 lambda s: scenario_labels_short.get(s, s))
             ordered = [scenario_labels_short.get(s, s) for s in scenario_order
                        if s in df_algo['Scenario'].values]
+            if not ordered:
+                # Defesa em profundidade: com `order=[]` o seaborn rebenta e leva
+                # com ele o relatório inteiro. Uma figura a menos não justifica
+                # perder as outras doze.
+                print(f"[!] Boxplot por algoritmo saltado ({algo}): "
+                      f"nenhum cenário reconhecido em {sorted(set(df_algo['Scenario']))}")
+                continue
 
             fig, ax = plt.subplots(figsize=(11, 6))
             sns.boxplot(data=df_algo, x='ScenLabel', y='BestScore',
