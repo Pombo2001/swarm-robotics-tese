@@ -86,8 +86,17 @@ def audita_vistas() -> None:
 
 
 def audita_imagens() -> None:
-    """Nenhuma figura vazia ou ilegível — a galeria serve-as todas."""
-    from PIL import Image
+    """Nenhuma figura vazia ou ilegível — a galeria serve-as todas.
+
+    O Pi não tem Pillow: a cópia publicada instala só `nicegui pandas plotly
+    numpy pyyaml`, e não é para lhe acrescentar uma dependência por causa de um
+    auditor. Sem Pillow verifica-se o que dá sem ele — ficheiros de 0 bytes, que
+    é a falha que de facto acontece quando um gerador morre a meio.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        Image = None
 
     vazios, corruptos, total = [], [], 0
     for raiz, _, fs in os.walk(os.path.join("results", "graficos_tese")):
@@ -99,6 +108,8 @@ def audita_imagens() -> None:
             if os.path.getsize(caminho) == 0:
                 vazios.append(caminho)
                 continue
+            if Image is None:
+                continue
             try:
                 with Image.open(caminho) as im:
                     im.verify()
@@ -108,8 +119,10 @@ def audita_imagens() -> None:
         X("figuras", "%d ficheiros de 0 bytes: %s" % (len(vazios), vazios[:3]))
     if corruptos:
         X("figuras", "%d imagens ilegíveis: %s" % (len(corruptos), corruptos[:3]))
-    I("figuras", "%d imagens, %d vazias, %d corruptas"
-      % (total, len(vazios), len(corruptos)))
+    I("figuras", "%d imagens, %d vazias%s"
+      % (total, len(vazios),
+         ", %d corruptas" % len(corruptos) if Image is not None
+         else " (sem Pillow: não se verificou se abrem)"))
 
 
 def audita_3d() -> None:
