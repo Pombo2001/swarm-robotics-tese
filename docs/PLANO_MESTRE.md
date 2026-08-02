@@ -16,7 +16,35 @@
 
 ---
 
-# 0. ONDE ISTO ESTÁ (31 jul, fim do dia) — LÊ ISTO PRIMEIRO
+# 0. ONDE ISTO ESTÁ (2 ago, tarde) — LÊ ISTO PRIMEIRO
+
+1. ✅ **O F1 do mapa grande FECHOU** — e desta vez com dados válidos. A condição
+   natural acabou a 1 ago 00:11 mas ficou no servidor (o esperador desistiu
+   quando a VPN caiu para se chegar ao Pi); foi trazida a 2 ago. As quatro
+   condições, **1680 episódios, 84 de 84 células a 0,00 recolhas/ep** — as três
+   causas alternativas ficam **excluídas** e vão para apêndice. Tudo em
+   `results/mapa_grande/f1_zeroshot_v2/` (a pasta `f1_zeroshot/` é a ANULADA:
+   `env_hash 267a7b547aed` vs `e930abe4d992`). Com o navegador geodésico a fazer
+   54 rec/ep no mesmo mapa, **o zero mede transferência** — a resposta à QI7.
+2. ✅ **megaA CONCLUÍDO** (2 ago 00:16 UTC, config reposto a 0.0/false). A fase 5
+   está trazida: `results/mega_1mes/mega_A_fase5/` — Sandbox adaptativo, **21
+   runs**, 55,7 comida/ep, 96,7% de sucesso. Falta a análise M1-M3 do
+   pré-registo v2, com o megaB.
+3. ⏳ **megaB na última fase** (7/7, perception adaptativo ×21). Medido a 2 ago
+   15:46 UTC: 19 runs de 21, ritmo estável de 3h15/run ⇒ **treino fecha ~3 ago
+   00:57 UTC**, máquina livre depois da avaliação (~03:00-05:00 UTC).
+4. 🚀 **F2 do mapa grande: pronto a disparar a 3 ago.** Emendas 19 e 20 do
+   pré-registo (escritas a 2 ago, **com zero dados de F2**): n=7 → **21 runs**
+   nos três algoritmos, mais um braço **exploratório** GNN @2340 min × 3. O
+   acréscimo vai todo para runs, nunca para minutos/run — são os minutos que
+   igualam as gerações às campanhas fechadas. Fecha ~14 ago, 8 dias antes do
+   hard stop de 22 ago. **Lançar com `scripts/mapa_streamF2.sh preparar` e um
+   tmux por stream** — cada um no SEU diretório (dois streams no mesmo diretório
+   partilham CSV e sentinelas; era um bug do script, corrigido a 2 ago).
+
+---
+
+# 0-Y. ONDE ISTO ESTAVA (31 jul, fim do dia)
 
 1. **O mapa grande é RESOLÚVEL, e o zero é das políticas.** Os 3 controlos do F1
    fecharam a **0,00 recolhas/ep** (420 ep cada) e a condição natural ia no mesmo
@@ -461,9 +489,15 @@ testes confirmatórios T1-T4, regra de decisão da QI6 (sobe a resultado sse: n�
       28 jul 20:12), megaB na **fase 5/7** (adaptativo bypass @195×21, desde 27 jul
       12:55), load 49,6/64. Pelo ritmo real (GNN @195×28 = 95-96 h; PPO @48×28 =
       27,5 h): **megaA ~1 ago à noite, megaB ~3 ago de manhã**.
-- [ ] Na chegada: verificação `_run{n}` + instalar em `results/mega_1mes/` SEM tocar nos
-      modelos ativos; confirmar configs repostos (os scripts repõem no fim — verificar);
-      análise M1-M3 do pré-registo v2. **Hard stop de integração na tese: 22 ago.**
+- [x] **megaA CONCLUÍDO** (2 ago 00:16 UTC) — config reposto a 0.0/false, confirmado.
+      As 5 fases estão em `results/mega_1mes/` (a fase 5 trazida a 2 ago: Sandbox
+      adaptativo, 21 runs × 20 ep, 55,7 comida/ep, 96,7% sucesso).
+- [ ] **megaB**: fase 7/7, 19 runs de 21 a 2 ago 15:46 UTC ⇒ fecha ~3 ago 00:57 UTC.
+      Na chegada: trazer fases 6-7, **confirmar o config de `~/swarm-novelty` reposto**
+      (está em true/0.5 porque está a correr — é a armadilha do stream B), verificação
+      `_run{n}` (armadilha nº8) e instalar SEM tocar nos modelos ativos.
+- [ ] **Análise M1-M3 do pré-registo v2**, com as duas streams completas.
+      **Hard stop de integração na tese: 22 ago.**
 
 ## P1.6 — MAPA GRANDE (8.º cenário) 🆕 **código FECHADO a 24 jul; treino só depois do mega-treino**
 
@@ -503,17 +537,27 @@ de virar código** — e só depois integrado.
       de decisão e modos de falha antecipados.
 - [x] **F0 — smoke test local** (~1 h, GNN, 1 run): só confirmar que arranca. **Não
       produz resultado** e não entra em análise nenhuma.
-- [ ] ⛔ **F1 — zero-shot de topologia: ANULADO a 29 jul, POR REPETIR.** A corrida
-      de 27-28 jul (4 condições, 1680 ep, ~34 h de servidor) correu num mundo com
-      **45 m de céu aberto por cima das paredes** — medido que os agentes voavam a
-      59 m o episódio inteiro. Nenhum número dela vale, incluindo o veredicto.
-      Corrigido em `4b8a26a` + emenda 16 do pré-registo. **Repetir de raiz nas 4
-      condições** (~8,5 h cada, em paralelo, no servidor). O script recusa-se a
-      retomar por cima do CSV antigo — a impressão digital do ambiente mudou.
-- [ ] **F2 — treino nativo**: 3 algoritmos × 7 runs × seeds 1-7. **Só depois do
-      mega-treino fechar (~3 ago).** Hard stop de integração na tese: **22 ago**.
-      **Script pronto e já no servidor** (28 jul): `scripts/mapa_streamF2.sh gnn`
-      e `... grad`, em dois tmux. 780 min/run no GNN, 192 em PPO/SAC.
+- [x] ⛔ **F1 v1 — ANULADO a 29 jul** (4 condições, 1680 ep, ~34 h de servidor
+      deitados fora): correu num mundo com **45 m de céu aberto por cima das
+      paredes**, com os agentes a voar a 59 m o episódio inteiro. Corrigido em
+      `4b8a26a` + emenda 16, e o teto de ±2 m na emenda 17. Fica no repositório
+      como prova documental, em `results/mapa_grande/f1_zeroshot/`.
+- [x] ✅ **F1 v2 — FECHADO a 2 ago.** Repetido de raiz nas 4 condições no mundo
+      corrigido (`env_hash e930abe4d992`, controlos em paralelo 31 jul, natural
+      a fechar 1 ago 00:11). **1680 episódios, 84/84 células a 0,00** ⇒ as três
+      causas alternativas EXCLUÍDAS, reporta-se a natural. Dados e veredicto em
+      `results/mapa_grande/f1_zeroshot_v2/`; a leitura está fixada pelo navegador
+      geodésico (54 rec/ep no mesmo mapa): **o zero mede transferência**.
+- [ ] **F2 — treino nativo**: 3 algoritmos × **21 runs** (emenda 19, 2 ago) +
+      braço **exploratório** GNN @2340 min × 3 (emenda 20). **Arranca 3 ago**,
+      quando o megaB largar a máquina. Fecha ~14 ago; hard stop **22 ago**.
+      Lançar: `scripts/mapa_streamF2.sh preparar` (cria `~/swarm-mapa-f2{g,r,l}`)
+      e depois `mapaF2g` + `mapaF2r`; o `longo` só quando o `grad` fechar
+      (~8 ago) — três streams saturam os 64 vCPU.
+      ⚠️ O script de 28 jul mandava correr os dois streams no MESMO diretório:
+      partilhariam `results/logs/*.csv` e as sentinelas de conclusão. Corrigido a
+      2 ago com o padrão dos controlos do F1 (um diretório por stream + guarda do
+      simulador).
 
 ### ⚠️ Dois bugs apanhados na auditoria de 24 jul (a pedido do utilizador)
 

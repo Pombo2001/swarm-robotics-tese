@@ -641,6 +641,54 @@ ambiente como parte do espaço de soluções, o que faz do comportamento aprendi
 instrumento de auditoria do simulador. Ambas foram apanhadas *antes* de haver
 resultados; nenhuma teria sido apanhada por inspeção de código.
 
+### 2 ago 2026 — o F1 fechou; o orçamento do F2 sobe em RUNS, não em minutos
+
+Escrito **com zero dados de F2 no repositório** — o F2 nunca correu. O F1 v2
+fechou hoje (as quatro condições, 1680 episódios, todas as 84 células a 0,00) e é
+o único resultado que existe deste mapa. Estas duas emendas mudam o **desenho do
+F2 antes de ele arrancar**, e a razão é de calendário, não de dados.
+
+19. **n = 7 → 21 runs nos três algoritmos.** O megaB liberta a máquina a 3 ago e o
+    hard stop de integração é 22 ago: são ~15 dias de servidor. O desenho
+    pré-registado custa 3,8 dias num stream — usaria um quarto da janela e deixava
+    o resto da máquina parada. O acréscimo vai todo para **runs**, nunca para
+    minutos por run: os 780 min existem para igualar **gerações** (13,7) às
+    campanhas fechadas dos 7 cenários, e mexer neles quebraria a única
+    comparabilidade que o F2 tem. n=21 é também o n dos reforços do
+    `PRE_REGISTO_MEGATREINO.md` — não é um número escolhido para este mapa.
+
+    **O que NÃO muda:** minutos por run (780 GNN / 192 PPO e SAC), seeds (1..n,
+    passadas pelo `run_experiments`), protocolo de avaliação (20 episódios),
+    **M1, M2 e M3 tal como estão**, a regra de decisão da QI7 e os cinco
+    compromissos de reporte da secção 4.
+
+    ⚠️ **M2 continua descritivo.** Com n=21 um teste de proporções passaria a ter
+    poder, e é precisamente por isso que se declara aqui que **não** se acrescenta:
+    converter um descritivo em teste depois de subir o n é escolher o teste com o
+    n na mão. O que muda em M1 é só a precisão do δ, que era o ponto.
+
+20. **Braço EXPLORATÓRIO de orçamento longo: GNN @2340 min × 3 runs** (3× as
+    gerações do braço principal, ~41 gerações). Existe para responder de antemão à
+    objeção óbvia se o F2 der zero — *"faltou treino"* — que nenhum dos braços
+    principais consegue responder sozinho.
+
+    **É exploratório e trata-se como tal:** não entra em M1-M3, **não** se compara
+    com os braços principais (orçamentos diferentes não são comparáveis), reporta-se
+    à parte como curva de fitness + recolhas com n=3, e **não altera o veredicto do
+    F2** — se ele produzir recolhas onde o braço principal não produz, isso não
+    reabre a comparação entre algoritmos: passa a ser uma afirmação sobre o **custo**
+    de resolver o mapa, e vai para trabalho futuro com esse rótulo.
+
+    Arranca **depois** do stream dos gradientes fechar (~8 ago), não em paralelo: a
+    máquina tem 64 vCPU e cada stream pesa ~21 de load; três em simultâneo
+    saturavam-na e atrasavam os braços que contam.
+
+**Calendário resultante** (arranque 3 ago): gradientes n=21 fecham ~8 ago, GNN
+n=21 ~14 ago, braço longo ~13 ago. Sobram 8 dias até ao hard stop de 22 ago para
+análise e integração. Se algum braço escorregar para lá de 22 ago, aplica-se a
+regra já pré-registada na secção 5 (cortar algoritmos, **declarando-o**, nunca
+reduzir runs abaixo de 7) — a subida para 21 não cria uma exceção nova.
+
 ---
 
 *Assinatura temporal: este plano existe no git antes de o mapa ter sido treinado uma

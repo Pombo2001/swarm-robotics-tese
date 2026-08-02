@@ -1,0 +1,29 @@
+Condicao,Origem,GNN,GNN_sucesso,PPO,PPO_sucesso,SAC,SAC_sucesso
+natural,Sandbox,0.0,0.0,0.0,0.0,0.0,0.0
+natural,Beco Sem Saída (U),0.0,0.0,0.0,0.0,0.0,0.0
+natural,Gargalo,0.0,0.0,0.0,0.0,0.0,0.0
+natural,Quatro Salas,0.0,0.0,0.0,0.0,0.0,0.0
+natural,Porta Cooperativa,0.0,0.0,0.0,0.0,0.0,0.0
+natural,Perceção Cooperativa,0.0,0.0,0.0,0.0,0.0,0.0
+natural,Porta Coop. c/ Alternativa,0.0,0.0,0.0,0.0,0.0,0.0
+escala,Sandbox,0.0,0.0,0.0,0.0,0.0,0.0
+escala,Beco Sem Saída (U),0.0,0.0,0.0,0.0,0.0,0.0
+escala,Gargalo,0.0,0.0,0.0,0.0,0.0,0.0
+escala,Quatro Salas,0.0,0.0,0.0,0.0,0.0,0.0
+escala,Porta Cooperativa,0.0,0.0,0.0,0.0,0.0,0.0
+escala,Perceção Cooperativa,0.0,0.0,0.0,0.0,0.0,0.0
+escala,Porta Coop. c/ Alternativa,0.0,0.0,0.0,0.0,0.0,0.0
+sem obstáculos,Sandbox,0.0,0.0,0.0,0.0,0.0,0.0
+sem obstáculos,Beco Sem Saída (U),0.0,0.0,0.0,0.0,0.0,0.0
+sem obstáculos,Gargalo,0.0,0.0,0.0,0.0,0.0,0.0
+sem obstáculos,Quatro Salas,0.0,0.0,0.0,0.0,0.0,0.0
+sem obstáculos,Porta Cooperativa,0.0,0.0,0.0,0.0,0.0,0.0
+sem obstáculos,Perceção Cooperativa,0.0,0.0,0.0,0.0,0.0,0.0
+sem obstáculos,Porta Coop. c/ Alternativa,0.0,0.0,0.0,0.0,0.0,0.0
+sem features da porta,Sandbox,0.0,0.0,0.0,0.0,0.0,0.0
+sem features da porta,Beco Sem Saída (U),0.0,0.0,0.0,0.0,0.0,0.0
+sem features da porta,Gargalo,0.0,0.0,0.0,0.0,0.0,0.0
+sem features da porta,Quatro Salas,0.0,0.0,0.0,0.0,0.0,0.0
+sem features da porta,Porta Cooperativa,0.0,0.0,0.0,0.0,0.0,0.0
+sem features da porta,Perceção Cooperativa,0.0,0.0,0.0,0.0,0.0,0.0
+sem features da porta,Porta Coop. c/ Alternativa,0.0,0.0,0.0,0.0,0.0,0.0
