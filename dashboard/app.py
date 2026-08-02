@@ -85,7 +85,16 @@ def index():
                 # NiceGUI carrega os Material Icons clássicos, onde esse nome não
                 # resolve — o separador ficava como o ÚNICO sem ícone. "insights"
                 # existe nos dois conjuntos.
-                t_monitor = ui.tab("Servidor", icon="dns")
+                # Em modo leitura este separador também não existe. Não é só
+                # o painel do servidor que desaparece (esse já desaparecia, por
+                # causa da password SSH): o que sobrava eram as curvas do último
+                # treino LOCAL — de 27 jul, na torre —, sob o nome «Servidor», com
+                # um aviso a mandar ver o treino a decorrer «na vista Servidor»,
+                # que era aquela mesma. Um separador que não mostra o que promete
+                # e remete para si próprio.
+                t_monitor = None
+                if not config.READONLY:
+                    t_monitor = ui.tab("Servidor", icon="dns")
                 ui.label("ANÁLISE").classes("text-[10px] font-bold tracking-[.2em] "
                                             "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
                 t_ciencia = ui.tab("Ciência", icon="science")
@@ -136,18 +145,18 @@ def index():
         if t_treinar is not None:
             with ui.tab_panel(t_treinar):
                 treinar.build(queue)
-        with ui.tab_panel(t_monitor):
-            # O servidor PRIMEIRO: é onde os treinos correm de facto (a regra do
-            # projeto é essa). As curvas locais vinham em cima e estavam sempre
-            # obsoletas — o CSV mais recente tinha 4 dias —, o que fazia a vista
-            # parecer avariada quando só estava a dizer a verdade sobre uma
-            # máquina onde não se treina.
-            # O painel do servidor pede a password SSH do ISCTE. Numa cópia
-            # publicada isso é uma caixa de credenciais num site aberto — não vai.
-            if not config.READONLY:
+        if t_monitor is not None:
+            with ui.tab_panel(t_monitor):
+                # O servidor PRIMEIRO: é onde os treinos correm de facto (a regra
+                # do projeto é essa). As curvas locais vinham em cima e estavam
+                # sempre obsoletas — o CSV mais recente tinha 4 dias —, o que
+                # fazia a vista parecer avariada quando só estava a dizer a
+                # verdade sobre uma máquina onde não se treina.
+                # O painel do servidor pede a password SSH do ISCTE. Numa cópia
+                # publicada isso é uma caixa de credenciais num site aberto.
                 servidor.build()
-            with ui.column().classes("w-full gap-4 p-4"):
-                curvas.build()
+                with ui.column().classes("w-full gap-4 p-4"):
+                    curvas.build()
         with ui.tab_panel(t_ciencia):
             ciencia.build()
         with ui.tab_panel(t_mapa):

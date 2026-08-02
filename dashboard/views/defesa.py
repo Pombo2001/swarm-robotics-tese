@@ -12,6 +12,7 @@ canónicos no momento em que se abre a vista.
 
 Navegação: setas ← → do teclado (numa sala não se procura o rato), ou os botões.
 """
+import glob
 import os
 import re
 import sys
@@ -27,6 +28,8 @@ MAIN_TEX = os.path.join(_RAIZ, "Tese", "main.tex")
 CSV_7D = os.path.join(_RAIZ, "results", "graficos_tese", "final_7d",
                       "eval_by_run_7d.csv")
 DIR_EST = os.path.join(_RAIZ, "results", "estatisticas")
+# v2 = a repetição do F1 no mundo corrigido; a pasta sem sufixo está ANULADA.
+DIR_F1_V2 = os.path.join(_RAIZ, "results", "mapa_grande", "f1_zeroshot_v2")
 
 # Cenários com gargalo — os quatro que a fitness de homing desbloqueou (QI5).
 GARGALOS = ("bottleneck", "four_rooms", "cooperative_door",
@@ -90,8 +93,9 @@ def _respostas():
 def _numeros():
     """O número em destaque de cada questão, calculado dos CSV.
 
-    Só para as questões cuja fonte está no disco: a QI4 é síntese das outras (não
-    tem dados próprios) e a QI7 ainda não tem campanha avaliada.
+    Só para as questões cuja fonte está no disco: a QI4 é síntese das outras e
+    não tem dados próprios. A QI7 passou a ter número a 2 ago — o F1 (zero-shot)
+    fechou; o que falta é o F2 (treino nativo), e o ecrã di-lo.
     """
     n = {}
     if os.path.exists(CSV_7D):
@@ -141,6 +145,21 @@ def _numeros():
     if ret:
         n[3] = ("%.0f–%.0f%%" % (min(ret), max(ret)),
                 "retenção com 10%% de falhas, nas %d combinações" % len(ret))
+
+    # QI7 — zero-shot de topologia (F1). Lê a pasta v2: a `f1_zeroshot/` é a
+    # corrida anulada de 27-28 jul (mundo com 45 m de céu por cima das paredes).
+    zeros = celulas_f1 = episodios = 0
+    for fp in sorted(glob.glob(os.path.join(DIR_F1_V2, "zeroshot_*.csv"))):
+        z = pd.read_csv(fp)
+        episodios += len(z)
+        por_celula = z.groupby(["Algorithm", "Origem"])["food_collected"].mean()
+        celulas_f1 += len(por_celula)
+        zeros += int((por_celula == 0).sum())
+    if celulas_f1:
+        n[7] = ("%d/%d" % (zeros, celulas_f1),
+                "células a zero recolhas no mapa composto, sem retreino "
+                "(%d episódios, 4 condições) — o F2 ainda não correu"
+                % episodios)
     return n
 
 
@@ -194,9 +213,8 @@ def build():
 
                     if n not in numeros:
                         ui.label(
-                            "· sem número próprio: a QI4 sintetiza as outras e a "
-                            "QI7 ainda não tem campanha avaliada"
-                            if n in (4, 7) else "· número não disponível no disco"
+                            "· sem número próprio: a QI4 sintetiza as outras"
+                            if n == 4 else "· número não disponível no disco"
                         ).classes("text-xs mt-3").style(f"color:{theme.INK_MUTED}")
 
         def andar(passo):

@@ -306,8 +306,8 @@ def build():
                 ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
                 ui.label(
                     "O zero não é um mapa impossível: um navegador que não aprendeu "
-                    "nada (descida do campo geodésico) faz 54,0 recolhas/ep neste "
-                    "mesmo mapa, contra 86,5 no Quatro Salas. Há caminho e cabe no "
+                    "nada (descida do campo geodésico) faz 53,0 recolhas/ep neste "
+                    "mesmo mapa, contra 82,0 no Quatro Salas. Há caminho e cabe no "
                     "episódio ⇒ o que o zero mede é transferência, que é o que a "
                     "QI7 pergunta."
                 ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")

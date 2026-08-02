@@ -25,7 +25,9 @@
    causas alternativas ficam **excluídas** e vão para apêndice. Tudo em
    `results/mapa_grande/f1_zeroshot_v2/` (a pasta `f1_zeroshot/` é a ANULADA:
    `env_hash 267a7b547aed` vs `e930abe4d992`). Com o navegador geodésico a fazer
-   54 rec/ep no mesmo mapa, **o zero mede transferência** — a resposta à QI7.
+   **53,0 rec/ep** no mesmo mapa (n=3 seeds; os 54,0 citados a 31 jul eram a
+   média de 2 — ver `results/mapa_grande/sanidade/sanidade_navegador.txt`),
+   **o zero mede transferência** — a resposta à QI7.
 2. ✅ **megaA CONCLUÍDO** (2 ago 00:16 UTC, config reposto a 0.0/false). A fase 5
    está trazida: `results/mega_1mes/mega_A_fase5/` — Sandbox adaptativo, **21
    runs**, 55,7 comida/ep, 96,7% de sucesso. Falta a análise M1-M3 do
@@ -49,10 +51,10 @@
 1. **O mapa grande é RESOLÚVEL, e o zero é das políticas.** Os 3 controlos do F1
    fecharam a **0,00 recolhas/ep** (420 ep cada) e a condição natural ia no mesmo
    caminho. `scripts/sanidade_mapa_grande.py` separou as duas leituras possíveis
-   com um navegador que não aprendeu nada (descida do campo geodésico): **54,0
-   rec/ep** no mapa grande, 86,5 no Quatro Salas. Há caminho, o ninho é
+   com um navegador que não aprendeu nada (descida do campo geodésico): **53,0
+   rec/ep** no mapa grande, 82,0 no Quatro Salas. Há caminho, o ninho é
    alcançável, cabe no episódio ⇒ **o zero mede transferência**, que é o que a
-   QI7 pergunta, e passa a ter um teto contra o qual se lê (a GNN faz 69% do
+   QI7 pergunta, e passa a ter um teto contra o qual se lê (a GNN faz 73% do
    navegador no Quatro Salas e 0% no mapa grande).
    ⏳ A condição natural fecha na noite de 31 jul; `scripts/trazer_f1_ao_fechar.sh`
    traz o CSV sozinho **assim que a VPN do ISCTE voltar** (está desligada desde
@@ -547,7 +549,7 @@ de virar código** — e só depois integrado.
       a fechar 1 ago 00:11). **1680 episódios, 84/84 células a 0,00** ⇒ as três
       causas alternativas EXCLUÍDAS, reporta-se a natural. Dados e veredicto em
       `results/mapa_grande/f1_zeroshot_v2/`; a leitura está fixada pelo navegador
-      geodésico (54 rec/ep no mesmo mapa): **o zero mede transferência**.
+      geodésico (53,0 rec/ep no mesmo mapa, n=3): **o zero mede transferência**.
 - [ ] **F2 — treino nativo**: 3 algoritmos × **21 runs** (emenda 19, 2 ago) +
       braço **exploratório** GNN @2340 min × 3 (emenda 20). **Arranca 3 ago**,
       quando o megaB largar a máquina. Fecha ~14 ago; hard stop **22 ago**.

@@ -81,8 +81,8 @@ nada** (desce o campo geodésico):
 
 | | mapa grande | Quatro Salas |
 |---|---|---|
-| navegador geodésico | **54,0 rec/ep** | 86,5 rec/ep |
-| GNN (campeão do próprio cenário) | 0,0 (0% do navegador) | 69% do navegador |
+| navegador geodésico (n=3 seeds) | **53,0 rec/ep** | 82,0 rec/ep |
+| GNN (campeão do próprio cenário) | 0,0 (0% do navegador) | 59,8 rec/ep (73% do navegador) |
 
 Há caminho, o ninho é alcançável e cabe no episódio. O que falha é a
 transferência — que é o que a QI7 pergunta.

@@ -69,7 +69,8 @@ CANONICAS = [
      "QI6 — a campanha que fechou a tensão do peso fixo", "graficos_tese/adaptativo_*"),
     ("Mega-treino de 1 mês", "mega_1mes",
      "12 fases (u_wall a n=28 nos 4 braços + ablações)",
-     "replicação da QI6 com 4× o n — A CORRER no servidor", "graficos_tese/mega_*"),
+     "replicação da QI6 com 4× o n — megaA concluído a 2 ago (5 fases); megaB na "
+     "última fase, fecha a 3 ago", "graficos_tese/mega_*"),
     ("Mapa grande — F1 (fechado)", "mapa_grande",
      "zero-shot de topologia: 4 condições × 21 células × 20 ep = 1680 episódios",
      "QI7 — 84 de 84 células a 0,00 recolhas/ep; os 3 confundentes EXCLUÍDOS. "

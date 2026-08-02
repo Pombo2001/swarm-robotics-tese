@@ -236,28 +236,38 @@ def significance():
 def robustness_table():
     """Por (cenário, algo): recolhas base vs com 10% de falhas + retenção %.
 
-    Base = eval_summary.csv (avaliação sem falhas, agregada por cenário/algo).
-    Falhas = eval_{algo}_{cenário}_fail10.csv (run_eval.py --fail-frac 0.1).
-    Devolve {scenario: {algo: {base, fail, base_succ, fail_succ, retencao, n}}}
-    só para os pares que têm ambas as avaliações; {} se ainda não há nada.
+    Base = `eval_{algo}_{cenário}.csv` — o ficheiro IRMÃO do `_fail10`, da mesma
+    corrida e dos mesmos modelos.
+    Falhas = `eval_{algo}_{cenário}_fail10.csv` (run_eval.py --fail-frac 0.1).
+
+    ⚠️ A base era o `eval_summary.csv`, e isso comparava corridas diferentes: o
+    summary é da campanha de 7 dias (10 jul, 140 ep/célula) e os `_fail10` são de
+    2 jul (20 ep, outros modelos). No Muro em U dava
+    `74,25 / 24,54 = 303%` de retenção — e no SAC 563%, um número que só podia
+    ser lido como "falhar 10% dos robôs multiplica o desempenho por cinco". Com o
+    par certo dá 93,6%, que é o que a tese reporta (§res_robustez: 92-106%) e o
+    que o `scripts/plot_robustez.py` sempre usou. Um par sem base não entra:
+    inventar denominador é como isto começou.
+
+    Devolve {scenario: {algo: {base, fail, base_succ, fail_succ, retencao, n}}}.
     """
-    if not os.path.exists(EVAL_SUMMARY):
-        return {}
-    base = pd.read_csv(EVAL_SUMMARY)
     out = {}
     for scen in config.SCENARIO_KEYS:
         for algo in config.ALGOS:
-            b = base[(base["Scenario"] == scen) & (base["Algorithm"] == algo)]
             fp = os.path.join(EVAL_DIR, f"eval_{algo.lower()}_{scen}_fail10.csv")
-            if b.empty or not os.path.exists(fp):
+            bp = os.path.join(EVAL_DIR, f"eval_{algo.lower()}_{scen}.csv")
+            if not (os.path.exists(fp) and os.path.exists(bp)):
                 continue
-            f = pd.read_csv(fp)
+            b, f = pd.read_csv(bp), pd.read_csv(fp)
+            if b.empty or f.empty:
+                continue
             base_m = float(b["food_collected"].mean())
             fail_m = float(f["food_collected"].mean())
             out.setdefault(scen, {})[algo] = {
                 "base": base_m,
                 "fail": fail_m,
-                "base_succ": 100.0 * float(b["success"].mean()),
+                "base_succ": (100.0 * float(b["success"].mean())
+                              if "success" in b.columns else None),
                 "fail_succ": (100.0 * float(f["success"].mean())
                               if "success" in f.columns else None),
                 "retencao": (100.0 * fail_m / base_m) if base_m > 1e-9 else None,

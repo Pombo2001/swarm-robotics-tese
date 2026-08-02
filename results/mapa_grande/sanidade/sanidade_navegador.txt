@@ -1,0 +1,22 @@
+# Sanidade do mapa grande — navegador geodésico (sem aprendizagem)
+# Gerado por scripts/sanidade_mapa_grande.py em 02 Aug 2026 18:22
+
+## mapa_grande
+[i] cenário: mapa_grande   controlador: descida do campo geodésico (não aprendido)
+    seed 1: recolhas= 56  1.ª recolha ao passo 604  chegaram ao ninho 6/20  presos 2  |  distância geodésica inicial min/média/máx = 122.1/132.2/137.9 m
+    seed 2: recolhas= 52  1.ª recolha ao passo 601  chegaram ao ninho 12/20  presos 2  |  distância geodésica inicial min/média/máx = 123.4/130.3/135.6 m
+    seed 3: recolhas= 51  1.ª recolha ao passo 605  chegaram ao ninho 15/20  presos 2  |  distância geodésica inicial min/média/máx = 122.6/130.6/136.7 m
+
+[=] 53.00 recolhas/ep (n=3), arena r=60 m, 2000 passos por episódio
+[=] a ida média até ao ninho custa ~661 passos a 0,2 m/passo  ⇒  teto teórico ~3.0 viagens por agente
+[v] o mapa é resolúvel: o zero do F1 é das políticas, não do cenário.
+
+## four_rooms (referência)
+[i] cenário: four_rooms   controlador: descida do campo geodésico (não aprendido)
+    seed 1: recolhas= 83  1.ª recolha ao passo 53  chegaram ao ninho 20/20  presos 0  |  distância geodésica inicial min/média/máx = 12.2/21.0/31.0 m
+    seed 2: recolhas= 90  1.ª recolha ao passo 62  chegaram ao ninho 20/20  presos 0  |  distância geodésica inicial min/média/máx = 14.3/19.4/27.3 m
+    seed 3: recolhas= 73  1.ª recolha ao passo 62  chegaram ao ninho 19/20  presos 0  |  distância geodésica inicial min/média/máx = 14.3/23.4/31.2 m
+
+[=] 82.00 recolhas/ep (n=3), arena r=15 m, 500 passos por episódio
+[=] a ida média até ao ninho custa ~105 passos a 0,2 m/passo  ⇒  teto teórico ~4.8 viagens por agente
+[v] o mapa é resolúvel: o zero do F1 é das políticas, não do cenário.

@@ -115,6 +115,13 @@ def _status_card(icon: str, title: str, goto=None, view: str = ""):
 # Campanhas de treino (nome, horas de parede) — curado à mão, como a _TIMELINE:
 # as sessões arquivadas não guardam a duração do treino. Inclui o servidor ISCTE
 # e os treinos locais deste PC (rotina noturna + testes, mai–jun; estimativa).
+#
+# ⚠️ Esta lista tinha ficado em junho: dizia 433 h quando só o mega-treino são
+# mais de 600. O cartaz é a primeira coisa que se vê, e subestimava o trabalho
+# por um fator de quatro. As horas de julho em diante vêm das datas de arranque e
+# fecho registadas nos logs das campanhas (`mega_{A,B}_master.log`) e no
+# PLANO_MESTRE — são horas de PAREDE, e as que correram em paralelo somam-se na
+# mesma, porque o que se conta é tempo de máquina, não tempo de calendário.
 _CAMPANHAS = [
     ("Treinos locais no PC (rotina noturna, mai–jun)", 65),
     ("Treino 24h", 24), ("Treino 48h", 48), ("Treino 24h v2", 24),
@@ -122,6 +129,14 @@ _CAMPANHAS = [
     ("Fim-de-semana (recompensa simplificada)", 90),
     ("Validações homing", 4), ("Treino 3 dias (GNN homing)", 68),
     ("Novelty Search (bypass)", 10), ("Re-runs seed 2", 7),
+    # julho em diante — as campanhas que sustentam a tese
+    ("Campanha final de 7 dias", 168),
+    ("Novelty de peso fixo", 30),
+    ("Novelty adaptativo (stream A)", 144),
+    ("Novelty adaptativo (stream B)", 168),
+    ("Mega-treino de 1 mês (stream A)", 317),
+    ("Mega-treino de 1 mês (stream B)", 341),
+    ("Mapa grande (F0 e F1)", 70),
 ]
 
 # Linha do tempo do projeto (editar aqui à medida que há marcos novos).
@@ -147,7 +162,7 @@ _TIMELINE = [
      "Publicado no Raspberry Pi para o orientador; o 3D passa a ser desenhado no browser."),
     ("01–02 ago", "F1 do mapa grande fecha",
      "1680 episódios, 84 de 84 células a 0,00: as três causas alternativas excluídas. "
-     "O zero mede transferência (o navegador geodésico faz 54 rec/ep no mesmo mapa)."),
+     "O zero mede transferência (o navegador geodésico faz 53 rec/ep no mesmo mapa)."),
     ("02 ago", "megaA concluído; F2 pronto",
      "5 fases arquivadas. O F2 arranca a 3 ago com 21 runs por algoritmo (emenda 19)."),
 ]
@@ -210,14 +225,20 @@ def build(queue: JobQueue, goto=None):
             _kpi(f"Treino mais longo · {longest_name.lower()}", longest_h, suffix="h")
 
         # ── Estado ────────────────────────────────────────────────────────────
-        with ui.grid(columns=4).classes("w-full gap-4 fade-up-2"):
-            with _status_card("rocket_launch", "Treino local", goto, "treinar"):
-                running = queue.is_running
-                with ui.row().classes("items-center gap-2 no-wrap"):
-                    ui.element("div").classes(
-                        "live-dot" + ("" if running else " live-dot--idle"))
-                    ui.label("a correr" if running else "parado — fila vazia") \
-                        .classes("text-sm").style(f"color:{theme.INK_SOFT}")
+        # Em modo leitura ficam dois: os cartões «Treino local» e «Servidor
+        # ISCTE» apontam para vistas que a cópia publicada não tem — eram dois
+        # retângulos clicáveis que não iam a lado nenhum, um deles a anunciar
+        # "VPN necessária" a quem está a ver isto pela internet.
+        with ui.grid(columns=2 if config.READONLY else 4) \
+                .classes("w-full gap-4 fade-up-2"):
+            if not config.READONLY:
+                with _status_card("rocket_launch", "Treino local", goto, "treinar"):
+                    running = queue.is_running
+                    with ui.row().classes("items-center gap-2 no-wrap"):
+                        ui.element("div").classes(
+                            "live-dot" + ("" if running else " live-dot--idle"))
+                        ui.label("a correr" if running else "parado — fila vazia") \
+                            .classes("text-sm").style(f"color:{theme.INK_SOFT}")
 
             with _status_card("fact_check", "Avaliação vs. modelos", goto, "ciencia"):
                 if not eval_t:
@@ -244,11 +265,12 @@ def build(queue: JobQueue, goto=None):
                 ui.label(f"{len(data.list_pngs(sessions[0]))} gráficos" if sessions else "") \
                     .classes("text-xs").style(f"color:{theme.INK_MUTED}")
 
-            with _status_card("dns", "Servidor ISCTE", goto, "monitorizar"):
-                ui.label("ver painel de monitorização").classes("text-sm") \
-                    .style(f"color:{theme.INK_SOFT}")
-                ui.label("VPN necessária").classes("text-xs") \
-                    .style(f"color:{theme.INK_MUTED}")
+            if not config.READONLY:
+                with _status_card("dns", "Servidor ISCTE", goto, "monitorizar"):
+                    ui.label("ver painel de monitorização").classes("text-sm") \
+                        .style(f"color:{theme.INK_SOFT}")
+                    ui.label("VPN necessária").classes("text-xs") \
+                        .style(f"color:{theme.INK_MUTED}")
 
         # ── Linha do tempo ────────────────────────────────────────────────────
         with ui.card().classes(theme.CARD + " p-5 fade-up-3"):
