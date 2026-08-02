@@ -15,13 +15,15 @@ Cobre as duas fases:
        reporta — sem escolher a condição que dá o número melhor.
 
   F2 — treino nativo (`eval_by_run.csv`), M1-M3:
-       M1  GNN vs PPO e GNN vs SAC, bilateral, médias por run (n=7)
+       M1  GNN vs PPO e GNN vs SAC, bilateral, médias por run (n=21 pela
+           emenda 19; era 7 quando isto foi escrito)
        M2  convergência: runs com ≥1 recolha e runs a 100% (DESCRITIVO — com
-           n=7 não se faz inferência sobre proporções)
+           o n desta campanha não se faz inferência sobre proporções)
        M3  uso da porta cooperativa, por algoritmo (descritivo + δ)
 
 Regra de decisão da QI7 (pré-comprometida, §4 do pré-registo): sobe a resultado
-se F2 der ≥5/7 runs convergentes em pelo menos um algoritmo E M1 for
+se F2 der ≥71,4% de runs convergentes (a proporção que «5/7» fixou) em
+pelo menos um algoritmo E M1 for
 interpretável. Caso contrário, resultado negativo honesto — que é reportado na
 mesma e NÃO se repete com parâmetros diferentes à procura de número melhor.
 
@@ -30,6 +32,8 @@ Uso:
     python scripts/analise_mapa_grande.py
 """
 import argparse
+import glob
+import math
 import os
 import sys
 from itertools import combinations
@@ -46,8 +50,19 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-F1_CSV = os.path.join(BASE, "results", "evaluation", "zeroshot_mapa_grande.csv")
-F2_CSV = os.path.join(BASE, "results", "mapa_grande", "evaluation", "eval_by_run.csv")
+
+# ⚠️ O F1 estava a ser lido de `results/evaluation/zeroshot_mapa_grande.csv` — a
+# corrida ANULADA a 29 jul (paredes de 30 m numa arena de raio 60: os agentes
+# voavam por cima do labirinto). Este script imprimia-a como se fosse o
+# resultado, 420 linhas e tudo. O F1 que vale são os quatro CSV da repetição, em
+# `f1_zeroshot_v2/`, e leem-se TODOS: a análise é por condição.
+F1_DIR = os.path.join(BASE, "results", "mapa_grande", "f1_zeroshot_v2")
+
+# O F2 ainda não existe. Quando chegar do servidor fica numa pasta por braço
+# (`f2_gnn`, `f2_grad`, `f2_longo`) — procura-se, em vez de fixar um caminho que
+# depois não é o que o transporte usou.
+F2_GLOB = os.path.join(BASE, "results", "mapa_grande", "f2*", "**",
+                       "eval_by_run.csv")
 
 ALGOS = ["GNN", "PPO", "SAC"]
 CONDICOES = {
@@ -79,10 +94,13 @@ def analisar_f1():
     print("=" * 78)
     print("F1 — ZERO-SHOT DE TOPOLOGIA")
     print("=" * 78)
-    if not os.path.exists(F1_CSV):
-        print("  SEM DADOS: %s" % os.path.relpath(F1_CSV, BASE))
+    csvs = sorted(glob.glob(os.path.join(F1_DIR, "zeroshot_*.csv")))
+    if not csvs:
+        print("  SEM DADOS em %s" % os.path.relpath(F1_DIR, BASE))
         return
-    df = pd.read_csv(F1_CSV)
+    df = pd.concat([pd.read_csv(c) for c in csvs], ignore_index=True)
+    print("  fonte: %s (%d ficheiros, %d episódios)"
+          % (os.path.relpath(F1_DIR, BASE), len(csvs), len(df)))
     c_alg = _col(df, "Algoritmo", "Algorithm", "Algo")
     c_org = _col(df, "Origem", "TreinadoEm", "Scenario")
     c_food = _col(df, "food_collected", "Recolhas", "FoodMean")
@@ -126,11 +144,13 @@ def analisar_f2():
     print("=" * 78)
     print("F2 — TREINO NATIVO")
     print("=" * 78)
-    if not os.path.exists(F2_CSV):
-        print("  SEM DADOS: %s" % os.path.relpath(F2_CSV, BASE))
-        print("  (a campanha só arranca depois do mega-treino, ~3 ago)")
+    hits = sorted(glob.glob(F2_GLOB, recursive=True))
+    if not hits:
+        print("  SEM DADOS: nada em results/mapa_grande/f2*/")
+        print("  (a campanha arranca a 3 ago, quando o megaB largar a máquina)")
         return
-    df = pd.read_csv(F2_CSV)
+    df = pd.concat([pd.read_csv(h) for h in hits], ignore_index=True)
+    print("  fonte: %s" % ", ".join(os.path.relpath(h, BASE) for h in hits))
     c_alg = _col(df, "Algorithm", "Algoritmo", "Algo")
     c_run = _col(df, "Run", "run")
     c_food = _col(df, "food_collected", "Recolhas")
@@ -150,7 +170,9 @@ def analisar_f2():
         print("  !! nenhum algoritmo encontrado no CSV")
         return
 
-    print("\n  M2 — convergência (DESCRITIVO; com n=7 não se infere sobre proporções)")
+    n_runs = max(len(g) for g in por_algo.values())
+    print("\n  M2 — convergência (DESCRITIVO; não se infere sobre proporções "
+          "— ver emenda 19)")
     for algo, g in por_algo.items():
         com_recolha = int((g["food"] > 0).sum())
         a_100 = int((g["suc"] >= 1.0).sum()) if c_suc else 0
@@ -178,13 +200,23 @@ def analisar_f2():
 
     print()
     print("  REGRA DE DECISÃO DA QI7 (pré-comprometida):")
+    # A regra do pré-registo é "≥5/7 runs convergentes". Com a emenda 19 o n
+    # passou de 7 para 21, e 5/7 tem de ser lido como a PROPORÇÃO que era —
+    # 71,4% — e não como o número 5. Ler o «5» à letra com n=21 baixava a
+    # fasquia de 71% para 24% por acidente de aritmética, o que é enfraquecer a
+    # regra de decisão depois de escrita. Declarado na emenda 21, antes dos dados.
+    limiar = int(math.ceil(5.0 / 7.0 * n_runs))
     max_conv = max(int((g["food"] > 0).sum()) for g in por_algo.values())
-    if max_conv >= 5:
-        print("    ≥5/7 runs convergentes em pelo menos um algoritmo (%d) →" % max_conv)
+    print("    limiar: %d de %d runs (5/7 = 71,4%%, a proporção pré-registada)"
+          % (limiar, n_runs))
+    if max_conv >= limiar:
+        print("    %d/%d runs convergentes em pelo menos um algoritmo →"
+              % (max_conv, n_runs))
         print("    a QI7 SOBE A RESULTADO: secção nova no Cap. de Resultados + QI7 nas")
         print("    Conclusões, desde que M1 seja interpretável.")
     else:
-        print("    máximo de %d/7 runs convergentes → resultado NEGATIVO honesto." % max_conv)
+        print("    máximo de %d/%d runs convergentes (< %d) → resultado NEGATIVO "
+              "honesto." % (max_conv, n_runs, limiar))
         print("    Reporta-se na mesma: evidencia o limite dos três métodos sob")
         print("    composição+escala. NÃO se repete a campanha com outros parâmetros.")
 
@@ -193,7 +225,11 @@ def verificar():
     print("=" * 78)
     print("DADOS ESPERADOS DO MAPA GRANDE")
     print("=" * 78)
-    for nome, fp in (("F1 zero-shot", F1_CSV), ("F2 treino nativo", F2_CSV)):
+    alvos = [("F1 zero-shot", c) for c in
+             sorted(glob.glob(os.path.join(F1_DIR, "zeroshot_*.csv")))] or             [("F1 zero-shot", os.path.join(F1_DIR, "zeroshot_natural.csv"))]
+    alvos += [("F2 treino nativo", h) for h in sorted(glob.glob(F2_GLOB, recursive=True))] or              [("F2 treino nativo", os.path.join(BASE, "results", "mapa_grande",
+                                                "f2_*", "evaluation", "eval_by_run.csv"))]
+    for nome, fp in alvos:
         existe = os.path.exists(fp)
         extra = ""
         if existe:

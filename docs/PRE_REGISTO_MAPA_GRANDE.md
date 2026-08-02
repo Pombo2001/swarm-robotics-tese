@@ -689,6 +689,23 @@ análise e integração. Se algum braço escorregar para lá de 22 ago, aplica-s
 regra já pré-registada na secção 5 (cortar algoritmos, **declarando-o**, nunca
 reduzir runs abaixo de 7) — a subida para 21 não cria uma exceção nova.
 
+21. **«≥5/7 runs convergentes» lê-se como PROPORÇÃO, não como o número 5.** A
+    regra de decisão da secção 4 foi escrita com n=7. Com n=21, aplicar o «5» à
+    letra baixaria a fasquia de **71,4% para 24%** — a regra passaria a ser
+    cumprida por 5 execuções em 21, quando o que ela exigia era que a maioria
+    larga convergisse. Isso seria enfraquecer o critério de decisão **depois** de
+    ele estar escrito, e por acidente de aritmética em vez de argumento.
+
+    Fica: **o limiar é ⌈5/7 × n⌉**, isto é **15 de 21**. `scripts/analise_mapa_grande.py`
+    calcula-o do n que encontrar no CSV e imprime-o antes do veredicto, para que
+    o número apareça no ecrã em vez de ficar implícito.
+
+    Escrito a 2 ago, com **zero dados de F2** — a mesma condição das emendas 19
+    e 20. Se o resultado ficar entre os dois limiares (entre 5 e 14 runs
+    convergentes), reporta-se como **negativo** pela regra proporcional **e**
+    declara-se explicitamente quantos runs convergiram: quem quiser aplicar o
+    outro critério tem o número à frente.
+
 ---
 
 *Assinatura temporal: este plano existe no git antes de o mapa ter sido treinado uma
