@@ -131,6 +131,40 @@ def build():
                      "velocidade.").classes("text-xs text-gray-500 mt-1")
 
         cartoes = ui.row().classes("w-full gap-4 no-wrap")
+        aviso_mapa = ui.label("").classes("text-xs").style("color:#d97706")
+
+        def cenarios_com_modelo(raiz):
+            """Os mapas que ESTE treino chegou a treinar (qualquer algoritmo)."""
+            return [c for c in config.SCENARIO_KEYS
+                    if any(_modelo_de(a, c, raiz)[1] for a in _ALGOS)]
+
+        def ao_mudar_treino():
+            """O Mapa fica no que estava — e a maioria dos treinos não o tem.
+
+            O seletor de mapa arranca sempre no Sandbox e não se mexia ao trocar de
+            treino. Mas quase nenhuma campanha treinou os oito cenários: a «B1» só
+            fez coop/bypass/perceção, as fases do mega-treino fizeram uma cada. O
+            ecrã respondia com três avisos amarelos — que se leem como "esta
+            campanha não tem modelos", quando o que falta é o modelo DAQUELE mapa.
+            Agora salta para um mapa que o treino tenha, e diz que saltou.
+            """
+            raiz = _treinos().get(treino_sel.value)
+            aviso_mapa.set_text("")
+            if raiz:
+                tem = cenarios_com_modelo(raiz)
+                if tem and scen_sel.value not in tem:
+                    antigo = config.SCENARIO_LABEL_SHORT.get(scen_sel.value, scen_sel.value)
+                    scen_sel.set_value(tem[0])
+                    aviso_mapa.set_text(
+                        "Este treino não treinou «%s» — mudei o mapa para «%s». "
+                        "Treinou: %s."
+                        % (antigo,
+                           config.SCENARIO_LABEL_SHORT.get(tem[0], tem[0]),
+                           ", ".join(config.SCENARIO_LABEL_SHORT.get(c, c) for c in tem)))
+                elif not tem:
+                    aviso_mapa.set_text(
+                        "Este treino não tem modelos próprios de nenhum mapa.")
+            render()
 
         def render():
             cartoes.clear()
@@ -276,6 +310,8 @@ def build():
                          "com a câmara livre de sempre.") \
                     .classes("text-xs text-gray-500")
 
-        treino_sel.on_value_change(render)
+        # Mudar de TREINO pode ter de mexer no mapa; mudar de MAPA é escolha
+        # explícita de quem está a ver e respeita-se como está.
+        treino_sel.on_value_change(ao_mudar_treino)
         scen_sel.on_value_change(render)
         render()
