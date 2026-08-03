@@ -44,8 +44,34 @@ ADAPT_LABEL_TO_DIR = {lbl: sub for lbl, sub in ADAPT_FASES}
 # testes são do `scripts/analise_megatreino.py` — recalculá-los aqui era uma
 # segunda implementação da mesma estatística, com o risco de dar outra resposta;
 # e no Pi, que serve isto, seria lento sem necessidade.
-MEGA_RESUMO = os.path.join(config.BASE_DIR, "results", "mega_1mes",
-                           "resumo_megatreino.json")
+MEGA_DIR = os.path.join(config.BASE_DIR, "results", "mega_1mes")
+MEGA_RESUMO = os.path.join(MEGA_DIR, "resumo_megatreino.json")
+
+# Fases do mega-treino com modelos próprios, para o visualizador. Os rótulos
+# dizem a CONDIÇÃO, não o número da fase — "mega_A_fase1" não diz a ninguém que
+# é o braço que resolve o Muro em U em 28 de 28 execuções.
+#
+# As três fases de GRADIENTE (A3 = PPO, A4 = SAC, B6 = SAC) não estão aqui: o
+# arquivamento entre fases copia `results/models`, a pasta do GNN, e não os
+# modelos do algoritmo que a fase treinou — as três ficaram com cópias de GNN de
+# outras fases (mesmo sha256) e nenhum `.zip` próprio. As de A3/A4 foram
+# removidas a 3 ago para não serem abertas por engano (LEIA-ME_modelos.md).
+#
+# Verificado a 3 ago, fase a fase: TODAS as fases GNN têm os modelos do seu
+# próprio cenário, com um hash distinto por run (28/28, 21/21, 7/7) — a
+# armadilha nº8 está limpa. Os resultados das fases de gradiente continuam
+# válidos: vêm das avaliações, feitas no servidor com o modelo certo em memória.
+MEGA_FASES = [
+    ("▣ Mega-treino · GNN adaptativo · Muro em U (28/28)", "mega_A_fase1"),
+    ("▣ Mega-treino · GNN objetivo · Muro em U (15/28)",   "mega_A_fase2"),
+    ("▣ Mega-treino · GNN adaptativo · Sandbox",           "mega_A_fase5"),
+    ("▣ Mega-treino · anneal sustain=5",                   "mega_B_fase1"),
+    ("▣ Mega-treino · anneal sustain=20",                  "mega_B_fase2"),
+    ("▣ Mega-treino · anneal decay=0,95",                  "mega_B_fase3"),
+    ("▣ Mega-treino · anneal decay=0,995",                 "mega_B_fase4"),
+    ("▣ Mega-treino · adaptativo · Porta c/ alternativa",  "mega_B_fase5"),
+    ("▣ Mega-treino · adaptativo · Perceção coop.",        "mega_B_fase7"),
+]
 
 
 def megatreino():
@@ -394,6 +420,63 @@ def list_sessions():
     curadas = [d for d in dirs if not _data_da_sessao(d)]
     campanhas.sort(key=_data_da_sessao, reverse=True)
     return campanhas + sorted(curadas)
+
+
+_MESES_PT = ("jan", "fev", "mar", "abr", "mai", "jun",
+             "jul", "ago", "set", "out", "nov", "dez")
+
+
+def descricao_sessao(session: str) -> str:
+    """'mega_A1 · Muro em U · 28 runs · 23 jul' — o que o nome da pasta não diz.
+
+    A DATA não pode vir dos ficheiros da pasta: as figuras regeneram-se (todas
+    foram refeitas a 3 ago) e passariam a dizer que um treino de julho é de
+    agosto. Vem do `eval_by_run.csv` da ORIGEM — a avaliação corre no fim do
+    treino, por isso é a data mais próxima do que aconteceu de facto. A origem
+    está escrita no CAMPANHA.md que o `figuras_campanha.py` deixa em cada pasta.
+
+    Sem CAMPANHA.md (campanhas antigas), cai para a data no nome da pasta.
+    """
+    pasta = os.path.join(GRAFICOS_DIR, session)
+    campanha_md = os.path.join(pasta, "CAMPANHA.md")
+    partes, quando = [], None
+
+    if os.path.exists(campanha_md):
+        try:
+            with open(campanha_md, encoding="utf-8") as f:
+                texto = f.read()
+        except Exception:
+            texto = ""
+        m = re.search(r"Origem dos dados:\s*`([^`]+)`", texto)
+        if m:
+            origem = os.path.join(config.BASE_DIR, m.group(1).replace("\\", os.sep))
+            for cand in (os.path.join(origem, "evaluation", "eval_by_run.csv"),
+                         os.path.join(origem, "evaluation", "eval_summary.csv")):
+                if os.path.exists(cand):
+                    quando = _mtime(cand)
+                    break
+        m = re.search(r"Cenários:\s*(.+)", texto)
+        if m:
+            cens = [c.strip() for c in m.group(1).split(",") if c.strip()]
+            if len(cens) == 1:
+                partes.append(config.SCENARIO_LABEL_SHORT.get(cens[0], cens[0]))
+            elif cens:
+                partes.append("%d cenários" % len(cens))
+        m = re.search(r"Runs por algoritmo:\s*\{(.+?)\}", texto)
+        if m:
+            ns = re.findall(r":\s*(\d+)", m.group(1))
+            if ns:
+                partes.append("%s runs" % (ns[0] if len(set(ns)) == 1 else "/".join(ns)))
+
+    if quando is None:
+        d = _data_da_sessao(session)
+        if d:
+            quando = d.timestamp() if hasattr(d, "timestamp") else None
+    if quando:
+        # `%b` segue o locale do sistema e sai "Aug" numa tese em português.
+        d = datetime.datetime.fromtimestamp(quando)
+        partes.append("%d %s" % (d.day, _MESES_PT[d.month - 1]))
+    return " · ".join(partes)
 
 
 def list_pngs(session: str):

@@ -64,10 +64,28 @@ def _treinos():
         raiz = os.path.join(data.ADAPT_DIR, sub)
         if os.path.isdir(os.path.join(raiz, "models")):
             ops[lbl] = raiz
+    # Mega-treino: os modelos vivem em results/mega_1mes/<fase>/models, fora do
+    # graficos_tese — a mesma situação das fases adaptativas, e por isso a mesma
+    # solução. Sem isto, a campanha mais recente da tese (e a que responde à QI6)
+    # era a única que não se podia ver a mexer.
+    #
+    # Só entram as fases com modelos PRÓPRIOS: as do PPO e do SAC arquivaram por
+    # engano uma cópia dos modelos GNN da fase anterior (mesmo sha256), e foram
+    # removidas — ver o LEIA-ME_modelos.md de cada uma. Abrir uma dessas era ver
+    # um GNN a fingir de PPO.
+    for lbl, sub in data.MEGA_FASES:
+        raiz = os.path.join(data.MEGA_DIR, sub)
+        if os.path.isdir(os.path.join(raiz, "models")):
+            ops[lbl] = raiz
     for s in data.list_sessions():
         raiz = os.path.join(data.GRAFICOS_DIR, s, "modelos")
         if os.path.isdir(raiz) and os.listdir(raiz):
-            ops[s] = raiz
+            # `mega_A1` não diz nem o cenário nem QUANDO foi treinado, e o
+            # seletor tem dezenas de entradas assim: escolher ali era adivinhar.
+            # A data vem dos dados de origem, não dos ficheiros da pasta — as
+            # figuras regeneram-se e diriam a data da regeneração.
+            desc = data.descricao_sessao(s)
+            ops["%s — %s" % (s, desc) if desc else s] = raiz
     return ops
 
 
