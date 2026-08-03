@@ -40,6 +40,30 @@ ADAPT_FASES = [
 ADAPT_LABEL_TO_DIR = {lbl: sub for lbl, sub in ADAPT_FASES}
 
 
+# Mega-treino de 1 mês (fechado a 3 ago): a vista lê o RESUMO, não os CSV. Os
+# testes são do `scripts/analise_megatreino.py` — recalculá-los aqui era uma
+# segunda implementação da mesma estatística, com o risco de dar outra resposta;
+# e no Pi, que serve isto, seria lento sem necessidade.
+MEGA_RESUMO = os.path.join(config.BASE_DIR, "results", "mega_1mes",
+                           "resumo_megatreino.json")
+
+
+def megatreino():
+    """Resumo do mega-treino, ou None se ainda não foi gerado.
+
+    Regenerar com:  python scripts/analise_megatreino.py --json
+    """
+    if not os.path.exists(MEGA_RESUMO):
+        return None
+    try:
+        import json
+        with open(MEGA_RESUMO, encoding="utf-8") as f:
+            d = json.load(f)
+    except Exception:
+        return None
+    return d if d.get("testes") else None
+
+
 def _mtime(path: str) -> float:
     return os.path.getmtime(path) if os.path.exists(path) else 0.0
 

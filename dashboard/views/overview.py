@@ -165,6 +165,13 @@ _TIMELINE = [
      "O zero mede transferência (o navegador geodésico faz 53 rec/ep no mesmo mapa)."),
     ("02 ago", "megaA concluído; F2 pronto",
      "5 fases arquivadas. O F2 arranca a 3 ago com 21 runs por algoritmo (emenda 19)."),
+    ("03 ago", "Mega-treino fecha — e entra na tese",
+     "12 de 12 fases sem falhas. No Muro em U a n=28, a dosagem adaptativa resolve "
+     "28/28 execuções contra 15/28 do objetivo puro e 14/28 de cada método de "
+     "gradiente (Fisher exato, p<0,0001): a única condição da tese sem uma execução "
+     "falhada neste cenário."),
+    ("03 ago", "F2 do mapa grande lançado",
+     "Os dois streams principais a treinar no 8.º cenário; o GNN fecha ~14 ago."),
 ]
 
 

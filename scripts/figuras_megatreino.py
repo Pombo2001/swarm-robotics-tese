@@ -40,7 +40,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from analise_megatreino import BASE, FIXO_BYPASS, carregar  # noqa: E402
 from gerar_figuras_7d import dotplot_por_run  # noqa: E402
 
-SAIDA = os.path.join(BASE, "results", "graficos_tese", "megatreino")
+# `mega_treino` e não `megatreino`: o empacotador do Pi só leva as campanhas cujo
+# nome começa por um dos prefixos canónicos, e um deles é "mega_". Sem o
+# underscore, estas figuras ficavam na torre e a vista do Pi mostrava molduras
+# vazias — o mesmo gap que deixou a campanha da QI6 sem imagens até 31 jul.
+SAIDA = os.path.join(BASE, "results", "graficos_tese", "mega_treino")
 
 # Os quatro braços do u_wall. A família GNN mantém-se verde (a convenção do
 # projeto, `src/scenarios.py`), com o adaptativo em tom cheio e o objetivo em tom

@@ -186,6 +186,84 @@ def _cell(info: dict, algo: str = ""):
         f"if(e&&window.monoCountUp) monoCountUp(e,{v:.0f},0,900,'%');"), once=True)
 
 
+def _p_legivel(p: float) -> str:
+    """p<0,0001 em vez de 0,0000 — um zero ali lê-se como 'p igual a zero'."""
+    return "p < 0,0001" if p < 0.0001 else ("p = %.4f" % p).replace(".", ",")
+
+
+def _braco_linha(d: dict, destaque: bool = False):
+    """Uma linha 'rótulo · média ± dp · convergentes' do mega-treino."""
+    cor = theme.INK if destaque else theme.INK_MUTED
+    peso = "font-bold" if destaque else ""
+    with ui.row().classes("w-full items-center justify-between gap-2"):
+        ui.label(d["rotulo"]).classes(f"text-sm {peso}").style(f"color:{cor}")
+        with ui.row().classes("items-center gap-3"):
+            ui.label(("%.1f ± %.1f" % (d["media"], d["dp"])).replace(".", ",")) \
+                .classes(f"text-sm {peso}").style(f"color:{cor}")
+            # A contagem é o que decide a leitura deste cenário: 28/28 vs 15/28
+            # separa os braços de forma que a média sozinha não separa.
+            conv = "%d/%d" % (d["convergentes"], d["n"])
+            completo = d["convergentes"] == d["n"]
+            ui.label(conv).classes("text-xs px-2 py-0.5 rounded").style(
+                "background:%s; color:%s; font-weight:600"
+                % ("rgba(46,125,50,.18)" if completo else "rgba(255,255,255,.06)",
+                   "#6ee7a8" if completo else theme.INK_MUTED))
+
+
+def _megatreino_card():
+    """O resultado de maior peso do capítulo, e o mais recente — fica no topo.
+
+    Mostra o que a tese afirma em §res_novelty: as contagens de convergência a
+    n=28. Os números vêm do resumo JSON gerado pela análise (fonte única).
+    """
+    m = data.megatreino()
+    if not m:
+        return
+    m1 = m["testes"].get("M1")
+    m3 = m["testes"].get("M3")
+    if not m1:
+        return
+
+    with ui.card().classes(CARD):
+        _section_title("workspace_premium",
+                       "Mega-treino de 1 mês — Muro em U a n=28",
+                       "a campanha que fecha a QI6")
+        ui.label("Quatro braços, 28 execuções cada, no cenário que resistia aos "
+                 "três algoritmos base. A dosagem adaptativa da novidade é a "
+                 "única condição de toda a tese sem uma execução falhada.") \
+            .classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
+
+        with ui.column().classes("w-full gap-1 mt-3"):
+            _braco_linha(m1["a"], destaque=True)
+            _braco_linha(m1["b"])
+            for chave in ("M2: GNN adaptativo vs PPO", "M2: GNN adaptativo vs SAC"):
+                t = m["testes"].get(chave)
+                if t:
+                    _braco_linha(t["b"])
+
+        with ui.row().classes("w-full gap-4 mt-3 flex-wrap"):
+            for rot, val in (
+                    ("magnitude (unilateral)",
+                     "%s · δ = %+.2f" % (_p_legivel(m1["p"]), m1["delta"])),
+                    ("convergência (Fisher exato)",
+                     _p_legivel(m1["fisher_p"]) if "fisher_p" in m1 else "—")):
+                with ui.column().classes("gap-0"):
+                    ui.label(rot).classes("text-xs").style(f"color:{theme.INK_MUTED}")
+                    ui.label(val.replace(".", ",")).classes("text-sm font-bold") \
+                        .style(f"color:{theme.INK}")
+
+        ui.image("/figuras_tese/megatreino_u_wall_4bracos.png") \
+            .classes("w-full rounded mt-3").style("background:#fff")
+
+        if m3:
+            ui.label("Porta com Alternativa (M3): %s vs %s — %s, δ = %+.2f. %s"
+                     % (("%.1f" % m3["a"]["media"]).replace(".", ","),
+                        ("%.1f" % m3["b"]["media"]).replace(".", ","),
+                        _p_legivel(m3["p"]), m3["delta"],
+                        m3.get("aviso", ""))) \
+                .classes("text-xs mt-2").style(f"color:{theme.INK_MUTED}")
+
+
 def build():
     def render():
         body.clear()
@@ -212,6 +290,9 @@ def build():
                         ui.icon("verified").classes("text-emerald-400 text-2xl")
                         ui.label(f"Avaliação coerente com os modelos (eval: {fmt(eval_t)})") \
                             .classes("text-sm text-emerald-300")
+
+            # ── Mega-treino (n=28) ───────────────────────────────────────────
+            _megatreino_card()
 
             # ── Matriz Ptask × cenário ───────────────────────────────────────
             table = data.science_table()

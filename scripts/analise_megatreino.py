@@ -111,7 +111,18 @@ def compara(nome, a, b, alternative="two-sided", rotulo_a="A", rotulo_b="B"):
              int((b["suc"] >= 1.0).sum()), len(b)))
     print("    Mann-Whitney (%s): p = %.4f   |   delta de Cliff = %+.2f"
           % (alternative, p, d))
-    return p, d
+    return {
+        "nome": nome, "p": float(p), "delta": float(d), "alternativa": alternative,
+        "a": _descritivo(rotulo_a, a), "b": _descritivo(rotulo_b, b),
+    }
+
+
+def _descritivo(rotulo, g):
+    return {
+        "rotulo": rotulo, "n": int(len(g)),
+        "media": float(g["food"].mean()), "dp": float(g["food"].std()),
+        "convergentes": int((g["suc"] >= 1.0).sum()),
+    }
 
 
 def verificar():
@@ -148,7 +159,14 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--verificar", action="store_true",
                     help="lista que dados existem e sai (não analisa)")
+    # O dashboard (e o Pi) não repetem a estatística: leem este resumo. Recalcular
+    # no Pi seria lento e, pior, uma segunda implementação que podia discordar
+    # desta — o mesmo argumento que impede o verificador de refazer os testes.
+    ap.add_argument("--json", metavar="FICHEIRO", nargs="?",
+                    const=os.path.join(MEGA, "resumo_megatreino.json"),
+                    help="escreve o resumo em JSON (por omissão, em results/mega_1mes/)")
     a = ap.parse_args()
+    resumo = {"testes": {}, "exploratorio": {}}
 
     if a.verificar:
         sys.exit(0 if verificar() == 0 else 1)
@@ -162,12 +180,16 @@ def main():
     obj = carregar("mega_A_fase2", "u_wall")
     r = compara("magnitude (unilateral: adaptativo > objetivo)", adapt, obj,
                 "greater", "adaptativo", "objetivo")
+    if r:
+        resumo["testes"]["M1"] = r
     if adapt is not None and obj is not None:
         ca, cb = int((adapt["suc"] >= 1.0).sum()), int((obj["suc"] >= 1.0).sum())
         odds, pf = fisher_exact([[ca, len(adapt) - ca], [cb, len(obj) - cb]])
         print("    Fisher exato sobre convergência: %d/%d vs %d/%d   p = %.4f"
               % (ca, len(adapt), cb, len(obj), pf))
         print("    (a n=28 este teste é reportável; a n=7 não era — ver pré-registo)")
+        if "M1" in resumo["testes"]:
+            resumo["testes"]["M1"]["fisher_p"] = float(pf)
 
     print()
     print("=" * 78)
@@ -182,7 +204,9 @@ def main():
         if d is not None:
             bracos[rot] = d
     for x, y in combinations(sorted(bracos), 2):
-        compara("%s vs %s" % (x, y), bracos[x], bracos[y], "two-sided", x, y)
+        r = compara("%s vs %s" % (x, y), bracos[x], bracos[y], "two-sided", x, y)
+        if r:
+            resumo["testes"]["M2: %s vs %s" % (x, y)] = r
     if len(bracos) > 1:
         print("  ⚠ multiplicidade: 6 pares, p BRUTOS (o pré-registo manda assinalar,")
         print("    não corrigir — a leitura assenta no delta).")
@@ -200,8 +224,11 @@ def main():
                                    suc=("success", "mean"))
     if byp is not None and fixo is not None:
         print("  ⚠ campanhas DIFERENTES (adaptativo desta; fixo de 12 jul) — declarado.")
-    compara("bypass adaptativo vs fixo", byp, fixo, "two-sided",
-            "adaptativo", "fixo w=0,5")
+    r = compara("bypass adaptativo vs fixo", byp, fixo, "two-sided",
+                "adaptativo", "fixo w=0,5")
+    if r:
+        r["aviso"] = "campanhas diferentes: o peso fixo é de 12 jul"
+        resumo["testes"]["M3"] = r
 
     print()
     print("=" * 78)
@@ -228,9 +255,22 @@ def main():
               % (fase, cen, len(d), d["food"].mean(), d["food"].std(),
                  int((d["suc"] >= 1.0).sum()), len(d)))
 
+        resumo["exploratorio"]["%s/%s" % (fase, cen)] = _descritivo(
+            FASES[fase][0], d)
+
     print()
     print("Compromissos do pré-registo: todos os runs e configs reportados; nada")
     print("fechado depois de 22 ago entra na tese (vai para a defesa).")
+
+    if a.json:
+        import json
+        from datetime import datetime, timezone
+        resumo["gerado"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        resumo["fonte"] = "scripts/analise_megatreino.py"
+        os.makedirs(os.path.dirname(a.json), exist_ok=True)
+        with open(a.json, "w", encoding="utf-8") as f:
+            json.dump(resumo, f, ensure_ascii=False, indent=2)
+        print("\n[v] resumo em %s" % os.path.relpath(a.json, BASE))
 
 
 if __name__ == "__main__":
