@@ -1,0 +1,184 @@
+{
+  "testes": {
+    "M1": {
+      "nome": "magnitude (unilateral: adaptativo > objetivo)",
+      "p": 3.918055539853216e-05,
+      "delta": 0.6122448979591837,
+      "alternativa": "greater",
+      "a": {
+        "rotulo": "adaptativo",
+        "n": 28,
+        "media": 67.37500000000001,
+        "dp": 13.395442149118123,
+        "convergentes": 28
+      },
+      "b": {
+        "rotulo": "objetivo",
+        "n": 28,
+        "media": 32.49285714285714,
+        "dp": 32.500144484823316,
+        "convergentes": 15
+      },
+      "fisher_p": 3.96231628668401e-05
+    },
+    "M2: GNN adaptativo vs GNN objetivo": {
+      "nome": "GNN adaptativo vs GNN objetivo",
+      "p": 7.836111079706432e-05,
+      "delta": 0.6122448979591837,
+      "alternativa": "two-sided",
+      "a": {
+        "rotulo": "GNN adaptativo",
+        "n": 28,
+        "media": 67.37500000000001,
+        "dp": 13.395442149118123,
+        "convergentes": 28
+      },
+      "b": {
+        "rotulo": "GNN objetivo",
+        "n": 28,
+        "media": 32.49285714285714,
+        "dp": 32.500144484823316,
+        "convergentes": 15
+      }
+    },
+    "M2: GNN adaptativo vs PPO": {
+      "nome": "GNN adaptativo vs PPO",
+      "p": 0.0010155652112414518,
+      "delta": 0.5127551020408163,
+      "alternativa": "two-sided",
+      "a": {
+        "rotulo": "GNN adaptativo",
+        "n": 28,
+        "media": 67.37500000000001,
+        "dp": 13.395442149118123,
+        "convergentes": 28
+      },
+      "b": {
+        "rotulo": "PPO",
+        "n": 28,
+        "media": 35.59464285714286,
+        "dp": 36.024598949847515,
+        "convergentes": 14
+      }
+    },
+    "M2: GNN adaptativo vs SAC": {
+      "nome": "GNN adaptativo vs SAC",
+      "p": 1.6538111931123664e-10,
+      "delta": 0.9923469387755102,
+      "alternativa": "two-sided",
+      "a": {
+        "rotulo": "GNN adaptativo",
+        "n": 28,
+        "media": 67.37500000000001,
+        "dp": 13.395442149118123,
+        "convergentes": 28
+      },
+      "b": {
+        "rotulo": "SAC",
+        "n": 28,
+        "media": 10.144642857142856,
+        "dp": 14.167198286010267,
+        "convergentes": 14
+      }
+    },
+    "M2: GNN objetivo vs PPO": {
+      "nome": "GNN objetivo vs PPO",
+      "p": 0.08763914258685797,
+      "delta": -0.26403061224489793,
+      "alternativa": "two-sided",
+      "a": {
+        "rotulo": "GNN objetivo",
+        "n": 28,
+        "media": 32.49285714285714,
+        "dp": 32.500144484823316,
+        "convergentes": 15
+      },
+      "b": {
+        "rotulo": "PPO",
+        "n": 28,
+        "media": 35.59464285714286,
+        "dp": 36.024598949847515,
+        "convergentes": 14
+      }
+    },
+    "M2: GNN objetivo vs SAC": {
+      "nome": "GNN objetivo vs SAC",
+      "p": 0.10124103765954562,
+      "delta": 0.2461734693877551,
+      "alternativa": "two-sided",
+      "a": {
+        "rotulo": "GNN objetivo",
+        "n": 28,
+        "media": 32.49285714285714,
+        "dp": 32.500144484823316,
+        "convergentes": 15
+      },
+      "b": {
+        "rotulo": "SAC",
+        "n": 28,
+        "media": 10.144642857142856,
+        "dp": 14.167198286010267,
+        "convergentes": 14
+      }
+    },
+    "M2: PPO vs SAC": {
+      "nome": "PPO vs SAC",
+      "p": 0.008421805984155394,
+      "delta": 0.40816326530612246,
+      "alternativa": "two-sided",
+      "a": {
+        "rotulo": "PPO",
+        "n": 28,
+        "media": 35.59464285714286,
+        "dp": 36.024598949847515,
+        "convergentes": 14
+      },
+      "b": {
+        "rotulo": "SAC",
+        "n": 28,
+        "media": 10.144642857142856,
+        "dp": 14.167198286010267,
+        "convergentes": 14
+      }
+    },
+    "M3": {
+      "nome": "bypass adaptativo vs fixo",
+      "p": 0.0015692037431167868,
+      "delta": 0.7687074829931972,
+      "alternativa": "two-sided",
+      "a": {
+        "rotulo": "adaptativo",
+        "n": 21,
+        "media": 80.92857142857143,
+        "dp": 15.600966087301865,
+        "convergentes": 21
+      },
+      "b": {
+        "rotulo": "fixo w=0,5",
+        "n": 7,
+        "media": 63.00714285714286,
+        "dp": 21.87348906346502,
+        "convergentes": 7
+      },
+      "aviso": "campanhas diferentes: o peso fixo é de 12 jul"
+    }
+  },
+  "exploratorio": {
+    "mega_A_fase5/none": {
+      "rotulo": "GNN adaptativo",
+      "n": 21,
+      "media": 55.66428571428572,
+      "dp": 20.090471266605114,
+      "convergentes": 20
+    },
+    "mega_B_fase7/cooperative_perception": {
+      "rotulo": "GNN adaptativo",
+      "n": 21,
+      "media": 17.521428571428572,
+      "dp": 9.318966834211981,
+      "convergentes": 17
+    }
+  },
+  "gerado": "2026-08-03T20:06:12+00:00",
+  "fonte": "scripts/analise_megatreino.py"
+}
