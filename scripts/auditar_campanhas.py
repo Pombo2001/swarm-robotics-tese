@@ -113,9 +113,47 @@ def main():
         if em_falta:
             faltas[d] = em_falta
 
+    # Lacunas que NÃO se podem fechar, e que por isso não fazem falhar o auditor.
+    #
+    # A `mega_B6` não tem heatmaps nem vídeo porque os modelos SAC dessa fase
+    # nunca foram guardados — nem cá nem no servidor (o arquivamento copiou a
+    # pasta do GNN). Não há como os gerar sem retreinar 21 execuções.
+    #
+    # Isto não é indulgência: um auditor que exige o impossível é um auditor que
+    # se aprende a ignorar, e — pior — que empurra para o falso. Os ficheiros
+    # errados ESTÃO na pasta (modelos GNN), e um heatmap gerado a partir deles
+    # sairia bonito e seria mentira. Por isso a excecão exige um
+    # LEIA-ME_modelos.md escrito ao lado dos dados, a explicar porquê.
+    documentadas = {}
+    for d in list(faltas):
+        campanha_md = os.path.join(GRAFICOS, d, "CAMPANHA.md")
+        origem = None
+        if os.path.exists(campanha_md):
+            import re
+            with open(campanha_md, encoding="utf-8") as f:
+                m = re.search(r"Origem dos dados:\s*`([^`]+)`", f.read())
+            if m:
+                origem = os.path.join(RAIZ, m.group(1).replace("\\", os.sep))
+        if origem and os.path.exists(os.path.join(origem, "LEIA-ME_modelos.md")):
+            documentadas[d] = faltas.pop(d)
+
     print()
-    if not faltas:
+    if not faltas and not documentadas:
         print("Todas as campanhas têm tudo.")
+        return 0
+
+    if documentadas:
+        print("=" * 78)
+        print("LACUNAS CONHECIDAS (documentadas — não são acionáveis)")
+        print("=" * 78)
+        rot = {c: r for c, r, _, _ in REQUISITOS}
+        for d, em_falta in documentadas.items():
+            print("  %-14s sem %s   → ver LEIA-ME_modelos.md na origem"
+                  % (d, ", ".join(rot[c] for c in em_falta)))
+        print()
+
+    if not faltas:
+        print("Nada por fechar: as lacunas que restam estão documentadas.")
         return 0
 
     print("=" * 78)
