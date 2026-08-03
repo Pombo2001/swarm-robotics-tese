@@ -79,7 +79,7 @@ def cliffs_delta(a, b):
 
 def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algorithm",
                     col_sucesso="sucesso", unidade="run independente",
-                    nota_extra="", n_por_algo=None):
+                    nota_extra="", n_por_algo=None, ordem=None, cores=None):
     """Um ponto por RUN, em vez de uma caixa. Guarda o PNG em `caminho`.
 
     PORQUÊ (e porque é que não é só estética): com n=7, os quartis de um boxplot
@@ -98,12 +98,19 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
       ler como dois;
     · a contagem de runs que resolvem (sucesso=100%) fica escrita à direita: é o
       "3/7" que o texto cita, aqui visível em vez de calculado pelo leitor.
+
+    `ordem`/`cores` servem as figuras cujas séries não são os três algoritmos —
+    o mega-treino compara quatro BRAÇOS no mesmo cenário (GNN adaptativo, GNN
+    objetivo, PPO, SAC). Sem elas, `ALGOS` filtrava os braços todos e a figura
+    saía vazia. Por omissão, nada muda para quem já chamava a função.
     """
     import textwrap
 
-    # A ordem de ALGOS lê-se de cima para baixo (o eixo y do matplotlib cresce
-    # ao contrário, daí a inversão): GNN em cima, como em todas as tabelas.
-    algos_presentes = [a for a in ALGOS if a in set(d[col_algo])]
+    # A ordem lê-se de cima para baixo (o eixo y do matplotlib cresce ao
+    # contrário, daí a inversão): GNN em cima, como em todas as tabelas.
+    ordem = ordem if ordem is not None else ALGOS
+    cores = cores if cores is not None else ALGO_COLORS
+    algos_presentes = [a for a in ordem if a in set(d[col_algo])]
     fig, ax = plt.subplots(figsize=(9, 1.35 * len(algos_presentes) + 2.4))
     rng = np.random.default_rng(7)          # jitter reprodutível
 
@@ -112,7 +119,7 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
         sub = d[d[col_algo] == algo]
         vals = sub[col_valor].to_numpy(dtype=float)
         y = i + rng.uniform(-0.16, 0.16, size=len(vals))
-        ax.scatter(vals, y, s=95, color=ALGO_COLORS.get(algo, "#666"),
+        ax.scatter(vals, y, s=95, color=cores.get(algo, "#666"),
                    edgecolors="white", linewidths=1.6, zorder=3,
                    alpha=.95, clip_on=False)
         m = float(np.mean(vals)) if len(vals) else 0.0
@@ -132,7 +139,10 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
     ax.set_yticks(range(len(algos_presentes)))
     ax.set_yticklabels(algos_presentes, fontsize=12, fontweight="bold")
     ax.set_ylim(len(algos_presentes) - 0.45, -0.55)      # GNN no topo
-    ax.set_xlim(left=0)
+    # Folga à esquerda do zero: os runs que NÃO resolvem valem 0 exato e, com
+    # `clip_on=False`, empilham-se por cima do rótulo do eixo. A n=7 passava
+    # despercebido; a n=28 são catorze pontos e o "PPO" deixa de se ler.
+    ax.set_xlim(left=-0.035 * max(x_max, 1e-9))
     ax.set_xlabel("Recolhas por episódio (média do run, 20 episódios)", fontsize=10)
     ax.set_title(titulo, fontsize=14, fontweight="bold", pad=12)
     ax.grid(True, axis="x", linestyle="--", alpha=.4)

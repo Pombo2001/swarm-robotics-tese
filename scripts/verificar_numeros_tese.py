@@ -473,6 +473,151 @@ def verificar_artigo(tolerancia):
     return problemas
 
 
+def verificar_megatreino(tolerancia):
+    """§res_novelty, parágrafo do mega-treino — prosa, como a robustez.
+
+    Estes números entraram na tese a 3 ago e são os de maior peso do capítulo:
+    o $28/28$ contra $15/28$ é o que sustenta a resposta final à QI6. Não têm
+    tabela, vivem em prosa e em duas legendas — exatamente a situação que o
+    `verificar_robustez` existe para cobrir: ninguém os regenera com um script,
+    e sobreviveriam a uma mudança de dados sem dar sinal.
+
+    As contagens de convergência verificam-se **exatamente** (são inteiros); as
+    médias e desvios com a mesma tolerância do resto do verificador.
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: §res_novelty (mega-treino, n=28)  vs  mega_1mes/*/eval_by_run.csv")
+    print("=" * 72)
+
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from analise_megatreino import FIXO_BYPASS, carregar
+    except Exception as e:                                   # pragma: no cover
+        print("[!] não importei o analise_megatreino (%s) — a saltar." % e)
+        return []
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = f.read()
+
+    N = r"([\d.,{}\\]+)"          # "67{,}4" tal como sai do LaTeX
+    problemas, conferidos = [], 0
+
+    def do_csv(fase, cen):
+        g = carregar(fase, cen)
+        if g is None:
+            return None
+        return (float(g["food"].mean()), float(g["food"].std()),
+                int((g["suc"] >= 1.0).sum()), len(g))
+
+    def confere(rotulo, tese, calc, exato=False):
+        """`tese` lido do .tex, `calc` recalculado do CSV."""
+        nonlocal conferidos
+        conferidos += 1
+        if tese is None:
+            problemas.append("%s: não consegui ler o valor no main.tex "
+                             "(mudou a redação? actualizar este verificador)" % rotulo)
+        elif exato and int(tese) != int(calc):
+            problemas.append("%-28s tese=%d  csv=%d" % (rotulo, tese, calc))
+        elif not exato and abs(tese - calc) > tolerancia:
+            problemas.append("%-28s tese=%6.1f  csv=%6.1f  (Δ=%+.2f)"
+                             % (rotulo, tese, calc, tese - calc))
+
+    def procura(padrao):
+        m = re.search(padrao, tex)
+        return [numero(g) for g in m.groups()] if m else None
+
+    # --- M1: as duas médias vêm na MESMA frase, e as contagens na seguinte ---
+    dados = {f: do_csv(f, c) for f, c in
+             (("mega_A_fase1", "u_wall"), ("mega_A_fase2", "u_wall"),
+              ("mega_A_fase3", "u_wall"), ("mega_A_fase4", "u_wall"),
+              ("mega_B_fase5", "cooperative_door_bypass"))}
+    for fase, v in dados.items():
+        if v is None:
+            problemas.append("%s: sem dados (a tese cita números que não consigo "
+                             "reproduzir)" % fase)
+    if any(v is None for v in dados.values()):
+        print("[!] faltam dados do mega-treino — a saltar o resto.")
+        return problemas
+
+    for fase, rot in (("mega_A_fase1", "GNN adaptativo"),
+                      ("mega_A_fase2", "GNN objetivo"),
+                      ("mega_A_fase3", "PPO"), ("mega_A_fase4", "SAC"),
+                      ("mega_B_fase5", "adaptativo bypass")):
+        med, dp, conv, n = dados[fase]
+        print("  %-18s n=%-3d %6.1f ± %5.1f   convergentes: %d/%d"
+              % (rot, n, med, dp, conv, n))
+
+    v = procura(r"o adaptativo faz \$" + N + r" \\pm " + N +
+                r"\$ recolhas/ep contra \$" + N + r" \\pm " + N +
+                r"\$ do objetivo puro")
+    med_a, dp_a, conv_a, n_a = dados["mega_A_fase1"]
+    med_o, dp_o, conv_o, n_o = dados["mega_A_fase2"]
+    for i, (rot, calc) in enumerate((("M1 adaptativo média", med_a),
+                                     ("M1 adaptativo desvio", dp_a),
+                                     ("M1 objetivo média", med_o),
+                                     ("M1 objetivo desvio", dp_o))):
+        confere(rot, v[i] if v else None, calc)
+
+    v = procura(r"\$(\d+)/(\d+)\$ execuções a 100\\% de sucesso contra \$(\d+)/(\d+)\$")
+    for i, (rot, calc) in enumerate((("M1 adaptativo convergentes", conv_a),
+                                     ("M1 adaptativo n", n_a),
+                                     ("M1 objetivo convergentes", conv_o),
+                                     ("M1 objetivo n", n_o))):
+        confere(rot, v[i] if v else None, calc, exato=True)
+
+    for algo, fase in (("PPO", "mega_A_fase3"), ("SAC", "mega_A_fase4")):
+        med, dp, conv, n = dados[fase]
+        v = procura(algo + r" \$" + N + r" \\pm " + N + r"\$ \(\$(\d+)/(\d+)\$")
+        for i, (rot, calc, ex) in enumerate(
+                ((("M2 %s média" % algo), med, False),
+                 (("M2 %s desvio" % algo), dp, False),
+                 (("M2 %s convergentes" % algo), conv, True),
+                 (("M2 %s n" % algo), n, True))):
+            confere(rot, v[i] if v else None, calc, exato=ex)
+
+    # --- M3: adaptativo desta campanha vs peso fixo da de julho, na mesma frase ---
+    med_b, dp_b, conv_b, n_b = dados["mega_B_fase5"]
+    v = procura(r"o adaptativo faz \$" + N + r" \\pm " + N +
+                r"\$ recolhas/ep em \$(\d+)/(\d+)\$ execuções contra \$" +
+                N + r" \\pm " + N + r"\$ do peso fixo")
+    if os.path.exists(FIXO_BYPASS):
+        df = pd.read_csv(FIXO_BYPASS)
+        col = "Run" if "Run" in df.columns else df.columns[0]
+        g = df.groupby(col).agg(food=("food_collected", "mean"))
+        med_f, dp_f = float(g["food"].mean()), float(g["food"].std())
+        print("  %-18s n=%-3d %6.1f ± %5.1f   (campanha de 12 jul, declarada)"
+              % ("peso fixo w=0,5", len(g), med_f, dp_f))
+        alvos = ((("M3 adaptativo média"), med_b, False),
+                 (("M3 adaptativo desvio"), dp_b, False),
+                 (("M3 adaptativo convergentes"), conv_b, True),
+                 (("M3 adaptativo n"), n_b, True),
+                 (("M3 peso fixo média"), med_f, False),
+                 (("M3 peso fixo desvio"), dp_f, False))
+        for i, (rot, calc, ex) in enumerate(alvos):
+            confere(rot, v[i] if v else None, calc, exato=ex)
+    else:
+        problemas.append("falta o CSV do peso fixo (%s) que a tese cita em M3"
+                         % os.path.relpath(FIXO_BYPASS, PROJECT_ROOT))
+
+    # O resumo repete o 28/28 vs 15/28: se um for corrigido e o outro não, é
+    # o resumo que o leitor vê primeiro.
+    v = procura(r"\$(\d+)/(\d+)\$, contra \$(\d+)/(\d+)\$ do objetivo puro")
+    for i, (rot, calc) in enumerate((("resumo adaptativo convergentes", conv_a),
+                                     ("resumo adaptativo n", n_a),
+                                     ("resumo objetivo convergentes", conv_o),
+                                     ("resumo objetivo n", n_o))):
+        confere(rot, v[i] if v else None, calc, exato=True)
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nOs %d valores do mega-treino batem com os CSV." % conferidos)
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tolerancia", type=float, default=0.05,
@@ -554,6 +699,7 @@ def main():
     problemas += verificar_escalabilidade(a.tolerancia)
     problemas += verificar_significancia(a.tolerancia)
     problemas += verificar_robustez()
+    problemas += verificar_megatreino(a.tolerancia)
     problemas += verificar_artigo(a.tolerancia)
 
     print()
