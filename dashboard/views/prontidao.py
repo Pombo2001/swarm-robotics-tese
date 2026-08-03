@@ -10,7 +10,7 @@ que interessam são as de **15 set** (versão composta) e **30 set** (entrega).
 
 Três decisões de desenho, para não ser um botão que mente:
 
-  · o **verificador dos 308 valores** corre de verdade (leva ~2 s) e o resultado é
+  · o **verificador dos números da tese** corre de verdade (leva ~2 s) e o resultado é
     o do momento — nunca um valor guardado de uma corrida anterior;
   · os **testes** levam ~3 min, por isso não correm sozinhos: mostram o último
     resultado com a hora a que foi obtido, e só correm quando se pede;
