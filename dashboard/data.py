@@ -242,6 +242,14 @@ def eval_freshness():
     files = []
     for d in MODEL_DIRS:
         files += glob.glob(os.path.join(config.BASE_DIR, "results", d, "*"))
+    # Os CHECKPOINTS intermédios (`*_ckpt_0091min.zip`) não são modelos a avaliar:
+    # são fotografias do treino a meio, e o treinador escreve-os em qualquer
+    # campanha que passe por aqui. Seis deles, de 27 jul, eram da campanha do mapa
+    # grande e faziam a vista Ciência gritar "avaliação DESATUALIZADA" contra uma
+    # avaliação que está em dia — o alarme comparava a matriz dos 7 cenários com
+    # ficheiros que nunca lhe pertenceram. Um alarme que toca sem motivo é pior do
+    # que nenhum: ensina a ignorá-lo, e este existe para a armadilha nº3.
+    files = [f for f in files if "ckpt" not in os.path.basename(f).lower()]
     model_t = max((_mtime(f) for f in files), default=0.0)
     # model_t == 0 significa que NÃO HÁ modelos nesta cópia (é o caso do pacote
     # de leitura que corre no Pi). Dizer "em dia" aí seria afirmar uma comparação
