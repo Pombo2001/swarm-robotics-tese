@@ -271,3 +271,5 @@ results/estatisticas/*
 
 # Grafo de conhecimento do código (gerado por /graphify)
 graphify-out/
+scripts/noite.log
+scripts/noite_achados.md
