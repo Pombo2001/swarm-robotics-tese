@@ -279,10 +279,22 @@ def build():
         rob = data.robustness_table()
         with ui.card().classes(CARD):
             _section_title("health_and_safety",
-                           "Robustez a falhas de agentes (Rrobust)")
+                           "Robustez a falhas de agentes (Rrobust)",
+                           "sempre com N=20 — não segue o seletor acima")
             ui.label("Recolhas retidas quando 10% dos agentes falham a meio do "
                      "episódio (avaliação emparelhada, mesmas seeds). 100% = imune.") \
                 .classes("text-xs text-gray-400")
+            # O seletor de N governa só a secção da escalabilidade. Esta bateria
+            # correu toda a N=20, e as barras do PPO e do SAC aparecem aqui de
+            # pleno direito — mas com "N = 50" escolhido lá em cima, e sem esta
+            # frase, leem-se como PPO e SAC a N=50, que é precisamente o que a
+            # página acabou de dizer ser impossível. Dizer o N aqui custa uma
+            # linha; deixar a ambiguidade custava a credibilidade das duas
+            # secções ao mesmo tempo.
+            ui.label("Todos os valores desta secção são com N=20, o tamanho de "
+                     "treino — é a única dimensão em que os três algoritmos "
+                     "correm, e por isso a única em que a comparação é possível.") \
+                .classes("text-xs").style(f"color:{theme.INK_MUTED}")
             if not rob:
                 with ui.row().classes("items-center gap-2 mt-2"):
                     ui.icon("info").classes("text-sky-400")
