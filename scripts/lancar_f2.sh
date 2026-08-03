@@ -21,6 +21,21 @@
 #
 # Só depois lança, e confirma que os dois streams escreveram a primeira geração.
 #
+# UMA ligação, não vinte  (3 ago)
+# -------------------------------
+# A primeira versão fazia uma ligação SSH por verificação. Em série, o servidor
+# aborta algumas ("Software caused connection abort") — e como o stderr ia para
+# /dev/null, uma ligação abortada devolvia string vazia. As verificações 1 e 6
+# são CONTAGENS: vazio lê-se como "0 sessões do mega-treino" e "0 ficheiros
+# alheios", exatamente os dois verdes que autorizam o lançamento. Era o verde
+# falso mais perigoso do script, e vi os dois sentidos do erro no mesmo dia (a
+# 3 ago disse que as três cópias não existiam quando existiam).
+#
+# Agora tudo o que é preciso saber vem num só bloco `chave=valor`, lido numa
+# ligação, e as verificações fazem-se em cima do que chegou. O `__FIM__` corre
+# sempre (`;`, não `&&`), por isso a sua ausência distingue "não liguei" de
+# "liguei e não havia nada" — e sem marcador o script recusa-se a lançar.
+#
 # Uso (na torre, com a VPN do ISCTE ligada):
 #     bash scripts/lancar_f2.sh --verificar     # só as verificações, não lança
 #     bash scripts/lancar_f2.sh                 # verifica e lança
@@ -35,38 +50,88 @@ falhas=0
 ok()   { echo "  [v] $*"; }
 mal()  { echo "  [X] $*"; falhas=$((falhas + 1)); }
 
-remoto() { bash "$SRV" "$*" 2>/dev/null; }
+# Devolve a saída do comando remoto, ou !=0 se a ligação não chegou ao fim.
+# Duas tentativas: o abort é intermitente e a segunda quase sempre passa; uma
+# VPN em baixo falha as duas. NÃO acrescenta newline à saída — os consumidores
+# fazem `tail -1` e uma linha em branco no fim lê-se como resposta vazia.
+remoto() {
+    local saida tentativa
+    for tentativa in 1 2; do
+        saida=$(bash "$SRV" "{ $*
+} ; printf '__FIM__\n'" 2>/dev/null)
+        if [[ "$saida" == *__FIM__* ]]; then
+            printf '%s' "${saida%%__FIM__*}"
+            return 0
+        fi
+        [ "$tentativa" = 1 ] && sleep 3
+    done
+    return 3
+}
 
 echo "=============================================================================="
 echo "F2 DO MAPA GRANDE — verificações antes de lançar   ($(date '+%d %b %Y %H:%M'))"
 echo "=============================================================================="
 
-# 0. o servidor responde
-if ! remoto "echo vivo" | grep -q vivo; then
-    echo "  [X] o servidor não responde. VPN do ISCTE ligada?"
-    echo "      (o Pi e o servidor não se alcançam ao mesmo tempo — ver o LEIA-ME)"
+# ----------------------------------------------------------------------------
+# Tudo o que é preciso saber do servidor, numa ligação só.
+# Heredoc entre aspas: nada aqui dentro é expandido pela shell LOCAL.
+# ----------------------------------------------------------------------------
+read -r -d '' RECOLHA <<'REMOTO' || true
+echo "MEGA=$(tmux ls 2>/dev/null | grep -cE '^mega[AB]:')"
+echo "SIM_base=$(sha256sum ~/swarm-mapa/src/environment/swarm_env_3d.py 2>/dev/null | awk '{print $1}')"
+for d in f2g f2r f2l; do
+    echo "SIM_$d=$(sha256sum ~/swarm-mapa-$d/src/environment/swarm_env_3d.py 2>/dev/null | awk '{print $1}')"
+    echo "NOV_$d=$(grep -hE 'novelty_(weight|adaptive)' ~/swarm-mapa-$d/configs/foraging.yaml 2>/dev/null | tr -d ' \n')"
+    echo "DEF_$d=$(grep -hE "novelty_(weight|adaptive)', " ~/swarm-mapa-$d/src/training/evo_trainer_3d.py 2>/dev/null | tr -d ' \n')"
+    echo "SUJO_$d=$(ls ~/swarm-mapa-$d/results/models_7d ~/swarm-mapa-$d/results/evaluation/*.csv 2>/dev/null | wc -l)"
+done
+echo "GEO=$(grep -hE 'arena_radius_mapa_grande|max_steps_mapa_grande' ~/swarm-mapa-f2g/configs/foraging.yaml 2>/dev/null | tr -d ' \n')"
+echo "DISCO=$(df --output=avail -BG /home | tail -1 | tr -dc '0-9')"
+echo "ULTIMA_MEGA=$(tail -1 ~/mega_B_master.log 2>/dev/null | tr -d '\r')"
+REMOTO
+
+dados=$(remoto "$RECOLHA") || {
+    echo "  [X] o servidor não respondeu (duas tentativas)."
+    echo "      VPN do ISCTE ligada? (o Pi e o servidor não se alcançam ao mesmo"
+    echo "      tempo — ver o LEIA-ME). Nada foi verificado, nada foi lançado."
     exit 2
-fi
+}
 ok "servidor a responder"
 
+declare -A V=()
+while IFS='=' read -r chave valor; do
+    [ -n "$chave" ] && V["$chave"]="${valor%$'\r'}"
+done <<< "$dados"
+
+# Uma recolha truncada a meio invalida tudo o que vem a seguir: uma chave em
+# falta lê-se como vazia, e vazio é o valor que faz passar as contagens.
+for esperada in MEGA SIM_base GEO DISCO; do
+    if [ -z "${V[$esperada]+x}" ]; then
+        echo "  [X] a resposta do servidor veio truncada (falta '$esperada')."
+        echo "      Não verifico nem lanço nada em cima de leitura incompleta."
+        exit 2
+    fi
+done
+
 # 1. o mega-treino largou a máquina
-vivos=$(remoto "tmux ls 2>/dev/null | grep -cE '^mega[AB]:'" | tail -1 | tr -d '[:space:]')
-if [ "${vivos:-0}" != "0" ]; then
-    mal "megaA/megaB AINDA a correr ($vivos sessões) — o pré-registo manda esperar"
-    remoto "tail -1 ~/mega_B_master.log"
+if [ -z "${V[MEGA]}" ]; then
+    mal "não consegui contar as sessões do mega-treino (resposta vazia)"
+elif [ "${V[MEGA]}" != "0" ]; then
+    mal "megaA/megaB AINDA a correr (${V[MEGA]} sessões) — o pré-registo manda esperar"
+    echo "      última linha: ${V[ULTIMA_MEGA]:-(sem log)}"
 else
     ok "mega-treino terminado (nenhuma sessão megaA/megaB)"
 fi
 
 # 2. as três cópias, com o simulador de agora
-sim_base=$(remoto "sha256sum ~/swarm-mapa/src/environment/swarm_env_3d.py" \
-           | tail -1 | awk '{print $1}')
+if [ -z "${V[SIM_base]}" ]; then
+    mal "não li o sha256 do simulador de ~/swarm-mapa (a referência)"
+fi
 for d in f2g f2r f2l; do
-    h=$(remoto "sha256sum ~/swarm-mapa-$d/src/environment/swarm_env_3d.py 2>/dev/null" \
-        | tail -1 | awk '{print $1}')
+    h="${V[SIM_$d]:-}"
     if [ -z "$h" ]; then
         mal "~/swarm-mapa-$d não existe — corre 'mapa_streamF2.sh preparar'"
-    elif [ "$h" != "$sim_base" ]; then
+    elif [ "$h" != "${V[SIM_base]}" ]; then
         mal "~/swarm-mapa-$d tem OUTRO simulador (foi isto que anulou o F1 de 29 jul)"
     else
         ok "~/swarm-mapa-$d com o simulador de agora"
@@ -82,14 +147,13 @@ done
 # primeira versão desta verificação exigia a chave presente e dava três falsos
 # alarmes).
 for d in f2g f2r f2l; do
-    linha=$(remoto "grep -E 'novelty_(weight|adaptive)' ~/swarm-mapa-$d/configs/foraging.yaml 2>/dev/null | tr -d ' \n'")
+    linha="${V[NOV_$d]:-}"
     if [ -z "$linha" ]; then
-        defaults=$(remoto "grep -E \"novelty_(weight|adaptive)'\, \" ~/swarm-mapa-$d/src/training/evo_trainer_3d.py | tr -d ' \n'")
-        case "$defaults" in
+        case "${V[DEF_$d]:-}" in
             *novelty_weight*0.0*novelty_adaptive*False*|*novelty_adaptive*False*novelty_weight*0.0*)
                 ok "$d sem novidade (chaves ausentes; defaults do código = 0.0/False)" ;;
             "") mal "$d: não li nem o config nem os defaults do evo_trainer" ;;
-            *)  mal "$d: chaves ausentes e defaults do código NÃO são 0.0/False: $defaults" ;;
+            *)  mal "$d: chaves ausentes e defaults do código NÃO são 0.0/False: ${V[DEF_$d]}" ;;
         esac
     else
         case "$linha" in
@@ -101,26 +165,27 @@ for d in f2g f2r f2l; do
 done
 
 # 4. a geometria do mapa
-geo=$(remoto "grep -E 'arena_radius_mapa_grande|max_steps_mapa_grande' ~/swarm-mapa-f2g/configs/foraging.yaml | tr -d ' \n'")
-case "$geo" in
+case "${V[GEO]}" in
     *arena_radius_mapa_grande:60*max_steps_mapa_grande:2000*|*max_steps_mapa_grande:2000*arena_radius_mapa_grande:60*)
         ok "mapa grande com arena r=60 e 2000 passos" ;;
-    *)  mal "geometria inesperada no config: ${geo:-vazio}" ;;
+    *)  mal "geometria inesperada no config: ${V[GEO]:-vazio}" ;;
 esac
 
 # 5. disco
-livre=$(remoto "df --output=avail -BG /home | tail -1 | tr -dc '0-9'")
-if [ "${livre:-0}" -lt 20 ]; then
-    mal "só ${livre}G livres em /home (o F2 escreve modelos e logs de 21 runs)"
+if [ -z "${V[DISCO]}" ]; then
+    mal "não li o espaço livre em /home"
+elif [ "${V[DISCO]}" -lt 20 ]; then
+    mal "só ${V[DISCO]}G livres em /home (o F2 escreve modelos e logs de 21 runs)"
 else
-    ok "${livre}G livres em /home"
+    ok "${V[DISCO]}G livres em /home"
 fi
 
 # 6. as cópias estão limpas de resultados alheios
 for d in f2g f2r f2l; do
-    sujo=$(remoto "ls ~/swarm-mapa-$d/results/models_7d ~/swarm-mapa-$d/results/evaluation/*.csv 2>/dev/null | wc -l" \
-           | tail -1 | tr -d '[:space:]')
-    if [ "${sujo:-0}" != "0" ]; then
+    sujo="${V[SUJO_$d]:-}"
+    if [ -z "$sujo" ]; then
+        mal "não consegui listar os resultados de ~/swarm-mapa-$d (resposta vazia)"
+    elif [ "$sujo" != "0" ]; then
         mal "~/swarm-mapa-$d tem resultados de outra campanha ($sujo ficheiros)"
     else
         ok "~/swarm-mapa-$d limpa"
@@ -141,15 +206,32 @@ fi
 
 echo
 echo "A LANÇAR os dois streams principais (o exploratório só quando o grad fechar):"
-remoto "tmux new-session -d -s mapaF2g '~/swarm-mapa-f2g/scripts/mapa_streamF2.sh gnn'; \
-        tmux new-session -d -s mapaF2r '~/swarm-mapa-f2r/scripts/mapa_streamF2.sh grad'; \
-        sleep 5; tmux ls"
+sessoes=$(remoto "tmux new-session -d -s mapaF2g '~/swarm-mapa-f2g/scripts/mapa_streamF2.sh gnn'
+tmux new-session -d -s mapaF2r '~/swarm-mapa-f2r/scripts/mapa_streamF2.sh grad'
+sleep 5
+tmux ls") || {
+    echo "  [X] a ligação partiu DURANTE o lançamento — estado desconhecido."
+    echo "      Vê o que ficou de pé antes de repetir (pode ter lançado um stream só):"
+    echo "        bash scripts/servidor.sh \"tmux ls\""
+    exit 2
+}
+echo "$sessoes"
+
+# Uma das duas pode ter falhado sozinha (diretório, permissões) e o script não
+# daria por isso — a confirmação nos logs abaixo passa com um stream só a andar.
+for s in mapaF2g mapaF2r; do
+    echo "$sessoes" | grep -q "^$s:" || mal "a sessão $s NÃO está de pé"
+done
+if [ "$falhas" -ne 0 ]; then
+    echo "!! lancei mas nem todos os streams estão a correr — vê o 'tmux ls' acima."
+    exit 3
+fi
 
 echo
 echo "A confirmar que arrancaram (até 3 min)..."
 for i in $(seq 1 18); do
     sleep 10
-    saida=$(remoto "tail -2 ~/mapa_F2_gnn.log 2>/dev/null; echo ---; tail -2 ~/mapa_F2_ppo.log 2>/dev/null")
+    saida=$(remoto "tail -2 ~/mapa_F2_gnn.log 2>/dev/null; echo ---; tail -2 ~/mapa_F2_ppo.log 2>/dev/null") || continue
     if echo "$saida" | grep -qE 'Gen 1 \||Iteração|timesteps'; then
         echo "$saida"
         echo
