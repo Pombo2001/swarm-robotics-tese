@@ -40,20 +40,46 @@ $fim = (Get-Date).AddHours($MaxHoras)
 # O goal. Quatro condicoes mecanicas + o que nao pode mexer.
 # Mantido numa string unica para a scheduled task poder usar o mesmo texto.
 $goal = @'
-/goal Os quatro comandos abaixo saem todos com codigo 0 e sem problemas
-reportados:
-  1. python -m pytest tests/ -q
+/goal Escrever testes para os modulos de src/ que nao tem nenhum, sem partir
+nada do que ja funciona.
+
+Alvos, por ordem (os dois primeiros sao o que interessa - 543 linhas que
+produzem numeros que estao NA TESE):
+  1. src/training/train_ppo_3d.py   (261 linhas, zero testes)
+  2. src/training/train_sac_3d.py   (282 linhas, zero testes)
+  3. src/agents/base_agent.py       (15 linhas)
+  4. src/agents/random_agent.py     (5 linhas)
+
+Condicao de conclusao - os quatro comandos saem com codigo 0:
+  1. python -m pytest tests/ -q          (os 63 que ja passam CONTINUAM a passar)
   2. python scripts/verificar_numeros_tese.py
   3. python scripts/auditar_dashboard.py
   4. python scripts/auditar_campanhas.py --tese
+E existe pelo menos um teste novo, a passar, para cada um dos alvos 1 e 2.
 
-Corrige o que falhar, uma coisa de cada vez, e faz um commit por correcao com
-uma mensagem que explique a CAUSA (nao "fix tests").
+Como escrever estes testes: sem treinar de verdade (um treino sao horas). Testa
+o que se pode testar em segundos - construcao do ambiente, formato e dimensao
+das observacoes, o config a ser lido, os caminhos dos modelos, o que acontece
+com um cenario que nao existe. Um teste que demore mais de 30 s esta errado
+para este proposito.
+
+Comeca por LER o modulo todo antes de escrever o primeiro teste. Um teste
+escrito a adivinhar a API passa a testar a tua suposicao, nao o codigo.
+
+Commit por cada modulo coberto, com mensagem que diga o que o teste protege.
 
 REGRAS — nao ha excepcoes a estas:
+- Se um teste novo revelar um BUG no codigo de treino, NAO o corrijas. Escreve o
+  teste que o expoe, marca-o com @pytest.mark.xfail(reason="..."), e descreve o
+  achado em scripts/noite_achados.md. Estes modulos produziram os numeros que
+  estao na tese: uma "correcao" de madrugada pode invalidar resultados que
+  custaram 1671 h de maquina, e essa decisao nao e tua.
 - NAO alteres Tese/, Artigo/ nem docs/. A tese esta fechada e verificada; se um
   numero da tese nao bater com os dados, PARA e escreve o que encontraste em
   scripts/noite_achados.md, sem corrigir nada.
+- NAO alteres o codigo de src/ para o tornar mais testavel. Se algo nao se
+  consegue testar sem o mudar, escreve isso nos achados e passa ao alvo
+  seguinte.
 - NAO alteres nem apagues nada dentro de results/. Sao 1671 horas de maquina e
   nao se regeneram.
 - NAO toques no servidor de treino (nada de scripts/servidor.sh, lancar_f2.sh,
