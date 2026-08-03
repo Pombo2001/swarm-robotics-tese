@@ -36,8 +36,16 @@ else
     #   · mapa_grande  — os CSV do F1 que a vista «Mapa grande» lê. Sem isto, o
     #     Pi mostrava a corrida ANULADA (ou nada), que é pior do que não mostrar.
     # São ~2 MB as duas; não é por elas que o delta engorda.
+    # E o que a vista Ciência passou a ler a 3 ago:
+    #   · o resumo do mega-treino — é um JSON de 8 KB, mas sem ele o cartão do
+    #     28/28 simplesmente não aparece no Pi (a vista devolve None e cala-se);
+    #   · Tese/images/resultados — a rota /figuras_tese serve daqui, e a figura
+    #     dos quatro braços é servida por essa rota, não pela pasta da campanha.
+    #     Sem isto o cartão aparece com a imagem partida.
     CAMINHOS=(dashboard scripts src configs
-              results/episodios_3d results/mapa_grande "${FIGS[@]}")
+              results/episodios_3d results/mapa_grande
+              results/mega_1mes/resumo_megatreino.json
+              Tese/images/resultados "${FIGS[@]}")
 fi
 
 echo "[pi] a enviar:"
