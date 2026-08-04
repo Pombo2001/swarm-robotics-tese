@@ -58,7 +58,12 @@ controladores ($7/7$ execuções no labirinto de deceção espacial), mas, com p
 fixo, degrada o desempenho onde o gradiente da tarefa basta; uma \emph{dosagem
 adaptativa} do peso de novidade, validada numa campanha pré-registada, elimina
 esse custo mantendo o ganho --- e o objetivo puro, mesmo com o dobro do
-orçamento, permanece incapaz de resolver o labirinto de forma fiável. A hipótese de que a inteligência
+orçamento, permanece incapaz de resolver o labirinto de forma fiável. Uma
+replicação com quatro vezes as execuções ($n=28$ por braço) fixa esse ganho em
+$28/28$ execuções bem-sucedidas contra $15/28$ (Fisher exato, $p<0{,}0001$), e
+mostra ao mesmo tempo que o controlador evolutivo \emph{sem} essa dosagem é
+indistinguível do PPO neste cenário: o que separa os braços é a exploração, não
+o paradigma. A hipótese de que a inteligência
 adaptativa domina a robustez estática é, por isso, apenas \emph{parcialmente}
 confirmada: a vantagem decisiva reside na \emph{representação} e no desenho do
 sinal de treino, e não no algoritmo de otimização.
@@ -446,7 +451,9 @@ e a sua análise ilustra por que razão a unidade estatística importa. O desemp
 $100\%$ de sucesso, ou não o aprende de todo (GNN $3/7$, PPO $4/7$, SAC $2/7$).
 A Figura~\ref{fig:bimodal} mostra a distribuição por execução. Nenhuma diferença
 entre algoritmos atinge significância, e a conclusão honesta é que sete execuções
-não bastam para distinguir taxas de convergência de $2/7$ a $4/7$.
+não bastam para distinguir taxas de convergência de $2/7$ a $4/7$ --- limitação
+que a replicação a $n=28$ da Secção~\ref{sec:mega} vem levantar, para o braço
+que ali se compara.
 
 O obstáculo não está no sinal de treino --- o potencial geodésico aponta
 corretamente para o contorno (Figura~\ref{fig:geodesico}) --- mas na
@@ -459,11 +466,13 @@ motivação da procura por novidade, avaliada de seguida.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{images/boxplot_eval_u_wall.png}
-\caption{Distribuição das recolhas por episódio no Muro em U, agregando as sete
-execuções de cada controlador. A dispersão não é ruído de avaliação: reflete
-execuções de treino que resolvem integralmente o cenário e execuções que falham
-por completo.}
+\includegraphics[width=\linewidth]{images/dotplot_eval_u_wall.png}
+\caption{Recolhas por episódio no Muro em U: um ponto por execução de treino
+(média dos $20$ episódios determinísticos dessa execução) e a barra vertical na
+média do braço. A dispersão não é ruído de avaliação --- reflete execuções que
+resolvem integralmente o cenário e execuções que falham por completo. Com
+$n=7$ mostram-se as execuções uma a uma: um diagrama de caixa a cobrir todo o
+intervalo sugeriria densidade onde não existe uma única execução.}
 \label{fig:bimodal}
 \end{figure}
 
@@ -520,6 +529,49 @@ melhor resultado de todo o estudo ($88{,}7\pm0{,}6$, $7/7$). A dosagem adaptativ
 fecha, assim, a tensão do peso fixo: retém a exploração enquanto ela compra
 descoberta e devolve a seleção ao objetivo quando ele basta.
 
+\subsection{Replicação com poder estatístico ($n=28$)}
+\label{sec:mega}
+Os testes anteriores assentam em sete execuções por braço --- suficientes para
+inferir sobre médias, curtas onde a leitura depende de \emph{contagens}: com
+$n=7$, um teste exato de Fisher sobre a convergência não é reportável. Uma
+campanha final de um mês de máquina, com pré-registo próprio fixado antes de
+existirem dados de avaliação, repetiu por isso o cenário crítico com
+\textbf{quatro vezes} as execuções, em quatro braços (GNN adaptativo, GNN
+objetivo, PPO e SAC) e com o orçamento por execução da campanha principal. As
+células a $n=28$ são autocontidas: execuções novas, que o pré-registo proíbe
+expressamente somar às sete anteriores.
+
+O resultado principal confirma-se e reforça-se. O adaptativo faz
+$67{,}4\pm13{,}4$ recolhas/ep contra $32{,}5\pm32{,}5$ do objetivo puro
+($p<0{,}0001$ unilateral, $\delta=+0{,}61$) e, sobretudo, a convergência ---
+agora reportável --- separa os braços sem ambiguidade: \textbf{$28/28$ execuções
+a $100\%$ de sucesso contra $15/28$} (Fisher exato, $p<0{,}0001$). É a única
+condição de todo o estudo em que \emph{todas} as execuções resolvem o Muro em U.
+Ao mesmo $n$, o adaptativo fica acima de ambos os métodos de gradiente --- PPO
+$35{,}6\pm36{,}0$ ($14/28$; $p=0{,}0010$, $\delta=+0{,}51$) e SAC
+$10{,}1\pm14{,}2$ ($14/28$; $p<0{,}0001$, $\delta=+0{,}99$) --- ao passo que o GNN
+\emph{objetivo} e o PPO permanecem indistinguíveis ($p=0{,}088$). A leitura que
+daqui resulta é mais restrita, e mais defensável, do que uma vitória de
+paradigma: o que separa os braços não é a neuroevolução enquanto tal, mas a
+\textbf{dosagem adaptativa da exploração}. No cenário \emph{deceptive}, a mesma
+campanha confirma a superioridade sobre o peso fixo com $n=21$
+($80{,}9\pm15{,}6$, $21/21$ a $100\%$, contra $63{,}0\pm21{,}9$; $p=0{,}0016$).
+Os seis pares acima são valores de $p$ brutos: o pré-registo manda declarar a
+multiplicidade e ancorar a leitura no tamanho de efeito, não corrigir os valores.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{images/megatreino_u_wall_4bracos.png}
+\caption{As $28$ execuções independentes de cada braço no Muro em U. Cada ponto
+é uma execução (média de $20$ episódios determinísticos); a barra vertical é a
+média. A leitura decisiva não é a diferença de médias, mas a \emph{forma} das
+distribuições: os três braços sem anilamento da novidade repartem-se entre
+execuções que resolvem o cenário e execuções que ficam a zero, praticamente sem
+nada pelo meio, enquanto a dosagem adaptativa não deixa uma única execução por
+resolver.}
+\label{fig:megatreino}
+\end{figure}
+
 \subsection{Escalabilidade \emph{zero-shot}}
 Apenas o controlador baseado em atenção é viável para $N\neq 20$: transferindo sem
 qualquer retreino a política aprendida com $N=20$ para $N\in\{10,50,100\}$, mantém
@@ -574,8 +626,10 @@ que nenhum agente é insubstituível.
 \centering
 \includegraphics[width=\linewidth]{images/robustez_falhas.png}
 \caption{Retenção de desempenho sob falha de $10\%$ dos agentes a meio do
-episódio, relativa à execução nominal. Nenhum paradigma colapsa; a redundância
-emerge da partilha de parâmetros e da observação puramente local.}
+episódio, relativa à execução nominal (mesmas \emph{seeds}). Os três painéis
+partilham a escala vertical, pelo que as alturas são comparáveis entre
+paradigmas. Nenhum paradigma colapsa; a redundância emerge da partilha de
+parâmetros e da observação puramente local.}
 \label{fig:robustez}
 \end{figure}
 
@@ -721,12 +775,18 @@ fixo, degrada simetricamente o desempenho onde o gradiente da tarefa basta, mas
 cuja dosagem adaptativa, validada numa campanha pré-registada, retém o ganho sem
 custo mensurável em nenhum dos sete cenários; com o dobro do orçamento, o
 objetivo puro permanece bimodal no Muro em U ($4/7$) e o adaptativo atinge o
-melhor resultado do estudo no cenário \emph{deceptive} ($88{,}7\pm0{,}6$). O trabalho
-futuro inclui uma política de atenção treinada por gradiente para separar o
-otimizador da arquitetura, o alargamento da bateria estatística nos cenários
-bimodais, o refinamento do \emph{schedule} adaptativo (re-armamento sob
-estagnação), e a validação da
-transferência simulação-para-real \citep{tobin2017domain}.
+melhor resultado do estudo no cenário \emph{deceptive} ($88{,}7\pm0{,}6$). Uma
+replicação com quatro vezes as execuções ($n=28$ por braço) leva esse ganho a
+$28/28$ contra $15/28$ (Fisher exato, $p<0{,}0001$) e, no mesmo movimento,
+delimita a conclusão: sem a dosagem adaptativa, o controlador evolutivo é
+indistinguível do PPO neste cenário ($p=0{,}088$). O que a evidência sustenta não
+é a superioridade de um paradigma de otimização, mas a de um \emph{mecanismo} ---
+a exploração doseada ao longo do treino --- que é, em princípio, transponível
+para qualquer um deles. O trabalho futuro inclui uma política de atenção treinada
+por gradiente para separar o otimizador da arquitetura, o alargamento da bateria
+estatística aos restantes cenários bimodais, o refinamento do \emph{schedule}
+adaptativo (re-armamento sob estagnação), e a validação da transferência
+simulação-para-real \citep{tobin2017domain}.
 
 \section*{Agradecimentos}
 This work was partially supported by national funds through Funda\c{c}\~ao para a

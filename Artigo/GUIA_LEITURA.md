@@ -1,10 +1,12 @@
 # Guia de leitura — o artigo da dissertação
 
-> Estado em **10 jul 2026**: o artigo foi **reescrito de raiz** com os dados da
-> campanha final de 7 dias. Está em **português**, tem **8 páginas** e compila sem
-> erros nem referências por resolver. Este guia diz: (1) o que o **professor**
-> pretende; (2) o que **mudou** face ao draft de junho e porquê; (3) o que ainda
-> depende de ti.
+> Estado em **4 ago 2026**: o artigo foi reescrito de raiz a 10 jul com os dados
+> da campanha de 7 dias, e hoje ganhou a **replicação a $n=28$** (mega-treino de
+> um mês) mais as figuras corrigidas da tese. Está em **português**, compila sem
+> erros nem referências por resolver, e tem **10 páginas** — 8,5 de corpo e 1,5
+> de bibliografia. ⚠️ **O Prof. pediu 6 a 8**: ver o ponto 3 de «O que depende de
+> ti». Este guia diz: (1) o que o **professor** pretende; (2) o que **mudou** face
+> ao draft de junho e porquê; (3) o que ainda depende de ti.
 
 ---
 
@@ -98,8 +100,8 @@ robustez a falhas.
 
 ## 3. O que ainda depende de ti
 
-1. **Ler o PDF** (`Artigo/artigo.pdf`, 8 págs). É a primeira vez que o artigo e a
-   tese contam a mesma história.
+1. **Ler o PDF** (`Artigo/artigo.pdf`, 10 págs). O artigo e a tese contam a mesma
+   história, agora incluindo o mega-treino (secção 4.4, `n=28`).
 
 2. **Título.** Continua o de junho: *"Aprendizagem Adaptativa versus Robustez
    Estática: Comparação de Aprendizagem por Reforço e Neuroevolução para Controlo
@@ -107,8 +109,19 @@ robustez a falhas.
    contraste "adaptativo vs. estático" e passou a ser o **desenho da aptidão**. Se
    quiseres, proponho títulos alternativos.
 
-3. **8 páginas** está no topo do intervalo (6–8). Se o Prof. quiser mais curto, os
-   cortes naturais são a secção do Novelty Search e a de robustez.
+3. ⚠️ **10 páginas contra as 6–8 pedidas.** O corpo são 8,5 e a bibliografia 1,5;
+   já estava assim antes desta atualização (o mega-treino entrou sem acrescentar
+   página, por reflow das colunas). Se for para cortar até 8, os candidatos, por
+   ordem de custo:
+   - **Robustez** (§4.6 + Figura 7): a própria secção conclui que a robustez *não*
+     discrimina entre paradigmas — é a que menos sustenta a tese central. ≈¾ pág.
+   - **Experiência preliminar do Novelty** (o parágrafo do $+26\%$ com orçamento
+     triplo): já está desmascarado como artefacto no parágrafo seguinte, e a
+     história fecha sem ele. ≈⅓ pág.
+   - **Tabela 2** (as 21 comparações par a par): pode remeter-se para a tese, com
+     as significâncias resumidas em prosa. ≈½ pág.
+   Não cortar: o mega-treino ($n=28$) é o resultado com mais poder estatístico do
+   trabalho todo.
 
 4. **Língua:** mantive **PT-PT** (decisão tua de 22 jun).
 

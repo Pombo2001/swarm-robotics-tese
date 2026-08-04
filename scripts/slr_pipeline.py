@@ -22,6 +22,7 @@ Colunas de screening.csv:
 """
 import csv
 import glob
+import math
 import os
 import re
 import sys
@@ -376,6 +377,23 @@ def prisma():
         return ' \\\\ '.join(f"$\\bullet$ {_esc(CURTO.get(m, m))}: {n}"
                              for m, n in sorted(dic.items())) or '---'
 
+    def _folga(dic, minimo=2.1):
+        """Distância vertical necessária para a caixa de exclusões não ser tapada.
+
+        A caixa da direita cresce com o número de motivos, mas a distância entre
+        as caixas do meio estava fixa em 2,1 cm: com os seis motivos da triagem
+        de 13 jul, a caixa seguinte passou a ser desenhada POR CIMA da última
+        linha, e o fluxograma da tese saía com o motivo cortado a meio da frase
+        ("Método fora do âmbito (nem"). Estimar aqui é preferível a corrigir à
+        mão porque este ficheiro é regerado a partir do screening.csv.
+
+        ~46 caracteres por linha em \\scriptsize numa caixa de 5,4 cm; ~0,34 cm
+        de altura por linha, mais o cabeçalho e as margens do nó.
+        """
+        textos = [f"{CURTO.get(m, m)}: {n}" for m, n in dic.items()]
+        linhas = 1 + sum(max(1, math.ceil(len(t) / 46)) for t in textos)
+        return max(minimo, round(0.34 * linhas + 0.75, 1))
+
     tex = os.path.join(RAIZ, 'Tese', 'prisma_gerado.tex')
     with open(tex, 'w', encoding='utf-8') as f:
         f.write(f"""% GERADO por scripts/slr_pipeline.py a partir de docs/slr/screening.csv
@@ -401,12 +419,12 @@ def prisma():
     \\node (exc1) [saida, right=1.3cm of screen] {{Excluídos na triagem
         \\textbf{{(n = {c['excluidos_triagem']})}} \\\\ {_lista(c['por_motivo_triagem'])}}};
 
-    \\node (full) [process, below=2.1cm of screen] {{Avaliados em texto integral \\\\
+    \\node (full) [process, below={_folga(c['por_motivo_triagem'])}cm of screen] {{Avaliados em texto integral \\\\
         \\textbf{{(n = {c['texto_integral']})}}}};
     \\node (exc2) [saida, right=1.3cm of full] {{Excluídos na elegibilidade
         \\textbf{{(n = {c['excluidos_integral']})}} \\\\ {_lista(c['por_motivo'])}}};
 
-    \\node (inc) [process, below=1.6cm of full, fill=black!5]
+    \\node (inc) [process, below={_folga(c['por_motivo'], minimo=1.6)}cm of full, fill=black!5]
         {{\\textbf{{Estudos incluídos na revisão}} \\\\ \\textbf{{(n = {c['incluidos']})}}}};
 
     \\draw [arrow] (id) -- (screen);
