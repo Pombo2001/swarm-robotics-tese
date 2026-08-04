@@ -225,9 +225,20 @@ def build(queue: JobQueue, goto=None):
             _kpi("Sessões de treino", len(data.historical_sessions()))
             _kpi("Cenários de estudo", len(config.SCENARIO_KEYS))
             _kpi("Episódios avaliados", n_epis)
-            best = max(covered.items(), key=lambda kv: kv[1])[0] if table else "—"
-            _kpi(f"Cenários ≥80% · melhor algo ({best})",
-                 max(covered.values()) if table else 0, suffix=f"/{len(config.SCENARIO_KEYS)}")
+            # Empate diz-se. O `max` devolvia o primeiro da lista e o cartão
+            # anunciava "melhor algo (GNN)" com o PPO na mesma contagem — uma
+            # preferência inventada pela ordem do dicionário, num trabalho cuja
+            # tese é precisamente que não há domínio de paradigma.
+            topo = max(covered.values()) if table else 0
+            best = "/".join(a for a in config.ALGOS
+                            if covered.get(a) == topo) if table else "—"
+            # O denominador é o nº de cenários NA TABELA de avaliação, não o
+            # `SCENARIO_KEYS` — que inclui o mapa grande (8.º cenário), ainda sem
+            # campanha avaliada. Com /8, o KPI dizia "6/8" quando o universo
+            # possível era 7: um cenário que nunca poderia contar aparecia no
+            # denominador e fazia a cobertura parecer pior do que é.
+            _kpi(f"Cenários ≥80% · melhor algo ({best})", topo,
+                 suffix=f"/{len(table) if table else len(config.MAIN_SCENARIO_KEYS)}")
             _kpi("Horas de treino acumuladas (PC + servidor)", total_h, suffix="h")
             _kpi(f"Treino mais longo · {longest_name.lower()}", longest_h, suffix="h")
 

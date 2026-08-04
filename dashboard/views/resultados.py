@@ -106,6 +106,14 @@ def build():
                 tipos = ["Todos"] + sorted({data.graph_type(f) for f in data.list_pngs(sessions[0])})
                 tipo = ui.select(tipos, value="Todos", label="Tipo") \
                     .props("outlined dense").classes("flex-1")
+            # Só em modo A/B. Por defeito a galeria mostra apenas os gráficos que
+            # EXISTEM NAS DUAS sessões: cada fase do mega-treino treina um cenário
+            # só, pelo que comparar duas quaisquer enchia o ecrã de "(não existe
+            # nesta sessão)" — ruído que escondia as comparações verdadeiras.
+            so_pares = ui.switch("Só o que existe em ambas", value=True) \
+                .classes("mt-2").props("dense")
+            so_pares.bind_visibility_from(sess_b, "value",
+                                          backward=lambda v: v != NONE)
 
         def _img_card(f: str, comparar: bool, pngs_b: set):
             with ui.card().classes("bg-slate-900/50 rounded-lg p-2"):
@@ -141,11 +149,33 @@ def build():
 
             pngs = [f for f in todos
                     if tipo.value == "Todos" or data.graph_type(f) == tipo.value]
-            if not pngs:
-                ui.label("Nenhum gráfico para este filtro.").classes("text-gray-500")
-                return
             comparar = sess_b.value != NONE
             pngs_b = set(data.list_pngs(sess_b.value)) if comparar else set()
+
+            if comparar:
+                so_a = [f for f in pngs if f not in pngs_b]
+                so_b = sorted(pngs_b - set(todos))
+                if so_pares.value:
+                    pngs = [f for f in pngs if f in pngs_b]
+                if so_a or so_b:
+                    partes = []
+                    if so_a:
+                        partes.append(f"{len(so_a)} só em A ({sess_a.value})")
+                    if so_b:
+                        partes.append(f"{len(so_b)} só em B ({sess_b.value})")
+                    escondidos = ("escondidos" if so_pares.value
+                                  else "mostrados com o lugar vazio")
+                    theme.fonte(f"{' · '.join(partes)} — sem par, {escondidos}. "
+                                "Campanhas diferentes treinam cenários diferentes; "
+                                "a ausência de um gráfico aqui não é uma falha de "
+                                "dados.")
+
+            if not pngs:
+                ui.label("Nenhum gráfico em comum para este filtro."
+                         if comparar and so_pares.value
+                         else "Nenhum gráfico para este filtro.") \
+                    .classes("text-gray-500")
+                return
 
             # Agrupa por tipo e desenha cada grupo como uma secção com cabeçalho.
             grupos = {}
@@ -166,7 +196,22 @@ def build():
                     for f in files:
                         _img_card(f, comparar, pngs_b)
 
+        def _tipos_da_sessao():
+            """O seletor de tipo seguia sempre a PRIMEIRA sessão da lista.
+
+            Ao mudar para uma campanha com outros tipos de gráfico, o seletor
+            continuava a oferecer os tipos da primeira — opções que não davam
+            resultado nenhum, e tipos existentes que não estavam na lista.
+            """
+            novos = ["Todos"] + sorted({data.graph_type(f)
+                                        for f in data.list_pngs(sess_a.value)})
+            tipo.options = novos
+            if tipo.value not in novos:
+                tipo.value = "Todos"
+            tipo.update()
+
         # refrescar a galeria quando muda qualquer filtro
-        for el in (sess_a, sess_b, tipo):
+        sess_a.on_value_change(lambda: (_tipos_da_sessao(), galeria.refresh()))
+        for el in (sess_b, tipo, so_pares):
             el.on_value_change(lambda: galeria.refresh())
         galeria()

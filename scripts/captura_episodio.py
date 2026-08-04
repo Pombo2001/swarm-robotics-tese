@@ -49,7 +49,10 @@ if RAIZ not in sys.path:
     sys.path.append(RAIZ)
 
 ORIGEM = os.path.join(RAIZ, "results", "episodios_3d")
-DESTINO = os.path.join(RAIZ, "results", "graficos_tese", "capturas")
+# FORA de results/graficos_tese/: tudo o que é pasta ali dentro entra na galeria
+# do dashboard como se fosse uma campanha de treino, e estas capturas não são
+# campanha nenhuma — são um recorte de episódios já gravados.
+DESTINO = os.path.join(RAIZ, "results", "capturas_episodios")
 
 COR_PAREDE = "#2b3038"
 COR_NINHO = "#12a35f"

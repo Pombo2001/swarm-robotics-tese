@@ -609,6 +609,32 @@ def verificar_megatreino(tolerancia):
                                      ("resumo objetivo n", n_o))):
         confere(rot, v[i] if v else None, calc, exato=True)
 
+    # --- Células EXPLORATÓRIAS (A5 Sandbox, B7 Perceção, B6 SAC no Gargalo) ---
+    # Entraram na tese a 4 ago, em cumprimento do compromisso do pré-registo de
+    # reportar todas as fases. Como as confirmatórias, vivem só em prosa.
+    for fase, cen, rot, padrao in (
+            ("mega_A_fase5", "none", "A5 Sandbox",
+             r"para \$\\mathbf\{(\d+)/(\d+)\}\$ \(\$95\\%\$\), com \$" + N +
+             r" \\pm " + N + r"\$ contra"),
+            ("mega_B_fase7", "cooperative_perception", "B7 Perceção",
+             r"\$(\d+)/(\d+)\$ \(\$81\\%\$\) e \$" + N + r" \\pm " + N + r"\$ contra"),
+            ("mega_B_fase6", "bottleneck", "B6 SAC Gargalo",
+             r"converge em \$(\d+)/(\d+)\$ \(\$33\\%\$\), com \$" + N +
+             r" \\pm " + N + r"\$ recolhas/ep")):
+        d = do_csv(fase, cen)
+        if d is None:
+            problemas.append("%s: sem dados para a célula exploratória" % rot)
+            continue
+        med, dp, conv, n = d
+        print("  %-18s n=%-3d %6.1f ± %5.1f   convergentes: %d/%d  (exploratória)"
+              % (rot, n, med, dp, conv, n))
+        v = procura(padrao)
+        for i, (r, calc, ex) in enumerate(((rot + " convergentes", conv, True),
+                                           (rot + " n", n, True),
+                                           (rot + " média", med, False),
+                                           (rot + " desvio", dp, False))):
+            confere(r, v[i] if v else None, calc, exato=ex)
+
     if problemas:
         print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
         for p in problemas:
