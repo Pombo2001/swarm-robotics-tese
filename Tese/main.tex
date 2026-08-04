@@ -813,7 +813,7 @@ O que a revisão \emph{não} encontra é um confronto rigoroso entre os dois. Um
 \section{Síntese Comparativa da Literatura}
 A Tabela~\ref{tab:sota_summary} sintetiza os estudos --- do corpo da revisão e do seu enquadramento complementar, com as entradas externas assinaladas --- que melhor delimitam a lacuna, organizados pelo paradigma que empregam.
 
-\begin{table}[H]
+\begin{table}[!htbp]
     \centering
     \footnotesize
     \caption[Síntese dos estudos mais relevantes do corpo da revisão]{Síntese dos estudos mais relevantes do corpo da revisão ($n=58$) e do seu enquadramento complementar (entradas externas ao corpus assinaladas), com as lacunas que motivam esta dissertação.}
@@ -899,7 +899,7 @@ O simulador foi desenvolvido de raiz em \textbf{Python}, projetado para colmatar
 \subsection{Modelo Físico e Hiperparâmetros}
 A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m, onde $N = 20$ agentes homogéneos operam em simultâneo. A Tabela \ref{tab:hyperparameters} sintetiza os hiperparâmetros físicos e arquiteturais aplicados.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \caption{Hiperparâmetros reais utilizados na simulação e no treino dos modelos.}
@@ -1164,7 +1164,7 @@ O impacto desta extensão é avaliado no Capítulo~\ref{ch:results} em três fre
 \section{Plano de Experiências e Tratamento Estatístico}
 O \textit{pipeline} experimental é segmentado em cinco avaliações prioritárias (Tabela \ref{tab:experiments_priority}) por forma a assegurar validação e significância dos resultados reportados na tese.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \caption{Plano de testes experimentais e métricas associadas.}
@@ -1195,7 +1195,7 @@ Este capítulo é dedicado à apresentação e análise rigorosa dos dados recol
 Os resultados reportados provêm de uma \textbf{campanha de treino contínua de sete dias} nos servidores de cálculo, executada com a configuração final do sistema (recompensa simplificada da Secção~\ref{sec:reward_design}, \textit{fitness} de \textit{homing} da Eq.~\ref{eq:fitness}, LiDAR de $8$\,m). Antes da análise, importa fixar as convenções de leitura:
 \begin{itemize}
     \item \textbf{Runs independentes:} Cada combinação (algoritmo, cenário) foi treinada em \textbf{7 \textit{runs} independentes} com sementes distintas, nos \textbf{7 cenários} do protocolo ($3 \times 7 \times 7 = 147$ treinos). As curvas reportam a média entre \textit{runs} e a banda sombreada o desvio padrão.
-    \item \textbf{Orçamentos de treino por paradigma:} cada \textit{run} do controlador evolutivo dispôs de 195 minutos (população de 30 genomas avaliada em paralelo), e cada \textit{run} do PPO/SAC de 48 minutos (16 ambientes vetorizados). Os orçamentos foram calibrados, com base nas campanhas exploratórias, para levar \emph{cada} paradigma ao seu planalto de convergência --- as curvas da Secção~\ref{sec:res_curvas_cenario} confirmam a estabilização dentro do orçamento. A comparação mede, portanto, o \textbf{desempenho atingível} por cenário, e não a eficiência amostral a cómputo igual; a assimetria de cómputo (favorável ao evolutivo) é retomada na discussão (Secção~\ref{sec:res_discussao}).
+    \item \textbf{Orçamentos de treino por paradigma:} cada \textit{run} do controlador evolutivo dispôs de 195 minutos (população de 30 genomas avaliada em paralelo), e cada \textit{run} do PPO/SAC de 48 minutos (16 ambientes vetorizados). Os orçamentos foram calibrados, com base nas campanhas exploratórias, para levar cada paradigma ao seu planalto de convergência --- e, na maioria das células, é o que se observa. Uma verificação \textit{a posteriori} sobre as curvas (comparação emparelhada, por \textit{run}, entre a média do último quinto do orçamento e a do quinto anterior; \path{scripts/verificar_planalto.py}) mostra, porém, que \textbf{7 das 21 combinações ainda subiam de forma significativa no fim} --- e duas delas de forma marcada: o SAC no Gargalo ($+112\%$) e na Porta com Alternativa ($+105\%$), seguidos do GNN no Muro em U ($+33\%$) e do PPO no Quatro Salas ($+27\%$). A comparação mede, portanto, o \textbf{desempenho atingível dentro do orçamento concedido}, e não o desempenho assintótico de cada paradigma nem a eficiência amostral a cómputo igual; nas quatro células assinaladas, os valores do algoritmo em causa devem ser lidos como \emph{limite inferior}. A implicação mais forte é para o SAC nos gargalos físicos: a fragilidade que a Secção~\ref{sec:res_boxplots} lhe atribui é indistinguível, com os dados retidos, de sub-treino --- os históricos da campanha final guardaram a recompensa episódica mas não a métrica de tarefa por passo, pelo que não é possível decidir se o crescimento final corresponde a mais recolhas ou apenas a mais \textit{shaping}. A assimetria de cómputo (favorável ao evolutivo) é retomada na discussão (Secção~\ref{sec:res_discussao}).
     \item \textbf{Avaliação determinística por \textit{run}:} cada um dos 7 modelos finais de cada célula foi avaliado em \textbf{20 episódios determinísticos emparelhados} (\textit{seeds} comuns aos três algoritmos), num total de 140 episódios por combinação (algoritmo, cenário). A \textbf{unidade estatística é o \textit{run}}: os testes entre algoritmos usam as médias por \textit{run} ($n=7$ por grupo, Mann-Whitney U + $\delta$ de Cliff), evitando inflacionar $n$ com episódios correlacionados do mesmo modelo.
     \item \textbf{Métrica de tarefa pura ($P_{task}$):} Para além da recompensa total (que inclui \textit{shaping}), reportam-se a taxa de sucesso (fração de episódios com pelo menos uma recolha) e as recolhas por episódio, obtidas em avaliação determinística, por serem as medidas não-enviesadas e \emph{comparáveis} do cumprimento da missão.
     \item \textbf{Escalas não-comparáveis entre paradigmas:} O GNN usa \textit{fitness} evolutiva e o PPO/SAC recompensa episódica; comparações de valor absoluto entre curvas de treino de paradigmas distintos devem ser evitadas, privilegiando as métricas de tarefa da avaliação determinística. O eixo das abcissas das curvas é normalizado para $[0\%, 100\%]$ do orçamento de cada algoritmo.
@@ -1258,7 +1258,7 @@ O cenário Sandbox --- arena aberta, sem paredes interiores --- isola a capacida
 
 A Tabela~\ref{tab:res_sandbox} sintetiza o desempenho de avaliação neste cenário.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \caption{Desempenho no cenário Sandbox (avaliação determinística; recolhas/ep em média $\pm$ desvio padrão entre os 7 \textit{runs}; $P_{task}$ sobre os 140 episódios).}
@@ -1393,7 +1393,7 @@ Consolidando o desempenho ao longo dos sete cenários (Figuras~\ref{fig:res_glob
 \label{sec:res_eval}
 A Tabela~\ref{tab:res_eval} reúne a métrica mais honesta do desempenho real na missão: avaliação em modo determinístico (sem ruído de exploração), com 7 \textit{runs} $\times$ 20 episódios emparelhados por configuração. Os valores fundamentam a discussão das secções anteriores --- a competitividade do controlador evolutivo nos cenários de navegação, a consistência do PPO e a fragilidade localizada do SAC nos gargalos.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \caption{Avaliação determinística (7 \textit{runs} $\times$ 20 episódios emparelhados): taxa de sucesso ($P_{task}$, sobre os 140 episódios) e recolhas por episódio (média $\pm$ desvio padrão entre \textit{runs}). A negrito, a melhor média de recolhas de cada cenário.}
@@ -1480,7 +1480,7 @@ Para além do desempenho de tarefa, é na \textbf{escalabilidade} que reside o c
 
 O resultado é inequívoco: o controlador de grafo mantém \textbf{100\% de sucesso nas 28 combinações}, de metade a cinco vezes o enxame de treino, em todos os cenários (Tabela~\ref{tab:res_scale_all}). As políticas MLP do PPO e do SAC, com dimensão de entrada fixa ($\mathbb{R}^{111}$, calibrada para $N=20$), são por construção incompatíveis com outras dimensões de enxame (Tabela~\ref{tab:res_scale}); no tamanho de treino, os três algoritmos são comparáveis (Sandbox, $N=20$: GNN $65{,}8$, PPO $71{,}7$, SAC $71{,}3$ recolhas/ep). Este contraste corrobora diretamente a hipótese de que o mecanismo de atenção sobre a vizinhança confere invariância à cardinalidade do enxame, sendo a propriedade que habilita o controlo escalável.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \caption{Escalabilidade Zero-Shot do controlador de grafo nos sete cenários (20 episódios determinísticos por célula; modelo campeão da campanha final, treinado com $N=20$): recolhas \emph{por agente} e retenção da eficiência per capita em $N=100$ face a $N=20$. Taxa de sucesso: $100\%$ em todas as células.}
@@ -1503,7 +1503,7 @@ O padrão da coluna de retenção merece leitura atenta, porque desarma a objeç
 
 A leitura honesta exige, porém, registar os dois casos intermédios: o Quatro Salas retém $66\%$ e o \textbf{Gargalo} $58\%$ --- a retenção mais baixa de todos os cenários com paredes. É precisamente o que se esperaria de uma saturação parcial do fluxo: o Gargalo tem uma \emph{única} passagem de $2{,}5$\,m, e é o cenário em que o congestionamento tem mais margem para morder. Mas mesmo aí não há colapso: a taxa de sucesso mantém-se em $100\%$ e as recolhas \emph{totais} continuam a crescer com o enxame ($138{,}6$ em $N=20$ para $403{,}6$ em $N=100$). A conclusão que a coluna suporta é, pois, mais matizada do que a ausência total de congestionamento: a estrutura física \emph{atenua} a diluição em vez de a agravar, e onde a geometria impõe um estrangulamento único observa-se um custo de fluxo mensurável --- mas nunca a rutura da coordenação que a objeção antecipava. A Figura~\ref{fig:res_escalabilidade} mostra graficamente esse contraste: a linha do controlador de grafo estende-se por toda a gama de dimensões, enquanto as dos métodos de gradiente se interrompem em $N=20$ --- a dimensão de entrada fixa da política MLP impede-os sequer de ser avaliados nas restantes.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \caption{O contraste arquitetural no cenário Sandbox (20 episódios/dimensão): taxa de sucesso e recolhas totais por episódio ao transferir a política treinada com $N=20$, sem retreino.}
@@ -1547,7 +1547,7 @@ A viabilidade da campanha experimental depende do \textit{throughput} do simulad
 
 O treino dos métodos de gradiente escapa a este limite por \textbf{paralelização}: PPO e SAC executam 16 clones independentes da arena em processos paralelos (\texttt{SubprocVecEnv}), recolhendo experiência concorrentemente nos vários núcleos dos servidores de cálculo; o controlador evolutivo, por sua vez, avalia os 30 genomas da população em paralelo. Adicionalmente, antes da campanha final o próprio simulador foi \textbf{vetorizado} com \texttt{NumPy}: o varrimento LiDAR em lote (todos os agentes $\times$ todos os raios numa única operação matricial, aceleração de $19{,}5\times$ nessa componente) e o cálculo em lote das observações egocêntricas ($2{,}58\times$ no custo total do passo de simulação). Ambas as otimizações foram validadas por testes de equivalência \emph{bit-exata} contra a implementação de referência (zero discrepâncias em dezenas de milhares de comparações), garantindo que aceleram a experimentação sem alterar a tarefa --- no caso do controlador evolutivo, o ganho no custo do passo de simulação ($2{,}58\times$) traduz-se num aumento aproximadamente proporcional do número de gerações avaliadas no mesmo orçamento de treino.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \caption{Desempenho computacional do simulador (\textit{throughput} de referência, $N=20$).}
@@ -1569,7 +1569,7 @@ A hipótese central desta investigação postula que a \emph{inteligência adapt
 
 \paragraph{Desempenho de tarefa.} Para quantificar as diferenças entre algoritmos aplicou-se o teste não-paramétrico de Mann-Whitney U sobre as \textbf{médias de recolhas por \textit{run}} ($n=7$ por grupo --- a unidade estatística independente é o \textit{run} de treino, não o episódio), com o $\delta$ de Cliff como tamanho de efeito; a Tabela~\ref{tab:res_signif} reporta os resultados.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \caption{Significância das diferenças em recolhas por episódio (Mann-Whitney U sobre as médias por \textit{run}, $n=7$ por algoritmo; $\delta$ de Cliff; $\alpha = 0{,}05$).}
@@ -1610,7 +1610,7 @@ A leitura da tabela desfaz a narrativa simples de um paradigma dominante. O cont
 
 \paragraph{Variância entre execuções.} A distribuição da variância pelos cenários é, ela própria, informativa. O controlador evolutivo é \emph{quase determinístico} nos labirintos com gradiente geodésico informativo (desvios de 1--2 recolhas/ep na Porta Cooperativa e na Porta com Alternativa), mas bimodal nos cenários abertos (Sandbox 5/7): sem paredes que canalizem o \textit{homing}, a paisagem de \textit{fitness} oferece ótimos locais de vaguear dos quais alguns \textit{runs} não escapam. O SAC exibe o padrão inverso --- estável em espaço aberto, lotaria nos gargalos físicos (Gargalo $41{,}4 \pm 36{,}8$, 5/7) ---, sugerindo que a exploração por entropia máxima, eficaz em espaço aberto, não gera com fiabilidade as trajetórias longas e coordenadas que atravessam passagens estreitas. O PPO é o mais estável dos três, com um único cenário bimodal (Muro U, 4/7). O Muro U, transversalmente bimodal, isola o ingrediente que falta a todos: nenhum dos mecanismos de exploração estudados (entropia, \textit{clipped surrogate}, mutação gaussiana) garante a descoberta do desvio comprido. Note-se que o obstáculo não está no sinal de treino --- o potencial geodésico aponta corretamente para o contorno (Secção~\ref{sec:reward_design}) ---, mas na \emph{descoberta}: o agente observa apenas a bússola de \textit{homing} euclidiana e o LiDAR local, pelo que percorrer o desvio exige uma trajetória longa que se afasta, durante dezenas de passos, da única direção que o agente vê como o ninho. É precisamente esta a motivação da linha de \textit{Novelty Search} (Secção~\ref{sec:res_novelty}).
 
-\paragraph{Custo computacional e eficiência.} A competitividade do evolutivo na tarefa tem um preço de cómputo: cada \textit{run} do GNN consumiu 195 minutos com $\approx 30$ núcleos (avaliação paralela da população), contra 48 minutos com 16 núcleos do PPO/SAC --- uma razão de $\approx 8\times$ em núcleos-hora. A comparação de desempenho atingível (Secção~\ref{sec:res_metodologia}) é válida porque ambos os regimes atingem o planalto; mas em \emph{eficiência amostral e computacional}, os métodos de gradiente mantêm uma vantagem clara, que deve pesar na escolha de paradigma quando o orçamento de treino é o recurso escasso.
+\paragraph{Custo computacional e eficiência.} A competitividade do evolutivo na tarefa tem um preço de cómputo: cada \textit{run} do GNN consumiu 195 minutos com $\approx 30$ núcleos (avaliação paralela da população), contra 48 minutos com 16 núcleos do PPO/SAC --- uma razão de $\approx 8\times$ em núcleos-hora. Esta assimetria é também o limite da comparação: como a verificação da Secção~\ref{sec:res_metodologia} mostra, o orçamento do PPO/SAC não foi suficiente para atingir o planalto em quatro células --- três delas do SAC ---, pelo que a leitura correta é a de \emph{desempenho atingível dentro do orçamento concedido}, com os valores dessas células a funcionarem como limite inferior. A conclusão que resiste é a inversa da que o cómputo sugeriria: mesmo com $8\times$ menos núcleos-hora, os métodos de gradiente igualam ou superam o evolutivo em quatro dos sete cenários --- em \emph{eficiência amostral e computacional} a sua vantagem é clara, e deve pesar na escolha de paradigma quando o orçamento de treino é o recurso escasso.
 
 \paragraph{Escalabilidade.} No eixo da transferência \textit{Zero-Shot} (Secção~\ref{sec:res_scale}), o controlador evolutivo com atenção sobre grafo é o \emph{único} viável, mantendo 100\% de sucesso de $N=10$ a $N=100$ sem retreino \textbf{nos sete cenários} --- com a eficiência per capita em $N=100$ a reter $58$--$90\%$ nos cenários com paredes (contra $39$--$45\%$ nos abertos), onde um colapso por congestionamento seria a expectativa natural --- enquanto as políticas MLP do PPO/SAC são estruturalmente incompatíveis com $N \neq 20$. A adaptabilidade que a hipótese atribuía ao MARL manifesta-se, assim, não no algoritmo de otimização, mas na \emph{representação} (grafo com atenção vs.\ vetor de dimensão fixa).
 
@@ -1649,6 +1649,7 @@ Em prol da transparência científica, identificam-se as seguintes limitações 
     \item \textbf{Escalabilidade restrita ao controlador de grafo:} como consequência do ponto anterior, o \textit{Zero-Shot Transfer} para $N \neq 20$ só é diretamente avaliável no controlador com atenção; a MLP de entrada fixa do PPO/SAC é, por construção, incompatível com outras dimensões de enxame.
     \item \textbf{Crítico não-centralizado:} a fase de treino utiliza um crítico que parte da mesma observação local do ator (\textit{parameter sharing}), não explorando o estado global. Trata-se de execução e treino descentralizados, e não de uma arquitetura CTDE com crítico centralizado em sentido estrito.
     \item \textbf{\textit{Sim-to-real} não validado:} a totalidade dos resultados é obtida em simulação; a transferência para plataformas físicas (\textit{Deployment Gap}) permanece por validar empiricamente.
+    \item \textbf{Orçamento de treino insuficiente em sete das vinte e uma células:} a comparação assenta em orçamentos calibrados por paradigma para atingir o planalto de convergência, e a verificação \textit{a posteriori} (Secção~\ref{sec:res_metodologia}) mostra que em $7$ das $21$ combinações a curva ainda subia significativamente no último quinto do orçamento --- destacadamente o SAC no Gargalo ($+112\%$) e na Porta com Alternativa ($+105\%$). A consequência mais séria recai sobre a leitura do SAC: a fragilidade que lhe é atribuída nos gargalos físicos não é separável, com estes dados, de simples sub-treino. Acresce que os históricos consolidados da campanha guardaram a recompensa episódica mas não a métrica de tarefa por passo, pelo que nem sequer é possível decidir se esse crescimento final corresponde a mais recolhas ou a mais \textit{shaping}. Uma repetição da campanha com orçamento estendido para o SAC --- e com a métrica de tarefa registada ao longo do treino, o que o código já suporta --- é a forma direta de fechar esta questão, e fica como trabalho imediato.
 \end{itemize}
 
 \section{Contributos}
@@ -1685,7 +1686,7 @@ A partir das limitações identificadas (Secção~\ref{sec:limitacoes}) e do est
 \label{apx:hyperparameters}
 Para garantir a reprodutibilidade integral das experiências, este apêndice reúne a configuração completa do sistema, tal como definida no ficheiro \texttt{configs/foraging.yaml} do repositório (Apêndice~\ref{apx:resources}). Os valores não resultaram de uma pesquisa automática de hiperparâmetros (\textit{grid}/\textit{Optuna}), mas sim de \textbf{calibração manual} informada por testes de fumo (\textit{smoke tests}) curtos e pelas escolhas de referência da literatura e das implementações da \textit{Stable-Baselines3}; documentam-se aqui os valores efetivamente utilizados nos treinos reportados no Capítulo~\ref{ch:results}. A Tabela~\ref{tab:apx_env} reúne os parâmetros do ambiente e da física, comuns aos três controladores; a Tabela~\ref{tab:apx_train} reúne os hiperparâmetros de treino, específicos de cada um.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \renewcommand{\arraystretch}{1.15}
@@ -1722,7 +1723,7 @@ Para garantir a reprodutibilidade integral das experiências, este apêndice re�
 \end{tabular}
 \end{table}
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \renewcommand{\arraystretch}{1.15}

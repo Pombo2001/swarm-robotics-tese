@@ -42,7 +42,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from src.scenarios import SCENARIOS, SCENARIO_LABELS, SCENARIO_LABELS_SHORT, ALGO_COLORS
-from scripts.curvas_agregadas import desenhar_curva_media
+from scripts.curvas_agregadas import curva_media_entre_runs, desenhar_curva_media
 
 GT = os.path.join(PROJECT_ROOT, 'results', 'graficos_tese')
 SRC_GNN_STATS = os.path.join(GT, 'estatisticas_7d_gnn')
@@ -233,23 +233,28 @@ def main():
         print(f"[OK] comparacao_mapa_{scen}.png")
 
     # ── 2. "1 modelo, todos os mapas" ───────────────────────────────────────
-    # Pré-agregamos por bins de progresso (2%) porque a TrainingProgress é contínua
-    # e difere entre runs; sem isto, o lineplot ligava pontos de runs distintos e
-    # produzia uma mancha preenchida ilegível. A banda ±sd por run está nos painéis
-    # por cenário (comparacao_mapa_*); aqui interessa a tendência média por cenário.
+    # Os bins de 2% (correção de 21 jul) resolveram a mancha ilegível, mas não o
+    # problema de fundo: com 51 bins e um SAC que loga 9 pontos por execução,
+    # cada bin continuava a receber um punhado de execuções — e a linha do SAC
+    # saía serrilhada, a saltar entre execuções. Aqui usa-se a mesma agregação
+    # das curvas por cenário: interpolar cada execução numa grelha comum e só
+    # depois tirar a média (scripts/curvas_agregadas.py).
     pal_scen = sns.color_palette("husl", len(scen_present))
     for algo in ALGOS:
         da = curves[curves['Algorithm'] == algo].copy()
         if da.empty:
             continue
-        da['bin'] = (da['TrainingProgress'] / 2).round() * 2
-        agg = da.groupby(['Scenario', 'bin'])['Score'].mean().reset_index()
         fig, ax = plt.subplots(figsize=(12, 7))
+        pontos = 0
         for color, scen in zip(pal_scen, scen_present):
-            a = agg[agg['Scenario'] == scen].sort_values('bin')
-            if a.empty:
+            sub = da[da['Scenario'] == scen]
+            if sub.empty:
                 continue
-            ax.plot(a['bin'], a['Score'], color=color, linewidth=2.5,
+            x, media, _, _, n_grelha = curva_media_entre_runs(sub)
+            if x.size == 0:
+                continue
+            pontos = max(pontos, n_grelha)
+            ax.plot(x, media, color=color, linewidth=2.5,
                     label=SCENARIO_LABELS.get(scen, scen))
         ax.set_title(f'Desempenho Global — {algo} ({da["Run"].nunique()} runs)',
                      fontsize=15, fontweight='bold', pad=14)
@@ -261,8 +266,9 @@ def main():
                   loc='upper left', framealpha=0.9)
         ax.grid(True, linestyle='--', alpha=0.5)
         fig.text(0.5, 0.005,
-                 "Linha = média entre os 7 runs por bin de progresso (2%). A dispersão "
-                 "por run está nos painéis por cenário (curvas de aprendizagem).",
+                 f"Linha = média entre os 7 runs, cada um interpolado numa grelha comum "
+                 f"de {pontos} pontos de progresso. A dispersão por run está nos painéis "
+                 "por cenário (curvas de aprendizagem).",
                  ha='center', va='bottom', fontsize=8.5, color='#555555', style='italic')
         plt.tight_layout(rect=[0, 0.04, 1, 1])
         fig.savefig(os.path.join(OUT, f'desempenho_global_{algo.lower()}.png'), dpi=300, bbox_inches='tight')

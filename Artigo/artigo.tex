@@ -363,9 +363,14 @@ Cada combinação (algoritmo, cenário) foi treinada em \textbf{sete execuções
 independentes} com sementes distintas, perfazendo $3\times7\times7=147$ treinos
 numa campanha contínua de sete dias. Cada execução do controlador evolutivo
 dispôs de $195$ minutos sobre $\approx 30$ núcleos, e cada execução de PPO/SAC de
-$48$ minutos sobre $16$ núcleos; todos os regimes atingem o planalto de
-aprendizagem, pelo que a comparação mede o \emph{desempenho atingível}, embora os
-métodos de gradiente conservem uma vantagem de $\approx 8\times$ em núcleos-hora.
+$48$ minutos sobre $16$ núcleos, calibrados para levar cada paradigma ao seu
+planalto. Uma verificação \emph{a posteriori} sobre as curvas (comparação
+emparelhada, por execução, entre o último quinto do orçamento e o anterior)
+mostra que $7$ das $21$ combinações ainda subiam significativamente no fim ---
+notoriamente o SAC no Gargalo ($+112\%$) e na Porta com Alternativa ($+105\%$).
+A comparação mede, pois, o \emph{desempenho atingível dentro do orçamento
+concedido}, com essas células a valerem como limite inferior, e os métodos de
+gradiente conservam uma vantagem de $\approx 8\times$ em núcleos-hora.
 
 Cada modelo é depois avaliado deterministicamente em $20$ episódios com sementes
 emparelhadas entre algoritmos, totalizando $140$ episódios por célula. Reportamos
