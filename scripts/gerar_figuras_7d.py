@@ -42,6 +42,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 from src.scenarios import SCENARIOS, SCENARIO_LABELS, SCENARIO_LABELS_SHORT, ALGO_COLORS
+from scripts.curvas_agregadas import desenhar_curva_media
 
 GT = os.path.join(PROJECT_ROOT, 'results', 'graficos_tese')
 SRC_GNN_STATS = os.path.join(GT, 'estatisticas_7d_gnn')
@@ -194,16 +195,21 @@ def main():
     curves = curves.drop(columns=['step_min', 'step_max'])
 
     # ── 1. Curvas "1 mapa, 3 modelos" (painéis separados, banda ±sd) ────────
+    # A média entre runs passa por uma grelha comum (curvas_agregadas): os runs
+    # logam em passos diferentes — o SAC escreve 7-11 pontos por run — e o
+    # sns.lineplot, que agrupa pelos x EXATOS, desenhava um run de cada vez
+    # sempre que os x não coincidiam. Daí os dentes de serra das figuras de
+    # 16 jul, e daí a legenda prometer uma média que a linha não era.
     for scen in scen_present:
         d = curves[curves['Scenario'] == scen]
         algos_here = [a for a in ALGOS if a in set(d['Algorithm'])]
         if not algos_here:
             continue
         fig, axes = plt.subplots(1, len(algos_here), figsize=(5.2 * len(algos_here), 6), squeeze=False)
+        pontos_grelha = {}
         for ax, algo in zip(axes[0], algos_here):
             da = d[d['Algorithm'] == algo]
-            sns.lineplot(data=da, x='TrainingProgress', y='Score', color=ALGO_COLORS[algo],
-                         linewidth=2.5, errorbar='sd', ax=ax)
+            pontos_grelha[algo] = desenhar_curva_media(ax, da, cor=ALGO_COLORS[algo])
             nr = da['Run'].nunique()
             ax.set_title(f"{algo} ({nr} runs)", fontsize=13, fontweight='bold')
             ax.set_xlabel('Progresso do Treino (%)', fontsize=10)
@@ -213,10 +219,13 @@ def main():
             ax.grid(True, linestyle='--', alpha=0.5)
         fig.suptitle(f"Curvas de Aprendizagem — {SCENARIO_LABELS.get(scen, scen)}",
                      fontsize=15, fontweight='bold')
+        grelhas = "/".join(str(pontos_grelha[a]) for a in algos_here)
         fig.text(0.5, 0.005,
-                 "Linha = média entre runs; banda = ±1 desvio padrão. Painéis separados porque as métricas "
-                 "não são comparáveis (GNN = fitness evolutiva; PPO/SAC = recompensa episódica); o eixo X "
-                 "(0–100% do orçamento de treino) é que é comparável.",
+                 "Linha = média entre os 7 runs; banda = ±1 desvio padrão entre runs. Cada run é interpolado "
+                 f"numa grelha comum de progresso ({grelhas} pontos, {'/'.join(algos_here)}), porque os runs "
+                 "não logam nos mesmos passos. Painéis separados porque as métricas não são comparáveis "
+                 "(GNN = fitness evolutiva; PPO/SAC = recompensa episódica); o eixo X (0–100% do orçamento "
+                 "de treino) é que é comparável.",
                  ha='center', va='bottom', fontsize=8, color='#555555', style='italic', wrap=True)
         plt.tight_layout(rect=[0, 0.06, 1, 0.95])
         fig.savefig(os.path.join(OUT, f'comparacao_mapa_{scen}.png'), dpi=300)

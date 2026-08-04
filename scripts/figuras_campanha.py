@@ -67,6 +67,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from src.scenarios import SCENARIOS, SCENARIO_LABELS, ALGO_COLORS  # noqa: E402
 from scripts.gerar_figuras_7d import dotplot_por_run, ALGOS, YLABEL_TREINO  # noqa: E402
+from scripts.curvas_agregadas import desenhar_curva_media  # noqa: E402
 from scripts.eval_suite import plot_evaluation  # noqa: E402
 
 GRAFICOS = os.path.join(RAIZ, "results", "graficos_tese")
@@ -227,10 +228,13 @@ def figura_curvas(curves, scen, destino):
     if not algos:
         return None
     fig, axes = plt.subplots(1, len(algos), figsize=(5.2 * len(algos), 6), squeeze=False)
+    # Média entre runs numa grelha comum — ver scripts/curvas_agregadas.py. Com o
+    # sns.lineplot sobre os x crus, cada ponto da linha vinha de um run só (os
+    # runs não logam nos mesmos passos) e saíam dentes de serra.
+    pontos_grelha = {}
     for ax, algo in zip(axes[0], algos):
         da = d[d["Algorithm"] == algo]
-        sns.lineplot(data=da, x="TrainingProgress", y="Score", color=ALGO_COLORS[algo],
-                     linewidth=2.5, errorbar="sd", ax=ax)
+        pontos_grelha[algo] = desenhar_curva_media(ax, da, cor=ALGO_COLORS[algo])
         ax.set_title(f"{algo} ({da['Run'].nunique()} runs)", fontsize=13, fontweight="bold")
         ax.set_xlabel("Progresso do Treino (%)", fontsize=10)
         ax.set_ylabel(YLABEL_TREINO.get(algo, "Score"), fontsize=10)
@@ -238,8 +242,11 @@ def figura_curvas(curves, scen, destino):
         ax.grid(True, linestyle="--", alpha=0.5)
     fig.suptitle(f"Curvas de Aprendizagem — {SCENARIO_LABELS.get(scen, scen)}",
                  fontsize=15, fontweight="bold")
+    grelhas = "/".join(str(pontos_grelha[a]) for a in algos)
     fig.text(0.5, 0.005,
-             "Linha = média entre runs; banda = ±1 desvio padrão. Painéis separados porque as "
+             "Linha = média entre runs; banda = ±1 desvio padrão entre runs. Cada run é "
+             f"interpolado numa grelha comum de progresso ({grelhas} pontos, {'/'.join(algos)}), "
+             "porque os runs não logam nos mesmos passos. Painéis separados porque as "
              "métricas não são comparáveis (GNN = fitness evolutiva; PPO/SAC = recompensa "
              "episódica); o eixo X (0-100% do orçamento) é que é comparável.",
              ha="center", va="bottom", fontsize=8, color="#555555", style="italic", wrap=True)
