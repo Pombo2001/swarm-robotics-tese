@@ -816,7 +816,7 @@ A Tabela~\ref{tab:sota_summary} sintetiza os estudos --- do corpo da revisão e 
 \begin{table}[H]
     \centering
     \footnotesize
-    \caption{Síntese dos estudos mais relevantes do corpo da revisão ($n=58$) e do seu enquadramento complementar (entradas externas ao corpus assinaladas), com as lacunas que motivam esta dissertação.}
+    \caption[Síntese dos estudos mais relevantes do corpo da revisão]{Síntese dos estudos mais relevantes do corpo da revisão ($n=58$) e do seu enquadramento complementar (entradas externas ao corpus assinaladas), com as lacunas que motivam esta dissertação.}
     \label{tab:sota_summary}
     \renewcommand{\arraystretch}{1.1}
     \begin{tabular}{|p{2.6cm}|p{2.3cm}|p{4.2cm}|p{4.2cm}|}
@@ -868,7 +868,7 @@ A construção das redes neuronais e o treino dos agentes MARL apoiaram-se em \t
 \subsection{Arquitetura Geral do Simulador}
 A Figura \ref{fig:sim_arch} ilustra o fluxo de dados em ciclo fechado do simulador, onde cada agente iterativamente recolhe observações e executa ações sob a validação de um motor de física contínuo.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \begin{tikzpicture}[
         box/.style={rectangle, draw=blue!70!black, fill=blue!5, thick, minimum width=3.6cm, minimum height=1.2cm, align=center, rounded corners=3pt, font=\small},
@@ -974,7 +974,7 @@ O passo de simulação ($\texttt{step}$) processa o enxame por uma ordem determi
 \subsection{Cenários de Teste}
 Para garantir uma avaliação exaustiva e progressiva das capacidades de controlo descentralizado, foram desenvolvidos sete cenários de dificuldade crescente (Figura~\ref{fig:cenarios_3d}):
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.32\textwidth]{images/mapa_3d_none.png}\hfill
     \includegraphics[width=0.32\textwidth]{images/mapa_3d_u_wall.png}\hfill
@@ -983,11 +983,11 @@ Para garantir uma avaliação exaustiva e progressiva das capacidades de control
     \includegraphics[width=0.32\textwidth]{images/mapa_3d_cooperative_door.png}\hfill
     \includegraphics[width=0.32\textwidth]{images/mapa_3d_cooperative_perception.png}\\[0.6em]
     \includegraphics[width=0.32\textwidth]{images/mapa_3d_cooperative_door_bypass.png}
-    \caption{Renderizações 3D dos sete cenários de teste, geradas a partir da geometria real do simulador (\texttt{scripts/render\_maps.py}). Em cima, da esquerda para a direita: Sandbox, Beco Sem Saída (Muro em U) e Gargalo; ao centro: Quatro Salas, Porta Cooperativa (com a porta destacada a âmbar) e Perceção Cooperativa; em baixo: Porta Cooperativa com Alternativa (\textit{bypass}). A esfera verde assinala o ninho (ou o alvo móvel, na Perceção Cooperativa).}
+    \caption[Renderizações 3D dos sete cenários de teste]{Renderizações 3D dos sete cenários de teste, geradas a partir da geometria real do simulador (\texttt{scripts/render\_maps.py}). Em cima, da esquerda para a direita: Sandbox, Beco Sem Saída (Muro em U) e Gargalo; ao centro: Quatro Salas, Porta Cooperativa (com a porta destacada a âmbar) e Perceção Cooperativa; em baixo: Porta Cooperativa com Alternativa (\textit{bypass}). A esfera verde assinala o ninho (ou o alvo móvel, na Perceção Cooperativa).}
     \label{fig:cenarios_3d}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \includegraphics[width=0.30\textwidth]{images/mapa_topo_none.png}\hfill
     \includegraphics[width=0.30\textwidth]{images/mapa_topo_u_wall.png}\hfill
@@ -996,28 +996,28 @@ Para garantir uma avaliação exaustiva e progressiva das capacidades de control
     \includegraphics[width=0.30\textwidth]{images/mapa_topo_cooperative_door.png}\hfill
     \includegraphics[width=0.30\textwidth]{images/mapa_topo_cooperative_perception.png}\\[0.4em]
     \includegraphics[width=0.30\textwidth]{images/mapa_topo_cooperative_door_bypass.png}
-    \caption{Vista de topo (planta) dos sete cenários, evidenciando a geometria das paredes e a largura das passagens. Mesma ordem da Figura~\ref{fig:cenarios_3d}: em cima, Sandbox, Muro em U e Gargalo; ao centro, Quatro Salas, Porta Cooperativa e Perceção Cooperativa; em baixo, Porta Cooperativa com Alternativa.}
+    \caption[Vista de topo (planta) dos sete cenários]{Vista de topo (planta) dos sete cenários, evidenciando a geometria das paredes e a largura das passagens. Mesma ordem da Figura~\ref{fig:cenarios_3d}: em cima, Sandbox, Muro em U e Gargalo; ao centro, Quatro Salas, Porta Cooperativa e Perceção Cooperativa; em baixo, Porta Cooperativa com Alternativa.}
     \label{fig:cenarios_topo}
 \end{figure}
 
 \begin{enumerate}
     \item \textbf{Foraging Aberto (Sandbox):} Cenário base sem barreiras fixas. Contém os agentes, obstáculos dinâmicos e um ninho móvel. Serve para aferir a capacidade pura de cooperação e gestão de energia sem entropia espacial acrescida.
-    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_sandbox.png} \caption{Cenário Sandbox no visualizador.} \end{figure}
+    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_sandbox.png} \caption{Cenário Sandbox no visualizador.} \end{figure}
     
     \item \textbf{Beco Sem Saída (Muro em U):} Um grande obstáculo em forma de "U" bloqueia a linha direta ao ninho. A parede superior tem $14$\,m e as pernas laterais têm $10$\,m. Os agentes começam do lado de fora da "taça" e têm de explorar lateralmente as aberturas de $7$\,m. Avalia a exploração prolongada em detrimento da navegação gananciosa.
-    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_u_wall.png} \caption{Cenário Muro em U.} \end{figure}
+    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_u_wall.png} \caption{Cenário Muro em U.} \end{figure}
 
     \item \textbf{Gargalo (Porta Estreita):} A arena é cortada a meio por uma parede contínua, deixando apenas uma passagem de $2{,}5$\,m de largura. Obriga a um alinhamento e gestão do fluxo do enxame, punindo gravemente o congestionamento desenfreado.
-    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_bottleneck.png} \caption{Cenário Gargalo.} \end{figure}
+    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_bottleneck.png} \caption{Cenário Gargalo.} \end{figure}
 
     \item \textbf{Quatro Salas (Labirinto):} Duas grandes paredes cruzam a arena vertical e horizontalmente, criando quatro salas isoladas ligadas apenas por aberturas de $2{,}5$\,m de largura. Os agentes começam no extremo oposto ao ninho, exigindo memória temporal e navegação estruturada de longo termo.
-    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_four_rooms.png} \caption{Cenário Quatro Salas.} \end{figure}
+    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_four_rooms.png} \caption{Cenário Quatro Salas.} \end{figure}
 
     \item \textbf{Porta Cooperativa:} Similar ao Gargalo, mas a passagem de $3$\,m de largura encontra-se bloqueada por um portão físico. A porta só abre (deslizando para fora do caminho, com realce visual no \textit{dashboard}) quando no mínimo 3 agentes ocupam a zona de pressão em simultâneo. Por exigir uma sincronização mais demorada, este cenário dispõe de um horizonte temporal alargado de $800$ passos (face aos $500$ dos restantes), dando margem para que o enxame coordene a abertura e ainda alcance o ninho. Foca-se em comportamentos de sincronização sem comunicação explícita.
-    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_cooperative_door.png} \caption{Cenário Porta Cooperativa.} \end{figure}
+    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_cooperative_door.png} \caption{Cenário Porta Cooperativa.} \end{figure}
 
     \item \textbf{Perceção Cooperativa (Alvo Móvel):} A noção de "ninho físico" desaparece. O alvo de interesse viaja livremente pelo mapa ao dobro da velocidade normal ($0{,}03$\,m/s). Só é considerado capturado quando $3$ agentes se aproximam a menos de $4$\,m de distância e distribuem-se num raio de 360\textdegree{} em redor do mesmo, testando manobras de cerco e perseguição.
-    %\begin{figure}[H] \centering \includegraphics[width=0.6\textwidth]{images/scen_perception.png} \caption{Cenário Perceção Cooperativa.} \end{figure}
+    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_perception.png} \caption{Cenário Perceção Cooperativa.} \end{figure}
 
     \item \textbf{Porta Cooperativa com Alternativa (\textit{Bypass}):} Variante da Porta Cooperativa desenhada como problema de \emph{recompensa enganadora} (\textit{deceptive}). A barreira horizontal mantém a porta central de $3$\,m (que continua a exigir 3 agentes na zona de pressão), mas o segmento direito da barreira termina antes da fronteira da arena, deixando uma abertura permanentemente livre de $4$\,m junto à parede leste --- um percurso alternativo que dispensa cooperação. Uma parede defletora, colocada mais a norte no mesmo lado, obriga quem usa a alternativa a afastar-se temporariamente do ninho, tornando o percurso alternativo cerca de duas vezes mais longo do que a passagem pela porta. A rota mais curta atrai, assim, o enxame para a porta (que exige coordenação), enquanto a descoberta da alternativa exige contrariar o gradiente de aproximação ao objetivo --- a propriedade que faz deste o cenário de referência para a QI6 (procura por novidade, Secção~\ref{sec:questoes_investigacao}). Pelo horizonte de exploração acrescido, o limite temporal é alargado para $1000$ passos.
 \end{enumerate}
@@ -1209,17 +1209,17 @@ A Tabela~\ref{tab:res_eval} e as Figuras~\ref{fig:res_ptask_sucesso}--\ref{fig:r
 
 O \textbf{Muro U} é o único cenário que nenhum algoritmo resolve de forma fiável: o desempenho é \emph{bimodal} nos três paradigmas --- cada \textit{run} ou aprende o desvio ao beco e atinge 100\% de sucesso, ou não o aprende de todo (GNN 3/7 \textit{runs}, PPO 4/7, SAC 2/7) --- e nenhuma diferença entre algoritmos é estatisticamente significativa (Secção~\ref{sec:res_discussao}). A fronteira de dificuldade da campanha final já não separa, portanto, os cenários de gargalo dos de espaço aberto (essa fronteira foi eliminada pela \textit{fitness} de \textit{homing} e pela recompensa simplificada, como analisado adiante): o que resta é a \textbf{armadilha do desvio comprido} do Muro U, transversal aos dois paradigmas.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.9}{images/resultados/taxa_sucesso_por_cenario.png}{Taxa de sucesso por cenario e algoritmo}
-    \caption{Taxa de sucesso ($P_{task}$) por cenário, em avaliação determinística (7 \textit{runs} $\times$ 20 episódios emparelhados por algoritmo).}
+    \caption[Taxa de sucesso ($P_{task}$) por cenário e algoritmo]{Taxa de sucesso ($P_{task}$) por cenário, em avaliação determinística (7 \textit{runs} $\times$ 20 episódios emparelhados por algoritmo).}
     \label{fig:res_ptask_sucesso}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.9}{images/resultados/recolhas_por_cenario.png}{Recolhas por episodio, por cenario e algoritmo}
-    \caption{Recolhas por episódio (média $\pm$ desvio padrão) por cenário. Mede a magnitude do desempenho, para além do sucesso binário.}
+    \caption[Recolhas por episódio, por cenário e algoritmo]{Recolhas por episódio, por cenário. Barra = média sobre os 140 episódios de avaliação (7 \textit{runs} $\times$ 20); barra de erro = desvio padrão \emph{entre episódios}, que nos cenários de convergência bimodal (Muro U, Sandbox-GNN, Gargalo-SAC) chega a exceder a própria média --- a dispersão que lhe está por trás é a dispersão entre \textit{runs} da Secção~\ref{sec:res_boxplots}. Mede a magnitude do desempenho, para além do sucesso binário.}
     \label{fig:res_ptask_recolhas}
 \end{figure}
 
@@ -1227,21 +1227,21 @@ O \textbf{Muro U} é o único cenário que nenhum algoritmo resolve de forma fi�
 \label{sec:res_heatmaps}
 Para fundamentar a opção pelo potencial geodésico no termo de progresso e diagnosticar o comportamento de navegação, recorre-se a dois tipos de mapa de calor. A Figura~\ref{fig:res_heatmap_geo} contrasta o potencial euclidiano com o geodésico no Muro U: as curvas de nível euclidianas atravessam a parede (atraindo o agente para o interior do beco), enquanto as geodésicas a contornam, atribuindo gradiente positivo ao desvio correto. A Figura~\ref{fig:res_heatmap_ocup} mostra a densidade de ocupação dos robôs --- zonas brilhantes coladas a uma parede revelam agentes presos, ao passo que um fluxo que contorna o obstáculo indica navegação resolvida.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.95}{images/resultados/heatmap_geodesico_u_wall.png}{Potencial euclidiano vs geodesico no Muro U}
-    \caption{Potencial de navegação no Muro U: euclidiano (esquerda) vs.\ geodésico (direita). As curvas de nível indicam a direção para a qual o termo de progresso atrai o agente; só o geodésico contorna a barra do U.}
+    \caption[Potencial de navegação no Muro U: euclidiano vs.\ geodésico]{Potencial de navegação no Muro U: euclidiano (esquerda) vs.\ geodésico (direita). As curvas de nível indicam a direção para a qual o termo de progresso atrai o agente; só o geodésico contorna a barra do U.}
     \label{fig:res_heatmap_geo}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.32}{images/resultados/heatmap_ocupacao_gnn_u_wall.png}{Ocupacao GNN no Muro U}
     \hfill
     \figresultado{0.32}{images/resultados/heatmap_ocupacao_ppo_u_wall.png}{Ocupacao PPO no Muro U}
     \hfill
     \figresultado{0.32}{images/resultados/heatmap_ocupacao_sac_u_wall.png}{Ocupacao SAC no Muro U}
-    \caption{Densidade de ocupação dos robôs no Muro U (GNN, PPO e SAC, da esquerda para a direita). O fluxo que contorna a barra do U pelos lados evidencia a navegação resolvida pelo potencial geodésico.}
+    \caption[Densidade de ocupação dos robôs no Muro U (GNN, PPO e SAC)]{Densidade de ocupação dos robôs no Muro U (GNN, PPO e SAC, da esquerda para a direita; 6 episódios por painel, escala logarítmica). O GNN contorna a barra do U pela esquerda e o PPO pela direita --- em ambos, um fluxo contínuo até ao ninho, com 473 e 412 recolhas. O SAC não resolve o cenário: a ocupação concentra-se \emph{colada} às faces interiores das paredes verticais, o padrão de agentes presos, e o episódio termina com \textbf{0 recolhas}. A escala de cor é normalizada por painel, pelo que as cores comparam a distribuição \emph{dentro} de cada algoritmo, não a magnitude entre eles.}
     \label{fig:res_heatmap_ocup}
 \end{figure}
 
@@ -1249,10 +1249,10 @@ Para fundamentar a opção pelo potencial geodésico no termo de progresso e dia
 \label{sec:res_sandbox}
 O cenário Sandbox --- arena aberta, sem paredes interiores --- isola a capacidade de \textit{foraging} da componente de navegação por obstáculos, servindo de referência de otimalidade. A Figura~\ref{fig:res_sandbox_curva} mostra que os dois métodos de gradiente convergem para políticas funcionais e \emph{repetíveis}: as bandas de desvio padrão entre os 7 \textit{runs} são estreitas, e o desempenho final de tarefa é praticamente idêntico (PPO $71{,}5 \pm 1{,}0$ recolhas/ep; SAC $69{,}2 \pm 1{,}9$), com o \textbf{SAC} (\textit{off-policy}) a subir mais cedo, beneficiando da reutilização de experiência do \textit{replay buffer}. O \textbf{GNN evolutivo} apresenta aqui o seu comportamento mais irregular de toda a campanha: quatro dos sete \textit{runs} convergem para políticas competitivas (61,6 a 64,7 recolhas/ep), dois degeneram por completo ($<1$ recolha/ep) e um fica num regime intermédio (15,8 recolhas/ep, com sucesso em todos os episódios mas uma fração da magnitude dos melhores), arrastando a média para $38{,}3 \pm 31{,}0$. É um resultado à primeira vista paradoxal --- o cenário mais simples é o menos fiável para o evolutivo --- que se explica pela ausência de gradiente geodésico informativo em campo aberto: sem paredes que canalizem o \textit{homing}, a paisagem de \textit{fitness} tem múltiplos ótimos locais de vaguear, e a fuga a esses ótimos depende da sorte da inicialização (Secção~\ref{sec:res_discussao}).
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.85}{images/resultados/comparacao_mapa_none.png}{Curva de aprendizagem no Sandbox (3 algoritmos)}
-    \caption{Curvas de aprendizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do orçamento de treino); linha = média de 7 \textit{runs}, banda = $\pm 1$ desvio padrão.}
+    \caption[Curvas de aprendizagem no cenário Sandbox]{Curvas de aprendizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do orçamento de treino); linha = média de 7 \textit{runs}, banda = $\pm 1$ desvio padrão.}
     \label{fig:res_sandbox_curva}
 \end{figure}
 
@@ -1282,84 +1282,84 @@ As curvas de aprendizagem por cenário (Figuras~\ref{fig:res_curva_uwall}--\ref{
 
 Nos cenários de navegação por gargalos (\textbf{Gargalo}, Figura~\ref{fig:res_curva_bottleneck}; \textbf{Quatro Salas}, Figura~\ref{fig:res_curva_fourrooms}; \textbf{Porta Cooperativa}, Figura~\ref{fig:res_curva_door}) o padrão da campanha final é o oposto do observado nas campanhas exploratórias: a \textit{fitness} do GNN sobe de forma sustentada \emph{e} traduz-se em recolhas na avaliação --- a assinatura do antigo \textit{fitness exploitation} (subida de \textit{shaping} sem tarefa) desapareceu com a \textit{fitness} de \textit{homing}. Entre os métodos de gradiente, o PPO converge de forma quase determinística (bandas estreitas), enquanto o SAC exibe bandas largas no Gargalo, refletindo os \textit{runs} que não convergem. No \textbf{Muro U} (Figura~\ref{fig:res_curva_uwall}), as bandas largas dos três algoritmos são o retrato da bimodalidade já referida: a média das curvas mistura \textit{runs} resolvidos e falhados. Na \textbf{Perceção Cooperativa} (Figura~\ref{fig:res_curva_perception}) os três algoritmos progridem, com o GNN a atingir a maior magnitude média. Finalmente, na \textbf{Porta Cooperativa com Alternativa} (Figura~\ref{fig:res_curva_bypass}) --- o cenário \textit{deceptive} introduzido para a QI6 --- os três algoritmos aprendem o desvio pelo corredor alternativo em todos os \textit{runs}, com o GNN e o PPO em vantagem clara de magnitude sobre o SAC (86,7 e 85,3 vs.\ 68,6 recolhas/ep).
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/comparacao_mapa_u_wall.png}{Curva de aprendizagem --- Beco Sem Saída (Muro U)}
     \caption{Curvas de aprendizagem no cenário Beco Sem Saída (Muro em U).}
     \label{fig:res_curva_uwall}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/comparacao_mapa_bottleneck.png}{Curva de aprendizagem --- Gargalo (Porta Estreita)}
     \caption{Curvas de aprendizagem no cenário Gargalo.}
     \label{fig:res_curva_bottleneck}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/comparacao_mapa_four_rooms.png}{Curva de aprendizagem --- Quatro Salas (Labirinto)}
     \caption{Curvas de aprendizagem no cenário Quatro Salas (Labirinto).}
     \label{fig:res_curva_fourrooms}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/comparacao_mapa_cooperative_door.png}{Curva de aprendizagem --- Porta Cooperativa}
     \caption{Curvas de aprendizagem no cenário Porta Cooperativa.}
     \label{fig:res_curva_door}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/comparacao_mapa_cooperative_perception.png}{Curva de aprendizagem --- Perceção Cooperativa (Alvo Móvel)}
     \caption{Curvas de aprendizagem no cenário Perceção Cooperativa (Alvo Móvel).}
     \label{fig:res_curva_perception}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/comparacao_mapa_cooperative_door_bypass.png}{Curva de aprendizagem --- Porta Cooperativa com Alternativa (deceptive)}
     \caption{Curvas de aprendizagem no cenário Porta Cooperativa com Alternativa (\textit{deceptive}).}
     \label{fig:res_curva_bypass}
 \end{figure}
 
-\section{Fiabilidade e Variância entre \textit{Runs} (Boxplots)}
+\section{Fiabilidade e Variância entre \textit{Runs}}
 \label{sec:res_boxplots}
-A análise da fiabilidade de treino requer múltiplas execuções independentes por configuração, de modo a distinguir o desempenho sistemático do ruído de inicialização. Os diagramas de caixa das Figuras~\ref{fig:res_box_1}--\ref{fig:res_box_4} mostram, para cada cenário, a distribuição das \textbf{recolhas por episódio de cada \textit{run}} (média dos 20 episódios de avaliação; 7 pontos por algoritmo) --- uma métrica de tarefa, na mesma unidade para os três algoritmos, ao contrário dos \textit{scores} de treino.
+A análise da fiabilidade de treino requer múltiplas execuções independentes por configuração, de modo a distinguir o desempenho sistemático do ruído de inicialização. As Figuras~\ref{fig:res_box_1}--\ref{fig:res_box_4} mostram, para cada cenário, \textbf{um ponto por \textit{run}} --- as recolhas por episódio desse \textit{run} (média dos 20 episódios de avaliação; 7 pontos por algoritmo) --- com a média reportada na tese marcada a traço vertical. A métrica é de tarefa, na mesma unidade para os três algoritmos, ao contrário dos \textit{scores} de treino. Com $n=7$ mostram-se os \textit{runs} um a um em vez de um diagrama de caixa: nestes dados a distribuição é frequentemente \emph{bimodal} --- \textit{runs} que resolvem o cenário e \textit{runs} que ficam a zero, sem nada pelo meio --- e uma caixa a cobrir todo esse intervalo sugeriria densidade onde não existe uma única execução.
 
-A leitura por cenário quantifica o que as secções anteriores anteciparam. Nos cenários \textbf{cooperativos} (Porta Cooperativa, Porta com Alternativa) e no \textbf{Quatro Salas}, as caixas dos três algoritmos são compactas e disjuntas do zero --- treinar é \emph{fiável} --- e o GNN posiciona-se sistematicamente acima do SAC (e, no Quatro Salas, muito acima de ambos os métodos de gradiente). No \textbf{Gargalo}, PPO e GNN são fiáveis (7/7 \textit{runs}), mas a caixa do SAC estende-se de 0 a 88 recolhas/ep --- o treino é uma lotaria. No \textbf{Sandbox} inverte-se: PPO/SAC compactos, GNN com dois \textit{runs} degenerados. No \textbf{Muro U}, as três caixas tocam o zero: nenhum algoritmo garante a convergência, e a mediana só é positiva no PPO (4/7 \textit{runs} funcionais). Esta análise por \textit{run} é a base dos testes de significância da Secção~\ref{sec:res_discussao}.
+A leitura por cenário quantifica o que as secções anteriores anteciparam. Nos cenários \textbf{cooperativos} (Porta Cooperativa, Porta com Alternativa) e no \textbf{Quatro Salas}, os sete \textit{runs} dos três algoritmos ficam agrupados e afastados do zero --- treinar é \emph{fiável} --- e o GNN posiciona-se sistematicamente acima do SAC (e, no Quatro Salas, muito acima de ambos os métodos de gradiente). No \textbf{Gargalo}, PPO e GNN são fiáveis (7/7 \textit{runs}), mas os \textit{runs} do SAC espalham-se de 0 a 88 recolhas/ep --- o treino é uma lotaria. No \textbf{Sandbox} inverte-se: PPO/SAC agrupados, GNN com dois \textit{runs} degenerados. No \textbf{Muro U}, os três algoritmos têm \textit{runs} a zero: nenhum garante a convergência, e só o PPO tem a maioria das execuções funcionais (4/7). Esta análise por \textit{run} é a base dos testes de significância da Secção~\ref{sec:res_discussao}.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \figresultado{0.49}{images/resultados/boxplot_eval_none.png}{Boxplot eval --- Sandbox}
+    \figresultado{0.49}{images/resultados/dotplot_eval_none.png}{Fiabilidade entre runs --- Sandbox}
     \hfill
-    \figresultado{0.49}{images/resultados/boxplot_eval_u_wall.png}{Boxplot eval --- Muro U}
+    \figresultado{0.49}{images/resultados/dotplot_eval_u_wall.png}{Fiabilidade entre runs --- Muro U}
     \caption{Recolhas/ep por \textit{run} (7 \textit{runs}, 20 ep cada): Sandbox (esq.) e Muro U (dir.).}
     \label{fig:res_box_1}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \figresultado{0.49}{images/resultados/boxplot_eval_bottleneck.png}{Boxplot eval --- Gargalo}
+    \figresultado{0.49}{images/resultados/dotplot_eval_bottleneck.png}{Fiabilidade entre runs --- Gargalo}
     \hfill
-    \figresultado{0.49}{images/resultados/boxplot_eval_four_rooms.png}{Boxplot eval --- Quatro Salas}
+    \figresultado{0.49}{images/resultados/dotplot_eval_four_rooms.png}{Fiabilidade entre runs --- Quatro Salas}
     \caption{Recolhas/ep por \textit{run}: Gargalo (esq.) e Quatro Salas (dir.).}
     \label{fig:res_box_2}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \figresultado{0.49}{images/resultados/boxplot_eval_cooperative_door.png}{Boxplot eval --- Porta Cooperativa}
+    \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_door.png}{Fiabilidade entre runs --- Porta Cooperativa}
     \hfill
-    \figresultado{0.49}{images/resultados/boxplot_eval_cooperative_perception.png}{Boxplot eval --- Perceção Cooperativa}
+    \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_perception.png}{Fiabilidade entre runs --- Perceção Cooperativa}
     \caption{Recolhas/ep por \textit{run}: Porta Cooperativa (esq.) e Perceção Cooperativa (dir.).}
     \label{fig:res_box_3}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
-    \figresultado{0.49}{images/resultados/boxplot_eval_cooperative_door_bypass.png}{Boxplot eval --- Porta Cooperativa com Alternativa}
+    \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_door_bypass.png}{Fiabilidade entre runs --- Porta Cooperativa com Alternativa}
     \caption{Recolhas/ep por \textit{run}: Porta Cooperativa com Alternativa (\textit{deceptive}).}
     \label{fig:res_box_4}
 \end{figure}
@@ -1368,24 +1368,24 @@ A leitura por cenário quantifica o que as secções anteriores anteciparam. Nos
 \label{sec:res_global}
 Consolidando o desempenho ao longo dos sete cenários (Figuras~\ref{fig:res_global_gnn}--\ref{fig:res_global_sac}), emergem três perfis bem definidos. O \textbf{GNN evolutivo com \textit{fitness} de \textit{homing}} é o especialista em \emph{navegação estruturada}: converge em \emph{todos} os 28 \textit{runs} dos quatro cenários de gargalo (Gargalo, Quatro Salas e as duas Portas Cooperativas --- incluindo, portanto, o cenário \textit{deceptive}, que o \textit{homing} resolve sem necessidade de pressão por novidade), lidera a magnitude de recolhas no Quatro Salas e na Porta Cooperativa e empata estatisticamente com o PPO no Gargalo e na Porta com Alternativa; o seu ponto fraco são os cenários abertos, onde ocasionalmente degenera. O \textbf{PPO} é o \emph{generalista fiável}: converge em todos os \textit{runs} de seis cenários com variância mínima, e é o menos afetado pelo Muro U (4/7). O \textbf{SAC} é fiável em espaço aberto e nos cooperativos, mas é o mais \emph{sensível aos gargalos físicos}: é o único que falha \textit{runs} no Gargalo e tem a pior taxa no Muro U (2/7).
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/desempenho_global_gnn.png}{Desempenho global do GNN em todos os cenários}
-    \caption{Desempenho do GNN (evolutivo) nos sete cenários (linha = média entre os 7 \textit{runs} por progresso de treino).}
+    \caption[Desempenho do GNN (evolutivo) nos sete cenários]{Desempenho do GNN (evolutivo) nos sete cenários (linha = média entre os 7 \textit{runs} por progresso de treino).}
     \label{fig:res_global_gnn}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/desempenho_global_ppo.png}{Desempenho global do PPO em todos os cenários}
-    \caption{Desempenho do PPO nos sete cenários (linha = média entre os 7 \textit{runs} por progresso de treino).}
+    \caption[Desempenho do PPO nos sete cenários]{Desempenho do PPO nos sete cenários (linha = média entre os 7 \textit{runs} por progresso de treino).}
     \label{fig:res_global_ppo}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/desempenho_global_sac.png}{Desempenho global do SAC em todos os cenários}
-    \caption{Desempenho do SAC nos sete cenários (linha = média entre os 7 \textit{runs} por progresso de treino).}
+    \caption[Desempenho do SAC nos sete cenários]{Desempenho do SAC nos sete cenários (linha = média entre os 7 \textit{runs} por progresso de treino).}
     \label{fig:res_global_sac}
 \end{figure}
 
@@ -1415,25 +1415,25 @@ Porta c/ Alternativa & $100\%$ & $\mathbf{86{,}7 \pm 2{,}0}$ & $100\%$ & $85{,}3
 
 \section{Análise de Cenários Complexos e Comportamento Emergente}
 \label{sec:res_complexos}
-Para além das métricas agregadas, a inspeção qualitativa no visualizador 3D (Figuras~\ref{fig:res_viz_nav}--\ref{fig:res_viz_coop}) revela os comportamentos coletivos que sustentam --- ou comprometem --- o desempenho de tarefa. No \textbf{Muro U} e no \textbf{Quatro Salas} (Figura~\ref{fig:res_viz_nav}), as políticas bem-sucedidas exibem contorno fluido das paredes, com os agentes a seguirem o gradiente geodésico em vez de colidirem frontalmente com os obstáculos --- o efeito direto da substituição do potencial euclidiano discutida na Secção~\ref{sec:res_heatmaps}. A dispersão inicial do \textit{spawn} pelas salas opostas ao ninho mitiga o congestionamento nas passagens estreitas, que era a causa do colapso anterior no Quatro Salas.
+Para além das métricas agregadas, a inspeção qualitativa das trajetórias (Figuras~\ref{fig:res_viz_nav}--\ref{fig:res_viz_coop}) revela os comportamentos coletivos que sustentam --- ou comprometem --- o desempenho de tarefa. As figuras traçam o percurso completo dos 20 agentes num episódio do modelo campeão da campanha final, com a cor a indicar o instante do episódio; são os mesmos episódios que o painel tridimensional reproduz. No \textbf{Muro U} e no \textbf{Quatro Salas} (Figura~\ref{fig:res_viz_nav}), as políticas bem-sucedidas exibem contorno fluido das paredes, com os agentes a seguirem o gradiente geodésico em vez de colidirem frontalmente com os obstáculos --- o efeito direto da substituição do potencial euclidiano discutida na Secção~\ref{sec:res_heatmaps}. A dispersão inicial do \textit{spawn} pelas salas opostas ao ninho mitiga o congestionamento nas passagens estreitas, que era a causa do colapso anterior no Quatro Salas.
 
-Nos cenários cooperativos (Figura~\ref{fig:res_viz_coop}) emergem comportamentos coordenados não programados explicitamente: na \textbf{Porta Cooperativa}, observa-se a sincronização de pelo menos três agentes na zona de pressão para abrir a passagem, condição imposta pela mecânica do cenário; na \textbf{Perceção Cooperativa}, o enxame organiza-se em torno do alvo móvel, mantendo cobertura à medida que este se desloca. Estes padrões confirmam que os controladores de gradiente aprendem não só a navegar, mas a explorar a estrutura cooperativa da tarefa. (As capturas apresentadas são ilustrativas do comportamento típico observado em execução.)
+Nos cenários cooperativos (Figura~\ref{fig:res_viz_coop}) emergem comportamentos coordenados não programados explicitamente: na \textbf{Porta Cooperativa}, observa-se a sincronização de pelo menos três agentes na zona de pressão para abrir a passagem, condição imposta pela mecânica do cenário; na \textbf{Perceção Cooperativa}, o enxame organiza-se em torno do alvo móvel, mantendo cobertura à medida que este se desloca. Estes padrões confirmam que os controladores de gradiente aprendem não só a navegar, mas a explorar a estrutura cooperativa da tarefa. Cada figura corresponde a \emph{um} episódio, não a uma montagem de vários: as recolhas indicadas no título são as desse episódio, e o comportamento é o típico do modelo campeão --- a dispersão entre execuções está quantificada na Secção~\ref{sec:res_boxplots}.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.48}{images/resultados/viz_u_wall.png}{Captura do visualizador --- contorno do Muro U}
     \hfill
     \figresultado{0.48}{images/resultados/viz_four_rooms.png}{Captura do visualizador --- navegação no Labirinto}
-    \caption{Comportamento emergente no visualizador 3D: contorno do obstáculo em U (esq.) e navegação no labirinto de Quatro Salas (dir.).}
+    \caption[Trajetórias: contorno do Muro U e navegação no Quatro Salas]{Trajetórias completas de um episódio do controlador evolutivo (20 agentes; cor = instante do episódio): contorno do obstáculo em U (esq., 78 recolhas) e navegação no labirinto de Quatro Salas (dir., 72 recolhas). Nenhuma trajetória atravessa uma parede: os saltos de reaparecimento após entrega no ninho estão excluídos do traçado.}
     \label{fig:res_viz_nav}
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.48}{images/resultados/viz_cooperative_door.png}{Captura --- sincronização na Porta Cooperativa}
     \hfill
     \figresultado{0.48}{images/resultados/viz_cooperative_perception.png}{Captura --- cerco do Alvo Móvel}
-    \caption{Comportamento cooperativo: abertura sincronizada da porta (esq.) e cerco a 360\textdegree{} do alvo móvel (dir.).}
+    \caption[Trajetórias: porta cooperativa e perseguição do alvo móvel]{Comportamento cooperativo nas trajetórias de um episódio: o funil de percursos que converge para a única passagem da Porta Cooperativa e a atravessa até ao ninho (esq., 72 recolhas) e a cobertura do alvo móvel, cuja rota está marcada a tracejado verde (dir., 25 recolhas).}
     \label{fig:res_viz_coop}
 \end{figure}
 
@@ -1461,7 +1461,7 @@ Duas análises exploratórias, assim rotuladas no pré-registo, completam o quad
 
 O resultado principal (M1) confirma-se e reforça-se: o adaptativo faz $67{,}4 \pm 13{,}4$ recolhas/ep contra $32{,}5 \pm 32{,}5$ do objetivo puro ($p < 0{,}0001$ unilateral, $\delta = +0{,}61$) e, sobretudo, a convergência --- agora reportável --- separa os braços sem ambiguidade: \textbf{$28/28$ execuções a 100\% de sucesso contra $15/28$} (Fisher exato, $p < 0{,}0001$). É a \emph{única} condição de toda a dissertação em que todas as execuções resolvem o Muro em U. A comparação com os métodos de gradiente ao mesmo $n$ (M2) coloca o adaptativo acima de ambos --- PPO $35{,}6 \pm 36{,}0$ ($14/28$; $p = 0{,}0010$, $\delta = +0{,}51$) e SAC $10{,}1 \pm 14{,}2$ ($14/28$; $p < 0{,}0001$, $\delta = +0{,}99$) ---, ao passo que o GNN \emph{objetivo} e o PPO permanecem indistinguíveis ($p = 0{,}088$): a vantagem não é da neuroevolução enquanto tal, mas da \textbf{dosagem adaptativa da exploração}. A Figura~\ref{fig:megatreino_uwall} mostra porque é que a média sozinha engana neste cenário --- os três braços sem anilamento repartem-se entre execuções que resolvem e execuções que ficam a zero, praticamente sem nada pelo meio, enquanto o adaptativo não tem uma única execução falhada. Assinala-se que os seis pares de M2 são $p$ brutos: o pré-registo manda declarar a multiplicidade e ancorar a leitura no tamanho de efeito, não corrigir os valores.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.92}{images/resultados/megatreino_u_wall_4bracos.png}{Muro em U: os quatro bracos do mega-treino a n=28}
     \caption[Muro em U: os quatro braços do mega-treino ($n=28$)]{Muro em U --- as $28$ execuções independentes de cada braço do mega-treino. Cada ponto é uma execução (média de $20$ episódios determinísticos) e a barra vertical é a média reportada no texto. A leitura decisiva não é a diferença de médias, mas a \emph{forma} das distribuições: o GNN objetivo, o PPO e o SAC repartem-se entre execuções que resolvem o cenário e execuções que ficam a zero, ao passo que a dosagem adaptativa da novidade não deixa uma única execução por resolver ($28/28$).}
@@ -1519,10 +1519,10 @@ SAC & N/A$^{\dagger}$ & $100\%$ / $71{,}3$ & N/A$^{\dagger}$ & N/A$^{\dagger}$ \
 {\footnotesize Cada célula: taxa de sucesso / recolhas por episódio. $^{\dagger}$ A política MLP do PPO/SAC tem dimensão de entrada fixa ($\mathbb{R}^{111}$, para $N=20$), sendo incompatível com outras dimensões de enxame. Só a arquitetura de atenção sobre grafo (controlador evolutivo) suporta a transferência \textit{Zero-Shot}. As recolhas totais do GNN crescem monotonicamente com $N$ ($37{,}4 \rightarrow 127{,}3$) sem qualquer colapso.}
 \end{table}
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/escalabilidade_zeroshot_none.png}{Grafico de barras/linhas --- desempenho vs. numero de agentes}
-    \caption{Degradação (ou estabilidade) do desempenho com o aumento do número de agentes, sem retreino.}
+    \caption[Eficiência por agente com o aumento do enxame (Sandbox), sem retreino]{Eficiência \emph{por agente} (recolhas por episódio a dividir pelo número de agentes) com o aumento do enxame, sem retreino, no cenário Sandbox. Só a linha do controlador de grafo atravessa toda a gama: o PPO e o SAC têm um único ponto, em $N=20$, porque a política MLP de entrada fixa não admite outras dimensões de enxame.}
     \label{fig:res_escalabilidade}
 \end{figure}
 
@@ -1532,10 +1532,10 @@ A métrica $R_{robust}$ avalia a resiliência do enxame perante a perda súbita 
 
 O resultado evidencia uma resiliência elevada e \emph{transversal aos paradigmas}: a retenção de recolhas situa-se entre \textbf{92\% e 106\%} em todas as 21 combinações algoritmo--cenário com desempenho de base, incluindo a Porta Cooperativa --- notável por exigir três agentes simultâneos para abrir a passagem: o enxame redistribui-se e mantém a função apesar da baixa. O controlador evolutivo, medido pela primeira vez nos labirintos nesta campanha, retém 92--97\%. (Os valores pontualmente acima de 100\% correspondem a episódios em que a perda de agentes reduziu o congestionamento nas passagens estreitas.) A ausência de degradação catastrófica sugere que o \textit{parameter sharing} e a observação local conferem ao enxame uma redundância funcional implícita: nenhum agente é insubstituível, pelo que a falha parcial é absorvida pela reorganização do coletivo.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
     \centering
     \figresultado{0.8}{images/resultados/robustez_falhas.png}{Grafico --- desempenho antes/depois da falha de 10\% dos agentes}
-    \caption{Resiliência do enxame perante a perda súbita de 10\% dos agentes a meio do episódio ($R_{robust}$).}
+    \caption[Resiliência à perda súbita de 10\% dos agentes ($R_{robust}$)]{Resiliência do enxame perante a perda súbita de 10\% dos agentes a meio do episódio ($R_{robust}$). Os três painéis partilham a escala vertical, pelo que as alturas são comparáveis entre algoritmos; o rótulo é a percentagem de recolhas retida face à avaliação sem falhas, nas mesmas \textit{seeds}. Os $106\%$ do SAC na Perceção Cooperativa não são um erro de medida: nesse cenário o alvo é móvel e um enxame ligeiramente menor congestiona-o menos --- a diferença ($16{,}5 \rightarrow 17{,}5$ recolhas/ep) está dentro do desvio entre episódios.}
     \label{fig:res_robustez}
 \end{figure}
 

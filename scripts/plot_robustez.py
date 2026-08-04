@@ -50,11 +50,30 @@ def main():
         print("[ROBUSTEZ] Sem dados — corre a avaliação base e a fail10 primeiro.")
         return
 
+    # Só entram os cenários com dados nos TRÊS algoritmos. O src/scenarios.py
+    # passou a incluir o mapa grande (8.º cenário), que só tem avaliação do GNN:
+    # desenhá-lo daria uma coluna cheia e duas vazias, e punha na figura da tese
+    # um cenário que a campanha dos sete não reporta — o pré-registo do mapa
+    # grande manda-o para uma secção própria, com dados próprios.
+    completos = {s for s, g in df.groupby("Scenario") if len(set(g.Algorithm)) == len(ALGOS)}
+    omitidos = sorted(set(df.Scenario) - completos)
+    if omitidos:
+        print(f"[ROBUSTEZ] omitidos (sem os três algoritmos): {', '.join(omitidos)}")
+    df = df[df.Scenario.isin(completos)]
+
     sns.set_theme(style="whitegrid")
-    fig, axes = plt.subplots(1, 3, figsize=(16, 6), sharey=False)
-    scen_order = [SCENARIO_LABELS[s] for s in ALL_SCENARIOS]
+    # sharey=True porque os três painéis medem a MESMA coisa na MESMA unidade
+    # (recolhas por episódio). Com eixos independentes, o Gargalo do PPO (123
+    # recolhas) desenhava-se com a mesma altura que o do GNN (88) e a figura
+    # convidava a uma comparação entre painéis que as escalas desmentiam.
+    fig, axes = plt.subplots(1, 3, figsize=(16, 6), sharey=True)
+    scen_order = [SCENARIO_LABELS[s] for s in ALL_SCENARIOS
+                  if SCENARIO_LABELS[s] in completos]
     x = np.arange(len(scen_order))
     w = 0.38
+    # Folga do rótulo, em unidades do eixo: 1,5% do maior valor desenhado (com o
+    # eixo partilhado, o mesmo valor serve os três painéis).
+    folga = 0.015 * float((df.fail_m + df.fail_sd.fillna(0)).max())
     for ax, algo in zip(axes, ALGOS):
         d = df[df.Algorithm == algo].set_index("Scenario").reindex(scen_order)
         c = ALGO_COLORS[algo]
@@ -62,10 +81,13 @@ def main():
                color=c, label="Sem falhas")
         ax.bar(x + w / 2, d.fail_m, w, yerr=d.fail_sd, capsize=3,
                color=c, alpha=0.45, hatch="//", label="10% falhas")
-        # retenção (%) por cima das barras com falhas
-        for xi, (bm, fm) in enumerate(zip(d.base_m, d.fail_m)):
+        # Retenção (%) por cima das barras com falhas — acima do TOPO DA BARRA DE
+        # ERRO, não do topo da barra: colado à barra, o rótulo caía em cima do
+        # bigode do desvio padrão e ficava ilegível em metade dos cenários.
+        for xi, (bm, fm, fsd) in enumerate(zip(d.base_m, d.fail_m, d.fail_sd)):
             if bm and bm > 0.5:
-                ax.text(xi + w / 2, fm, f"{fm / bm * 100:.0f}%",
+                topo = fm + (fsd if np.isfinite(fsd) else 0.0)
+                ax.text(xi + w / 2, topo + folga, f"{fm / bm * 100:.0f}%",
                         ha="center", va="bottom", fontsize=8)
         ax.set_title(algo, fontweight="bold", color=c)
         ax.set_xticks(x)
