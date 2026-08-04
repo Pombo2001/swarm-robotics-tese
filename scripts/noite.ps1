@@ -98,6 +98,36 @@ corrigiste e o que ficou por resolver.
 "=== noite.ps1 arrancou $(Get-Date -Format 'dd/MM HH:mm') · limite $MaxHoras h ===" |
     Tee-Object -FilePath $log -Append
 
+# Backup = git push. O trabalho da noite fica em commits LOCAIS, e commits
+# locais nao sao backup nenhum: se o disco morrer, morrem com ele. A 3 ago havia
+# 24 commits por enviar e o ultimo push era de 31 jul — quatro dias de trabalho
+# a viver num sitio so.
+#
+# Quem empurra e o SCRIPT, nao o agente: o prompt proibe-lhe o push de proposito,
+# porque decidir o que vai para publico nao e decisao de um agente as 4 da manha.
+# Aqui e mecanico — o que ele commitou, sobe; nada mais.
+function Backup([string]$quando) {
+    $porEnviar = (git rev-list --count origin/main..HEAD 2>$null)
+    if (-not $porEnviar -or $porEnviar -eq "0") {
+        "[backup $quando] nada por enviar" | Tee-Object -FilePath $log -Append
+        return
+    }
+    "[backup $quando] a enviar $porEnviar commit(s)..." | Tee-Object -FilePath $log -Append
+    git push origin HEAD 2>&1 | Tee-Object -FilePath $log -Append
+    if ($LASTEXITCODE -eq 0) {
+        "[backup $quando] enviados" | Tee-Object -FilePath $log -Append
+    } else {
+        # Falhar o backup nao pode matar a noite de trabalho: fica no log e
+        # tenta-se na volta seguinte.
+        "[backup $quando] FALHOU (codigo $LASTEXITCODE) — tenta-se na proxima volta" |
+            Tee-Object -FilePath $log -Append
+    }
+}
+
+# Antes de comecar: poe a salvo o que ja existe, para o trabalho da noite nao
+# ficar misturado com dias por enviar caso alguma coisa corra mal.
+Backup "inicial"
+
 $iteracao = 0
 while ((Get-Date) -lt $fim) {
     $iteracao++
