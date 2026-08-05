@@ -171,7 +171,17 @@ _TIMELINE = [
      "gradiente (Fisher exato, p<0,0001): a única condição da tese sem uma execução "
      "falhada neste cenário."),
     ("03 ago", "F2 do mapa grande lançado",
-     "Os dois streams principais a treinar no 8.º cenário; o GNN fecha ~14 ago."),
+     "Os dois streams principais a treinar no 8.º cenário."),
+    ("04 ago", "O stream do GNN treinava o braço errado",
+     "O script da campanha não escrevia as chaves de novidade no config e o treino "
+     "caiu nos defaults — objetivo puro, onde o pré-registo fixa o adaptativo "
+     "(w₀=0,5). Pior: o lançador verificava «sem novidade» e certificava o erro. "
+     "27 h descartadas; relançado a 4 ago às 22:57 com o braço certo, e o script "
+     "passa a escrever, reler e abortar se não bater."),
+    ("05 ago", "A primeira recolha que o mapa grande alguma vez deu",
+     "Com o braço adaptativo, 4,75 recolhas à geração 140 (era 0,00 em dois runs "
+     "completos do objetivo puro, guardados como controlo). O GNN fecha ~16 ago; "
+     "o braço exploratório arranca sozinho quando os gradientes largarem a máquina."),
 ]
 
 

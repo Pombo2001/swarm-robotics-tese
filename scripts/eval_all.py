@@ -91,12 +91,25 @@ def run_episode(env, algo, model, seed=None):
         if any(terms.values()) or any(truncs.values()):
             break
     food = int(env.total_food_collected)
+    # A porta foi aberta neste episódio? `_update_door` põe `door_active` a False
+    # e remove o painel de `walls` quando DOOR_PUSHERS_REQUIRED agentes ocupam a
+    # push zone ao mesmo tempo — é a definição operacional de «cooperou».
+    #
+    # Isto existe porque a M3 do pré-registo do mapa grande — «fração de
+    # episódios em que a porta cooperativa é aberta, por algoritmo» — NÃO era
+    # calculável: nada no pipeline de avaliação registava o estado da porta, e a
+    # análise ia encontrar a coluna em falta só quando a campanha fechasse.
+    # `None` (e não `False`) nos cenários sem porta: a distinção entre «não
+    # abriu» e «não havia porta» é a diferença entre um zero e um vazio.
+    tem_porta = bool(getattr(env, "has_door", False)) or \
+        getattr(env, "door_wall_index", None) is not None
     return {
         "food_collected": food,
         "task_reward":    food * env.food_collected_reward,
         "total_reward":   total_reward,
         "episode_length": steps,
         "success":        food > 0,
+        "door_opened":    (not env.door_active) if tem_porta else None,
     }
 
 

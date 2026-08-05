@@ -88,6 +88,10 @@ def evaluate_all(episodes=20, scenarios=None, algos=None, seed_base=1000,
                     "food_collected": float(r["food_collected"]),
                     "success": bool(r["success"]),
                     "total_reward": float(r["total_reward"]),
+                    # Igual ao eval_by_run: a M3 do mapa grande precisa disto, e
+                    # dois CSV do mesmo pipeline com colunas diferentes é uma
+                    # divergência à espera de acontecer. Vazio sem porta.
+                    "door_opened": r.get("door_opened"),
                 })
             sr = df.success.mean() * 100
             print(f"  [OK] {algo.upper():3s}/{sc:22s} sucesso={sr:5.1f}%  "

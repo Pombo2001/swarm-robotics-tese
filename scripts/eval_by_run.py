@@ -97,6 +97,10 @@ def evaluate_by_run(episodes=20, scenarios=None, algos=None, seed_base=1000,
                         "food_collected": float(r["food_collected"]),
                         "success": bool(r["success"]),
                         "total_reward": float(r["total_reward"]),
+                        # M3 do pré-registo do mapa grande: sem esta coluna a
+                        # métrica não é calculável, e a falta só apareceria com a
+                        # campanha já fechada. Vazio nos cenários sem porta.
+                        "door_opened": r.get("door_opened"),
                     })
                 print(f"  [OK] {algo.upper():3s}/{sc:22s} run {run}: "
                       f"sucesso={df.success.mean()*100:5.1f}%  "
