@@ -64,10 +64,15 @@ def _hex(s):
     return color.rgb32(int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
 
 
+# ⚠️ Os tons têm de SEPARAR-SE, não só combinar. Na 1.ª versão o chão era
+# rgb(18,23,28) e as paredes rgb(52,60,69) — perto demais: a parede só se via do
+# lado que a luz apanhava, e na captura de teste UMA DAS DUAS do gargalo
+# desaparecia consoante a direção da luz. Agora há três degraus claros entre
+# fundo, chão e parede, e as arestas são bem mais claras do que ambos.
 FUNDO      = color.rgb32(11, 14, 17)     # o mesmo #0b0e11 do dashboard
-CHAO       = color.rgb32(18, 23, 28)
-GRELHA     = color.rgb32(38, 46, 54)
-PAREDE     = color.rgb32(52, 60, 69)
+CHAO       = color.rgb32(26, 32, 39)
+GRELHA     = color.rgb32(96, 112, 128)   # arestas e grelha: leem-se sempre
+PAREDE     = color.rgb32(104, 118, 134)
 PORTA      = color.rgb32(232, 163, 61)   # âmbar, como no viz3d do browser
 NINHO      = color.rgb32(16, 185, 129)
 OBSTACULO  = color.rgb32(124, 92, 58)
@@ -85,11 +90,21 @@ _ap.add_argument('--agents', type=int, default=None)
 # que têm a mesma estrutura. Evita restaurar modelos por cima dos ativos só para
 # espreitar um treino antigo.
 _ap.add_argument('--models-root', type=str, default=None)
-_ap.add_argument('--sem-sombras', action='store_true',
-                 help='desliga as sombras projetadas (máquinas sem GPU)')
-_ap.add_argument('--angulo', type=float, default=48.0,
+_ap.add_argument('--sombras', action='store_true',
+                 help='liga as sombras projetadas (o shadow map desta escala '
+                      'desenha borrões grandes; as de contacto ficam sempre)')
+_ap.add_argument('--angulo', type=float, default=62.0,
                  help='inclinação inicial da câmara em graus '
                       '(90 = topo, 0 = ao nível do chão; por omissão 48)')
+# Captura: corre N passos sem intervenção, grava um PNG e fecha. Serve para
+# mostrar a cena a quem não a pode abrir, para pôr uma imagem num documento e
+# para comparar duas versões do visualizador sem depender de memória visual.
+_ap.add_argument('--recuo', type=float, default=3.1,
+                 help='distância da câmara, em raios de arena')
+_ap.add_argument('--captura', type=str, default=None,
+                 help='grava um PNG da cena e sai (ex.: --captura fig.png)')
+_ap.add_argument('--passos-antes', type=int, default=140,
+                 help='passos de simulação a correr antes da captura')
 _args, _ = _ap.parse_known_args()
 
 ALGO = _args.algo
@@ -126,7 +141,7 @@ _luz = DirectionalLight(y=3, z=-2, x=1, rotation=(50, -30, 0),
 # originais tinham-nas desligadas por custo (~140 entidades), mas só a luz
 # PRINCIPAL as projeta e a caixa de sombra é limitada à arena, o que as torna
 # baratas. Se alguma máquina sofrer, `--sem-sombras` desliga-as.
-if not _args.sem_sombras:
+if _args.sombras:
     _luz.shadows = True
     try:
         _luz.shadow_map_resolution = Vec2(2048, 2048)
@@ -134,7 +149,7 @@ if not _args.sem_sombras:
         pass
 DirectionalLight(y=2, z=3, x=-2, rotation=(30, 140, 0), shadows=False,
                  color=color.rgb32(120, 140, 170))          # preenchimento, fria
-AmbientLight(color=color.rgba32(70, 76, 86, 255))
+AmbientLight(color=color.rgba32(86, 94, 106, 255))
 
 vis_config = config.get('visualization', {})
 speed_slider = Slider(min=vis_config.get('speed_slider_min', 1),
@@ -207,9 +222,15 @@ politica = _carregar_politica()
 # diagrama. Aproxima-se a câmara e alarga-se o fov, o que dá perspetiva visível
 # sem cortar a arena.
 _camera_editor.rotation_x = _args.angulo
-_camera_editor.position = (0, 0, 0)
-camera.fov = 55
-camera.z = -(env.arena_radius * 2.6)
+# ⚠️ O plano do MAPA (x,y do simulador) é vertical no espaço do Ursina, porque
+# a cena é desenhada 1:1 com o mundo. Consequência: `rotation_x=90` dá a vista de
+# topo do mapa (era o 89 dos originais) e baixar o ângulo inclina. Ao inclinar, o
+# centro da arena sobe no ecrã e sobra uma faixa preta em baixo — desloca-se o
+# pivô ao longo de Y (norte-sul do mapa) para recentrar.
+_desvio = env.arena_radius * 0.42 * max(0.0, (90.0 - _args.angulo) / 90.0)
+_camera_editor.position = (0, _desvio, 0)
+camera.fov = 50
+camera.z = -(env.arena_radius * _args.recuo)
 _camera_editor.target_z = camera.z   # o EditorCamera faz lerp para target_z
 
 # ── Chão: disco da arena com grelha métrica ──────────────────────────────────
@@ -220,16 +241,26 @@ _camera_editor.target_z = camera.z   # o EditorCamera faz lerp para target_z
 R = env.arena_radius
 Entity(model='circle', scale=R * 2, color=CHAO, position=(0, 0, 0.06))
 Entity(model='circle', scale=R * 2, color=GRELHA, mode='line', thickness=2,
-       position=(0, 0, 0.05))
+       position=(0, 0, 0.05), alpha=0.55)
 for _raio in range(5, int(R) + 1, 5):
     Entity(model='circle', scale=_raio * 2, color=GRELHA, mode='line',
            position=(0, 0, 0.04), alpha=0.25)
 
-# ── Ninho: esfera + halo no chão ─────────────────────────────────────────────
-nest_view = Entity(model='sphere', color=NINHO, unlit=True,
-                   scale=env.nest_radius * 2, position=tuple(env.nest_pos))
-nest_halo = Entity(model='circle', color=NINHO, alpha=0.22,
-                   scale=env.nest_radius * 4, position=tuple(env.nest_pos))
+# ── Ninho: disco marcado no chão, não uma bola ───────────────────────────────
+# Era uma esfera de raio×2 mais um halo de raio×4 — no ecrã, uma bola verde que
+# competia com o enxame inteiro. O ninho é uma ZONA (raio 1,5 m), não um objeto:
+# lê-se melhor como alvo desenhado no chão, com uma cúpula baixa que lhe dá
+# presença sem o transformar no protagonista.
+nest_halo = Entity(model='circle', color=NINHO, alpha=0.18, unlit=True,
+                   scale=env.nest_radius * 2.6,
+                   position=(env.nest_pos[0], env.nest_pos[1], 0.02))
+nest_ring = Entity(model='circle', color=NINHO, mode='line', thickness=3,
+                   unlit=True, scale=env.nest_radius * 2,
+                   position=(env.nest_pos[0], env.nest_pos[1], 0.01))
+nest_view = Entity(model='sphere', color=NINHO, unlit=True, alpha=0.85,
+                   scale=(env.nest_radius * 1.1, env.nest_radius * 1.1,
+                          env.nest_radius * 0.5),
+                   position=tuple(env.nest_pos))
 
 obs_views = [Entity(model='sphere', color=OBSTACULO, texture='noise',
                     scale=env.obstacle_radius * 2, position=tuple(p))
@@ -283,23 +314,42 @@ except Exception:
 # Eram cubos laranja iguais para os três algoritmos. Passam a ter o corpo na cor
 # que o algoritmo tem nas figuras da tese, uma cúpula clara que dá volume e um
 # visor que continua a mostrar a direção.
-COR_ALGO = _hex(ALGO_COLORS[ALGO.upper()])
+def _aviva(c, f=1.75):
+    """Clareia mantendo a matiz. A paleta da tese foi escolhida para papel
+    branco; no ecrã escuro, o verde #2E7D32 do GNN desaparece contra o cinzento
+    do chão. Sobe-se o brilho e conserva-se a cor — é ela que liga o ecrã às
+    figuras."""
+    return color.rgb32(min(255, int(c.r * 255 * f)),
+                       min(255, int(c.g * 255 * f)),
+                       min(255, int(c.b * 255 * f)))
+
+
+COR_ALGO = _aviva(_hex(ALGO_COLORS[ALGO.upper()]))
+
+# ⚠️ Escala VISUAL dos robôs. Ao tamanho físico (raio 0,15 m numa arena de raio
+# 15) um robô ocupa um centésimo do diâmetro da arena: na captura de teste eram
+# pontinhos que não se distinguiam do fundo. Desenham-se 3,5× maiores — é a
+# convenção de qualquer visualização de enxame, e o HUD diz o raio real. O que
+# NÃO se exagera é a posição: essa é a do simulador, ao milímetro.
+ESCALA_ROBO = 5.0
+_r = env.robot_radius * ESCALA_ROBO
+CORPO = (_r * 2, _r * 2, _r * 1.35)
+
 robot_views, robot_shadows = [], []
 for r_pos in env.agent_positions:
     robot = Entity(model='sphere', color=COR_ALGO, position=tuple(r_pos),
-                   scale=(env.robot_radius * 2, env.robot_radius * 2,
-                          env.robot_radius * 1.3))
-    Entity(parent=robot, model='sphere', color=color.white, alpha=0.5,
-           scale=(0.62, 0.62, 0.62), position=(0, 0, -0.34), unlit=True)
+                   scale=CORPO)
+    Entity(parent=robot, model='sphere', color=color.white, alpha=0.45,
+           scale=(0.6, 0.6, 0.6), position=(0, 0, -0.36), unlit=True)
     Entity(parent=robot, model='cube', color=color.white,
-           scale=(0.7, 0.26, 0.34), position=(0, 0, 0.5))   # visor: direção
+           scale=(0.66, 0.24, 0.32), position=(0, 0, 0.5))  # visor: direção
     robot_views.append(robot)
     # Sombra de contacto: um disco escuro colado ao chão, por baixo de cada robô.
     # É o que o "assenta" na superfície — sem ela, mesmo com sombras projetadas,
     # os robôs parecem flutuar a poucos centímetros do plano.
-    robot_shadows.append(Entity(model='circle', color=color.black, alpha=0.32,
-                                scale=env.robot_radius * 3.4, unlit=True,
-                                position=(r_pos[0], r_pos[1], 0.03)))
+    robot_shadows.append(Entity(model='circle', color=color.black, alpha=0.16,
+                                scale=_r * 1.15, unlit=True,
+                                position=(r_pos[0], r_pos[1], 0.015)))
 
 # ── O GRAFO: as ligações que a política vê ───────────────────────────────────
 # A tese é sobre uma rede de grafo com ATENÇÃO SOBRE OS VIZINHOS — e esse grafo,
@@ -312,7 +362,7 @@ for r_pos in env.agent_positions:
 # até 190 pares, e criar uma entidade por aresta seria insustentável.
 RAIO_VIZINHO = 4.0          # metros; a mesma ordem do alcance de interação
 grafo = Entity(model=Mesh(vertices=[], mode='line', thickness=1),
-               color=COR_ALGO, alpha=0.28, unlit=True)
+               color=COR_ALGO, alpha=0.12, unlit=True)
 
 
 MAX_ARESTAS = 600           # acima disto a malha vira borrão e deixa de informar
@@ -346,10 +396,10 @@ def _atualizar_grafo():
 # funil à entrada do gargalo, o beco onde alguns ficam presos, a fila que se
 # forma na porta. Guarda-se uma janela curta das posições e desenha-se como
 # linhas esbatidas — de novo num só Mesh, por causa do custo.
-PASSOS_RASTO = 45
+PASSOS_RASTO = 26
 historico = []
-rastos = Entity(model=Mesh(vertices=[], mode='line', thickness=2),
-                color=COR_ALGO, alpha=0.5, unlit=True)
+rastos = Entity(model=Mesh(vertices=[], mode='line', thickness=1),
+                color=COR_ALGO, alpha=0.2, unlit=True)
 
 
 # ── HUD ──────────────────────────────────────────────────────────────────────
@@ -391,33 +441,13 @@ def robot_min_dist(pos, all_positions, idx):
 MAX_STEPS_PER_FRAME = 20
 
 
-def update():
-    global obs_dict, time_accumulator
+def _atualizar_cena():
+    """Põe o desenho a par do estado do ambiente.
 
-    time_accumulator += time.dt
-    target_delay = 1.0 / speed_slider.value
-
-    stepped = False
-    n_steps = 0
-    while time_accumulator >= target_delay and n_steps < MAX_STEPS_PER_FRAME:
-        time_accumulator -= target_delay
-        n_steps += 1
-        stepped = True
-
-        agent_ids = list(env.agents)
-        obs_batch = np.stack([np.asarray(obs_dict[a], dtype=np.float32)
-                              for a in agent_ids])
-        act_batch = politica(obs_batch)
-        obs_dict, _, terms, _, _ = env.step(
-            {aid: act_batch[k] for k, aid in enumerate(agent_ids)})
-
-        if any(terms.values()):
-            obs_dict, _ = env.reset()
-            break
-
-    if not stepped:
-        return
-
+    Separada do `update()` porque a captura (`--captura`) precisa exatamente do
+    mesmo trabalho sem o ciclo de eventos do Ursina — e duas cópias divergiriam,
+    que é o defeito que juntar os três visualizadores veio corrigir.
+    """
     porta = ""
     if getattr(env, 'has_door', False):
         porta = ("   ·   porta ABERTA" if not env.door_active
@@ -465,21 +495,78 @@ def update():
                                + Vec3(*env.agent_headings[i]))
         robot_shadows[i].position = (r_pos[0], r_pos[1], 0.03)
 
-        # Cor por estado de proximidade — a telemetria que os três já tinham,
-        # agora sobre a cor do algoritmo em vez de laranja para todos.
+        # A telemetria de proximidade fica só para o SINAL e para o contacto
+        # com paredes. Na captura de teste, o enxame agrupado no gargalo
+        # ficava TODO ciano ("perto de outro robô") — e a cor do algoritmo,
+        # que é o que liga o ecrã às figuras da tese, desaparecia.
         w_dist = wall_min_dist(r_pos, env.walls, env.arena_radius)
-        r_dist = robot_min_dist(r_pos, env.agent_positions, i)
         if env.signaling[i] == 1.0:
             robot_views[i].color = SINALIZA          # a sinalizar
             robot_views[i].scale = tuple(x * 1.7 for x in normal)
         else:
             robot_views[i].scale = normal
-            if w_dist < 0.8:
-                robot_views[i].color = PERTO_MURO    # perto de parede/borda
-            elif r_dist < 1.0:
-                robot_views[i].color = PERTO_ROBO    # perto de outro robô
-            else:
-                robot_views[i].color = COR_ALGO
+            robot_views[i].color = (PERTO_MURO if w_dist < 0.45
+                                    else COR_ALGO)
 
 
-app.run()
+def update():
+    global obs_dict, time_accumulator
+
+    time_accumulator += time.dt
+    target_delay = 1.0 / speed_slider.value
+
+    stepped = False
+    n_steps = 0
+    while time_accumulator >= target_delay and n_steps < MAX_STEPS_PER_FRAME:
+        time_accumulator -= target_delay
+        n_steps += 1
+        stepped = True
+
+        agent_ids = list(env.agents)
+        obs_batch = np.stack([np.asarray(obs_dict[a], dtype=np.float32)
+                              for a in agent_ids])
+        act_batch = politica(obs_batch)
+        obs_dict, _, terms, _, _ = env.step(
+            {aid: act_batch[k] for k, aid in enumerate(agent_ids)})
+
+        if any(terms.values()):
+            obs_dict, _ = env.reset()
+            break
+
+    if stepped:
+        _atualizar_cena()
+
+
+def _capturar_e_sair():
+    """Avança a simulação, grava um PNG e fecha.
+
+    Corre os passos ANTES de gravar para a cena ter história: com o enxame ainda
+    no spawn não há rastos nem topologia para ver, que é precisamente o que a
+    imagem deve mostrar. O `renderFrame` explícito é preciso porque o Panda3D só
+    desenha quando lhe pedem, e aqui não há ciclo de eventos a correr.
+    """
+    from panda3d.core import Filename
+
+    alvo = os.path.abspath(_args.captura)
+    os.makedirs(os.path.dirname(alvo) or '.', exist_ok=True)
+    for _ in range(_args.passos_antes):
+        agent_ids = list(env.agents)
+        obs = np.stack([np.asarray(obs_dict[a], dtype=np.float32)
+                        for a in agent_ids])
+        act = politica(obs)
+        globals()['obs_dict'], _, terms, _, _ = env.step(
+            {aid: act[k] for k, aid in enumerate(agent_ids)})
+        _atualizar_cena()
+        if any(terms.values()):
+            break
+    for _ in range(3):                     # deixa o render assentar
+        base.graphicsEngine.renderFrame()
+    base.win.saveScreenshot(Filename.fromOsSpecific(alvo))
+    print(f"[OK] captura: {alvo}")
+    application.quit()
+
+
+if _args.captura:
+    _capturar_e_sair()
+else:
+    app.run()
