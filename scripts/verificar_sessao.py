@@ -16,7 +16,9 @@ Uso:
     python scripts/verificar_sessao.py results/graficos_tese/09-07-2026_12h52m
 """
 import os
+import re
 import sys
+from datetime import datetime
 
 # a consola do Windows é cp1252 e rebenta com os símbolos do relatório
 if hasattr(sys.stdout, 'reconfigure'):
@@ -121,12 +123,50 @@ def verificar(pasta, algos=('gnn', 'ppo', 'sac'), scenarios=None):
     return faltam_essenciais, len(existentes), len(itens), n_videos
 
 
+def _data_do_nome(nome):
+    """Data do treino a partir do nome da pasta (`DD-MM-AAAA_HHhMMm`).
+
+    Devolve None se o nome não seguir a convenção — aí não se adivinha.
+    """
+    m = re.match(r"^(\d{2})-(\d{2})-(\d{4})_(\d{2})h(\d{2})m", nome)
+    if not m:
+        return None
+    d, mes, ano, h, mi = (int(x) for x in m.groups())
+    try:
+        return datetime(ano, mes, d, h, mi)
+    except ValueError:
+        return None
+
+
 def ultima_sessao():
+    """A sessão mais recente — pela data no NOME, não pelo mtime da pasta.
+
+    ⚠️ Era `max(cands, key=os.path.getmtime)`, e isso é uma armadilha que se
+    arma sozinha: o passo 2 do `pos_campanha.py` COPIA a avaliação para dentro da
+    sessão, o que lhe atualiza o mtime — e a partir daí essa pasta passa a ser
+    «a última» para sempre. Encontrado a 5 ago: `ultima_sessao()` devolvia
+    `27-05-2026_11h18m` (maio) enquanto a campanha da tese é `09-07-2026_12h52m`,
+    e a única razão era o mtime ter sido tocado por uma execução anterior deste
+    mesmo script. Regenerar figuras por cima de uma campanha antiga tem o mesmo
+    efeito.
+
+    O nome da pasta traz a data do treino e não muda quando alguém lhe mexe. As
+    pastas com nome fora da convenção (campanhas nomeadas à mão, como
+    `final_7d` ou `mega_treino`) continuam a ser ordenadas por mtime, mas ficam
+    SEMPRE atrás das datadas: uma pasta sem data não é candidata a «a última»
+    enquanto houver uma com data.
+    """
     if not os.path.isdir(SESSOES):
         return None
     cands = [os.path.join(SESSOES, d) for d in os.listdir(SESSOES)
              if os.path.isdir(os.path.join(SESSOES, d)) and d[:2].isdigit()]
-    return max(cands, key=os.path.getmtime) if cands else None
+    if not cands:
+        return None
+    datadas = [(c, _data_do_nome(os.path.basename(c))) for c in cands]
+    com_data = [(c, dt) for c, dt in datadas if dt is not None]
+    if com_data:
+        return max(com_data, key=lambda par: par[1])[0]
+    return max(cands, key=os.path.getmtime)
 
 
 def main():

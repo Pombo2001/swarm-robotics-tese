@@ -68,7 +68,10 @@ def test_existem_seis(implementacoes):
     r = subprocess.run(["git", "grep", "-l", "def cliffs_delta", "--", "*.py"],
                        cwd=RAIZ, capture_output=True, text=True)
     encontrados = {l.replace("\\", "/") for l in r.stdout.split() if l.strip()}
-    encontrados = {f for f in encontrados if not f.startswith("out/")}
+    # `out/` é a cópia empacotada para o Pi; e este próprio ficheiro contém a
+    # string que o `git grep` procura — ficou na lista assim que foi commitado.
+    encontrados = {f for f in encontrados
+                   if not f.startswith(("out/", "tests/"))}
     assert encontrados == set(FICHEIROS), (
         "o conjunto de ficheiros com cliffs_delta mudou; acrescenta ou remove "
         f"da lista deste teste.\nencontrados: {sorted(encontrados)}")
