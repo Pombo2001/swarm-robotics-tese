@@ -172,6 +172,28 @@ que altera \textbf{uma} coisa e deixa o resto bit-a-bit igual:
 \PORPREENCHER{condição natural vs. escala vs. sem obstáculos vs. sem features da
 porta --- e a conclusão sobre qual das causas explica o resultado}
 
+Duas causas adicionais, que a geometria tridimensional do simulador torna
+plausíveis, foram excluídas por medição direta e não figuram entre as quatro do
+pré-registo por não terem sido antecipadas. A primeira é o \textbf{limite
+vertical}: os sete cenários de origem não o têm, e os controladores usam a
+dimensão vertical de forma substancial durante o treino --- nos episódios
+registados para inspeção, a altitude média dos agentes vai de $0{,}13$ a
+$5{,}67$\,m e chega a máximos de $14{,}6$\,m ---, pelo que a restrição a
+$\pm 2$\,m imposta neste mapa altera a dinâmica em que essas políticas foram
+otimizadas. Repetindo a avaliação com o limite vertical removido (isto é, com a
+casca esférica da arena como único limite), quatro campeões evolutivos --- os do
+Muro em U, Gargalo, Quatro Salas e Sandbox --- sobre três sementes cada mantêm
+$0{,}00$ recolhas por episódio, exatamente como na condição com limite. O limite
+vertical não é, portanto, o que explica o zero. A segunda é a
+\textbf{impossibilidade geométrica de entregar} discutida nas limitações: também
+essa fica excluída, porque a distância mínima ao ninho \emph{na horizontal},
+tomada sobre os vinte agentes e todos os passos do episódio, é de $36{,}8$ a
+$79{,}4$\,m num percurso mínimo de $154$\,m --- os agentes não chegam sequer à
+vizinhança do ninho, quanto mais a precisar de descer para lá entrar. Os mesmos
+modelos, nos seus cenários de origem, aproximam-se até $1{,}4$\,m do ninho e
+recolhem entre $67$ e $137$ itens por episódio. O que falha na transferência é a
+navegação, e falha cedo.
+
 \subsection{Treino nativo (F2)}
 
 \PORPREENCHER{tabela dos $3$ algoritmos $\times$ $7$ execuções: média $\pm$
@@ -214,13 +236,17 @@ por algoritmo}
 % verificações independentes excluem que a causa seja o desenho do mapa: existe
 % caminho do \textit{spawn} ao ninho para todos os agentes, mesmo com a porta
 % fechada; um oráculo que desça o gradiente geodésico recolhe
-% \PORPREENCHER{valor} itens por episódio; e a folga do orçamento de passos é de
+% $53$ itens por episódio (média de três sementes: $56$, $52$ e $51$, com a
+% primeira recolha ao passo $\approx 600$ de $2000$); e a folga do orçamento é de
 % $2{,}9\times$ a partir do pior \textit{spawn}. O mapa é resolúvel; o que estes
 % algoritmos não fazem, com este sinal de treino e este orçamento, é aprendê-lo.
 
 \subsection{Limitações desta campanha}
 
-Quatro limitações ficam declaradas, todas fixadas antes dos dados.
+Seis limitações ficam declaradas. As quatro primeiras foram fixadas antes dos
+dados; as duas últimas resultaram de medições feitas ao mapa construído, e
+declaram-se aqui porque condicionam a leitura de resultados que ainda não estão
+produzidos.
 
 Primeiro, as duas condições de normalização da observação estão \textbf{ambas}
 fora da distribuição de treino, de maneiras opostas: na condição natural as
@@ -249,6 +275,34 @@ daqueles têm orçamento, número de passos por episódio e protocolo próprios;
 juntá-los na mesma linha compararia coisas diferentes. É também a razão pela qual
 o código mantém a lista dos sete cenários da dissertação separada da lista de
 cenários ativos do simulador.
+
+Quinto, o \textbf{incentivo a cooperar na zona C é pequeno, e tem de ser
+reportado ao lado da métrica que o mede}. A métrica M3 --- fração de episódios em
+que a porta é aberta --- foi pré-registada para testar se a cooperação emerge
+\emph{quando é vantajosa}; o quanto ela é vantajosa neste mapa só foi medido
+depois, sobre a geometria construída. O percurso mais curto do \textit{spawn} ao
+ninho passando pela porta mede $154{,}5$\,m; o percurso pela alternativa longa a
+norte, que não exige coordenação nenhuma, mede $178{,}5$\,m. Cooperar poupa,
+portanto, $13{,}4\%$ do trajeto, e exige que três agentes ocupem a zona de
+empurrão \emph{ao mesmo tempo}. Com esta razão de custos, uma M3 baixa não
+distingue ``a cooperação não emergiu'' de ``não compensava emergir'', e a segunda
+leitura é a mais parcimoniosa. Verificou-se, pelo mesmo procedimento, que a
+alternativa existe de facto: com a porta tratada como parede, o ninho continua
+alcançável a partir do \textit{spawn} --- não abrir a porta atrasa, não impede.
+
+Sexto, a entrega no ninho é avaliada em \textbf{três} dimensões, enquanto tudo o
+resto do que este mapa mede é planar. A condição de recolha compara a distância
+euclidiana tridimensional do agente ao centro do ninho, que está no plano
+$z = 0$, com o raio do ninho: um agente acima de $1{,}6$\,m não entrega, esteja
+onde estiver na horizontal, nem que esteja exatamente por cima do alvo. Como o
+movimento vertical está limitado a $\pm 2$\,m neste cenário, sobram $0{,}4$\,m de
+altitude em que a navegação é possível e a entrega não. A restrição é pequena, e
+é muito menor do que a dos sete cenários --- onde, sem limite vertical, a mesma
+faixa improdutiva se estende até ao raio da arena, $13{,}4$\,m ---, mas fica
+declarada porque a assimetria entre uma tarefa planar e um critério de sucesso
+tridimensional não é evidente a partir da descrição do cenário. Uma versão futura
+deste mapa deve alinhar o limite vertical com o raio do ninho, e não com uma
+folga de manobra escolhida à parte.
 
 \paragraph{Nota metodológica sobre o desenho do mapa.} Três correções feitas
 antes de existir qualquer resultado válido neste cenário merecem registo, porque
