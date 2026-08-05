@@ -23,15 +23,30 @@ except Exception:
     pass
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:      # para o import de scripts.verificar_sessao
+    sys.path.insert(0, PROJECT_ROOT)
 
 
 def _latest_report_dir():
+    """A campanha mais recente — pela data do NOME, não pelo mtime da pasta.
+
+    Terceiro sítio com o mesmo defeito (5 ago): o mtime muda quando se
+    regeneram figuras ou se copia um CSV para dentro de uma campanha antiga, e
+    isto escolhe os dados que vão para o PDF da reunião. Ver
+    `verificar_sessao.ultima_sessao`, onde a regra vive.
+    """
+    from scripts.verificar_sessao import _data_do_nome
+
     base = os.path.join(PROJECT_ROOT, "results", "graficos_tese")
     dirs = [d for d in glob.glob(os.path.join(base, "*")) if os.path.isdir(d)
             and os.path.basename(d) != "estatisticas"]
     if not dirs:
         return None
-    return max(dirs, key=os.path.getmtime)
+
+    def chave(d):
+        dt = _data_do_nome(os.path.basename(d))
+        return (1, dt.timestamp()) if dt else (0, os.path.getmtime(d))
+    return max(dirs, key=chave)
 
 
 def _page_text(pdf, title, lines):
