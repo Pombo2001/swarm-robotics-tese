@@ -90,6 +90,16 @@ _ap.add_argument('--agents', type=int, default=None)
 # que têm a mesma estrutura. Evita restaurar modelos por cima dos ativos só para
 # espreitar um treino antigo.
 _ap.add_argument('--models-root', type=str, default=None)
+# ⚠️ Rastos e grafo: DESLIGADOS por omissão. Na captura de teste as linhas
+# leem-se como uma teia de riscos emaranhados — com 20 agentes, ligar cada um aos
+# vizinhos e às suas posições anteriores dá centenas de segmentos cruzados sobre
+# a mesma área, e o que devia mostrar o padrão coletivo tapa a cena. Ficam
+# disponíveis para quem quiser ver a topologia ou o caminho num momento
+# específico, que é onde informam.
+_ap.add_argument('--grafo', action='store_true',
+                 help='desenha as ligações entre vizinhos (a topologia da GNN)')
+_ap.add_argument('--rastos', action='store_true',
+                 help='desenha o caminho recente de cada robô')
 _ap.add_argument('--sombras', action='store_true',
                  help='liga as sombras projetadas (o shadow map desta escala '
                       'desenha borrões grandes; as de contacto ficam sempre)')
@@ -331,7 +341,7 @@ COR_ALGO = _aviva(_hex(ALGO_COLORS[ALGO.upper()]))
 # pontinhos que não se distinguiam do fundo. Desenham-se 3,5× maiores — é a
 # convenção de qualquer visualização de enxame, e o HUD diz o raio real. O que
 # NÃO se exagera é a posição: essa é a do simulador, ao milímetro.
-ESCALA_ROBO = 5.0
+ESCALA_ROBO = 3.0
 _r = env.robot_radius * ESCALA_ROBO
 CORPO = (_r * 2, _r * 2, _r * 1.35)
 
@@ -361,8 +371,9 @@ for r_pos in env.agent_positions:
 # Desenha-se em UM só `Mesh` de linhas, reconstruído por frame: 20 agentes dão
 # até 190 pares, e criar uma entidade por aresta seria insustentável.
 RAIO_VIZINHO = 4.0          # metros; a mesma ordem do alcance de interação
-grafo = Entity(model=Mesh(vertices=[], mode='line', thickness=1),
-               color=COR_ALGO, alpha=0.12, unlit=True)
+grafo = (Entity(model=Mesh(vertices=[], mode='line', thickness=1),
+                color=COR_ALGO, alpha=0.18, unlit=True)
+         if _args.grafo else None)
 
 
 MAX_ARESTAS = 600           # acima disto a malha vira borrão e deixa de informar
@@ -376,6 +387,8 @@ def _atualizar_grafo():
     distâncias resolve o mesmo em NumPy; é a técnica que o projeto já aplicou ao
     LiDAR e às observações, pela mesma razão.
     """
+    if grafo is None:
+        return
     p = env.agent_positions
     if len(p) < 2:
         return
@@ -398,8 +411,9 @@ def _atualizar_grafo():
 # linhas esbatidas — de novo num só Mesh, por causa do custo.
 PASSOS_RASTO = 26
 historico = []
-rastos = Entity(model=Mesh(vertices=[], mode='line', thickness=1),
-                color=COR_ALGO, alpha=0.2, unlit=True)
+rastos = (Entity(model=Mesh(vertices=[], mode='line', thickness=1),
+                 color=COR_ALGO, alpha=0.28, unlit=True)
+          if _args.rastos else None)
 
 
 # ── HUD ──────────────────────────────────────────────────────────────────────
@@ -474,26 +488,26 @@ def _atualizar_cena():
         wall_views[i].enabled = False        # porta aberta: sai do ecrã
         wall_edges[i].enabled = False
 
-    # Grafo e rastos — as duas camadas que mostram o COLETIVO, e não os
-    # indivíduos. Reconstruídos por frame, cada um num só Mesh.
+    # Grafo e rastos — opcionais, cada um num só Mesh reconstruído por frame.
     _atualizar_grafo()
-    historico.append(env.agent_positions.copy())
-    if len(historico) > PASSOS_RASTO:
-        historico.pop(0)
-    if len(historico) > 1:
-        v = []
-        for k in range(1, len(historico)):
-            for a, b in zip(historico[k - 1], historico[k]):
-                v.extend([Vec3(*a), Vec3(*b)])
-        rastos.model.vertices = v
-        rastos.model.generate()
+    if rastos is not None:
+        historico.append(env.agent_positions.copy())
+        if len(historico) > PASSOS_RASTO:
+            historico.pop(0)
+        if len(historico) > 1:
+            v = []
+            for k in range(1, len(historico)):
+                for a, b in zip(historico[k - 1], historico[k]):
+                    v.extend([Vec3(*a), Vec3(*b)])
+            rastos.model.vertices = v
+            rastos.model.generate()
 
-    normal = (env.robot_radius * 2, env.robot_radius * 2, env.robot_radius * 1.3)
+    normal = CORPO
     for i, r_pos in enumerate(env.agent_positions):
         robot_views[i].position = tuple(r_pos)
         robot_views[i].look_at(robot_views[i].position
                                + Vec3(*env.agent_headings[i]))
-        robot_shadows[i].position = (r_pos[0], r_pos[1], 0.03)
+        robot_shadows[i].position = (r_pos[0], r_pos[1], 0.015)
 
         # A telemetria de proximidade fica só para o SINAL e para o contacto
         # com paredes. Na captura de teste, o enxame agrupado no gargalo
