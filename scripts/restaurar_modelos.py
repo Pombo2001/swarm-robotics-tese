@@ -25,17 +25,39 @@ except Exception:
     pass
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# Preciso para o `from scripts.verificar_sessao import ...` funcionar quando este
+# ficheiro é corrido diretamente (`python scripts/restaurar_modelos.py`).
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 GRAFICOS_DIR = os.path.join(PROJECT_ROOT, "results", "graficos_tese")
 SUBS = ("models", "models_ppo", "models_sac")
 
 
 def _sessions_with_models():
-    """Sessões (pasta/modelos existe), mais recente primeiro."""
+    """Sessões com modelos arquivados, a mais recente primeiro.
+
+    ⚠️ Ordenava por `os.path.getmtime`, e isso decide **que modelos ficam
+    ativos** — é a armadilha nº9 na sua forma mais direta. O mtime de uma pasta
+    muda quando lhe regeneram as figuras ou lhe copiam um CSV (é o que o
+    `pos_campanha.py` faz no passo 2), e a partir daí uma campanha de meses atrás
+    passa a ser «a mais recente». A 5 ago o mesmo defeito foi encontrado em
+    `verificar_sessao.ultima_sessao()`, que devolvia uma campanha de maio.
+
+    Ordena-se pela data no NOME (`DD-MM-AAAA_HHhMMm`), que é a data do treino e
+    não muda quando alguém mexe na pasta. A regra vive no `verificar_sessao` para
+    não haver duas — foi ter duas réguas que causou os erros deste dia.
+    """
+    from scripts.verificar_sessao import _data_do_nome
+
     out = []
     for d in glob.glob(os.path.join(GRAFICOS_DIR, "*")):
         if os.path.isdir(os.path.join(d, "modelos")):
             out.append(d)
-    return sorted(out, key=os.path.getmtime, reverse=True)
+    # Sem data no nome (campanhas nomeadas à mão) ficam no fim, por mtime.
+    def chave(d):
+        dt = _data_do_nome(os.path.basename(d))
+        return (1, dt.timestamp()) if dt else (0, os.path.getmtime(d))
+    return sorted(out, key=chave, reverse=True)
 
 
 def restaurar(sessao_dir):
