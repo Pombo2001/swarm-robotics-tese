@@ -171,9 +171,12 @@ def campeoes():
             if np.mean(recs) != 0.0:
                 falhas.append(f"{cen} ({rotulo} teto): {np.mean(recs):.2f} recolhas — "
                               f"a tese afirma 0,00 nas duas condições")
+    # A tese arredonda para «entre 37 e 79 m»: o valor exato move-se ~0,1 m com
+    # a semente, e um número com décima na tese faria este verificador acusar
+    # uma divergência que não é uma.
     if d2_todas:
-        print(f"  intervalo das distâncias mínimas: {min(d2_todas):.1f} a "
-              f"{max(d2_todas):.1f} m   (tese: 36,8 a 79,4)")
+        compara("distância mínima ao ninho, menor (m)", min(d2_todas), 37.0, 1.0)
+        compara("distância mínima ao ninho, maior (m)", max(d2_todas), 79.0, 1.0)
 
 
 def main():
