@@ -32,7 +32,9 @@ O padrão: **os números têm verificador, as afirmações sobre os números nã
 | 1.1 | M3 (`door_opened`) registada na avaliação | ✅ 5 ago — coluna + 5 testes + enviada às 4 pastas do servidor |
 | 1.2 | M1 e M2 calculáveis do `eval_by_run.csv` | ✅ colunas presentes (`food_collected`, `success`, `Run`) |
 | 1.3 | A análise F2 corre ponta a ponta com dados na forma real | ✅ `scripts/testes/ensaio_analise_f2.py` — 3 cenários de resultado |
-| 1.4 | `pos_campanha.py` (armadilha nº9) corre sobre a campanha do mapa | ⬜ |
+| 1.4 | `pos_campanha.py` (armadilha nº9) corre sobre a campanha do mapa | ✅ corrido — e apanhou o defeito da «última sessão» por mtime |
+| 1.7 | O 8.º cenário fica fora das tabelas e figuras dos sete | ✅ `gerar_figuras_7d` e `plot_robustez` passam a filtrar por `THESIS_SCENARIOS` |
+| 1.8 | Os scripts do F1 apontam para os dados **válidos** | ✅ o default do `analise_f1_controlos` era a pasta ANULADA |
 | 1.5 | O limiar de decisão (⌈5/7 × n⌉ = 15/21) sai do n do CSV, não fixo | ✅ testado nos dois lados: 15 sobe, 14 dá negativo |
 | 1.6 | A secção do mapa grande compila **dentro** do `main.tex` | ✅ 5 ago — 127 págs, 0 refs indefinidas, 0 overfull; `\input` deixado comentado no sítio |
 
@@ -41,7 +43,9 @@ O padrão: **os números têm verificador, as afirmações sobre os números nã
 | # | Verificação | Estado |
 |---|---|---|
 | 2.1 | Datas e estados do dashboard vs realidade do servidor | ✅ linha do tempo corrigida; ⬜ automatizar |
-| 2.2 | Números da tese ↔ scripts que os reproduzem | ✅ 346 + `verificar_vertical.py`; ⬜ cobrir a secção do mapa grande quando fechar |
+| 2.2 | Números da tese ↔ scripts que os reproduzem | ✅ 346 + `verificar_vertical.py` + **16 contagens em prosa** (no hook); ⬜ cobrir a secção do mapa grande quando fechar |
+| 2.5 | A documentação aponta para ficheiros que existem — e para os **certos** | ✅ 94 caminhos existem; o `REPRODUZIR` e o `INVENTARIO` mandavam para os dados anulados do F1 |
+| 2.6 | Dois scripts a escrever o mesmo ficheiro com metodologias diferentes | ✅ `statistical_tests` (episódio) separado do canónico (run) |
 | 2.3 | Afirmações do pré-registo ↔ geometria atual do mapa | ✅ emendas 22-23 datadas |
 | 2.4 | Uma métrica medida por duas réguas diferentes | ✅ **seis** cópias do δ de Cliff fixadas por teste (3 rebentavam com arrays); constantes duplicadas no visualizador ligadas ao ambiente |
 
@@ -53,9 +57,28 @@ O padrão: **os números têm verificador, as afirmações sobre os números nã
 | 3.2 | Os três visualizadores usam convenções de eixos diferentes | ⬜ decidir se se unificam ou se se documenta |
 | 3.3 | Scripts que produzem números da tese e vivem fora do repositório | ✅ `verificar_vertical.py` trouxe os de hoje |
 
+### O padrão que se repete
+
+Dos onze defeitos encontrados a 5 de agosto, **cinco** são a mesma coisa: uma
+decisão tomada por um sinal que se altera sozinho, ou uma segunda régua para uma
+grandeza que já tinha a sua.
+
+| Defeito | Sinal frágil | Onde |
+|---|---|---|
+| «última sessão» | `mtime` da pasta | `verificar_sessao` |
+| que modelos ficam ativos | `mtime` da pasta | `restaurar_modelos` |
+| campanha do PDF de reunião | `mtime` da pasta | `gerar_pdf_reuniao` |
+| tabela de significância certa | **ordem** por que se correm dois scripts | `statistical_tests` vs `gerar_figuras_7d` |
+| 8.º cenário fora das tabelas | **não haver dados** dele ainda | `gerar_figuras_7d`, `plot_robustez` |
+
+A regra que sai daqui: **uma garantia que depende de um acidente não é uma
+garantia**. Quando algo tem de ser verdade, tem de ser verdade por construção —
+a data do treino está no nome da pasta, a lista dos sete cenários existe no
+código, e cada ficheiro tem um só produtor.
+
 ### Inventário de testes (5 ago)
 
-87 testes passam. O que **não** tem rede, por ordem do que produz números que a
+110 testes passam. O que **não** tem rede, por ordem do que produz números que a
 tese publica:
 
 | Módulo | Linhas | Testes | Risco |
