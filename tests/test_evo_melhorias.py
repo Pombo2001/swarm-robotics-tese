@@ -39,10 +39,29 @@ FALHAS = []
 
 
 def check(cond, msg):
+    """Regista e imprime. ⚠️ NÃO falha sozinho — ver a nota no fim do ficheiro.
+
+    Cada função de teste tem de terminar com `_exigir()`, senão as verificações
+    correm e o pytest dá o teste por passado aconteça o que acontecer.
+    """
     tag = "[ok]" if cond else "[FALHA]"
     print(f"  {tag} {msg}")
     if not cond:
         FALHAS.append(msg)
+
+
+def _exigir():
+    """Converte o que o `check` acumulou numa falha de teste, e limpa.
+
+    Sem isto — e foi assim até 5 ago — o `test_anneal_unit` corria as suas oito
+    verificações do anneal adaptativo e **passava sempre** no pytest, porque não
+    tinha uma única asserção: o `check` só imprime. Oito verificações do
+    mecanismo central da QI6 (a dosagem adaptativa da novidade) a dar verde
+    incondicional, e a suite a contá-las como cobertura.
+    """
+    global FALHAS
+    pendentes, FALHAS = list(FALHAS), []
+    assert not pendentes, "verificações falhadas:\n  - " + "\n  - ".join(pendentes)
 
 
 # ---------------------------------------------------------------- 1. unit: anneal
@@ -82,6 +101,7 @@ def test_anneal_unit():
     check(d.novelty_weight == 0.0, "abaixo de 1e-3 fecha em 0.0 exato")
     upd(d, 1.0)
     check(d.novelty_weight == 0.0, "com w=0.0 o método é no-op")
+    _exigir()
 
 
 # ------------------------------------------------- 2/3. treinos miniatura (Pool)
@@ -142,6 +162,23 @@ def _cache_equivalencia(tmpdir, novelty_weight, novelty_adaptive, rotulo):
     print("[3] CSV por run = CSV canónico")
     check(_le_csv(canon_on) == _le_csv(per_on),
           "linhas do canónico == linhas do por-run (cache ON)")
+    _exigir()
+
+
+# As partes 2 e 3 só corriam no `__main__` — ou seja, nunca no pytest, e a suite
+# dava-as por cobertas. São dois treinos miniatura de 30 s cada por braço; o
+# preço é ~2 min, e o que compram é a garantia de que o cache de elites não muda
+# um único número (é o que autoriza tê-lo ligado nas campanhas).
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize("w,adapt,rotulo", [
+    (0.0, False, "objetivo"),
+    (0.5, True, "novelty_adapt"),
+])
+def test_cache_de_elites_nao_muda_resultados(tmp_path, w, adapt, rotulo):
+    _cache_equivalencia(str(tmp_path), novelty_weight=w,
+                        novelty_adaptive=adapt, rotulo=rotulo)
 
 
 if __name__ == "__main__":
