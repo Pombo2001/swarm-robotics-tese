@@ -120,7 +120,15 @@ def index():
             # Defesa a letra maior partia-o em duas linhas). Ver theme.py.
             with ui.row().classes("items-center gap-2 px-2 pt-2 no-wrap op-footer"):
                 ui.element("div").classes("live-dot live-dot--ok").style("width:6px;height:6px")
-                ui.label("servidor local · :8080").classes("text-[11px] mono-num") \
+                # A porta vem do ambiente (o Pi corre na 8090 porque a 8080 está
+                # ocupada pelo Pi-hole), e o rodapé tinha «:8080» em duro: no Pi
+                # anunciava uma porta que não era a dele, ao lado de «servidor
+                # local», que ali também não é verdade. Um rodapé que se engana
+                # sobre onde está é o género de detalhe que quem vê o ecrã nota
+                # e não diz.
+                _porta = os.environ.get("PORT", "8080")
+                _onde = "Raspberry Pi" if config.READONLY else "servidor local"
+                ui.label(f"{_onde} · :{_porta}").classes("text-[11px] mono-num") \
                     .style(f"color:{theme.INK_MUTED}")
 
     # A Overview salta para outras vistas por nome (cartões de estado clicáveis).
