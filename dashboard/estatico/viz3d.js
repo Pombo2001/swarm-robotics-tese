@@ -118,6 +118,13 @@
                      sx: chao.x, sy: chao.y, d: q.d });
       }
 
+      // Um agente desenhado ACIMA do topo da parede lê-se como um agente a
+      // passar por cima dela — e foi exatamente isso que aconteceu de facto até
+      // 29 jul (paredes de 30 m numa arena de raio 60: 45 m de céu aberto, e os
+      // campeões a 59 m em 3800 de 4000 passos). Desde a correção as paredes
+      // vedam até 2×raio, por isso o que aqui se vê por cima é só o corte
+      // visual. Diz-se, em vez de se deixar a imagem afirmar o contrário.
+      const zMax = Math.max(...dados.quadros[est.quadro].map(a => Math.abs(a[2])));
       itens.sort((A, B) => A.d - B.d);
       for (const it of itens) {
         if (it.tipo === "poli") {
@@ -141,11 +148,20 @@
           ctx.strokeStyle = "rgba(255,255,255,.75)"; ctx.lineWidth = 1; ctx.stroke();
         }
       }
+      if (zMax > ALTURA_VISUAL) {
+        ctx.font = "12px system-ui, sans-serif";
+        ctx.fillStyle = "#e8a33d";
+        ctx.fillText(
+          `altura maxima dos robos ${zMax.toFixed(1)} m — paredes desenhadas a `
+          + `${ALTURA_VISUAL} m (vedam ate ${(2 * meta.raio_arena).toFixed(0)} m)`,
+          10, h - 10);
+      }
       if (aoMudar) {
         aoMudar({
           quadro: est.quadro, total: dados.quadros.length,
           passo: est.quadro * meta.passo,
           recolhas: dados.recolhas[est.quadro] || 0,
+          alturaMax: zMax,
           aPassar: est.aPassar,
         });
       }

@@ -148,9 +148,10 @@ def main(args):
 
     # Robôs parados no spawn, BEM SEPARADOS (o utilizador pediu-os espalhados;
     # e nascer empilhado faz a separação física do ambiente empurrá-los logo no
-    # primeiro passo). O main_visualizer usa model='cylinder', mas este Ursina
-    # (8.3.0) não traz esse modelo — dá "warning: missing model" e a entidade
-    # fica invisível. Usa-se 'sphere', que existe.
+    # primeiro passo). Este Ursina (8.3.0) NÃO traz o modelo 'cylinder' — dá
+    # "warning: missing model" e a entidade fica invisível; usa-se 'sphere', que
+    # existe. O main_visualizer usava 'cylinder' e corria sem mostrar um único
+    # robô; corrigido a 5 ago para 'sphere' também.
     # Posições REAIS do spawn do ambiente (env.agent_positions após reset), não
     # uma amostragem à parte: é onde os robôs vão mesmo nascer.
     if not args.sem_robos:

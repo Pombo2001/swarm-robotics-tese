@@ -44,10 +44,45 @@ def main(args):
     print(f"DEBUG: Selected classic scenario: {scenario}")
 
     window.title = f'Swarm 3D - Visualizer: {args.algo.upper()} · {scenario}'
-    EditorCamera()
 
     env = SwarmForagingEnv3D(config=config)
     obs_dict, _ = env.reset()
+
+    # ─── EIXOS E ALTURA ──────────────────────────────────────────────────────
+    # Convenção da cena (a mesma do visualize_mapa_grande.py): o mapa é o plano
+    # XY e a vertical é −Z (o chão está em z=+0.1 e o que sobe tem z menor).
+    #
+    # O visualizador desenhava TODOS os robôs em z=−0.15 fixo, ignorando
+    # `agent_positions[:, 2]`. Num simulador onde a ação tem componente vertical
+    # e a arena é uma ESFERA, isso é apagar do ecrã a dimensão onde vive o
+    # defeito que anulou o F1 a 29 jul: campeões a 59 m de altura, a atravessar
+    # o mapa por cima de paredes de 30 m, durante 3800 de 4000 passos. No ecrã
+    # apareciam colados ao chão. Agora a altura real é desenhada.
+    def cena_z(mundo_z, pousado=-0.15):
+        return pousado - float(mundo_z)
+
+    # As paredes são caixas de 2×arena_radius (120 m no mapa grande): desenhadas
+    # à altura real tapam a cena inteira. Desenham-se mais baixas, mas nunca
+    # abaixo do que os agentes conseguem subir — senão o ecrã mostra um robô
+    # legítimo a passar «por cima» de uma parede que na verdade o veda. O HUD diz
+    # sempre a altura real, para o que se vê não poder ser lido como a verdade.
+    # No mapa grande o alcance é o teto (±2 m) e a parede desenhada fica em 4 m:
+    # exata e legível. Nos outros a arena é uma esfera de raio 15, e desenhar os
+    # 30 m reais dá um bosque que tapa a cena — corta-se em 8 m e o HUD avisa
+    # quando algum robô passa acima do que está desenhado (que é o sintoma que
+    # se quer apanhar, não a altura do desenho).
+    alcance_z = (env.MAPA_GRANDE_TETO if scenario == 'mapa_grande'
+                 else float(env.arena_radius))
+    altura_real = float(env.walls[0]['size'][2]) if len(env.walls) else 0.0
+    altura_visual = (args.altura_paredes if args.altura_paredes is not None
+                     else min(max(2.0 * alcance_z, 0.4), altura_real or 0.4, 8.0))
+
+    # Câmara enquadrada pelo raio: com `EditorCamera()` cru, o mapa grande (r=60,
+    # 4× os outros) abria fora do enquadramento. O pivô é o centro do mapa e a
+    # distância vem do raio, como no visualize_mapa_grande.py.
+    editor_cam = EditorCamera(rotation=(45, 0, 0))
+    editor_cam.position = (0, 0, 0)
+    camera.z = -env.arena_radius * 2.2
     # Convenção de nomes: o Sandbox ("none") é guardado SEM sufixo;
     # os restantes cenários com "_{scenario}". Tem de bater certo com os trainers.
     scenario_suffix = f"_{scenario}" if scenario and scenario != "none" else ""
@@ -107,22 +142,52 @@ def main(args):
         obs_entities.append(e)
 
     # Paredes (incluindo porta cooperativa)
-    wall_entities = []
-    for wall in env.walls:
-        pos_3d = (wall['pos'][0], wall['pos'][1], -0.2)
-        size_3d = (wall['size'][0], wall['size'][1], 0.4)
-        e = Entity(model='cube', color=color.hsv(215, 0.3, 0.6),
-                   scale=size_3d, position=pos_3d, texture='white_cube')
-        wall_entities.append(e)
+    def _criar_parede(wall):
+        return Entity(model='cube', color=color.hsv(215, 0.3, 0.6),
+                      texture='white_cube',
+                      scale=(wall['size'][0], wall['size'][1], altura_visual),
+                      position=(wall['pos'][0], wall['pos'][1],
+                                -altura_visual / 2))
+
+    wall_entities = [_criar_parede(w) for w in env.walls]
 
     # Robôs
+    # `model='cylinder'` NÃO existe no Ursina 8.3.0 (só sphere/cube/quad/circle/
+    # diamond/plane): dava "missing model" e a entidade ficava INVISÍVEL — ou
+    # seja, o visualizador principal corria episódios inteiros sem mostrar um
+    # único robô. O visualize_mapa_grande.py já documentava isto e usava
+    # 'sphere'; aqui tinha ficado por corrigir. Escala = diâmetro real (0,30 m).
     robot_views = {}
     for agent_id, pos in zip(env.agents, env.agent_positions):
-        r = Entity(model='cylinder', color=color.hsv(210, 0.9, 0.9),
-                   scale=(env.robot_radius * 2, 0.15, env.robot_radius * 2),
-                   rotation_x=90, position=(pos[0], pos[1], -0.15))
-        Entity(parent=r, model='sphere', color=color.white, scale=0.4, y=0.5, unlit=True)
+        r = Entity(model='sphere', color=color.hsv(210, 0.9, 0.9),
+                   scale=env.robot_radius * 2,
+                   position=(pos[0], pos[1], cena_z(pos[2])))
+        # Ponto claro por cima (−z é a vertical), para se ver que é um agente e
+        # não um obstáculo: os obstáculos são esferas vermelhas de raio 0,2.
+        Entity(parent=r, model='sphere', color=color.white, scale=0.45,
+               z=-0.9, unlit=True)
         robot_views[agent_id] = r
+
+    # HUD: o que se vê tem de dizer o que é. A altura desenhada das paredes é
+    # menor que a real, e sem esta linha o ecrã afirmaria uma geometria falsa.
+    hud = Text(text='', position=(-0.86, 0.47), scale=0.7,
+               color=color.hsv(0, 0, 0.75))
+
+    def _hud():
+        zs = env.agent_positions[:, 2]
+        acima = float(np.max(np.abs(zs))) > altura_visual
+        hud.color = color.hsv(35, 0.9, 1.0) if acima else color.hsv(0, 0, 0.75)
+        hud.text = (
+            f'{scenario}  ·  {args.algo.upper()}  ·  arena r={env.arena_radius:.0f} m'
+            f'  ·  episódio {state["episode"]}\n'
+            f'recolhas: {int(env.total_food_collected)}  ·  '
+            f'altura dos robôs: {zs.min():+.2f} a {zs.max():+.2f} m'
+            + (f' (teto {env.MAPA_GRANDE_TETO:.0f} m)' if scenario == 'mapa_grande' else '')
+            + '\n'
+            f'paredes desenhadas a {altura_visual:.1f} m; vedam de facto até '
+            f'{altura_real:.0f} m (2×raio da arena)'
+            + ('\n⚠ ha robos ACIMA da altura desenhada — o que se ve por cima '
+               'das paredes nao e uma passagem' if acima else ''))
 
     state = {'obs_dict': obs_dict, 'needs_reset': False, 'episode': 1,
              'door_animated': False}
@@ -141,12 +206,7 @@ def main(args):
         for e in wall_entities:
             destroy(e)
         wall_entities.clear()
-        for wall in env.walls:
-            pos_3d = (wall['pos'][0], wall['pos'][1], -0.2)
-            size_3d = (wall['size'][0], wall['size'][1], 0.4)
-            e = Entity(model='cube', color=color.hsv(215, 0.3, 0.6),
-                       scale=size_3d, position=pos_3d, texture='white_cube')
-            wall_entities.append(e)
+        wall_entities.extend(_criar_parede(w) for w in env.walls)
 
     def update():
         if state['needs_reset']:
@@ -173,11 +233,12 @@ def main(args):
 
         state['obs_dict'], _, terms, truncs, _ = env.step(actions)
 
-        # Atualizar robôs
+        # Atualizar robôs — com a altura REAL (ver cena_z)
         for agent_id, view in robot_views.items():
             idx = env.agents.index(agent_id)
             new_p = env.agent_positions[idx]
-            view.position = (new_p[0], new_p[1], -0.15)
+            view.position = (new_p[0], new_p[1], cena_z(new_p[2]))
+        _hud()
 
         # Atualizar ninho (move em cooperative_perception)
         nest_entity.position = (env.nest_pos[0], env.nest_pos[1], 0)
@@ -195,8 +256,12 @@ def main(args):
                 if door_idx < len(wall_entities):
                     door_e = wall_entities[door_idx]
                     door_e.color = color.hsv(45, 0.9, 1.0)  # amarelo brilhante
+                    # Sobe: a vertical da cena é −Z (ver cena_z). Estava
+                    # `y + 6`, que desliza a porta 6 m para NORTE, ao longo do
+                    # chão — o comentário dizia «deslize para cima» e o ecrã
+                    # mostrava a porta a afastar-se pelo mapa.
                     door_e.animate_position(
-                        Vec3(door_e.x, door_e.y + 6, door_e.z),
+                        Vec3(door_e.x, door_e.y, door_e.z - altura_visual * 1.5),
                         duration=0.8, curve=curve.out_expo)
                     door_e.animate_color(
                         color.hsv(45, 0.9, 1.0, 0.0),
@@ -220,5 +285,9 @@ if __name__ == '__main__':
                              'Não escreve no configs/foraging.yaml.')
     parser.add_argument('--config', type=str, default=None,
                         help='caminho do YAML (default: configs/foraging.yaml)')
+    parser.add_argument('--altura-paredes', type=float, default=None,
+                        help='altura VISUAL das paredes em metros (default: o '
+                             'alcance vertical dos agentes no cenário). A altura '
+                             'real é sempre 2×raio da arena e está no HUD.')
     args = parser.parse_args()
     main(args)
