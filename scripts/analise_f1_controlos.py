@@ -24,7 +24,7 @@ Uso:
     python scripts/analise_f1_controlos.py --csv a.csv b.csv     # ficheiros à mão
     python scripts/analise_f1_controlos.py --sem-figura
 
-Saídas (em results/mapa_grande/f1_zeroshot/):
+Saídas (em results/mapa_grande/f1_zeroshot_v2/):
     f1_grelha_por_condicao.csv   — a grelha 7×3 de cada condição, para a tese
     f1_veredicto.txt             — o que este script imprimiu, datado
     f1_condicoes.png             — 4 painéis, um por condição
@@ -49,7 +49,15 @@ try:
 except Exception:
     pass
 
-DEST = os.path.join(PROJECT_ROOT, "results", "mapa_grande", "f1_zeroshot")
+# ⚠️ `f1_zeroshot_v2` e não `f1_zeroshot`: a pasta sem sufixo é a corrida
+# ANULADA a 29 jul (paredes de 30 m numa arena de raio 60 — os agentes voavam
+# por cima do labirinto), e era ELA o default deste script, tanto para ler como
+# para escrever. Corrido sem argumentos, analisava os dados inválidos e escrevia
+# o veredicto por cima deles; o comando certo — o que o dashboard cita — exigia
+# `--csv .../f1_zeroshot_v2/*.csv --saida .../f1_zeroshot_v2` de cada vez.
+# Corrigido a 5 ago. A pasta anulada fica no disco como registo, com o seu
+# `ANULADO_29jul.md`.
+DEST = os.path.join(PROJECT_ROOT, "results", "mapa_grande", "f1_zeroshot_v2")
 ALGOS = ("GNN", "PPO", "SAC")
 
 # (NormObs, Controlo) -> nome legível. A ordem é a do pré-registo.
@@ -290,7 +298,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", nargs="*", default=None,
                     help="CSV a juntar (por omissão: todos os zeroshot_*.csv "
-                         "de results/mapa_grande/f1_zeroshot/)")
+                         "de results/mapa_grande/f1_zeroshot_v2/ — a corrida VÁLIDA; "
+                         "a `f1_zeroshot/` sem sufixo foi anulada a 29 jul)")
     ap.add_argument("--sem-figura", action="store_true")
     ap.add_argument("--saida", default=None,
                     help="onde escrever a grelha, o veredicto e a figura. "
