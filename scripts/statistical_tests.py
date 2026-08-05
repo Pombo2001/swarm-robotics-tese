@@ -9,10 +9,31 @@ incompatíveis — o GNN reporta fitness evolutiva e o PPO/SAC recompensa episó
 A avaliação, pelo contrário, mede a MESMA métrica de tarefa para todos
 (food_collected / taxa de sucesso), tornando a comparação cientificamente válida.
 
-Teste principal: Mann-Whitney U (não-paramétrico) — apropriado para amostras
-pequenas e distribuições não-normais (nº de recolhas é discreto e enviesado).
-Teste complementar: t de Welch (paramétrico, variâncias desiguais).
-Tamanho de efeito: rank-biserial (derivado do U), interpretável independentemente de n.
+⚠️ A UNIDADE AQUI É O EPISÓDIO — E A DA TESE NÃO É
+---------------------------------------------------
+Este script compara **episódios** (20 por célula). A tese compara **execuções de
+treino**: «a unidade estatística é a execução de treino --- e não o episódio ---,
+o que evita a inflação de n que é comum na literatura comparada» (Contributos).
+Vinte episódios do mesmo modelo não são vinte observações independentes: são vinte
+amostras do mesmo treino, e tratá-las como tal multiplica o n por 20 e faz
+significâncias aparecer do nada.
+
+A tabela da tese (`tab:res_signif`) vem do `gerar_figuras_7d.py`, que agrega por
+run antes de testar. **Este ficheiro não alimenta a tese** — serve para inspeção
+rápida de uma avaliação isolada.
+
+Por isso escreve em `testes_significancia_por_episodio_*.csv`, e não no nome
+canónico: escrevia no MESMO ficheiro que a tese e o dashboard leem, e a única
+coisa que separava as duas metodologias era a ordem por que se corriam os scripts
+(o `gerar_figuras_7d.py --install-oficial` vinha a seguir e reescrevia por cima).
+O backup `testes_significancia_food_collected_pre7d.csv` guarda 42 comparações
+com `wilcoxon` — prova de que a sobrescrita chegou a acontecer.
+
+Testes: Wilcoxon signed-rank quando as amostras têm o mesmo tamanho (tratadas
+como emparelhadas), Mann-Whitney U caso contrário; t de Welch como complementar;
+efeito por δ de Cliff. ⚠️ O emparelhamento por igualdade de tamanho é uma
+heurística frágil — dois algoritmos com 20 episódios cada não têm pares naturais
+a não ser que as seeds de avaliação coincidam. Ver `docs/PLANO_QUALIDADE.md`.
 
 Pré-requisito: correr a avaliação primeiro, idealmente com >=30 episódios:
     python scripts/eval_all.py --episodes 30 --scenario none
@@ -199,13 +220,26 @@ def main():
         sys.exit(1)
 
     df_out = pd.DataFrame(rows)
-    csv_path = os.path.join(OUT_DIR, f"testes_significancia_{args.metric}.csv")
+    # Nome PRÓPRIO: o canónico (`testes_significancia_{metric}.csv`) é escrito
+    # pelo `gerar_figuras_7d.py` com a unidade certa (médias por run) e é o que a
+    # tese e o dashboard leem. Ver o cabeçalho deste ficheiro.
+    csv_path = os.path.join(OUT_DIR,
+                            f"testes_significancia_por_episodio_{args.metric}.csv")
     df_out.to_csv(csv_path, index=False)
+    canonico = os.path.join(OUT_DIR, f"testes_significancia_{args.metric}.csv")
+    print(f"\n[!] AVISO: a unidade destes testes é o EPISÓDIO, não a execução de")
+    print(f"    treino. A tese usa médias por run — estes números NÃO são os dela.")
+    print(f"    Escrito em: {os.path.relpath(csv_path, PROJECT_ROOT)}")
+    if os.path.exists(canonico):
+        print(f"    (o ficheiro da tese, {os.path.basename(canonico)}, fica intacto)")
 
     # Tabela LaTeX pronta a colar na tese (booktabs-friendly, sem dependências extra).
-    tex_path = os.path.join(OUT_DIR, f"testes_significancia_{args.metric}.tex")
+    tex_path = os.path.join(OUT_DIR,
+                            f"testes_significancia_por_episodio_{args.metric}.tex")
     with open(tex_path, "w", encoding="utf-8") as f:
-        f.write("% Gerado por scripts/statistical_tests.py\n")
+        f.write("% Gerado por scripts/statistical_tests.py — unidade: EPISÓDIO.\n"
+                "% NÃO é a tabela da tese: essa agrega por execução de treino e é\n"
+                "% gerada pelo gerar_figuras_7d.py. Ver o cabeçalho do script.\n")
         f.write("\\begin{tabular}{llrrrl}\n\\hline\n")
         f.write("Cenário & Par & média A & média B & $p$ & Significativo \\\\\n\\hline\n")
         for r in rows:
