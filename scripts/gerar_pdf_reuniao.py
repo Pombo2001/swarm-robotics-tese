@@ -35,18 +35,12 @@ def _latest_report_dir():
     isto escolhe os dados que vão para o PDF da reunião. Ver
     `verificar_sessao.ultima_sessao`, onde a regra vive.
     """
-    from scripts.verificar_sessao import _data_do_nome
+    from scripts.verificar_sessao import chave_de_recencia
 
     base = os.path.join(PROJECT_ROOT, "results", "graficos_tese")
     dirs = [d for d in glob.glob(os.path.join(base, "*")) if os.path.isdir(d)
             and os.path.basename(d) != "estatisticas"]
-    if not dirs:
-        return None
-
-    def chave(d):
-        dt = _data_do_nome(os.path.basename(d))
-        return (1, dt.timestamp()) if dt else (0, os.path.getmtime(d))
-    return max(dirs, key=chave)
+    return max(dirs, key=chave_de_recencia) if dirs else None
 
 
 def _page_text(pdf, title, lines):

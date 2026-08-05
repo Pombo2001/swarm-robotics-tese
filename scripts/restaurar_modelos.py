@@ -47,17 +47,11 @@ def _sessions_with_models():
     não muda quando alguém mexe na pasta. A regra vive no `verificar_sessao` para
     não haver duas — foi ter duas réguas que causou os erros deste dia.
     """
-    from scripts.verificar_sessao import _data_do_nome
+    from scripts.verificar_sessao import chave_de_recencia
 
-    out = []
-    for d in glob.glob(os.path.join(GRAFICOS_DIR, "*")):
-        if os.path.isdir(os.path.join(d, "modelos")):
-            out.append(d)
-    # Sem data no nome (campanhas nomeadas à mão) ficam no fim, por mtime.
-    def chave(d):
-        dt = _data_do_nome(os.path.basename(d))
-        return (1, dt.timestamp()) if dt else (0, os.path.getmtime(d))
-    return sorted(out, key=chave, reverse=True)
+    out = [d for d in glob.glob(os.path.join(GRAFICOS_DIR, "*"))
+           if os.path.isdir(os.path.join(d, "modelos"))]
+    return sorted(out, key=chave_de_recencia, reverse=True)
 
 
 def restaurar(sessao_dir):

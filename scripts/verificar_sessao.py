@@ -138,6 +138,24 @@ def _data_do_nome(nome):
         return None
 
 
+def chave_de_recencia(caminho):
+    """Ordena campanhas da mais antiga para a mais recente.
+
+    A data vem do NOME da pasta; as pastas com nome fora da convenção (campanhas
+    nomeadas à mão, como `final_7d`) caem para o mtime e ficam SEMPRE atrás das
+    datadas — uma pasta sem data não é candidata a «a mais recente» enquanto
+    houver uma com data.
+
+    Vive aqui, com o `_data_do_nome`, porque três sítios precisam dela:
+    `ultima_sessao`, o `restaurar_modelos` (que escolhe os modelos ativos) e o
+    `gerar_pdf_reuniao`. A 5 ago escrevi-a duas vezes, palavra por palavra, no
+    mesmo dia em que andava a corrigir precisamente este padrão — duas cópias da
+    mesma regra que divergem à primeira alteração.
+    """
+    dt = _data_do_nome(os.path.basename(caminho))
+    return (1, dt.timestamp()) if dt else (0, os.path.getmtime(caminho))
+
+
 def ultima_sessao():
     """A sessão mais recente — pela data no NOME, não pelo mtime da pasta.
 
@@ -160,13 +178,7 @@ def ultima_sessao():
         return None
     cands = [os.path.join(SESSOES, d) for d in os.listdir(SESSOES)
              if os.path.isdir(os.path.join(SESSOES, d)) and d[:2].isdigit()]
-    if not cands:
-        return None
-    datadas = [(c, _data_do_nome(os.path.basename(c))) for c in cands]
-    com_data = [(c, dt) for c, dt in datadas if dt is not None]
-    if com_data:
-        return max(com_data, key=lambda par: par[1])[0]
-    return max(cands, key=os.path.getmtime)
+    return max(cands, key=chave_de_recencia) if cands else None
 
 
 def main():
