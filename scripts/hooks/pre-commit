@@ -30,7 +30,11 @@ PY="$RAIZ/.venv/Scripts/python.exe"
 [ -x "$PY" ] || PY=python
 
 echo "[pre-commit] a tese ou os dados mudaram — a verificar os números..."
-if "$PY" "$RAIZ/scripts/verificar_numeros_tese.py"; then
+# Dois verificadores: as TABELAS (346 valores) e as CONTAGENS EM PROSA. O segundo
+# entrou a 5 ago, depois de três erros seguidos aparecerem todos em afirmações
+# sobre os números, e não nos números — que já tinham rede.
+if "$PY" "$RAIZ/scripts/verificar_numeros_tese.py" \
+   && "$PY" "$RAIZ/scripts/verificar_contagens_prosa.py"; then
     exit 0
 fi
 
