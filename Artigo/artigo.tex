@@ -31,42 +31,33 @@ Aprendizagem por Reforço e Neuroevolução para Controlo de Enxames}
 
 \begin{abstract}
 O controlo de enxames robóticos é abordado por duas comunidades que raramente se
-encontram num referencial comum: a aprendizagem por reforço multiagente (MARL),
-que promete adaptabilidade \emph{em linha}, e a otimização bio-inspirada, que
-oferece robustez pré-programada. Este trabalho apresenta uma comparação
-controlada e independente do paradigma entre três controladores --- uma rede de
-grafo neuroevoluída com atenção sobre os vizinhos, \emph{Proximal Policy
-Optimisation} (PPO) e \emph{Soft Actor--Critic} (SAC) --- no mesmo simulador
-tridimensional de \emph{foraging} de alta fidelidade, em sete cenários de
-dificuldade crescente, com sete execuções de treino independentes por combinação,
-sob avaliação determinística emparelhada e testes não paramétricos ao nível da
+encontram num referencial comum: a aprendizagem por reforço multiagente (MARL) e
+a otimização bio-inspirada. Comparamos três controladores --- uma rede de grafo
+neuroevoluída com atenção sobre os vizinhos, \emph{Proximal Policy Optimisation}
+(PPO) e \emph{Soft Actor--Critic} (SAC) --- no mesmo simulador tridimensional de
+\emph{foraging}, em sete cenários de dificuldade crescente, com sete execuções de
+treino independentes por combinação e inferência não paramétrica ao nível da
 execução. O resultado central é que o desempenho do controlador evolutivo depende
 menos do orçamento de treino do que do \emph{desenho da função de aptidão}:
-substituindo o retorno acumulado --- que é farmável por deambulação --- por um
-\emph{shaping} de \emph{homing} terminal, o controlador converge nas $28$
-execuções dos quatro cenários de gargalo e torna-se estatisticamente superior
-aos métodos de gradiente em três cenários, indistinguível do melhor deles em mais
-dois. Os métodos de gradiente conservam duas vantagens sólidas: fiabilidade em
-espaço aberto, onde o evolutivo ocasionalmente degenera, e uma eficiência
-computacional cerca de $8\times$ superior. Sob escalabilidade \emph{zero-shot},
-apenas o controlador baseado em atenção transita de $N=10$ para $N=100$ agentes
-sem retreino, mantendo $100\%$ de sucesso nos sete cenários --- com eficiência
-por agente quase intacta precisamente nos labirintos, onde o congestionamento
-seria a expectativa. A hibridização com procura por
-novidade, sob orçamento igualado, resolve o único cenário que resistia aos três
-controladores ($7/7$ execuções no labirinto de deceção espacial), mas, com peso
-fixo, degrada o desempenho onde o gradiente da tarefa basta; uma \emph{dosagem
-adaptativa} do peso de novidade, validada numa campanha pré-registada, elimina
-esse custo mantendo o ganho --- e o objetivo puro, mesmo com o dobro do
-orçamento, permanece incapaz de resolver o labirinto de forma fiável. Uma
-replicação com quatro vezes as execuções ($n=28$ por braço) fixa esse ganho em
-$28/28$ execuções bem-sucedidas contra $15/28$ (Fisher exato, $p<0{,}0001$), e
-mostra ao mesmo tempo que o controlador evolutivo \emph{sem} essa dosagem é
-indistinguível do PPO neste cenário: o que separa os braços é a exploração, não
-o paradigma. A hipótese de que a inteligência
-adaptativa domina a robustez estática é, por isso, apenas \emph{parcialmente}
-confirmada: a vantagem decisiva reside na \emph{representação} e no desenho do
-sinal de treino, e não no algoritmo de otimização.
+substituindo o retorno acumulado --- farmável por deambulação --- por um
+\emph{shaping} de \emph{homing} terminal, converge nas $28$ execuções dos quatro
+cenários de gargalo e torna-se superior aos métodos de gradiente em três
+cenários, indistinguível do melhor deles em mais dois. Estes conservam a
+fiabilidade em espaço aberto e uma eficiência computacional $\approx 8\times$
+superior. Sob escalabilidade \emph{zero-shot}, só o controlador com atenção
+transita de $N=10$ para $N=100$ sem retreino, com $100\%$ de sucesso nas $28$
+combinações cenário~$\times$~dimensão. A hibridização com procura por novidade,
+sob orçamento igualado, resolve o único cenário que resistia aos três
+controladores ($7/7$ no labirinto de deceção espacial) mas, com peso fixo,
+degrada o desempenho onde o gradiente da tarefa basta; uma \emph{dosagem
+adaptativa}, validada em campanha pré-registada, elimina esse custo mantendo o
+ganho. Uma replicação com $n=28$ por braço fixa-o em $28/28$ execuções contra
+$15/28$ (Fisher exato, $p<0{,}0001$) e mostra que, \emph{sem} essa dosagem, o
+controlador evolutivo é indistinguível do PPO: o que separa os braços é a
+exploração, não o paradigma. A hipótese de que a inteligência adaptativa domina a
+robustez estática é, por isso, apenas \emph{parcialmente} confirmada --- a
+vantagem decisiva reside na \emph{representação} e no desenho do sinal de treino,
+não no algoritmo de otimização.
 \end{abstract}
 
 \begin{keyword}
@@ -104,54 +95,39 @@ estatística. O isolamento metodológico
 entre as duas comunidades deixa assim de ser um diagnóstico intuitivo para passar
 a ser uma contagem: $1$ em $58$.
 
-Controlar um enxame é difícil por três razões que se reforçam. O espaço de ações
-conjuntas cresce exponencialmente com o número de agentes, tornando inviável tratar
-o enxame como um único agente monolítico; a recompensa de tarefa é tipicamente
-esparsa e diferida, o que agrava a atribuição de crédito; e cada agente decide a
-partir de uma observação parcial e local, sem acesso ao estado global. Os dois
-paradigmas respondem a estas dificuldades de formas opostas --- a MARL aprende uma
-política partilhada que generaliza por experiência, a otimização bio-inspirada
-procura um controlador robusto num só esforço de otimização --- e é precisamente
-essa oposição que motiva uma comparação direta e controlada.
+Controlar um enxame é difícil por três razões que se reforçam: o espaço de ações
+conjuntas cresce exponencialmente com o número de agentes; a recompensa de tarefa
+é esparsa e diferida, o que agrava a atribuição de crédito; e cada agente decide a
+partir de uma observação parcial e local. Os dois paradigmas respondem de formas
+opostas --- a MARL aprende uma política partilhada que generaliza por experiência,
+a otimização bio-inspirada procura um controlador robusto num só esforço --- e a
+questão que daí decorre é se a \emph{inteligência adaptativa} supera a
+\emph{robustez estática} sob \emph{stress} dinâmico. Responder-lhe exige um
+referencial em que ambos sejam avaliados nas mesmas condições, com as mesmas
+métricas e a mesma análise estatística.
 
-A questão de investigação que orienta a dissertação é, em rigor, se a
-\emph{inteligência adaptativa} (uma política de MARL que aprende com a
-experiência) supera a \emph{robustez estática} (um controlador otimizado de uma
-só vez e depois congelado) em cenários de \emph{stress} dinâmico. Responder a
-esta questão exige um referencial em que ambos os paradigmas sejam avaliados nas
-mesmas condições, com as mesmas métricas e a mesma análise estatística --- algo
-que a literatura raramente oferece.
+É o que aqui se faz. Implementámos um simulador tridimensional de \emph{foraging}
+de alta fidelidade e avaliámos três controladores --- uma rede de grafo
+neuroevoluída com auto-atenção sobre os vizinhos, PPO e SAC --- em sete cenários e
+ao longo de três eixos: desempenho na tarefa ($P_{\text{task}}$), robustez a
+falhas ($R_{\text{robust}}$) e escalabilidade \emph{zero-shot}
+($S_{\text{scale}}$). Cada combinação foi treinada em sete execuções
+independentes, o que permite tratar a \emph{execução de treino} --- e não o
+episódio --- como unidade estatística, distinguindo o desempenho atingível da
+fiabilidade da convergência.
 
-Este artigo aborda essa lacuna com uma avaliação comparativa imparcial.
-Implementámos um simulador tridimensional de \emph{foraging} de alta fidelidade e
-avaliámos três controladores --- uma rede de grafo neuroevoluída com
-auto-atenção sobre os vizinhos, PPO e SAC --- em sete cenários e ao longo de três
-eixos: desempenho na tarefa ($P_{\text{task}}$), robustez a falhas de agentes
-($R_{\text{robust}}$) e escalabilidade \emph{zero-shot} ($S_{\text{scale}}$).
-Cada combinação (algoritmo, cenário) foi treinada em sete execuções independentes,
-o que permite tratar a \emph{execução de treino} --- e não o episódio --- como
-unidade estatística, distinguindo o desempenho atingível da fiabilidade da
-convergência.
-
-A nossa contribuição é quíntupla: (i) a quantificação da lacuna, por revisão
-sistemática, que situa este trabalho como a segunda comparação empírica entre os
-dois paradigmas na navegação de enxames --- e a primeira com escalabilidade,
-robustez e inferência estatística; (ii) um protocolo de avaliação reprodutível e
-independente do paradigma, com significância aferida ao nível da execução; (iii) a
-demonstração de que o alegado colapso da neuroevolução em cenários de
-estrangulamento é um artefacto do \emph{desenho da aptidão}, e não uma limitação
-intrínseca do paradigma, corrigível por um \emph{shaping} de \emph{homing}
-terminal não farmável; (iv) a evidência de que a escalabilidade \emph{zero-shot}
-é uma propriedade da representação (grafo com atenção), e não do otimizador; e
-(v) a validação, sob protocolo \emph{pré-registado} (hipótese, testes e regra de
-decisão fixados antes dos dados), de uma dosagem adaptativa da pressão por
-novidade que retém o ganho desta onde a deceção morde sem o seu custo onde não
-morde. Uma
-versão preliminar deste trabalho, com um orçamento de treino mais curto e uma
-aptidão baseada no retorno acumulado, levava à conclusão oposta sobre o
-paradigma evolutivo --- circunstância que ilustra a importância metodológica do
-segundo contributo. A metodologia e os resultados completos são detalhados na
-dissertação que acompanha este artigo.
+A contribuição é quíntupla: (i) a quantificação da lacuna por revisão sistemática,
+que situa este trabalho como a segunda comparação empírica entre os dois
+paradigmas na navegação de enxames --- e a primeira com escalabilidade, robustez e
+inferência estatística; (ii) um protocolo de avaliação reprodutível e independente
+do paradigma; (iii) a demonstração de que o alegado colapso da neuroevolução nos
+estrangulamentos é um artefacto do \emph{desenho da aptidão}, corrigível por um
+\emph{shaping} de \emph{homing} terminal não farmável; (iv) a evidência de que a
+escalabilidade \emph{zero-shot} é propriedade da representação, não do otimizador;
+e (v) a validação, sob protocolo \emph{pré-registado}, de uma dosagem adaptativa
+da pressão por novidade. Uma versão preliminar deste trabalho, com orçamento mais
+curto e aptidão baseada no retorno acumulado, levava à conclusão oposta sobre o
+paradigma evolutivo --- o que ilustra a importância do segundo contributo.
 
 \section{Trabalho Relacionado}
 \label{sec:related}
@@ -174,41 +150,37 @@ invariante à permutação e à cardinalidade do conjunto de vizinhos, e sustent
 igualmente a manutenção de formações sob variação da escala do enxame
 \citep{li2024shape}.
 
-No paradigma de aprendizagem, o esquema de treino centralizado com execução
-descentralizada (CTDE) tornou-se padrão para domar a não-estacionariedade do
-ambiente multiagente \citep{lowe2017maddpg, oliehoek2016concise}. No presente
-trabalho, contudo, os \emph{baselines} de gradiente partilham uma única política
-e executam a partir da observação puramente local, sem um crítico de estado
-global, o que mantém a comparação ancorada num regime descentralizado comum aos
-três controladores.
+No paradigma de aprendizagem, o treino centralizado com execução descentralizada
+(CTDE) tornou-se padrão para domar a não-estacionariedade \citep{lowe2017maddpg,
+oliehoek2016concise}. Aqui, contudo, os \emph{baselines} de gradiente partilham
+uma única política e executam a partir da observação puramente local, sem crítico
+global, o que ancora a comparação num regime descentralizado comum aos três
+controladores.
 
-Do lado bio-inspirado, a neuroevolução otimiza os pesos da rede sem gradientes
-\citep{salimans2017es}, oferecendo controladores estáveis para tarefas estáticas,
-mas com adaptabilidade \emph{em linha} limitada \citep{kegeleirs2025towards}. As
-estratégias de evolução são atrativas pela simplicidade e pela paralelização
-trivial, mas otimizam a partir de um único escalar de aptidão por episódio, sem
-atribuição de crédito temporal --- uma distinção que se revelará decisiva. Quando
-a recompensa de tarefa é esparsa, a aptidão fica refém do termo de modelação, e a
-escolha desse termo determina se a seleção discrimina ou fica cega.
+Do lado bio-inspirado, a neuroevolução otimiza os pesos sem gradientes
+\citep{salimans2017es}, oferecendo controladores estáveis mas com adaptabilidade
+\emph{em linha} limitada \citep{kegeleirs2025towards}. Otimiza a partir de um
+único escalar de aptidão por episódio, sem atribuição de crédito temporal --- uma
+distinção que se revelará decisiva: quando a recompensa de tarefa é esparsa, a
+aptidão fica refém do termo de modelação, e a escolha desse termo determina se a
+seleção discrimina ou fica cega.
 
-Que esta especificação seja difícil não é observação nova: é precisamente o que
-motiva a linha de \emph{desenho automático} de enxames, na qual se procura
-dispensar a função-objetivo. \citet{hasselmann2023novelty} geram, por procura por
-novidade \citep{lehman2011abandoning}, repertórios de comportamentos que são
-depois montados modularmente em controladores; \citet{szpirer2024composite}
-substituem a função-objetivo por demonstrações, recuperando-a por aprendizagem por
-reforço inversa; e a transferibilidade destes controladores da simulação para
-plataformas físicas distintas foi caracterizada por \citet{kegeleirs2024transfer}.
-Numa linha complementar, a evolução é tratada como processo \emph{em linha} e
-distribuído, propagando-se os controladores entre robôs durante a própria missão
-\citep{bredeche2022social, fontbonne2020online}. Na tarefa de \emph{foraging} ---
-a mesma que aqui se estuda --- a neuroevolução é aplicada com sucesso em arenas
-abertas com obstáculos dispersos \citep{zaman2025neat, biteng2025training} e a
-afinação multiobjetivo de regras de interação arbitra entre recolha e energia
-\citep{ordaz2026foraging}. É de notar que estes trabalhos empregam aptidões
-baseadas em retorno acumulado sem observar o colapso que aqui reportamos: uma
-divergência que atribuímos à ausência, nas suas arenas, de estrangulamentos
-decetivos onde o termo de modelação satura (Secção~\ref{sec:discussion}).
+Que esta especificação seja difícil não é observação nova: é o que motiva a linha
+de \emph{desenho automático} de enxames. \citet{hasselmann2023novelty} geram, por
+procura por novidade \citep{lehman2011abandoning}, repertórios de comportamentos
+montados modularmente em controladores; \citet{szpirer2024composite} substituem a
+função-objetivo por demonstrações, recuperando-a por reforço inverso; e a
+transferibilidade destes controladores entre plataformas foi caracterizada por
+\citet{kegeleirs2024transfer}. Numa linha complementar, a evolução é tratada como
+processo \emph{em linha} e distribuído \citep{bredeche2022social,
+fontbonne2020online}. Na tarefa de \emph{foraging} --- a mesma que aqui se estuda
+--- a neuroevolução é aplicada com sucesso em arenas abertas com obstáculos
+dispersos \citep{zaman2025neat, biteng2025training} e a afinação multiobjetivo
+arbitra entre recolha e energia \citep{ordaz2026foraging}. Estes trabalhos empregam
+aptidões baseadas em retorno acumulado \emph{sem} observar o colapso que aqui
+reportamos --- divergência que atribuímos à ausência, nas suas arenas, de
+estrangulamentos decetivos onde o termo de modelação satura
+(Secção~\ref{sec:discussion}).
 
 Quanto ao confronto entre paradigmas, os estudos existentes salientam a ausência
 de uma referência de desempenho comum entre as duas famílias
@@ -250,20 +222,19 @@ localmente pelo LiDAR de $8$\,m, preservando uma observabilidade parcial genuín
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.24\linewidth]{images/mapa_3d_none.png}\hfill
-\includegraphics[width=0.24\linewidth]{images/mapa_3d_u_wall.png}\hfill
-\includegraphics[width=0.24\linewidth]{images/mapa_3d_bottleneck.png}\hfill
-\includegraphics[width=0.24\linewidth]{images/mapa_3d_four_rooms.png}\\[2pt]
-\includegraphics[width=0.24\linewidth]{images/mapa_3d_cooperative_door.png}\hfill
-\includegraphics[width=0.24\linewidth]{images/mapa_3d_cooperative_perception.png}\hfill
-\includegraphics[width=0.24\linewidth]{images/mapa_3d_cooperative_door_bypass.png}\hfill
-\hspace{0.24\linewidth}
-\caption{Os sete cenários de avaliação, renderizados a partir da geometria real
-do simulador. Em cima: Sandbox (aberto, com obstáculos esféricos), Beco Sem Saída (Muro em U),
-Gargalo e Quatro Salas. Em baixo: Porta Cooperativa (passagem a âmbar, abre com
-$\geq 3$ agentes), Perceção Cooperativa (alvo móvel) e Porta Cooperativa com
-Alternativa (cenário \emph{deceptive}: a porta atrai, o corredor lateral resolve).
-O ninho é a esfera verde.}
+\includegraphics[width=0.138\linewidth]{images/mapa_3d_none.png}\hfill
+\includegraphics[width=0.138\linewidth]{images/mapa_3d_u_wall.png}\hfill
+\includegraphics[width=0.138\linewidth]{images/mapa_3d_bottleneck.png}\hfill
+\includegraphics[width=0.138\linewidth]{images/mapa_3d_four_rooms.png}\hfill
+\includegraphics[width=0.138\linewidth]{images/mapa_3d_cooperative_door.png}\hfill
+\includegraphics[width=0.138\linewidth]{images/mapa_3d_cooperative_perception.png}\hfill
+\includegraphics[width=0.138\linewidth]{images/mapa_3d_cooperative_door_bypass.png}
+\caption{Os sete cenários, renderizados a partir da geometria real do simulador.
+Da esquerda para a direita: Sandbox (aberto, com obstáculos esféricos), Muro em U,
+Gargalo, Quatro Salas, Porta Cooperativa (passagem a âmbar, abre com $\geq 3$
+agentes), Perceção Cooperativa (alvo móvel) e Porta Cooperativa com Alternativa
+(\emph{deceptive}: a porta atrai, o corredor lateral resolve). O ninho é a esfera
+verde.}
 \label{fig:mapas}
 \end{figure*}
 
@@ -290,31 +261,24 @@ a armadilha. É um sinal de treino, não uma observação.}
 \end{figure}
 
 \subsection{Espaço de observação, de ação e recompensa}
-A observação de cada agente é um vetor egocêntrico que reúne a bússola de
-\emph{homing} (direção e distância ao ninho), os oito raios LiDAR e o estado
-relativo dos $N-1$ vizinhos; manter o vizinho como uma entidade explícita é o que
-permite à GNN atender sobre um conjunto de cardinalidade variável. O espaço de
-ação é contínuo e egocêntrico: três componentes de translação em $[-1,1]$
-(frontal, lateral e vertical), escaladas por um passo máximo de $0{,}2$\,m e
-resolvidas por uma ordem determinística de
-\emph{step} que aplica deslizamento ao longo das paredes (\emph{wall-sliding}) em
-caso de colisão, evitando que o agente fique imobilizado num canto.
+A observação de cada agente reúne a bússola de \emph{homing}, os oito raios LiDAR
+e o estado relativo dos $N-1$ vizinhos; manter o vizinho como entidade explícita é
+o que permite à GNN atender sobre um conjunto de cardinalidade variável. A ação é
+contínua e egocêntrica --- três componentes de translação em $[-1,1]$, escaladas
+por um passo máximo de $0{,}2$\,m, com deslizamento ao longo das paredes em caso
+de colisão.
 
-A recompensa foi deliberadamente \emph{simplificada} face a iterações anteriores,
-e reduz-se a quatro termos: (i) uma recompensa de tarefa de $+300$ por recolha,
-repetível ao longo do episódio e claramente dominante; (ii) o progresso geodésico
-descrito acima, com fator $10$ \citep{ng1999policy}; (iii) um bónus de exploração
-baseado em contagem ($+0{,}5$ por célula nova de $2\times2$\,m), pequeno de
-propósito; e (iv) um custo energético de $-0{,}05$ por passo, que impõe pressão
-temporal. As penalizações secundárias de dispersão e de colisão foram anuladas no
-\emph{sinal de recompensa} (a física de colisão e separação mantém-se), depois de
-se verificar que competiam com a tarefa sem benefício mensurável. O número de
-agentes exigidos em simultâneo no ninho é definido por cenário: $k_{\min}=3$ nos
-cenários em que a cooperação é o objeto de estudo, e $k_{\min}=1$ nos labirintos
-de navegação pura, onde exigir três agentes converteria um problema de navegação
-numa cooperação artificial. Uma calibração anterior, com um bónus de exploração
-maior, produziu \emph{exploração da recompensa}: a política aprendia a deambular a
-colher exploração em vez de convergir para a recolha.
+A recompensa foi deliberadamente \emph{simplificada} face a iterações anteriores e
+reduz-se a quatro termos: $+300$ por recolha (repetível e claramente dominante);
+o progresso geodésico com fator $10$ \citep{ng1999policy}; um bónus de exploração
+por contagem ($+0{,}5$ por célula nova de $2\times2$\,m), pequeno de propósito; e
+um custo energético de $-0{,}05$ por passo. As penalizações de dispersão e colisão
+foram anuladas no \emph{sinal} (a física mantém-se), por competirem com a tarefa
+sem benefício mensurável. O número de agentes exigidos em simultâneo no ninho é
+$k_{\min}=3$ nos cenários cooperativos e $k_{\min}=1$ nos labirintos de navegação
+pura, onde exigir três converteria navegação em cooperação artificial. Uma
+calibração anterior, com bónus de exploração maior, produziu \emph{exploração da
+recompensa}: a política deambulava a colher exploração em vez de recolher.
 
 \subsection{Controladores}
 O \emph{controlador evolutivo} (GNN) é uma rede compacta que codifica as
@@ -347,16 +311,14 @@ a única forma de o maximizar é \emph{terminar} junto ao ninho. Como uma única
 recolha ($10^4$) vale o dobro do \emph{shaping} máximo ($5000$), a tarefa domina
 a seleção assim que um genoma recolhe.
 
-Os \emph{baselines de aprendizagem} são o PPO \citep{schulman2017ppo} e o SAC
-\citep{haarnoja2018sac} da biblioteca Stable-Baselines3, com uma política de
-perceptrão multicamada partilhada ($[256,256]$) sobre a observação densa da
-vizinhança (partilha de parâmetros). O mecanismo de atenção sobre o grafo é, assim,
-instanciado apenas no controlador evolutivo, o que é precisamente o que viabiliza
-a sua transferência \emph{zero-shot}. O PPO usa estimação de vantagem generalizada
-\citep{schulman2016gae} e o SAC, fora de política, regulariza por entropia; ambos
-são treinados sobre ambientes vetorizados em paralelo (\emph{SubprocVecEnv}), com
-a mesma política a recolher experiência de todos os agentes do enxame, e o
-controlador evolutivo avalia a sua população também em paralelo.
+Os \emph{baselines de aprendizagem} são o PPO \citep{schulman2017ppo} --- com
+estimação de vantagem generalizada \citep{schulman2016gae} --- e o SAC
+\citep{haarnoja2018sac} da Stable-Baselines3, com uma política de perceptrão
+multicamada partilhada ($[256,256]$) sobre a observação densa da vizinhança. O
+mecanismo de atenção sobre o grafo é, assim, instanciado apenas no controlador
+evolutivo, o que é precisamente o que viabiliza a sua transferência
+\emph{zero-shot}. Todos treinam sobre ambientes vetorizados em paralelo, com a
+mesma política a recolher experiência de todos os agentes do enxame.
 
 \subsection{Protocolo de avaliação}
 Cada combinação (algoritmo, cenário) foi treinada em \textbf{sete execuções
@@ -440,25 +402,16 @@ Porta c/ Alternativa        & $\mathbf{86{,}7\pm2{,}0}$ (100\%) [7/7] & $85{,}3\
 \end{tabular}
 \end{table*}
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{images/recolhas_por_cenario.png}
-\caption{Comida recolhida por episódio (média $\pm$ desvio-padrão) por cenário e
-controlador. As barras de erro largas do controlador evolutivo no Sandbox e no
-Muro em U refletem bimodalidade entre execuções, não ruído de avaliação.}
-\label{fig:recolhas}
-\end{figure}
-
 \subsection{O Muro em U e a bimodalidade entre execuções}
 O Muro em U é o único cenário que \emph{nenhum} algoritmo resolve de forma fiável,
 e a sua análise ilustra por que razão a unidade estatística importa. O desempenho
 é bimodal nos três paradigmas: cada execução ou aprende o desvio ao beco e atinge
-$100\%$ de sucesso, ou não o aprende de todo (GNN $3/7$, PPO $4/7$, SAC $2/7$).
-A Figura~\ref{fig:bimodal} mostra a distribuição por execução. Nenhuma diferença
-entre algoritmos atinge significância, e a conclusão honesta é que sete execuções
-não bastam para distinguir taxas de convergência de $2/7$ a $4/7$ --- limitação
-que a replicação a $n=28$ da Secção~\ref{sec:mega} vem levantar, para o braço
-que ali se compara.
+$100\%$ de sucesso, ou não o aprende de todo (GNN $3/7$, PPO $4/7$, SAC $2/7$) ---
+uma distribuição que a Figura~\ref{fig:megatreino} torna visível, já com
+$n=28$ por braço. Nenhuma diferença entre algoritmos atinge significância, e a
+conclusão honesta é que sete execuções não bastam para distinguir taxas de
+convergência de $2/7$ a $4/7$ --- limitação que a replicação da
+Secção~\ref{sec:mega} vem levantar, para o braço que ali se compara.
 
 O obstáculo não está no sinal de treino --- o potencial geodésico aponta
 corretamente para o contorno (Figura~\ref{fig:geodesico}) --- mas na
@@ -468,18 +421,6 @@ afasta, durante dezenas de passos, da única direção que o agente perceciona c
 sendo o ninho. Nenhum dos mecanismos de exploração estudados (entropia,
 \emph{clipped surrogate}, mutação gaussiana) garante essa descoberta --- é esta a
 motivação da procura por novidade, avaliada de seguida.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{images/dotplot_eval_u_wall.png}
-\caption{Recolhas por episódio no Muro em U: um ponto por execução de treino
-(média dos $20$ episódios determinísticos dessa execução) e a barra vertical na
-média do braço. A dispersão não é ruído de avaliação --- reflete execuções que
-resolvem integralmente o cenário e execuções que falham por completo. Com
-$n=7$ mostram-se as execuções uma a uma: um diagrama de caixa a cobrir todo o
-intervalo sugeriria densidade onde não existe uma única execução.}
-\label{fig:bimodal}
-\end{figure}
 
 \subsection{Deceção e procura por novidade}
 Numa experiência preliminar na Porta Cooperativa com Alternativa --- desenhada
@@ -619,24 +560,13 @@ isolados.}
 
 \subsection{Robustez}
 Sob a falha de $10\%$ dos agentes a meio do episódio, todos os paradigmas mantêm
-desempenho elevado, com retenção entre $92\%$ e $106\%$ em todas as combinações
-com desempenho de base, sem colapso (Figura~\ref{fig:robustez}). Os valores
-pontualmente acima de $100\%$ correspondem a episódios em que a perda de agentes
-reduziu o congestionamento nas passagens estreitas. A robustez, sendo transversal
-aos três paradigmas, não constitui critério discriminante entre eles: a partilha
-de parâmetros e a observação local conferem ao enxame uma redundância funcional em
-que nenhum agente é insubstituível.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{images/robustez_falhas.png}
-\caption{Retenção de desempenho sob falha de $10\%$ dos agentes a meio do
-episódio, relativa à execução nominal (mesmas \emph{seeds}). Os três painéis
-partilham a escala vertical, pelo que as alturas são comparáveis entre
-paradigmas. Nenhum paradigma colapsa; a redundância emerge da partilha de
-parâmetros e da observação puramente local.}
-\label{fig:robustez}
-\end{figure}
+desempenho elevado, com retenção entre $92\%$ e $106\%$ nas $21$ combinações com
+desempenho de base, sem colapso. Os valores pontualmente acima de $100\%$
+correspondem a episódios em que a perda de agentes reduziu o congestionamento nas
+passagens estreitas. A robustez, sendo transversal aos três paradigmas, não
+constitui critério discriminante entre eles: a partilha de parâmetros e a
+observação local conferem ao enxame uma redundância funcional em que nenhum
+agente é insubstituível.
 
 \subsection{Significância estatística}
 A Tabela~\ref{tab:signif} apresenta as $21$ comparações par a par sobre as médias
@@ -648,42 +578,43 @@ dois. Os métodos de gradiente são superiores no Sandbox, onde as execuções
 degeneradas do evolutivo pesam ($\delta=\pm1{,}00$). No Muro em U nenhuma
 comparação atinge significância.
 
-\begin{table*}[t]
+\begin{table}[t]
 \centering
-\caption{Testes de significância sobre as \emph{médias de recolhas por execução}
-($n=7$ por grupo; teste $U$ de Mann--Whitney com $\delta$ de Cliff, $\alpha=0{,}05$).
-A unidade independente é a execução de treino, não o episódio. ``méd.~A'' e
-``méd.~B'' são as médias de comida recolhida de cada elemento do par.}
+\caption{As $21$ comparações par a par sobre as \emph{médias de recolhas por
+execução} ($n=7$ por grupo; teste $U$ de Mann--Whitney com $\delta$ de Cliff,
+$\alpha=0{,}05$; $\bullet$ assinala significância). A unidade independente é a
+execução de treino, não o episódio; as médias de cada braço constam da
+Tabela~\ref{tab:task}.}
 \label{tab:signif}
 \footnotesize
-\begin{tabular}{llrrrrl}
+\begin{tabular}{llrrc}
 \toprule
-Cenário & Par & méd.~A & méd.~B & $p$ & $\delta$ & Significativo \\
+Cenário & Par & $p$ & $\delta$ & \\
 \midrule
-Sandbox              & GNN vs PPO & 38{,}31 & 71{,}46 & $0{,}0006$ & $-1{,}00$ & Sim \\
-Sandbox              & GNN vs SAC & 38{,}31 & 69{,}24 & $0{,}0021$ & $-1{,}00$ & Sim \\
-Sandbox              & PPO vs SAC & 71{,}46 & 69{,}24 & $0{,}0297$ & $+0{,}71$ & Sim \\
-Beco Sem Saída (U)   & GNN vs PPO & 24{,}54 & 39{,}62 & $0{,}1552$ & $-0{,}47$ & não \\
-Beco Sem Saída (U)   & GNN vs SAC & 24{,}54 & 8{,}99  & $0{,}5714$ & $+0{,}18$ & não \\
-Beco Sem Saída (U)   & PPO vs SAC & 39{,}62 & 8{,}99  & $0{,}0526$ & $+0{,}63$ & não \\
-Gargalo              & GNN vs PPO & 121{,}39 & 123{,}17 & $0{,}2086$ & $+0{,}43$ & não \\
-Gargalo              & GNN vs SAC & 121{,}39 & 41{,}44 & $0{,}0006$ & $+1{,}00$ & Sim \\
-Gargalo              & PPO vs SAC & 123{,}17 & 41{,}44 & $0{,}0006$ & $+1{,}00$ & Sim \\
-Quatro Salas         & GNN vs PPO & 59{,}76 & 33{,}58 & $0{,}0006$ & $+1{,}00$ & Sim \\
-Quatro Salas         & GNN vs SAC & 59{,}76 & 31{,}82 & $0{,}0006$ & $+1{,}00$ & Sim \\
-Quatro Salas         & PPO vs SAC & 33{,}58 & 31{,}82 & $0{,}3374$ & $+0{,}33$ & não \\
-Porta Cooperativa    & GNN vs PPO & 69{,}81 & 67{,}06 & $0{,}0262$ & $+0{,}71$ & Sim \\
-Porta Cooperativa    & GNN vs SAC & 69{,}81 & 62{,}09 & $0{,}0006$ & $+1{,}00$ & Sim \\
-Porta Cooperativa    & PPO vs SAC & 67{,}06 & 62{,}09 & $0{,}0175$ & $+0{,}76$ & Sim \\
-Perceção Cooperativa & GNN vs PPO & 18{,}98 & 15{,}33 & $0{,}0297$ & $+0{,}71$ & Sim \\
-Perceção Cooperativa & GNN vs SAC & 18{,}98 & 16{,}11 & $0{,}0297$ & $+0{,}71$ & Sim \\
-Perceção Cooperativa & PPO vs SAC & 15{,}33 & 16{,}11 & $0{,}0547$ & $-0{,}63$ & não \\
-Porta c/ Alternativa & GNN vs PPO & 86{,}70 & 85{,}25 & $0{,}8477$ & $+0{,}08$ & não \\
-Porta c/ Alternativa & GNN vs SAC & 86{,}70 & 68{,}61 & $0{,}0006$ & $+1{,}00$ & Sim \\
-Porta c/ Alternativa & PPO vs SAC & 85{,}25 & 68{,}61 & $0{,}0021$ & $+1{,}00$ & Sim \\
+Sandbox        & GNN vs PPO & $0{,}0006$ & $-1{,}00$ & $\bullet$ \\
+               & GNN vs SAC & $0{,}0021$ & $-1{,}00$ & $\bullet$ \\
+               & PPO vs SAC & $0{,}0297$ & $+0{,}71$ & $\bullet$ \\
+Muro em U      & GNN vs PPO & $0{,}1552$ & $-0{,}47$ & \\
+               & GNN vs SAC & $0{,}5714$ & $+0{,}18$ & \\
+               & PPO vs SAC & $0{,}0526$ & $+0{,}63$ & \\
+Gargalo        & GNN vs PPO & $0{,}2086$ & $+0{,}43$ & \\
+               & GNN vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
+               & PPO vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
+Quatro Salas   & GNN vs PPO & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
+               & GNN vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
+               & PPO vs SAC & $0{,}3374$ & $+0{,}33$ & \\
+Porta Coop.    & GNN vs PPO & $0{,}0262$ & $+0{,}71$ & $\bullet$ \\
+               & GNN vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
+               & PPO vs SAC & $0{,}0175$ & $+0{,}76$ & $\bullet$ \\
+Perceção Coop. & GNN vs PPO & $0{,}0297$ & $+0{,}71$ & $\bullet$ \\
+               & GNN vs SAC & $0{,}0297$ & $+0{,}71$ & $\bullet$ \\
+               & PPO vs SAC & $0{,}0547$ & $-0{,}63$ & \\
+Porta c/ Alt.  & GNN vs PPO & $0{,}8477$ & $+0{,}08$ & \\
+               & GNN vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
+               & PPO vs SAC & $0{,}0021$ & $+1{,}00$ & $\bullet$ \\
 \bottomrule
 \end{tabular}
-\end{table*}
+\end{table}
 
 \section{Discussão}
 \label{sec:discussion}
@@ -721,82 +652,70 @@ pela qual pode ter passado despercebido a uma literatura que avalia
 maioritariamente em arenas abertas. A implicação prática é direta: a robustez de
 uma aptidão não se afere na tarefa fácil, mas na estrutura que a decompõe.
 
-A distribuição da variância pelos cenários é igualmente informativa. O controlador
-evolutivo é quase determinístico nos labirintos com gradiente geodésico informativo
-(desvios de $1$--$2$ recolhas/ep nas duas Portas), mas bimodal nos cenários
-abertos: sem paredes que canalizem o \emph{homing}, a paisagem de aptidão oferece
-ótimos locais de deambulação dos quais algumas execuções não escapam. O SAC exibe
-o padrão inverso --- estável em espaço aberto, lotaria nos estrangulamentos
-físicos ---, sugerindo que a exploração por entropia máxima, eficaz em espaço
-aberto, não gera com fiabilidade as trajetórias longas e coordenadas que
-atravessam passagens estreitas.
+A distribuição da variância é igualmente informativa. O controlador evolutivo é
+quase determinístico nos labirintos com gradiente geodésico informativo (desvios
+de $1$--$2$ recolhas/ep nas duas Portas), mas bimodal nos cenários abertos, onde
+a paisagem de aptidão oferece ótimos locais de deambulação. O SAC exibe o padrão
+inverso --- estável em espaço aberto, lotaria nos estrangulamentos ---,
+sugerindo que a exploração por entropia máxima não gera com fiabilidade as
+trajetórias longas e coordenadas que atravessam passagens estreitas.
 
-Decorrem duas implicações de engenharia. Primeira, a comparação combina dois
-fatores --- algoritmo de otimização e arquitetura de rede --- pelo que integrar o
-módulo de atenção numa política treinada por gradiente é o passo natural para
-isolar o efeito do otimizador. Segunda, o valor não está em eleger um vencedor,
-mas em mapear os eixos de escolha: estrutura do cenário, variabilidade da dimensão
-do enxame e orçamento de cómputo. Em enxames de dimensão fixa e conhecida, com
-prioridade na eficiência da tarefa e orçamento de treino curto, o MARL por
-gradiente é preferível; quando a dimensão é variável ou a missão exige escalar sem
-retreino, a arquitetura de grafo com atenção é a única opção viável entre as
-estudadas.
+Daqui decorre que o valor não está em eleger um vencedor, mas em mapear os eixos
+de escolha: estrutura do cenário, variabilidade da dimensão do enxame e orçamento
+de cómputo. Em enxames de dimensão fixa e conhecida, com prioridade na eficiência
+da tarefa, o MARL por gradiente é preferível; quando a dimensão é variável ou a
+missão exige escalar sem retreino, a arquitetura de grafo com atenção é a única
+opção viável entre as estudadas.
 
 \section{Limitações do estudo}
 \label{sec:limitacoes}
 Três limitações enquadram o alcance das conclusões. Primeira, e mais importante, a
 comparação é \emph{assimétrica}: o controlador evolutivo usa uma arquitetura de
-grafo com atenção, enquanto os \emph{baselines} de gradiente usam um perceptrão
-multicamada de entrada fixa. Isolar o efeito do otimizador exigiria treinar a
-mesma arquitetura de atenção por gradiente --- o passo natural já identificado.
-Segunda, sete execuções por configuração, embora suficientes para estabelecer
-significância na maioria das células, limitam o poder estatístico precisamente
-onde ele mais faz falta: nos cenários bimodais, distinguir taxas de convergência
-de $2/7$ a $4/7$ exigiria uma bateria substancialmente maior. Terceira, todos os
-resultados são em simulação; a transferência para hardware real introduz o
-conhecido \emph{reality gap}, cuja mitigação por aleatorização de domínio
-\citep{tobin2017domain} fica como trabalho futuro. Estas limitações não invalidam
-os achados centrais --- a dependência da neuroevolução face ao desenho da aptidão e
-o contraste de escalabilidade são robustos e estatisticamente suportados --- mas
-delimitam-nos com honestidade.
+grafo com atenção, os \emph{baselines} de gradiente um perceptrão de entrada fixa;
+isolar o efeito do otimizador exigiria treinar a mesma arquitetura por gradiente.
+Segunda, sete execuções por configuração limitam o poder estatístico precisamente
+onde ele mais faz falta --- nos cenários bimodais, distinguir taxas de
+convergência de $2/7$ a $4/7$ exigiria uma bateria maior. Terceira, todos os
+resultados são em simulação, com o \emph{reality gap} por medir
+\citep{tobin2017domain}. Nenhuma invalida os achados centrais --- a dependência da
+neuroevolução face ao desenho da aptidão e o contraste de escalabilidade são
+estatisticamente suportados --- mas delimitam-nos.
 
 \section{Conclusões}
 \label{sec:conclusions}
-Apresentámos uma avaliação comparativa imparcial de um controlador de atenção
-neuroevoluído contra o PPO e o SAC num enxame de \emph{foraging} tridimensional,
-ao longo de sete cenários e três eixos de avaliação, com sete execuções de treino
+Comparámos um controlador de atenção neuroevoluído com o PPO e o SAC num enxame de
+\emph{foraging} tridimensional, em sete cenários e três eixos, com sete execuções
 independentes por combinação e significância aferida ao nível da execução. A
 hipótese de que a inteligência adaptativa domina a robustez estática é apenas
-parcialmente confirmada, e o quadro é mais rico do que o antecipado. Com o desenho
-adequado da aptidão, o controlador evolutivo deixou de ser o elo fraco na tarefa:
-é estatisticamente superior aos métodos de gradiente em três dos sete cenários,
+parcialmente confirmada. Com o desenho adequado da aptidão, o controlador
+evolutivo é superior aos métodos de gradiente em três dos sete cenários,
 indistinguível do melhor deles em mais dois, e é o único a escalar
-\emph{zero-shot} até $N=100$. Os métodos de gradiente preservam a fiabilidade em
-espaço aberto e uma vantagem de $\approx 8\times$ em núcleos-hora. A exploração
-sob deceção espacial, que nenhum dos paradigmas base resolveu de forma
-consistente, cedeu apenas à hibridização com procura por novidade ($7/7$
-execuções no Muro em U, sob orçamento igualado) --- um mecanismo que, com peso
-fixo, degrada simetricamente o desempenho onde o gradiente da tarefa basta, mas
-cuja dosagem adaptativa, validada numa campanha pré-registada, retém o ganho sem
-custo mensurável em nenhum dos sete cenários; com o dobro do orçamento, o
-objetivo puro permanece bimodal no Muro em U ($4/7$) e o adaptativo atinge o
-melhor resultado do estudo no cenário \emph{deceptive} ($88{,}7\pm0{,}6$). Uma
-replicação com quatro vezes as execuções ($n=28$ por braço) leva esse ganho a
-$28/28$ contra $15/28$ (Fisher exato, $p<0{,}0001$) e, no mesmo movimento,
-delimita a conclusão: sem a dosagem adaptativa, o controlador evolutivo é
-indistinguível do PPO neste cenário ($p=0{,}088$). O que a evidência sustenta não
-é a superioridade de um paradigma de otimização, mas a de um \emph{mecanismo} ---
-a exploração doseada ao longo do treino --- que é, em princípio, transponível
-para qualquer um deles. O trabalho futuro inclui uma política de atenção treinada
-por gradiente para separar o otimizador da arquitetura, o alargamento da bateria
-estatística aos restantes cenários bimodais, o refinamento do \emph{schedule}
-adaptativo (re-armamento sob estagnação), e a validação da transferência
+\emph{zero-shot} até $N=100$; os métodos de gradiente preservam a fiabilidade em
+espaço aberto e $\approx 8\times$ de vantagem em núcleos-hora. A deceção espacial,
+que nenhum paradigma base resolveu, cedeu à procura por novidade doseada
+adaptativamente --- $28/28$ execuções contra $15/28$ na replicação a $n=28$
+(Fisher exato, $p<0{,}0001$) ---, mas o mesmo movimento delimita a conclusão: sem
+essa dosagem, o evolutivo é indistinguível do PPO ($p=0{,}088$). O que a evidência
+sustenta não é a superioridade de um paradigma de otimização, mas a de um
+\emph{mecanismo} --- a exploração doseada ao longo do treino --- em princípio
+transponível para qualquer um deles. Como trabalho futuro ficam uma política de
+atenção treinada por gradiente, que separaria o otimizador da arquitetura, o
+alargamento da bateria aos restantes cenários bimodais, o re-armamento do
+\emph{schedule} adaptativo sob estagnação e a validação
 simulação-para-real \citep{tobin2017domain}.
 
 \section*{Agradecimentos}
 This work was partially supported by national funds through Funda\c{c}\~ao para a
 Ci\^encia e a Tecnologia, I.P. (FCT), ISTAR-Iscte Pluriannual Projects UID/04466/2025
 (\url{https://doi.org/10.54499/UID/04466/2025}).
+
+% Bibliografia a \footnotesize e sem espaço extra entre entradas: com 35
+% referências no estilo autor--ano, a lista derramava sozinha para uma nona
+% página. É redução de corpo de letra e de espaçamento, não de conteúdo —
+% nenhuma referência foi retirada.
+\let\oldthebibliography\thebibliography
+\renewcommand{\thebibliography}[1]{\oldthebibliography{#1}\footnotesize}
+\setlength{\bibsep}{0pt plus 0.3ex}
 
 \bibliographystyle{elsarticle-harv}
 \bibliography{references}
