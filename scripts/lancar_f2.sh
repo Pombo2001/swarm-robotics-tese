@@ -12,7 +12,10 @@
 #
 #   1. o mega-treino já largou a máquina (senão são três streams pesados);
 #   2. as três cópias existem e têm o simulador de agora (mesmo sha256);
-#   3. os configs estão sem novidade (novelty_weight 0.0 / adaptive false);
+#   3. cada stream vai treinar o BRAÇO que o pré-registo fixa — GNN adaptativo
+#      (0.5/true) nos dois streams de GNN, sem novidade nos gradientes. Esta
+#      verificação já existiu ao contrário e certificou 26 h do braço errado;
+#      ver a nota longa junto à verificação;
 #   4. o cenário do config é o que o run_experiments vai sobrepor, e a arena do
 #      mapa grande está nos 60 m com 2000 passos;
 #   5. há disco;
@@ -83,6 +86,17 @@ for d in f2g f2r f2l; do
     echo "SIM_$d=$(sha256sum ~/swarm-mapa-$d/src/environment/swarm_env_3d.py 2>/dev/null | awk '{print $1}')"
     echo "NOV_$d=$(grep -hE 'novelty_(weight|adaptive)' ~/swarm-mapa-$d/configs/foraging.yaml 2>/dev/null | tr -d ' \n')"
     echo "DEF_$d=$(grep -hE "novelty_(weight|adaptive)', " ~/swarm-mapa-$d/src/training/evo_trainer_3d.py 2>/dev/null | tr -d ' \n')"
+    # O que o script VAI escrever no arranque — a única declaração do braço que
+    # existe antes de treinar. Extrai-se a chamada do RAMO deste stream (o
+    # ficheiro tem as três: gnn, grad e longo). Por contexto e não por posição:
+    # a ordem das chamadas no ficheiro não é um contrato.
+    case "$d" in
+        f2g) marca='MODO" = "gnn"' ;;
+        f2r) marca='MODO" = "grad"' ;;
+        *)   marca='EXPLORATÓRIO (emenda 20)' ;;
+    esac
+    echo "CFGNOV_$d=$(awk -v m="$marca" 'index($0,m){f=1} f && /^ *config_novelty /{print $1 $2 $3; exit}' \
+        ~/swarm-mapa-$d/scripts/mapa_streamF2.sh 2>/dev/null | tr -d ' \n')"
     echo "SUJO_$d=$(ls ~/swarm-mapa-$d/results/models_7d ~/swarm-mapa-$d/results/evaluation/*.csv 2>/dev/null | wc -l)"
 done
 echo "GEO=$(grep -hE 'arena_radius_mapa_grande|max_steps_mapa_grande' ~/swarm-mapa-f2g/configs/foraging.yaml 2>/dev/null | tr -d ' \n')"
@@ -138,30 +152,45 @@ for d in f2g f2r f2l; do
     fi
 done
 
-# 3. sem novidade — por config OU por omissão
+# 3. o BRAÇO de cada stream é o que o pré-registo fixa
 #
-# O `~/swarm-mapa` não tem as chaves `novelty_*` no config: só os diretórios do
-# mega-treino as têm, porque são os `mega_stream*.sh` que lhes mexem com sed. A
-# ausência é o estado correto para o F2 — mas «não está lá» só é seguro se o
-# DEFAULT do código for desligado, e isso verifica-se em vez de se assumir (a
-# primeira versão desta verificação exigia a chave presente e dava três falsos
-# alarmes).
+# ⚠️ Esta verificação já existiu ao contrário, e custou 26 h de máquina (4 ago).
+# Chamava-se «sem novidade — por config OU por omissão», dava verde quando as
+# chaves `novelty_*` estavam ausentes e vermelho se a novidade estivesse LIGADA.
+# Isto é o inverso do que a secção 2 do pré-registo manda: «GNN com Novelty
+# **adaptativo** (w₀=0,5, sustain=10, decay=0,98) — **não o objetivo puro**: a
+# QI6 mostrou que o adaptativo domina o objetivo». Os dois primeiros runs do F2
+# treinaram, portanto, o braço errado, com o lançador a certificá-lo.
+#
+# Verifica-se o SCRIPT que vai correr, não o estado do config: é o
+# `mapa_streamF2.sh` que escreve as chaves em cada arranque (config_novelty), e
+# o config antes do arranque não diz nada sobre o que vai ser treinado. O que o
+# script declara é a única fonte da verdade disponível antes de lançar.
 for d in f2g f2r f2l; do
-    linha="${V[NOV_$d]:-}"
-    if [ -z "$linha" ]; then
-        case "${V[DEF_$d]:-}" in
-            *novelty_weight*0.0*novelty_adaptive*False*|*novelty_adaptive*False*novelty_weight*0.0*)
-                ok "$d sem novidade (chaves ausentes; defaults do código = 0.0/False)" ;;
-            "") mal "$d: não li nem o config nem os defaults do evo_trainer" ;;
-            *)  mal "$d: chaves ausentes e defaults do código NÃO são 0.0/False: ${V[DEF_$d]}" ;;
-        esac
-    else
-        case "$linha" in
-            *novelty_adaptive:false*novelty_weight:0.0*|*novelty_weight:0.0*novelty_adaptive:false*)
-                ok "config de $d sem novidade (0.0 / false)" ;;
-            *)  mal "config de $d com novidade LIGADA: $linha" ;;
-        esac
+    esperado_w="0.5"; esperado_a="true"; rotulo="GNN adaptativo"
+    if [ "$d" = "f2r" ]; then
+        esperado_w="0.0"; esperado_a="false"; rotulo="gradientes (sem novidade)"
     fi
+    linha="${V[CFGNOV_$d]:-}"
+    if [ -z "$linha" ]; then
+        mal "$d: o mapa_streamF2.sh não declara o braço (falta config_novelty) —"
+        echo "      é exatamente assim que se treina o braço errado em silêncio."
+    elif [[ "$linha" == *"config_novelty$esperado_w$esperado_a"* ]]; then
+        ok "$d lança o braço certo: $rotulo ($esperado_w / $esperado_a)"
+    else
+        mal "$d declara '$linha', esperado 'config_novelty $esperado_w $esperado_a' ($rotulo)"
+    fi
+done
+
+# 3b. e o config não pode contradizer o script (se tiver as chaves, que batam)
+for d in f2g f2l; do
+    linha="${V[NOV_$d]:-}"
+    case "$linha" in
+        "") ok "$d: config sem chaves de novidade — o script escreve-as no arranque" ;;
+        *novelty_adaptive:true*novelty_weight:0.5*|*novelty_weight:0.5*novelty_adaptive:true*)
+            ok "config de $d já com o braço adaptativo (0.5 / true)" ;;
+        *)  mal "config de $d contradiz o pré-registo: $linha" ;;
+    esac
 done
 
 # 4. a geometria do mapa

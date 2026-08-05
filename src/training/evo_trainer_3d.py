@@ -397,6 +397,19 @@ class GeneticTrainer3D:
 
         print(f"[START] Treino GNN 3D Iniciado (Meta: Orcamento de {self.time_limit_seconds / 60:.1f} minutos)")
         print(f"[ACELERACAO] {num_cores} NUCLEOS DO RYZEN A AVALIAR EM PARALELO!")
+        # O BRAÇO, impresso a partir do que está de facto configurado.
+        # Esta linha era a constante "Pure Evolution + Guilhotina", que dizia o
+        # mesmo com ou sem novidade — e foi assim que o F2 do mapa grande correu
+        # 26 h com o objetivo puro onde o pré-registo mandava o adaptativo (4 ago):
+        # nada, do arranque ao fim do run, dizia qual dos dois estava a treinar.
+        if self.novelty_weight > 0:
+            modo = (f"Novelty w={self.novelty_weight:g}"
+                    + (f" ADAPTATIVO (sustain={self.novelty_sustain_gens}, "
+                       f"decay={self.novelty_decay:g})" if self.novelty_adaptive
+                       else " FIXO"))
+        else:
+            modo = "OBJETIVO PURO (sem novidade)"
+        print(f"[INFO] Braco: {modo} | cenario: {self.config['environment'].get('classic_scenario', 'none')}")
         print("[INFO] Funcionalidades: Pure Evolution + Guilhotina")
 
         global_timestep = 0

@@ -121,6 +121,45 @@ MASTER=~/mapa_F2${MODO}_master.log
 
 registar() { echo "[$TAG] $*" | tee -a "$MASTER"; }
 
+# ─── A CONFIGURAÇÃO DO BRAÇO, ESCRITA E VERIFICADA ────────────────────────────
+# Porque é que isto existe (4 ago): os streams do GNN correram 26 h com o
+# `novelty_weight` em 0 — o OBJETIVO PURO — quando o pré-registo fixa, na secção
+# 2, «GNN com Novelty adaptativo (w₀=0,5, sustain=10, decay=0,98) — não o
+# objetivo puro». O `mega_streamA.sh` tinha uma função `config()` que escrevia
+# estas chaves em cada fase; este script não a tinha, e HERDAVA o que estivesse
+# no ficheiro da cópia. Como a cópia veio sem a secção `novelty`, o trainer usou
+# os defaults (weight=0, adaptive=false) e treinou o braço errado — em silêncio,
+# porque nada no arranque imprimia a configuração científica.
+#
+# Agora escreve-se e RELÊ-SE: se o que ficou no ficheiro não for o que se pediu,
+# aborta. Um sed que não encontra a chave não falha — limita-se a não fazer nada,
+# e era assim que se lançava com os parâmetros errados.
+config_novelty() {   # config_novelty <weight> <adaptive>
+    local w="$1" adap="$2"
+    # As chaves da ablação saem sempre: os defaults do trainer (sustain=10,
+    # decay=0,98) são os que o pré-registo declara, e uma sobra de outra
+    # campanha mudava o braço sem aparecer em lado nenhum.
+    sed -i '/^  novelty_decay:/d; /^  novelty_sustain_gens:/d' "$CFG"
+    for chave in novelty_weight novelty_adaptive; do
+        local valor; [ "$chave" = novelty_weight ] && valor="$w" || valor="$adap"
+        if grep -qE "^  $chave:" "$CFG"; then
+            sed -i "s/^  $chave: .*/  $chave: $valor/" "$CFG"
+        else
+            # A secção pode não ter a chave (foi o que aconteceu): acrescenta-se
+            # debaixo de `evolution:`, que é onde o evo_trainer a procura.
+            sed -i "/^evolution:/a\\  $chave: $valor" "$CFG"
+        fi
+    done
+    local lido_w lido_a
+    lido_w=$(grep -E '^  novelty_weight:' "$CFG" | awk '{print $2}')
+    lido_a=$(grep -E '^  novelty_adaptive:' "$CFG" | awk '{print $2}')
+    registar "braço: novelty_weight=$lido_w novelty_adaptive=$lido_a (pedido: $w/$adap)"
+    if [ "$lido_w" != "$w" ] || [ "$lido_a" != "$adap" ]; then
+        registar "⛔ o config NÃO ficou com o braço pedido — a abortar sem treinar."
+        exit 5
+    fi
+}
+
 correr() {  # correr <log> <args...> — fase nova + até 2 retries com --resume
   local log=$1; shift
   rm -f "$LOGDIR/_campanha_concluida.txt" "$LOGDIR/_sessao_treino.txt"
@@ -153,11 +192,17 @@ fi
 registar "ARRANQUE $(date -u '+%a %b %d %H:%M:%S %Z %Y') — modo $MODO"
 
 if [ "$MODO" = "gnn" ]; then
-    registar "FASE 1/1: GNN mapa_grande @${MIN_GNN}x${RUNS} ($(date))"
+    # Secção 2 do pré-registo: o braço GNN é o ADAPTATIVO (w₀=0,5), não o
+    # objetivo puro — «a QI6 mostrou que o adaptativo domina o objetivo».
+    config_novelty 0.5 true
+    registar "FASE 1/1: GNN ADAPTATIVO mapa_grande @${MIN_GNN}x${RUNS} ($(date))"
     correr ~/mapa_F2_gnn.log --algo GNN --runs "$RUNS" --time-gnn "$MIN_GNN" \
            --scenarios mapa_grande --eval-episodes 20
     arquivar mapa_F2_gnn ~/mapa_F2_gnn.log
 elif [ "$MODO" = "grad" ]; then
+    # PPO e SAC não usam novidade: a chave fica explicitamente a zero para o log
+    # do arranque dizer qual foi o braço, em vez de o deixar implícito.
+    config_novelty 0.0 false
     registar "FASE 1/2: PPO mapa_grande @${MIN_GRAD}x${RUNS} ($(date))"
     correr ~/mapa_F2_ppo.log --algo PPO --runs "$RUNS" --time-ppo "$MIN_GRAD" \
            --scenarios mapa_grande --eval-episodes 20
@@ -177,7 +222,10 @@ else
         registar "   Relança quando ele fechar (~8 ago). A sair sem tocar em nada."
         exit 4
     fi
-    registar "FASE 1/1 EXPLORATÓRIA: GNN mapa_grande @${MIN_LONGO}x${RUNS_LONGO} ($(date))"
+    # O exploratório é o MESMO braço com mais orçamento — só assim responde a
+    # "faltou treino". Com outra configuração responderia a outra pergunta.
+    config_novelty 0.5 true
+    registar "FASE 1/1 EXPLORATÓRIA: GNN ADAPTATIVO mapa_grande @${MIN_LONGO}x${RUNS_LONGO} ($(date))"
     correr ~/mapa_F2_longo.log --algo GNN --runs "$RUNS_LONGO" --time-gnn "$MIN_LONGO" \
            --scenarios mapa_grande --eval-episodes 20
     arquivar mapa_F2_longo ~/mapa_F2_longo.log
