@@ -41,7 +41,8 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from src.scenarios import SCENARIOS, SCENARIO_LABELS, SCENARIO_LABELS_SHORT, ALGO_COLORS
+from src.scenarios import (SCENARIOS, THESIS_SCENARIOS, SCENARIO_LABELS,
+                           SCENARIO_LABELS_SHORT, ALGO_COLORS)
 from scripts.curvas_agregadas import curva_media_entre_runs, desenhar_curva_media
 
 GT = os.path.join(PROJECT_ROOT, 'results', 'graficos_tese')
@@ -181,9 +182,20 @@ def main():
     best.to_csv(os.path.join(OUT, 'all_best_scores_7d.csv'), index=False)
     curves.to_csv(os.path.join(OUT, 'all_curves_data_7d.csv'), index=False)
 
-    scen_present = [s for s in SCENARIOS if s in set(ev['Scenario'])]
+    # THESIS_SCENARIOS e não SCENARIOS: é este script que produz `tab:res_eval` e
+    # `tab:res_signif`, e o compromisso 3 do pré-registo do mapa grande diz que
+    # «o mapa NÃO entra nas tabelas dos 7 cenários — os 7 têm campanhas com
+    # orçamento e protocolo próprios, e misturá-los seria comparar coisas
+    # diferentes na mesma linha». Até hoje a proteção era não haver dados do
+    # 8.º cenário; a partir de ~16 ago passa a haver, e um CSV que os contenha
+    # punha o mapa grande dentro das tabelas dos sete sem ninguém decidir isso.
+    fora = sorted(set(ev['Scenario']) - set(THESIS_SCENARIOS))
+    scen_present = [s for s in THESIS_SCENARIOS if s in set(ev['Scenario'])]
     n_runs = ev.groupby('Algorithm')['Run'].nunique().to_dict()
     print(f"[i] Runs por algoritmo (eval): {n_runs}; cenários: {len(scen_present)}")
+    if fora:
+        print(f"[i] Fora das tabelas da tese (compromisso 3 do pré-registo): "
+              f"{', '.join(fora)}")
 
     # ── Normalização do eixo X (progresso de treino 0–100%) ────────────────
     curves = curves.copy()
