@@ -21,13 +21,13 @@ tem um subconjunto. Antes de tentar reproduzir/verificar, confirma onde estás.
 |---|---|:---:|:---:|
 | Escalabilidade (Zero-Shot) | `results/estatisticas/escalabilidade_*.csv` | ✅ | ✅ |
 | Triagem da SLR | `docs/slr/screening.csv` + `docs/slr/raw/` | ✅ | ✅ |
-| Figuras finais da tese | `Tese/images/resultados/*.png` (36) | ✅ | ✅ |
+| Figuras finais da tese | `Tese/images/resultados/*.png` (39) | ✅ | ✅ |
 | **Eval por run da campanha 7d** | `results/graficos_tese/final_7d/eval_by_run_7d.csv` | ❌ | ✅ |
 | **Figuras canónicas 7d** | `results/graficos_tese/final_7d/` | ❌ | ✅ |
 | **Tabelas de significância** | `results/estatisticas/testes_significancia_*.{tex,csv}` | ❌ | ✅ |
 | **Novelty (QI6)** | `results/novelty_final/{uwall,bypass}/` | ❌ | ✅ |
 | Campanha Novelty adaptativo | `results/novelty_adaptativo/` (trazida a 19 jul) | ❌ | ✅ |
-| **F1 do mapa grande** (QI7) | `results/mapa_grande/f1_zeroshot/` — **versionado**, exceção deliberada ao `.gitignore` | ✅ | ✅ |
+| **F1 do mapa grande** (QI7) | `results/mapa_grande/f1_zeroshot_v2/` — **versionado**, exceção deliberada ao `.gitignore`. ⚠️ `f1_zeroshot/` (sem `_v2`) é a corrida **ANULADA** a 29 jul, em que os agentes voavam por cima das paredes; fica no disco como registo e **não se usa** | ✅ | ✅ |
 | Campeões da campanha 7d | `results/models_7d/` (21 modelos, 3-9 jul) | ❌ | ✅ + servidor |
 | Mega-treino (12 fases) | `results/mega_1mes/` — 6 fases trazidas a 28 jul, 6 por fechar | ❌ | ⏳ |
 
@@ -49,11 +49,24 @@ conhecidas (ver secção final).
                                           # a MLP (~/run7d_mlp); só o output DESTE script e
                                           # canónico. Gera eval_by_run_7d.csv + boxplots +
                                           # significância entre algoritmos + copia p/ a tese.
-3. python scripts/statistical_tests.py    # Mann-Whitney U + Welch + rank-biserial, por
-                                          # cenário, das CSVs de avaliação -> results/estatisticas/
+3. python scripts/statistical_tests.py    # OPCIONAL, e a unidade é o EPISÓDIO (ver abaixo)
+                                          # Wilcoxon/Mann-Whitney + Welch + δ de Cliff, das
+                                          # CSVs de avaliação -> testes_significancia_POR_EPISODIO_*
 4. python scripts/eval_scalability.py --episodes 20
                                           # Zero-Shot N in {10,20,50,100} -> escalabilidade_*.csv
 ```
+
+**⚠️ O passo 3 NÃO produz a tabela da tese (corrigido a 5 ago).** A unidade dele é o
+**episódio**; a da tese é a **execução de treino** — «o que evita a inflação de $n$ que é
+comum na literatura comparada» (Contributos). Vinte episódios do mesmo modelo não são
+vinte observações independentes. A tabela `tab:res_signif` sai do **passo 2**.
+
+Até 5 de agosto os dois escreviam no **mesmo ficheiro**
+(`results/estatisticas/testes_significancia_food_collected.csv`), e a única coisa que
+mantinha a tabela certa era esta ordem: o passo 3 sobrescrevia o passo 2, e depois alguém
+voltava a correr o passo 2. O backup `..._pre7d.csv` ainda guarda 42 comparações com
+`wilcoxon` — a prova de que a sobrescrita aconteceu. Hoje o passo 3 escreve com nome
+próprio (`..._por_episodio_*`) e a ordem deixou de poder estragar nada.
 
 **Porquê o passo 2 é indispensável (armadilha real):** a campanha 7d correu em **duas
 instalações separadas** do servidor (GNN numa, PPO+SAC noutra). Os gráficos gerados *dentro*
@@ -69,13 +82,13 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
 |---|---|---|---|
 | **Cap. 3 — SLR**: fluxograma PRISMA, apêndice, "1 em 58", 21/23/58 | `docs/slr/screening.csv` (+ `raw/`) | `slr_pipeline.py prisma` → `Tese/prisma_gerado.tex` + `Tese/apendice_slr.tex` (via `\input`, linhas 690/1709) | ✅ PC |
 | **Ptask** — tabela principal de avaliação `tab:res_eval` (§1367); boxplots de eval (`boxplot_eval_*`); §res_ptask/global | `results/evaluation/eval_{algo}_{cenario}.csv` + `final_7d/eval_by_run_7d.csv` | `gerar_figuras_7d.py` (funde GNN+MLP) | ⚠️ torre |
-| **Significância** (Mann-Whitney/Welch/rank-biserial) por cenário | CSVs de avaliação (mesma métrica p/ todos: `food_collected`/sucesso) | `statistical_tests.py` → `results/estatisticas/testes_significancia_*.{tex,csv}` | ⚠️ torre |
+| **Significância** `tab:res_signif` (Mann-Whitney + δ de Cliff sobre **médias por run**) | `final_7d/eval_by_run_7d.csv` | **`gerar_figuras_7d.py`** → `results/estatisticas/testes_significancia_food_collected.csv`. ⚠️ NÃO é o `statistical_tests.py`: esse compara episódios e escreve `..._por_episodio_*` (corrigido a 5 ago) | ⚠️ torre |
 | **Sscale** — Zero-Shot `tab:res_scale_all` (§1431), `tab:res_scale` (§1454), fig `escalabilidade_zeroshot_*` | `results/estatisticas/escalabilidade_*.csv` | `eval_scalability.py` (GNN invariante; PPO/SAC = "N/A" para N≠20) | ✅ PC |
 | **Novelty (QI6)** — §res_novelty (§1408) | `results/novelty_final/{uwall,bypass}/` (eval_by_run 7×20 ep) | `eval_by_run.py` + `statistical_tests.py` | ⚠️ torre |
 | **Rrobust** — §res_robustez (§1476) | `results/evaluation/eval_{algo}_{cen}[_fail10].csv` (retenção = fail10/base) | `run_eval.py --fail-frac 0.1` | ✅ torre, VERIFICADO 16 jul: 21/21 células, retenção 92,4–105,8% (tese: 92–106% ✓); GNN 92,4–96,9% (✓); >100% só na Perceção Coop. (✓) |
 | **Custo computacional** — `tab:res_computacional` (§1498) | medição direta no simulador | `scripts/benchmark_sim.py` (novo, 16 jul) | ✅ torre, VERIFICADO+ATUALIZADO 16 jul: 139 passos/s era PRÉ-vetorização; medição atual ≈420 passos/s (3,0×, consistente c/ o 2,58× do passo); tabela da tese atualizada c/ ambos |
-| **QI7 — F1 do mapa grande** (zero-shot de topologia), `seccao_mapa_grande.tex` §Transferência | `results/mapa_grande/f1_zeroshot/zeroshot_mapa_grande.csv` (**versionado**; 1 linha por episódio, com `NormObs`/`Controlo`/`env_hash`/`ModeloPath`/`ModeloData`) | `eval_zeroshot_mapa.py` (produz) → `analise_f1_controlos.py` (lê as 4 condições e aplica o veredicto do pré-registo §3) | ✅ PC — natural fechada 27 jul; controlos no servidor |
-| **QI7 — F2 do mapa grande** (treino nativo) | `results/mapa_grande/f2/` (não existe: campanha por lançar) | `mapa_streamF2.sh {gnn\|grad}` no servidor → `analise_mapa_grande.py` | ❌ por correr (~3 ago) |
+| **QI7 — F1 do mapa grande** (zero-shot de topologia), `seccao_mapa_grande.tex` §Transferência | `results/mapa_grande/f1_zeroshot_v2/zeroshot_*.csv` — as **quatro** condições (**versionado**; ⚠️ `f1_zeroshot/`, sem `_v2`, é a corrida ANULADA a 29 jul); 1 linha por episódio, com `NormObs`/`Controlo`/`env_hash`/`ModeloPath`/`ModeloData`) | `eval_zeroshot_mapa.py` (produz) → `analise_f1_controlos.py` (lê as 4 condições e aplica o veredicto do pré-registo §3) | ✅ PC — natural fechada 27 jul; controlos no servidor |
+| **QI7 — F2 do mapa grande** (treino nativo) | `results/mapa_grande/f2_*/evaluation/eval_by_run.csv` | `mapa_streamF2.sh {gnn\|grad\|longo}` no servidor → `analise_mapa_grande.py` | ⏳ **a correr desde 3 ago** — GNN ~16 ago, PPO/SAC ~9 ago (o stream GNN foi relançado a 4 ago: treinava o braço errado) |
 | **Figuras** (mecanismo) | `Tese/images/resultados/*.png` | copiar o PNG com o nome que o `\figresultado` espera + recompilar (sem editar o `.tex`) | ✅ PC |
 
 > A **QI7** (composição de dificuldades) é a única cujas duas fases se leem em

@@ -58,9 +58,13 @@ o mapa grande é acrescento, e o pré-registo já fixou que se não fechar até
 | **Mega-treino megaA** (5 fases) | a correr no servidor — **fases 1 e 2 já arquivadas** | ~1-2 ago |
 | **Mega-treino megaB** (7 fases) | a correr no servidor — **fases 1-4 já arquivadas** | ~3 ago |
 
-> A **condição natural** do F1 está **FECHADA** (27 jul): 420 episódios, 21
-> células, em `results/mapa_grande/f1_zeroshot/` (versionada). Sem as três de
-> controlo, porém, não responde à QI7 — o pré-registo é explícito.
+> O F1 está **FECHADO** nas **quatro** condições (1-2 ago): 1680 episódios, 84
+> células a 0,00, em `results/mapa_grande/f1_zeroshot_v2/` (versionada).
+> ⚠️ `f1_zeroshot/` — **sem** o `_v2` — é a corrida **ANULADA a 29 jul**, em que
+> os agentes voavam por cima das paredes (ver `ANULADO_29jul.md` lá dentro).
+> Fica no disco como registo e **não se usa**: este parágrafo apontava-lhe, e
+> uma nota que diz «fechada» ao lado de dados anulados é a pior combinação
+> possível (corrigido a 5 ago).
 
 ### Ainda não existe ❌
 
