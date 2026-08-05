@@ -33,7 +33,8 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if RAIZ not in sys.path:
     sys.path.append(RAIZ)
 
-from src.environment.swarm_env_3d import SwarmForagingEnv3D  # noqa: E402
+from src.environment.swarm_env_3d import (SwarmForagingEnv3D,  # noqa: E402
+                                          DOOR_PUSHERS_REQUIRED)
 from src.scenarios import SCENARIOS  # noqa: E402
 
 CFG = os.path.join(RAIZ, "configs", "foraging.yaml")
@@ -109,8 +110,12 @@ def verificar_paredes(envs):
 
 
 # ── 3. Alcançabilidade: do spawn ao ninho, e a comida ───────────────────────
-def _grelha_livre(e, passo=0.5):
-    """Grelha booleana de células navegáveis (True = livre), no plano z=0."""
+def _grelha_livre(e, passo=0.5, porta_passavel=True):
+    """Grelha booleana de células navegáveis (True = livre), no plano z=0.
+
+    `porta_passavel=False` trata o painel da porta como parede — é o mundo que
+    um enxame que não coordene encontra de facto (ver secção 7).
+    """
     R = e.arena_radius
     n = int(2 * R / passo) + 1
     eixo = np.linspace(-R, R, n)
@@ -120,7 +125,7 @@ def _grelha_livre(e, passo=0.5):
     folga = float(getattr(e, "robot_radius", 0.15))
     idx_porta = getattr(e, "door_wall_index", None)
     for i, parede in enumerate(getattr(e, "walls", [])):
-        if idx_porta is not None and i == idx_porta:
+        if porta_passavel and idx_porta is not None and i == idx_porta:
             continue          # o painel da porta abre-se durante o episódio
         centro, tamanho = parede["pos"], parede["size"]
         cx, cy = float(centro[0]), float(centro[1])
@@ -338,6 +343,125 @@ def episodio_de_fumo(envs, passos=300):
                  f"agente saiu para uma zona sem campo")
 
 
+# ── 6b. O andar onde a tarefa é impossível ──────────────────────────────────
+def verificar_teto_vs_ninho(envs):
+    """O teto vertical deixa uma faixa de altitude onde não se pode entregar?
+
+    A entrega é uma distância **3D**: `norm(pos − nest_pos) < nest_radius + 0.1`,
+    com o ninho em z=0. Um agente a |z| ≥ 1,6 m não entrega, esteja onde estiver
+    em x,y — nem por cima do ninho. O mapa grande tem teto de ±2 m, ou seja
+    **maior** que esse limiar: entre 1,6 e 2,0 m há um andar onde um agente pode
+    navegar o mapa inteiro sem nunca poder recolher.
+
+    ⚠️ O andar improdutivo NÃO é uma singularidade do mapa grande: nos sete
+    cenários vai até ao raio da arena (13,4 m), e é o teto de ±2 m que o reduz a
+    0,4 m aqui. A tabela imprime-se toda por isso mesmo — a primeira versão
+    desta verificação avisava só sobre o mapa grande e deixava a leitura de que
+    o teto criava o problema, quando é ele que quase o elimina.
+
+    ⚠️ E o andar improdutivo também NÃO explica o zero do F1, por muito que a
+    coincidência convide (5 ago, medido em 4 campeões × 3 seeds):
+
+      · com teto e sem teto, as recolhas são 0,00 — o teto não muda nada;
+      · a distância MÍNIMA ao ninho, em todo o episódio e sobre 20 agentes, é de
+        **37 a 79 m** num percurso de 154 m: os campeões nem chegam perto do
+        ninho, quanto mais a precisar de descer para entregar;
+      · nos cenários nativos os mesmos campeões chegam a 1,4 m do ninho e
+        recolhem 67-137 vezes, com 0-57% do tempo acima do limiar de entrega.
+
+    O zero do F1 é falta de transferência da NAVEGAÇÃO. A altura é um
+    comportamento parasita que os campeões trazem do treino, não a causa.
+    """
+    print()
+    print("=" * 78)
+    print("6b. TETO vs. NINHO — há altitude a que a entrega é impossível?")
+    print("=" * 78)
+    faixas = {}
+    for cen, e in envs.items():
+        limiar = float(getattr(e, "nest_radius", 1.5)) + 0.1
+        teto = (e.MAPA_GRANDE_TETO if cen == ALVO else float(e.arena_radius))
+        faixas[cen] = teto - limiar
+        print(f"  {cen:<26} entrega exige |z| < {limiar:.2f} m   "
+              f"teto {teto:6.1f} m   andar improdutivo {faixas[cen]:6.1f} m")
+
+    sete = [f for c, f in faixas.items() if c != ALVO]
+    if ALVO in faixas and sete:
+        print(f"    └ o teto de ±{envs[ALVO].MAPA_GRANDE_TETO:.0f} m deixa "
+              f"{faixas[ALVO]:.1f} m improdutivos, contra {min(sete):.1f} m nos "
+              f"sete: o mapa grande é o MENOS exposto dos oito.")
+        if faixas[ALVO] > 0:
+            aviso(f"{ALVO}: sobra {faixas[ALVO]:.1f} m de altitude onde a entrega é "
+                  f"impossível (teto 2,0 m contra limiar 1,6 m). NÃO é o que "
+                  f"explica o zero do F1 — medido: com e sem teto dá 0,00, e os "
+                  f"campeões param a 37-79 m do ninho. Fica como nota de desenho: "
+                  f"com o teto em 1,5 m nenhuma altitude seria improdutiva")
+
+
+# ── 7. A porta compensa? (M3 do pré-registo) ────────────────────────────────
+def verificar_porta(envs):
+    """Compara o percurso PELA PORTA com o da alternativa longa.
+
+    A M3 do pré-registo mede «se a cooperação emerge quando é *vantajosa*». O
+    quanto ela é vantajosa nunca tinha sido medido — e sem esse número, «nenhum
+    algoritmo abriu a porta» não se distingue de «não valia a pena abri-la».
+    Abrir exige DOOR_PUSHERS_REQUIRED agentes ao mesmo tempo na push zone; a
+    alternativa não exige coordenação nenhuma.
+    """
+    print()
+    print("=" * 78)
+    print("7. A PORTA COMPENSA? — percurso pela porta vs. pela alternativa")
+    print("=" * 78)
+    e = envs.get(ALVO)
+    if e is None or not getattr(e, "has_door", False):
+        print("  (sem porta neste cenário)")
+        return
+    spawn = np.mean(e.agent_positions[:, :2], axis=0)
+    ninho = e.nest_pos[:2]
+    custos = {}
+    for rotulo, passavel in (("porta", True), ("alternativa", False)):
+        eixo, livre = _grelha_livre(e, porta_passavel=passavel)
+        ini = (_idx(eixo, spawn[0]), _idx(eixo, spawn[1]))
+        passos = _bfs_custo(livre, ini)
+        xx, yy = np.meshgrid(eixo, eixo, indexing="ij")
+        zona = (((xx - ninho[0]) ** 2 + (yy - ninho[1]) ** 2)
+                <= (float(getattr(e, "nest_radius", 1.5)) + 0.5) ** 2)
+        alcancadas = passos[zona & (passos >= 0)]
+        custos[rotulo] = float(alcancadas.min()) * 0.5 if alcancadas.size else np.inf
+        print(f"  pela {rotulo:<12} {custos[rotulo]:7.1f} m")
+    if not np.isfinite(custos["alternativa"]):
+        erro(f"{ALVO}: com a porta FECHADA o ninho é inalcançável — a alternativa "
+             f"longa não existe de facto, e não abrir a porta é não recolher")
+        return
+    ganho = 100.0 * (custos["alternativa"] - custos["porta"]) / custos["alternativa"]
+    print(f"  cooperar poupa {ganho:.1f}% do percurso, e exige "
+          f"{DOOR_PUSHERS_REQUIRED} agentes ao mesmo tempo na push zone")
+    if ganho < 25.0:
+        aviso(f"{ALVO}: abrir a porta só poupa {ganho:.0f}% do percurso "
+              f"({custos['porta']:.0f} m contra {custos['alternativa']:.0f} m) — a M3 "
+              f"lê-se «a cooperação não emergiu» quando o incentivo é este; dizer "
+              f"o número ao lado do resultado")
+    else:
+        ok(f"{ALVO}: a porta poupa {ganho:.0f}% — a M3 tem incentivo que a sustente")
+
+
+def _bfs_custo(livre, origem_ij):
+    """Nº de células até cada ponto (4-conexo), −1 onde não chega."""
+    dist = np.full(livre.shape, -1, dtype=int)
+    if not livre[origem_ij]:
+        return dist
+    dist[origem_ij] = 0
+    fila = deque([origem_ij])
+    n, m = livre.shape
+    while fila:
+        i, j = fila.popleft()
+        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            a, b = i + di, j + dj
+            if 0 <= a < n and 0 <= b < m and livre[a, b] and dist[a, b] < 0:
+                dist[a, b] = dist[i, j] + 1
+                fila.append((a, b))
+    return dist
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--verboso", action="store_true")
@@ -361,6 +485,8 @@ def main():
     verificar_orcamento(envs)
     verificar_geodesico(envs, mapas)
     episodio_de_fumo(envs)
+    verificar_teto_vs_ninho(envs)
+    verificar_porta(envs)
 
     print()
     print("=" * 78)
