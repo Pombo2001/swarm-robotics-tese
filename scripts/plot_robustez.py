@@ -15,7 +15,12 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 EVAL_DIR = os.path.join(PROJECT_ROOT, "results", "evaluation")
 
-from src.scenarios import (SCENARIOS as ALL_SCENARIOS,
+# THESIS_SCENARIOS: esta figura (`robustez_falhas.png`) é UMA só, agregada, e
+# entra na tese — um cenário a mais aparece lá dentro sem ninguém decidir isso.
+# O compromisso 3 do pré-registo do mapa grande manda mantê-lo fora das figuras
+# e tabelas dos sete. Hoje ele não tem CSV de robustez; se um dia tiver, fica de
+# fora por regra e não por acaso. Ver `gerar_figuras_7d.py`, mesma correção.
+from src.scenarios import (THESIS_SCENARIOS as ALL_SCENARIOS,
                            SCENARIO_LABELS_SHORT as SCENARIO_LABELS, ALGO_COLORS)
 ALGOS = ["GNN", "PPO", "SAC"]
 
