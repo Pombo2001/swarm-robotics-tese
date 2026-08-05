@@ -706,6 +706,49 @@ reduzir runs abaixo de 7) — a subida para 21 não cria uma exceção nova.
     declara-se explicitamente quantos runs convergiram: quem quiser aplicar o
     outro critério tem o número à frente.
 
+### 5 ago 2026 — a M3 não era calculável, e o braço do GNN esteve errado 27 h
+
+Duas correções encontradas a auditar a campanha **já a correr**. Nenhuma toca em
+hipóteses, métricas ou regra de decisão; ambas tocam no que é preciso para as
+poder responder.
+
+22. **A M3 não tinha de onde sair.** Este documento compromete-se com «fração de
+    episódios em que a porta é aberta, por algoritmo», e o
+    `analise_mapa_grande.py` procura para isso uma coluna `door_opened` no
+    `eval_by_run.csv`. Essa coluna **nunca foi escrita**: o `run_episode`
+    registava recolhas, recompensa, passos e sucesso, e mais nada. A falta só
+    apareceria com a campanha fechada — e a M3, que é uma das três métricas
+    pré-registadas, ficaria por reportar.
+
+    Corrigido a 5 ago: `run_episode` devolve `door_opened` (o `door_active` do
+    ambiente depois do episódio, que é o que `_update_door` comuta quando três
+    agentes ocupam a push zone), e o `eval_suite`/`eval_by_run` gravam-na. Vale
+    vazio nos cenários sem porta, para não misturar «não abriu» com «não havia
+    porta». Preso por `tests/test_door_opened_metric.py`.
+
+    **Isto não altera nenhum resultado**: a avaliação da campanha corre uma vez,
+    no fim de todos os runs, e o `run_experiments` só importa os módulos de
+    avaliação nesse momento — os processos já em curso vão ler a versão nova
+    quando lá chegarem. Os números de F2 são os mesmos que seriam sem esta
+    correção; passa apenas a haver mais uma coluna.
+
+23. **O stream GNN treinou 27 h o braço errado.** O `mapa_streamF2.sh` não
+    escrevia as chaves `novelty_*` no config e o treino caiu nos defaults do
+    trainer (peso 0, adaptativo falso): **objetivo puro**, onde a secção 2 deste
+    documento fixa o **adaptativo** ($w_0 = 0{,}5$). O lançador verificava «sem
+    novidade» e, portanto, certificava o erro. Detetado a 4 ago; os dois runs
+    afetados foram **descartados** e o stream relançado a 4 ago às 22:57 com o
+    braço certo, do run 1. O script passa a escrever, reler e abortar se o que
+    ficou no ficheiro não for o pedido.
+
+    Os dois runs do braço errado ficam guardados em
+    `~/mapa_F2_gnn_objetivopuro/` — não entram em M1-M3 (não é o braço
+    pré-registado), mas são, por acaso, um controlo do mesmo mapa e orçamento a
+    variar só a dosagem de exploração, e como tal se declaram.
+
+    Consequência no calendário: o GNN fecha ~16 ago em vez de ~14. O hard stop de
+    22 ago mantém-se, e com ele a regra 4 dos compromissos de reporte.
+
 ---
 
 *Assinatura temporal: este plano existe no git antes de o mapa ter sido treinado uma

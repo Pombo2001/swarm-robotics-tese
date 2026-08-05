@@ -110,11 +110,13 @@ def verificar_paredes(envs):
 
 
 # ── 3. Alcançabilidade: do spawn ao ninho, e a comida ───────────────────────
-def _grelha_livre(e, passo=0.5, porta_passavel=True):
+def _grelha_livre(e, passo=0.5):
     """Grelha booleana de células navegáveis (True = livre), no plano z=0.
 
-    `porta_passavel=False` trata o painel da porta como parede — é o mundo que
-    um enxame que não coordene encontra de facto (ver secção 7).
+    Serve a alcançabilidade (secção 3), que é uma pergunta de sim/não. Para
+    DISTÂNCIAS usa-se o campo geodésico do ambiente e não esta grelha: 4-conexo
+    a 0,5 m sobrestima percursos, e foi assim que a secção 7 chegou a publicar
+    13,4% onde o ambiente mede 17,0%.
     """
     R = e.arena_radius
     n = int(2 * R / passo) + 1
@@ -125,7 +127,7 @@ def _grelha_livre(e, passo=0.5, porta_passavel=True):
     folga = float(getattr(e, "robot_radius", 0.15))
     idx_porta = getattr(e, "door_wall_index", None)
     for i, parede in enumerate(getattr(e, "walls", [])):
-        if porta_passavel and idx_porta is not None and i == idx_porta:
+        if idx_porta is not None and i == idx_porta:
             continue          # o painel da porta abre-se durante o episódio
         centro, tamanho = parede["pos"], parede["size"]
         cx, cy = float(centro[0]), float(centro[1])
@@ -415,51 +417,46 @@ def verificar_porta(envs):
     if e is None or not getattr(e, "has_door", False):
         print("  (sem porta neste cenário)")
         return
-    spawn = np.mean(e.agent_positions[:, :2], axis=0)
-    ninho = e.nest_pos[:2]
+
+    # Mede-se com o CAMPO GEODÉSICO do próprio ambiente (Dijkstra 8-conexo a
+    # 0,4 m), não com um BFS à parte: é ele que alimenta a recompensa de
+    # progresso, e é sobre ele que a emenda 15 do pré-registo fixou o número.
+    # A primeira versão desta secção usou um BFS 4-conexo a 0,5 m a partir do
+    # spawn médio e deu 13,4% de poupança, contra os 17,0% reais — uma grelha
+    # sem diagonais sobrestima os percursos, e não do mesmo modo nos dois.
+    # A lição: quando o ambiente já mede uma coisa, medi-la outra vez por fora
+    # é criar uma segunda resposta para a mesma pergunta.
     custos = {}
-    for rotulo, passavel in (("porta", True), ("alternativa", False)):
-        eixo, livre = _grelha_livre(e, porta_passavel=passavel)
-        ini = (_idx(eixo, spawn[0]), _idx(eixo, spawn[1]))
-        passos = _bfs_custo(livre, ini)
-        xx, yy = np.meshgrid(eixo, eixo, indexing="ij")
-        zona = (((xx - ninho[0]) ** 2 + (yy - ninho[1]) ** 2)
-                <= (float(getattr(e, "nest_radius", 1.5)) + 0.5) ** 2)
-        alcancadas = passos[zona & (passos >= 0)]
-        custos[rotulo] = float(alcancadas.min()) * 0.5 if alcancadas.size else np.inf
-        print(f"  pela {rotulo:<12} {custos[rotulo]:7.1f} m")
+    for rotulo, aberta in (("porta", True), ("alternativa", False)):
+        alvo = _env(ALVO, seed=1)
+        if not aberta:
+            alvo._geo_cache.clear()
+            alvo.door_wall_index = None      # o painel passa a contar como parede
+            alvo._build_geodesic_field()
+        pots = np.array([alvo._potential(p) for p in alvo.agent_positions])
+        if not np.isfinite(pots).all():
+            custos[rotulo] = np.inf
+        else:
+            custos[rotulo] = float(pots.mean())
+        print(f"  pela {rotulo:<12} {custos[rotulo]:7.1f} m   "
+              f"(min {pots.min():.1f}, máx {pots.max():.1f})")
+
     if not np.isfinite(custos["alternativa"]):
         erro(f"{ALVO}: com a porta FECHADA o ninho é inalcançável — a alternativa "
              f"longa não existe de facto, e não abrir a porta é não recolher")
         return
-    ganho = 100.0 * (custos["alternativa"] - custos["porta"]) / custos["alternativa"]
-    print(f"  cooperar poupa {ganho:.1f}% do percurso, e exige "
-          f"{DOOR_PUSHERS_REQUIRED} agentes ao mesmo tempo na push zone")
+    razao = custos["alternativa"] / custos["porta"]
+    ganho = 100.0 * (1.0 - 1.0 / razao)
+    print(f"  razão fechada/aberta {razao:.3f}  ⇒  não cooperar custa "
+          f"+{100*(razao-1):.1f}%; cooperar poupa {ganho:.1f}% do percurso,")
+    print(f"  e exige {DOOR_PUSHERS_REQUIRED} agentes ao mesmo tempo na push zone.")
     if ganho < 25.0:
-        aviso(f"{ALVO}: abrir a porta só poupa {ganho:.0f}% do percurso "
+        aviso(f"{ALVO}: abrir a porta poupa {ganho:.0f}% do percurso "
               f"({custos['porta']:.0f} m contra {custos['alternativa']:.0f} m) — a M3 "
               f"lê-se «a cooperação não emergiu» quando o incentivo é este; dizer "
               f"o número ao lado do resultado")
     else:
         ok(f"{ALVO}: a porta poupa {ganho:.0f}% — a M3 tem incentivo que a sustente")
-
-
-def _bfs_custo(livre, origem_ij):
-    """Nº de células até cada ponto (4-conexo), −1 onde não chega."""
-    dist = np.full(livre.shape, -1, dtype=int)
-    if not livre[origem_ij]:
-        return dist
-    dist[origem_ij] = 0
-    fila = deque([origem_ij])
-    n, m = livre.shape
-    while fila:
-        i, j = fila.popleft()
-        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            a, b = i + di, j + dj
-            if 0 <= a < n and 0 <= b < m and livre[a, b] and dist[a, b] < 0:
-                dist[a, b] = dist[i, j] + 1
-                fila.append((a, b))
-    return dist
 
 
 def main():
