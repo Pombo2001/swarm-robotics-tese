@@ -39,11 +39,13 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-# Constantes reais (configs/foraging.yaml) — iguais às do ambiente.
-NEST_RADIUS = 1.5
-ROBOT_RADIUS = 0.15
-OBSTACLE_RADIUS = 0.2
-NUM_AGENTS = 20
+# Raios e nº de agentes: lidos do AMBIENTE em `main`, não escritos aqui.
+#
+# Estavam aqui quatro constantes com o comentário «iguais às do ambiente» — que é
+# uma promessa, não um mecanismo. O mesmo padrão custou hoje (5 ago) um número
+# errado na tese: medi um percurso com uma régua minha em vez da do simulador, e
+# publiquei 13,4% onde o ambiente diz 17,0%. Uma segunda fonte para a mesma
+# grandeza não fica desatualizada com estrondo; fica em silêncio.
 
 
 def _raio_do_config():
@@ -93,6 +95,12 @@ def main(args):
     raio = args.radius if args.radius is not None else _raio_do_config()
     altura = max(0.4, args.wall_height)
     walls, porta, ninho, posicoes, obs, (W, H), env = _geometria(raio)
+
+    # Do ambiente construído — a mesma instância que deu a geometria acima.
+    NEST_RADIUS = float(env.nest_radius)
+    ROBOT_RADIUS = float(env.robot_radius)
+    OBSTACLE_RADIUS = float(env.obstacle_radius)
+    NUM_AGENTS = int(env.num_agents)
 
     app = Ursina()
     window.title = f'Swarm 3D - MAPA GRANDE - r={raio:.0f} m'
@@ -164,7 +172,7 @@ def main(args):
               f'labirinto {W:.0f}x{H:.0f} m  ·  paredes {altura:.1f} m\n'
               f'5 zonas: S partida · A gargalo+U · B 4 salas · C porta coop. · D ninho'
               f'  ·  {len(obs)} obstaculos\n'
-              f'{"sem robos" if args.sem_robos else f"{NUM_AGENTS} robos (raio real 0,15 m)"}'
+              f'{"sem robos" if args.sem_robos else f"{NUM_AGENTS} robos (raio real {ROBOT_RADIUS:.2f} m)"}'
               f'  ·  cena PARADA (geometria do ambiente real)',
          position=(-0.86, 0.47), scale=0.7, color=color.hsv(0, 0, 0.75))
 

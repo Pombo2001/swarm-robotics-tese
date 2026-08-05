@@ -91,7 +91,11 @@ def cliffs_delta(a, b):
     n = 0
     for x in a:
         for y in b:
-            n += (x > y) - (x < y)
+            # `int(...)`: com escalares NumPy, `np.bool_ - np.bool_` e um
+            # TypeError desde o NumPy 2. So nao rebenta aqui porque cada
+            # chamador embrulha os dados em `list()` — e isso e uma
+            # convencao, nao uma garantia. O valor devolvido e o mesmo.
+            n += int(x > y) - int(x < y)
     return n / (len(a) * len(b))
 
 
