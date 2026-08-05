@@ -54,7 +54,40 @@ O padrão: **os números têm verificador, as afirmações sobre os números nã
 | # | Verificação | Estado |
 |---|---|---|
 | 3.1 | Módulos sem um único teste | ✅ inventariado — ver abaixo |
-| 3.2 | Os três visualizadores usam convenções de eixos diferentes | ⬜ decidir se se unificam ou se se documenta |
+| 3.2 | Os três visualizadores usam convenções de eixos diferentes | ⬜ **fundir num só** — ver abaixo |
+| 3.4 | Revisão de código (5 ago) | ✅ feita — resultados abaixo |
+
+### Revisão de código — o que vale a pena, por ordem
+
+**Depois de 22 ago** (nada disto se toca com a campanha a correr):
+
+1. **Fundir `visualize_{gnn,ppo,sac}.py`.** São 205, 205 e 222 linhas; o `ppo` e
+   o `sac` diferem em **12 linhas** (o algoritmo, o título, o caminho do modelo
+   e a classe que carrega). São ~630 linhas onde bastariam ~230 com `--algo`.
+   Não são código morto — a vista «Ao vivo (3D)» invoca-os — e têm o que o
+   `main_visualizer` não tem (slider de velocidade, telemetria de distâncias).
+   Já divergiram de facto: a 5 ago encontrei convenções de eixos diferentes
+   entre eles e o `main_visualizer`, e o `cylinder` inexistente só num deles.
+2. **`swarm_env_3d.step()`: 407 linhas, 74 ramos** — a função mais crítica do
+   projeto e a mais ramificada. ⚠️ **Não tocar enquanto o F2 correr**: qualquer
+   alteração, mesmo equivalente, obrigaria a reverificar a equivalência
+   bit-a-bit dos oito cenários e invalidaria a comparabilidade da campanha.
+3. **`compare_pair` do `statistical_tests`** (Wilcoxon emparelhado por igualdade
+   de tamanho) — já documentado no cabeçalho do ficheiro; não alimenta a tese.
+4. **Testes para `train_ppo_3d` / `train_sac_3d`** (261 e 282 linhas sem um
+   único teste). Risco baixo — são invólucros da Stable-Baselines3.
+
+**O que a revisão decidiu NÃO mudar, e porquê:**
+
+- **43 «exceções engolidas»**: quase todas são idiomas benignos
+  (`matplotlib.use("Agg")`, `sys.stdout.reconfigure`, imports opcionais). Tratá-las
+  como defeito seria ruído.
+- **`cliffs_delta` em 6 ficheiros e `compara` em 4**: a duplicação está fixada
+  por teste (as seis têm de concordar); unificar código que já produziu números
+  publicados é pior do que a duplicação.
+- **`create_thesis_plots_3d`, 497 linhas**: código de figuras, risco baixo,
+  ganho baixo.
+- 0 `except:` nus, 0 argumentos por omissão mutáveis.
 | 3.3 | Scripts que produzem números da tese e vivem fora do repositório | ✅ `verificar_vertical.py` trouxe os de hoje |
 
 ### O padrão que se repete
