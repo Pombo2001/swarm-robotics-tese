@@ -16,7 +16,7 @@ Para ver agentes treinados a mexer neste mapa, usa o visualizador normal com
 
 Uso:
     .venv/Scripts/python.exe visualization/visualize_mapa_grande.py
-    .venv/Scripts/python.exe visualization/visualize_mapa_grande.py --radius 60
+    .venv/Scripts/python.exe visualization/visualize_mapa_grande.py --radius 45
     .venv/Scripts/python.exe visualization/visualize_mapa_grande.py --wall-height 8
 """
 import argparse
@@ -44,6 +44,19 @@ NEST_RADIUS = 1.5
 ROBOT_RADIUS = 0.15
 OBSTACLE_RADIUS = 0.2
 NUM_AGENTS = 20
+
+
+def _raio_do_config():
+    """O raio que o ambiente usa de facto (`arena_radius_mapa_grande`).
+
+    Estava aqui um default de 45 m em duro, de quando o mapa era rascunho; o
+    config foi para 60 m e a pré-visualização passou a mostrar um mapa que não
+    é o que se treina — sem nada no ecrã a dizê-lo. O default passa a ser lido.
+    """
+    import yaml
+    with open(os.path.join(PROJECT_ROOT, 'configs', 'foraging.yaml')) as f:
+        cfg = yaml.safe_load(f)
+    return float(cfg['environment'].get('arena_radius_mapa_grande', 45.0))
 
 
 def _geometria(raio):
@@ -77,7 +90,7 @@ def _geometria(raio):
 
 
 def main(args):
-    raio = args.radius
+    raio = args.radius if args.radius is not None else _raio_do_config()
     altura = max(0.4, args.wall_height)
     walls, porta, ninho, posicoes, obs, (W, H), env = _geometria(raio)
 
@@ -165,7 +178,8 @@ def main(args):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--radius', type=float, default=45.0)
+    ap.add_argument('--radius', type=float, default=None,
+                    help='raio da arena (default: o do configs/foraging.yaml)')
     ap.add_argument('--wall-height', type=float, default=3.0)
     ap.add_argument('--sem-robos', action='store_true')
     main(ap.parse_args())

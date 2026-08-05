@@ -21,23 +21,33 @@ if PROJECT_ROOT not in sys.path:
 
 from src.environment.swarm_env_3d import SwarmForagingEnv3D, DOOR_SCENARIOS
 from src.agents.gnn_agent_3d import GNNAgent3D
+from src.scenarios import SCENARIOS
 
 def main(args):
     app = Ursina()
 
-    config_path = os.path.join(PROJECT_ROOT, 'configs', 'foraging.yaml')
+    config_path = args.config or os.path.join(PROJECT_ROOT, 'configs', 'foraging.yaml')
     print(f"DEBUG: Loading configuration from {config_path}")
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
-    print(f"DEBUG: Selected classic scenario: {config['environment'].get('classic_scenario')}")
 
-    window.title = f'Swarm 3D - Visualizer: {args.algo.upper()}'
+    # --scenario: sem isto, ver outro cenário obrigava a EDITAR o
+    # configs/foraging.yaml partilhado — o mesmo ficheiro que os trainers leem e
+    # que as campanhas do servidor reescrevem por sed. Os trainers já aceitavam
+    # --config por esta razão; o visualizador não, e o cabeçalho do
+    # visualize_mapa_grande.py chegava a prometer uma flag --scenario que não
+    # existia. O ambiente é construído a partir do dicionário já alterado, para
+    # que nada seja escrito no disco.
+    if args.scenario:
+        config['environment']['classic_scenario'] = args.scenario
+    scenario = config['environment'].get('classic_scenario', 'none')
+    print(f"DEBUG: Selected classic scenario: {scenario}")
+
+    window.title = f'Swarm 3D - Visualizer: {args.algo.upper()} · {scenario}'
     EditorCamera()
 
-    env = SwarmForagingEnv3D(config_path=config_path)
+    env = SwarmForagingEnv3D(config=config)
     obs_dict, _ = env.reset()
-
-    scenario = config['environment'].get('classic_scenario', 'none')
     # Convenção de nomes: o Sandbox ("none") é guardado SEM sufixo;
     # os restantes cenários com "_{scenario}". Tem de bater certo com os trainers.
     scenario_suffix = f"_{scenario}" if scenario and scenario != "none" else ""
@@ -202,5 +212,13 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--algo', type=str, required=True, choices=['gnn', 'ppo', 'sac'])
+    parser.add_argument('--scenario', type=str, default=None,
+                        # dict.fromkeys desduplica: o mapa_grande já entrou no
+                        # src.scenarios e aparecia duas vezes na ajuda.
+                        choices=list(dict.fromkeys(list(SCENARIOS) + ['mapa_grande'])),
+                        help='cenário a visualizar (default: o do config). '
+                             'Não escreve no configs/foraging.yaml.')
+    parser.add_argument('--config', type=str, default=None,
+                        help='caminho do YAML (default: configs/foraging.yaml)')
     args = parser.parse_args()
     main(args)
