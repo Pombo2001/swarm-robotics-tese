@@ -104,7 +104,7 @@ _ap.add_argument('--rastos', action='store_true',
 _ap.add_argument('--sombras', action='store_true',
                  help='liga as sombras projetadas (o shadow map desta escala '
                       'desenha borrões grandes; as de contacto ficam sempre)')
-_ap.add_argument('--angulo', type=float, default=52.0,
+_ap.add_argument('--angulo', type=float, default=None,
                  help='inclinação inicial da câmara em graus '
                       '(90 = topo, 0 = ao nível do chão; por omissão 48)')
 # Captura: corre N passos sem intervenção, grava um PNG e fecha. Serve para
@@ -238,6 +238,16 @@ politica = _carregar_politica()
 # quase ortográfica (linhas paralelas, sem fuga) e o resultado volta a parecer um
 # diagrama. Aproxima-se a câmara e alarga-se o fov, o que dá perspetiva visível
 # sem cortar a arena.
+# ⚠️ Ângulo por omissão consoante a arena, e medido em capturas, não escolhido
+# de cabeça. Nos sete cenários (raio 15) há uma ou duas paredes e 52° dá volume
+# sem tapar nada. Num labirinto de 103 m com muros de 6 m, o mesmo ângulo põe os
+# muros à frente dos corredores e o enxame desaparece atrás deles — e a saída
+# não pode ser desenhar através das paredes (foi o que o marcador vertical fazia,
+# e lê-se como raio-X). Nesta convenção, MENOS graus é mais de cima: a 40° vê-se
+# o labirinto todo por dentro e os muros continuam com volume; a 70° e 78° a
+# cena inclina-se para o perfil e tapa-se ainda mais.
+if _args.angulo is None:
+    _args.angulo = 40.0 if env.arena_radius > 30.0 else 52.0
 _camera_editor.rotation_x = _args.angulo
 # ⚠️ O plano do MAPA (x,y do simulador) é vertical no espaço do Ursina, porque
 # a cena é desenhada 1:1 com o mundo. Consequência: `rotation_x=90` dá a vista de
@@ -604,14 +614,15 @@ for r_pos in env.agent_positions:
                                 position=(r_pos[0], r_pos[1], 0.015)))
 
 # ── Marcador vertical: onde está o enxame quando o corpo não se vê ───────────
-# Num labirinto com muros de 6 m, os agentes andam encostados às paredes — é
-# esse o comportamento — e o corpo, desenhado maior do que é para se ver ao
-# longe, fica enterrado no volume da parede. No mapa grande media-se 20 agentes
-# espalhados e via-se UM. O marcador é uma haste fina na posição (x, y) exata do
-# robô, que sobe acima das paredes: não exagera posição nenhuma, e mostra o
-# enxame através da geometria. Ligado por omissão só em arenas grandes, onde o
-# problema existe.
-PINOS = _args.pinos if _args.pinos is not None else (R > 30.0)
+# Uma haste fina na posição (x, y) exata do robô, que sobe acima das paredes.
+# ⚠️ DESLIGADO por omissão. Foi tentado ligado nos mapas grandes, para mostrar o
+# enxame quando o corpo fica enterrado no volume dos muros, e o efeito é o de um
+# raio-X: aparecem robôs por cima de paredes que, na vista escolhida, os deviam
+# tapar — «continuo a ver os robôs por detrás da parede». Um visualizador que
+# mostra através da geometria deixa de servir para julgar se o enxame contorna
+# ou atravessa, que é a única coisa que aqui se quer julgar. Fica disponível
+# (`--pinos`) para quem quiser localizar o enxame num mapa grande de propósito.
+PINOS = bool(_args.pinos)
 ALTURA_PINO = ALTURA_VISUAL + 3.0
 robot_pins = []
 if PINOS:
