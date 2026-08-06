@@ -112,6 +112,9 @@ _ap.add_argument('--angulo', type=float, default=52.0,
 # para comparar duas versões do visualizador sem depender de memória visual.
 _ap.add_argument('--recuo', type=float, default=2.8,
                  help='distância da câmara, em raios de arena')
+_ap.add_argument('--pinos', action=argparse.BooleanOptionalAction, default=None,
+                 help='marcador vertical por robô, para o ver através das '
+                      'paredes (por omissão: ligado em arenas de raio > 30 m)')
 _ap.add_argument('--chao', choices=('plano', 'disco'), default='plano',
                  help="'plano': chão contínuo que morre na névoa (omissão); "
                       "'disco': o disco recortado da versão anterior")
@@ -339,8 +342,20 @@ def _arestas_caixa(escala):
 
 
 if _args.chao == 'plano':
-    Entity(model='quad', scale=CHAO_EXT * 2, color=CHAO, unlit=True,
-           position=(0, 0, 0.08))
+    # ⚠️ Translúcido, e não por gosto. O «cima» do ecrã é −z, logo um agente com
+    # z > 0 está do OUTRO lado deste plano — e com o plano opaco desaparecia do
+    # ecrã. No mapa grande, onde o teto é ±2 m, isso escondia metade do enxame, e
+    # a cena parecia vazia: procurava-se um defeito de navegação onde havia um
+    # defeito de desenho. O plano é uma referência, não um chão; deixa ver quem
+    # está por baixo.
+    _chao = Entity(model='quad', scale=CHAO_EXT * 2, color=CHAO, unlit=True,
+                   alpha=0.82, position=(0, 0, 0.08))
+    # Translúcido não chega: o plano continuava a escrever no depth buffer e a
+    # descartar tudo o que estivesse do outro lado. Desenha-se no bin de fundo e
+    # sem escrita de profundidade — assim é mesmo uma referência, e nunca apaga
+    # um agente. (Medido no mapa grande: 20 agentes espalhados, 1 visível.)
+    _chao.setDepthWrite(False)
+    _chao.setBin('background', 0)
     # Grelha quadrada de 5 m: dá escala sem apontar para o centro. Uma só malha
     # (não uma entidade por linha) — são ~90 segmentos.
     # A grelha acaba ANTES do plano (2,2 R contra 3,4 R): levada até ao fim, as
@@ -410,13 +425,106 @@ def _e_porta(i):
 # inclinar a câmara e ver volume de facto. O HUD diz sempre a altura REAL, para
 # o ecrã não afirmar uma geometria que não é a do simulador — a mesma solução do
 # `viz3d.js` do dashboard e do `main_visualizer.py`.
-ALTURA_VISUAL = max(3.5, R / 4.0)
 ALTURA_REAL = float(env.walls[0]['size'][2]) if len(env.walls) else 0.0
+# A altura visual fixa-se mais abaixo, depois de medida a passagem mais estreita:
+# num labirinto, uma parede muito mais alta do que a passagem é larga transforma
+# a vista num telhado — vê-se a caixa por fora e não o percurso lá dentro.
+ALTURA_VISUAL = max(3.5, R / 4.0)          # revisto adiante
+
+
+def _passagem_mais_estreita():
+    """Largura da passagem obrigatória mais apertada entre o \\textit{spawn} e o
+    ninho, em metros — ou None se não se puder calcular.
+
+    Serve UM propósito: limitar o quanto se pode engrossar uma parede no ecrã.
+    Uma parede de 1,5 m num mapa de 103 m desenha-se como um risco no chão e não
+    se lê como barreira (foi a queixa); engrossá-la resolve isso, mas engrossar
+    de mais fecha visualmente uma passagem que existe de facto --- e aí a figura
+    passava a mentir ao contrário, que é pior.
+
+    Calcula-se o `widest path`: de todos os caminhos livres do spawn ao ninho,
+    aquele cujo ponto mais apertado é o mais largo. É esse ponto que manda.
+    """
+    try:
+        import scipy.ndimage as _ndi
+    except Exception:      # noqa: BLE001 — sem scipy, não se engrossa nada
+        return None
+    if not len(env.walls):
+        return None
+    import heapq
+    res = float(env.geo_res)
+    n = int(2 * R / res) + 1
+    bloqueado = np.zeros((n, n), dtype=bool)
+    for w in env.walls:
+        meia = np.asarray(w['size'], dtype=float) / 2.0
+        i0 = max(0, int((w['pos'][0] - meia[0] + R) / res))
+        i1 = min(n - 1, int((w['pos'][0] + meia[0] + R) / res))
+        j0 = max(0, int((w['pos'][1] - meia[1] + R) / res))
+        j1 = min(n - 1, int((w['pos'][1] + meia[1] + R) / res))
+        bloqueado[i0:i1 + 1, j0:j1 + 1] = True
+    folga = _ndi.distance_transform_edt(~bloqueado) * res
+
+    def celula(p):
+        return (int((p[0] + R) / res), int((p[1] + R) / res))
+
+    origem, destino = celula(env.agent_positions[0]), celula(env.nest_pos)
+    if not (0 <= origem[0] < n and 0 <= origem[1] < n):
+        return None
+    melhor = np.full((n, n), -1.0)
+    melhor[origem] = folga[origem]
+    fila = [(-folga[origem], origem[0], origem[1])]
+    while fila:
+        v, i, j = heapq.heappop(fila)
+        v = -v
+        if v < melhor[i, j]:
+            continue
+        if (i, j) == destino:
+            break
+        for di, dj in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            a, b = i + di, j + dj
+            if 0 <= a < n and 0 <= b < n and not bloqueado[a, b]:
+                nv = min(v, folga[a, b])
+                if nv > melhor[a, b]:
+                    melhor[a, b] = nv
+                    heapq.heappush(fila, (-nv, a, b))
+    largura = 2.0 * float(melhor[destino])
+    return largura if largura > 0 else None
+
+
+# ⚠️ Engrossamento VISUAL das paredes, pela mesma lógica da altura: o que se
+# exagera é a espessura do desenho, nunca a posição de nada. No mapa grande as
+# paredes têm 1,5 m para 103 m de mapa — ao natural são riscos, e a cena não
+# mostra que há muros para contornar. O alvo é 1/25 do raio da arena, e o
+# aumento é cortado a um quarto da passagem mais apertada: a passagem tem de
+# continuar visivelmente aberta, senão o desenho mentia ao contrário.
+_PASSAGEM = _passagem_mais_estreita()
+_ESP_MIN_REAL = min((float(min(w['size'][0], w['size'][1])) for w in env.walls),
+                    default=0.0)
+ESPESSURA_EXTRA = 0.0
+if _PASSAGEM and _ESP_MIN_REAL:
+    ESPESSURA_EXTRA = max(0.0, min(R / 25.0 - _ESP_MIN_REAL, 0.25 * _PASSAGEM))
+
+# ⚠️ E a altura pela mesma medida. `R/4` dava 15 m no mapa grande, contra
+# passagens de 2,4 m: o que aparecia no ecrã eram os TOPOS das paredes, uma
+# caixa fechada vista de fora, com os robôs escondidos nos corredores. Limitar a
+# 2,5× a passagem mantém a leitura de labirinto — muros altos que obrigam a
+# contornar, mas com o percurso à vista.
+if _PASSAGEM:
+    ALTURA_VISUAL = max(3.5, min(R / 4.0, 2.5 * _PASSAGEM))
 
 wall_views, wall_edges, wall_altas = [], [], []
 for i, w in enumerate(env.walls):
     cor = PORTA if _e_porta(i) else PAREDE
-    escala = (float(w['size'][0]), float(w['size'][1]), ALTURA_VISUAL)
+    # Engrossa-se SÓ a dimensão menor (a espessura). Aumentar também o
+    # comprimento estenderia a parede para dentro da abertura que está na sua
+    # ponta — exatamente o que não se quer.
+    _sx, _sy = float(w['size'][0]), float(w['size'][1])
+    if ESPESSURA_EXTRA > 0:
+        if _sx <= _sy:
+            _sx += ESPESSURA_EXTRA
+        else:
+            _sy += ESPESSURA_EXTRA
+    escala = (_sx, _sy, ALTURA_VISUAL)
     pos = (float(w['pos'][0]), float(w['pos'][1]), -ALTURA_VISUAL / 2)
     wall_views.append(Entity(model='cube', color=cor, texture='white_cube',
                              scale=escala, position=pos))
@@ -471,7 +579,12 @@ COR_ALGO = _aviva(_hex(ALGO_COLORS[ALGO.upper()]))
 # convenção de qualquer visualização de enxame, e o HUD diz o raio real. O que
 # NÃO se exagera é a posição: essa é a do simulador, ao milímetro.
 ESCALA_ROBO = 3.0
-_r = env.robot_radius * ESCALA_ROBO
+# ⚠️ Numa arena de raio 15 o robô a 3× já se vê. No mapa grande (raio 60) não:
+# 0,45 m em 103 m de mapa é meio pixel, e a cena parece vazia — foi o que
+# aconteceu ao visualizador do mapa grande, que desenhava os robôs ao tamanho
+# real e não mostrava um único. O tamanho no ecrã passa a ter um mínimo ligado
+# ao raio da arena; a POSIÇÃO continua a ser a do simulador, ao milímetro.
+_r = max(env.robot_radius * ESCALA_ROBO, R / 40.0)
 CORPO = (_r * 2, _r * 2, _r * 1.35)
 
 robot_views, robot_shadows = [], []
@@ -489,6 +602,25 @@ for r_pos in env.agent_positions:
     robot_shadows.append(Entity(model='circle', color=color.black, alpha=0.16,
                                 scale=_r * 1.15, unlit=True,
                                 position=(r_pos[0], r_pos[1], 0.015)))
+
+# ── Marcador vertical: onde está o enxame quando o corpo não se vê ───────────
+# Num labirinto com muros de 6 m, os agentes andam encostados às paredes — é
+# esse o comportamento — e o corpo, desenhado maior do que é para se ver ao
+# longe, fica enterrado no volume da parede. No mapa grande media-se 20 agentes
+# espalhados e via-se UM. O marcador é uma haste fina na posição (x, y) exata do
+# robô, que sobe acima das paredes: não exagera posição nenhuma, e mostra o
+# enxame através da geometria. Ligado por omissão só em arenas grandes, onde o
+# problema existe.
+PINOS = _args.pinos if _args.pinos is not None else (R > 30.0)
+ALTURA_PINO = ALTURA_VISUAL + 3.0
+robot_pins = []
+if PINOS:
+    _lp = max(0.25, R / 120.0)
+    for r_pos in env.agent_positions:
+        robot_pins.append(Entity(
+            model='cube', color=COR_ALGO, alpha=0.55, unlit=True,
+            scale=(_lp, _lp, ALTURA_PINO),
+            position=(r_pos[0], r_pos[1], -ALTURA_PINO / 2)))
 
 # ── O GRAFO: as ligações que a política vê ───────────────────────────────────
 # A tese é sobre uma rede de grafo com ATENÇÃO SOBRE OS VIZINHOS — e esse grafo,
@@ -558,10 +690,22 @@ rastos = (Entity(model=Mesh(vertices=[], mode='line', thickness=1),
 _cen = config['environment'].get('classic_scenario', 'none')
 Text(text=f"{TITULO}  ·  {rotulo_cenario(_cen)}  ·  N={env.num_agents}",
      position=(-0.86, 0.47), scale=0.85, color=color.rgb32(245, 245, 245))
+# O HUD declara TODOS os exageros do desenho — é o que os torna aceitáveis. E
+# diz também uma coisa que não é exagero nenhum e explica a cena: nos cenários
+# com paredes os agentes nascem todos em z = 0, num plano. Quem olha e acha que
+# «parece 2D» está a ver bem: no primeiro passo, é.
+_z0 = float(np.max(np.abs(env.agent_positions[:, 2]))) < 1e-9 if len(env.agent_positions) else False
+_espessura = (f"  ·  espessura +{ESPESSURA_EXTRA:.1f} m no desenho "
+              f"(real {_ESP_MIN_REAL:.1f} m; passagem mais estreita "
+              f"{_PASSAGEM:.1f} m)" if ESPESSURA_EXTRA > 0 else "")
 Text(text=f"arena r={R:.0f} m  ·  grelha 5 m  ·  {len(env.walls)} paredes  ·  "
           f"{len(env.obstacles)} obstáculos  ·  paredes desenhadas a "
-          f"{ALTURA_VISUAL:.1f} m (vedam até {ALTURA_REAL:.0f} m)",
+          f"{ALTURA_VISUAL:.1f} m (vedam até {ALTURA_REAL:.0f} m){_espessura}",
      position=(-0.86, 0.43), scale=0.62, color=color.rgb32(125, 125, 125))
+Text(text=f"robôs desenhados a {_r:.2f} m de raio (real {env.robot_radius:.2f} m)"
+          + ("   ·   spawn PLANAR: todos nascem em z = 0" if _z0 else
+             "   ·   spawn em volume (z livre dentro da esfera)"),
+     position=(-0.86, 0.395), scale=0.58, color=color.rgb32(125, 125, 125))
 hud_estado = Text(text="", position=(-0.86, -0.44), scale=0.7,
                   color=color.rgb32(163, 163, 163))
 Text(text="BOTÃO DIREITO = rodar   ·   RODA = zoom   ·   BOTÃO DO MEIO = deslocar",
@@ -662,6 +806,8 @@ def _atualizar_cena():
         robot_views[i].look_at(robot_views[i].position
                                + Vec3(*env.agent_headings[i]))
         robot_shadows[i].position = (r_pos[0], r_pos[1], 0.015)
+        if robot_pins:
+            robot_pins[i].position = (r_pos[0], r_pos[1], -ALTURA_PINO / 2)
 
         # A telemetria de proximidade fica só para o SINAL e para o contacto
         # com paredes. Na captura de teste, o enxame agrupado no gargalo
@@ -731,6 +877,20 @@ def _capturar_e_sair():
         base.graphicsEngine.renderFrame()
     base.win.saveScreenshot(Filename.fromOsSpecific(alvo))
     print(f"[OK] captura: {alvo}")
+    # Onde estão os agentes NO MOMENTO da captura. Sem isto não há como saber se
+    # «não se veem robôs na imagem» é comportamento (estão todos amontoados num
+    # canto) ou desenho (estão espalhados e a imagem não os mostra) — foi
+    # precisamente essa dúvida que levou meia hora a esclarecer no mapa grande.
+    _p = env.agent_positions
+    _d = np.linalg.norm(_p[:, :2] - env.nest_pos[:2], axis=1)
+    _dentro = sum(1 for q in _p for w in env.walls
+                  if all(abs(q[k] - w['pos'][k]) <= w['size'][k] / 2.0
+                         for k in range(3)))
+    print(f"     {len(_p)} agentes | x {_p[:, 0].min():.1f}..{_p[:, 0].max():.1f}"
+          f" | y {_p[:, 1].min():.1f}..{_p[:, 1].max():.1f}"
+          f" | z {_p[:, 2].min():.2f}..{_p[:, 2].max():.2f}"
+          f" | ao ninho {_d.min():.1f}..{_d.max():.1f} m"
+          f" | dentro de paredes: {_dentro}")
     application.quit()
 
 

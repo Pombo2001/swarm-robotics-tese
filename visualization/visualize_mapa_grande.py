@@ -26,7 +26,7 @@ import sys
 
 import numpy as np
 from ursina import (Ursina, Entity, EditorCamera, DirectionalLight, AmbientLight,
-                    Text, color, camera, window)
+                    Mesh, Text, Vec3, color, camera, window)
 
 if sys.platform.startswith('win'):
     try:
@@ -119,12 +119,23 @@ def main(args):
     DirectionalLight(y=2, z=-3, shadows=True, rotation=(45, -45, 45))
     AmbientLight(color=color.rgba(120, 120, 120, 0.3))
 
-    # Chão + arena circular — mesmas cores/ordem do main_visualizer.
+    # Chão + fronteira da arena.
+    # ⚠️ A fronteira estava assim: `Entity(model='circle', mode='line')`. Essa
+    # combinação NÃO faz contorno nenhum — o `mode` só é lido ao construir um
+    # `Mesh`, e o modelo pedido pelo nome vem CHEIO. O que estava no ecrã era um
+    # disco ciano opaco de 120 m a tapar o mapa todo. Agora é um anel de facto.
     Entity(model='quad', scale=raio * 2.5, color=color.hsv(0, 0, 0.08),
            texture='white_cube', z=0.1)
     Entity(model='circle', scale=raio * 2, color=color.hsv(220, 0.2, 0.15), z=0.05)
-    Entity(model='circle', scale=raio * 2, color=color.hsv(180, 0.8, 0.8),
-           mode='line', z=0.0)
+    _v = []
+    for _k in range(96):
+        _a0, _a1 = 2 * np.pi * _k / 96, 2 * np.pi * (_k + 1) / 96
+        _v += [Vec3(np.cos(_a0) * raio, np.sin(_a0) * raio, 0.0),
+               Vec3(np.cos(_a1) * raio, np.sin(_a1) * raio, 0.0)]
+    Entity(model=Mesh(vertices=_v,
+                      triangles=[(i, i + 1) for i in range(0, len(_v), 2)],
+                      mode='line', thickness=2),
+           color=color.hsv(180, 0.8, 0.8), unlit=True)
 
     # Paredes. No main_visualizer são achatadas (0.4) porque a câmara olha de
     # cima para a simulação; aqui a altura é ajustável para se julgar o volume
@@ -162,17 +173,21 @@ def main(args):
     # robô; corrigido a 5 ago para 'sphere' também.
     # Posições REAIS do spawn do ambiente (env.agent_positions após reset), não
     # uma amostragem à parte: é onde os robôs vão mesmo nascer.
+    # ⚠️ Estavam desenhados ao tamanho REAL (raio 0,15 m) num mapa de 103 m: meio
+    # pixel no ecrã, e a cena parecia não ter robôs nenhuns. O tamanho no desenho
+    # passa a ter um mínimo ligado ao raio da arena — a POSIÇÃO é a do simulador.
+    raio_visual = max(ROBOT_RADIUS * 3.0, raio / 40.0)
     if not args.sem_robos:
         for p in posicoes:
             Entity(model='sphere', color=color.hsv(210, 0.9, 0.9),
-                   scale=ROBOT_RADIUS * 2,
-                   position=(float(p[0]), float(p[1]), -0.15))
+                   scale=raio_visual * 2,
+                   position=(float(p[0]), float(p[1]), -raio_visual))
 
     Text(text=f'MAPA GRANDE  ·  arena r={raio:.0f} m  ·  '
               f'labirinto {W:.0f}x{H:.0f} m  ·  paredes {altura:.1f} m\n'
               f'5 zonas: S partida · A gargalo+U · B 4 salas · C porta coop. · D ninho'
               f'  ·  {len(obs)} obstaculos\n'
-              f'{"sem robos" if args.sem_robos else f"{NUM_AGENTS} robos (raio real {ROBOT_RADIUS:.2f} m)"}'
+              f'{"sem robos" if args.sem_robos else f"{NUM_AGENTS} robos desenhados a {raio_visual:.2f} m (raio real {ROBOT_RADIUS:.2f} m)"}'
               f'  ·  cena PARADA (geometria do ambiente real)',
          position=(-0.86, 0.47), scale=0.7, color=color.hsv(0, 0, 0.75))
 
@@ -189,6 +204,10 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--radius', type=float, default=None,
                     help='raio da arena (default: o do configs/foraging.yaml)')
-    ap.add_argument('--wall-height', type=float, default=3.0)
+    # 6 m, não 3: as paredes têm 1,5 m de espessura para 103 m de mapa, e a 3 m
+    # de altura leem-se como riscos no chão em vez de muros a contornar. 6 m é
+    # 2,5× a passagem mais estreita (2,4 m) — alto que chegue para se ler como
+    # labirinto, baixo que chegue para não tapar o percurso lá dentro.
+    ap.add_argument('--wall-height', type=float, default=6.0)
     ap.add_argument('--sem-robos', action='store_true')
     main(ap.parse_args())
