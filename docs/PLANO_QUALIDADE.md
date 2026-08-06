@@ -160,10 +160,12 @@ Por ordem do que custa mais descobrir tarde:
    `scripts/verificar_mapa_grande.py`, **20 valores** (geometria contra o
    simulador, F1 inteiro contra os CSV do zero-shot), esperados lidos do `.tex`;
    a parte do F2 ativa-se sozinha quando o `eval_by_run.csv` aparecer. No hook.
-2. **Conclusões + Resumo com a QI7, nos três desfechos.** A secção já está
-   escrita para os três; falta o parágrafo das Conclusões e a frase do
-   Resumo/Abstract. É texto que não depende do resultado — só de qual dos três
-   se escolhe.
+2. ~~**Conclusões + Resumo com a QI7, nos três desfechos.**~~ ✅ **6 ago** — os
+   cinco sítios escritos (pergunta, resposta, parágrafo das Conclusões, Resumo e
+   Abstract) e **ensaiados** (`scripts/testes/ensaio_integracao_qi7.py` integra
+   numa cópia do `main.tex`, nos três desfechos). O ensaio apanhou o `\item`
+   órfão a seguir ao `\end{description}` e o `\PORPREENCHER` indefinido no
+   Resumo.
 3. **Testes para `train_ppo_3d` e `train_sac_3d`** (543 linhas sem um único
    teste). Não tocam na campanha a correr: são invólucros da Stable-Baselines3.
 4. **Nota de rodapé do spawn no Gargalo.** Medido a 6 ago: **18%** dos agentes
