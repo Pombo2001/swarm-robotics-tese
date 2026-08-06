@@ -974,16 +974,18 @@ O passo de simulação ($\texttt{step}$) processa o enxame por uma ordem determi
 \subsection{Cenários de Teste}
 Para garantir uma avaliação exaustiva e progressiva das capacidades de controlo descentralizado, foram desenvolvidos sete cenários de dificuldade crescente (Figura~\ref{fig:cenarios_3d}):
 
+Duas notas sobre a leitura da Figura~\ref{fig:cenarios_3d}, ambas consequência de o domínio ser tridimensional. Primeira, o deslocamento dos agentes tem componente vertical --- a ação inclui $\Delta z$ --- e o domínio é uma esfera, não um disco: por isso os obstáculos aparecem nas suas cotas reais, distribuídos pelo volume, e não assentes num plano. Medido em $400$ passos de uma política PPO no Sandbox, o afastamento vertical mediano ao plano de referência é de $2{,}35$\,m e o máximo de $11{,}8$\,m. Segunda, cada parede está desenhada duas vezes de propósito: sólida a $2$\,m, altura arbitrária que serve apenas para a planta se ler, e translúcida com a altura que ocupa de facto no simulador --- de $-15$ a $+15$\,m, ou seja, cortando o domínio de lado a lado. É essa altura que a torna estanque, e a distinção não é cosmética: quando o mapa alargado usado no trabalho em curso passou a ter $60$\,m de raio sem que a altura das paredes acompanhasse, sobravam $45$\,m de espaço livre por cima de cada parede e as políticas atravessavam o labirinto por cima, sem o resolver. A altura passou a ser derivada do raio da arena, e as figuras mostram-na.
+
 \begin{figure}[!htbp]
     \centering
-    \includegraphics[width=0.32\textwidth]{images/mapa_3d_none.png}\hfill
-    \includegraphics[width=0.32\textwidth]{images/mapa_3d_u_wall.png}\hfill
-    \includegraphics[width=0.32\textwidth]{images/mapa_3d_bottleneck.png}\\[0.6em]
-    \includegraphics[width=0.32\textwidth]{images/mapa_3d_four_rooms.png}\hfill
-    \includegraphics[width=0.32\textwidth]{images/mapa_3d_cooperative_door.png}\hfill
-    \includegraphics[width=0.32\textwidth]{images/mapa_3d_cooperative_perception.png}\\[0.6em]
-    \includegraphics[width=0.32\textwidth]{images/mapa_3d_cooperative_door_bypass.png}
-    \caption[Renderizações 3D dos sete cenários de teste]{Renderizações 3D dos sete cenários de teste, geradas a partir da geometria real do simulador (\texttt{scripts/render\_maps.py}). Em cima, da esquerda para a direita: Sandbox, Beco Sem Saída (Muro em U) e Gargalo; ao centro: Quatro Salas, Porta Cooperativa (com a porta destacada a âmbar) e Perceção Cooperativa; em baixo: Porta Cooperativa com Alternativa (\textit{bypass}). A esfera verde assinala o ninho (ou o alvo móvel, na Perceção Cooperativa) e as esferas cinzentas os obstáculos --- densos no Sandbox, esparsos nos restantes. A malha de círculos é a fronteira do domínio, que é uma \textbf{esfera} de raio $15$\,m: o deslocamento dos agentes tem componente vertical, e os obstáculos aparecem nas suas cotas reais, distribuídos pelo volume e não assentes num plano. O anel escuro marca a circunferência de referência $z=0$. Cada parede aparece duas vezes: a preto-azulado, sólida, com altura ilustrativa de $2$\,m para a planta se ler; e em cinzento translúcido, com o volume que ocupa de facto --- de $-15$ a $+15$\,m, ou seja, cortando o domínio de lado a lado. É essa altura que a torna estanque: até 29 de julho de 2026 as paredes tinham $30$\,m fixos numa arena que, no mapa alargado, passara a ter $60$\,m de raio, e os agentes atravessavam-nas por cima.}
+    \includegraphics[width=0.29\textwidth]{images/mapa_3d_none.png}\hfill
+    \includegraphics[width=0.29\textwidth]{images/mapa_3d_u_wall.png}\hfill
+    \includegraphics[width=0.29\textwidth]{images/mapa_3d_bottleneck.png}\\[0.4em]
+    \includegraphics[width=0.29\textwidth]{images/mapa_3d_four_rooms.png}\hfill
+    \includegraphics[width=0.29\textwidth]{images/mapa_3d_cooperative_door.png}\hfill
+    \includegraphics[width=0.29\textwidth]{images/mapa_3d_cooperative_perception.png}\\[0.4em]
+    \includegraphics[width=0.29\textwidth]{images/mapa_3d_cooperative_door_bypass.png}
+    \caption[Renderizações 3D dos sete cenários de teste]{Renderizações 3D dos sete cenários de teste, geradas a partir da geometria real do simulador (\texttt{scripts/render\_maps.py}). Em cima, da esquerda para a direita: Sandbox, Beco Sem Saída (Muro em U) e Gargalo; ao centro: Quatro Salas, Porta Cooperativa (com a porta destacada a âmbar) e Perceção Cooperativa; em baixo: Porta Cooperativa com Alternativa (\textit{bypass}). A esfera verde assinala o ninho (ou o alvo móvel, na Perceção Cooperativa) e as esferas cinzentas os obstáculos. A malha de círculos é a fronteira do domínio, que é uma \textbf{esfera} de raio $15$\,m; o anel escuro marca a circunferência de referência $z=0$. Cada parede aparece duas vezes: sólida, com altura ilustrativa de $2$\,m, e em cinzento translúcido com o volume real. A leitura da figura está detalhada no parágrafo seguinte.}
     \label{fig:cenarios_3d}
 \end{figure}
 

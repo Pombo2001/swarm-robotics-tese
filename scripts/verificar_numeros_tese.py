@@ -48,6 +48,7 @@ Uso:
 Devolve 0 se tudo bate; 1 se houver divergências (serve para um hook ou CI).
 """
 import argparse
+import json
 import os
 import re
 import sys
@@ -390,6 +391,70 @@ def verificar_robustez():
     return problemas
 
 
+def verificar_legendas_trajetorias():
+    """As recolhas citadas nas LEGENDAS das figuras de trajetórias.
+
+    §res_complexos afirma, dentro das legendas, quantas recolhas teve o episódio
+    de cada figura: *"contorno do obstáculo em U (esq., 78 recolhas)"*. São
+    números como quaisquer outros — só que vivem numa legenda, e por isso
+    escapavam a tudo: não estão em tabela nem em prosa corrida, e regenerar as
+    figuras com outros episódios não os atualizaria. A fonte é o JSON do episódio
+    gravado, o mesmo que o painel «Ao vivo (3D)» reproduz e de onde a figura sai
+    (`scripts/captura_episodio.py`).
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: legendas de §res_complexos  vs  results/episodios_3d/*.json")
+    print("=" * 72)
+
+    d_ep = os.path.join(PROJECT_ROOT, "results", "episodios_3d")
+    if not os.path.isdir(d_ep):
+        print("[!] sem results/episodios_3d — a saltar.")
+        return []
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = f.read()
+
+    # (cenário, o que a legenda diz antes do número) — a ordem é a das figuras
+    alvos = [
+        ("u_wall", r"contorno do obstáculo em U \(esq\., (\d+) recolhas\)"),
+        ("four_rooms", r"labirinto de Quatro Salas \(dir\., (\d+) recolhas\)"),
+        ("cooperative_door", r"Porta Cooperativa e a atravessa até ao ninho "
+                             r"\(esq\., (\d+) recolhas\)"),
+        ("cooperative_perception", r"tracejado verde \(dir\., (\d+) recolhas\)"),
+    ]
+
+    problemas = []
+    for cen, padrao in alvos:
+        caminho = os.path.join(d_ep, "gnn_%s.json" % cen)
+        if not os.path.exists(caminho):
+            problemas.append("%s: falta o JSON do episódio (%s)"
+                             % (cen, os.path.basename(caminho)))
+            continue
+        with open(caminho, encoding="utf-8") as f:
+            real = json.load(f).get("meta", {}).get("recolhas")
+        m = re.search(padrao, tex)
+        if not m:
+            problemas.append("%s: não encontrei o número na legenda (a redação "
+                             "mudou? atualizar este verificador)" % cen)
+            continue
+        na_tese = int(m.group(1))
+        estado = "[v]" if na_tese == real else "[X]"
+        print("  %s %-24s legenda %3d   episódio %s"
+              % (estado, cen, na_tese, real))
+        if na_tese != real:
+            problemas.append("%s: a legenda diz %d recolhas, o episódio tem %s"
+                             % (cen, na_tese, real))
+
+    if problemas:
+        print("DIVERGÊNCIAS:")
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("As legendas das trajetórias batem com os episódios gravados.")
+    return problemas
+
+
 def verificar_artigo(tolerancia):
     """Artigo/artigo.tex, tab:task — a mesma campanha, outra apresentação.
 
@@ -725,6 +790,7 @@ def main():
     problemas += verificar_escalabilidade(a.tolerancia)
     problemas += verificar_significancia(a.tolerancia)
     problemas += verificar_robustez()
+    problemas += verificar_legendas_trajetorias()
     problemas += verificar_megatreino(a.tolerancia)
     problemas += verificar_artigo(a.tolerancia)
 
