@@ -1,5 +1,5 @@
 ==========================================================================
-F1 — ZERO-SHOT DE TOPOLOGIA: as 4 condições  (2026-08-02 15:53)
+F1 — ZERO-SHOT DE TOPOLOGIA: as 4 condições  (2026-08-06 11:18)
 ==========================================================================
 
 CONDIÇÕES PRESENTES: natural, escala, sem obstáculos, sem features da porta

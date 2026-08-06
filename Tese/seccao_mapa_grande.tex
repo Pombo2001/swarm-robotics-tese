@@ -15,13 +15,17 @@
 %      sec:res_novelty;
 %   4. acrescentar QI7 às Conclusões e uma frase ao Resumo/Abstract.
 %
-% ⚠️ ESTADO DOS DADOS a 29 jul 2026: NÃO HÁ NENHUM. O F1 corrido a 27-28 jul
-% (4 condições, 1680 episódios) foi ANULADO: as paredes tinham 30 m de altura
-% numa arena esférica de raio 60, sobravam 45 m de céu aberto e os agentes
-% atravessavam o labirinto POR CIMA — medido a 59 m de altura, o episódio quase
-% inteiro. Quem vier preencher os \PORPREENCHER{} NÃO pode usar os CSV de
-% `results/mapa_grande/f1_zeroshot/` que tenham env_hash 267a7b547aed. Corrigido
-% em 4b8a26a; detalhe na emenda 16 do pré-registo. O F1 vai ser repetido.
+% ⚠️ ESTADO DOS DADOS a 6 ago 2026:
+%   · F1 FECHADO e válido (repetido a 31 jul após a anulação, em
+%     `results/mapa_grande/f1_zeroshot_v2/`, env_hash e930abe4d992): 4 condições,
+%     1680 episódios, 84 de 84 células a 0,00. JÁ ESTÁ ESCRITO nesta secção.
+%   · F2 A CORRER desde 3 ago com **n = 21** (emenda 19), não 7. Os gradientes
+%     fecham ~9 ago e o GNN ~16 ago. Os \PORPREENCHER que restam são todos do F2.
+%
+% ⚠️ NÃO usar os CSV de `results/mapa_grande/f1_zeroshot/` (env_hash 267a7b547aed):
+% é a corrida ANULADA de 27-28 jul, em que as paredes tinham 30 m numa arena de
+% raio 60 e os agentes atravessavam o labirinto POR CIMA, medidos a 59 m de
+% altura. Corrigido em 4b8a26a; emenda 16 do pré-registo.
 %
 % O texto abaixo — motivação, geometria, protocolo, limitações — não depende de
 % nenhum resultado e foi escrito com o mapa já auditado (27 jul 2026). Continua
@@ -139,23 +143,42 @@ um resultado:
           qualquer retreino}, $20$ episódios por célula, com sementes
           emparelhadas. Responde a ``o que já sabíamos transfere?''.
     \item[F2 --- Treino nativo.] Os três algoritmos treinam de raiz no mapa,
-          $7$ execuções independentes com sementes $1$--$7$, e são avaliados no
+          $21$ execuções independentes com sementes $1$--$21$, e são avaliados no
           mesmo protocolo determinístico das restantes campanhas.
 \end{description}
+
+O número de execuções do F2 foi elevado de $7$ para $21$ antes de existir
+qualquer dado de avaliação (emenda~19 do pré-registo). A razão é de recursos e
+não de resultado: o desenho original ocupava menos de um quarto da janela de
+servidor disponível até ao limite de integração. O acréscimo foi todo para
+\emph{execuções} e nenhum para minutos por execução --- os $780$ minutos do
+controlador evolutivo existem para igualar \textbf{gerações} às campanhas
+fechadas dos sete cenários, e mexer neles quebraria a única comparabilidade que o
+F2 tem. As métricas M1--M3, a regra de decisão e os compromissos de reporte
+ficaram como estavam; em particular, \textbf{M2 permanece descritiva}. Com
+$n = 21$ um teste exato sobre proporções de convergência passaria a ter poder, e
+é precisamente por isso que se declara que não se acrescenta: converter um
+descritivo em teste depois de subir o $n$ é escolher o teste com o $n$ na mão.
 
 O orçamento de F2 não iguala minutos, mas \textbf{gerações de evolução}, que é a
 unidade de otimização do controlador evolutivo. Uma geração custa
 $\text{pop\_size} \times \text{eval\_episodes} \times \text{max\_steps}$ passos
 de simulação; com episódios quatro vezes mais longos, igualar o número de
 minutos daria ao controlador evolutivo um quarto da otimização e chamar-lhe-ia
-comparação justa. O orçamento foi, por isso, fixado em
-\PORPREENCHER{minutos por execução do GNN e dos métodos de gradiente, e o número
-de gerações efetivamente alcançado} --- registado antes de qualquer análise.
+comparação justa. O orçamento foi, por isso, fixado em $780$ minutos por execução
+do controlador evolutivo --- o que iguala às campanhas dos sete cenários as
+$13{,}7$ gerações que cada execução perfaz --- e $192$ minutos por execução de
+cada método de gradiente, ambos registados antes de qualquer análise.
+\PORPREENCHER{gerações efetivamente alcançadas por execução, média e amplitude}
 
 \subsection{Transferência sem retreino (F1)}
 
-\PORPREENCHER{tabela $7$ cenários de origem $\times$ $3$ algoritmos, com
-recolhas/ep e taxa de sucesso na condição natural}
+O resultado do F1 dispensa tabela: das $21$ células da condição natural --- sete
+cenários de origem $\times$ três algoritmos, $20$ episódios cada, $420$ episódios
+--- \textbf{todas} as $21$ registam $0{,}00$ recolhas por episódio e $0\%$ de
+sucesso. Nenhum dos $21$ campeões entrega um único item no mapa composto sem
+retreino, e o mesmo se verifica nas três condições de controlo, o que perfaz
+$84$ células a zero em $1680$ episódios.
 
 A leitura desta grelha exige cuidado, e o pré-registo fixa-a antes dos dados: um
 zero no F1 admite \textbf{quatro} causas e apenas uma é a pergunta da QI7. Além
@@ -169,8 +192,20 @@ associadas à porta, identicamente nulas no treino de quem nunca teve porta e
 ativas neste mapa. Cada uma destas causas foi isolada numa condição de controlo
 que altera \textbf{uma} coisa e deixa o resto bit-a-bit igual:
 
-\PORPREENCHER{condição natural vs. escala vs. sem obstáculos vs. sem features da
-porta --- e a conclusão sobre qual das causas explica o resultado}
+Nenhuma das três causas alternativas explica o resultado. Cada condição de
+controlo repete as mesmas $21$ células com \textbf{uma} alteração e o resto
+bit-a-bit igual --- normalizar as distâncias pelo raio da arena de treino em vez
+do raio deste mapa, remover os obstáculos dispersos, e zerar as quatro dimensões
+da observação associadas à porta --- e as três devolvem, célula a célula,
+exatamente o mesmo: $0{,}00$ recolhas por episódio, sem uma única célula
+``ressuscitada''. Com as $21$ células a zero nas duas condições de cada
+comparação emparelhada, nem o teste de Wilcoxon nem o $\delta$ de Cliff têm
+conteúdo (não há sequer um par discordante); o que sustenta a exclusão é o
+\emph{número de células ressuscitadas}, que é zero nas três. As três condições
+ficam, por isso, remetidas para apêndice e a leitura reporta-se sobre a condição
+natural, como o pré-registo fixou antes de haver dados.
+
+O que resta é a causa que a QI7 pergunta: a topologia composta à escala do mapa.
 
 Duas causas adicionais, que a geometria tridimensional do simulador torna
 plausíveis, foram excluídas por medição direta e não figuram entre as quatro do
@@ -196,15 +231,14 @@ navegação, e falha cedo.
 
 \subsection{Treino nativo (F2)}
 
-\PORPREENCHER{tabela dos $3$ algoritmos $\times$ $7$ execuções: média $\pm$
+\PORPREENCHER{tabela dos $3$ algoritmos $\times$ $21$ execuções: média $\pm$
 desvio-padrão das recolhas/ep, taxa de sucesso, execuções convergentes}
 
-\PORPREENCHER{M1 --- Mann-Whitney U bilateral sobre médias por execução, GNN vs
-PPO e GNN vs SAC, com $\delta$ de Cliff}
+\PORPREENCHER{M1 --- Mann-Whitney U bilateral sobre médias por execução ($n=21$),
+GNN vs PPO e GNN vs SAC, com $\delta$ de Cliff}
 
 \PORPREENCHER{M2 --- taxa de execuções que atingem pelo menos uma recolha, e
-execuções a $100\%$ (descritivo: com $n = 7$ não se faz inferência sobre
-proporções)}
+execuções a $100\%$ (descritivo, por compromisso pré-registado)}
 
 \PORPREENCHER{M3 --- fração de episódios em que a porta cooperativa é aberta,
 por algoritmo}
@@ -212,9 +246,16 @@ por algoritmo}
 \subsection{Discussão}
 
 % ─────────────────────────────────────────────────────────────────────────────
-% ESCOLHER UMA DAS DUAS E APAGAR A OUTRA. As duas leituras estão
-% pré-comprometidas no pré-registo: a regra de decisão é ≥5/7 execuções
-% convergentes em pelo menos um algoritmo E M1 interpretável.
+% ESCOLHER UMA DAS TRÊS E APAGAR AS OUTRAS. As três leituras estão
+% pré-comprometidas: a regra de decisão é ⌈5/7 × n⌉ = 15/21 execuções
+% convergentes em pelo menos um algoritmo E M1 interpretável (emenda 21).
+%   A: ≥15/21 num algoritmo          → sobe a resultado afirmativo
+%   B: 0 execuções convergentes      → negativo honesto
+%   C: entre 1 e 14 convergentes     → NEGATIVO pela regra proporcional, com o
+%      número de execuções convergentes declarado (emenda 21, 2 ago: «se o
+%      resultado ficar entre os dois limiares, reporta-se como negativo e
+%      declara-se explicitamente quantos runs convergiram»). A leitura C escreve
+%      esse caso; não o cria.
 % ─────────────────────────────────────────────────────────────────────────────
 
 % ── LEITURA A: pelo menos um algoritmo converge ──────────────────────────────
@@ -241,6 +282,38 @@ por algoritmo}
 % $2{,}9\times$ a partir do pior \textit{spawn}. O mapa é resolúvel; o que estes
 % algoritmos não fazem, com este sinal de treino e este orçamento, é aprendê-lo.
 
+% ── LEITURA C: algumas execuções convergem, mas abaixo do limiar ─────────────
+% O mapa composto é resolúvel por \PORPREENCHER{algoritmo}, mas não de forma
+% fiável: \PORPREENCHER{k} das $21$ execuções atingem pelo menos uma recolha e
+% \PORPREENCHER{k100} chegam aos $100\%$ de sucesso, abaixo do limiar de $15$ que
+% o pré-registo fixou. Pela regra de decisão pré-comprometida, \textbf{a QI7 não
+% sobe a resultado afirmativo}, e o número de execuções convergentes é declarado
+% aqui para que quem prefira outro critério o tenha à frente. A distribuição
+% entre execuções é o resultado, e não a média: \PORPREENCHER{média e amplitude,
+% e a forma da distribuição --- se é tudo-ou-nada, dizê-lo}.
+%
+% Esta é a assinatura que a dissertação já documentou no Muro em U
+% (Secção~\ref{sec:res_boxplots}), onde a mesma configuração ora resolve o
+% cenário por completo ora fica a zero, e onde a média entre execuções não
+% descreve nenhuma execução real. O que o mapa composto acrescenta é que a
+% bimodalidade \emph{sobrevive à escala}: multiplicar por quatro o raio da arena
+% e compor quatro dificuldades não a substitui por um colapso uniforme --- o que
+% seria a hipótese natural --- mas amplia a fração de execuções que ficam do lado
+% errado. A leitura honesta da QI7 é, portanto, intermédia: as conclusões dos
+% cenários isolados transferem-se \emph{parcialmente} e ao preço da fiabilidade,
+% e é a variabilidade entre execuções --- não a magnitude média --- que a
+% composição degrada.
+%
+% Sob esta leitura, o que a QI7 responde às Conclusões é uma condição, não um
+% veredicto: um enxame treinado de raiz resolve o mapa composto em
+% \PORPREENCHER{k}/$21$ tentativas de treino independentes, pelo que qualquer
+% aplicação teria de treinar várias vezes e selecionar --- que é exatamente a
+% prática que a Secção~\ref{sec:res_novelty} mostra ser dispensável nos sete
+% cenários quando a exploração é doseada adaptativamente. Fica em aberto, e como
+% trabalho futuro declarado, se a mesma dosagem adaptativa recupera a fiabilidade
+% neste mapa; o braço exploratório de orçamento longo responde apenas à objeção
+% do orçamento, não a esta.
+
 \subsection{Limitações desta campanha}
 
 Seis limitações ficam declaradas. As quatro primeiras foram fixadas antes dos
@@ -254,10 +327,12 @@ distâncias chegam comprimidas $4\times$; na condição de controlo passam a val
 mais de $1$ (até $\approx 2{,}5$), valor que nenhum modelo viu em treino. Não há
 terceira hipótese sem retreinar --- e retreinar é, precisamente, a fase F2.
 
-Segundo, com $n = 7$ execuções o peso da evidência está no tamanho de efeito
-($\delta$ de Cliff) e não em cruzar o limiar de $0{,}05$: um teste exato de
-Fisher sobre proporções de convergência não teria poder para distinguir
-$7/7$ de $3/7$.
+Segundo, o peso da evidência está no tamanho de efeito ($\delta$ de Cliff) e não
+em cruzar o limiar de $0{,}05$. Com $n = 21$ o teste sobre médias por execução
+tem poder suficiente, mas a métrica de convergência (M2) mantém-se
+\textbf{descritiva} por compromisso declarado antes dos dados: com $n=7$ um teste
+exato de Fisher não distinguiria $7/7$ de $3/7$, e passar a testá-lo só porque o
+$n$ subiu seria escolher o teste depois de conhecer a amostra.
 
 Terceiro, o simulador é tridimensional e este mapa é, por construção, planar: o
 labirinto vive num plano, o \textit{LiDAR} varre na horizontal, e tanto o bónus de
