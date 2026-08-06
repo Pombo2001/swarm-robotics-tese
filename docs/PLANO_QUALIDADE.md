@@ -137,6 +137,57 @@ para depois de 22 ago.
 | 4.3 | Pi atualizado | ⬜ **exige a VPN DESLIGADA** — um comando, `scripts/atualizar_pi.sh` |
 | 4.4 | O delta do Pi leva o que as vistas novas leem | ✅ envia `dashboard/` inteiro |
 
+## Plano de ataque — de 6 ago ao hard stop (escrito a 6 ago)
+
+O utilizador está fora de 7 a 10 de agosto. O que corre sozinho, o que fica à
+espera dele, e o que se adianta entretanto.
+
+### A. Corre sozinho, sem ninguém à frente (7–10 ago)
+
+| quando | o quê | se falhar |
+|---|---|---|
+| ~9 ago | o `mapaF2r` fecha (PPO 21/21 + SAC 21/21) e o `f2lwatch` lança o exploratório | **não lança** se o grad morrer sem `CONCLUÍDO` — é de propósito, a decisão é do utilizador. Custo: o exploratório atrasa até segunda; não entra em M1–M3 |
+| até ~16 ago | o `mapaF2g` continua os 21 runs do GNN adaptativo | nada a fazer |
+
+Não há nada a carregar em botões durante o fim de semana. O único risco real é o
+servidor cair, e isso resolve-se na segunda com um relançamento.
+
+### B. O que se adianta já (não depende de dados novos)
+
+Por ordem do que custa mais descobrir tarde:
+
+1. **Verificador da secção do mapa grande.** Os 5 `\PORPREENCHER` que faltam vão
+   ser preenchidos a 16 ago, com seis dias de folga: os números têm de entrar já
+   verificados contra os CSV, como os outros 352. Escrever o verificador **antes**
+   de haver números é a única forma de não o escrever à pressa depois.
+2. **Conclusões + Resumo com a QI7, nos três desfechos.** A secção já está
+   escrita para os três; falta o parágrafo das Conclusões e a frase do
+   Resumo/Abstract. É texto que não depende do resultado — só de qual dos três
+   se escolhe.
+3. **Testes para `train_ppo_3d` e `train_sac_3d`** (543 linhas sem um único
+   teste). Não tocam na campanha a correr: são invólucros da Stable-Baselines3.
+4. **Nota de rodapé do spawn no Gargalo.** Medido a 6 ago: **18%** dos agentes
+   nascem dentro da barreira (o spawn vai de $y=-12$ a $-2$ e a parede cobre
+   $-4$ a $4$), mas a separação física **põe-nos fora ao primeiro passo** —
+   mediana 1, máximo 1, nenhum preso em 200 passos. Uma frase nas limitações
+   chega; corrigir o spawn mudaria a física dos sete cenários e está fora de
+   questão até 22 ago.
+5. **Lote para o Pi** — acumulado desde 5 ago (visualizador corrigido, figuras
+   dos cenários, `estado_f2.json` nas vistas, linha do tempo). Vai quando o
+   utilizador pedir, com a VPN desligada.
+
+### C. Quando os dados chegarem
+
+| data | o quê |
+|---|---|
+| 11–14 ago | a decisão do limiar **sela-se** (`scripts/projetar_limiar_f2.py`): basta o 7.º run não convergente para 15/21 ficar impossível |
+| ~14 ago | exploratório fecha — reporta-se à parte, com n=3, e **não** altera o veredicto |
+| ~16 ago | GNN fecha → `analise_mapa_grande.py`, preencher os 5 buracos, escolher **uma** das três leituras, descomentar o `\input` |
+| 16–22 ago | Conclusões, Resumo, verificação final e revisão do PDF |
+
+Correr `scripts/estado_f2.sh` sempre que se espreitar o servidor: as vistas do
+dashboard leem o instantâneo, e sem ele voltam a envelhecer sozinhas.
+
 ## Eixo 5 — Calendário
 
 - **~9 ago** o grad fecha → o `f2lwatch` lança o exploratório sozinho.
