@@ -42,8 +42,8 @@ O padrão: **os números têm verificador, as afirmações sobre os números nã
 
 | # | Verificação | Estado |
 |---|---|---|
-| 2.1 | Datas e estados do dashboard vs realidade do servidor | ✅ linha do tempo corrigida; ⬜ automatizar |
-| 2.2 | Números da tese ↔ scripts que os reproduzem | ✅ 346 + `verificar_vertical.py` + **16 contagens em prosa** (no hook); ⬜ cobrir a secção do mapa grande quando fechar |
+| 2.1 | Datas e estados do dashboard vs realidade do servidor | ✅ 6 ago — `scripts/estado_f2.sh` grava um instantâneo datado (`results/estado_f2.json`) e as 3 vistas leem-no; apanhou «o F2 arranca 3 ago» e «o F2 ainda não correu» com a campanha a correr há 3 dias |
+| 2.2 | Números da tese ↔ scripts que os reproduzem | ✅ **352** + `verificar_vertical.py` + 16 contagens em prosa (no hook); 6 ago juntou as **legendas das trajetórias** (78/72/72/25 vs os JSON dos episódios) e **duas frases do artigo**; ⬜ cobrir a secção do mapa grande quando fechar |
 | 2.5 | A documentação aponta para ficheiros que existem — e para os **certos** | ✅ 94 caminhos existem; o `REPRODUZIR` e o `INVENTARIO` mandavam para os dados anulados do F1 |
 | 2.6 | Dois scripts a escrever o mesmo ficheiro com metodologias diferentes | ✅ `statistical_tests` (episódio) separado do canónico (run) |
 | 2.3 | Afirmações do pré-registo ↔ geometria atual do mapa | ✅ emendas 22-23 datadas |
