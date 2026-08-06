@@ -36,7 +36,8 @@ O padrão: **os números têm verificador, as afirmações sobre os números nã
 | 1.7 | O 8.º cenário fica fora das tabelas e figuras dos sete | ✅ `gerar_figuras_7d` e `plot_robustez` passam a filtrar por `THESIS_SCENARIOS` |
 | 1.8 | Os scripts do F1 apontam para os dados **válidos** | ✅ o default do `analise_f1_controlos` era a pasta ANULADA |
 | 1.5 | O limiar de decisão (⌈5/7 × n⌉ = 15/21) sai do n do CSV, não fixo | ✅ testado nos dois lados: 15 sobe, 14 dá negativo |
-| 1.6 | A secção do mapa grande compila **dentro** do `main.tex` | ✅ 5 ago — 127 págs, 0 refs indefinidas, 0 overfull; `\input` deixado comentado no sítio |
+| 1.6 | A secção do mapa grande compila **dentro** do `main.tex` | ✅ 6 ago — **129 págs**, 0 refs, 0 overfull, 0 floats grandes demais; `\input` comentado outra vez |
+| 1.9 | A secção do mapa grande está escrita para o **n da campanha** | ✅ 6 ago — estava para **n=7** com a campanha a correr a **n=21** (emenda 19); F1 escrito (84 células a 0,00) e **leitura C** (convergência parcial) redigida; `\PORPREENCHER` 16 → **5** |
 
 ## Eixo 2 — Afirmações sem verificador
 
