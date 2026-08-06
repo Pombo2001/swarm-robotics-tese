@@ -13,6 +13,7 @@ canónicos no momento em que se abre a vista.
 Navegação: setas ← → do teclado (numa sala não se procura o rato), ou os botões.
 """
 import glob
+import json
 import os
 import re
 import sys
@@ -28,6 +29,24 @@ MAIN_TEX = os.path.join(_RAIZ, "Tese", "main.tex")
 CSV_7D = os.path.join(_RAIZ, "results", "graficos_tese", "final_7d",
                       "eval_by_run_7d.csv")
 DIR_EST = os.path.join(_RAIZ, "results", "estatisticas")
+ESTADO_F2 = os.path.join(_RAIZ, "results", "estado_f2.json")
+
+
+def _estado_f2_curto():
+    """Uma frase sobre o F2, do instantâneo datado — ou o reconhecimento de que
+    não há instantâneo. Nunca uma afirmação escrita à mão sobre o presente."""
+    try:
+        with open(ESTADO_F2, encoding="utf-8") as fh:
+            e = json.load(fh)
+    except (OSError, ValueError):
+        return "estado do F2 por medir (scripts/estado_f2.sh)"
+    n, g = e.get("gnn", {}), e.get("grad", {})
+    if not e.get("tmux_vivos"):
+        return "F2 sem sessões vivas em %s" % e.get("medido_utc", "?")
+    return ("F2 a correr em %s: PPO %s/%s runs, GNN %s de %s runs fechados com "
+            "recolha" % (e.get("medido_utc", "?"), g.get("ppo_runs_concluidos", "?"),
+                         g.get("runs_previstos", "?"),
+                         n.get("fechados_com_recolha", "?"), n.get("fechados", "?")))
 # v2 = a repetição do F1 no mundo corrigido; a pasta sem sufixo está ANULADA.
 DIR_F1_V2 = os.path.join(_RAIZ, "results", "mapa_grande", "f1_zeroshot_v2")
 
@@ -156,10 +175,13 @@ def _numeros():
         celulas_f1 += len(por_celula)
         zeros += int((por_celula == 0).sum())
     if celulas_f1:
+        # ⚠️ Dizia «o F2 ainda não correu». Correu — desde 3 ago, e a 6 ago já
+        # tinha runs fechados. O estado do F2 lê-se do instantâneo, para esta
+        # frase não voltar a envelhecer sozinha (scripts/estado_f2.sh).
         n[7] = ("%d/%d" % (zeros, celulas_f1),
                 "células a zero recolhas no mapa composto, sem retreino "
-                "(%d episódios, 4 condições) — o F2 ainda não correu"
-                % episodios)
+                "(%d episódios, 4 condições) — %s"
+                % (episodios, _estado_f2_curto()))
     return n
 
 

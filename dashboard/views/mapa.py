@@ -14,6 +14,7 @@ esta vista **não interpreta** — mostra as condições lado a lado e diz quant
 faltam. O veredicto formal é o `scripts/analise_f1_controlos.py`, e está dito no
 ecrã para que ninguém tire conclusões daqui com metade das condições medidas.
 """
+import json
 import os
 
 import pandas as pd
@@ -42,6 +43,60 @@ ORIGENS = [("none", "Sandbox"), ("u_wall", "Muro U"), ("bottleneck", "Gargalo"),
            ("cooperative_door", "Porta Cooperativa"),
            ("cooperative_perception", "Perceção Coop."),
            ("cooperative_door_bypass", "Porta c/ Alternativa")]
+
+
+ESTADO_F2 = os.path.join(_RAIZ, "results", "estado_f2.json")
+
+
+def _estado_f2():
+    """O instantâneo do servidor gravado por `scripts/estado_f2.sh`, ou None.
+
+    ⚠️ Aqui estava escrito à mão «F2 — arranca 3 ago, quando o megaB largar a
+    máquina». A 6 de agosto o F2 corria havia três dias, com 19 de 21 runs de PPO
+    fechados — e a frase continuava no ecrã. Uma vista que descreve uma campanha
+    viva não pode fazê-lo em prosa fixa: ou lê um instantâneo datado, ou mente
+    passado um dia. Quem abre isto no Pi não tem VPN para confirmar nada.
+    """
+    try:
+        with open(ESTADO_F2, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return None
+
+
+def _texto_f2():
+    """A linha do F2 nas fases, construída do instantâneo (nunca inventada)."""
+    e = _estado_f2()
+    if e is None:
+        return ("lançado a 3 ago (3 algoritmos × 21 runs, emenda 19); sem "
+                "instantâneo do servidor — correr scripts/estado_f2.sh")
+    g, n = e.get("grad", {}), e.get("gnn", {})
+    prev = g.get("runs_previstos") or 21
+    partes = [
+        "PPO %s/%s runs" % (g.get("ppo_runs_concluidos", "?"), prev),
+        "SAC %s/%s" % (g.get("sac_runs_concluidos", "?"), prev),
+        "GNN adaptativo %s/%s runs fechados"
+        % (n.get("fechados", "?"), n.get("runs_previstos") or prev),
+    ]
+    fechados, com = n.get("fechados", 0), n.get("fechados_com_recolha", 0)
+    if fechados:
+        # O número que interessa e que nenhuma frase dizia: em quantos runs o
+        # mapa grande é RESOLVIDO. Um run com 6 recolhas e outro com 0 não é
+        # «o mapa grande foi resolvido» — é uma proporção, e é ela que M1 mede.
+        partes.append("%d de %d com recolha (%s)"
+                      % (com, fechados,
+                         ", ".join("%.2f" % r["recolhas"]
+                                   for r in n.get("runs_fechados", []))))
+    if e.get("exploratorio_armado"):
+        partes.append("exploratório armado (f2lwatch)")
+    return "%s · medido %s" % ("; ".join(partes), e.get("medido_utc", "?"))
+
+
+def _cor_f2():
+    e = _estado_f2()
+    if e is None:
+        return theme.INK_MUTED
+    return "#4ade80" if e.get("tmux_vivos") else "#ffb020"
 
 
 def _carregar():
@@ -217,11 +272,7 @@ def build():
                     ("; faltam " + ", ".join(faltam)) if faltam else ""),
                  "#ef4444" if anulado
                  else ("#4ade80" if len(presentes) == 4 else "#ffb020")),
-                ("F2 — treino nativo",
-                 "arranca 3 ago, quando o megaB largar a máquina: 3 algoritmos × "
-                 "21 runs (emenda 19) + braço exploratório @2340 min × 3 "
-                 "(emenda 20); diretórios já preparados no servidor",
-                 theme.INK_MUTED),
+                ("F2 — treino nativo", _texto_f2(), _cor_f2()),
             ]
             for nome, estado, cor in fases:
                 with ui.row().classes("items-center gap-3 no-wrap w-full py-1"):

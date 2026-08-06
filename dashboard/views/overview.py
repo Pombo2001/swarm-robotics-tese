@@ -182,6 +182,12 @@ _TIMELINE = [
      "Com o braço adaptativo, 4,75 recolhas à geração 140 (era 0,00 em dois runs "
      "completos do objetivo puro, guardados como controlo). O GNN fecha ~16 ago; "
      "o braço exploratório arranca sozinho quando os gradientes largarem a máquina."),
+    ("06 ago", "O mapa grande resolve-se num run e não no seguinte",
+     "O run que dava 4,75 fechou com 6,00 recolhas; o run 2 fechou a 0,00. É a "
+     "bimodalidade do Muro em U outra vez, agora no 8.º cenário — e é por isso "
+     "que M1 precisa dos 21 runs: a resposta vai ser uma PROPORÇÃO de execuções "
+     "que resolvem, não um «resolve». O estado deixa de ser escrito à mão: "
+     "scripts/estado_f2.sh grava um instantâneo datado e as vistas leem-no."),
 ]
 
 
