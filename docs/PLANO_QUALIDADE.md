@@ -47,6 +47,7 @@ O padrão: **os números têm verificador, as afirmações sobre os números nã
 | 2.5 | A documentação aponta para ficheiros que existem — e para os **certos** | ✅ 94 caminhos existem; o `REPRODUZIR` e o `INVENTARIO` mandavam para os dados anulados do F1 |
 | 2.6 | Dois scripts a escrever o mesmo ficheiro com metodologias diferentes | ✅ `statistical_tests` (episódio) separado do canónico (run) |
 | 2.3 | Afirmações do pré-registo ↔ geometria atual do mapa | ✅ emendas 22-23 datadas |
+| 2.7 | As FIGURAS afirmam a geometria certa | ✅ 6 ago — as 7 dos cenários mostravam um mundo plano (o `render_maps.py` dizia-o em comentário); agora com a esfera do domínio, as paredes à altura real e os obstáculos nas cotas reais. ⚠️ `Artigo/images` tinha divergido pela 2.ª vez |
 | 2.4 | Uma métrica medida por duas réguas diferentes | ✅ **seis** cópias do δ de Cliff fixadas por teste (3 rebentavam com arrays); constantes duplicadas no visualizador ligadas ao ambiente |
 
 ## Eixo 3 — Código sem rede de segurança
