@@ -20,8 +20,16 @@ set -uo pipefail
 
 RAIZ="$(git rev-parse --show-toplevel)"
 ALVOS='^(Tese/main\.tex|results/graficos_tese/final_7d/|results/estatisticas/escalabilidade_)'
+# A secção do mapa grande tem verificador próprio (o `main.tex` não a inclui
+# enquanto não houver dados do F2, por isso nunca entraria pelos ALVOS acima).
+ALVOS_MAPA='^(Tese/seccao_mapa_grande\.tex|results/mapa_grande/)'
 
-if ! git diff --cached --name-only | grep -qE "$ALVOS"; then
+MEXEU_TESE=0
+MEXEU_MAPA=0
+git diff --cached --name-only | grep -qE "$ALVOS"      && MEXEU_TESE=1
+git diff --cached --name-only | grep -qE "$ALVOS_MAPA" && MEXEU_MAPA=1
+
+if [ "$MEXEU_TESE" -eq 0 ] && [ "$MEXEU_MAPA" -eq 0 ]; then
     exit 0
 fi
 
@@ -30,13 +38,20 @@ PY="$RAIZ/.venv/Scripts/python.exe"
 [ -x "$PY" ] || PY=python
 
 echo "[pre-commit] a tese ou os dados mudaram — a verificar os números..."
-# Dois verificadores: as TABELAS (346 valores) e as CONTAGENS EM PROSA. O segundo
-# entrou a 5 ago, depois de três erros seguidos aparecerem todos em afirmações
-# sobre os números, e não nos números — que já tinham rede.
-if "$PY" "$RAIZ/scripts/verificar_numeros_tese.py" \
-   && "$PY" "$RAIZ/scripts/verificar_contagens_prosa.py"; then
-    exit 0
+# Três verificadores. As TABELAS (352 valores) e as CONTAGENS EM PROSA — o
+# segundo entrou a 5 ago, depois de três erros seguidos aparecerem todos em
+# afirmações sobre os números, e não nos números, que já tinham rede. E, desde
+# 6 ago, a SECÇÃO DO MAPA GRANDE (20 valores), que tem fontes próprias: a
+# geometria vem do simulador e o F1 dos CSV do zero-shot.
+OK=1
+if [ "$MEXEU_TESE" -eq 1 ]; then
+    "$PY" "$RAIZ/scripts/verificar_numeros_tese.py" || OK=0
+    "$PY" "$RAIZ/scripts/verificar_contagens_prosa.py" || OK=0
 fi
+if [ "$MEXEU_MAPA" -eq 1 ]; then
+    "$PY" "$RAIZ/scripts/verificar_mapa_grande.py" || OK=0
+fi
+[ "$OK" -eq 1 ] && exit 0
 
 cat >&2 <<'FIM'
 
