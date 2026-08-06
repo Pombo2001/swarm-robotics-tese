@@ -156,10 +156,10 @@ servidor cair, e isso resolve-se na segunda com um relançamento.
 
 Por ordem do que custa mais descobrir tarde:
 
-1. **Verificador da secção do mapa grande.** Os 5 `\PORPREENCHER` que faltam vão
-   ser preenchidos a 16 ago, com seis dias de folga: os números têm de entrar já
-   verificados contra os CSV, como os outros 352. Escrever o verificador **antes**
-   de haver números é a única forma de não o escrever à pressa depois.
+1. ~~**Verificador da secção do mapa grande.**~~ ✅ **6 ago** —
+   `scripts/verificar_mapa_grande.py`, **20 valores** (geometria contra o
+   simulador, F1 inteiro contra os CSV do zero-shot), esperados lidos do `.tex`;
+   a parte do F2 ativa-se sozinha quando o `eval_by_run.csv` aparecer. No hook.
 2. **Conclusões + Resumo com a QI7, nos três desfechos.** A secção já está
    escrita para os três; falta o parágrafo das Conclusões e a frase do
    Resumo/Abstract. É texto que não depende do resultado — só de qual dos três
