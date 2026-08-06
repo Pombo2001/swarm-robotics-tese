@@ -29,6 +29,7 @@ frame, a telemetria de proximidade que colore os robôs, a câmara de topo, o
 `--models-root` para espreitar campanhas arquivadas.
 """
 import argparse
+import math
 import os
 import sys
 
@@ -70,7 +71,7 @@ def _hex(s):
 # desaparecia consoante a direção da luz. Agora há três degraus claros entre
 # fundo, chão e parede, e as arestas são bem mais claras do que ambos.
 FUNDO      = color.rgb32(11, 14, 17)     # o mesmo #0b0e11 do dashboard
-CHAO       = color.rgb32(26, 32, 39)
+CHAO       = color.rgb32(31, 38, 46)     # um degrau claro acima do fundo
 GRELHA     = color.rgb32(96, 112, 128)   # arestas e grelha: leem-se sempre
 PAREDE     = color.rgb32(104, 118, 134)
 PORTA      = color.rgb32(232, 163, 61)   # âmbar, como no viz3d do browser
@@ -103,14 +104,17 @@ _ap.add_argument('--rastos', action='store_true',
 _ap.add_argument('--sombras', action='store_true',
                  help='liga as sombras projetadas (o shadow map desta escala '
                       'desenha borrões grandes; as de contacto ficam sempre)')
-_ap.add_argument('--angulo', type=float, default=62.0,
+_ap.add_argument('--angulo', type=float, default=52.0,
                  help='inclinação inicial da câmara em graus '
                       '(90 = topo, 0 = ao nível do chão; por omissão 48)')
 # Captura: corre N passos sem intervenção, grava um PNG e fecha. Serve para
 # mostrar a cena a quem não a pode abrir, para pôr uma imagem num documento e
 # para comparar duas versões do visualizador sem depender de memória visual.
-_ap.add_argument('--recuo', type=float, default=3.1,
+_ap.add_argument('--recuo', type=float, default=2.8,
                  help='distância da câmara, em raios de arena')
+_ap.add_argument('--chao', choices=('plano', 'disco'), default='plano',
+                 help="'plano': chão contínuo que morre na névoa (omissão); "
+                      "'disco': o disco recortado da versão anterior")
 _ap.add_argument('--captura', type=str, default=None,
                  help='grava um PNG da cena e sai (ex.: --captura fig.png)')
 _ap.add_argument('--passos-antes', type=int, default=140,
@@ -243,18 +247,119 @@ camera.fov = 50
 camera.z = -(env.arena_radius * _args.recuo)
 _camera_editor.target_z = camera.z   # o EditorCamera faz lerp para target_z
 
-# ── Chão: disco da arena com grelha métrica ──────────────────────────────────
-# Substitui a "caixa da arena" translúcida, que era um cubo branco a 12% de alfa
-# e não dizia nada sobre a escala. O disco marca a fronteira real (a arena É um
-# círculo) e a grelha de 5 m dá noção de distância — sem ela, um enxame a 60 m
-# do ninho parece igual a um enxame a 6 m.
+# ── Chão ─────────────────────────────────────────────────────────────────────
+# O disco recortado no preto lia-se como uma panqueca a flutuar no vazio: um
+# objeto, e não um sítio. E os anéis concêntricos da grelha métrica agravavam-no,
+# porque desenhavam um alvo — o olho ia para o centro geométrico da arena, que
+# não é onde a ação está.
+#
+# Passa a haver CHÃO CONTÍNUO, que se estende muito para lá da arena e morre na
+# névoa (a mesma que já esbate as paredes distantes). Não tem bordo visível, por
+# isso não pode ler-se como um objeto. A fronteira real da arena — que existe e
+# importa — fica marcada por um anel de luz no chão e outro à altura de 2,5 m: o
+# recinto lê-se como recinto, sem uma superfície a competir com os robôs.
 R = env.arena_radius
-Entity(model='circle', scale=R * 2, color=CHAO, position=(0, 0, 0.06))
-Entity(model='circle', scale=R * 2, color=GRELHA, mode='line', thickness=2,
-       position=(0, 0, 0.05), alpha=0.55)
-for _raio in range(5, int(R) + 1, 5):
-    Entity(model='circle', scale=_raio * 2, color=GRELHA, mode='line',
-           position=(0, 0, 0.04), alpha=0.25)
+CHAO_EXT = R * 3.4          # onde o plano acaba já a névoa o dissolveu
+
+
+def _linhas(v, thickness=1):
+    """Um `Mesh` de SEGMENTOS soltos a partir de uma lista de pares de vértices.
+
+    ⚠️ `Mesh(vertices=v, mode='line')` sozinho desenha uma linha CONTÍNUA: liga
+    também o fim de cada segmento ao início do seguinte. Era isso que enchia a
+    cena de riscos diagonais — a grelha do chão e as arestas das paredes vinham
+    atravessadas por diagonais que ninguém tinha desenhado. Os pares têm de ir
+    explicitamente em `triangles`.
+    """
+    return Mesh(vertices=v, triangles=[(i, i + 1) for i in range(0, len(v), 2)],
+                mode='line', thickness=thickness)
+
+
+def _anel(raio, z, cor, alpha=1.0, thickness=1, lados=96):
+    """Um círculo DE LINHA, no plano do mapa.
+
+    ⚠️ Era `Entity(model='circle', mode='line')` — e essa combinação NÃO faz
+    wireframe nenhum: o `mode` só é lido quando se constrói um `Mesh`; com um
+    modelo pedido pelo nome, o Ursina carrega o disco CHEIO e ignora-o. Os
+    "anéis" da grelha métrica eram portanto discos opacos empilhados a alturas
+    diferentes — é isso que dava o efeito de donut/panqueca que se via na cena,
+    e que nenhuma mudança de cor ia resolver, porque o problema era geometria.
+    """
+    v = []
+    for k in range(lados):
+        a0 = 2 * math.pi * k / lados
+        a1 = 2 * math.pi * (k + 1) / lados
+        v += [Vec3(math.cos(a0) * raio, math.sin(a0) * raio, z),
+              Vec3(math.cos(a1) * raio, math.sin(a1) * raio, z)]
+    return Entity(model=_linhas(v, thickness), color=cor, alpha=alpha,
+                  unlit=True)
+
+
+def _esfera_arame(raio, cor, alpha=0.16, meridianos=8, paralelos=5, lados=72):
+    """O VOLUME da arena, em arame: paralelos + meridianos.
+
+    ⚠️ Sem isto a cena mente por omissão. A arena não é um recinto plano: é uma
+    ESFERA de raio `arena_radius`, e o eixo z dos agentes é livre dentro dela
+    (`move_local[2]`; só o `mapa_grande` tem teto). Com um chão desenhado e nada
+    por cima, a vista lê-se como um tabuleiro de 2D — que é precisamente a
+    geometria que o `_altura_paredes` teve de corrigir em 29 jul, quando os
+    robôs passavam POR CIMA das paredes de 30 m e ninguém via porquê.
+    """
+    v = []
+    for k in range(1, paralelos + 1):          # paralelos: círculos em z
+        z = raio * (2.0 * k / (paralelos + 1) - 1.0)
+        r = math.sqrt(max(0.0, raio * raio - z * z))
+        for s in range(lados):
+            a0, a1 = 2 * math.pi * s / lados, 2 * math.pi * (s + 1) / lados
+            v += [Vec3(math.cos(a0) * r, math.sin(a0) * r, z),
+                  Vec3(math.cos(a1) * r, math.sin(a1) * r, z)]
+    for m in range(meridianos):                # meridianos: círculos verticais
+        th = math.pi * m / meridianos
+        cx, cy = math.cos(th), math.sin(th)
+        for s in range(lados):
+            a0, a1 = 2 * math.pi * s / lados, 2 * math.pi * (s + 1) / lados
+            v += [Vec3(cx * math.cos(a0) * raio, cy * math.cos(a0) * raio,
+                       math.sin(a0) * raio),
+                  Vec3(cx * math.cos(a1) * raio, cy * math.cos(a1) * raio,
+                       math.sin(a1) * raio)]
+    return Entity(model=_linhas(v), color=cor, alpha=alpha, unlit=True)
+
+
+def _arestas_caixa(escala):
+    """As 12 arestas de um paralelepípedo centrado na origem, como segmentos."""
+    sx, sy, sz = (e / 2.0 for e in escala)
+    c = [Vec3(x, y, z) for x in (-sx, sx) for y in (-sy, sy) for z in (-sz, sz)]
+    pares = [(0, 1), (2, 3), (4, 5), (6, 7),      # verticais (em z)
+             (0, 2), (1, 3), (4, 6), (5, 7),      # em y
+             (0, 4), (1, 5), (2, 6), (3, 7)]      # em x
+    v = []
+    for a, b in pares:
+        v += [c[a], c[b]]
+    return v
+
+
+if _args.chao == 'plano':
+    Entity(model='quad', scale=CHAO_EXT * 2, color=CHAO, unlit=True,
+           position=(0, 0, 0.08))
+    # Grelha quadrada de 5 m: dá escala sem apontar para o centro. Uma só malha
+    # (não uma entidade por linha) — são ~90 segmentos.
+    # A grelha acaba ANTES do plano (2,2 R contra 3,4 R): levada até ao fim, as
+    # linhas mais distantes chegavam ao ecrã quase rasantes e emaranhavam-se num
+    # feixe no canto. O chão continua para lá dela e morre na névoa.
+    _v, _passo, _lim = [], 5, int(R * 1.3 // 5) * 5
+    for _k in range(-_lim, _lim + 1, _passo):
+        _v += [Vec3(_k, -_lim, 0.07), Vec3(_k, _lim, 0.07),
+               Vec3(-_lim, _k, 0.07), Vec3(_lim, _k, 0.07)]
+    Entity(model=_linhas(_v), color=GRELHA, alpha=0.22, unlit=True)
+    # A fronteira ao nível do plano de referência, bem visível…
+    _anel(R, 0.04, GRELHA, alpha=0.75, thickness=3)
+    # … e a ESFERA inteira em arame, que é o espaço onde os robôs se podem mexer.
+    _esfera_arame(R, GRELHA, alpha=0.20)
+else:                       # 'disco': a versão anterior, para comparar
+    Entity(model='circle', scale=R * 2, color=CHAO, position=(0, 0, 0.06))
+    _anel(R, 0.04, GRELHA, alpha=0.55, thickness=2)
+    for _raio in range(5, int(R) + 1, 5):
+        _anel(_raio, 0.03, GRELHA, alpha=0.25)
 
 # ── Ninho: disco marcado no chão, não uma bola ───────────────────────────────
 # Era uma esfera de raio×2 mais um halo de raio×4 — no ecrã, uma bola verde que
@@ -262,11 +367,15 @@ for _raio in range(5, int(R) + 1, 5):
 # lê-se melhor como alvo desenhado no chão, com uma cúpula baixa que lhe dá
 # presença sem o transformar no protagonista.
 nest_halo = Entity(model='circle', color=NINHO, alpha=0.18, unlit=True,
-                   scale=env.nest_radius * 2.6,
-                   position=(env.nest_pos[0], env.nest_pos[1], 0.02))
-nest_ring = Entity(model='circle', color=NINHO, mode='line', thickness=3,
-                   unlit=True, scale=env.nest_radius * 2,
-                   position=(env.nest_pos[0], env.nest_pos[1], 0.01))
+                   scale=env.nest_radius * 2.6, position=tuple(env.nest_pos))
+# Sombra do ninho no plano de referência: quando ele nasce a 8 m de altura, é o
+# que diz DE ONDE ele está pendurado. Sem isto, o alvo da tarefa aparecia a
+# flutuar sem sítio no mapa.
+nest_shadow = Entity(model='circle', color=color.black, alpha=0.14, unlit=True,
+                     scale=env.nest_radius * 1.6,
+                     position=(env.nest_pos[0], env.nest_pos[1], 0.02))
+nest_ring = _anel(env.nest_radius, 0.0, NINHO, thickness=3)
+nest_ring.position = (env.nest_pos[0], env.nest_pos[1], 0.01)
 nest_view = Entity(model='sphere', color=NINHO, unlit=True, alpha=0.85,
                    scale=(env.nest_radius * 1.1, env.nest_radius * 1.1,
                           env.nest_radius * 0.5),
@@ -275,6 +384,14 @@ nest_view = Entity(model='sphere', color=NINHO, unlit=True, alpha=0.85,
 obs_views = [Entity(model='sphere', color=OBSTACULO, texture='noise',
                     scale=env.obstacle_radius * 2, position=tuple(p))
              for p in env.obstacles]
+# Sombra de contacto dos obstáculos, pela mesma razão dos robôs — e aqui é mais
+# do que estética: a arena é uma ESFERA, os obstáculos ocupam-na em altura, e sem
+# a marca no chão os que estão a 10 m de altura projetam-se para fora do anel da
+# arena e parecem pedras a flutuar no vazio, ou um erro de geometria.
+obs_shadows = [Entity(model='circle', color=color.black, alpha=0.22, unlit=True,
+                      scale=env.obstacle_radius * 1.8,
+                      position=(p[0], p[1], 0.02))
+               for p in env.obstacles]
 
 
 def _e_porta(i):
@@ -296,15 +413,27 @@ def _e_porta(i):
 ALTURA_VISUAL = max(3.5, R / 4.0)
 ALTURA_REAL = float(env.walls[0]['size'][2]) if len(env.walls) else 0.0
 
-wall_views, wall_edges = [], []
+wall_views, wall_edges, wall_altas = [], [], []
 for i, w in enumerate(env.walls):
     cor = PORTA if _e_porta(i) else PAREDE
     escala = (float(w['size'][0]), float(w['size'][1]), ALTURA_VISUAL)
     pos = (float(w['pos'][0]), float(w['pos'][1]), -ALTURA_VISUAL / 2)
     wall_views.append(Entity(model='cube', color=cor, texture='white_cube',
                              scale=escala, position=pos))
-    wall_edges.append(Entity(model='cube', color=GRELHA, mode='line',
-                             scale=escala, position=pos))
+    # ⚠️ Mesma armadilha do `circle`: `model='cube', mode='line'` desenhava um
+    # CUBO CHEIO cinzento por cima da parede — era ele que a deixava chapada,
+    # sem sombreamento nem volume, e a esconder a cor âmbar da porta. As doze
+    # arestas têm de ser construídas à mão.
+    wall_edges.append(Entity(model=_linhas(_arestas_caixa(escala), 2),
+                             color=GRELHA, alpha=0.55, unlit=True,
+                             position=pos))
+    # A parede REAL vai até `ALTURA_REAL` (2× o raio da arena). Desenhá-la sólida
+    # faz da cena um poço; não a desenhar de todo faz a cena parecer 2D — foi
+    # esta a queixa. Fica em arame: vê-se até onde veda, e vê-se através.
+    wall_altas.append(Entity(
+        model=_linhas(_arestas_caixa((escala[0], escala[1], ALTURA_REAL))),
+        color=cor, alpha=0.22, unlit=True,
+        position=(pos[0], pos[1], 0.0)))
 
 # ── Névoa: profundidade atmosférica ──────────────────────────────────────────
 # O que está longe esbate-se na cor do fundo. É o truque mais antigo do desenho
@@ -400,7 +529,13 @@ def _atualizar_grafo():
     if len(i) > MAX_ARESTAS:          # fica com as mais curtas: a estrutura local
         ordem = np.argsort(d[i, j])[:MAX_ARESTAS]
         i, j = i[ordem], j[ordem]
-    grafo.model.vertices = [Vec3(*v) for par in zip(p[i], p[j]) for v in par]
+    v = [Vec3(*x) for par in zip(p[i], p[j]) for x in par]
+    grafo.model.vertices = v
+    # ⚠️ Sem os pares em `triangles`, o Mesh liga o fim de cada aresta ao início
+    # da seguinte: o que aparecia não era o grafo dos vizinhos, mas um caminho a
+    # atravessar a arena de lado a lado. Era esse o "emaranhado" que levou a
+    # desligar o grafo por omissão — o desenho é que estava errado, não a ideia.
+    grafo.model.triangles = [(k, k + 1) for k in range(0, len(v), 2)]
     grafo.model.generate()
 
 
@@ -471,9 +606,19 @@ def _atualizar_cena():
 
     nest_view.position = tuple(env.nest_pos)
     nest_halo.position = tuple(env.nest_pos)
+    nest_shadow.position = (env.nest_pos[0], env.nest_pos[1], 0.02)
+    # ⚠️ O anel também: no Sandbox o ninho MUDA de sítio a cada recolha
+    # (`_spawn_nest`), e o anel ficava para trás — no ecrã apareciam dois ninhos,
+    # o verdadeiro e um anel verde vazio onde ele tinha estado.
+    # ⚠️ O ninho tem TRÊS coordenadas — no Sandbox nasce dentro da esfera, e
+    # pode estar a 8 m de altura. O anel colado ao plano z=0 deixava-o a apontar
+    # para um sítio onde não estava; agora acompanha-o, e a marca no chão fica
+    # por conta da sombra.
+    nest_ring.position = tuple(env.nest_pos)
 
     for i, obs_pos in enumerate(env.obstacles):
         obs_views[i].position = tuple(obs_pos)
+        obs_shadows[i].position = (obs_pos[0], obs_pos[1], 0.02)
 
     # ⚠️ As PAREDES têm de ser atualizadas: quando a porta cooperativa abre, o
     # ambiente REMOVE-A de `env.walls`, e é este ciclo que a faz desaparecer do
@@ -482,8 +627,16 @@ def _atualizar_cena():
     # desenhada. É a divergência que motivou juntar os três.
     for i, wall in enumerate(env.walls):
         if i < len(wall_views):
-            wall_views[i].position = tuple(wall['pos'])
-            wall_edges[i].position = tuple(wall['pos'])
+            # ⚠️ O z tem de continuar a ser o VISUAL (-ALTURA_VISUAL/2, que
+            # assenta a caixa no chão). Copiar `wall['pos']` inteiro punha-a
+            # centrada em z=0 a partir do primeiro passo — metade enterrada, e
+            # a mudar de sítio entre o arranque e o resto da simulação.
+            wall_views[i].position = (float(wall['pos'][0]),
+                                      float(wall['pos'][1]),
+                                      -ALTURA_VISUAL / 2)
+            wall_edges[i].position = wall_views[i].position
+            wall_altas[i].position = (float(wall['pos'][0]),
+                                      float(wall['pos'][1]), 0.0)
     for i in range(len(env.walls), len(wall_views)):
         wall_views[i].enabled = False        # porta aberta: sai do ecrã
         wall_edges[i].enabled = False
@@ -500,6 +653,7 @@ def _atualizar_cena():
                 for a, b in zip(historico[k - 1], historico[k]):
                     v.extend([Vec3(*a), Vec3(*b)])
             rastos.model.vertices = v
+            rastos.model.triangles = [(k, k + 1) for k in range(0, len(v), 2)]
             rastos.model.generate()
 
     normal = CORPO
