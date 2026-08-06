@@ -535,6 +535,36 @@ def verificar_artigo(tolerancia):
               % conferidos)
     print("NOTA: o [n/7] do artigo é 'execuções com 100%% de sucesso', que NÃO é")
     print("      a taxa de sucesso média — a tese não reporta esta métrica.")
+
+    # ── as mesmas afirmações que a tese faz em prosa, agora do lado do artigo ──
+    # O artigo repete-as por palavras suas ("Quinze das vinte e uma"), e uma
+    # correção na tese não lhes toca. É a divergência de sempre, a um nível a que
+    # o verificador ainda não chegava: as tabelas batiam, as frases não eram
+    # olhadas por ninguém.
+    cheios = d.groupby(["Scenario", "Algorithm", "Run"])["success"].mean()
+    combinacoes = d.groupby(["Scenario", "Algorithm"]).ngroups
+    a_100 = sum(1 for (_, _), g in cheios.groupby(level=[0, 1])
+                if (g == 1.0).all())
+
+    # O artigo escreve os números por extenso; o texto tem quebras de linha no
+    # meio das frases, por isso os padrões toleram qualquer espaço em branco.
+    frases = [
+        (r"Quinze\s+das\s+vinte\s+e\s+uma\s+combinações", float(a_100), 15.0,
+         "combinações com 100% em todas as execuções"),
+        (r"as\s+seis\s+restantes\s+escondem", float(combinacoes - a_100), 6.0,
+         "combinações restantes"),
+    ]
+    for padrao, medido, no_artigo, nome in frases:
+        conferidos += 1
+        if not re.search(padrao, tex):
+            problemas.append("artigo: não encontrei a frase de %s (a redação "
+                             "mudou?)" % nome)
+        elif abs(medido - no_artigo) > 0.01:
+            problemas.append("artigo: %s — texto diz %.0f, dados dão %.0f"
+                             % (nome, no_artigo, medido))
+        else:
+            print("  [v] %-42s dados %2.0f   artigo %2.0f"
+                  % (nome, medido, no_artigo))
     return problemas
 
 
