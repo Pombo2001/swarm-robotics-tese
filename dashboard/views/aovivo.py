@@ -1,6 +1,6 @@
 """Vista «Ao vivo (3D)» — lança os visualizadores Ursina que já existem.
 
-NÃO reimplementa nada. Abre exatamente `visualization/visualize_{gnn,ppo,sac}.py` —
+NÃO reimplementa nada. Abre exatamente `visualization/visualize_algo.py --algo <a>` —
 os mesmos mapas, as mesmas cores, a mesma câmara livre e o mesmo slider de velocidade
 de sempre. É o que o launcher antigo (`launcher_dashboard.py`) fazia, e a única razão
 por que ele ainda era preciso.
@@ -28,8 +28,11 @@ CARD = theme.CARD + " p-4"
 _section_title = theme.section_title
 
 _ALGOS = {"gnn": "GNN (Evolutivo)", "ppo": "PPO", "sac": "SAC"}
-_SCRIPT = {a: os.path.join(config.BASE_DIR, "visualization", f"visualize_{a}.py")
-           for a in _ALGOS}
+# Um só visualizador para os três algoritmos, escolhido por `--algo` (6 ago 2026).
+# Antes eram três ficheiros: o `ppo` e o `sac` diferiam em 12 linhas, e tinham já
+# divergido de facto (convenções de eixos diferentes, a porta que abria na
+# simulação mas não no ecrã só em dois deles).
+_SCRIPT = os.path.join(config.BASE_DIR, "visualization", "visualize_algo.py")
 _LOG_DIR = os.path.join(config.BASE_DIR, "results", "logs")
 
 # (subpasta, prefixo, extensão) por algoritmo — a convenção de nomes do projeto:
@@ -197,7 +200,8 @@ def build():
                         def abrir(algo=algo, raiz=raiz):
                             # -u: sem buffer, senão o "[OK] modelo carregado" (ou o erro)
                             # fica preso no buffer enquanto a janela está aberta.
-                            cmd = [sys.executable, "-u", _SCRIPT[algo],
+                            cmd = [sys.executable, "-u", _SCRIPT,
+                                   "--algo", algo,
                                    "--scenario", scen_sel.value]
                             if agents.value and int(agents.value) != 20:
                                 cmd += ["--agents", str(int(agents.value))]

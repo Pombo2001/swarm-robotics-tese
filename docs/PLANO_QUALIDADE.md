@@ -54,14 +54,15 @@ O padrão: **os números têm verificador, as afirmações sobre os números nã
 | # | Verificação | Estado |
 |---|---|---|
 | 3.1 | Módulos sem um único teste | ✅ inventariado — ver abaixo |
-| 3.2 | Os três visualizadores usam convenções de eixos diferentes | ⬜ **fundir num só** — ver abaixo |
+| 3.2 | Os três visualizadores usam convenções de eixos diferentes | ✅ 6 ago — `visualize_algo.py --algo`; a vista «Ao vivo (3D)» aponta-lhe e os três originais foram apagados |
 | 3.4 | Revisão de código (5 ago) | ✅ feita — resultados abaixo |
 
 ### Revisão de código — o que vale a pena, por ordem
 
 **Depois de 22 ago** (nada disto se toca com a campanha a correr):
 
-1. **Fundir `visualize_{gnn,ppo,sac}.py`.** São 205, 205 e 222 linhas; o `ppo` e
+1. ~~**Fundir `visualize_{gnn,ppo,sac}.py`.**~~ ✅ **feito a 6 ago** — antecipado
+   porque não toca no simulador nem em nada que a campanha use. São 205, 205 e 222 linhas; o `ppo` e
    o `sac` diferem em **12 linhas** (o algoritmo, o título, o caminho do modelo
    e a classe que carrega). São ~630 linhas onde bastariam ~230 com `--algo`.
    Não são código morto — a vista «Ao vivo (3D)» invoca-os — e têm o que o
