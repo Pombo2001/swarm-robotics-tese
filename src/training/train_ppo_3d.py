@@ -81,8 +81,30 @@ class FlattenMultiAgentVecEnv(VecEnvWrapper):
         super().__init__(venv, observation_space=venv.observation_space, action_space=venv.action_space)
         self.num_envs = self.num_arenas * self.num_agents
 
+    def _verificar_forma(self, obs):
+        """O `num_agents` deste wrapper vem do CONFIG — e o default do código
+        (25) não é o do `configs/foraging.yaml` (20).
+
+        Quando os dois números discordam, o reshape não estoira: com (2, 20, 10)
+        lido como 25 agentes por arena, 400 elementos dividem-se por 50 linhas e
+        saem 8 colunas — **observações de agentes diferentes coladas na mesma
+        linha**, sem uma palavra. Um treino nessas condições corre até ao fim e
+        converge para outra coisa.
+
+        Medido a 13 ago em tests/test_treino_gradientes.py, que antes desta
+        guarda documentava o silêncio em vez de o impedir.
+        """
+        if obs.ndim == 3 and obs.shape[1] != self.num_agents:
+            raise ValueError(
+                "FlattenMultiAgentVecEnv construído com num_agents=%d, mas o "
+                "ambiente devolve %d agentes por arena. O reshape juntaria "
+                "observações de agentes diferentes na mesma linha — corrigir "
+                "`environment.num_agents` no config."
+                % (self.num_agents, obs.shape[1]))
+
     def reset(self):
         obs = self.venv.reset()
+        self._verificar_forma(obs)
         return obs.reshape(self.num_envs, -1)
 
     def step_async(self, actions):
