@@ -687,6 +687,65 @@ def scenarios_with_video(session: str):
     return [k for k in config.SCENARIO_KEYS if k in present]
 
 
+# ── F2 do mapa grande: os resultados MEDIDOS ─────────────────────────────────
+F2_GLOB = os.path.join(config.BASE_DIR, "results", "mapa_grande", "f2*", "**",
+                       "eval_by_run.csv")
+
+
+def f2_resultados():
+    """Por algoritmo: execuções, convergentes, recolhas/ep e uso da porta.
+
+    A vista do Mapa mostrava o F1 inteiro e, do F2, só uma linha de estado com o
+    que o servidor está a correr. Entretanto o braço dos gradientes fechou (7 e
+    10 ago) e os 840 episódios ficaram no disco **sem aparecer em lado nenhum** —
+    o resultado mais recente da tese, invisível no sítio que existe para o
+    mostrar. Um dashboard que não mostra o que já está medido é uma surpresa à
+    espera de acontecer em frente ao júri.
+
+    O mesmo glob do `scripts/verificar_mapa_grande.py` e do
+    `analise_mapa_grande.py`: um braço que apareça no disco entra aqui sozinho,
+    incluindo o do GNN quando fechar.
+
+    ⚠️ «Convergente» é ≥1 recolha na MÉDIA POR EXECUÇÃO, que é a unidade
+    estatística da tese (M2 do pré-registo) — não por episódio. E o limiar
+    ⌈5/7 × n⌉ sai do n do próprio CSV, nunca de um 15 escrito à mão: se uma
+    execução faltar, a fasquia desce e tem de descer à vista de todos.
+    """
+    hits = sorted(glob.glob(F2_GLOB, recursive=True))
+    if not hits:
+        return None
+    try:
+        df = pd.concat([pd.read_csv(h) for h in hits], ignore_index=True)
+    except Exception:                        # noqa: BLE001 — CSV a meio de uma escrita
+        return None
+    if df.empty or "Algorithm" not in df.columns:
+        return None
+
+    fora = []
+    for algo, g in df.groupby("Algorithm"):
+        por_run = g.groupby("Run").food_collected.mean()
+        porta = g["door_opened"] if "door_opened" in g.columns else None
+        if porta is not None:
+            porta = porta.astype(str).str.lower().isin(("true", "1")).mean()
+        fora.append({
+            "algo": str(algo).upper(),
+            "runs": int(por_run.size),
+            "convergentes": int((por_run > 0).sum()),
+            "media": float(por_run.mean()),
+            "dp": float(por_run.std(ddof=0)) if por_run.size > 1 else 0.0,
+            "episodios": int(len(g)),
+            "porta": None if porta is None else float(porta),
+        })
+    fora.sort(key=lambda d: d["algo"])
+    n = max(d["runs"] for d in fora)
+    return {"algos": fora, "n": n, "limiar": -(-5 * n // 7),
+            "episodios": int(len(df)),
+            "fontes": [os.path.relpath(h, config.BASE_DIR) for h in hits],
+            "falhas": [os.path.relpath(h, config.BASE_DIR)
+                       for h in hits
+                       if os.path.exists(h.replace(".csv", "_FALHAS.txt"))]}
+
+
 def send_to_thesis(session: str, filename: str):
     """Copia um PNG da sessão para Tese/images/resultados/ (nome inalterado)."""
     src = os.path.join(GRAFICOS_DIR, session, filename)

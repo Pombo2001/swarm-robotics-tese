@@ -20,7 +20,7 @@ import os
 import pandas as pd
 from nicegui import ui
 
-from .. import theme
+from .. import data, theme
 
 CARD = theme.CARD + " p-4"
 _RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -178,6 +178,68 @@ def _grelha(d, cond):
     return saida
 
 
+def _painel_f2():
+    """Os resultados MEDIDOS do F2, quando existirem no disco.
+
+    A vista mostrava o F1 inteiro e, do F2, só a linha de estado do servidor —
+    quantos runs fecharam. A 10 de agosto o braço dos gradientes terminou e os
+    840 episódios ficaram no disco sem aparecer aqui: o resultado mais recente da
+    tese, invisível no sítio que existe para o mostrar.
+
+    Não escreve veredicto nenhum sobre a QI7. O limiar sai do n do próprio CSV e
+    diz-se o que ele dá; qual das leituras da secção vai para a tese decide-se
+    com o braço do GNN, que ainda não fechou, e antecipá-lo aqui era escolher com
+    a régua errada (o `projetar_limiar_f2.py` chegou a fazê-lo).
+    """
+    r = data.f2_resultados()
+    if not r:
+        return
+    with ui.card().classes(CARD + " w-full"):
+        ui.label("F2 — treino nativo: o que já está medido") \
+            .classes("text-sm font-bold mb-1")
+        ui.label(
+            "%d episódios de avaliação determinística, %d execuções por braço. "
+            "Limiar do pré-registo para a QI7: ⌈5/7 × %d⌉ = %d execuções "
+            "convergentes em pelo menos um algoritmo."
+            % (r["episodios"], r["n"], r["n"], r["limiar"])
+        ).classes("text-xs mb-2").style(f"color:{theme.INK_MUTED}")
+
+        with ui.grid(columns=5).classes("w-full gap-px"):
+            for cab in ("algoritmo", "execuções", "convergentes",
+                        "recolhas/ep", "porta aberta"):
+                ui.label(cab).classes("text-[10px] py-1") \
+                    .style(f"color:{theme.INK_MUTED}")
+            for a in r["algos"]:
+                ui.label(a["algo"]).classes("text-xs font-bold py-1")
+                ui.label("%d" % a["runs"]).classes("text-xs mono-num py-1")
+                lbl = ui.label("%d de %d" % (a["convergentes"], a["runs"])) \
+                    .classes("text-xs mono-num py-1")
+                if a["convergentes"] >= r["limiar"]:
+                    lbl.style("color:#4ade80")
+                elif a["convergentes"] == 0:
+                    lbl.style(f"color:{theme.INK_MUTED}")
+                ui.label("%.2f ± %.2f" % (a["media"], a["dp"])) \
+                    .classes("text-xs mono-num py-1")
+                ui.label("—" if a["porta"] is None else "%.0f%%" % (100 * a["porta"])) \
+                    .classes("text-xs mono-num py-1")
+
+        em_falta = [a for a in ALGOS if a not in {x["algo"] for x in r["algos"]}]
+        if em_falta:
+            ui.label("A correr, ainda sem avaliação no disco: %s."
+                     % ", ".join(em_falta)) \
+                .classes("text-xs mt-2").style("color:#ffb020")
+        if r["falhas"]:
+            # O sidecar do eval_by_run.py: execuções que não entraram no CSV. O n
+            # decide o limiar, por isso isto não pode ficar só no terminal de
+            # quem correu a avaliação.
+            ui.label("⚠ Há execuções que falharam a avaliar (%s). O n em cima "
+                     "está incompleto e o limiar desceu com ele."
+                     % ", ".join(r["falhas"])) \
+                .classes("text-xs mt-2 font-bold").style("color:#ef4444")
+        ui.label("Fonte: %s" % ", ".join(r["fontes"])) \
+            .classes("text-[10px] mt-2").style(f"color:{theme.INK_MUTED}")
+
+
 def build():
     with ui.column().classes("w-full gap-4 p-4"):
         theme.section_title(
@@ -282,6 +344,8 @@ def build():
                     ui.label(nome).classes("text-xs font-bold w-56 shrink-0")
                     ui.label(estado).classes("text-xs") \
                         .style(f"color:{theme.INK_MUTED}")
+
+        _painel_f2()
 
         # ── a grelha do F1, por condição ─────────────────────────────────────
         if d is None:
