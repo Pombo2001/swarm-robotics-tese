@@ -1,0 +1,21 @@
+Scenario,ScenarioLabel,Algorithm,food_collected,success,total_reward,door_opened
+mapa_grande,Mapa Grande,PPO,0.0,False,6955.342330506641,False
+mapa_grande,Mapa Grande,PPO,0.0,False,-3791.293218813483,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7964.899618032018,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7642.389950040159,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7485.348852748006,False
+mapa_grande,Mapa Grande,PPO,0.0,False,-3892.4810972921696,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7154.642994522896,False
+mapa_grande,Mapa Grande,PPO,0.0,False,6916.7984925350565,False
+mapa_grande,Mapa Grande,PPO,0.0,False,11485.254362311724,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7532.976039005615,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7710.217828518842,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7261.6764722815415,False
+mapa_grande,Mapa Grande,PPO,0.0,False,6766.60726577032,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7883.78054099344,False
+mapa_grande,Mapa Grande,PPO,0.0,False,11115.492342058167,False
+mapa_grande,Mapa Grande,PPO,0.0,False,10083.365127595725,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7472.561435750023,False
+mapa_grande,Mapa Grande,PPO,0.0,False,6879.830873001561,False
+mapa_grande,Mapa Grande,PPO,0.0,False,7170.9272657703605,False
+mapa_grande,Mapa Grande,PPO,0.0,False,6930.171075537119,False
