@@ -47,6 +47,10 @@ OK=1
 if [ "$MEXEU_TESE" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_numeros_tese.py" || OK=0
     "$PY" "$RAIZ/scripts/verificar_contagens_prosa.py" || OK=0
+    # 13 ago: a limitacao do spawn no Gargalo (10 valores). Mede no simulador e
+    # le os esperados do proprio main.tex — uma alteracao a geometria do cenario
+    # ou um numero mudado a mao param aqui.
+    "$PY" "$RAIZ/scripts/verificar_spawn_gargalo.py" || OK=0
 fi
 if [ "$MEXEU_MAPA" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_mapa_grande.py" || OK=0
