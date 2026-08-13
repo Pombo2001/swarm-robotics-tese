@@ -182,20 +182,54 @@ Por ordem do que custa mais descobrir tarde:
 
 | data | o quê |
 |---|---|
-| 11–14 ago | a decisão do limiar **sela-se** (`scripts/projetar_limiar_f2.py`): basta o 7.º run não convergente para 15/21 ficar impossível |
-| ~14 ago | exploratório fecha — reporta-se à parte, com n=3, e **não** altera o veredicto |
-| ~16 ago | GNN fecha → `analise_mapa_grande.py`, preencher os 5 buracos, escolher **uma** das três leituras, descomentar o `\input` |
-| 16–22 ago | Conclusões, Resumo, verificação final e revisão do PDF |
+| ~~11–14 ago~~ | ✅ **13 ago — a decisão está SELADA, e é negativa.** 15 execuções fechadas, **3 convergentes**, 12 a zero: faltam 12 convergências e restam 6 execuções. Pela emenda 21, reporta-se como negativo com o número declarado — é a **leitura C** |
+| ~~~14 ago~~ | ⛔ **o exploratório nunca correu** (ver abaixo) e, a 13 ago, o utilizador decidiu **não o lançar**: com o limiar selado, um n=3 não muda o veredicto e competiria com o `mapaF2g` pelo CPU |
+| ~17 ago | GNN fecha (16/21 a 13 ago) → `analise_mapa_grande.py`, preencher os 5 buracos, descomentar o `\input` |
+| 17–22 ago | Conclusões, Resumo, verificação final e revisão do PDF |
+
+### O que aconteceu de 6 a 13 ago (escrito a 13 ago)
+
+**1. O braço dos gradientes fechou — e ficou três dias parado no servidor.**
+PPO 21/21 a 7 ago, SAC 21/21 a 10 ago. 840 episódios, **0,00 recolhas em 42 de
+42 execuções**, `success` sempre falso, `door_opened` sempre falso. Trazido a 13
+ago para `results/mapa_grande/f2_grad_{ppo,sac}/` (nomes distintos — o ficheiro
+remoto chama-se `eval_by_run.csv` nos dois). A **M3 fica respondida para os
+gradientes**: a porta nunca é aberta, um dos desfechos que o pré-registo já
+tinha declarado legítimo.
+
+**2. O watcher do exploratório não lançou nada — e tinha razão em não lançar.**
+A 10 ago às 17:01 viu o `mapaF2r` desaparecer sem `CONCLUÍDO` no
+`mapa_F2grad_master.log` e parou, como estava desenhado. Só que a campanha
+**tinha** terminado: os 21+21 `.zip`, a avaliação das 16h34 e o
+`logs/_campanha_concluida.txt` provam-no. O travão funcionou; o **sinal é que
+era frágil** — a conclusão existia, noutro ficheiro.
+
+Isto é o mesmo padrão da tabela acima, com uma variante: não é uma garantia que
+depende de um acidente, é uma garantia que **lê o sítio errado**. O marcador
+canónico de conclusão é `logs/_campanha_concluida.txt`, escrito pelo próprio
+pipeline; a linha no `master.log` é decoração de um script de shell. Quem
+escrever o próximo watcher que olhe para o primeiro. (Não se corrige agora: o
+`f2_longo_ao_fechar.sh` já não tem trabalho para fazer.)
+
+**3. O único braço que recolhe alguma coisa no mapa grande é o evolutivo.**
+3 das 15 execuções fechadas do GNN adaptativo chegam a 6,0–7,5 recolhas; os dois
+braços de gradiente dão zero em 840 episódios. Não é ainda uma comparação — os
+números do GNN são de treino (`best_task_food`), os dos gradientes são de
+avaliação. **A M1 só se calcula com o `eval_by_run.csv` do GNN**, e esse só
+existe quando o `mapaF2g` fechar. Não antecipar a frase antes de ter as duas
+metades medidas com a mesma régua.
 
 Correr `scripts/estado_f2.sh` sempre que se espreitar o servidor: as vistas do
 dashboard leem o instantâneo, e sem ele voltam a envelhecer sozinhas.
 
 ## Eixo 5 — Calendário
 
-- **~9 ago** o grad fecha → o `f2lwatch` lança o exploratório sozinho.
-- **~14 ago** exploratório fecha.
-- **~16 ago** o GNN fecha → correr a análise M1-M3, integrar a secção do mapa
-  grande, preencher os `\PORPREENCHER`.
+- ~~**~9 ago** o grad fecha → o `f2lwatch` lança o exploratório sozinho.~~ ✅ o
+  grad fechou a **10 ago** (não 9); o exploratório **não** foi lançado, e a 13
+  ago decidiu-se que não vai correr.
+- ~~**~14 ago** exploratório fecha.~~ ⛔ cancelado.
+- **~17 ago** o GNN fecha (16/21 a 13 ago) → correr a análise M1-M3, integrar a
+  secção do mapa grande, preencher os `\PORPREENCHER`.
 - **22 ago** hard stop: o que não fechar até aqui vai para a defesa, não para a
   tese (regra 4 dos compromissos de reporte do pré-registo).
 
