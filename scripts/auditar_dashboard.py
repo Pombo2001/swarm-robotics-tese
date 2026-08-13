@@ -85,6 +85,254 @@ def audita_vistas() -> None:
     I("vistas", "%d de %d construíram" % (ok, len(VISTAS)))
 
 
+# ── Estados vazios ───────────────────────────────────────────────────────────
+# Uma vista que constrói perfeitamente e escreve «Ainda não há dados» está tão
+# partida, aos olhos de quem a abre, como uma que rebenta — e a auditoria
+# original, que só verificava que as vistas CONSTROEM, deixava-a passar sem uma
+# palavra.
+#
+# A primeira tentativa procurou marcas soltas («não há», «nenhum») no texto
+# renderizado, e apanhou sobretudo PROSA: «Não há domínio de paradigma» é uma
+# conclusão da tese, não um painel vazio. Seis dos seis achados eram falsos.
+#
+# Agora as mensagens saem do CÓDIGO. Extraem-se por AST as literais curtas das
+# vistas que falam de ausência — que são, por construção, exatamente as que
+# alguém escreveu para o caso de não haver o que mostrar — e depois procura-se
+# no que a vista renderizou. Uma mensagem nova entra sozinha; uma frase de prosa
+# não entra porque nunca é uma literal curta e isolada.
+MARCAS_VAZIO = (
+    "sem dados", "sem csv", "sem gráfico", "sem graficos", "sem figuras",
+    "sem vídeos", "não há", "ainda não", "indisponível", "sem seleção",
+    "sem configs", "nenhum treino", "sem instantâneo", "sem coluna",
+)
+
+# Vistas onde um estado vazio é ESPERADO nesta máquina, com a razão escrita. Uma
+# isenção sem razão é uma forma educada de não corrigir.
+VAZIO_ESPERADO = {
+    "videos": "os GIF dos episódios não são versionados (SWARM_VIDEOS=1 gera-os)",
+    "prontidao": "os testes correm a pedido, dentro da própria vista",
+    "curvas": "não há treinos locais por decisão do projeto — o treino é no servidor",
+}
+
+
+def _mensagens_de_vazio() -> dict:
+    """{mensagem: (ficheiro, linha)} — as literais de ausência do código das vistas."""
+    import ast
+
+    base = os.path.join("dashboard", "views")
+    # `data.py` também conta: a frase «Nenhum treino local a decorrer» é
+    # construída lá e devolvida à vista já pronta. Procurar só nas vistas
+    # deixava-a de fora — e é a mensagem que mais aparece nesta máquina.
+    ficheiros = [(f, os.path.join(base, f)) for f in sorted(os.listdir(base))
+                 if f.endswith(".py")]
+    ficheiros.append(("data.py", os.path.join("dashboard", "data.py")))
+    achadas = {}
+    for f, caminho in ficheiros:
+        with open(caminho, encoding="utf-8") as fh:
+            try:
+                arvore = ast.parse(fh.read())
+            except SyntaxError as e:
+                X("vistas", "%s não faz parse: %s" % (f, e))
+                continue
+        for no in ast.walk(arvore):
+            if isinstance(no, ast.Constant) and isinstance(no.value, str):
+                v = no.value.strip()
+                if 3 < len(v) < 90 and any(m in v.lower() for m in MARCAS_VAZIO):
+                    achadas.setdefault(v, (f, no.lineno))
+    return achadas
+
+
+def _percorre(elemento, profundidade=0):
+    """Todos os elementos da árvore construída, em profundidade."""
+    yield elemento, profundidade
+    for slot in getattr(elemento, "slots", {}).values():
+        for filho in slot.children:
+            yield from _percorre(filho, profundidade + 1)
+
+
+def _constroi(nome, fila):
+    """Constrói uma vista dentro de um contentor e devolve-o (ou None)."""
+    from nicegui import ui
+    mod = importlib.import_module("dashboard.views." + nome)
+    if not hasattr(mod, "build"):
+        return None
+    with ui.element("div") as raiz:
+        try:
+            mod.build(fila)
+        except TypeError as e:
+            if "positional argument" not in str(e):
+                raise
+            mod.build()
+    return raiz
+
+
+def audita_vistas_vazias() -> None:
+    """Cada vista MOSTRA alguma coisa — e diz-se quais mostram um estado vazio.
+
+    Duas medidas por vista: quantos elementos produziu (uma vista com meia dúzia
+    está vazia, construa ou não) e que textos de «não há nada» escreveu.
+    """
+    from dashboard.jobs import JobQueue
+
+    fila = JobQueue()
+    mensagens = _mensagens_de_vazio()
+    magras, mostrados = [], 0
+    for nome in VISTAS:
+        try:
+            raiz = _constroi(nome, fila)
+        except Exception:                    # já reportado por audita_vistas
+            continue
+        if raiz is None:
+            continue
+        elementos = list(_percorre(raiz))
+        renderizados = [t for t in (getattr(el, "text", None) for el, _ in elementos)
+                        if isinstance(t, str) and t.strip()]
+        encontradas = [m for m in mensagens
+                       if any(m in t for t in renderizados)]
+        if len(elementos) < 8:
+            magras.append((nome, len(elementos)))
+        if encontradas:
+            mostrados += len(encontradas)
+            razao = VAZIO_ESPERADO.get(nome)
+            registar = I if razao else X
+            registar(nome, "mostra %d estado(s) vazio(s): %s%s"
+                     % (len(encontradas),
+                        " | ".join("«%s» (%s:%d)"
+                                   % (m, mensagens[m][0], mensagens[m][1])
+                                   for m in encontradas)[:240],
+                        "  [esperado: %s]" % razao if razao else ""))
+    if magras:
+        X("vistas", "vistas com quase nada construído: %s"
+          % ", ".join("%s (%d elementos)" % m for m in magras))
+    I("vistas", "%d vistas inspecionadas; %d mensagens de vazio no código, "
+                "%d a aparecer" % (len(VISTAS), len(mensagens), mostrados))
+
+
+def audita_imagens_referenciadas() -> None:
+    """Todo o `src` que uma vista cria aponta para um ficheiro que existe.
+
+    A auditoria antiga verificava que as PASTAS servidas existem e que os PNG do
+    disco não estão vazios. Faltava o cruzamento que interessa: a figura que a
+    vista pede é a figura que lá está. Um `src` errado não rebenta nada — dá um
+    ícone partido, que numa galeria de mil imagens ninguém vê a tempo.
+    """
+    from dashboard.jobs import JobQueue
+
+    # As rotas estáticas do app, para traduzir URL -> caminho no disco.
+    ROTAS = {"/graficos": "results/graficos_tese",
+             "/estatico": "dashboard/estatico",
+             "/episodios": "results/episodios_3d",
+             "/figuras_tese": "Tese/images/resultados"}
+
+    fila = JobQueue()
+    total = partidas = externas = 0
+    exemplos = []
+    for nome in VISTAS:
+        try:
+            raiz = _constroi(nome, fila)
+        except Exception:                    # noqa: BLE001
+            continue
+        if raiz is None:
+            continue
+        for el, _ in _percorre(raiz):
+            src = getattr(el, "_props", {}).get("src")
+            if not isinstance(src, str) or not src:
+                continue
+            total += 1
+            if src.startswith(("http://", "https://", "data:")):
+                externas += 1
+                continue
+            caminho = None
+            for rota, base in ROTAS.items():
+                if src.startswith(rota + "/"):
+                    caminho = os.path.join(base, src[len(rota) + 1:])
+                    break
+            if caminho is None:
+                continue                     # rota que não servimos: fora do âmbito
+            caminho = caminho.split("?")[0]
+            if not os.path.isfile(caminho):
+                partidas += 1
+                if len(exemplos) < 5:
+                    exemplos.append("%s -> %s" % (nome, src))
+    if partidas:
+        X("imagens", "%d referências para ficheiros que não existem: %s"
+          % (partidas, "; ".join(exemplos)))
+    I("imagens", "%d referências verificadas (%d externas, %d partidas)"
+      % (total, externas, partidas))
+
+
+def audita_funcoes_data() -> None:
+    """Todas as funções públicas de `dashboard/data.py` respondem — e com quê.
+
+    São 697 linhas e ~30 funções: é delas que sai tudo o que as vistas desenham.
+    Uma que passe a devolver vazio não estoira nada; a vista limita-se a mostrar
+    menos, e a diferença entre «não há dados» e «a função partiu-se» não se vê
+    do lado de fora. Aqui chamam-se todas, com argumentos derivados dos próprios
+    dados quando precisam de um.
+    """
+    import inspect as _inspect
+
+    from dashboard import data
+
+    # Argumentos derivados dos dados: nada fixo à mão, senão a auditoria começa
+    # a testar um mundo que já não existe.
+    sessoes = data.list_sessions() or []
+    com_eval = data.sessions_with_eval() or []
+    cenarios = data.scalability_scenarios() or []
+    pngs = data.list_pngs(sessoes[0]) if sessoes else []
+    videos = data.video_sessions() or []
+    ARGS = {
+        "session_metrics": (com_eval[:1] or sessoes[:1]),
+        "descricao_sessao": sessoes[:1],
+        "list_pngs": sessoes[:1],
+        "session_datetime": sessoes[:1],
+        "session_is_evaluated": sessoes[:1],
+        "session_manifesto": sessoes[:1],
+        "list_videos": videos[:1] or sessoes[:1],
+        "scenarios_with_video": videos[:1] or sessoes[:1],
+        "scalability_table": cenarios[:1],
+        "graph_type": [pngs[0]] if pngs else ["desempenho_global.png"],
+        "idade_legivel": [os.path.getmtime("configs/foraging.yaml")],
+        "proveniencia": ["configs/foraging.yaml"],
+        "parse_video": ["gnn_u_wall.gif"],
+        "video_for": (videos[:1] or sessoes[:1]) + ["gnn", "u_wall"],
+    }
+    # `send_to_thesis` COPIA ficheiros para a tese: não se chama numa auditoria.
+    NAO_CHAMAR = {"send_to_thesis"}
+
+    vazias, rebentaram, chamadas = [], [], 0
+    for nome, fn in sorted(vars(data).items()):
+        if nome.startswith("_") or not _inspect.isfunction(fn):
+            continue
+        if fn.__module__ != data.__name__ or nome in NAO_CHAMAR:
+            continue
+        sig = _inspect.signature(fn)
+        obrigatorios = [p for p in sig.parameters.values()
+                        if p.default is _inspect.Parameter.empty
+                        and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)]
+        args = ARGS.get(nome, [])
+        if len(args) < len(obrigatorios):
+            I("data", "%s: sem argumento derivável — não chamada" % nome)
+            continue
+        try:
+            r = fn(*args[:max(len(obrigatorios), 0)] if obrigatorios else [])
+            chamadas += 1
+        except Exception as e:               # noqa: BLE001
+            rebentaram.append("%s: %s: %s" % (nome, type(e).__name__, e))
+            continue
+        vazio = r is None or (hasattr(r, "__len__") and len(r) == 0)
+        if vazio:
+            vazias.append(nome)
+    if rebentaram:
+        X("data", "%d funções rebentaram: %s" % (len(rebentaram),
+                                                 "; ".join(rebentaram[:4])))
+    if vazias:
+        X("data", "%d funções devolvem vazio (a vista que as usa mostra "
+                  "«sem dados»): %s" % (len(vazias), ", ".join(vazias)))
+    I("data", "%d funções chamadas, %d vazias, %d rebentaram"
+      % (chamadas, len(vazias), len(rebentaram)))
+
+
 def audita_imagens() -> None:
     """Nenhuma figura vazia ou ilegível — a galeria serve-as todas.
 
@@ -256,6 +504,9 @@ def audita_numeros() -> None:
 def main() -> int:
     leitura = os.environ.get("SWARM_DASH_READONLY") == "1"
     audita_vistas()
+    audita_vistas_vazias()
+    audita_imagens_referenciadas()
+    audita_funcoes_data()
     audita_imagens()
     audita_3d()
     audita_estaticos()
