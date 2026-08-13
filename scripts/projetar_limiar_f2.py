@@ -64,6 +64,69 @@ def posterior_beta(sucessos, tentativas, a=0.5, b=0.5, passos=2001):
     return grelha, [w / total for w in pesos]
 
 
+def _gradientes():
+    """A ressalva 2 do cabeçalho deixou de ser hipotética — mostra o que se mediu.
+
+    A 6 de agosto esta projeção só via o braço do GNN e tinha de avisar que o
+    limiar vale para QUALQUER algoritmo, pelo que o PPO ou o SAC ainda o podiam
+    cruzar sozinhos. A 10 de agosto os dois fecharam, e a avaliação está no
+    disco: 0 de 21 cada. Continuar a imprimir a ressalva como possibilidade
+    aberta seria envelhecer no sítio — que é o defeito que o
+    `estado_f2.sh` existe para não repetir.
+    """
+    import glob
+    padrao = os.path.join(RAIZ, "results", "mapa_grande", "f2*", "**",
+                          "eval_by_run.csv")
+    csvs = sorted(glob.glob(padrao, recursive=True))
+    if not csvs:
+        print("  Gradientes: ainda sem eval_by_run.csv — a ressalva 2 mantém-se "
+              "aberta (o PPO ou o SAC podem cruzar o limiar sozinhos).")
+        return
+    try:
+        import pandas as pd
+    except ImportError:
+        return
+    print("  Os outros dois braços, MEDIDOS (o limiar vale para qualquer um):")
+    for c in csvs:
+        d = pd.read_csv(c)
+        for algo, g in d.groupby("Algorithm"):
+            conv = int((g.groupby("Run").food_collected.mean() > 0).sum())
+            n = g.Run.nunique()
+            print("    %-4s %2d/%2d execuções convergentes na avaliação"
+                  % (algo, conv, n))
+
+
+def _b_ou_c(n_conv_treino):
+    """Qual das leituras da secção, agora que a (A) está excluída.
+
+    A (A) — «o mapa é aprendível de raiz» — cai com o limiar. As outras duas
+    NÃO se distinguem com o que existe hoje:
+
+      (B) «nenhum o resolve, nem por transferência nem com treino nativo»
+      (C) «é resolvido em k das 21 execuções, abaixo do limiar»
+
+    A diferença é `k >= 1`, e o `k` da secção conta-se na AVALIAÇÃO
+    determinística, não nas curvas de treino. As três execuções que hoje
+    aparecem com recolha são `best_task_food` do melhor genoma contra as
+    sementes de treino — o majorante otimista da ressalva 1. Se nenhuma delas
+    recolher na avaliação, o `k` é zero e a leitura certa é a (B).
+
+    Por isso este script deixou de escolher: escolher entre B e C sem o
+    `eval_by_run.csv` do GNN seria decidir pela régua errada, que é exatamente o
+    erro que o plano de qualidade cataloga como «uma métrica medida por duas
+    réguas diferentes».
+    """
+    print()
+    print("  Qual leitura da secção:")
+    print("    (A) excluída — o limiar é inalcançável.")
+    print("    (B) ou (C) — decide-se com o eval_by_run.csv do GNN, não aqui:")
+    print("         k = 0   → (B) nenhum resolve o mapa")
+    print("         k >= 1  → (C) resolve-o em k das 21, abaixo do limiar")
+    print("    hoje há %d execuções com recolha nas CURVAS DE TREINO, que são o"
+          % n_conv_treino)
+    print("    majorante otimista da ressalva 1 — não são o k da secção.")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--horas-por-run", type=float, default=13.0,
@@ -103,7 +166,10 @@ def main():
         print("  ✘ O limiar é INALCANÇÁVEL: faltam %d convergências e só restam "
               "%d execuções." % (faltam, restantes))
         print("    Pela emenda 21, reporta-se como negativo com o número "
-              "declarado (leitura C da secção).")
+              "declarado.")
+        print()
+        _gradientes()
+        _b_ou_c(n_conv)
         return 0
 
     print("  Faltam %d convergências em %d execuções." % (faltam, restantes))
