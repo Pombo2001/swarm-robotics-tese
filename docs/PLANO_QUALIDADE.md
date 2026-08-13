@@ -182,9 +182,9 @@ Por ordem do que custa mais descobrir tarde:
 
 | data | o quê |
 |---|---|
-| ~~11–14 ago~~ | ✅ **13 ago — a decisão está SELADA, e é negativa.** 15 execuções fechadas, **3 convergentes**, 12 a zero: faltam 12 convergências e restam 6 execuções. Pela emenda 21, reporta-se como negativo com o número declarado — é a **leitura C** |
+| ~~11–14 ago~~ | ✅ **13 ago — o veredicto está SELADO, e é negativo.** 15 execuções fechadas, **3 convergentes**, 12 a zero: faltam 12 convergências e restam 6 execuções. Como a contagem do treino é o *majorante otimista* da avaliação, nem os 6 restantes salvam o limiar. Pela emenda 21, reporta-se como negativo com o número declarado. ⚠️ **A leitura ainda não está escolhida:** só a **(A)** cai; entre **(B)** «nenhum resolve» e **(C)** «resolve em k das 21» decide-se com o `eval_by_run.csv` do GNN (k=0 → B) |
 | ~~~14 ago~~ | ⛔ **o exploratório nunca correu** (ver abaixo) e, a 13 ago, o utilizador decidiu **não o lançar**: com o limiar selado, um n=3 não muda o veredicto e competiria com o `mapaF2g` pelo CPU |
-| ~17 ago | GNN fecha (16/21 a 13 ago) → `analise_mapa_grande.py`, preencher os 5 buracos, descomentar o `\input` |
+| ~17 ago | GNN fecha (16/21 a 13 ago) → `analise_mapa_grande.py`, ler o **k** da avaliação, escolher **(B)** ou **(C)** por esse k, preencher os 5 buracos, descomentar o `\input` |
 | 17–22 ago | Conclusões, Resumo, verificação final e revisão do PDF |
 
 ### O que aconteceu de 6 a 13 ago (escrito a 13 ago)
