@@ -143,6 +143,28 @@ def analisar_f1():
 
 # ── F2 ───────────────────────────────────────────────────────────────────────
 
+def _avisar_falhas(csvs):
+    """Se o `eval_by_run.py` deixou um sidecar de falhas, dizê-lo AQUI.
+
+    O sidecar existe porque um run que falhe ao avaliar não entra no CSV, e o n
+    do CSV é o que fixa o limiar da QI7 (⌈5/7 × n⌉ — 21 execuções pedem 15,
+    19 pedem 14). Escrever o aviso ao lado dos dados não chega se o sítio onde
+    o limiar é calculado não olhar para ele: um aviso que ninguém lê é a mesma
+    coisa que não existir.
+    """
+    for c in csvs:
+        sidecar = c.replace(".csv", "_FALHAS.txt")
+        if not os.path.exists(sidecar):
+            continue
+        print()
+        print("  " + "!" * 70)
+        print("  AVISO: %s" % os.path.relpath(sidecar, BASE))
+        with open(sidecar, encoding="utf-8") as fh:
+            for linha in fh.read().splitlines():
+                print("  " + linha)
+        print("  " + "!" * 70)
+
+
 def analisar_f2():
     print()
     print("=" * 78)
@@ -155,6 +177,7 @@ def analisar_f2():
         return
     df = pd.concat([pd.read_csv(h) for h in hits], ignore_index=True)
     print("  fonte: %s" % ", ".join(os.path.relpath(h, BASE) for h in hits))
+    _avisar_falhas(hits)
     c_alg = _col(df, "Algorithm", "Algoritmo", "Algo")
     c_run = _col(df, "Run", "run")
     c_food = _col(df, "food_collected", "Recolhas")
