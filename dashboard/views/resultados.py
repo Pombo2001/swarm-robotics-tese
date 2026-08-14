@@ -122,10 +122,24 @@ def build():
         # se ver onde ela cai — ou que não tem avaliação nenhuma.
         alvo_ranking = ui.column().classes("w-full")
 
+        def _mostrar(campanha):
+            """Clicar numa linha do ranking abre as imagens desse treino."""
+            if campanha in sessions:
+                sess_a.set_value(campanha)
+                ui.notify("Galeria: %s" % data.rotulo_campanha(campanha)[0],
+                          type="positive", position="top")
+            else:
+                # Uma campanha pode ter avaliação e não ter pasta de figuras
+                # (o `eval_7d` é o caso). Dizer porquê é melhor do que um
+                # clique que não faz nada.
+                ui.notify("«%s» tem avaliação mas não tem figuras próprias "
+                          "nesta galeria." % campanha, type="warning")
+
         def _desenhar_ranking():
             alvo_ranking.clear()
             with alvo_ranking:
-                ranking.painel(campanha_atual=sess_a.value)
+                ranking.painel(campanha_atual=sess_a.value,
+                               ao_escolher=_mostrar, escolhiveis=set(sessions))
 
         _desenhar_ranking()
         sess_a.on_value_change(lambda _: _desenhar_ranking())

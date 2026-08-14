@@ -22,10 +22,20 @@ def _url(session: str, filename: str) -> str:
 
 
 def _metric_chip(session: str, algo: str, scenario: str):
-    """Chip com Ptask·recolhas do eval oficial (se houver), por baixo do vídeo."""
-    table = data.science_table() or {}
-    info = table.get(scenario, {}).get(algo.upper())
-    if not info:
+    """Chip com Ptask·recolhas DESTE treino, por baixo do vídeo.
+
+    ⚠️ Recebia a `session` e não a usava: lia a `science_table()`, que é a
+    avaliação oficial (a campanha final), e mostrava-a por baixo de qualquer
+    vídeo. No «Comparar treinos» punha o mesmo «86% · 38,3 rec/ep» debaixo dos
+    dois — dois treinos diferentes com a mesma pontuação, a ler-se como um
+    empate que ninguém mediu. Agora o número é o da campanha do vídeo, e quando
+    essa campanha não tem avaliação determinística diz-se isso em vez de se
+    emprestar o número de outra.
+    """
+    info = data.pontuacao_campanha(session, scenario, algo)
+    if not info or info.get("ptask") is None:
+        ui.label("treino sem avaliação determinística").classes("text-[10px] mt-1") \
+            .style(f"color:{theme.INK_MUTED}")
         return
     p = info["ptask"]
     color = "#22c55e" if p >= 80 else ("#f59e0b" if p >= 40 else "#ef4444")
@@ -34,6 +44,9 @@ def _metric_chip(session: str, algo: str, scenario: str):
         ui.icon(icon).style(f"color:{color}").classes("text-sm")
         ui.label(f"{p:.0f}% · {info['recolhas']:.1f} rec/ep").classes("text-xs") \
             .style(f"color:{color};font-weight:600")
+        if info.get("convergentes") is not None:
+            ui.label("(%d/%d execuções)" % (info["convergentes"], info["runs"])) \
+                .classes("text-[10px]").style(f"color:{theme.INK_MUTED}")
 
 
 def _zoom(session: str, filename: str):
@@ -53,7 +66,13 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
     """Cartão de um vídeo (algo×cenário) com badge colorido, GIF e métrica."""
     meta = config.ALGO_META.get(algo.upper(), {"color": "#64748b", "icon": "❓", "label": algo.upper()})
     fn = data.video_for(session, algo, scenario)
-    with ui.element("div").classes("vid-card glass rounded-2xl p-3 flex flex-col gap-2").style(
+    # `w-full`: dentro de uma `ui.column()` os filhos alinham ao início e não
+    # esticam, e o cartão encolhia à largura do rótulo «GNN (Evolutivo)» —
+    # levando o vídeo atrás dele. Nos modos que põem o cartão direito na grelha
+    # isto não se notava, porque a célula da grelha já o esticava; no «Comparar
+    # treinos», que o embrulha numa coluna, saíam duas tiras espremidas.
+    with ui.element("div").classes(
+            "vid-card glass rounded-2xl p-3 flex flex-col gap-2 w-full").style(
             f"border-top:3px solid {meta['color']}"):
         with ui.row().classes("items-center gap-2 no-wrap"):
             ui.label(meta["icon"]).classes("text-lg")
@@ -123,11 +142,20 @@ def build():
         # adivinhar qual dos treinos era o bom. Realça o que está selecionado.
         alvo_ranking = ui.column().classes("w-full")
 
+        def _mostrar(campanha):
+            """Clicar numa linha do ranking passa a mostrar os vídeos desse treino."""
+            sess_sel.set_value(campanha)
+            ui.notify("Vídeos: %s" % data.rotulo_campanha(campanha)[0],
+                      type="positive", position="top")
+
         def _desenhar_ranking():
             alvo_ranking.clear()
             with alvo_ranking:
+                # Só são clicáveis os treinos que gravaram vídeo: os outros têm
+                # pontuação mas não há nada para mostrar aqui.
                 ranking.painel(campanha_atual=sess_sel.value,
-                               titulo="Qual treino mostrar, por cenário")
+                               titulo="Qual treino mostrar, por cenário",
+                               ao_escolher=_mostrar, escolhiveis=set(sessions))
 
         body = ui.column().classes("w-full gap-4")
 
@@ -236,31 +264,92 @@ def _render_gallery(st):
 
 
 def _render_compare_sessions(sessions, st):
+    """Dois treinos lado a lado, no mesmo algoritmo e cenário.
+
+    Este modo tinha dois defeitos que se somavam para o fazer parecer avariado:
+
+    · o cartão ia dentro de uma `ui.column()` SEM `w-full`. Uma coluna encolhe
+      ao conteúdo, e o `w-full` do vídeo passava a ser relativo a essa largura —
+      o GIF colapsava para a largura do badge e ficava uma tira espremida ao
+      lado de meio ecrã vazio. Os outros dois modos põem o cartão direito na
+      grelha, e é por isso que só este partia;
+    · os treinos A e B eram os dois primeiros da lista, e o cenário o segundo do
+      catálogo, sem se verificar se essa combinação existe. Como cada fase do
+      mega-treino treinou um cenário só, o mais provável era abrir com dois
+      «sem vídeo». Agora a ESCOLHA vem primeiro (algoritmo e cenário) e os
+      seletores de treino oferecem apenas os que têm mesmo esse vídeo.
+    """
+    algo_ini, scen_ini = "GNN", st.get("scenario") or config.SCENARIO_KEYS[0]
+    if not data.sessoes_com_video(algo_ini.lower(), scen_ini):
+        # O cenário herdado do outro modo pode não ter vídeo neste algoritmo:
+        # procura-se o primeiro par que exista, em vez de abrir vazio.
+        for k in config.SCENARIO_KEYS:
+            if data.sessoes_com_video(algo_ini.lower(), k):
+                scen_ini = k
+                break
+
     with ui.card().classes(CARD):
-        ui.label("Compara o mesmo algoritmo e cenário em dois treinos diferentes "
-                 "(ex.: GNN-48h vs treino novo).").classes("text-xs text-gray-400")
+        ui.label("Compara o mesmo algoritmo e cenário em dois treinos diferentes. "
+                 "Escolhe primeiro o que queres ver; os treinos oferecidos são os "
+                 "que têm esse vídeo.").classes("text-xs text-gray-400")
         with ui.row().classes("w-full items-center gap-3 no-wrap flex-wrap mt-1"):
-            sess_a = ui.select(sessions, value=sessions[0], label="Treino A") \
-                .props("outlined dense").classes("flex-1 min-w-[200px]")
-            sess_b = ui.select(sessions, value=sessions[min(1, len(sessions) - 1)], label="Treino B") \
-                .props("outlined dense").classes("flex-1 min-w-[200px]")
-            algo_s = ui.select(["GNN", "PPO", "SAC"], value="GNN", label="Algoritmo") \
+            algo_s = ui.select(["GNN", "PPO", "SAC"], value=algo_ini, label="Algoritmo") \
                 .props("outlined dense").classes("min-w-[130px]")
             scen_s = ui.select(
                 {k: config.SCENARIO_LABEL_BY_KEY.get(k, k) for k in config.SCENARIO_KEYS},
-                value=config.SCENARIO_KEYS[1], label="Cenário") \
+                value=scen_ini, label="Cenário") \
                 .props("outlined dense").classes("min-w-[200px]")
+            sess_a = ui.select([], label="Treino A") \
+                .props("outlined dense").classes("flex-1 min-w-[200px]")
+            sess_b = ui.select([], label="Treino B") \
+                .props("outlined dense").classes("flex-1 min-w-[200px]")
+        aviso = ui.label("").classes("text-xs mt-1").style("color:#ffb020")
+
+    def _opcoes():
+        """Repõe as opções de A e B para o (algoritmo, cenário) escolhidos."""
+        disponiveis = data.sessoes_com_video(algo_s.value.lower(), scen_s.value)
+        rotulos = {s: "%s%s" % (data.rotulo_campanha(s)[0],
+                                " · " + s if data.rotulo_campanha(s)[0] != s else "")
+                   for s in disponiveis}
+        for el in (sess_a, sess_b):
+            el.options = rotulos
+            el.update()
+        if not disponiveis:
+            sess_a.value = sess_b.value = None
+            aviso.text = ("Nenhum treino gravou vídeo desta combinação — as "
+                          "campanhas treinaram um cenário de cada vez, e sem "
+                          "modelo não há episódio para gravar.")
+            return
+        aviso.text = ("" if len(disponiveis) > 1 else
+                      "Só um treino tem este vídeo: A e B mostram o mesmo.")
+        sess_a.value = disponiveis[0]
+        sess_b.value = disponiveis[min(1, len(disponiveis) - 1)]
 
     @ui.refreshable
     def pair():
-        algo = algo_s.value.lower()
-        scen = scen_s.value
-        with ui.grid().classes("w-full gap-4").style("grid-template-columns: repeat(auto-fit, minmax(320px, 1fr))"):
+        algo, scen = algo_s.value.lower(), scen_s.value
+        if not sess_a.value:
+            return
+        with ui.grid().classes("w-full gap-4").style(
+                "grid-template-columns: repeat(auto-fit, minmax(320px, 1fr))"):
             for tag, sess in (("A", sess_a.value), ("B", sess_b.value)):
-                with ui.column().classes("gap-1"):
-                    ui.badge(f"{tag} · {sess}", color="primary").props("rounded").classes("text-[11px]")
+                # `w-full`: sem isto a coluna encolhe e leva o vídeo com ela.
+                with ui.column().classes("gap-1 w-full"):
+                    # O rótulo sozinho não chega: as campanhas datadas chamam-se
+                    # todas «Exploratória», e os dois badges ficavam iguais num
+                    # ecrã cujo objetivo é distingui-las.
+                    rot = data.rotulo_campanha(sess)[0]
+                    ui.badge("%s · %s" % (tag, rot if rot != "Exploratória" else sess),
+                             color="primary").props("rounded").classes("text-[11px]")
                     _video_card(sess, algo, scen, height="clamp(220px,34vh,420px)")
 
-    for el in (sess_a, sess_b, algo_s, scen_s):
+    def _mudou_filtro():
+        _opcoes()
+        pair.refresh()
+
+    for el in (algo_s, scen_s):
+        el.on_value_change(lambda _: _mudou_filtro())
+    for el in (sess_a, sess_b):
         el.on_value_change(pair.refresh)
+    _opcoes()
     pair()

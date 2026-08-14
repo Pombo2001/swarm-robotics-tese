@@ -27,13 +27,23 @@ CARD = theme.CARD + " p-4"
 _COR_ALGO = {a: config.ALGO_META[a]["color"] for a in config.ALGO_META}
 
 
-def _linha(d, melhor, destacar):
-    """Uma linha do ranking de um cenário."""
+def _linha(d, melhor, destacar, ao_escolher=None):
+    """Uma linha do ranking de um cenário.
+
+    Clicar leva a vista a mostrar ESTE treino — que era o ponto da tabela:
+    saber qual é o melhor não serve de nada se depois for preciso procurá-lo à
+    mão no seletor, que é o problema que a tabela veio resolver.
+    """
     rotulo, canonica = data.rotulo_campanha(d["campanha"])
     e_o_melhor = d is melhor
     fundo = ("background:rgba(255,255,255,.05);" if destacar else "")
-    with ui.row().classes("w-full items-center gap-3 no-wrap py-1 px-2") \
-            .style(f"border-radius:6px; {fundo}"):
+    linha = ui.row().classes("w-full items-center gap-3 no-wrap py-1 px-2") \
+        .style(f"border-radius:6px; {fundo}")
+    if ao_escolher is not None:
+        linha.classes("cursor-pointer hover:bg-white/5") \
+            .on("click", lambda _, c=d["campanha"]: ao_escolher(c)) \
+            .tooltip("Mostrar as imagens deste treino")
+    with linha:
         ui.label("★" if e_o_melhor else "").classes("text-xs w-3") \
             .style("color:#facc15")
         ui.element("div").style(
@@ -57,8 +67,15 @@ def _linha(d, melhor, destacar):
             .style(f"color:{theme.INK_MUTED}")
 
 
-def painel(campanha_atual=None, titulo="Qual foi o melhor treino, por cenário"):
-    """Constrói o painel. `campanha_atual` realça as linhas dessa campanha."""
+def painel(campanha_atual=None, titulo="Qual foi o melhor treino, por cenário",
+           ao_escolher=None, escolhiveis=None):
+    """Constrói o painel.
+
+    `campanha_atual` realça as linhas dessa campanha. `ao_escolher(campanha)`,
+    quando dado, torna as linhas clicáveis e é chamado com a campanha da linha —
+    é assim que a Galeria salta para as imagens do treino escolhido.
+    `escolhiveis` limita quais são clicáveis (nos Vídeos, só as que têm vídeo).
+    """
     rank = data.ranking_por_cenario()
     if not rank:
         return
@@ -95,4 +112,8 @@ def painel(campanha_atual=None, titulo="Qual foi o melhor treino, por cenário")
                             .classes("text-xs mono-num font-bold")
                 # Dentro: o ranking completo do cenário.
                 for d in linhas:
-                    _linha(d, melhor, destacar=(d["campanha"] == campanha_atual))
+                    clicavel = (ao_escolher if (escolhiveis is None
+                                                or d["campanha"] in escolhiveis)
+                                else None)
+                    _linha(d, melhor, destacar=(d["campanha"] == campanha_atual),
+                           ao_escolher=clicavel)

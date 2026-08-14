@@ -586,6 +586,8 @@ def _pontuacao_de(path: str):
         linhas.append({
             "cenario": cen, "algo": algo,
             "recolhas": float(g["recolhas"].mean()),
+            "ptask": (100.0 * float(g["sucesso"].mean())
+                      if "sucesso" in g.columns else None),
             "runs": len(g) if tem_run else None,
             "convergentes": conv if tem_run else None,
         })
@@ -671,6 +673,34 @@ def ranking_por_cenario():
 
     _RANKING_CACHE.update(chave=chave, valor=por_cenario)
     return por_cenario
+
+
+def pontuacao_campanha(campanha: str, cenario: str, algo: str):
+    """A pontuação DESTA campanha neste cenário e algoritmo, ou None.
+
+    Existe porque o chip por baixo dos vídeos recebia a sessão e não a usava:
+    lia a `science_table()`, que é a avaliação OFICIAL, e mostrava-a por baixo
+    de qualquer vídeo. No modo «Comparar treinos» isso punha o mesmo «86% ·
+    38,3 rec/ep» debaixo de dois treinos diferentes — a ler-se como um empate
+    medido, quando era o mesmo número escrito duas vezes.
+    """
+    alvo = _ALIAS.get(campanha, campanha)
+    for d in ranking_por_cenario().get(cenario, []):
+        if d["algo"].upper() == algo.upper() and d["campanha"] == alvo:
+            return d
+    return None
+
+
+def sessoes_com_video(algo: str, scenario: str):
+    """Que treinos têm vídeo deste algoritmo NESTE cenário.
+
+    O seletor de «Comparar treinos» oferecia as 24 sessões com vídeo, fossem
+    quais fossem o algoritmo e o cenário escolhidos — e a maioria das
+    combinações não existe: cada fase do mega-treino treinou um cenário só, e
+    metade delas só o GNN. O resultado era escolher dois treinos e receber dois
+    «sem vídeo», que se lê como avaria e não como ausência.
+    """
+    return [s for s in video_sessions() if video_for(s, algo, scenario)]
 
 
 def session_manifesto(session: str):
