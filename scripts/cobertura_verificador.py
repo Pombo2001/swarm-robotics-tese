@@ -60,8 +60,17 @@ def _instrumentar(marcas):
     """
     orig = {n: getattr(re, n) for n in ("search", "findall", "finditer", "match")}
 
+    # O corpo do `.tex`, para reconhecer também os PEDAÇOS. O limiar antigo era
+    # «mais de 20 000 caracteres e tem \section», e por isso não via um
+    # verificador que recorta uma secção (14 636 caracteres) e faz as buscas só
+    # nela — que é exatamente o que a verificação do Novelty passou a fazer. Uma
+    # medição que não vê o instrumento novo dá a ilusão de que nada mudou.
+    corpo_tex = open(MAIN, encoding="utf-8").read()
+
     def e_tex(s):
-        return isinstance(s, str) and len(s) > 20000 and "\\section" in s
+        if not isinstance(s, str) or len(s) < 2000:
+            return False
+        return s in corpo_tex or (len(s) > 20000 and "\\section" in s)
 
     def guardar(m):
         if m and m.group(0):

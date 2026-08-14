@@ -67,8 +67,10 @@ não está mapeada em lado nenhum.
       sobram, 495 são automatizáveis, 468 precisam de leitura, 631 não são
       resultados. O maior buraco é a secção do Novelty (**164**), que é onde
       vive a QI6. Ver *Achados*.
-- [ ] **B2 — automatizar as (i).** Acrescentar ao `verificar_numeros_tese.py`,
-      lendo do `.tex` e não fixando no script (é a regra que já lá está).
+- [~] **B2 — automatizar as (i).** EM CURSO. Feita a secção do Novelty (a maior):
+      **41 valores** passam a ser verificados, e o buraco dessa secção cai de
+      164 para 118. Cobertura global 12% → 14%. A seguir, por ordem: Resposta às
+      QI (61), Escalabilidade (35), Discussão Global (27), Conclusões (25).
 - [ ] **B3 — o dashboard afirma números também.** O Overview diz 25 sessões,
       2940 episódios, 1671 h, 341 h, 6/7 cenários. Conferir contra as mesmas
       fontes da tese: **um número que apareça nos dois sítios tem de ser o mesmo
@@ -173,3 +175,34 @@ de conteúdo — o que muda a urgência, mas não a conclusão: são números qu
 volta a conferir se algum CSV for regenerado.
 
 **Nada foi mudado na tese.** Nenhum número desta secção precisou de correção.
+
+### 15 ago — B2 — a secção do Novelty passa a ser verificada: 41 valores, todos batem
+
+**Feito.** `verificar_novelty()` no `verificar_numeros_tese.py`: nove afirmações
+em prosa, 41 valores (médias, desvios, convergências, $p$ e $\delta$), lidos do
+`.tex` e confrontados com os `eval_by_run` das seis campanhas. Cobertura global
+**12% → 14%**; a secção do Novelty cai de 164 por verificar para 118.
+
+**Uma diferença de método, declarada na saída.** Nas tabelas, este verificador
+compara a tese com o CSV que o `statistical_tests.py` produziu e recusa repetir
+os testes — duas implementações podiam discordar. A secção do Novelty **nunca
+teve esse CSV**: os testes correram nos scripts de análise e o resultado ficou
+só na prosa. Aqui, recalcular é a única verificação possível; o $\delta$ vem
+importado do `statistical_tests`, para não haver uma segunda implementação dele.
+
+**Duas correções ao próprio verificador, antes de ele valer alguma coisa:**
+1. No par da Porta com Alternativa a tese escreve o objetivo primeiro e a
+   novidade depois; eu tinha mapeado as séries pela ordem da frase e não pela
+   dos grupos, e o verificador acusava 4 divergências de $\approx 24$ recolhas
+   que eram só ele a comparar cada braço com o outro.
+2. A tolerância era um número escolhido por mim (0,002 para o $p$), e acusava
+   `$p=0{,}32$` de errado por os dados darem $0{,}3176$. Passa a sair das
+   **casas decimais que a tese escreveu**: uma afirmação a duas casas julga-se a
+   duas casas. Exigir mais é chamar erro a um arredondamento correto.
+
+**A medição de cobertura também teve de ser corrigida** (segunda vez): só
+reconhecia como «o `.tex`» strings com mais de 20 000 caracteres, e a
+verificação nova recorta a secção (14 636) e busca só dentro dela. Uma medição
+que não vê o instrumento novo dá a ilusão de que nada mudou.
+
+**Nada foi mudado na tese.** Os 41 valores batem todos.

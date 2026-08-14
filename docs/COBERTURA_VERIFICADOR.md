@@ -7,24 +7,24 @@ O `verificar_numeros_tese.py` diz «tudo bate ✓». Este ficheiro diz **de quan
 | | tokens numéricos |
 |---|---|
 | no corpo do `main.tex` (sem comentários) | 1806 |
-| lidos por algum verificador | **212** (12%) |
-| por cobrir | 1594 |
+| lidos por algum verificador | **258** (14%) |
+| por cobrir | 1548 |
 
 «Lido» é um **majorante** de «verificado»: a medição regista o que os padrões dos verificadores apanham do `.tex`, e um padrão pode apanhar uma frase inteira e usar só metade dos números dela. Um token *não lido* é, esse sim, certo: ninguém olhou para ele.
 
 Método: instrumenta-se o módulo `re` e corre-se cada verificador, guardando o texto de cada match feito sobre o `.tex`. Não há lista de padrões escrita à mão para envelhecer.
 
-## (i) Automatizáveis — 495
+## (i) Automatizáveis — 449
 
 Números com um dado por trás e nenhum verificador a olhar para eles. É aqui que se acrescenta ao `verificar_numeros_tese.py`.
 
-### Por onde começar — onde estão os 495
+### Por onde começar — onde estão os 449
 
 A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por verificar no Resumo é lido por toda a gente e citado de volta na defesa; o mesmo valor no meio do Cap. 2 não.
 
 | secção | por verificar |
 |---|---|
-| Deceção e Procura por Novidade (\textit{Novelty Search | 164 |
+| Deceção e Procura por Novidade (\textit{Novelty Search | 118 |
 | Resposta às Questões de Investigação | 61 |
 | Análise de Escalabilidade (Zero-Shot Transfer) | 35 |
 | Discussão Global e Validação da Hipótese | 27 |
@@ -74,7 +74,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `3` (linha 1226) — …ll.py}) & 5 min & Desempenho sem exploração (20 episódios). & $P_{task}$ (Eval) \\ \hline 3 & Benchmark Estatístico (execuções múltiplas) & 3--7 dias …
 - *(mais 107)*
 
-### média ± desvio — 104
+### média ± desvio — 76
 
 - `41{,}4` (linha 1256) — …os físicos: no Gargalo apenas 5/7 \textit{runs} convergem (com magnitude muito dispersa, $41{,}4 \pm 36{,}8$) e no Muro U apenas 2/7. O \textbf{Muro U…
 - `36{,}8` (linha 1256) — …no Gargalo apenas 5/7 \textit{runs} convergem (com magnitude muito dispersa, $41{,}4 \pm 36{,}8$) e no Muro U apenas 2/7. O \textbf{Muro U} é o único …
@@ -90,9 +90,9 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `71{,}46` (linha 1319) — …} \\ \hline GNN (Evolutivo) & $38{,}31 \pm 31{,}03$ & $85{,}7\%$ & $5/7$ \\ \hline PPO & $71{,}46 \pm 0{,}98$ & $100\%$ & $7/7$ \\ \hline SAC & $69{,}…
 - `20` (linha 1492) — …itness} de \textit{homing}, 195 minutos), sob o mesmo protocolo de avaliação emparelhado (20 episódios, \textit{seeds} comuns). O controlador com novi…
 - `3` (linha 1496) — …o mais expressivo da linha de novidade: a hibridização elevou a taxa de convergência de $3/7$ para \textbf{$7/7$ \textit{runs} a 100\% de sucesso}, co…
-- *(mais 90)*
+- *(mais 62)*
 
-### recolhas por episódio — 86
+### recolhas por episódio — 68
 
 - `88{,}7` (linha 337) — …s cenários e atinge, na Porta com Alternativa, o melhor resultado de toda a dissertação ($88{,}7$ recolhas/ep). Uma replicação com $28$ execuções por …
 - `28` (linha 337) — …iva, o melhor resultado de toda a dissertação ($88{,}7$ recolhas/ep). Uma replicação com $28$ execuções por braço confirmou-o com poder estatístico: a…
@@ -108,7 +108,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `1{,}9` (linha 1298) — …al de tarefa é praticamente idêntico (PPO $71{,}5 \pm 1{,}0$ recolhas/ep; SAC $69{,}2 \pm 1{,}9$), com o \textbf{SAC} (\textit{off-policy}) a subir ma…
 - `61,6` (linha 1298) — …de toda a campanha: quatro dos sete \textit{runs} convergem para políticas competitivas (61,6 a 64,7 recolhas/ep), dois degeneram por completo ($<1$ r…
 - `64,7` (linha 1298) — …a a campanha: quatro dos sete \textit{runs} convergem para políticas competitivas (61,6 a 64,7 recolhas/ep), dois degeneram por completo ($<1$ recolha…
-- *(mais 72)*
+- *(mais 54)*
 
 ### episódios — 56
 

@@ -871,6 +871,228 @@ def verificar_megatreino(tolerancia):
     return problemas
 
 
+# ── Novelty Search (QI6) ─────────────────────────────────────────────────────
+#
+# A secção do Novelty é a que carrega a QI6 — o resultado central da tese — e a
+# medição de cobertura de 14 ago encontrou lá **164 valores que nenhum
+# verificador olhava**, o maior buraco da dissertação. Não tem tabela: os
+# números vivem em prosa, e por isso não há `ler_tabela()` que os apanhe.
+#
+# Diferença face às outras verificações deste ficheiro: os p e os δ **são
+# recalculados** aqui. Nas tabelas comparo a tese com o CSV que o
+# `statistical_tests.py` produziu, e digo que não repito os testes — porque
+# repetir seria ter duas implementações a poder discordar. Para o Novelty não
+# existe esse CSV: os testes correram nos scripts de análise e o resultado só
+# ficou na prosa. Recalcular é, portanto, a única verificação possível — e o
+# `cliffs_delta` vem importado do `statistical_tests`, para não haver uma
+# segunda implementação dele por aqui.
+
+RAIZ_NOV = os.path.join(PROJECT_ROOT, "results")
+FONTES_NOV = {
+    "fixo_uwall": ("novelty_final", "uwall", "results", "evaluation",
+                   "eval_by_run.csv"),
+    "fixo_bypass": ("novelty_final", "bypass", "results", "evaluation",
+                    "eval_by_run.csv"),
+    "adapt_A1": ("novelty_adaptativo", "week_A_fase1", "evaluation",
+                 "eval_by_run.csv"),
+    "adapt_A2": ("novelty_adaptativo", "week_A_fase2", "evaluation",
+                 "eval_by_run.csv"),
+    "adapt_B1": ("novelty_adaptativo", "week_B_fase1", "evaluation",
+                 "eval_by_run.csv"),
+    "adapt_B2": ("novelty_adaptativo", "week_B_fase2", "evaluation",
+                 "eval_by_run.csv"),
+    "adapt_B3": ("novelty_adaptativo", "week_B_fase3", "evaluation",
+                 "eval_by_run.csv"),
+    "objetivo": ("graficos_tese", "final_7d", "eval_by_run_7d.csv"),
+}
+
+
+def _por_run(chave, cen):
+    """Médias por execução — a unidade da tese, nunca o episódio."""
+    fp = os.path.join(RAIZ_NOV, *FONTES_NOV[chave])
+    if not os.path.exists(fp):
+        return None
+    d = pd.read_csv(fp)
+    d = d[d["Algorithm"].astype(str).str.upper() == "GNN"]
+    if "Scenario" in d.columns:
+        d = d[d["Scenario"] == cen]
+    if d.empty:
+        return None
+    return d.groupby("Run")["food_collected"].mean().sort_index()
+
+
+def _mw(a, b, unilateral):
+    from scipy.stats import mannwhitneyu
+    alt = "greater" if unilateral else "two-sided"
+    try:
+        return float(mannwhitneyu(list(a), list(b), alternative=alt,
+                                  method="exact")[1])
+    except ValueError:
+        return None
+
+
+def _delta(a, b):
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from statistical_tests import cliffs_delta
+    return cliffs_delta(list(a), list(b))
+
+
+# Cada afirmação: o padrão lê os valores DO .tex (nunca fixos aqui), e cada
+# grupo diz de que série sai o valor esperado.
+AFIRMACOES_NOV = [
+    {
+        "rot": "Muro em U — novidade fixa vs objetivo",
+        "re": r"com \$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ recolhas/ep contra "
+              r"\$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$ do objetivo puro "
+              r"\(\$p = (?P<p>[\d{},]+)\$, \$\\delta = \+(?P<d>[\d{},]+)\$\)",
+        "A": ("fixo_uwall", "u_wall"), "B": ("objetivo", "u_wall"),
+        "unilateral": False,
+    },
+    {
+        "rot": "Porta c/ Alternativa — objetivo vs novidade fixa",
+        "re": r"\$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$ contra "
+              r"\$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ recolhas/ep com novidade "
+              r"\(\$p = (?P<p>[\d{},]+)\$, \$\\delta = -(?P<d>[\d{},]+)\$",
+        # A frase escreve o objetivo primeiro e a novidade depois, mas o grupo
+        # `m` é sempre a série A: aqui A é a NOVIDADE (o segundo par), e o
+        # δ=-1,00 do texto é δ(novidade, objetivo).
+        "A": ("fixo_bypass", "cooperative_door_bypass"),
+        "B": ("objetivo", "cooperative_door_bypass"),
+        "unilateral": False, "delta_negativo": True,
+    },
+    {
+        "rot": "T2 — adaptativo no Muro em U",
+        "re": r"\$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ recolhas/ep contra "
+              r"\$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$ do objetivo "
+              r"\(\$p=(?P<p>[\d{},]+)\$ unilateral, \$\\delta=\+(?P<d>[\d{},]+)\$\)",
+        "A": ("adapt_A1", "u_wall"), "B": ("objetivo", "u_wall"),
+        "unilateral": True,
+    },
+    {
+        "rot": "T3 — adaptativo no bypass",
+        "re": r"\$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ vs\.\\ "
+              r"\$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$ "
+              r"\(\$p=(?P<p>[\d{},]+)\$, \$\\delta=-(?P<d>[\d{},]+)\$",
+        "A": ("adapt_B1", "cooperative_door_bypass"),
+        "B": ("objetivo", "cooperative_door_bypass"),
+        "unilateral": False, "delta_negativo": True,
+    },
+    {
+        "rot": "Controlo de orçamento — objetivo puro a 390 min",
+        "re": r"\$(?P<conv>\d+)/7\$ \\textit\{runs\}, \$(?P<m>[\d{},]+) \\pm "
+              r"(?P<s>[\d{},]+)\$",
+        "A": ("adapt_A2", "u_wall"), "B": None, "unilateral": False,
+    },
+    {
+        "rot": "Adaptativo a 390 min — Muro em U",
+        "re": r"mant[ée]m \$7/7\$ no Muro em U \(\$(?P<m>[\d{},]+) \\pm "
+              r"(?P<s>[\d{},]+)\$\)",
+        "A": ("adapt_B2", "u_wall"), "B": None, "unilateral": False,
+    },
+    {
+        "rot": "Adaptativo a 390 min — bypass (melhor da dissertação)",
+        "re": r"\(\$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$, \$7/7\$\)",
+        "A": ("adapt_B3", "cooperative_door_bypass"), "B": None,
+        "unilateral": False,
+    },
+    {
+        "rot": "T1 — Porta Cooperativa (não-degradação)",
+        "re": r"Porta Cooperativa \$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ vs\.\\ "
+              r"\$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$ "
+              r"\(\$\\delta=-(?P<d>[\d{},]+)\$\)",
+        "A": ("adapt_B1", "cooperative_door"), "B": ("objetivo", "cooperative_door"),
+        "unilateral": False, "delta_negativo": True,
+    },
+    {
+        "rot": "T1 — Perceção Cooperativa (não-degradação)",
+        "re": r"Perce[çc][ãa]o \$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ vs\.\\ "
+              r"\$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$ "
+              r"\(\$\\delta=-(?P<d>[\d{},]+)\$\)",
+        "A": ("adapt_B1", "cooperative_perception"),
+        "B": ("objetivo", "cooperative_perception"),
+        "unilateral": False, "delta_negativo": True,
+    },
+]
+
+
+def verificar_novelty(tolerancia):
+    """§res_novelty — os valores em prosa da QI6, contra os eval_by_run."""
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: §Novelty (QI6, em prosa)  vs  eval_by_run das campanhas")
+    print("=" * 72)
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+    i = tex.find("Deceção e Procura por Novidade")
+    if i < 0:
+        print("[!] não encontrei a secção do Novelty — a saltar.")
+        return []
+    sec = tex[i:tex.find("\\section", i + 10)]
+
+    problemas, conferidos = [], 0
+    for af in AFIRMACOES_NOV:
+        m = re.search(af["re"], sec)
+        if m is None:
+            problemas.append("%s: não encontrei a frase no main.tex "
+                             "(o texto mudou de forma?)" % af["rot"])
+            continue
+        g = m.groupdict()
+        a_serie = _por_run(*af["A"])
+        b_serie = _por_run(*af["B"]) if af["B"] else None
+        if a_serie is None or (af["B"] and b_serie is None):
+            problemas.append("%s: falta o CSV de origem" % af["rot"])
+            continue
+
+        alvos = [("média", g.get("m"), a_serie.mean()),
+                 ("desvio", g.get("s"), a_serie.std())]
+        if b_serie is not None:
+            alvos += [("média (B)", g.get("mo"), b_serie.mean()),
+                      ("desvio (B)", g.get("so"), b_serie.std())]
+        if g.get("conv") is not None:
+            alvos.append(("convergentes", g["conv"], float((a_serie > 0).sum())))
+        if g.get("p") is not None and b_serie is not None:
+            alvos.append(("p", g["p"], _mw(a_serie, b_serie, af["unilateral"])))
+        if g.get("d") is not None and b_serie is not None:
+            d = _delta(a_serie, b_serie)
+            alvos.append(("δ", g["d"], abs(d) if af.get("delta_negativo") else d))
+
+        for nome, txt, esperado in alvos:
+            if txt is None or esperado is None:
+                continue
+            conferidos += 1
+            tese = numero(str(txt))
+            # A tolerância sai das casas decimais que a tese ESCREVEU, não de um
+            # número escolhido por mim: «$p=0{,}32$» é uma afirmação a duas
+            # casas, e exigir-lhe 0,3176 é acusar de erro um arredondamento
+            # correto — foi o que este verificador fez à primeira. Para as
+            # médias fica o maior entre essa regra e a tolerância da linha de
+            # comandos, que existe para absorver a ordem das agregações.
+            casas = len((str(txt).replace("{,}", ".").split(".") + [""])[1])
+            tol = 0.5 * 10 ** (-casas) if casas else 0.5
+            if nome.startswith(("média", "desvio")):
+                tol = max(tol, tolerancia)
+            if tese is None:
+                problemas.append("%s %s: não consegui ler (%r)"
+                                 % (af["rot"], nome, txt))
+            elif abs(tese - esperado) > tol:
+                problemas.append("%-44s %-13s tese=%8.4f  dados=%8.4f  (Δ=%+.4f)"
+                                 % (af["rot"], nome, tese, esperado,
+                                    tese - esperado))
+
+    if problemas:
+        print("DIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("Os %d valores em prosa da secção do Novelty batem com os CSV."
+              % conferidos)
+    print("NOTA: aqui os p e os δ são RECALCULADOS, ao contrário das tabelas —")
+    print("      esta secção nunca teve um CSV de testes, só prosa. O δ vem do")
+    print("      `statistical_tests.cliffs_delta`, não de uma cópia local.")
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tolerancia", type=float, default=0.05,
@@ -954,6 +1176,7 @@ def main():
     problemas += verificar_robustez()
     problemas += verificar_legendas_trajetorias()
     problemas += verificar_megatreino(a.tolerancia)
+    problemas += verificar_novelty(a.tolerancia)
     problemas += verificar_artigo(a.tolerancia)
     problemas += verificar_megatreino_artigo(a.tolerancia)
 
