@@ -338,6 +338,23 @@ BG_SWARM_JS = r"""
 """
 
 
+def js_diferido(js: str, atraso_s: float = 0.3):
+    """Corre `js` no browser daqui a `atraso_s`, SEM timer do lado do servidor.
+
+    Estas esperas são todas cosméticas: dar tempo a que o elemento exista no DOM
+    e a que o JS do tema esteja carregado. Feitas com `ui.timer(..., once=True)`
+    ficavam a dormir no servidor, e fechar o separador a meio da espera fazia o
+    `_cleanup()` do NiceGUI ir buscar um `parent_slot` já apagado — cerca de
+    trinta tracebacks «The parent slot of the element has been deleted» na
+    consola de cada vez que se fechava a página. Não é evitável do lado do
+    callback (rebenta ao SAIR do `with`, depois de o callback ser saltado).
+    A espera passa para o `setTimeout` do browser, onde não há slot nenhum para
+    apagar; o `run_javascript` fica em fila até o cliente ligar.
+    """
+    ui.run_javascript("setTimeout(function(){%s}, %d);"
+                      % (js, int(atraso_s * 1000)))
+
+
 def apply():
     """Aplica o tema global (chamar uma vez por página)."""
     ui.dark_mode().enable()
@@ -351,7 +368,7 @@ def apply():
     ui.add_body_html(
         '<canvas id="boids-bg" style="position:fixed;inset:0;z-index:0;'
         'pointer-events:none"></canvas>')
-    ui.timer(0.5, lambda: ui.run_javascript(BG_SWARM_JS), once=True)
+    js_diferido(BG_SWARM_JS, 0.5)
 
 
 def section_title(icon: str, text: str, sub: str = ""):

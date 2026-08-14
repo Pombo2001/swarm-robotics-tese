@@ -181,9 +181,9 @@ def _cell(info: dict, algo: str = ""):
         ui.label(f"{info['recolhas']:.1f} rec/ep").classes("text-xs opacity-80 leading-tight")
         ui.label(f"n={info['n']}").classes("text-[10px] opacity-50 leading-tight")
     delay = 0.15 + (_cell_seq % 24) * 0.04          # cascata pela grelha
-    ui.timer(delay, lambda i=el_id, v=info['ptask']: ui.run_javascript(
-        f"var e=document.getElementById('{i}');"
-        f"if(e&&window.monoCountUp) monoCountUp(e,{v:.0f},0,900,'%');"), once=True)
+    theme.js_diferido(f"var e=document.getElementById('{el_id}');"
+                      f"if(e&&window.monoCountUp) "
+                      f"monoCountUp(e,{info['ptask']:.0f},0,900,'%');", delay)
 
 
 def _p_legivel(p: float) -> str:

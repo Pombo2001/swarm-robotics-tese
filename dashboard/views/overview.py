@@ -90,9 +90,8 @@ def _kpi(label: str, value: float, decimals: int = 0, suffix: str = ""):
                 ui.label(suffix).classes("text-sm").style(f"color:{theme.INK_MUTED}")
         ui.label(label).classes("text-xs uppercase tracking-widest") \
             .style(f"color:{theme.INK_MUTED}")
-    ui.timer(0.3, lambda: ui.run_javascript(
-        f"var e=document.getElementById('{el_id}');"
-        f"if(e) monoCountUp(e, {value}, {decimals});"), once=True)
+    theme.js_diferido(f"var e=document.getElementById('{el_id}');"
+                      f"if(e) monoCountUp(e, {value}, {decimals});", 0.3)
 
 
 def _status_card(icon: str, title: str, goto=None, view: str = ""):
@@ -245,7 +244,7 @@ def build(queue: JobQueue, goto=None):
                                                     f"background:{c}")
                             ui.label(config.ALGO_META[a]["label"]) \
                                 .classes("text-xs").style(f"color:{theme.INK_SOFT}")
-        ui.timer(0.4, lambda: ui.run_javascript(_BOIDS_JS), once=True)
+        theme.js_diferido(_BOIDS_JS, 0.4)
 
         # ── KPIs (count-up) ───────────────────────────────────────────────────
         total_h = sum(h for _, h in _CAMPANHAS)
