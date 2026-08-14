@@ -9,6 +9,7 @@ servidos pela rota estática '/graficos' (registada em app.py). Três modos:
 from nicegui import ui
 
 from .. import config, data, theme
+from . import ranking
 
 CARD = theme.CARD + " p-4"
 NONE = "— (nenhum)"
@@ -117,6 +118,17 @@ def build():
                     "vídeo nenhum."
                 ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
 
+        # O mesmo painel da Galeria: o seletor «Treino» aqui em cima tem os
+        # mesmos nomes opacos, e escolher um vídeo para mostrar a alguém era
+        # adivinhar qual dos treinos era o bom. Realça o que está selecionado.
+        alvo_ranking = ui.column().classes("w-full")
+
+        def _desenhar_ranking():
+            alvo_ranking.clear()
+            with alvo_ranking:
+                ranking.painel(campanha_atual=sess_sel.value,
+                               titulo="Qual treino mostrar, por cenário")
+
         body = ui.column().classes("w-full gap-4")
 
         # ── Render por modo ──────────────────────────────────────────────────
@@ -141,7 +153,9 @@ def build():
                     _render_compare_sessions(sessions, st)
 
         sess_sel.on_value_change(render)
+        sess_sel.on_value_change(lambda _: _desenhar_ranking())
         mode.on_value_change(render)
+        _desenhar_ranking()
         render()
 
 

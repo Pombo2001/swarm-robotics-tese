@@ -6,6 +6,7 @@ As imagens são servidas pela rota estática '/graficos' (registada em app.py).
 from nicegui import ui
 
 from .. import config, data, theme
+from . import ranking
 
 CARD = theme.CARD + " p-4"
 NONE = "— (sem comparação)"
@@ -114,6 +115,20 @@ def build():
                 .classes("mt-2").props("dense")
             so_pares.bind_visibility_from(sess_b, "value",
                                           backward=lambda v: v != NONE)
+
+        # Qual destas 48 campanhas vale alguma coisa? O seletor em cima não o
+        # dizia, e os nomes das pastas (`mega_A1`, `09-07-2026_12h52m`) também
+        # não. O painel responde por cenário e realça a campanha escolhida, para
+        # se ver onde ela cai — ou que não tem avaliação nenhuma.
+        alvo_ranking = ui.column().classes("w-full")
+
+        def _desenhar_ranking():
+            alvo_ranking.clear()
+            with alvo_ranking:
+                ranking.painel(campanha_atual=sess_a.value)
+
+        _desenhar_ranking()
+        sess_a.on_value_change(lambda _: _desenhar_ranking())
 
         def _img_card(f: str, comparar: bool, pngs_b: set):
             with ui.card().classes("bg-slate-900/50 rounded-lg p-2"):

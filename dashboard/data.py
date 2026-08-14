@@ -519,6 +519,160 @@ def session_is_evaluated(session: str) -> bool:
     return os.path.isdir(modelos) and bool(os.listdir(modelos))
 
 
+_RANKING_CACHE = {"chave": None, "valor": None}
+
+# As pastas de campanha seguem quatro convenções diferentes, todas na mesma
+# gaveta: datadas (`09-07-2026_12h52m`), canónicas (`final_7d`), fases de uma
+# campanha (`mega_A1`, `adaptativo_B3`) e pastas que nem campanhas são
+# (`estatisticas`, `eval_7d`). Quem escolhe no seletor não tem como saber o que
+# está a escolher — e o nome, sozinho, nunca lho vai dizer.
+#
+# `canonica` marca as campanhas que a TESE cita: é a diferença entre um número
+# que está escrito na dissertação e um que ficou por transparência de percurso.
+_CAMPANHAS = {
+    "final_7d":   ("Campanha final · 7 dias", True),
+    # Mesma campanha que a `final_7d`, noutra pasta: os dados brutos da
+    # avaliação. Dá os mesmos valores, e sem esta linha apareciam duas
+    # campanhas empatadas no topo de cada cenário, como se fossem duas.
+    "eval_7d":    ("Campanha final · avaliação bruta", False),
+    "mapa_grande": ("Mapa grande · 8.º cenário", True),
+    "mega_treino": ("Mega-treino · agregado", True),
+}
+_PREFIXOS = (
+    ("adaptativo_", "Novelty adaptativo", True),
+    ("mega_",       "Mega-treino",        True),
+)
+# Pastas diferentes que são a MESMA campanha. A avaliação da campanha final
+# ficou em duas (`eval_7d` com os dados brutos, `final_7d` com os curados) e o
+# ranking mostrava-as como dois treinos empatados.
+_ALIAS = {"eval_7d": "final_7d"}
+
+
+def rotulo_campanha(nome: str) -> tuple:
+    """`('Mega-treino A1', True)` — nome legível e se a tese a cita."""
+    if nome in _CAMPANHAS:
+        return _CAMPANHAS[nome]
+    for pre, rot, canon in _PREFIXOS:
+        if nome.startswith(pre):
+            return ("%s %s" % (rot, nome[len(pre):]), canon)
+    if _data_da_sessao(nome):
+        return ("Exploratória", False)
+    return (nome, False)
+
+
+def _pontuacao_de(path: str):
+    """Pontuação por (cenário, algoritmo) de um `eval_by_run*.csv`.
+
+    A unidade é a EXECUÇÃO, não o episódio: agrega-se dentro de cada run antes
+    de fazer a média, que é a regra da tese inteira. Sem isso uma campanha com
+    mais episódios gravados pesava mais do que uma com mais execuções.
+    """
+    try:
+        df = pd.read_csv(path)
+    except Exception:                                        # noqa: BLE001
+        return []
+    if not {"Scenario", "Algorithm", "food_collected"} <= set(df.columns):
+        return []
+    tem_run = "Run" in df.columns
+    chave = ["Scenario", "Algorithm"] + (["Run"] if tem_run else [])
+    agreg = {"recolhas": ("food_collected", "mean")}
+    if "success" in df.columns:
+        agreg["sucesso"] = ("success", "mean")
+    por_run = df.groupby(chave).agg(**agreg).reset_index()
+
+    linhas = []
+    for (cen, algo), g in por_run.groupby(["Scenario", "Algorithm"]):
+        conv = int((g["sucesso"] >= 1.0).sum()) if "sucesso" in g.columns else None
+        linhas.append({
+            "cenario": cen, "algo": algo,
+            "recolhas": float(g["recolhas"].mean()),
+            "runs": len(g) if tem_run else None,
+            "convergentes": conv if tem_run else None,
+        })
+    return linhas
+
+
+def ranking_por_cenario():
+    """Que treino ganhou em cada cenário — `{cenário: [linhas, melhor primeiro]}`.
+
+    Porque existe
+    -------------
+    A Galeria tinha 48 campanhas num seletor e nenhuma pista sobre qual delas
+    valia alguma coisa: para mostrar a alguém o melhor resultado num cenário era
+    preciso saber de cor qual pasta o continha. As pastas chamam-se `mega_A1` ou
+    `09-07-2026_12h52m`, que não ajudam.
+
+    ⚠️ O ranking é SEMPRE dentro de um cenário, nunca entre cenários. As 121
+    recolhas/ep do Gargalo e as 67 do Muro em U não são a mesma régua — o mapa,
+    o número de itens e a dificuldade mudam —, e um «melhor treino overall»
+    somando os dois seria um número sem significado. Por isso não existe aqui:
+    a pergunta a que isto responde é «neste cenário, qual foi o melhor treino».
+
+    ⚠️ Só entram campanhas com **avaliação determinística** (`eval_by_run*.csv`,
+    20 episódios de sementes fixas). As campanhas exploratórias de maio–junho
+    guardaram curvas de treino, que são outra régua: pô-las na mesma tabela
+    daria a um número de treino o estatuto de resultado.
+    """
+    if not os.path.isdir(GRAFICOS_DIR):
+        return {}
+    ficheiros = sorted(glob.glob(os.path.join(GRAFICOS_DIR, "**", "eval_by_run*.csv"),
+                                 recursive=True))
+    chave = tuple((f, _mtime(f)) for f in ficheiros)
+    if _RANKING_CACHE["chave"] == chave:
+        return _RANKING_CACHE["valor"]
+
+    # Uma campanha pode ter o mesmo resultado em vários CSV — o `eval_7d` tem-no
+    # em `evaluation_gnn/`, em `evaluation_mlp/` e na raiz, e sem desduplicar o
+    # mesmo treino aparecia três vezes seguidas no topo do cenário, como se
+    # fossem três treinos diferentes empatados. Fica um registo por
+    # (campanha, cenário, algoritmo): o que mediu MAIS execuções.
+    melhor = {}
+    for f in ficheiros:
+        # A campanha é a pasta de topo dentro de graficos_tese; as subpastas de
+        # avaliação não são campanhas e os seus nomes não aparecem em lado
+        # nenhum do dashboard.
+        rel = os.path.relpath(f, GRAFICOS_DIR).replace("\\", "/")
+        campanha = rel.split("/")[0]
+        for linha in _pontuacao_de(f):
+            linha["campanha"] = campanha
+            linha["ficheiro"] = rel
+            # `_ALIAS` funde pastas que são a MESMA campanha. A `eval_7d` e a
+            # `final_7d` são as duas a campanha final de 7 dias, e apareciam
+            # como duas entradas com valores idênticos, uma a seguir à outra —
+            # a ler-se como dois treinos empatados quando é um só, contado duas
+            # vezes.
+            k = (_ALIAS.get(campanha, campanha), linha["cenario"], linha["algo"])
+            anterior = melhor.get(k)
+            if anterior is None:
+                melhor[k] = linha
+                continue
+            # Entre duas cópias fica a que mediu mais execuções e, a empatar, a
+            # que está na pasta canónica — a que a tese cita pelo nome.
+            chave_nova = ((linha["runs"] or 0),
+                          1 if rotulo_campanha(linha["campanha"])[1] else 0)
+            chave_velha = ((anterior["runs"] or 0),
+                           1 if rotulo_campanha(anterior["campanha"])[1] else 0)
+            if chave_nova > chave_velha:
+                melhor[k] = linha
+
+    por_cenario = {}
+    for linha in melhor.values():
+        por_cenario.setdefault(linha["cenario"], []).append(linha)
+
+    for cen in por_cenario:
+        # Empate desfaz-se por esta ordem: mais execuções primeiro (entre duas
+        # médias iguais, vale a que foi medida mais vezes) e, ainda empatado, a
+        # campanha CANÓNICA. Sem a segunda regra, o topo de quatro cenários
+        # anunciava a «Campanha final · avaliação bruta» em vez da `final_7d`
+        # que a tese cita — o mesmo resultado, com o nome que não está escrito
+        # em lado nenhum da dissertação.
+        por_cenario[cen].sort(key=lambda d: (-d["recolhas"], -(d["runs"] or 0),
+                                             0 if rotulo_campanha(d["campanha"])[1] else 1))
+
+    _RANKING_CACHE.update(chave=chave, valor=por_cenario)
+    return por_cenario
+
+
 def session_manifesto(session: str):
     """Conteúdo do MANIFESTO.md da campanha (markdown), ou None."""
     p = os.path.join(GRAFICOS_DIR, session, "MANIFESTO.md")
