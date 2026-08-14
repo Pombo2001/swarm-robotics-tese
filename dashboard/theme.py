@@ -7,7 +7,7 @@ gráficos e os semáforos de estado (verde/âmbar/vermelho).
 
 Tipografia: Space Grotesk (títulos) · Inter (texto) · JetBrains Mono (números/consolas).
 """
-from nicegui import ui
+from nicegui import core, ui
 
 # ── Paleta monocromática ──────────────────────────────────────────────────────
 BG        = "#050505"   # fundo (quase preto)
@@ -350,7 +350,15 @@ def js_diferido(js: str, atraso_s: float = 0.3):
     callback (rebenta ao SAIR do `with`, depois de o callback ser saltado).
     A espera passa para o `setTimeout` do browser, onde não há slot nenhum para
     apagar; o `run_javascript` fica em fila até o cliente ligar.
+
+    Sem servidor a correr — a auditoria `auditar_dashboard.py` e os testes
+    constroem as vistas sem levantar o NiceGUI — não há sequer ciclo de eventos,
+    e o `ui.run_javascript` rebenta numa `assert core.loop is not None`. O
+    `ui.timer` que aqui estava adiava-se sozinho nesse caso; isto tem de o
+    dizer à mão, senão «arranjar o log» partia a construção de duas vistas.
     """
+    if core.loop is None:
+        return
     ui.run_javascript("setTimeout(function(){%s}, %d);"
                       % (js, int(atraso_s * 1000)))
 
