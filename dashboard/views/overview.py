@@ -188,6 +188,22 @@ _TIMELINE = [
      "que M1 precisa dos 21 runs: a resposta vai ser uma PROPORÇÃO de execuções "
      "que resolvem, não um «resolve». O estado deixa de ser escrito à mão: "
      "scripts/estado_f2.sh grava um instantâneo datado e as vistas leem-no."),
+    ("07–10 ago", "O braço dos gradientes fecha — e fica três dias parado",
+     "PPO 21/21 a 7 ago, SAC 21/21 a 10 ago: 840 episódios de avaliação "
+     "determinística, 0,00 recolhas em 42 de 42 execuções, a porta cooperativa "
+     "nunca aberta. A M3 do pré-registo fica respondida para os gradientes. "
+     "Ninguém os trouxe até 13 ago porque o watcher procurava a conclusão no log "
+     "do script de shell e não no marcador que o pipeline escreve "
+     "(logs/_campanha_concluida.txt): travou por bem, mas a ler o sítio errado."),
+    ("13 ago", "A QI7 tem resposta, e é negativa",
+     "Com 15 execuções do GNN fechadas e 3 convergentes, faltavam 12 "
+     "convergências para as 6 execuções que restavam: o limiar pré-registado de "
+     "⌈5/7 × 21⌉ = 15 tornou-se aritmeticamente inalcançável — e como a contagem "
+     "do treino é o majorante otimista da avaliação, nem as restantes o salvam. "
+     "Reporta-se como negativo, com o número declarado (emenda 21). O braço "
+     "exploratório é cancelado: a n=3 não mexe no veredicto e competiria pelo "
+     "CPU. Falta o eval_by_run do GNN para saber em quantas execuções, se "
+     "alguma, o mapa chega a ser resolvido."),
 ]
 
 
