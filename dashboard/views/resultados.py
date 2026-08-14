@@ -138,16 +138,41 @@ def build():
 
         def _mostrar(campanha):
             """Clicar numa linha do ranking abre as imagens desse treino."""
-            if campanha in sessions:
-                sess_a.set_value(campanha)
-                ui.notify("Galeria: %s" % data.rotulo_campanha(campanha)[0],
-                          type="positive", position="top")
-            else:
+            if campanha not in sessions:
                 # Uma campanha pode ter avaliação e não ter pasta de figuras
                 # (o `eval_7d` é o caso). Dizer porquê é melhor do que um
                 # clique que não faz nada.
                 ui.notify("«%s» tem avaliação mas não tem figuras próprias "
                           "nesta galeria." % campanha, type="warning")
+                return
+
+            # Os filtros ficavam os do treino ANTERIOR e podiam esconder tudo o
+            # que este tem: o clique dava uma galeria vazia, que se lê como
+            # «esta campanha não tem gráficos». Tem — o filtro é que não a
+            # deixava passar. Quem carrega na tabela quer VER o treino, por isso
+            # o filtro que o esconderia por inteiro é desligado, e diz-se qual.
+            pngs = data.list_pngs(campanha)
+            largados = []
+            if tipo.value != "Todos" and not any(data.graph_type(f) == tipo.value
+                                                 for f in pngs):
+                tipo.set_value("Todos")
+                largados.append("tipo")
+            if so_tese.value and not any(data.figura_na_tese(campanha, f)
+                                         for f in pngs):
+                so_tese.set_value(False)
+                largados.append("só na dissertação")
+
+            # A notificação vem ANTES de trocar a sessão: trocá-la redesenha o
+            # ranking, o que apaga a própria linha em que se carregou — e
+            # notificar a partir de um elemento já apagado rebenta com
+            # RuntimeError («parent slot has been deleted»), que matava o
+            # servidor a meio do clique.
+            msg = "Galeria: %s" % data.rotulo_campanha(campanha)[0]
+            if largados:
+                msg += " · filtro «%s» desligado (escondia tudo)" % \
+                       "» e «".join(largados)
+            ui.notify(msg, type="positive", position="top")
+            sess_a.set_value(campanha)
 
         def _desenhar_ranking():
             alvo_ranking.clear()
