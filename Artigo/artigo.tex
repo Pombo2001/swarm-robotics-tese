@@ -676,9 +676,11 @@ Três limitações enquadram o alcance das conclusões. Primeira, e mais importa
 comparação é \emph{assimétrica}: o controlador evolutivo usa uma arquitetura de
 grafo com atenção, os \emph{baselines} de gradiente um perceptrão de entrada fixa;
 isolar o efeito do otimizador exigiria treinar a mesma arquitetura por gradiente.
-Segunda, sete execuções por configuração limitam o poder estatístico precisamente
-onde ele mais faz falta --- nos cenários bimodais, distinguir taxas de
-convergência de $2/7$ a $4/7$ exigiria uma bateria maior. Terceira, todos os
+Segunda, a replicação a $n=28$ cobriu apenas o Muro em U: as restantes
+combinações mantêm sete execuções por configuração, e é aí que o poder
+estatístico continua a faltar --- nos cenários que ficaram bimodais a $n=7$
+(Sandbox, $5/7$; SAC no Gargalo, $5/7$), distinguir taxas de convergência exige
+uma bateria maior. Terceira, todos os
 resultados são em simulação, com o \emph{reality gap} por medir
 \citep{tobin2017domain}. Nenhuma invalida os achados centrais --- a dependência da
 neuroevolução face ao desenho da aptidão e o contraste de escalabilidade são

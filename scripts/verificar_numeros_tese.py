@@ -568,6 +568,124 @@ def verificar_artigo(tolerancia):
     return problemas
 
 
+def verificar_megatreino_artigo(tolerancia):
+    """Artigo, §5 — os números do mega-treino em PROSA, contra os mesmos CSV.
+
+    O `verificar_artigo` cobre a tab:task; o mega-treino, no artigo, não vive
+    em tabela nenhuma — vive num parágrafo, e nada o verificava. É a mesma
+    situação que a tese tinha no Abstract até hoje: um número copiado para um
+    segundo sítio, que sobrevive a uma correção do primeiro sem dar sinal. No
+    artigo o risco é maior, porque é o que vai ser submetido e as suas figuras
+    já derivaram uma vez em silêncio (8 delas, até 21 jul).
+
+    A redação do artigo é a da tese comprimida (`\\pm` sem espaços à volta),
+    pelo que os padrões são próprios. Se a redação mudar, o regex deixa de
+    casar e o verificador diz que não conseguiu ler — não passa em silêncio.
+    """
+    fp_tex = os.path.join(PROJECT_ROOT, "Artigo", "artigo.tex")
+    if not os.path.exists(fp_tex):
+        return []
+
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        from analise_megatreino import carregar
+    except Exception as e:                                   # pragma: no cover
+        print("[!] não importei o analise_megatreino (%s) — a saltar." % e)
+        return []
+
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: Artigo §5 (mega-treino, prosa)  vs  mega_1mes/*/eval_by_run.csv")
+    print("=" * 72)
+
+    with open(fp_tex, encoding="utf-8") as f:
+        tex = f.read()
+
+    N = r"([\d.,{}\\]+)"
+    problemas, conferidos = [], 0
+
+    def do_csv(fase, cen):
+        g = carregar(fase, cen)
+        if g is None:
+            return None
+        return (float(g["food"].mean()), float(g["food"].std()),
+                int((g["suc"] >= 1.0).sum()), len(g))
+
+    def confere(rotulo, tese, calc, exato=False):
+        nonlocal conferidos
+        conferidos += 1
+        if tese is None:
+            problemas.append("%s: não consegui ler o valor no artigo.tex "
+                             "(mudou a redação? actualizar este verificador)"
+                             % rotulo)
+        elif exato and int(tese) != int(calc):
+            problemas.append("%-30s artigo=%d  csv=%d" % (rotulo, tese, calc))
+        elif not exato and abs(tese - calc) > tolerancia:
+            problemas.append("%-30s artigo=%6.1f  csv=%6.1f  (Δ=%+.2f)"
+                             % (rotulo, tese, calc, tese - calc))
+
+    def procura(padrao):
+        m = re.search(padrao, tex)
+        return [numero(g) for g in m.groups()] if m else None
+
+    dados = {f: do_csv(f, c) for f, c in
+             (("mega_A_fase1", "u_wall"), ("mega_A_fase2", "u_wall"),
+              ("mega_A_fase3", "u_wall"), ("mega_A_fase4", "u_wall"),
+              ("mega_B_fase5", "cooperative_door_bypass"))}
+    if any(v is None for v in dados.values()):
+        print("[!] faltam dados do mega-treino — a saltar.")
+        return []
+    med_a, dp_a, conv_a, n_a = dados["mega_A_fase1"]
+    med_o, dp_o, conv_o, n_o = dados["mega_A_fase2"]
+    med_p, dp_p, conv_p, n_p = dados["mega_A_fase3"]
+    med_s, dp_s, conv_s, n_s = dados["mega_A_fase4"]
+    med_b, dp_b, conv_b, n_b = dados["mega_B_fase5"]
+
+    for rot, padrao, alvos in (
+            ("M1 médias",
+             r"adaptativo faz\s*\$" + N + r"\\pm" + N +
+             r"\$ recolhas/ep contra \$" + N + r"\\pm" + N +
+             r"\$ do objetivo puro",
+             ((("M1 adaptativo média"), med_a, False),
+              (("M1 adaptativo desvio"), dp_a, False),
+              (("M1 objetivo média"), med_o, False),
+              (("M1 objetivo desvio"), dp_o, False))),
+            ("M1 contagens",
+             r"\\textbf\{\$(\d+)/(\d+)\$ execuções\s*a \$100\\%\$ de sucesso "
+             r"contra \$(\d+)/(\d+)\$\}",
+             ((("M1 adaptativo convergentes"), conv_a, True),
+              (("M1 adaptativo n"), n_a, True),
+              (("M1 objetivo convergentes"), conv_o, True),
+              (("M1 objetivo n"), n_o, True))),
+            ("M2 PPO",
+             r"PPO\s*\$" + N + r"\\pm" + N + r"\$ \(\$(\d+)/(\d+)\$;",
+             ((("M2 PPO média"), med_p, False), (("M2 PPO desvio"), dp_p, False),
+              (("M2 PPO convergentes"), conv_p, True), (("M2 PPO n"), n_p, True))),
+            ("M2 SAC",
+             r"SAC\s*\$" + N + r"\\pm" + N + r"\$ \(\$(\d+)/(\d+)\$;",
+             ((("M2 SAC média"), med_s, False), (("M2 SAC desvio"), dp_s, False),
+              (("M2 SAC convergentes"), conv_s, True), (("M2 SAC n"), n_s, True))),
+            ("M3 bypass",
+             r"\(\$" + N + r"\\pm" + N + r"\$, \$(\d+)/(\d+)\$ a \$100\\%\$, "
+             r"contra \$" + N + r"\\pm" + N + r"\$",
+             ((("M3 adaptativo média"), med_b, False),
+              (("M3 adaptativo desvio"), dp_b, False),
+              (("M3 adaptativo convergentes"), conv_b, True),
+              (("M3 adaptativo n"), n_b, True))),
+    ):
+        v = procura(padrao)
+        for i, (r, calc, ex) in enumerate(alvos):
+            confere(r, v[i] if v else None, calc, exato=ex)
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("  " + p)
+    else:
+        print("Os %d valores do mega-treino no artigo batem com os CSV." % conferidos)
+    return problemas
+
+
 def verificar_megatreino(tolerancia):
     """§res_novelty, parágrafo do mega-treino — prosa, como a robustez.
 
@@ -837,6 +955,7 @@ def main():
     problemas += verificar_legendas_trajetorias()
     problemas += verificar_megatreino(a.tolerancia)
     problemas += verificar_artigo(a.tolerancia)
+    problemas += verificar_megatreino_artigo(a.tolerancia)
 
     print()
     print("=" * 72)
