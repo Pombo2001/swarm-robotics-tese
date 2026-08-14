@@ -18,18 +18,30 @@ DIR_PI=/home/pi5/TeseRobotics
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$RAIZ"
 
+# Janela do delta. O `-1 day` de omissão pressupõe que se publica todos os dias,
+# e a 14 de agosto o lote estava parado havia NOVE — com essa janela, o script
+# anunciava «a enviar» e não levava uma única figura das que mudaram no
+# entretanto. Quem publica ao fim de uns dias tem de a alargar:
+#
+#     DESDE='-10 days' scripts/atualizar_pi.sh
+DESDE="${DESDE:--1 day}"
+
 if [ $# -gt 0 ]; then
     CAMINHOS=("$@")
 else
-    # Por omissão: o código todo (é pequeno) e as pastas de figuras tocadas nas
-    # últimas 24 h. `find -newermt` evita reenviar 1 GB de campanhas antigas.
-    # A data que conta é a dos FICHEIROS, não a das pastas: regenerar figuras
-    # por cima das antigas não mexe no mtime da pasta (só criar ou apagar o faz),
-    # e por isso o critério antigo via 2 campanhas alteradas onde havia 15 — as
-    # outras 13 ficavam no Pi com as figuras da véspera, sem sinal nenhum.
+    # Por omissão: o código todo (é pequeno) e as figuras tocadas na janela.
+    # `find -newermt` evita reenviar 1 GB de campanhas antigas. A data que conta
+    # é a dos FICHEIROS, não a das pastas: regenerar figuras por cima das antigas
+    # não mexe no mtime da pasta (só criar ou apagar o faz), e por isso o critério
+    # antigo via 2 campanhas alteradas onde havia 15 — as outras 13 ficavam no Pi
+    # com as figuras da véspera, sem sinal nenhum.
+    #
+    # Enviam-se os FICHEIROS, não as pastas que os contêm. A versão anterior
+    # reduzia cada ficheiro à sua campanha e mandava a campanha inteira: um
+    # MANIFESTO.md de 2 KB alterado arrastava os 118 MB da pasta, e os 34 ficheiros
+    # tocados na `final_7d` arrastavam 51 MB. O tar recria a árvore na mesma.
     mapfile -t FIGS < <(find results/graficos_tese -mindepth 2 -type f \
-                        -newermt '-1 day' -printf '%h\n' 2>/dev/null \
-                        | sed 's|\(results/graficos_tese/[^/]*\).*|\1|' | sort -u)
+                        -newermt "$DESDE" 2>/dev/null | sort -u)
     # Duas pastas de RESULTADOS que não são figuras e o delta não levava:
     #   · episodios_3d — a vista «Episódio 3D» lê-os do disco. Ficaram 13 no Pi
     #     quando cá já havia 21: os oito do PPO e do SAC não chegavam lá.
@@ -42,9 +54,20 @@ else
     #   · Tese/images/resultados — a rota /figuras_tese serve daqui, e a figura
     #     dos quatro braços é servida por essa rota, não pela pasta da campanha.
     #     Sem isto o cartão aparece com a imagem partida.
+    # E três caminhos que as vistas leem para produzir NÚMEROS, e que o delta
+    # não levava — todos pequenos, somam ~3 MB:
+    #   · estado_f2.json — o instantâneo datado do servidor. É o ficheiro que a
+    #     vista «Mapa grande» e a «Defesa» passaram a ler justamente para não
+    #     afirmarem o estado da campanha em prosa fixa. Sem ele no delta, o Pi
+    #     mostra o estado do dia da última publicação completa — que é o defeito
+    #     que essas vistas existem para não ter;
+    #   · estatisticas — os testes de significância e a escalabilidade, que a
+    #     Ciência e a Defesa leem;
+    #   · evaluation — os `*_fail10.csv` da robustez.
     CAMINHOS=(dashboard scripts src configs
               results/episodios_3d results/mapa_grande
               results/mega_1mes/resumo_megatreino.json
+              results/estado_f2.json results/estatisticas results/evaluation
               Tese/images/resultados "${FIGS[@]}")
 fi
 
