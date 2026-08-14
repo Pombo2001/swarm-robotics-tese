@@ -106,6 +106,62 @@ def _da_tese():
     return n
 
 
+def _conferir_registo(incl):
+    """O `screening.csv` regista a classificação? E bate com esta medição?
+
+    A partir de 14 ago o registo tem colunas próprias (`scripts/classificar_slr.py`),
+    e é isso que torna os números da tese auditáveis por quem não corra este
+    script. O papel daqui muda em conformidade: em vez de ser a única medição,
+    passa a ser a SEGUNDA — mede outra vez, e compara com o que está escrito.
+
+    Uma divergência não é forçosamente um erro. Uma linha marcada `manual` é a
+    leitura do autor sobre o texto integral, que ganha às palavras-chave; o que
+    se exige é que esteja declarada como tal. O que é mesmo um problema é uma
+    linha incluída sem classificação nenhuma: aí o número da tese volta a não
+    ter de onde sair.
+    """
+    print()
+    print("  ── o registo (docs/slr/screening.csv) ──")
+    if "paradigma" not in incl.columns:
+        print("  ⚠️ SEM as colunas de classificação: os números da tese não são")
+        print("     auditáveis a partir do registo. Correr:")
+        print("       python scripts/classificar_slr.py --escrever")
+        return ["screening.csv sem colunas de classificação"]
+
+    par = incl["paradigma"].fillna("").astype(str).str.strip()
+    fonte = incl["classificacao_fonte"].fillna("").astype(str).str.strip()
+    por_classificar = int((par == "").sum())
+    manuais = int((fonte == "manual").sum())
+    print("  %d de %d classificados no registo (%d à mão, %d por regra)"
+          % (len(incl) - por_classificar, len(incl), manuais,
+             len(incl) - por_classificar - manuais))
+
+    esperado = incl.apply(
+        lambda r: ("ambos" if r["marl"] and r["bio"] else
+                   "marl" if r["marl"] else "bio" if r["bio"] else "nenhum"),
+        axis=1)
+    divergem = incl[(par != "") & (par != esperado)]
+    for _, r in divergem.iterrows():
+        marca = "leitura do autor" if str(
+            r["classificacao_fonte"]).strip() == "manual" else "⚠ POR EXPLICAR"
+        print("    · registo diz «%s», palavras-chave dizem «%s» — %s: %s"
+              % (r["paradigma"], esperado[r.name], marca,
+                 str(r["titulo"])[:52]))
+
+    problemas = []
+    if por_classificar:
+        print("  ⚠️ %d incluídos SEM classificação no registo." % por_classificar)
+        problemas.append("%d incluídos sem classificação" % por_classificar)
+    nao_explicadas = divergem[divergem["classificacao_fonte"].astype(str).str.strip()
+                              != "manual"]
+    if len(nao_explicadas):
+        problemas.append("%d linhas divergem sem estarem marcadas `manual`"
+                         % len(nao_explicadas))
+    if not problemas:
+        print("  ✓ o registo cobre os 58 e é consistente com esta medição.")
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--listar", action="store_true",
@@ -162,10 +218,8 @@ def main():
             print(f"  {tags}  {r['ano']}  {str(r['titulo'])[:78]}")
         print("  (M=MARL  B=bio-inspirada  E=escalabilidade, por título+resumo)")
 
-    print()
-    print("  ⚠️ Isto CORROBORA, não substitui: a classificação do autor não está")
-    print("     no `screening.csv` (os 58 incluídos têm `motivo` e `notas` vazios).")
-    print("     Duas colunas nesse ficheiro tornariam os números auditáveis.")
+    falhas += _conferir_registo(incl)
+
     if falhas:
         print()
         for f in falhas:

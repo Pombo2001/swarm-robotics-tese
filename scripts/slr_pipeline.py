@@ -447,23 +447,48 @@ def prisma():
 \\end{{figure}}
 """)
 
+    # A coluna da classificação: sem ela, o leitor da tese via a lista dos 58 e
+    # não via de onde saíam os «21 assentam em MARL e 23 em bio-inspirada» do
+    # corpo do capítulo — os números eram afirmados e não mostrados. Vem do
+    # `screening.csv` (colunas escritas por scripts/classificar_slr.py), a mesma
+    # fonte que o verificador confere.
+    ROTULO = {"marl": "MARL", "bio": "Bio", "ambos": "Ambos",
+              "nenhum": "---", "": "---"}
+
+    def _classificacao(r):
+        par = ROTULO.get(str(r.get('paradigma', '') or '').strip(), "---")
+        return par + (", E" if str(r.get('escalabilidade', '')).strip() == "sim"
+                      else "")
+
     apx = os.path.join(RAIZ, 'Tese', 'apendice_slr.tex')
+    cab = r'\# & Autores & Ano & Título & Publicação & Par. \\ \hline'
     with open(apx, 'w', encoding='utf-8') as f:
         f.write('% GERADO por scripts/slr_pipeline.py — não editar à mão.\n')
-        f.write(r'\begin{longtable}{@{}rp{2.4cm}rp{5.4cm}p{3.2cm}@{}}' + '\n')
+        # `\small`: a coluna do paradigma rouba largura às do título e da
+        # publicação, e a 12pt isso custava quatro páginas de mudanças de linha
+        # numa tabela que já ocupa cinco. Um corpo mais pequeno é o tratamento
+        # normal de uma tabela longa de apêndice, e devolve as páginas todas.
+        f.write(r'\begingroup\small' + '\n')
+        f.write(r'\begin{longtable}{@{}rp{2.3cm}rp{5.4cm}p{3.0cm}p{1.4cm}@{}}'
+                + '\n')
         f.write(r'\caption{Estudos incluídos na revisão sistemática ($n = '
                 + str(c['incluidos']) + r'$), resultantes do fluxo PRISMA '
-                r'(Figura~\ref{fig:prisma}).}\label{tab:slr_incluidos}\\' + '\n')
+                r'(Figura~\ref{fig:prisma}). A coluna \emph{Par.} indica o '
+                r'paradigma dominante e, com \emph{E}, se o estudo aborda '
+                r'escalabilidade ou generalização a dimensões não vistas; é '
+                r'derivada dos resumos por regras explícitas, registadas estudo '
+                r'a estudo em \texttt{docs/slr/screening.csv} com os termos que '
+                r'a determinaram.}\label{tab:slr_incluidos}\\' + '\n')
         f.write(r'\hline' + '\n')
-        f.write(r'\# & Autores & Ano & Título & Publicação \\ \hline' + '\n')
+        f.write(cab + '\n')
         f.write(r'\endfirsthead' + '\n')
-        f.write(r'\hline \# & Autores & Ano & Título & Publicação \\ \hline \endhead'
-                + '\n')
+        f.write(r'\hline ' + cab + r' \endhead' + '\n')
         for i, r in enumerate(c['lista'], 1):
             nome = _autores(r['autores'])
             f.write(f"{i} & {nome} & {r['ano']} & {_esc(r['titulo'])} & "
-                    f"{_esc(r['venue'])} \\\\\n")
+                    f"{_esc(r['venue'])} & {_classificacao(r)} \\\\\n")
         f.write(r'\hline' + '\n' + r'\end{longtable}' + '\n')
+        f.write(r'\endgroup' + '\n')      # fecha o \small aberto acima
 
     print(f"PRISMA gerado com números REAIS:")
     print(f"  identificados (únicos): {c['unicos']}")
