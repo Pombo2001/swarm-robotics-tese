@@ -695,14 +695,28 @@ def verificar_megatreino(tolerancia):
         problemas.append("falta o CSV do peso fixo (%s) que a tese cita em M3"
                          % os.path.relpath(FIXO_BYPASS, PROJECT_ROOT))
 
-    # O resumo repete o 28/28 vs 15/28: se um for corrigido e o outro não, é
-    # o resumo que o leitor vê primeiro.
-    v = procura(r"\$(\d+)/(\d+)\$, contra \$(\d+)/(\d+)\$ do objetivo puro")
-    for i, (rot, calc) in enumerate((("resumo adaptativo convergentes", conv_a),
-                                     ("resumo adaptativo n", n_a),
-                                     ("resumo objetivo convergentes", conv_o),
-                                     ("resumo objetivo n", n_o))):
-        confere(rot, v[i] if v else None, calc, exato=True)
+    # O Resumo e o Abstract repetem as contagens dos quatro braços: são os
+    # primeiros números que o leitor (e o júri) vê, e vivem a cem páginas do
+    # capítulo que os produz. Verificam-se os DOIS idiomas porque a versão
+    # anterior só cobria o Resumo — e a 14 de agosto encontrou-se o Abstract
+    # sem sequer a frase, que o Resumo tinha desde 3 de agosto. Uma tradução
+    # que fica para trás não é um erro de número, e por isso nada a apanhava.
+    med_p, dp_p, conv_p, n_p = dados["mega_A_fase3"]
+    med_s, dp_s, conv_s, n_s = dados["mega_A_fase4"]
+    quatro_bracos = (("adaptativo convergentes", conv_a), ("adaptativo n", n_a),
+                     ("objetivo convergentes", conv_o), ("objetivo n", n_o),
+                     ("PPO convergentes", conv_p), ("PPO n", n_p),
+                     ("SAC convergentes", conv_s), ("SAC n", n_s))
+    for idioma, padrao in (
+            ("resumo",
+             r"\$(\d+)/(\d+)\$, contra \$(\d+)/(\d+)\$ do objetivo puro, "
+             r"\$(\d+)/(\d+)\$ do PPO e \$(\d+)/(\d+)\$ do SAC"),
+            ("abstract",
+             r"\$(\d+)/(\d+)\$, against \$(\d+)/(\d+)\$ for the pure objective, "
+             r"\$(\d+)/(\d+)\$ for PPO and \$(\d+)/(\d+)\$ for SAC")):
+        v = procura(padrao)
+        for i, (rot, calc) in enumerate(quatro_bracos):
+            confere("%s %s" % (idioma, rot), v[i] if v else None, calc, exato=True)
 
     # --- Células EXPLORATÓRIAS (A5 Sandbox, B7 Perceção, B6 SAC no Gargalo) ---
     # Entraram na tese a 4 ago, em cumprimento do compromisso do pré-registo de
