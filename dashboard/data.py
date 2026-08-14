@@ -675,6 +675,94 @@ def ranking_por_cenario():
     return por_cenario
 
 
+_TESE_TEX = os.path.join(config.BASE_DIR, "Tese", "main.tex")
+_TESE_IMG = os.path.join(config.BASE_DIR, "Tese", "images")
+_FIG_TESE = {"chave": None, "valor": None}
+_HASH_CACHE = {}
+
+
+def _md5(path):
+    import hashlib
+    chave = (path, _mtime(path))
+    if chave not in _HASH_CACHE:
+        try:
+            with open(path, "rb") as fh:
+                _HASH_CACHE[chave] = hashlib.md5(fh.read()).hexdigest()
+        except OSError:
+            return None
+    return _HASH_CACHE[chave]
+
+
+def figuras_da_tese():
+    """`{hash: caminho}` das imagens que o `main.tex` usa de facto.
+
+    A galeria mostra 1105 PNG e nada distinguia os que estão na dissertação dos
+    que ficaram pelo caminho. Para mostrar uma figura a alguém era preciso saber
+    de cor quais entraram — e as figuras da tese são CÓPIAS das da campanha
+    (foi assim que oito delas derivaram em silêncio até 21 jul), pelo que a
+    ligação existe no conteúdo, não no nome: compara-se o ficheiro, não o
+    caminho. Uma figura regenerada e ainda não copiada para a tese deixa de
+    casar, que é a resposta certa — já não é a que está lá.
+    """
+    if not os.path.exists(_TESE_TEX):
+        return {}
+    chave = _mtime(_TESE_TEX)
+    if _FIG_TESE["chave"] == chave:
+        return _FIG_TESE["valor"]
+    try:
+        with open(_TESE_TEX, encoding="utf-8") as fh:
+            tex = fh.read()
+    except OSError:
+        return {}
+    # Sem as linhas comentadas: a secção do mapa grande ainda está por entrar, e
+    # as figuras dela não estão na tese enquanto o `\input` não for descomentado.
+    tex = "\n".join(l for l in tex.split("\n") if not l.strip().startswith("%"))
+    out = {}
+    for rel in set(re.findall(r"\{images/([^}]+)\}", tex)):
+        p = os.path.join(_TESE_IMG, rel.replace("/", os.sep))
+        if os.path.exists(p):
+            h = _md5(p)
+            if h:
+                out[h] = rel
+    _FIG_TESE.update(chave=chave, valor=out)
+    return out
+
+
+def figura_na_tese(session: str, filename: str):
+    """O caminho na tese, se esta imagem for a que a dissertação usa; senão None."""
+    alvos = figuras_da_tese()
+    if not alvos:
+        return None
+    p = os.path.join(GRAFICOS_DIR, session, filename)
+    # Filtro barato primeiro: só se o tamanho bater com algum candidato é que
+    # vale a pena ler o ficheiro. Sem isto, abrir a galeria custava o hash de
+    # todos os PNG da campanha.
+    try:
+        tam = os.path.getsize(p)
+    except OSError:
+        return None
+    if tam not in _tamanhos_da_tese():
+        return None
+    return alvos.get(_md5(p))
+
+
+_TAMANHOS = {"chave": None, "valor": frozenset()}
+
+
+def _tamanhos_da_tese():
+    chave = _mtime(_TESE_TEX)
+    if _TAMANHOS["chave"] != chave:
+        tams = set()
+        for rel in figuras_da_tese().values():
+            p = os.path.join(_TESE_IMG, rel.replace("/", os.sep))
+            try:
+                tams.add(os.path.getsize(p))
+            except OSError:
+                pass
+        _TAMANHOS.update(chave=chave, valor=frozenset(tams))
+    return _TAMANHOS["valor"]
+
+
 def pontuacao_campanha(campanha: str, cenario: str, algo: str):
     """A pontuação DESTA campanha neste cenário e algoritmo, ou None.
 

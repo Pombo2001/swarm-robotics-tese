@@ -79,6 +79,15 @@ def build():
     def open_zoom(session: str, filename: str):
         with ui.dialog() as dlg, ui.card().classes("max-w-[90vw]"):
             ui.label(filename).classes("text-sm font-mono text-gray-300")
+            na_tese = data.figura_na_tese(session, filename)
+            if na_tese:
+                ui.label(f"Está na dissertação como images/{na_tese}") \
+                    .classes("text-xs text-emerald-300")
+            else:
+                # Dizer que NÃO está é tão útil como dizer que está: é o aviso
+                # de que carregar em «Enviar para a Tese» muda mesmo o PDF.
+                ui.label("Não está na dissertação (ou a cópia lá dentro já "
+                         "divergiu desta).").classes("text-xs text-amber-300")
             ui.image(_url(session, filename)).classes("max-h-[75vh] object-contain")
             with ui.row().classes("w-full justify-end gap-2"):
                 def enviar():
@@ -115,6 +124,11 @@ def build():
                 .classes("mt-2").props("dense")
             so_pares.bind_visibility_from(sess_b, "value",
                                           backward=lambda v: v != NONE)
+            # Das 1099 figuras da galeria, umas dezenas é que estão mesmo na
+            # dissertação, e nada as distinguia: para mostrar uma a alguém era
+            # preciso saber de cor quais entraram.
+            so_tese = ui.switch("Só as que estão na dissertação", value=False) \
+                .classes("mt-1").props("dense")
 
         # Qual destas 48 campanhas vale alguma coisa? O seletor em cima não o
         # dizia, e os nomes das pastas (`mega_A1`, `09-07-2026_12h52m`) também
@@ -144,15 +158,36 @@ def build():
         _desenhar_ranking()
         sess_a.on_value_change(lambda _: _desenhar_ranking())
 
+        def _selo_tese(session: str, f: str):
+            """Marca a figura que a dissertação usa DE FACTO.
+
+            Compara-se conteúdo, não nome: as figuras da tese são cópias das da
+            campanha e já derivaram em silêncio uma vez (8 delas, até 21 jul).
+            Uma figura regenerada e ainda não copiada deixa de ter selo — que é
+            a resposta certa, porque já não é a que está no PDF.
+            """
+            rel = data.figura_na_tese(session, f)
+            if rel:
+                ui.badge("na dissertação", color="positive").props("rounded") \
+                    .classes("text-[10px]").tooltip(f"images/{rel}")
+
         def _img_card(f: str, comparar: bool, pngs_b: set):
             with ui.card().classes("bg-slate-900/50 rounded-lg p-2"):
-                ui.label(_pretty_title(f)).classes("text-sm font-semibold text-sky-200")
+                with ui.row().classes("w-full items-center gap-2 no-wrap"):
+                    ui.label(_pretty_title(f)).classes("text-sm font-semibold text-sky-200")
+                    if not comparar:
+                        _selo_tese(sess_a.value, f)
                 ui.label(f).classes("text-[10px] font-mono text-gray-500 truncate")
                 if comparar:
                     with ui.row().classes("w-full gap-2 no-wrap"):
                         for s, tag in ((sess_a.value, "A"), (sess_b.value, "B")):
                             with ui.column().classes("flex-1 gap-0 items-center"):
                                 ui.badge(f"{tag} · {s}", color="primary").props("rounded").classes("text-[10px]")
+                                # O selo é por lado: em A/B o mesmo nome pode ser
+                                # a figura que está no PDF de um lado e uma versão
+                                # antiga do outro.
+                                if not (tag == "B" and f not in pngs_b):
+                                    _selo_tese(s, f)
                                 # o ficheiro pode não existir na sessão B
                                 if tag == "B" and f not in pngs_b:
                                     ui.label("(não existe nesta sessão)") \
@@ -173,11 +208,15 @@ def build():
             todos = data.list_pngs(sess_a.value)
             n_heat = len([f for f in todos if f.startswith("heatmap")])
             n_vid = len(data.list_videos(sess_a.value))
+            n_tese = len([f for f in todos if data.figura_na_tese(sess_a.value, f)])
             theme.fonte(f"sessão {sess_a.value} · {len(todos)} gráficos "
-                        f"({n_heat} heatmaps) · {n_vid} vídeos")
+                        f"({n_heat} heatmaps · {n_tese} na dissertação) · "
+                        f"{n_vid} vídeos")
 
             pngs = [f for f in todos
                     if tipo.value == "Todos" or data.graph_type(f) == tipo.value]
+            if so_tese.value:
+                pngs = [f for f in pngs if data.figura_na_tese(sess_a.value, f)]
             comparar = sess_b.value != NONE
             pngs_b = set(data.list_pngs(sess_b.value)) if comparar else set()
 
@@ -200,10 +239,14 @@ def build():
                                 "dados.")
 
             if not pngs:
-                ui.label("Nenhum gráfico em comum para este filtro."
-                         if comparar and so_pares.value
-                         else "Nenhum gráfico para este filtro.") \
-                    .classes("text-gray-500")
+                if so_tese.value:
+                    msg = ("Nenhum gráfico desta campanha está na dissertação. "
+                           "A maioria das figuras do PDF vem do treino de 7 dias.")
+                elif comparar and so_pares.value:
+                    msg = "Nenhum gráfico em comum para este filtro."
+                else:
+                    msg = "Nenhum gráfico para este filtro."
+                ui.label(msg).classes("text-gray-500")
                 return
 
             # Agrupa por tipo e desenha cada grupo como uma secção com cabeçalho.
@@ -241,6 +284,6 @@ def build():
 
         # refrescar a galeria quando muda qualquer filtro
         sess_a.on_value_change(lambda: (_tipos_da_sessao(), galeria.refresh()))
-        for el in (sess_b, tipo, so_pares):
+        for el in (sess_b, tipo, so_pares, so_tese):
             el.on_value_change(lambda: galeria.refresh())
         galeria()
