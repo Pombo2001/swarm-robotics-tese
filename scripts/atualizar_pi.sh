@@ -64,11 +64,21 @@ else
     #   · estatisticas — os testes de significância e a escalabilidade, que a
     #     Ciência e a Defesa leem;
     #   · evaluation — os `*_fail10.csv` da robustez.
+    # E, desde 14 ago, a dissertação inteira em `Tese/`:
+    #   · main.tex  — a Galeria marca as figuras que a tese usa DE FACTO, e
+    #     descobre-as lendo os `\includegraphics` do `.tex`. Sem ele no Pi, a
+    #     função devolve `{}` e a galeria fica sem um único selo — sem erro
+    #     nenhum, que é a maneira mais cara de falhar;
+    #   · images/   — a comparação é por CONTEÚDO (md5 do ficheiro), não por
+    #     nome, e por isso precisa das imagens todas e não só das de
+    #     `resultados/`. Vão inteiras (14 MB): ao contrário das figuras das
+    #     campanhas, estas não passam pela janela do `-newermt`, porque uma
+    #     imagem que falte não dá erro — tira um selo em silêncio.
     CAMINHOS=(dashboard scripts src configs
               results/episodios_3d results/mapa_grande
               results/mega_1mes/resumo_megatreino.json
               results/estado_f2.json results/estatisticas results/evaluation
-              Tese/images/resultados "${FIGS[@]}")
+              Tese/main.tex Tese/images "${FIGS[@]}")
 fi
 
 echo "[pi] a enviar:"
