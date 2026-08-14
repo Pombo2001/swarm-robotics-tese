@@ -3,10 +3,14 @@
 Executar:  python -m dashboard.app
 Abre em http://localhost:8080 (e fica acessível na rede local).
 
-Layout: tema monocromático noturno (preto e branco), barra lateral com a navegação
-por fluxo de trabalho — INÍCIO (Overview), OPERAÇÃO (Treinar, Monitorizar) e
-ANÁLISE (Ciência, Resultados, Vídeos) — e a área principal com a vista selecionada.
-O estilo vive em dashboard/theme.py (fonte única).
+Layout: tema monocromático noturno (preto e branco), barra lateral agrupada por
+pergunta e a área principal com a vista selecionada. O estilo vive em
+dashboard/theme.py (fonte única).
+
+As secções, por ordem: OPERAÇÃO (só na torre — o que está a correr agora),
+A TESE (o que a dissertação responde), DEFESA (como se apresenta e de onde vêm
+os números), PROVAS (o material que os sustenta) e BASTIDORES (o percurso, e a
+checklist de trabalho). A cópia publicada no Pi não tem OPERAÇÃO nem Prontidão.
 """
 import os
 
@@ -67,6 +71,11 @@ def index():
                 .style(f"color:{theme.INK_MUTED}")
 
     # ── Navegação (barra lateral, por fluxo de trabalho) ───────────────────────
+    def _sec(titulo):
+        """Cabeçalho de secção na barra lateral."""
+        ui.label(titulo).classes("text-[10px] font-bold tracking-[.2em] px-2 pt-3 pb-1") \
+            .style(f"color:{theme.INK_MUTED}")
+
     with ui.left_drawer(value=True, bordered=False).props("width=236").classes("p-3") as drawer:
         with ui.column().classes("w-full gap-1 h-full"):
             with ui.tabs().props("vertical active-color=white indicator-color=white") \
@@ -78,8 +87,7 @@ def index():
                 # lançado por quem soubesse o nome da vista.
                 t_treinar = t_aovivo = None
                 if not config.READONLY:
-                    ui.label("OPERAÇÃO").classes("text-[10px] font-bold tracking-[.2em] "
-                                                 "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
+                    _sec("OPERAÇÃO")
                     t_treinar = ui.tab("Treinar", icon="rocket_launch")
                 # "monitoring" só existe nos Material Symbols (conjunto novo); o
                 # NiceGUI carrega os Material Icons clássicos, onde esse nome não
@@ -95,25 +103,48 @@ def index():
                 t_monitor = None
                 if not config.READONLY:
                     t_monitor = ui.tab("Servidor", icon="dns")
-                ui.label("ANÁLISE").classes("text-[10px] font-bold tracking-[.2em] "
-                                            "px-2 pt-3 pb-1").style(f"color:{theme.INK_MUTED}")
+                    # O 3D do treino a decorrer é OPERAÇÃO, não prova: mostra o
+                    # que está a correr agora, e só existe onde há treino.
+                    t_aovivo = ui.tab("Ao vivo (3D)", icon="view_in_ar")
+
+                # As doze entradas viviam todas sob um único rótulo «ANÁLISE»,
+                # numa lista plana: os resultados repartidos por quatro vistas
+                # sem ordem de leitura, quatro vistas de imagens, e o arquivo
+                # das campanhas exploratórias ao mesmo nível dos números da
+                # tese. Quem abre o link não tem por onde começar. Passam a
+                # quatro secções que respondem a quatro perguntas diferentes —
+                # o que a tese responde, como se defende, o que o prova, e o
+                # percurso — sem que nenhuma vista mude ou desapareça.
+                _sec("A TESE")
                 t_ciencia = ui.tab("Ciência", icon="science")
-                t_mapa    = ui.tab("Mapa grande", icon="map")
                 t_escala  = ui.tab("Escala e robustez", icon="groups")
-                # Defesa: "de onde vem este número?" respondido em dois cliques,
-                # em vez de procurado no REPRODUZIR.md com o júri à espera.
-                t_proven  = ui.tab("Proveniência", icon="fact_check")
-                t_vitrine = ui.tab("Vitrine", icon="slideshow")
-                t_result  = ui.tab("Galeria", icon="image")
-                t_pronto  = ui.tab("Prontidão", icon="checklist")
+                # Última: é a questão em aberto, e vem depois do que já fechou.
+                t_mapa    = ui.tab("Mapa grande", icon="map")
+
+                _sec("DEFESA")
                 t_defesa  = ui.tab("Defesa", icon="record_voice_over")
+                t_vitrine = ui.tab("Vitrine", icon="slideshow")
+                # "De onde vem este número?" respondido em dois cliques, em vez
+                # de procurado no REPRODUZIR.md com o júri à espera.
+                t_proven  = ui.tab("Proveniência", icon="fact_check")
+
+                _sec("PROVAS")
+                t_result  = ui.tab("Galeria", icon="image")
                 t_videos  = ui.tab("Vídeos", icon="smart_display")
                 # Existe TAMBÉM em modo leitura: ao contrário do Ursina,
                 # desenha no browser de quem vê, não no ecrã do servidor.
                 t_viz3d   = ui.tab("Episódio 3D", icon="view_in_ar")
-                if not config.READONLY:
-                    t_aovivo = ui.tab("Ao vivo (3D)", icon="view_in_ar")
+
+                _sec("BASTIDORES")
                 t_arquivo = ui.tab("Arquivo", icon="history_edu")
+                # A Prontidão é a checklist de trabalho de quem escreve a tese:
+                # anuncia commits por enviar, testes por correr e se o PDF está
+                # atrás do .tex. Publicada no Pi, é estado interno exposto a
+                # quem abre o link — e lê-se como «isto tem problemas» quando
+                # está apenas a fazer o seu trabalho. Fica na torre.
+                t_pronto = None
+                if not config.READONLY:
+                    t_pronto = ui.tab("Prontidão", icon="checklist")
             ui.space()
             ui.separator()
             # Rodapé operacional: útil a trabalhar, ruído numa defesa (e no Modo
@@ -177,8 +208,9 @@ def index():
             vitrine.build()
         with ui.tab_panel(t_result):
             resultados.build()
-        with ui.tab_panel(t_pronto):
-            prontidao.build()
+        if t_pronto is not None:
+            with ui.tab_panel(t_pronto):
+                prontidao.build()
         with ui.tab_panel(t_defesa):
             defesa.build()
         with ui.tab_panel(t_videos):
