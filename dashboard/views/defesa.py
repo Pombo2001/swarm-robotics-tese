@@ -86,13 +86,41 @@ def _limpar(tex):
 
 
 def _questoes():
-    """{n: pergunta} da secção das questões de investigação."""
+    """{n: (pergunta, declarada)} da secção das questões de investigação.
+
+    Duas subtilezas, ambas apanhadas a 14 ago no ecrã da QI7:
+
+    · a pergunta pode ocupar VÁRIAS linhas do `.tex`. O `.+` da versão anterior
+      parava na primeira, e a QI7 aparecia na defesa como «Composição de
+      dificuldades: As conclusões» — cortada a meio da frase, num ecrã feito
+      para ser projetado;
+    · a QI7 vive em COMENTÁRIO até a secção do mapa grande entrar, e o regex
+      não distinguia comentário de texto. A pergunta mostra-se na mesma (não
+      depende do resultado — é a pergunta, não a resposta), mas quem defende
+      tem de saber que ainda não está na tese: é para isso que serve o segundo
+      elemento do par.
+    """
     if not os.path.exists(MAIN_TEX):
         return {}
     tex = open(MAIN_TEX, encoding="utf-8").read()
+    i = tex.find(r"\label{sec:questoes_investigacao}")
+    if i < 0:
+        return {}
+    # Só a lista das questões: fora dela há três respostas comentadas à QI7,
+    # nos três desfechos possíveis, e nenhuma delas é uma pergunta.
+    bloco = tex[i:tex.find(r"\end{enumerate}", i)]
     saida = {}
-    for m in re.finditer(r"\\item\[\\textbf\{QI(\d)\.\}\]\s*(.+)", tex):
-        saida[int(m.group(1))] = _limpar(m.group(2))
+    # Cada \item vai até ao \item seguinte (ou ao fim do bloco) — é assim que
+    # se apanha uma pergunta escrita em cinco linhas. O `%?` no lookahead
+    # existe porque a QI7 está comentada e o item seguinte também começa por %.
+    for m in re.finditer(r"\\item\[\\textbf\{QI(\d)\.\}\](.*?)(?=\s*%?\s*\\item\[|\Z)",
+                         bloco, re.S):
+        linha = bloco.rfind("\n", 0, m.start()) + 1
+        declarada = not bloco[linha:m.start()].lstrip().startswith("%")
+        # Numa pergunta comentada, o `%` que abre cada linha é decoração do
+        # ficheiro, não texto da pergunta.
+        texto = "\n".join(re.sub(r"^\s*%", "", l) for l in m.group(2).split("\n"))
+        saida[int(m.group(1))] = (_limpar(texto), declarada)
     return saida
 
 
@@ -215,8 +243,17 @@ def build():
                     ui.label("QUESTÃO DE INVESTIGAÇÃO %d" % n).classes(
                         "text-[10px] font-bold tracking-[.25em]") \
                         .style(f"color:{theme.INK_MUTED}")
-                    ui.label(perguntas.get(n, "—")).classes(
-                        "text-xl font-bold leading-snug mt-1 mb-4")
+                    texto_q, declarada = perguntas.get(n, ("—", True))
+                    ui.label(texto_q).classes(
+                        "text-xl font-bold leading-snug mt-1"
+                        + ("" if declarada else " mb-1"))
+                    if not declarada:
+                        ui.label("· pergunta ainda não declarada na tese — "
+                                 "entra com a secção do mapa grande") \
+                            .classes("text-xs mb-4") \
+                            .style(f"color:{theme.INK_MUTED}")
+                    else:
+                        ui.element("div").classes("mb-4")
 
                     if n in numeros:
                         valor, legenda = numeros[n]
