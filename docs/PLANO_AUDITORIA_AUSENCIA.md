@@ -61,10 +61,12 @@ O verificador cobre 352 valores (tese + artigo). O corpo do `main.tex` tem
 verificável — muitos são anos, secções, dimensões —, mas a fração por cobrir
 não está mapeada em lado nenhum.
 
-- [ ] **B1 — mapear o que NÃO é verificado.** Listar as afirmações numéricas do
-      `main.tex` sem verificador associado, classificadas em: (i) automatizável,
-      (ii) verificável só à mão, (iii) não é resultado (ano, página, dimensão).
-      Entregável: `docs/COBERTURA_VERIFICADOR.md` com a lista e a contagem.
+- [x] **B1 — mapear o que NÃO é verificado.** FEITO a 14 ago —
+      `scripts/cobertura_verificador.py` + `docs/COBERTURA_VERIFICADOR.md`.
+      **212 de 1806 tokens (12%) são lidos por algum verificador**; dos 1594 que
+      sobram, 495 são automatizáveis, 468 precisam de leitura, 631 não são
+      resultados. O maior buraco é a secção do Novelty (**164**), que é onde
+      vive a QI6. Ver *Achados*.
 - [ ] **B2 — automatizar as (i).** Acrescentar ao `verificar_numeros_tese.py`,
       lendo do `.tex` e não fixando no script (é a regra que já lá está).
 - [ ] **B3 — o dashboard afirma números também.** O Overview diz 25 sessões,
@@ -146,4 +148,28 @@ que esta tese pode ter — mais do que um número errado.
 
 *(cada entrada: data, item, o que se mediu, o que se fez ou porque não se fez)*
 
-- nada ainda.
+### 14 ago — B1 — a cobertura dos verificadores é de 12%, e o buraco maior é a QI6
+
+**Medido.** 1806 tokens numéricos no corpo do `main.tex`; **212 lidos** por algum
+dos seis verificadores. Dos 1594 restantes: 495 automatizáveis, 468 a precisar de
+leitura, 631 que não são resultados. Por secção, os automatizáveis concentram-se
+em: Novelty Search **164**, Resposta às QI **61**, Escalabilidade **35**,
+Discussão Global **27**, Conclusões **25**, Resumo **8**.
+
+**A medição teve de ser corrigida a meio, e isso é parte do achado.** A primeira
+instrumentação só embrulhava o módulo `re` e deu 6% — número que não batia com os
+352 valores que o verificador diz conferir. A causa não era o verificador estar a
+mentir: o `ler_tabela()` lê as tabelas com `find()` e `split('&')`, sem uma única
+expressão regular, e escapava inteiro à medição. Uma medição que só vê metade dos
+instrumentos mede o instrumento, não a tese.
+
+**Verificado à mão o pior caso, e não há erro.** Antes de tratar os 164 como
+dívida, confirmei os valores-chave da secção do Novelty contra os
+`eval_by_run.csv`: u_wall novidade fixa $69{,}8 \pm 5{,}9$, bypass fixa
+$63{,}0 \pm 21{,}9$, adaptativo u_wall $68{,}5 \pm 13{,}1$, adaptativo bypass
+$77{,}2 \pm 16{,}7$, exploratório $88{,}7 \pm 0{,}6$, objetivo puro com o dobro
+do orçamento $4/7$ no Muro em U. **Batem todos.** O problema é de cobertura, não
+de conteúdo — o que muda a urgência, mas não a conclusão: são números que ninguém
+volta a conferir se algum CSV for regenerado.
+
+**Nada foi mudado na tese.** Nenhum número desta secção precisou de correção.
