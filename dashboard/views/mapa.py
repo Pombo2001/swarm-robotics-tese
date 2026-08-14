@@ -16,6 +16,7 @@ ecrã para que ninguém tire conclusões daqui com metade das condições medida
 """
 import json
 import os
+import sys
 
 import pandas as pd
 from nicegui import ui
@@ -62,6 +63,51 @@ def _estado_f2():
             return json.load(fh)
     except (OSError, ValueError):
         return None
+
+
+def _limiar_projetado():
+    """O limiar ainda é alcançável? Aritmética sobre o que já fechou.
+
+    A tabela por baixo mostra os braços com avaliação no disco (PPO e SAC, a
+    zero). O braço do GNN ainda corre, e é dele que o limiar depende — sem esta
+    linha, um leitor com 17 de 21 execuções à frente não tem como saber que a
+    resposta já está selada desde 13 de agosto: faltam mais convergências do que
+    execuções restantes, e a contagem que as conta é a de TREINO, que é o
+    majorante otimista da avaliação.
+
+    A conta não vive aqui: importa-se do `projetar_limiar_f2.py`, que é onde o
+    pré-registo a fixou. Duplicá-la seria criar duas réguas para o mesmo número.
+    """
+    e = _estado_f2()
+    if not e or "gnn" not in e:
+        return
+    try:
+        sys.path.insert(0, os.path.join(_RAIZ, "scripts"))
+        from projetar_limiar_f2 import projetar
+        p = projetar(e)
+    except Exception:                                        # noqa: BLE001
+        return
+    if p["estado"] == "em_aberto":
+        texto, cor = ("Limiar ainda em aberto: faltam %d convergências e restam "
+                      "%d execuções (GNN, contagem de treino)."
+                      % (p["faltam"], p["restantes"]), theme.INK_MUTED)
+    elif p["estado"] == "atingido":
+        texto, cor = ("Limiar ATINGIDO: %d execuções convergentes de %d."
+                      % (p["n_convergentes"], p["n_fechados"]), "#4ade80")
+    else:
+        texto, cor = (
+            "Limiar INALCANÇÁVEL: faltam %d convergências e restam %d execuções "
+            "(GNN: %d convergentes em %d fechadas, contagem de TREINO — o "
+            "majorante otimista da avaliação). Pela emenda 21 do pré-registo, a "
+            "QI7 reporta-se como negativa com o número declarado. Qual das "
+            "leituras da secção — nenhum resolve, ou resolve em k das %d — "
+            "decide-se com a avaliação do GNN, que ainda não existe."
+            % (p["faltam"], p["restantes"], p["n_convergentes"],
+               p["n_fechados"], p["total"]), "#ffb020")
+    ui.label(texto).classes("text-xs mb-2").style(f"color:{cor}")
+    ui.label("Projeção sobre o instantâneo de %s · scripts/projetar_limiar_f2.py"
+             % p["medido_utc"]).classes("text-[10px] mb-2") \
+        .style(f"color:{theme.INK_MUTED}")
 
 
 def _texto_f2():
@@ -186,10 +232,13 @@ def _painel_f2():
     840 episódios ficaram no disco sem aparecer aqui: o resultado mais recente da
     tese, invisível no sítio que existe para o mostrar.
 
-    Não escreve veredicto nenhum sobre a QI7. O limiar sai do n do próprio CSV e
-    diz-se o que ele dá; qual das leituras da secção vai para a tese decide-se
-    com o braço do GNN, que ainda não fechou, e antecipá-lo aqui era escolher com
-    a régua errada (o `projetar_limiar_f2.py` chegou a fazê-lo).
+    Ver também `_limiar_projetado`, que diz se o limiar ainda é alcançável.
+
+    Não ESCOLHE a leitura da secção. Há duas coisas diferentes, e a vista faz
+    só a primeira: dizer se o limiar ainda é alcançável é aritmética sobre o que
+    já fechou; escolher entre (B) «nenhum resolve» e (C) «resolve em k das 21»
+    depende do `eval_by_run.csv` do GNN, que ainda não existe. Confundir as duas
+    foi o erro que o `projetar_limiar_f2.py` cometeu e que se corrigiu a 13 ago.
     """
     r = data.f2_resultados()
     if not r:
@@ -203,6 +252,7 @@ def _painel_f2():
             "convergentes em pelo menos um algoritmo."
             % (r["episodios"], r["n"], r["n"], r["limiar"])
         ).classes("text-xs mb-2").style(f"color:{theme.INK_MUTED}")
+        _limiar_projetado()
 
         with ui.grid(columns=5).classes("w-full gap-px"):
             for cab in ("algoritmo", "execuções", "convergentes",

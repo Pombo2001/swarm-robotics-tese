@@ -127,6 +127,36 @@ def _b_ou_c(n_conv_treino):
     print("    majorante otimista da ressalva 1 — não são o k da secção.")
 
 
+def projetar(e):
+    """A aritmética do limiar, sem imprimir nada — para quem a queira mostrar.
+
+    Existe porque o dashboard precisa exatamente destes números e copiá-los
+    para lá criaria a mesma conta em dois sítios: o defeito que este projeto
+    apanhou a 5 ago com o custo do percurso (13,4% num sítio, 17,0% no outro).
+    A conta do limiar vive aqui; quem a mostra, importa-a.
+
+    Devolve `estado` em {'atingido', 'inalcancavel', 'em_aberto'}. Note-se que
+    'inalcancavel' NÃO escolhe a leitura da secção: diz que a (A) caiu, e a
+    escolha entre (B) e (C) continua a depender do `eval_by_run.csv` do GNN.
+    """
+    gnn = e["gnn"]
+    total = gnn.get("runs_previstos") or 21
+    limiar = -(-5 * total // 7)          # ⌈5/7 × n⌉, a mesma conta do pré-registo
+    fechados = gnn.get("runs_fechados", [])
+    n_fech = len(fechados)
+    n_conv = sum(1 for r in fechados if r["recolhas"] > 0)
+    restantes = total - n_fech
+    faltam = limiar - n_conv             # convergências ainda necessárias
+    return {
+        "medido_utc": e.get("medido_utc", "?"),
+        "total": total, "limiar": limiar,
+        "n_fechados": n_fech, "n_convergentes": n_conv,
+        "n_falhas": n_fech - n_conv, "restantes": restantes, "faltam": faltam,
+        "estado": ("atingido" if faltam <= 0 else
+                   "inalcancavel" if faltam > restantes else "em_aberto"),
+    }
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--horas-por-run", type=float, default=13.0,
@@ -139,15 +169,10 @@ def main():
     with open(ESTADO, encoding="utf-8") as fh:
         e = json.load(fh)
 
-    gnn = e["gnn"]
-    total = gnn.get("runs_previstos") or 21
-    limiar = -(-5 * total // 7)          # ⌈5/7 × n⌉, a mesma conta do pré-registo
-    fechados = gnn.get("runs_fechados", [])
-    n_fech = len(fechados)
-    n_conv = sum(1 for r in fechados if r["recolhas"] > 0)
-    n_falhas = n_fech - n_conv
-    restantes = total - n_fech
-    faltam = limiar - n_conv             # convergências ainda necessárias
+    p = projetar(e)
+    total, limiar = p["total"], p["limiar"]
+    n_fech, n_conv = p["n_fechados"], p["n_convergentes"]
+    n_falhas, restantes, faltam = p["n_falhas"], p["restantes"], p["faltam"]
 
     print("=" * 74)
     print("PROJEÇÃO DO LIMIAR DO F2  (medido em %s)" % e.get("medido_utc", "?"))
