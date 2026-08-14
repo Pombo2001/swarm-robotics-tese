@@ -165,19 +165,21 @@ def _avisar_falhas(csvs):
         print("  " + "!" * 70)
 
 
-def analisar_f2():
-    print()
-    print("=" * 78)
-    print("F2 — TREINO NATIVO")
-    print("=" * 78)
-    hits = sorted(glob.glob(F2_GLOB, recursive=True))
+def medir_f2(glob_csv=None):
+    """As métricas do F2 em números, sem imprimir nada.
+
+    Existe separada do `analisar_f2()` porque o `fechar_qi7.py` precisa
+    exatamente destes valores para os escrever na secção. Copiá-los para lá
+    criaria a mesma conta em dois sítios — o defeito que este projeto apanhou a
+    5 ago com o custo do percurso (13,4% num sítio, 17,0% no outro). A conta
+    vive aqui; quem a escreve, importa-a.
+
+    Devolve `None` se ainda não houver CSV nenhum.
+    """
+    hits = sorted(glob.glob(glob_csv or F2_GLOB, recursive=True))
     if not hits:
-        print("  SEM DADOS: nada em results/mapa_grande/f2*/")
-        print("  (a campanha arranca a 3 ago, quando o megaB largar a máquina)")
-        return
+        return None
     df = pd.concat([pd.read_csv(h) for h in hits], ignore_index=True)
-    print("  fonte: %s" % ", ".join(os.path.relpath(h, BASE) for h in hits))
-    _avisar_falhas(hits)
     c_alg = _col(df, "Algorithm", "Algoritmo", "Algo")
     c_run = _col(df, "Run", "run")
     c_food = _col(df, "food_collected", "Recolhas")
@@ -189,63 +191,103 @@ def analisar_f2():
         sub = df[df[c_alg].str.upper() == algo] if c_alg else df
         if sub.empty:
             continue
-        g = sub.groupby(c_run).agg(food=(c_food, "mean"),
-                                   suc=(c_suc, "mean") if c_suc else (c_food, "mean"))
-        por_algo[algo] = g.sort_index()
-
+        g = sub.groupby(c_run).agg(
+            food=(c_food, "mean"),
+            suc=(c_suc, "mean") if c_suc else (c_food, "mean")).sort_index()
+        por_algo[algo] = {
+            "n": len(g),
+            "media": float(g["food"].mean()),
+            "dp": float(g["food"].std()),
+            "sucesso": float(g["suc"].mean()) if c_suc else None,
+            "convergentes": int((g["food"] > 0).sum()),
+            "cem_por_cento": int((g["suc"] >= 1.0).sum()) if c_suc else 0,
+            "medias_por_run": [float(v) for v in g["food"]],
+            "porta": (float(sub[c_porta].mean()) if c_porta else None),
+            "min": float(g["food"].min()), "max": float(g["food"].max()),
+        }
     if not por_algo:
-        print("  !! nenhum algoritmo encontrado no CSV")
-        return
+        return None
 
-    n_runs = max(len(g) for g in por_algo.values())
-    print("\n  M2 — convergência (DESCRITIVO; não se infere sobre proporções "
-          "— ver emenda 19)")
-    for algo, g in por_algo.items():
-        com_recolha = int((g["food"] > 0).sum())
-        a_100 = int((g["suc"] >= 1.0).sum()) if c_suc else 0
-        print("    %-4s n=%-2d  %6.1f ± %5.1f   ≥1 recolha: %d/%d   100%%: %d/%d"
-              % (algo, len(g), g["food"].mean(), g["food"].std(),
-                 com_recolha, len(g), a_100, len(g)))
-
-    print("\n  M1 — magnitude (Mann-Whitney bilateral sobre médias por run)")
+    m1 = []
     for x, y in combinations([a for a in ALGOS if a in por_algo], 2):
-        a, b = por_algo[x]["food"], por_algo[y]["food"]
-        U, p = mannwhitneyu(a, b, alternative="two-sided", method="exact")
-        d = cliffs_delta(list(a), list(b))
-        print("    %-4s vs %-4s   p = %.4f   δ = %+.2f" % (x, y, p, d))
-    print("    (expectativa pré-registada: a GNN NÃO é inferior a nenhum dos dois;")
-    print("     não foi pré-registada superioridade)")
+        a = por_algo[x]["medias_por_run"]
+        b = por_algo[y]["medias_por_run"]
+        _U, p = mannwhitneyu(a, b, alternative="two-sided", method="exact")
+        m1.append({"a": x, "b": y, "p": float(p),
+                   "delta": cliffs_delta(list(a), list(b))})
 
-    if c_porta:
-        print("\n  M3 — uso da porta cooperativa")
-        for algo in por_algo:
-            sub = df[df[c_alg].str.upper() == algo]
-            print("    %-4s fração de episódios com porta aberta: %.2f"
-                  % (algo, sub[c_porta].mean()))
-    else:
-        print("\n  M3 — coluna da porta ausente do CSV (%s); registar porquê." % c_porta)
-
-    print()
-    print("  REGRA DE DECISÃO DA QI7 (pré-comprometida):")
     # A regra do pré-registo é "≥5/7 runs convergentes". Com a emenda 19 o n
     # passou de 7 para 21, e 5/7 tem de ser lido como a PROPORÇÃO que era —
     # 71,4% — e não como o número 5. Ler o «5» à letra com n=21 baixava a
     # fasquia de 71% para 24% por acidente de aritmética, o que é enfraquecer a
     # regra de decisão depois de escrita. Declarado na emenda 21, antes dos dados.
+    n_runs = max(v["n"] for v in por_algo.values())
     limiar = int(math.ceil(5.0 / 7.0 * n_runs))
-    max_conv = max(int((g["food"] > 0).sum()) for g in por_algo.values())
+    campeao = max(por_algo, key=lambda a: por_algo[a]["convergentes"])
+    max_conv = por_algo[campeao]["convergentes"]
+
+    return {
+        "fontes": [os.path.relpath(h, BASE) for h in hits],
+        "n_runs": n_runs, "limiar": limiar,
+        "por_algo": por_algo, "m1": m1,
+        "algo_campeao": campeao, "max_convergentes": max_conv,
+        "tem_porta": c_porta is not None,
+        # A leitura da secção, pela regra pré-comprometida (ver o bloco de
+        # comentário na Discussão de `seccao_mapa_grande.tex`).
+        "leitura": ("A" if max_conv >= limiar else "B" if max_conv == 0 else "C"),
+    }
+
+
+def analisar_f2():
+    print()
+    print("=" * 78)
+    print("F2 — TREINO NATIVO")
+    print("=" * 78)
+    m = medir_f2()
+    if m is None:
+        print("  SEM DADOS: nada em results/mapa_grande/f2*/")
+        print("  (a campanha arranca a 3 ago, quando o megaB largar a máquina)")
+        return
+    print("  fonte: %s" % ", ".join(m["fontes"]))
+    _avisar_falhas(sorted(glob.glob(F2_GLOB, recursive=True)))
+
+    print("\n  M2 — convergência (DESCRITIVO; não se infere sobre proporções "
+          "— ver emenda 19)")
+    for algo, v in m["por_algo"].items():
+        print("    %-4s n=%-2d  %6.1f ± %5.1f   ≥1 recolha: %d/%d   100%%: %d/%d"
+              % (algo, v["n"], v["media"], v["dp"],
+                 v["convergentes"], v["n"], v["cem_por_cento"], v["n"]))
+
+    print("\n  M1 — magnitude (Mann-Whitney bilateral sobre médias por run)")
+    for t in m["m1"]:
+        print("    %-4s vs %-4s   p = %.4f   δ = %+.2f"
+              % (t["a"], t["b"], t["p"], t["delta"]))
+    print("    (expectativa pré-registada: a GNN NÃO é inferior a nenhum dos dois;")
+    print("     não foi pré-registada superioridade)")
+
+    if m["tem_porta"]:
+        print("\n  M3 — uso da porta cooperativa")
+        for algo, v in m["por_algo"].items():
+            print("    %-4s fração de episódios com porta aberta: %.2f"
+                  % (algo, v["porta"]))
+    else:
+        print("\n  M3 — coluna da porta ausente do CSV; registar porquê.")
+
+    print()
+    print("  REGRA DE DECISÃO DA QI7 (pré-comprometida):")
     print("    limiar: %d de %d runs (5/7 = 71,4%%, a proporção pré-registada)"
-          % (limiar, n_runs))
-    if max_conv >= limiar:
+          % (m["limiar"], m["n_runs"]))
+    if m["leitura"] == "A":
         print("    %d/%d runs convergentes em pelo menos um algoritmo →"
-              % (max_conv, n_runs))
+              % (m["max_convergentes"], m["n_runs"]))
         print("    a QI7 SOBE A RESULTADO: secção nova no Cap. de Resultados + QI7 nas")
         print("    Conclusões, desde que M1 seja interpretável.")
     else:
         print("    máximo de %d/%d runs convergentes (< %d) → resultado NEGATIVO "
-              "honesto." % (max_conv, n_runs, limiar))
+              "honesto." % (m["max_convergentes"], m["n_runs"], m["limiar"]))
         print("    Reporta-se na mesma: evidencia o limite dos três métodos sob")
         print("    composição+escala. NÃO se repete a campanha com outros parâmetros.")
+        print("    Leitura da secção: (%s)." % m["leitura"])
 
 
 def verificar():
