@@ -65,15 +65,52 @@ MAPA = "mapa_grande"
 
 
 def _carregar(algo, caminho):
-    """Carrega um campeão da Stable-Baselines3 (só PPO e SAC: o GNN tem o seu
-    próprio formato e o seu braço ainda não fechou)."""
+    """Carrega um campeão: PPO/SAC da Stable-Baselines3, ou um genoma do GNN.
+
+    O GNN entrou aqui a 17 ago, quando o seu braço fechou. Sem ele, este script
+    respondia «o PPO fica-se a 76 m» e mais nada — e a pergunta que interessa
+    não é onde o PPO para, é **porque é que o GNN passa e ele não**. Medir os
+    dois com a mesma régua, no mesmo mapa e com as mesmas sementes é o que
+    transforma dois números soltos numa comparação.
+    """
     if algo == "ppo":
         from stable_baselines3 import PPO
         return PPO.load(caminho, device="cpu")
     if algo == "sac":
         from stable_baselines3 import SAC
         return SAC.load(caminho, device="cpu")
-    raise SystemExit("algo tem de ser ppo ou sac (o GNN não é um modelo SB3)")
+    if algo == "gnn":
+        import torch
+        from src.agents.gnn_agent_3d import GNNAgent3D
+        cfg = os.path.join(PROJECT_ROOT, "configs", "foraging.yaml")
+        env_tmp = SwarmForagingEnv3D(config_path=cfg)
+        agente = GNNAgent3D("eval", env_tmp.action_space("robot_0"), cfg)
+        agente.load_state_dict(torch.load(caminho, weights_only=True))
+        agente.eval()
+        return agente
+    raise SystemExit("algo tem de ser ppo, sac ou gnn")
+
+
+def _acoes(env, algo, modelo, obs_dict):
+    """As ações de todos os agentes, no formato de cada arquitetura.
+
+    O GNN avalia o enxame INTEIRO de uma vez (a atenção é sobre a vizinhança);
+    as políticas MLP do PPO/SAC avaliam um agente de cada vez. É a mesma
+    distinção do `heatmaps._policy_actions`, e a razão pela qual só uma delas
+    aceita um enxame de outro tamanho.
+    """
+    if algo == "gnn":
+        import torch
+        obs = np.array([obs_dict[a] for a in env.agents], dtype=np.float32)
+        with torch.no_grad():
+            acts = modelo(torch.tensor(obs)).cpu().numpy()
+        return {a: acts[i] for i, a in enumerate(env.agents)}
+    saida = {}
+    for agente in env.agents:
+        obs = np.array(obs_dict[agente], dtype=np.float32)
+        accao, _ = modelo.predict(obs, deterministic=True)
+        saida[agente] = accao
+    return saida
 
 
 def _sanidade_da_regua(env):
@@ -109,11 +146,7 @@ def episodio_instrumentado(env, algo, modelo, seed):
     d_min, passo_min = float(pot0.min()), 0
     passos = 0
     while True:
-        acoes = {}
-        for agente in env.agents:
-            obs = np.array(obs_dict[agente], dtype=np.float32)
-            accao, _ = modelo.predict(obs, deterministic=True)
-            acoes[agente] = accao
+        acoes = _acoes(env, algo, modelo, obs_dict)
         obs_dict, _, terms, truncs, _ = env.step(acoes)
         passos += 1
 
@@ -150,7 +183,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--models-dir", required=True,
                    help="pasta da campanha (ex.: ~/mapa_F2_ppo)")
-    p.add_argument("--algo", required=True, choices=["ppo", "sac"])
+    p.add_argument("--algo", required=True, choices=["ppo", "sac", "gnn"])
     p.add_argument("--episodes", type=int, default=3,
                    help="episódios por campeão (o objetivo é o mecanismo, não a "
                         "precisão da média: 3 chegam para separar 10 m de 100 m)")
@@ -163,12 +196,23 @@ def main():
     args = p.parse_args()
 
     raiz = os.path.expanduser(args.models_dir)
-    padrao = os.path.join(raiz, "models_%s" % args.algo,
-                          "%s_3d_final_%s_run*.zip" % (args.algo, MAPA))
-    campeoes = sorted(glob.glob(padrao),
-                      key=lambda f: int(re.search(r"run(\d+)", f).group(1)))
+    if args.algo == "gnn":
+        # O evolutivo guarda um `.pth` por execução na própria pasta, e o
+        # ficheiro SEM sufixo `_runN` é o campeão global — entraria como uma
+        # execução a mais, duplicando a melhor. O padrão exige o sufixo.
+        padroes = [os.path.join(raiz, "gnn_3d_best_%s_run*.pth" % MAPA),
+                   os.path.join(raiz, "models", "gnn_3d_best_%s_run*.pth" % MAPA)]
+    else:
+        padroes = [os.path.join(raiz, "models_%s" % args.algo,
+                                "%s_3d_final_%s_run*.zip" % (args.algo, MAPA))]
+    campeoes = []
+    for padrao in padroes:
+        campeoes = sorted(glob.glob(padrao),
+                          key=lambda f: int(re.search(r"run(\d+)", f).group(1)))
+        if campeoes:
+            break
     if not campeoes:
-        raise SystemExit("[!] nenhum campeão em %s" % padrao)
+        raise SystemExit("[!] nenhum campeão em %s" % " nem ".join(padroes))
     if args.runs:
         campeoes = campeoes[:args.runs]
 

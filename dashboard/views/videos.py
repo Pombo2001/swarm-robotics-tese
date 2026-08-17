@@ -63,9 +63,27 @@ def _zoom(session: str, filename: str):
 
 
 def _video_card(session: str, algo: str, scenario: str, show_metric=True, height="clamp(180px,26vh,340px)"):
-    """Cartão de um vídeo (algo×cenário) com badge colorido, GIF e métrica."""
+    """Cartão de um vídeo (algo×cenário) com badge colorido, GIF e métrica.
+
+    Quando o vídeo não existe NESTA campanha mas existe noutra, mostra-se o de
+    lá **com a campanha escrita por cima**. O mapa grande obrigou a isto: os
+    três braços correram em campanhas separadas (GNN a 16 ago, PPO a 7, SAC a
+    10), por serem streams independentes no servidor. Sem esta procura, a vista
+    que existe para comparar algoritmos mostrava um vídeo e dois «sem vídeo» —
+    e a comparação que o cenário existe para fazer não se via em lado nenhum.
+
+    O rótulo não é decoração: sem ele, três GIFs lado a lado leem-se como a
+    mesma campanha, e as recolhas por baixo passariam a comparar-se como se
+    tivessem corrido no mesmo dia com o mesmo código.
+    """
     meta = config.ALGO_META.get(algo.upper(), {"color": "#64748b", "icon": "❓", "label": algo.upper()})
     fn = data.video_for(session, algo, scenario)
+    fonte = session
+    if not fn:
+        outras = [s for s in data.sessoes_com_video(algo, scenario) if s != session]
+        if outras:
+            fonte = outras[0]
+            fn = data.video_for(fonte, algo, scenario)
     # `w-full`: dentro de uma `ui.column()` os filhos alinham ao início e não
     # esticam, e o cartão encolhia à largura do rótulo «GNN (Evolutivo)» —
     # levando o vídeo atrás dele. Nos modos que põem o cartão direito na grelha
@@ -78,11 +96,17 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
             ui.label(meta["icon"]).classes("text-lg")
             ui.label(meta["label"]).classes("text-sm font-bold").style(f"color:{meta['color']}")
         if fn:
-            ui.image(_url(session, fn)).classes("w-full rounded-lg cursor-pointer bg-black/30") \
+            ui.image(_url(fonte, fn)).classes("w-full rounded-lg cursor-pointer bg-black/30") \
                 .style(f"height:{height};object-fit:contain") \
-                .on("click", lambda _, f=fn: _zoom(session, f))
+                .on("click", lambda _, f=fn, s=fonte: _zoom(s, f))
+            if fonte != session:
+                ui.label("de outra campanha: %s" % fonte).classes("text-[10px]") \
+                    .style(f"color:{theme.INK_MUTED}")
             if show_metric:
-                _metric_chip(session, algo, scenario)
+                # A métrica é a da campanha DE ONDE VEIO o vídeo, não a da
+                # sessão escolhida: emprestar o número da outra é o defeito que
+                # o `pontuacao_campanha` foi criado para fechar.
+                _metric_chip(fonte, algo, scenario)
         else:
             with ui.element("div").classes(
                     "w-full rounded-lg bg-slate-900/50 flex flex-col items-center "
