@@ -300,6 +300,142 @@ def f2(texto):
     _f2_contra_texto(texto)
 
 
+def medir_f2_seguro():
+    """O `medir_f2()` do analise_mapa_grande, ou None se não houver dados."""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from analise_mapa_grande import medir_f2
+        return medir_f2()
+    except Exception:                                        # noqa: BLE001
+        return None
+
+
+def trabalho_futuro():
+    """O item do mapa composto nos Trabalhos Futuros (está no `main.tex`).
+
+    Este item afirma coisas que **nenhum outro verificador vê**, por viverem
+    fora da `seccao_mapa_grande.tex`: quantas execuções tinham o pico do
+    `fitness` nos últimos 20% do treino, e o que muda quando se duplica o
+    horizonte. São números de diagnóstico, das curvas de treino e do
+    `horizonte_gnn.csv` — e o `horizonte_gnn.csv` é um ficheiro que vai crescer
+    (mais episódios por célula), pelo que a probabilidade de o texto e os dados
+    divergirem é alta. Daí estar aqui.
+    """
+    main_tex = os.path.join(RAIZ, "Tese", "main.tex")
+    if not os.path.exists(main_tex):
+        return
+    with open(main_tex, encoding="utf-8") as fh:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", fh.read())
+    i = tex.find("O mapa composto, com o orçamento separado em três causas")
+    if i < 0:
+        print("\n  [i] o item do mapa composto não está nos Trabalhos Futuros "
+              "— nada a verificar.")
+        return
+    item = tex[i:i + 3000]
+
+    print()
+    print("=" * 74)
+    print("TRABALHOS FUTUROS (item do mapa composto)  vs  as medições")
+    print("=" * 74)
+
+    # ── as curvas de treino: quantas ainda subiam, e onde caiu o pico ────────
+    curvas = sorted(glob.glob(os.path.join(
+        RAIZ, "results", "mapa_grande", "f2_gnn", "logs",
+        "gnn_3d_training_mapa_grande_run*.csv")))
+    if curvas:
+        picos, n_ultimos = [], 0
+        for f in curvas:
+            d = pd.read_csv(f)
+            if "best_fitness" not in d or len(d) < 2:
+                continue
+            fracao = d.best_fitness.idxmax() / (len(d) - 1)
+            picos.append(fracao)
+            n_ultimos += fracao > 0.8
+        compara("execuções com o pico nos últimos 20%", float(n_ultimos),
+                le(r"Em \$(\d+)\$ das \$21\$ execuções o melhor", item,
+                   "execuções com o pico no fim"), tol=0.0)
+        compara("geração do pico (mediana, % do orçamento)",
+                100.0 * float(np.median(picos)),
+                le(r"em mediana, a \$(\d+)\\%\$ do orçamento", item,
+                   "mediana do pico"), tol=1.0)
+
+    # ── o teste do horizonte ────────────────────────────────────────────────
+    fp = os.path.join(RAIZ, "results", "mapa_grande", "horizonte_gnn.csv")
+    if os.path.exists(fp):
+        h = pd.read_csv(fp)
+        por = {k: g.groupby("Run").recolhas.max()
+               for k, g in h.groupby("horizonte")}
+        if 2000 in por and 4000 in por:
+            compara("execuções com recolha a 2000 passos",
+                    float((por[2000] > 0).sum()),
+                    le(r"execuções com pelo menos uma recolha apenas de "
+                       r"\$(\d+)\$ para \$\d+\$", item, "recolhas a 2000"),
+                    tol=0.0)
+            compara("execuções com recolha a 4000 passos",
+                    float((por[4000] > 0).sum()),
+                    le(r"execuções com pelo menos uma recolha apenas de "
+                       r"\$\d+\$ para \$(\d+)\$", item, "recolhas a 4000"),
+                    tol=0.0)
+            compara("melhor execução a 2000 passos (recolhas)",
+                    float(por[2000].max()),
+                    le(r"\(de \$(\d+)\$ para \$\d+\$ recolhas por episódio\)",
+                       item, "melhor a 2000"), tol=0.0)
+            compara("melhor execução a 4000 passos (recolhas)",
+                    float(por[4000].max()),
+                    le(r"\(de \$\d+\$ para \$(\d+)\$ recolhas por episódio\)",
+                       item, "melhor a 4000"), tol=0.0)
+            # A distância mediana ao ninho, nos dois horizontes. É o par que
+            # sustenta a distinção do item («mais percurso feito, não mais
+            # execuções a fechar») e o que mais mexeu quando os episódios por
+            # célula passaram de 1 para 3 — daí estar sob verificação.
+            dm = {k: g.groupby("Run").d_min.min().median()
+                  for k, g in h.groupby("horizonte")}
+            compara("distância mediana ao ninho a 2000 passos (m)", dm[2000],
+                    le(r"mediana ao ninho cair de \$([\d{},]+)\$ para", item,
+                       "d_min mediana a 2000"), tol=0.1)
+            compara("distância mediana ao ninho a 4000 passos (m)", dm[4000],
+                    le(r"cair de \$[\d{},]+\$ para \$([\d{},]+)\$\\,m", item,
+                       "d_min mediana a 4000"), tol=0.1)
+            # E a coerência com a avaliação oficial: ao horizonte pré-registado,
+            # este diagnóstico tem de reproduzir o k que a secção reporta.
+            m_ofic = medir_f2_seguro()
+            if m_ofic:
+                compara("k a 2000 passos vs o k da avaliação oficial",
+                        float(m_ofic["max_convergentes"]),
+                        float((por[2000] > 0).sum()), tol=0.0)
+            # «quatro execuções param a 5--13 m do ninho e não entram nele».
+            # O numeral está escrito por palavras, por isso a contagem não se
+            # extrai com o `le()`: lê-se o INTERVALO do texto e confirma-se que
+            # são mesmo quatro as execuções que nele caem sem recolher.
+            # «há execuções que param a 5--13 m do ninho e não entram nele
+            # mesmo com o dobro do tempo». O item deixou de as contar (eram
+            # quatro com um episódio por célula, são duas com três) — mas o
+            # intervalo continua a ser uma afirmação, e tem de conter alguma.
+            m_int = re.search(r"param a \$(\d+)\$--\$(\d+)\$\\,m do ninho e "
+                              r"não entram", item)
+            if m_int is None:
+                falhas.append("Trabalhos Futuros: não encontrei a frase das "
+                              "execuções presas perto do ninho")
+            else:
+                lo, hi = float(m_int.group(1)), float(m_int.group(2))
+                d4 = h[h.horizonte == 4000].groupby("Run").agg(
+                    dmin=("d_min", "min"), rec=("recolhas", "max"))
+                presas = d4[(d4.rec == 0) & (d4.dmin >= lo) & (d4.dmin <= hi)]
+                global conferidos
+                conferidos += 1
+                if len(presas):
+                    print("  [v] %-46s %d execução(ões): %s"
+                          % ("execuções presas a %g--%g m" % (lo, hi),
+                             len(presas),
+                             ", ".join("run %d a %.1f m" % (r, v)
+                                       for r, v in presas.dmin.items())))
+                else:
+                    print("  [X] execuções presas a %g--%g m: nenhuma"
+                          % (lo, hi))
+                    falhas.append("Trabalhos Futuros: o intervalo %g--%g m não "
+                                  "contém execução nenhuma" % (lo, hi))
+
+
 def _f2_contra_texto(texto):
     """A tabela, o M1--M3 e a Discussão do F2 contra o `medir_f2()`.
 
@@ -446,6 +582,7 @@ def main():
     f1(texto)
     orcamento(texto)
     f2(texto)
+    trabalho_futuro()
 
     print()
     print("=" * 74)
