@@ -90,13 +90,30 @@ transferência — que é o que a QI7 pergunta.
 **Sanidade dos ficheiros:** o zero do PPO não é avaria — os mesmos modelos dão
 68,3 recolhas/ep no Sandbox e 127,3 no Gargalo, contra 71,5 e 123,2 na tese.
 
-## F2 — treino nativo (arranca 3 ago)
+## F2 — treino nativo (FECHADO a 16 ago 2026)
 
-Ainda **não existe um único dado de F2**. Desenho em
-`docs/PRE_REGISTO_MAPA_GRANDE.md` (emendas 19 e 20, de 2 ago): 3 algoritmos ×
-**21 runs** (GNN @780 min, PPO/SAC @192 min) + um braço **exploratório** GNN
-@2340 min × 3 runs. Lança-se com `scripts/mapa_streamF2.sh preparar` e depois um
-tmux por stream, **cada um no seu diretório**.
+Desenho em `docs/PRE_REGISTO_MAPA_GRANDE.md` (emendas 19 a 24): 3 algoritmos ×
+**21 execuções** (GNN @780 min, PPO/SAC @192 min), avaliação determinística de
+20 episódios por execução.
+
+| pasta | fecho (`logs/_campanha_concluida.txt`) | resultado |
+|---|---|---|
+| `f2_grad_ppo/` | 7 ago 05:41 | 0,00 recolhas/ep em 21/21 |
+| `f2_grad_sac/` | 10 ago 17:00 | 0,00 recolhas/ep em 21/21 |
+| `f2_gnn/` | **16 ago 16:21** | 1,69 ± 3,62; **4/21** convergentes, 2 a 100% |
+
+O limiar de decisão era ⌈5/7 × 21⌉ = **15** (emenda 21) ⇒ **QI7 negativa**, com
+o k declarado — a leitura (C) do pré-registo. M1: p=0,3058, δ=+0,19 (não
+inferior, que era a expectativa pré-registada); M3: a porta abre em 43% dos
+episódios do GNN e em 0% dos gradientes.
+
+⛔ O braço **exploratório** GNN @2340 min × 3 da emenda 20 **não correu** —
+cancelado a 13 ago com o veredicto já selado (emenda 24). Não há dados dele, e
+não há de haver.
+
+O marcador canónico de conclusão é `logs/_campanha_concluida.txt`, escrito pelo
+pipeline. A linha `CONCLUÍDO` no `master.log` é decoração de um script de shell,
+e foi por ler essa que o *watcher* do exploratório se enganou.
 
 ## O que NÃO está aqui (fica no PC da torre)
 

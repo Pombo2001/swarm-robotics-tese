@@ -257,6 +257,51 @@ mais.
 execuções que resolvem e execuções a zero; o SAC não chega sequer a metade da
 magnitude dos outros braços em nenhuma das 28».
 
+### 17 ago — 1.4 — pré-registo vs reportado: 28 compromissos cumpridos, e o que faltava era um braço que nunca correu
+
+**Feito.** `scripts/verificar_preregistos.py` põe os três pré-registos lado a
+lado com o que a dissertação reporta: **29 compromissos**, dos quais 28
+verificados por medição ou por padrão no `.tex` e 1 remetido para leitura humana.
+A tabela é gerada, não escrita (`--escrever` → `docs/PREREGISTO_VS_REPORTADO.md`),
+por isso muda sozinha se um compromisso deixar de ser cumprido.
+
+O que ele confirma sem margem: o **desenho executado** é o pré-registado (3
+algoritmos × 21 execuções × 20 episódios, N=20, `max_steps=2000`,
+`required_to_eat=1`, 106 obstáculos — lidos dos CSV e do simulador, não do
+texto); as três campanhas fecharam **antes** do hard stop; M1--M3 e T1--T4 estão
+todas reportadas; o oitavo cenário **não** entrou nas tabelas dos sete; a M2
+continua descritiva com a razão declarada; e as células exploratórias do
+mega-treino que ninguém precisaria de publicar — o Sandbox a 20/21, a Perceção a
+17/21, o SAC no Gargalo a 7/21 — estão lá.
+
+**O achado é um desvio por declarar, e é do tipo que mais custa.** A emenda 20
+pré-registou um **braço exploratório de orçamento longo** (GNN @2340 min × 3
+execuções) para responder de antemão à objeção *«faltou treino»*. Ele **nunca
+correu**: a 13 de agosto, com o veredicto já selado pela aritmética, decidiu-se
+não o lançar. A decisão está certa e está registada no `PLANO_QUALIDADE.md` — mas
+**não estava no pré-registo**, que se compromete a datar todos os desvios, e a
+secção da dissertação invocava-o numa frase (*«o braço exploratório de orçamento
+longo responde apenas à objeção do orçamento»*) que o dava por existente. Quem
+lesse a secção contaria com um braço que não há.
+
+Corrigido nos dois sítios: **emenda 24** no pré-registo (o que se perde, o que
+não muda, e a distinção entre a decisão humana de 13 ago e a falha técnica do
+*watcher* a 10 ago) e a frase da secção, que passa a dizer que o braço não foi
+lançado e que a objeção do orçamento se responde por **medição sobre as 21
+execuções que existem** — medição que, honestamente, *sustenta* a objeção: em 19
+das 21 o pico do *fitness* está nos últimos 20% das gerações.
+
+⚠️ **O verificador foi posto à prova antes de se acreditar nele**
+(`tests/test_verificar_preregistos.py`, 8 ensaios): comentar a M2, meter o mapa
+grande na `tab:res_eval`, apagar a emenda do cancelamento, invocar o braço sem
+ressalva, trocar o valor da M3 e abrir um buraco na numeração das emendas — todas
+as mutações são apanhadas. A primeira é a que interessa: o `.tex` é lido **sem
+comentários**, porque a QI7 inteira viveu meses dentro deles e um parser ingénuo
+dá por reportado o que ainda não está.
+
+Ficou também atualizado o `results/mapa_grande/LEIA-ME.md`, que ainda anunciava
+«ainda não existe um único dado de F2» com a campanha fechada há um dia.
+
 ### 17 ago — 1.3 e E2 — bibliografia: as 19 com DOI batem, e os dois `.bib` estão sincronizados
 
 **Feito.** `scripts/verificar_bibliografia.py` compara cada entrada citada com

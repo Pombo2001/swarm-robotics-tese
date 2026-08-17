@@ -749,6 +749,41 @@ poder responder.
     Consequência no calendário: o GNN fecha ~16 ago em vez de ~14. O hard stop de
     22 ago mantém-se, e com ele a regra 4 dos compromissos de reporte.
 
+### 13 ago 2026 — o braço EXPLORATÓRIO da emenda 20 não corre (decisão registada)
+
+24. **`GNN @2340 min × 3 runs` — CANCELADO, e portanto sem dados.** O braço foi
+    pré-registado a 2 ago para responder de antemão à objeção *«faltou treino»*
+    se o F2 desse zero. A 13 ago, com **15 das 21 execuções do braço principal
+    fechadas e 3 convergentes**, o veredicto já estava selado pela aritmética —
+    faltavam 12 convergências e restavam 6 execuções, e a contagem do treino é o
+    majorante otimista da avaliação. **O utilizador decidiu não o lançar**: com o
+    limiar fora de alcance, um n=3 não muda o veredicto da QI7 e competiria pelo
+    CPU com o `mapaF2g`, que ainda tinha 6 execuções por fechar dentro da janela
+    até 22 ago.
+
+    **O que isto tira e o que não tira.** A emenda 20 já declarava que este braço
+    **não entra em M1-M3, não se compara com os principais e não altera o
+    veredicto do F2** — nada do que a QI7 responde dependia dele, e nada muda nas
+    métricas, na regra de decisão ou nos compromissos de reporte. O que se perde é
+    a resposta *experimental* à objeção do orçamento. Essa objeção passa a ser
+    respondida por **medição sobre as 21 execuções que existem**, e não por um
+    braço de n=3: em 19 das 21 o melhor *fitness* surge nos últimos 20% das
+    gerações (mediana do máximo a 95% do orçamento), o que **suporta** a objeção
+    em vez de a refutar — o orçamento não chegou ao planalto. Está reportado nos
+    Trabalhos Futuros da dissertação, com essa leitura e com o rótulo de
+    diagnóstico, não de resultado confirmatório.
+
+    ⚠️ O *watcher* automático (`f2lwatch`) que devia lançá-lo quando o stream dos
+    gradientes fechasse **também não o lançou**, por ler o sítio errado: esperava
+    `CONCLUÍDO` no `mapa_F2grad_master.log` e a conclusão canónica estava em
+    `logs/_campanha_concluida.txt`. As duas coisas são independentes — a decisão
+    de cancelar é de 13 ago e é humana; a falha do watcher é de 10 ago e é
+    técnica. Registam-se as duas para que o cancelamento não pareça, mais tarde,
+    ter sido um acidente racionalizado.
+
+    Verificado por `scripts/verificar_preregistos.py`, que falha enquanto um
+    braço pré-registado não tiver dados **nem** declaração datada.
+
 ---
 
 *Assinatura temporal: este plano existe no git antes de o mapa ter sido treinado uma
