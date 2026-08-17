@@ -1034,22 +1034,16 @@ Duas notas sobre a leitura da Figura~\ref{fig:cenarios_3d}, ambas consequência 
 
 \begin{enumerate}
     \item \textbf{Foraging Aberto (Sandbox):} Cenário base sem barreiras fixas. Contém os agentes, obstáculos dinâmicos e um ninho móvel. Serve para aferir a capacidade pura de cooperação e gestão de energia sem entropia espacial acrescida.
-    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_sandbox.png} \caption{Cenário Sandbox no visualizador.} \end{figure}
     
     \item \textbf{Beco Sem Saída (Muro em U):} Um grande obstáculo em forma de ``U'' bloqueia a linha direta ao ninho. A parede superior tem $14$\,m e as pernas laterais têm $10$\,m. Os agentes começam do lado de fora da ``taça'' e têm de explorar lateralmente as aberturas de $7$\,m. Avalia a exploração prolongada em detrimento da navegação gananciosa.
-    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_u_wall.png} \caption{Cenário Muro em U.} \end{figure}
 
     \item \textbf{Gargalo (Porta Estreita):} A arena é cortada a meio por uma parede contínua, deixando apenas uma passagem de $2{,}5$\,m de largura. Obriga a um alinhamento e gestão do fluxo do enxame, punindo gravemente o congestionamento desenfreado.
-    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_bottleneck.png} \caption{Cenário Gargalo.} \end{figure}
 
     \item \textbf{Quatro Salas (Labirinto):} Duas grandes paredes cruzam a arena vertical e horizontalmente, criando quatro salas isoladas ligadas apenas por aberturas de $2{,}5$\,m de largura. Os agentes começam no extremo oposto ao ninho, exigindo memória temporal e navegação estruturada de longo termo.
-    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_four_rooms.png} \caption{Cenário Quatro Salas.} \end{figure}
 
     \item \textbf{Porta Cooperativa:} Similar ao Gargalo, mas a passagem de $3$\,m de largura encontra-se bloqueada por um portão físico. A porta só abre (deslizando para fora do caminho, com realce visual no \textit{dashboard}) quando no mínimo 3 agentes ocupam a zona de pressão em simultâneo. Por exigir uma sincronização mais demorada, este cenário dispõe de um horizonte temporal alargado de $800$ passos (face aos $500$ dos restantes), dando margem para que o enxame coordene a abertura e ainda alcance o ninho. Foca-se em comportamentos de sincronização sem comunicação explícita.
-    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_cooperative_door.png} \caption{Cenário Porta Cooperativa.} \end{figure}
 
     \item \textbf{Perceção Cooperativa (Alvo Móvel):} A noção de ``ninho físico'' desaparece. O alvo de interesse viaja livremente pelo mapa ao dobro da velocidade normal ($0{,}03$\,m/s). Só é considerado capturado quando $3$ agentes se aproximam a menos de $4$\,m de distância e distribuem-se num raio de 360\textdegree{} em redor do mesmo, testando manobras de cerco e perseguição.
-    %\begin{figure}[!htbp] \centering \includegraphics[width=0.6\textwidth]{images/scen_perception.png} \caption{Cenário Perceção Cooperativa.} \end{figure}
 
     \item \textbf{Porta Cooperativa com Alternativa (\textit{Bypass}):} Variante da Porta Cooperativa desenhada como problema de \emph{recompensa enganadora} (\textit{deceptive}). A barreira horizontal mantém a porta central de $3$\,m (que continua a exigir 3 agentes na zona de pressão), mas o segmento direito da barreira termina antes da fronteira da arena, deixando uma abertura permanentemente livre de $4$\,m junto à parede leste --- um percurso alternativo que dispensa cooperação. Uma parede defletora, colocada mais a norte no mesmo lado, obriga quem usa a alternativa a afastar-se temporariamente do ninho, tornando o percurso alternativo cerca de duas vezes mais longo do que a passagem pela porta. A rota mais curta atrai, assim, o enxame para a porta (que exige coordenação), enquanto a descoberta da alternativa exige contrariar o gradiente de aproximação ao objetivo --- a propriedade que faz deste o cenário de referência para a QI6 (procura por novidade, Secção~\ref{sec:questoes_investigacao}). Pelo horizonte de exploração acrescido, o limite temporal é alargado para $1000$ passos.
 \end{enumerate}

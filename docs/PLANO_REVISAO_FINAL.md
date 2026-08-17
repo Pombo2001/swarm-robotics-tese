@@ -257,6 +257,20 @@ mais.
 execuções que resolvem e execuções a zero; o SAC não chega sequer a metade da
 magnitude dos outros braços em nenhuma das 28».
 
+### 17 ago — 3.3 — limpeza: seis figuras fantasma fora, quatro entradas do `.bib` ficam
+
+As **seis linhas comentadas** com `\includegraphics{images/scen_*.png}` saíram do
+`main.tex`: apontavam para ficheiros que não existem e as plantas dos sete
+cenários já estão na Figura~\ref{fig:cenarios_topo}. Só confundiam quem lesse o
+fonte. 131 páginas, 0 *overfulls*, 0 referências indefinidas depois da remoção.
+
+As **quatro entradas não citadas** do `.bib` (`elrod2025gnn`, `heimann2024runtime`,
+`onori2024adaptive`, `schmickl2025gnn`) **ficam**. Não entram no PDF — o
+`biblatex` só imprime o que é citado —, e uma delas está no `screening.csv` da
+revisão sistemática. Apagar uma referência que alguém leu custa mais do que
+deixá-la: se forem restos, são restos invisíveis; se forem leituras por integrar,
+apagá-las perde-as. 👤 Decisão de uma linha, se quiseres o contrário.
+
 ### 17 ago — 2.1, 2.2 e 2.3 — o dashboard: a tabela bate, o inventário não batia, e três figuras mostravam o melhor caso
 
 **2.1 — feito.** `scripts/verificar_dashboard.py` compara o que o dashboard
