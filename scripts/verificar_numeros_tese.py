@@ -1436,6 +1436,30 @@ def verificar_robustez():
                          % (m.group(1), len(retencoes)))
 
     # "O controlador evolutivo (…) retém 92--97\%"
+    # A legenda passou a declarar que a base é o campeão e não a média das sete
+    # execuções, e cita o par do Muro em U para o mostrar. São dois números de
+    # FONTES DIFERENTES na mesma frase — exatamente o género que se copia mal —,
+    # por isso confirmam-se um contra o seu CSV e o outro contra o da campanha.
+    m = re.search(r"no Muro em U, \$(\d+)\$ contra \$([\d{},]+)\$ recolhas/ep",
+                  tex)
+    if m:
+        base_uw = pd.read_csv(os.path.join(d_eval, "eval_gnn_u_wall.csv"))
+        campeao = float(base_uw["food_collected"].mean())
+        d7 = pd.read_csv(CSV_7D)
+        g = d7[(d7["Scenario"] == "u_wall") & (d7["Algorithm"] == "GNN")]
+        media7 = float(g.groupby("Run")["food_collected"].mean().mean())
+        for rot, na_tese, medido, tol in (
+                ("campeão do GNN no Muro em U", numero(m.group(1)), campeao, 0.5),
+                ("média das 7 execuções", numero(m.group(2)), media7, 0.05)):
+            if na_tese is None or abs(na_tese - medido) > tol:
+                problemas.append("%s: legenda diz %s, medido %.2f"
+                                 % (rot, m.group(1), medido))
+        print("legenda: campeão %.1f  vs  média das 7 execuções %.1f"
+              % (campeao, media7))
+    else:
+        problemas.append("não encontrei na legenda da robustez o par «campeão "
+                         "vs média das sete execuções» (mudou a redação?)")
+
     m = re.search(r"controlador evolutivo[^.]*?retém\s*(\d+)--(\d+)\\%", tex)
     gnn = [v for (a, _), v in retencoes.items() if a == "GNN"]
     if m and gnn:
@@ -1827,6 +1851,39 @@ def verificar_megatreino(tolerancia):
         med, dp, conv, n = dados[fase]
         print("  %-18s n=%-3d %6.1f ± %5.1f   convergentes: %d/%d"
               % (rot, n, med, dp, conv, n))
+
+    # --- a legenda da figura distingue os dois padrões de falha ---------------
+    #
+    # Dizia que o GNN objetivo, o PPO e o SAC «repartem-se entre execuções que
+    # resolvem e execuções que ficam a zero». Para o SAC isso era falso: nenhuma
+    # das 28 chega a metade da magnitude dos outros braços, e a distribuição é
+    # contínua. A legenda passou a separar os dois casos, com dois números — e
+    # são estes, que descrevem a FORMA da distribuição e não a média, que aqui
+    # se conferem. Uma média pode manter-se enquanto a forma muda por completo.
+    v = procura(r"o PPO com \$(\d+)\$ das \$(\d+)\$ acima de \$(\d+)\$ "
+                r"recolhas/ep")
+    if v:
+        g_ppo = carregar("mega_A_fase3", "u_wall")
+        limiar = v[2]
+        confere("legenda: PPO acima do limiar", v[0],
+                int((g_ppo["food"] > limiar).sum()), exato=True)
+        confere("legenda: n do PPO", v[1], len(g_ppo), exato=True)
+    else:
+        problemas.append("legenda do mega-treino: não encontrei a contagem do "
+                         "PPO acima do limiar")
+
+    v = procura(r"nenhuma das suas \$(\d+)\$ execuções passa de \$" + N +
+                r"\$ recolhas/ep")
+    if v:
+        g_sac = carregar("mega_A_fase4", "u_wall")
+        confere("legenda: n do SAC", v[0], len(g_sac), exato=True)
+        confere("legenda: máximo do SAC", v[1], float(g_sac["food"].max()))
+        conferidos += 1
+        # «nenhuma passa de X» tem de ser verdade, não só o máximo bater.
+        if int((g_sac["food"] > v[1] + 0.05).sum()):
+            problemas.append("legenda: o SAC tem execuções acima de %s" % v[1])
+    else:
+        problemas.append("legenda do mega-treino: não encontrei o máximo do SAC")
 
     v = procura(r"o adaptativo faz \$" + N + r" \\pm " + N +
                 r"\$ recolhas/ep contra \$" + N + r" \\pm " + N +
