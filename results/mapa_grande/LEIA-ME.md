@@ -144,3 +144,40 @@ cópia em `f2_gnn/videos/` é a que sobrevive a um disco novo.
 
 O campeão global (`gnn_3d_best_mapa_grande.pth`) é o do **seed 19**, uma das
 quatro execuções que resolvem o mapa. É com ele que o GIF foi gravado.
+
+## Onde param os agentes — os três braços com a mesma régua (17 ago 2026)
+
+`scripts/onde_param_mapa_grande.py`, 21 execuções × 3 episódios por algoritmo,
+mesmas sementes, régua = `env._potential` (a distância geodésica ao ninho que
+paga o *progress*). CSV em `onde_param_{gnn,ppo,sac}.csv`.
+
+| | GNN | PPO | SAC |
+|---|---|---|---|
+| distância mínima ao ninho (m) | **42,4** | 75,9 | 80,8 |
+| fração do percurso | **65%** | 38% | 34% |
+| andado por agente (m) | 360 | 415 | 330 |
+| **passo do mínimo** (de 2000) | **1986** | 1208 | 1276 |
+| recuo depois do mínimo (m) | 0,2 | 2,0 | 1,4 |
+| passa o gargalo da zona A | 98% | 83% | 62% |
+| entra nas quatro salas (B) | 71% | 37% | 5% |
+| chega à passagem para a zona C | **49%** | 3% | 0% |
+| chega à câmara do ninho (D) | **29%** | 0% | 0% |
+| episódios com ≥1 recolha | 14% | 0% | 0% |
+
+Referência das distâncias (medidas no campo geodésico): spawn 128,8 m; saída da
+zona S 118,8 m; gargalo da zona A 89,5 m; passagem B→C 39,1 m; ninho 0 m.
+
+**O zero dos gradientes não é imobilidade.** O PPO percorre 415 m por episódio
+num mapa cujo percurso ótimo são 128,8 m, e a recompensa é positiva (mediana
+5 648). Fica-se a **76 m** — dentro das quatro salas.
+
+**As duas falhas não são a mesma.** O PPO e o SAC atingem o seu melhor a meio do
+episódio (passo ~1200 de 2000) e depois **afastam-se**: param. O GNN ainda está
+a aproximar-se no passo **1986** e recua 0,2 m — o episódio acaba-lhe em cima.
+O limite do evolutivo neste mapa parece ser o **horizonte**, não a incapacidade,
+e isso é testável com uma corrida de horizonte maior.
+
+**A porta cooperativa (zona C) fecha o argumento.** PPO e SAC nunca a abrem —
+0 em 840 episódios de avaliação. O GNN abre-a em 43%, e nos quatro runs que
+resolvem o mapa, em 100% dos episódios. Não é que falhem a cooperação na porta:
+nunca lhe chegam perto.
