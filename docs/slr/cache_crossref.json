@@ -1,0 +1,366 @@
+{
+ "10.1016/j.swevo.2023.101395": {
+  "ano": 2023,
+  "anos": [
+   2023
+  ],
+  "autores": [
+   "Hasselmann",
+   "Ligot",
+   "Birattari"
+  ],
+  "titulo": "Automatic modular design of robot swarms based on repertoires of behaviors generated via novelty search",
+  "venue": "Swarm and Evolutionary Computation"
+ },
+ "10.1016/j.swevo.2026.102294": {
+  "ano": 2026,
+  "anos": [
+   2026
+  ],
+  "autores": [
+   "Ordáz-Rivas",
+   "Rodríguez-Liñan",
+   "Torres-Treviño"
+  ],
+  "titulo": "Multi-objective optimization in autonomous foraging using swarm robots",
+  "venue": "Swarm and Evolutionary Computation"
+ },
+ "10.1098/rstb.2020.0309": {
+  "ano": 2021,
+  "anos": [
+   2021,
+   2022
+  ],
+  "autores": [
+   "Bredeche",
+   "Fontbonne"
+  ],
+  "titulo": "Social learning in swarm robotics",
+  "venue": "Philosophical Transactions of the Royal Society B"
+ },
+ "10.1109/CEC48606.2020.9185697": {
+  "ano": 2020,
+  "anos": [
+   2020
+  ],
+  "autores": [
+   "Fontbonne",
+   "Dauchot",
+   "Bredeche"
+  ],
+  "titulo": "Distributed On-line Learning in Swarm Robotics with Limited Communication Bandwidth",
+  "venue": "2020 IEEE Congress on Evolutionary Computation (CEC)"
+ },
+ "10.1109/ICHORA69329.2026.11537199": {
+  "ano": 2026,
+  "anos": [
+   2026
+  ],
+  "autores": [
+   "Yigit",
+   "Ceylan",
+   "Palas",
+   "Isik",
+   "Bekar",
+   "Vatansever",
+   "Oniz"
+  ],
+  "titulo": "Multi Agent Reinforcement Learning Based Swarm Navigation",
+  "venue": "2026 8th International Congress on Human-Computer Interaction, Optimization and Robotic Applications (ICHORA)"
+ },
+ "10.1109/ICMA65362.2025.11120654": {
+  "ano": 2025,
+  "anos": [
+   2025
+  ],
+  "autores": [
+   "Biteng",
+   "Zaman",
+   "Lu"
+  ],
+  "titulo": "Training Robot Swarms for Adaptive Foraging in Environments with Obstacles",
+  "venue": "2025 IEEE International Conference on Mechatronics and Automation (ICMA)"
+ },
+ "10.1109/IRCE66030.2025.11203043": {
+  "ano": 2025,
+  "anos": [
+   2025
+  ],
+  "autores": [
+   "Zaman",
+   "Biteng",
+   "Lu"
+  ],
+  "titulo": "Evolving Adaptive Foraging Robot Swarms with NEAT in Environments with Obstacles",
+  "venue": "2025 8th International Conference on Intelligent Robotics and Control Engineering (IRCE)"
+ },
+ "10.1109/IROS55552.2023.10341749": {
+  "ano": 2023,
+  "anos": [
+   2023
+  ],
+  "autores": [
+   "Tang",
+   "Zhang",
+   "Shi",
+   "Chen",
+   "Ding",
+   "Zhang"
+  ],
+  "titulo": "Autonomous Swarm Robot Coordination via Mean-Field Control Embedding Multi-Agent Reinforcement Learning",
+  "venue": "2023 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)"
+ },
+ "10.1109/IROS58592.2024.10801506": {
+  "ano": 2024,
+  "anos": [
+   2024
+  ],
+  "autores": [
+   "Szpirer",
+   "Ramos",
+   "Birattari"
+  ],
+  "titulo": "Automatic design of robot swarms that perform composite missions: an approach based on inverse reinforcement learning",
+  "venue": "2024 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)"
+ },
+ "10.1109/LRA.2020.2994035": {
+  "ano": 2020,
+  "anos": [
+   2020
+  ],
+  "autores": [
+   "Riviere",
+   "Honig",
+   "Yue",
+   "Chung"
+  ],
+  "titulo": "GLAS: Global-to-Local Safe Autonomy Synthesis for Multi-Robot Motion Planning With End-to-End Learning",
+  "venue": "IEEE Robotics and Automation Letters"
+ },
+ "10.1109/LRA.2022.3146912": {
+  "ano": 2022,
+  "anos": [
+   2022
+  ],
+  "autores": [
+   "Zhang",
+   "Cheng",
+   "Zhang",
+   "Li",
+   "Zhang"
+  ],
+  "titulo": "H2GNN: Hierarchical-Hops Graph Neural Networks for Multi-Robot Exploration in Unknown Environments",
+  "venue": "IEEE Robotics and Automation Letters"
+ },
+ "10.1109/LRA.2024.3360013": {
+  "ano": 2024,
+  "anos": [
+   2024
+  ],
+  "autores": [
+   "Kegeleirs",
+   "Ramos",
+   "Hasselmann",
+   "Garattoni",
+   "Francesca",
+   "Birattari"
+  ],
+  "titulo": "Transferability in the Automatic Off-Line Design of Robot Swarms: From Sim-to-Real to Embodiment and Design-Method Transfer Across Different Platforms",
+  "venue": "IEEE Robotics and Automation Letters"
+ },
+ "10.1109/LRA.2024.3414210": {
+  "ano": 2024,
+  "anos": [
+   2024
+  ],
+  "autores": [
+   "Li",
+   "Zhou",
+   "Sun"
+  ],
+  "titulo": "Adaptive Shape Formation Against Swarm-Scale Variants in Robot Swarms",
+  "venue": "IEEE Robotics and Automation Letters"
+ },
+ "10.1109/TNNLS.2023.3264540": {
+  "ano": 2024,
+  "anos": [
+   2024
+  ],
+  "autores": [
+   "Majid",
+   "Saaybi",
+   "Francois-Lavet",
+   "Prasad",
+   "Verhoeven"
+  ],
+  "titulo": "Deep Reinforcement Learning Versus Evolution Strategies: A Comparative Survey",
+  "venue": "IEEE Transactions on Neural Networks and Learning Systems"
+ },
+ "10.1162/EVCO_a_00025": {
+  "ano": 2011,
+  "anos": [
+   2011
+  ],
+  "autores": [
+   "Lehman",
+   "Stanley"
+  ],
+  "titulo": "Abandoning Objectives: Evolution Through the Search for Novelty Alone",
+  "venue": "Evolutionary Computation"
+ },
+ "10.14750/ME.2026.007": {
+  "ano": 2026,
+  "anos": [
+   2026
+  ],
+  "autores": [
+   "Iskandar"
+  ],
+  "fonte": "datacite",
+  "titulo": "Deep reinforcement learning for swarm robotic systems",
+  "venue": "Miskolci Egyetem"
+ },
+ "10.17587/mau.25.471-478": {
+  "ano": 2024,
+  "anos": [
+   2024
+  ],
+  "autores": [
+   "Iskandar",
+   "Hammoud",
+   "Kovács"
+  ],
+  "titulo": "Swarm Robotics Navigation Task: A Comparative Study of Reinforcement Learning and Particle Swarm Optimization Methodologies",
+  "venue": "Mekhatronika, Avtomatizatsiya, Upravlenie"
+ },
+ "10.3389/frobt.2025.1607978": {
+  "ano": 2025,
+  "anos": [
+   2025
+  ],
+  "autores": [
+   "Kegeleirs",
+   "Birattari"
+  ],
+  "titulo": "Towards applied swarm robotics: current limitations and enablers",
+  "venue": "Frontiers in Robotics and AI"
+ },
+ "10.5220/0012462800003654": {
+  "ano": 2024,
+  "anos": [
+   2024
+  ],
+  "autores": [
+   "Pina",
+   "De Silva",
+   "Artaud"
+  ],
+  "titulo": "Towards Self-Adaptive Resilient Swarms Using Multi-Agent Reinforcement Learning",
+  "venue": "Proceedings of the 13th International Conference on Pattern Recognition Applications and Methods"
+ },
+ "titulo:a concise introduction to decentralized pomdps": {
+  "ano": 2016,
+  "anos": [
+   2016
+  ],
+  "autores": [
+   "Oliehoek",
+   "Amato"
+  ],
+  "titulo": "A Concise Introduction to Decentralized POMDPs",
+  "venue": "SpringerBriefs in Intelligent Systems"
+ },
+ "titulo:a review on influx of bio inspired algorithms critique and improvement needs": null,
+ "titulo:a survey on uav control with multi agent reinforcement learning": {
+  "ano": 2025,
+  "anos": [
+   2025
+  ],
+  "autores": [
+   "Ekechi",
+   "Elfouly",
+   "Alouani",
+   "Khattab"
+  ],
+  "titulo": "A Survey on UAV Control with Multi-Agent Reinforcement Learning",
+  "venue": "Drones"
+ },
+ "titulo:attention is all you need": null,
+ "titulo:benchmarl benchmarking multi agent reinforcement learning": null,
+ "titulo:csper curiosity driven safety prioritized experience replay for mapless navigati": {
+  "ano": 2026,
+  "anos": [
+   2026
+  ],
+  "autores": [
+   "Xiao",
+   "Yuan",
+   "Ran",
+   "He",
+   "Zhang",
+   "Cui"
+  ],
+  "titulo": "CSPER: Curiosity-Driven Safety-Prioritized Experience Replay for Mapless Navigation Using Deep Reinforcement Learning",
+  "venue": "IEEE Transactions on Cognitive and Developmental Systems"
+ },
+ "titulo:deep reinforcement learning for swarm systems": null,
+ "titulo:domain randomization for transferring deep neural networks from simulation to th": {
+  "ano": 2017,
+  "anos": [
+   2017
+  ],
+  "autores": [
+   "Tobin",
+   "Fong",
+   "Ray",
+   "Schneider",
+   "Zaremba",
+   "Abbeel"
+  ],
+  "titulo": "Domain randomization for transferring deep neural networks from simulation to the real world",
+  "venue": "2017 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)"
+ },
+ "titulo:dynamic window approach for mobile robot path planning based on hybrid swarm alg": null,
+ "titulo:evolution strategies as a scalable alternative to reinforcement learning": null,
+ "titulo:graph attention networks": null,
+ "titulo:high dimensional continuous control using generalized advantage estimation": null,
+ "titulo:life 3 0 being human in the age of artificial intelligence": null,
+ "titulo:lns2 rl combining multi agent reinforcement learning with large neighborhood sea": {
+  "ano": 2025,
+  "anos": [
+   2025
+  ],
+  "autores": [
+   "Wang",
+   "Duhan",
+   "Li",
+   "Sartoretti"
+  ],
+  "titulo": "LNS2+RL: Combining Multi-agent Reinforcement Learning with Large Neighborhood Search in Multi-agent Path Finding",
+  "venue": "Proceedings of the AAAI Conference on Artificial Intelligence"
+ },
+ "titulo:multi agent actor critic for mixed cooperative competitive environments": null,
+ "titulo:multi agent reinforcement learning a comprehensive survey": null,
+ "titulo:optimization learning and natural algorithms": null,
+ "titulo:particle swarm optimization": null,
+ "titulo:policy invariance under reward transformations theory and application to reward ": null,
+ "titulo:proximal policy optimization algorithms": null,
+ "titulo:race improve multi agent reinforcement learning with representation asymmetry an": null,
+ "titulo:reinforcement learning an introduction": null,
+ "titulo:soft actor critic off policy maximum entropy deep reinforcement learning with a ": null,
+ "titulo:swarm intelligence from natural to artificial systems": null,
+ "titulo:transferable graphical marl for real time estimation in dynamic wireless network": null,
+ "titulo:using deep reinforcement learning to solve a navigation problem for a swarm robo": {
+  "ano": 2023,
+  "anos": [
+   2023
+  ],
+  "autores": [
+   "Iskandar",
+   "Rostum",
+   "Kovács"
+  ],
+  "titulo": "Using Deep Reinforcement Learning to Solve a Navigation Problem for a Swarm Robotics System",
+  "venue": "2023 24th International Carpathian Control Conference (ICCC)"
+ }
+}

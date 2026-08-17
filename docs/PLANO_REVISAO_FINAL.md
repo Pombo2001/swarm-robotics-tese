@@ -256,3 +256,45 @@ mais.
 *Proposta:* distinguir os dois padrões numa oração — «o PPO reparte-se entre
 execuções que resolvem e execuções a zero; o SAC não chega sequer a metade da
 magnitude dos outros braços em nenhuma das 28».
+
+### 17 ago — 1.3 e E2 — bibliografia: as 19 com DOI batem, e os dois `.bib` estão sincronizados
+
+**Feito.** `scripts/verificar_bibliografia.py` compara cada entrada citada com
+o registo dos editores — CrossRef, e **DataCite** quando o CrossRef devolve 404,
+que é o caso das teses de doutoramento com DOI da própria universidade. Compara
+apelido do primeiro autor, lista de autores, ano e título; guarda as respostas
+em `docs/slr/cache_crossref.json` para a auditoria se repetir sem rede.
+
+* **19 entradas com DOI: todas corretas.** Nenhum nome fabricado, que era o
+  defeito de 16 jul.
+* **Os dois `.bib` estão sincronizados**: 46 entradas comuns, **zero**
+  divergências campo a campo; a tese tem 3 a mais (`bonabeau1999swarm`,
+  `iskandar2025phd`, `riviere2020glas`) e o artigo nenhuma que a tese não tenha.
+* **6 das 26 sem DOI** foram confirmadas por busca de título; as outras **20
+  ficam para leitura humana** — são clássicos que o CrossRef não indexa (arXiv,
+  NeurIPS, ICLR, livros). Isso está dito na saída, não escondido.
+
+⚠️ **Três entradas têm identificador que não corresponde ao autor**:
+`gupta2025influx` → Somvanshi, `lin2025survey` → Ekechi, `sun2024graph` →
+Chen, `zheng2025lns2` → Wang. São restos das correções de 16 jul — a chave
+BibTeX ficou a antiga e o campo `author` foi corrigido. Não afeta o PDF (a
+chave é só um identificador interno), mas engana quem ler o `.bib`.
+
+**Três defeitos meus, apanhados por o instrumento ter sido posto à prova:**
+
+1. O leitor de `.bib` **ignorava o último campo de cada entrada** — que é onde
+   vive o `doi`. Concluiu «nenhuma das 45 tem DOI» quando 19 têm. Um parser que
+   perde dados em silêncio produz auditorias tranquilas e falsas.
+2. A normalização de nomes desfazia os acentos LaTeX **pela ordem errada**:
+   `Rivi{\`e}re` ficava `rivi ere` e o verificador acusava o CrossRef de não ter
+   o autor que tem. Dois falsos positivos.
+3. A busca por título aceitava «o mais parecido» e deu **oito acusações falsas
+   de uma vez**: «Attention is All You Need» casou com «Is Attention All You
+   Need?», o PSO com um capítulo introdutório sobre PSO, e o livro do Tegmark
+   com uma *recensão* do livro do Tegmark — cujo autor é o recenseador. Passou a
+   exigir Jaccard ≥ 0,85 no título **e** o ano a menos de dois anos.
+
+Fica uma questão para leitura, não um erro: o DataCite dá `publicationYear:
+2026` à tese de Iskandar e o `.bib` diz 2025. Fui à capa do PDF: diz **«Miskolc
+2025»**. O 2026 é o ano do depósito do DOI (registado a 27 fev 2026). Cita-se o
+documento, não o depósito — está declarado no verificador com essa razão.
