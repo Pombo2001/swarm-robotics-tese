@@ -210,3 +210,49 @@ o nome final.
 «0,05% dos pixels», que numa figura de 3000×2000 são 3000 pixels de tolerância.
 Uma barra de erro com a altura errada mexe em muito menos. Passou a ser um
 limiar **absoluto** de 50 pixels, e o ensaio apanha a mutação.
+
+### 17 ago — 1.2 — legendas contra o conteúdo: dois achados, e nenhum é um número errado
+
+Lidas as 28 legendas e vistas as figuras que fazem afirmações verificáveis. **A
+maioria bate**, incluindo as que mais podiam falhar: os heatmaps de ocupação do
+Muro em U dizem «6 ep, 473 / 412 / 0 recolhas» e é isso que está impresso em
+cada painel; o GNN contorna mesmo pela esquerda e o PPO pela direita; o SAC
+mostra a ocupação colada às faces interiores das pernas do U, como a legenda
+descreve; o potencial euclidiano está à esquerda e o geodésico à direita; a
+figura da escalabilidade tem mesmo um único ponto para PPO e SAC; os dotplots
+têm sete pontos por algoritmo e as médias impressas batem com a
+Tabela~\ref{tab:res_eval}.
+
+Os dois problemas que apareceram são de **redação**, e por isso ficam aqui em
+vez de serem corrigidos:
+
+**(a) A figura da robustez e a tabela principal dizem números muito diferentes
+sobre a mesma célula, e nada na tese os concilia.** A `robustez_falhas.png`
+mostra o GNN no Muro em U a ~79 recolhas/ep; a `tab:res_eval` e o dotplot da
+mesma dissertação dizem $24{,}5$. Ambos estão certos: a figura da robustez usa
+o **modelo campeão** de cada célula (`results/evaluation/eval_*.csv`, um modelo
+× 20 episódios) e a tabela usa a **média das médias dos sete *runs***. O texto
+diz «sobre os modelos da campanha final», o que é verdade e não chega — não diz
+*quantos*. Nos cenários bimodais a diferença é enorme (Sandbox $62{,}1$ vs
+$38{,}3$; Muro em U $79{,}3$ vs $24{,}5$; Porta c/ Alternativa $64{,}5$ vs
+$86{,}7$). O rácio que a figura mede — a retenção — não é afetado, porque base e
+falha vêm da mesma fonte.
+
+*Proposta:* uma frase na legenda ou na secção, do género «a base é a avaliação
+do modelo campeão de cada célula, não a média das sete execuções da
+Tabela~\ref{tab:res_eval}; a retenção é um rácio entre duas medições da mesma
+fonte e não é afetada por essa escolha».
+
+**(b) A legenda do mega-treino descreve o SAC como bimodal, e ele não é.** Diz
+que «o GNN objetivo, o PPO e o SAC repartem-se entre execuções que resolvem o
+cenário e execuções que ficam a zero». Medido nas 28 execuções do Muro em U: o
+PPO tem 3 zeros e **14 execuções acima de 60** recolhas/ep — bimodal, sim. O
+SAC tem 11 zeros e **zero execuções acima de 60**; o seu máximo é $45{,}4$ e o
+resto distribui-se continuamente entre 0 e 45. O SAC não tem execuções «que
+resolvem o cenário» no sentido em que os outros têm: tem execuções fracas e
+execuções nulas. A figura mostra-o com clareza — é a legenda que generaliza a
+mais.
+
+*Proposta:* distinguir os dois padrões numa oração — «o PPO reparte-se entre
+execuções que resolvem e execuções a zero; o SAC não chega sequer a metade da
+magnitude dos outros braços em nenhuma das 28».
