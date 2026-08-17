@@ -65,6 +65,30 @@ def _estado_f2():
         return None
 
 
+def _veredicto_final():
+    """A leitura da QI7 pela avaliação, ou None enquanto o GNN não tiver eval.
+
+    A projeção do limiar conta execuções pelo **treino**; esta conta-as pela
+    **avaliação determinística**, que é a régua do pré-registo. Enquanto só
+    existir a primeira, o painel diz que a decisão está por tomar; assim que o
+    `eval_by_run.csv` do GNN aparece, passa a dizer o resultado.
+
+    A regra não vive aqui: importa-se do `medir_f2()` do
+    `analise_mapa_grande.py`, o mesmo que o `fechar_qi7.py` usa para escrever
+    na dissertação. Duas cópias da regra seriam duas respostas possíveis para a
+    mesma pergunta.
+    """
+    try:
+        sys.path.insert(0, os.path.join(_RAIZ, "scripts"))
+        from analise_mapa_grande import medir_f2
+        m = medir_f2()
+    except Exception:                                        # noqa: BLE001
+        return None
+    if not m or "GNN" not in m.get("por_algo", {}):
+        return None
+    return m
+
+
 def _limiar_projetado():
     """O limiar ainda é alcançável? Aritmética sobre o que já fechou.
 
@@ -104,6 +128,20 @@ def _limiar_projetado():
             "decide-se com a avaliação do GNN, que ainda não existe."
             % (p["faltam"], p["restantes"], p["n_convergentes"],
                p["n_fechados"], p["total"]), "#ffb020")
+        # …e quando ela passa a existir, esta frase deixa de ser verdade. A
+        # avaliação do GNN chegou a 17 ago; sem esta condição, o dashboard
+        # continuava a mandar esperar por um ficheiro que já está no disco —
+        # exatamente o género de frase escrita à mão que este painel existe
+        # para não ter. O k final sai do `medir_f2()`, que é onde a regra vive.
+        final = _veredicto_final()
+        if final:
+            texto, cor = (
+                "QI7 FECHADA: %d execuções convergentes de %d na avaliação "
+                "determinística (limiar %d) ⇒ negativo, leitura (%s). O GNN é o "
+                "único que alguma vez resolve o mapa; PPO e SAC ficam a 0. "
+                "Falta escrever na dissertação: scripts/fechar_qi7.py --escrever."
+                % (final["max_convergentes"], final["n_runs"], final["limiar"],
+                   final["leitura"]), "#4ade80")
     ui.label(texto).classes("text-xs mb-2").style(f"color:{cor}")
     ui.label("Projeção sobre o instantâneo de %s · scripts/projetar_limiar_f2.py"
              % p["medido_utc"]).classes("text-[10px] mb-2") \
@@ -234,11 +272,18 @@ def _painel_f2():
 
     Ver também `_limiar_projetado`, que diz se o limiar ainda é alcançável.
 
-    Não ESCOLHE a leitura da secção. Há duas coisas diferentes, e a vista faz
-    só a primeira: dizer se o limiar ainda é alcançável é aritmética sobre o que
-    já fechou; escolher entre (B) «nenhum resolve» e (C) «resolve em k das 21»
-    depende do `eval_by_run.csv` do GNN, que ainda não existe. Confundir as duas
-    foi o erro que o `projetar_limiar_f2.py` cometeu e que se corrigiu a 13 ago.
+    Não ESCOLHE a leitura da secção — mas desde 17 ago pode dizer qual é. Há
+    duas coisas diferentes, e a vista faz as duas em separado: dizer se o limiar
+    ainda é alcançável é aritmética sobre o que já fechou, pelo TREINO; dizer se
+    é (B) «nenhum resolve» ou (C) «resolve em k das 21» exige o
+    `eval_by_run.csv` do GNN. Enquanto ele não existia, a vista dizia que a
+    decisão estava por tomar; agora que existe, mostra o k medido (4 de 21) e a
+    leitura que a regra dá. Confundir as duas contagens foi o erro que o
+    `projetar_limiar_f2.py` cometeu e que se corrigiu a 13 ago — continuam
+    separadas, cada uma com a sua régua.
+
+    Escrever isto na dissertação continua a ser um ato à parte
+    (`fechar_qi7.py --escrever`), e a vista só o lembra.
     """
     r = data.f2_resultados()
     if not r:
