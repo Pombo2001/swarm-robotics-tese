@@ -182,3 +182,31 @@ problema descoberto tarde demais.
 dissertação. Não é um erro do artigo (ele nunca prometeu cobrir o oitavo
 cenário); é uma **divergência entre dois documentos do mesmo trabalho**, e é
 preciso decidir o que fazer com ela antes de qualquer um dos dois sair. Ver 0.2.
+
+### 17 ago — 1.1 e 1.2 — as 46 figuras: 43 batem, 3 divergem com explicação
+
+**Feito.** `scripts/verificar_figuras_tese.py` compara **pixel a pixel** cada
+figura do PDF com o ficheiro homónimo em `results/`, e diz de que guião sai
+(`--listar`). O medo era encontrar figuras velhas como a 21 jul e a 4 ago: não
+se confirmou. **43 das 46 são idênticas à fonte.**
+
+**As três que divergem são os heatmaps de ocupação do Muro em U**, e a tese
+está do lado certo: usa a versão de **6 episódios** (a do pipeline canónico,
+`plot_results.py`), que é a que a legenda descreve — «6 episódios por painel».
+A cópia em `final_7d` foi regenerada a 31 jul pelo `figuras_campanha.py`, que
+corre **4**. Não é a tese que está desatualizada; é a pasta de onde ela copia
+que passou a ter outra coisa. Ficam declaradas no verificador, com a razão: se
+alguém copiar de `final_7d` para a tese, a legenda passa a mentir sem que nada
+mude no texto.
+
+**Uma figura não tinha fonte nenhuma — e era minha.** A dos percursos entrou
+hoje na dissertação como `mapa_grande_rastos.png` mas era gerada como
+`rastos_mapa_grande.png`: gerar com um nome e copiar com outro quebra a única
+ligação automática entre o PDF e o que o produziu. O guião passou a gravar com
+o nome final.
+
+⚠️ **E o ensaio desmentiu o meu próprio verificador.** Pintei um quadrado de
+40×40 pixels no meio de uma figura da tese e ele deu-a por boa: o limiar era
+«0,05% dos pixels», que numa figura de 3000×2000 são 3000 pixels de tolerância.
+Uma barra de erro com a altura errada mexe em muito menos. Passou a ser um
+limiar **absoluto** de 50 pixels, e o ensaio apanha a mutação.
