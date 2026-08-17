@@ -37,7 +37,16 @@ dois lados e essa é uma decisão de autoria.
 
 ## A. O que chega durante a ausência  *(prioridade máxima)*
 
-- [ ] **A1 — o F2/GNN fechar (~17 ago).** Ao detetar `eval_by_run.csv` do GNN em
+- [x] **A1 — FEITO a 17 ago.** A campanha fechou a 16 ago 16:21 UTC. Os três
+      passos correram, o `fechar_qi7.py` em seco: **GNN 4/21, PPO 0/21, SAC
+      0/21, limiar 15 ⇒ leitura (C)**. Dados trazidos e versionados
+      (`results/mapa_grande/f2_gnn/`). **Nada escrito na tese** — ver *Achados*.
+- [x] **A2 — o braço não morreu: acabou.** Mas o instantâneo dizia «20 de 21» e
+      um run «a correr» com o servidor a 0,00 de carga. Corrigido (lê a
+      sentinela de conclusão).
+
+- [ ] ~~A1 — o F2/GNN fechar (~17 ago).~~ *(mantido para referência do que foi
+      corrido.)* Ao detetar `eval_by_run.csv` do GNN em
       `results/mapa_grande/f2*/`:
       1. `bash scripts/estado_f2.sh` (precisa da VPN desligada);
       2. `python scripts/analise_mapa_grande.py`;
@@ -236,6 +245,39 @@ diferentes escritos na mesma forma de frase. Cada sítio passou a ter a sua
 na **mesma** ocorrência, e aí a verificação passa sempre sem nunca comparar nada.
 Aconteceu com as «28 combinações», em que o segundo padrão era um subconjunto do
 primeiro. Há agora uma guarda que o deteta, e está ensaiada a disparar.
+
+### 17 ago — A1 — a QI7 fechou: 4 de 21, e a leitura é (C), não (B)
+
+A campanha do GNN terminou a **16 ago 16:21 UTC** (21 execuções × 780 min). Com
+os 420 episódios de avaliação trazidos, a regra pré-registada dá:
+
+| | média rec/ep | ≥1 recolha | 100% |
+|---|---|---|---|
+| GNN | $1{,}69 \pm 3{,}62$ | **4/21** | 2/21 |
+| PPO | $0{,}00$ | 0/21 | 0/21 |
+| SAC | $0{,}00$ | 0/21 | 0/21 |
+
+Limiar $\lceil 5/7 \times 21 \rceil = 15$ ⇒ **negativo**, e a leitura é a **(C)**
+— «resolve-o em $k$ das 21, abaixo do limiar» —, não a (B): $k = 4$, não zero.
+M1: GNN vs PPO/SAC $p = 0{,}3058$, $\delta = +0{,}19$ (não inferior, que era a
+expectativa pré-registada; não foi pré-registada superioridade). M3: o GNN abre
+a porta cooperativa em **43%** dos episódios, os gradientes em **0%**.
+
+**A dúvida de 14 ago está resolvida.** As quatro execuções que resolvem o mapa na
+avaliação (1, 10, 11 e 19) são **as mesmas** que tinham recolha no treino. O
+receio de que o `best_task_food` fosse um majorante enganador não se
+materializou — aqui as duas réguas concordam.
+
+**Nada foi escrito na tese.** O `fechar_qi7.py` em seco diz que preencheria os 5
+`\PORPREENCHER` e descomentaria a variante (C) em doze sítios. A regra escolheu a
+leitura; a sanção é de quem assina.
+
+⚠️ **O instantâneo mentia por omissão.** Dizia «20 runs fechados» de uma campanha
+de 21 terminada na véspera, com o run 21 «a correr» e o servidor a 0,00 de carga.
+A heurística era «o run de índice mais alto é o que está a correr», sem exceção
+para a campanha ter acabado. Passa a ler a sentinela
+`logs/_campanha_concluida.txt` — o marcador canónico, a mesma lição que o watcher
+dos gradientes deu a 10 ago.
 
 ### 17 ago — B2 — a tese descreve um mundo em metros, e ninguém perguntava ao simulador
 
