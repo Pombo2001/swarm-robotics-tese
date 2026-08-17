@@ -181,3 +181,22 @@ e isso é testável com uma corrida de horizonte maior.
 0 em 840 episódios de avaliação. O GNN abre-a em 43%, e nos quatro runs que
 resolvem o mapa, em 100% dos episódios. Não é que falhem a cooperação na porta:
 nunca lhe chegam perto.
+
+### Episódios 3D dos três braços (`results/episodios_3d/*_mapa_grande.json`)
+
+Gerados com `scripts/exportar_episodio_3d.py --cenario mapa_grande --passo 5`,
+400 quadros cada, para a vista «Episódio 3D» do dashboard os desenhar no browser.
+
+| | modelo usado | porquê esse | recolhas |
+|---|---|---|---|
+| GNN | campeão global (seed 19) | é um dos 4 que resolvem o mapa | 8 |
+| PPO | run 11 | o que chega **mais perto** do ninho (15,6 m) | 0 |
+| SAC | run 8 | idem (46,5 m) | 0 |
+
+Para o PPO e o SAC escolheu-se deliberadamente **a melhor** das 21 execuções,
+não uma qualquer: com todas a zero, mostrar a pior seria escolher o retrato mais
+favorável ao argumento. O que se vê é o melhor que cada um faz.
+
+Os `.zip` do PPO/SAC (2,5 e 4,6 MB) **não** são versionados — vêm do servidor
+com `trazer_do_servidor.sh` a partir de `~/mapa_F2_{ppo,sac}/models_{ppo,sac}/`
+quando forem precisos. Os `.pth` do GNN, esses, estão em `results/models_f2_gnn/`.
