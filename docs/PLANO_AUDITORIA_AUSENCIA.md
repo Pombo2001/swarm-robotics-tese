@@ -6,6 +6,13 @@ Nada está partido — por isso este plano não é de reparação, é de **procu
 
 **Prazo que manda:** 22 ago (hard stop). O F2/GNN fecha ~17 ago.
 
+> ⚠️ **17 ago — este plano foi substituído.** A janela de ausência acabou e a
+> QI7 entrou na dissertação; o que falta deixou de ser «procura» e passou a ser
+> revisão final, com o prazo à vista. O plano vivo é agora
+> **`docs/PLANO_REVISAO_FINAL.md`**, que herda os itens B–G ainda por fechar.
+> Este documento fica pelos **Achados** — é onde está registado o que se mediu
+> entre 14 e 17 de agosto.
+
 ---
 
 ## Como este plano se usa

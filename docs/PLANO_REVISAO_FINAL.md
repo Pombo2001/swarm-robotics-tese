@@ -1,0 +1,184 @@
+# Plano de ataque — revisão final (17 a 22 ago 2026)
+
+**Estado à partida (17 ago, depois de a QI7 entrar):** tese em **129 páginas**,
+0 overfull, 0 referências indefinidas. 143 testes passam. 8 verificadores, com
+**62 valores** só na secção do mapa grande e cobertura global de **28%** dos
+tokens numéricos. Auditoria do dashboard a 0 problemas. **Nenhuma campanha por
+fechar** — o servidor está vazio.
+
+**Prazo:** 22 ago (hard stop). São **5 dias**, e o trabalho já não é produzir
+resultados: é garantir que o que está escrito resiste a ser lido com atenção.
+
+---
+
+## Como este plano se lê
+
+Cada item diz **quem o faz**. Há coisas que eu não posso fazer por ti — ler a
+dissertação de fio a pavio é uma delas, e é a que mais vale.
+
+| símbolo | significado |
+|---|---|
+| 🤖 | faço eu, sem te perguntar nada |
+| 👤 | só tu podes: leitura, redação, decisão de autoria |
+| 🤝 | eu preparo e reporto, tu decides |
+
+A ordem é por **risco × custo de descobrir tarde**, não por conforto.
+
+---
+
+## P0 — o que bloqueia a entrega
+
+### 0.1 👤 Ler a QI7 inteira, de olhos frescos *(≈1 h)*
+
+Foi escrita hoje por um guião, a partir dos dados. Os números estão verificados
+(62 deles), a **redação não**. Ler:
+
+- a secção completa (**p. 79–86**), com atenção à Discussão (p. 83–84);
+- o parágrafo das Conclusões, a resposta às QI (p. 76–79) e as frases do Resumo
+  e do Abstract.
+
+O que procurar não são números — é se **o argumento é teu**. A Discussão afirma
+que a bimodalidade do Muro em U «sobrevive à escala». É defensável e é o que os
+dados mostram; mas é uma leitura, e é a que o júri vai atacar primeiro.
+
+### 0.2 🤝 O artigo não sabe que a QI7 existe *(decisão + ≈2 h se sim)*
+
+Medido hoje: **zero menções** ao mapa grande, ao mapa composto ou à QI7 em
+`Artigo/artigo.tex`, cuja última alteração é de 14 ago. A dissertação tem agora
+um oitavo cenário e uma questão de investigação que o artigo não reporta.
+
+Três saídas, e a escolha é tua:
+1. **integrar** — uma subsecção curta de resultados + uma frase nas conclusões;
+2. **declarar o recorte** — uma nota a dizer que o artigo cobre os sete
+   cenários, e a dissertação o oitavo;
+3. **deixar como está** — só se o artigo não for submetido nem anexado.
+
+A (3) é a única que não exige trabalho, e é também a única em que dois
+documentos teus dizem coisas diferentes sobre o mesmo trabalho.
+
+### 0.3 👤 Confirmar o regulamento sobre uso de ferramentas de IA *(≈15 min)*
+
+A declaração de triagem assistida saiu hoje, a teu pedido. Vale a pena
+confirmares o texto do regulamento do ISCTE: se ele **exigir** a declaração, o
+que hoje é conformidade passa a ser omissão. É uma leitura de 15 minutos que
+fecha a questão nos dois sentidos.
+
+---
+
+## P1 — os defeitos que este projeto já cometeu
+
+Cada um destes já aconteceu uma vez. É por isso que estão à frente.
+
+### 1.1 🤖 Figuras: ligar cada uma à sua fonte *(C1 do plano anterior)*
+
+A tese referencia **46 figuras** (todas presentes; as 6 «em falta» estão em
+linhas comentadas — ver 3.3). As da tese são **cópias** das das campanhas e
+derivam em silêncio: a 21 jul havia 8 desatualizadas, a 4 ago capturas 3D
+anteriores à correção das paredes.
+
+Para cada figura: de que dados e de que script sai; regenerar; comparar
+bit-a-bit. Onde mudar, a versão que está no PDF estava errada.
+
+### 1.2 🤖 Legendas vs conteúdo *(C3)*
+
+A 4 ago um heatmap com **0 recolhas** tinha legenda a dizer «navegação
+resolvida». Reler as 46 legendas contra o que a figura mostra. É leitura, não
+script — mas posso fazer o primeiro passe e trazer-te só os casos duvidosos.
+
+### 1.3 🤖 Bibliografia: autor + ano + título contra a fonte *(E1, E2)*
+
+A auditoria de 16 jul apanhou **nomes de autores fabricados com DOIs válidos** —
+passou porque se verificaram os DOIs e não os nomes. São **45 entradas citadas**
+de 49 no `.bib`. Verificar as citadas, e sincronizar os dois `.bib` (tese e
+artigo), que já divergiram uma vez.
+
+### 1.4 🤖 Pré-registo → o que é reportado *(F1, F2)*
+
+Três pré-registos com emendas até à 21. **Um compromisso pré-registado que não
+seja reportado é o defeito mais caro que esta tese pode ter** — mais do que um
+número errado, porque é o que separa uma regra fixada à partida de uma escolhida
+depois. Tabela: compromisso → onde é reportado → bate. Inclui as células do
+Sandbox que estavam por reportar a 4 ago.
+
+---
+
+## P2 — o dashboard
+
+O dashboard não é entregável, mas é o que projetas na defesa.
+
+### 2.1 🤖 Os números do dashboard vs os da tese *(B3)*
+
+O Overview afirma 28 sessões, 2940 episódios, 1671 h, 341 h, 6/7 cenários. **Um
+número que apareça nos dois sítios tem de ser o mesmo número** — foi assim que 2
+KPIs mentiram a 4 ago. Verificar contra as mesmas fontes que a tese usa.
+
+### 2.2 👤 Ver as 16 vistas ao olho *(≈40 min)*
+
+A auditoria automática diz «16 de 16 construíram» — isso prova que não
+rebentam, não que estejam certas. A 2 ago só 5 de 16 tinham sido vistas por
+alguém. Abrir uma a uma em `localhost:8080` e olhar.
+
+⚠️ Já sabido, e por corrigir: os PNG da campanha do GNN na **Galeria** vêm do
+`eval_summary.csv`, que só tem o modelo campeão — mostram *81% · 7,4 rec/ep*
+onde a campanha dá *17,4% · 1,69*. Os números das tabelas do dashboard estão
+certos; as imagens é que são do melhor caso. **Não usar esses três gráficos numa
+apresentação sem os regenerar** (🤖 posso regenerá-los a partir dos 21 runs).
+
+### 2.3 🤖 Paridade Pi ↔ local *(G2)*
+
+Escrever a verificação que compara o que as vistas leem com o que o
+`atualizar_pi.sh` envia, e que falha quando alguém acrescenta uma leitura nova
+sem a acrescentar ao script. **Não publicar** — a publicação é em lote e a teu
+pedido.
+
+---
+
+## P3 — se sobrar tempo
+
+### 3.1 🤖 Ensaiar o `docs/REPRODUZIR.md` de ponta a ponta *(D1, D2)*
+
+Comando a comando, em diretório limpo. Cada um que não corra, ou que dê um
+número diferente do prometido, é achado. É literalmente a pergunta «de onde vem
+este número?» que o júri faz.
+
+### 3.2 🤖 Continuar a cobertura dos verificadores *(B2)*
+
+28% dos tokens numéricos. A seguir, por ordem de visibilidade: Conclusões (25
+valores), Sandbox (19), Desempenho Computacional (17), Resumo (8).
+
+### 3.3 🤖 Limpeza *(≈20 min)*
+
+- Seis `\includegraphics` de ficheiros inexistentes, em linhas comentadas
+  (`images/scen_*.png`, linhas 1037–1052 do `main.tex`) — lixo que só confunde
+  quem ler o fonte.
+- Quatro entradas do `.bib` não citadas: confirmar se sobram de propósito.
+
+---
+
+## Sugestão de calendário
+
+| dia | 🤖 eu | 👤 tu |
+|---|---|---|
+| **18 ago** | figuras (1.1) + legendas, 1.º passe (1.2) | ler a QI7 (0.1) |
+| **19 ago** | bibliografia (1.3) | decidir o artigo (0.2) + regulamento (0.3) |
+| **20 ago** | pré-registo (1.4) + dashboard (2.1) | ver as 16 vistas (2.2) |
+| **21 ago** | paridade Pi (2.3) + REPRODUZIR (3.1) | reler o que eu tiver mudado |
+| **22 ago** | corrida final: testes, verificadores, compilação | **entrega** |
+
+O dia 22 fica **inteiro** para a corrida final e para o que correr mal. Não é
+folga: é o que impede que um problema descoberto às 18h do último dia seja um
+problema descoberto tarde demais.
+
+---
+
+## Achados
+
+*(cada entrada: data, item, o que se mediu, o que se fez)*
+
+### 17 ago — o artigo ficou para trás da tese
+
+`Artigo/artigo.tex` não tem uma única menção ao mapa grande, ao mapa composto ou
+à QI7 — última alteração a 14 ago, três dias antes de a secção entrar na
+dissertação. Não é um erro do artigo (ele nunca prometeu cobrir o oitavo
+cenário); é uma **divergência entre dois documentos do mesmo trabalho**, e é
+preciso decidir o que fazer com ela antes de qualquer um dos dois sair. Ver 0.2.
