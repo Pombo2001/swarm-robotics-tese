@@ -51,6 +51,10 @@ if [ "$MEXEU_TESE" -eq 1 ]; then
     # le os esperados do proprio main.tex — uma alteracao a geometria do cenario
     # ou um numero mudado a mao param aqui.
     "$PY" "$RAIZ/scripts/verificar_spawn_gargalo.py" || OK=0
+    # 17 ago: o VOCABULARIO DO PROTOCOLO (155 valores) — «7 execucoes», «195
+    # minutos», «20 episodios», «n=28» — contra as campanhas que correram. Le a
+    # seccao do mapa grande tambem, por isso corre nos dois ramos.
+    "$PY" "$RAIZ/scripts/verificar_protocolo.py" || OK=0
 fi
 if [ "$MEXEU_MAPA" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_mapa_grande.py" || OK=0

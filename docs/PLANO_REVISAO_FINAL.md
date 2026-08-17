@@ -257,6 +257,59 @@ mais.
 execuções que resolvem e execuções a zero; o SAC não chega sequer a metade da
 magnitude dos outros braços em nenhuma das 28».
 
+### 17 ago — 3.1 e 3.2 — o `REPRODUZIR.md` ensaiado, e a cobertura de 28% para 41%
+
+**3.1 — feito.** `scripts/ensaiar_reproduzir.py` percorre o mapa de proveniência
+e confronta-o com o disco: os **75 caminhos** que promete existem, os **26
+scripts** que cita existem **e compilam**, e os 4 passos do pipeline apontam para
+ficheiros reais. Nada estava perdido — o que estava era **velho**, e é esse o
+modo de falha deste documento: não dizer algo falso, mas continuar a dizer o que
+era verdade. Dizia que o F2 estava «a correr desde 3 ago» (fechou a 16), que o
+mega-treino tinha «6 fases por fechar» (tem as 12 no disco) e que os controlos do
+F1 estavam «no servidor» (estão cá desde 31 jul). O ensaio passou a verificar
+essas três afirmações contra as sentinelas de conclusão — uma linha que envelhece
+deixa de o poder fazer em silêncio.
+
+Faltava-lhe também uma linha inteira: a **QI6 replicada a $n=28$** (mega-treino)
+está reportada na tese e não tinha entrada no mapa. Quem perguntasse «de onde vem
+o 28/28?» não tinha resposta escrita. Acrescentada, com os CSV das 12 fases e o
+`analise_megatreino.py`. E o documento ganhou a secção **«Como isto se audita
+hoje»**: os nove comandos que confirmam o que ele promete, com o que cada um
+cobre.
+
+⚠️ **Dois falsos achados que o ensaio inventou antes de eu o corrigir**, e valem
+como aviso para o próximo: tratou os marcadores `{algo}` e `[_fail10]` do
+documento como sintaxe de shell e deu **36 ficheiros por em falta** que estão no
+disco 50 e 21 vezes; e leu `~/swarm-mapa-c{1,2,3}` como um script chamado
+`2.sh`. Um verificador que inventa achados gasta-se tão depressa como um que os
+esconde — sete ensaios em `tests/test_ensaiar_reproduzir.py` prendem as duas
+pontas.
+
+**3.2 — a cobertura passou de 28% para 41%** (518 → **761** dos 1851 tokens
+numéricos do `main.tex`), e os «automatizáveis por cobrir» caíram de 371 para
+261. Duas frentes:
+
+**(a) O vocabulário do protocolo, que era o maior grupo por cobrir (124 tokens).**
+`scripts/verificar_protocolo.py` confere as **155** afirmações de protocolo
+espalhadas pela prosa — «7 execuções», «195 minutos por execução», «20
+episódios», `$n=28$` — contra as campanhas que de facto correram. Não fixa os
+valores: **mede-os** dos `eval_by_run.csv`, dos scripts que lançaram os treinos
+(incluindo os arquivados em `results/novelty_adaptativo/week_stream*.sh`, sem os
+quais os braços @390 min apareciam como inventados), do `foraging.yaml` e do
+`screening.csv`. É o erro que não desalinha nada: dizer 195 minutos onde foram
+780 descreve uma campanha que não aconteceu e não mexe numa única tabela. Corre
+no *pre-commit*.
+
+**(b) Os ecos do Capítulo 6.** A «Resposta às Questões de Investigação» e as
+«Conclusões» são o Capítulo 5 recontado, e o risco lá não é o número nascer
+errado — é ficar para trás quando o resultado é corrigido atrás. O verificador de
+coerência interna passou de 7 para **10 factos cruzados** (54 valores): o k/n da
+QI7, a retenção per capita da QI2 e a janela de robustez, cada um lido nos dois
+sítios onde é dito e obrigado a concordar consigo próprio.
+
+As **27 mutações** do `ensaiar_verificador.py` (eram 24) continuam todas a ser
+apanhadas, incluindo as três novas, que estragam o **eco** e não o resultado.
+
 ### 17 ago — 3.3 — limpeza: seis figuras fantasma fora, quatro entradas do `.bib` ficam
 
 As **seis linhas comentadas** com `\includegraphics{images/scen_*.png}` saíram do

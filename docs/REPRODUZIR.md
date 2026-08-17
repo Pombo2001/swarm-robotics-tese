@@ -29,7 +29,8 @@ tem um subconjunto. Antes de tentar reproduzir/verificar, confirma onde estás.
 | Campanha Novelty adaptativo | `results/novelty_adaptativo/` (trazida a 19 jul) | ❌ | ✅ |
 | **F1 do mapa grande** (QI7) | `results/mapa_grande/f1_zeroshot_v2/` — **versionado**, exceção deliberada ao `.gitignore`. ⚠️ `f1_zeroshot/` (sem `_v2`) é a corrida **ANULADA** a 29 jul, em que os agentes voavam por cima das paredes; fica no disco como registo e **não se usa** | ✅ | ✅ |
 | Campeões da campanha 7d | `results/models_7d/` (21 modelos, 3-9 jul) | ❌ | ✅ + servidor |
-| Mega-treino (12 fases) | `results/mega_1mes/` — 6 fases trazidas a 28 jul, 6 por fechar | ❌ | ⏳ |
+| Mega-treino (12 fases) | `results/mega_1mes/` — **as 12 fases fechadas e trazidas** (megaA 2 ago, megaB 3 ago); `resumo_megatreino.json` traz M1-M3 já calculados | ❌ | ✅ |
+| **F2 do mapa grande** (QI7) | `results/mapa_grande/f2_{gnn,grad_ppo,grad_sac}/` — **versionado**, como o F1. Fechado a 16 ago (PPO 7 ago, SAC 10 ago); a sentinela de conclusão de cada braço é `logs/_campanha_concluida.txt` | ✅ | ✅ |
 
 > A auditoria número-a-número (última secção) faz-se **na torre**, ou depois de trazer
 > `final_7d/` + `novelty_final/` para cá com `python scripts/pos_campanha.py`.
@@ -87,8 +88,9 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
 | **Novelty (QI6)** — §res_novelty (§1408) | `results/novelty_final/{uwall,bypass}/` (eval_by_run 7×20 ep) | `eval_by_run.py` + `statistical_tests.py` | ⚠️ torre |
 | **Rrobust** — §res_robustez (§1476) | `results/evaluation/eval_{algo}_{cen}[_fail10].csv` (retenção = fail10/base) | `run_eval.py --fail-frac 0.1` | ✅ torre, VERIFICADO 16 jul: 21/21 células, retenção 92,4–105,8% (tese: 92–106% ✓); GNN 92,4–96,9% (✓); >100% só na Perceção Coop. (✓) |
 | **Custo computacional** — `tab:res_computacional` (§1498) | medição direta no simulador | `scripts/benchmark_sim.py` (novo, 16 jul) | ✅ torre, VERIFICADO+ATUALIZADO 16 jul: 139 passos/s era PRÉ-vetorização; medição atual ≈420 passos/s (3,0×, consistente c/ o 2,58× do passo); tabela da tese atualizada c/ ambos |
-| **QI7 — F1 do mapa grande** (zero-shot de topologia), `seccao_mapa_grande.tex` §Transferência | `results/mapa_grande/f1_zeroshot_v2/zeroshot_*.csv` — as **quatro** condições (**versionado**; ⚠️ `f1_zeroshot/`, sem `_v2`, é a corrida ANULADA a 29 jul); 1 linha por episódio, com `NormObs`/`Controlo`/`env_hash`/`ModeloPath`/`ModeloData`) | `eval_zeroshot_mapa.py` (produz) → `analise_f1_controlos.py` (lê as 4 condições e aplica o veredicto do pré-registo §3) | ✅ PC — natural fechada 27 jul; controlos no servidor |
-| **QI7 — F2 do mapa grande** (treino nativo) | `results/mapa_grande/f2_*/evaluation/eval_by_run.csv` | `mapa_streamF2.sh {gnn\|grad\|longo}` no servidor → `analise_mapa_grande.py` | ⏳ **a correr desde 3 ago** — GNN ~16 ago, PPO/SAC ~9 ago (o stream GNN foi relançado a 4 ago: treinava o braço errado) |
+| **QI7 — F1 do mapa grande** (zero-shot de topologia), `seccao_mapa_grande.tex` §Transferência | `results/mapa_grande/f1_zeroshot_v2/zeroshot_*.csv` — as **quatro** condições (**versionado**; ⚠️ `f1_zeroshot/`, sem `_v2`, é a corrida ANULADA a 29 jul); 1 linha por episódio, com `NormObs`/`Controlo`/`env_hash`/`ModeloPath`/`ModeloData`) | `eval_zeroshot_mapa.py` (produz) → `analise_f1_controlos.py` (lê as 4 condições e aplica o veredicto do pré-registo §3) | ✅ PC — **as quatro condições fechadas e no disco** (repetidas de raiz a 31 jul, depois da correção das paredes): 84 células, 1680 episódios, todas a 0,00 |
+| **QI6 replicada a n=28** — mega-treino, §res_novelty (28/28 vs 15/28, Fisher; os 6 pares de M2; a ablação do anilamento; as 3 células exploratórias) | `results/mega_1mes/*/evaluation/eval_by_run.csv` (12 fases) + `resumo_megatreino.json` | `mega_stream{A,B}.sh` no servidor → `analise_megatreino.py` (imprime; o JSON é o registo) | ✅ PC |
+| **QI7 — F2 do mapa grande** (treino nativo) | `results/mapa_grande/f2_*/evaluation/eval_by_run.csv` (3 braços × 21 execuções × 20 ep = 1260 episódios) | `mapa_streamF2.sh {gnn\|grad}` no servidor → `analise_mapa_grande.py` | ✅ PC — **fechado**: PPO 7 ago, SAC 10 ago, GNN 16 ago. O braço `longo` (exploratório) foi **cancelado** e não tem dados (emenda 24) |
 | **Figuras** (mecanismo) | `Tese/images/resultados/*.png` | copiar o PNG com o nome que o `\figresultado` espera + recompilar (sem editar o `.tex`) | ✅ PC |
 
 > A **QI7** (composição de dificuldades) é a única cujas duas fases se leem em
@@ -102,6 +104,35 @@ serve para a tese** — os PNGs "brutos" de cada campanha não.
 > **QI6** Novelty. Cada uma remete para uma linha acima.
 > *(Corrigido a 25 jul: dizia "QI1/QI3 Ptask" e "QI4 Rrobust", trocando as duas — na tese
 > a QI3 é a robustez e a QI4 é o critério de escolha.)*
+
+---
+
+## Como isto se audita hoje (os verificadores)
+
+O mapa acima diz de onde vem cada número. Estes comandos **confirmam-no**, e são
+o que se corre antes de qualquer entrega. Todos leem os valores esperados do
+`.tex` ou dos CSV — nenhum tem números fixados lá dentro, que é o defeito que
+transformaria um verificador numa segunda cópia da tese.
+
+| Comando | O que confirma | Escala |
+|---|---|---|
+| `python scripts/verificar_numeros_tese.py` | os números do corpo da dissertação **e do artigo** contra os CSV, o config e o ambiente instanciado | ~640 valores em 14 blocos |
+| `python scripts/verificar_mapa_grande.py` | a secção da QI7 inteira: geometria, F1, F2, M1-M3, Trabalhos Futuros | 62 valores |
+| `python scripts/verificar_protocolo.py` | o **vocabulário do protocolo** espalhado pela prosa («7 execuções», «195 minutos», «20 episódios», `$n=28$`) contra as campanhas que de facto correram | 155 valores |
+| `python scripts/verificar_figuras_tese.py` | cada figura do PDF **pixel a pixel** contra a fonte em `results/` (`--listar` diz de que guião sai) | 46 figuras |
+| `python scripts/verificar_bibliografia.py` | autor, ano e título de cada entrada citada contra CrossRef/DataCite; e os dois `.bib` entre si | 19 com DOI + 46 comuns |
+| `python scripts/verificar_preregistos.py` | cada **compromisso pré-registado** contra o que a tese reporta (`--escrever` gera `PREREGISTO_VS_REPORTADO.md`) | 29 compromissos |
+| `python scripts/verificar_dashboard.py` | os números do dashboard contra os da tese (mesma fonte, mesmo valor) | 44 valores |
+| `python scripts/verificar_paridade_pi.py` | tudo o que as vistas leem vai no delta do `atualizar_pi.sh` | 316 leituras |
+| `python scripts/ensaiar_reproduzir.py` | **este documento** contra o disco: cada caminho existe, cada script compila, e o estado que ele afirma ainda é verdade | 75 caminhos, 26 scripts |
+| `python -m pytest tests -q` | a suite completa (física, avaliação, dashboard, verificadores) | 161 testes |
+
+⚠️ **Um verificador só vale depois de ter falhado uma vez de propósito.** Os de
+figuras, de pré-registos e de paridade têm ensaios de mutação
+(`tests/test_verificar_preregistos.py`, `tests/test_paridade_pi.py`,
+`scripts/ensaiar_verificador.py`): mutila-se a fonte e exige-se que acusem. O de
+figuras foi assim que se corrigiu — dava por boa uma figura com um quadrado de
+40×40 pixels pintado por cima, porque o limiar era relativo.
 
 ---
 
@@ -206,6 +237,17 @@ na torre** (onde estão `final_7d/` e `novelty_final/`):
 > 7d** passaram a estar no disco em `results/models_7d/` (21/21, datados de 3-9
 > jul, guarda de campanha a passar), o que também torna o F1 reproduzível
 > localmente.
+>
+> **Feito a 17 ago (torre) — o mapa deixou de ser só um mapa.** Correu-se o
+> `scripts/ensaiar_reproduzir.py` sobre este documento: os **75 caminhos** que ele
+> promete existem, os **26 scripts** que cita existem e compilam, e os 4 passos do
+> pipeline apontam para ficheiros reais. Os únicos achados foram de **estado**, e
+> são os que este mapa tem de mais frágil: dizia que o F2 estava «a correr desde 3
+> ago» (fechou a 16), que o mega-treino tinha «6 fases por fechar» (tem as 12 no
+> disco) e que os controlos do F1 estavam «no servidor» (estão cá desde 31 jul).
+> Corrigidos, e o ensaio passou a verificá-los — uma linha que envelhece deixa de
+> o poder fazer em silêncio. Acrescentou-se também a linha da **QI6 replicada a
+> n=28** (mega-treino), que estava reportada na tese e não tinha entrada no mapa.
 >
 > **Feito a 28 jul (torre):** acrescentadas as duas linhas da **QI7** ao mapa. O
 > F1 é a primeira fonte de resultados **versionada no git** (`results/mapa_grande/`,

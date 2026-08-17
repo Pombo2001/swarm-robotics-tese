@@ -2287,6 +2287,38 @@ FACTOS_REPETIDOS = [
          {"re": r"QI2 --- Escalabilidade\.\].{0,260}?100\\% de sucesso nas "
                 r"(\d+) combina[çc][õo]es"},
      ]},
+    # ── Os ecos do Capítulo 6 (17 ago) ──────────────────────────────────────
+    # A «Resposta às Questões de Investigação» e as «Conclusões» são o Capítulo 5
+    # recontado, e a medição de cobertura acusava-lhes 51 valores por verificar.
+    # O risco aqui não é o número estar errado à nascença: é ficar para trás
+    # quando o resultado é corrigido lá atrás. Estes quatro factos são os que a
+    # QI7 e a QI2 dizem duas e três vezes.
+    {"rot": "QI7 — o mapa composto resolvido em k de n execuções",
+     "sitios": [
+         {"re": r"GNN, mas só em (\d+) das \$(\d+)\$\s*\n?\s*execuções"},
+         {"re": r"resolve o mapa em (\d+) das \$(\d+)\$\s*\n?\s*execuções"},
+     ]},
+    {"rot": "QI2 — retenção per capita em N=100 (paredes e abertos)",
+     "sitios": [
+         # Contributos: «a reter 58--90% … (contra 39--45% nos abertos)»
+         {"re": r"per capita em \$N=100\$ a reter \$(\d+)\$--\$(\d+)\\%\$ nos "
+                r"cenários com paredes \(contra \$(\d+)\$--\$(\d+)\\%\$"},
+         # QI2: a mesma janela, com os dois cenários abertos nomeados um a um.
+         {"re": r"per capita em \$N=100\$ retém \$(\d+)\$--\$(\d+)\\%\$ nos "
+                r"cenários com paredes.{0,180}?\$(\d+)\\%\$ no Sandbox, "
+                r"\$(\d+)\\%\$ na Perceção"},
+     ]},
+    {"rot": "Robustez — a janela de retenção com 10% de falhas",
+     "sitios": [
+         # Só a JANELA (92--106) é o mesmo facto nos dois sítios: o Cap. 5
+         # acrescenta as 21 combinações e o Cap. 6 a fração de falha, e juntar
+         # tudo faria o verificador acusar uma contradição onde há duas frases
+         # a dizer coisas complementares.
+         {"re": r"retenção de recolhas situa-se entre \\textbf\{(\d+)\\% e "
+                r"(\d+)\\%\}"},
+         {"re": r"falhas de 10\\% dos agentes.{0,90}?retenção de "
+                r"(\d+)--(\d+)\\%"},
+     ]},
     {"rot": "Planalto — células ainda a subir no fim do orçamento",
      "sitios": [
          {"re": r"\\textbf\{(\d+) das (\d+) combina[çc][õo]es ainda subiam de "

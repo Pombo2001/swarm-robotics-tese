@@ -102,6 +102,18 @@ MUTACOES = [
     ("o Sandbox do GNN (5/7 -> 6/7)",
      "cenários abertos (Sandbox 5/7)", "cenários abertos (Sandbox 6/7)",
      "discussao"),
+    # ── Os ecos do Capítulo 6 (17 ago) ──────────────────────────────────────
+    # Estas três mutações não estragam um resultado: estragam o **eco** dele no
+    # capítulo seguinte, que é o defeito que a coerência interna existe para
+    # apanhar — corrigir o Capítulo 5 e esquecer o Capítulo 6.
+    ("eco da QI7 nas Conclusões (4 de 21 -> 6 de 21)",
+     "resolve o mapa em 4 das $21$", "resolve o mapa em 6 das $21$",
+     "coerencia"),
+    ("eco da retenção per capita na QI2 (58--90 -> 58--88)",
+     "retém $58$--$90\\%$ nos cenários com paredes",
+     "retém $58$--$88\\%$ nos cenários com paredes", "coerencia"),
+    ("eco da robustez nos Contributos (92--106 -> 92--104)",
+     "(retenção de 92--106\\%", "(retenção de 92--104\\%", "coerencia"),
 ]
 
 VERIFICADORES = {
@@ -109,6 +121,7 @@ VERIFICADORES = {
     "simulador": V.verificar_simulador,
     "hiper": V.verificar_hiperparametros,
     "discussao": lambda: V.verificar_discussao_global(0.05),
+    "coerencia": V.verificar_coerencia_interna,
 }
 
 
