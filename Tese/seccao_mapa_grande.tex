@@ -252,6 +252,32 @@ SAC & $0{,}0$ & $0{,}0$ & $0\%$ & 0/21 \\
 
 \textbf{M3 (porta cooperativa).} Fração de episódios em que a porta é aberta: GNN $43\%$, PPO $0\%$, SAC $0\%$.
 
+Um zero em recolhas é um número pobre: não distingue ``os agentes não se
+movem'' de ``os agentes percorrem quase todo o mapa e ficam-se a dez metros do
+fim''. A Figura~\ref{fig:mapa_grande_rastos} desfaz essa ambiguidade
+mostrando, para um episódio de cada controlador, o percurso de todos os agentes
+sobre a planta. Os três episódios partilham as sementes e o horizonte; para o
+PPO e o SAC escolheu-se deliberadamente a \emph{melhor} das $21$ execuções
+--- a que mais se aproxima do ninho ---, para que a comparação não dependa de
+uma execução particularmente má.
+
+\begin{figure}[!htbp]
+    \centering
+    \figresultado{0.74}{images/resultados/mapa_grande_rastos.png}{Percursos dos
+      agentes no mapa grande: GNN, PPO e SAC}
+    \caption[Percursos dos agentes no mapa grande, por controlador]{Percurso de
+      cada um dos $20$ agentes ao longo de um episódio completo ($2000$ passos),
+      sobre a planta do mapa. Pontos brancos: posições iniciais; pontos cheios:
+      posições finais. O controlador de grafo atravessa as cinco zonas e
+      regressa ao ninho --- os segmentos retos são reposições após cada entrega
+      ---, ao passo que o PPO se concentra na zona das quatro salas e o SAC não
+      transpõe consistentemente o gargalo da zona A. Os episódios são os mesmos
+      que a instrumentação por distância geodésica quantifica: sobre $21$
+      execuções $\times$ $3$ episódios, a fração que alcança a passagem para a
+      zona da porta é de $49\%$ (GNN), $3\%$ (PPO) e $0\%$ (SAC).}
+    \label{fig:mapa_grande_rastos}
+\end{figure}
+
 \subsection{Discussão}
 
 % ─────────────────────────────────────────────────────────────────────────────

@@ -390,6 +390,31 @@ def _f2_contra_texto(texto):
     else:
         print("  [X] M3: não encontrei a frase da porta")
 
+    # ── a legenda da figura dos rastos cita a instrumentação geodésica ──────
+    #
+    # Estes três números não vêm do `eval_by_run`: vêm dos
+    # `onde_param_{gnn,ppo,sac}.csv`, e a fronteira de 39,1 m é a distância
+    # geodésica da passagem B→C ao ninho. Sem esta verificação, a legenda de uma
+    # figura ficaria a ser o único sítio da dissertação com números que ninguém
+    # confere — e legendas já mentiram neste projeto (o heatmap com 0 recolhas
+    # sob «navegação resolvida», 4 ago).
+    mm = re.search(r"zona da porta é de \$(\d+)\\%\$ \(GNN\), \$(\d+)\\%\$ "
+                   r"\(PPO\)\s*\n?\s*e \$(\d+)\\%\$ \(SAC\)", texto)
+    if mm:
+        for k, algo in enumerate(("gnn", "ppo", "sac")):
+            fp = os.path.join(RAIZ, "results", "mapa_grande",
+                              "onde_param_%s.csv" % algo)
+            if not os.path.exists(fp):
+                falhas.append("legenda dos rastos: falta o %s"
+                              % os.path.basename(fp))
+                continue
+            d = pd.read_csv(fp)
+            confere("rastos: %s chega à passagem B→C (%%)" % algo.upper(),
+                    _n(mm.group(k + 1)), 100.0 * (d.d_min < 39.1).mean(), 0.5)
+    else:
+        print("  [X] legenda dos rastos: não encontrei os 3 valores")
+        falhas.append("legenda da figura dos rastos: não encontrei os valores")
+
     # ── a Discussão repete o k e o k100: têm de bater com a M2 ──────────────
     campeao = m["algo_campeao"]
     v = m["por_algo"][campeao]
