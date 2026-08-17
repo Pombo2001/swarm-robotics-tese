@@ -79,12 +79,36 @@ MUTACOES = [
      "máx.\\ $1000$ (FIFO", "máx.\\ $500$ (FIFO", "hiper"),
     ("pesos do GNN (8k -> 12k)",
      "$32$ ($\\approx 8$k pesos)", "$32$ ($\\approx 12$k pesos)", "hiper"),
+    ("«superior a ambos em três cenários» (troca de cenários)",
+     "(Quatro Salas, Porta Cooperativa e Perceção Cooperativa, com "
+     "$\\delta \\geq +0{,}71$)",
+     "(Quatro Salas, Porta Cooperativa e Gargalo, com "
+     "$\\delta \\geq +0{,}71$)", "discussao"),
+    ("δ mínimo dos três cenários (0,71 -> 0,80)",
+     "com $\\delta \\geq +0{,}71$)", "com $\\delta \\geq +0{,}80$)", "discussao"),
+    ("convergência no Muro U (2/7 a 4/7 -> 2/7 a 5/7)",
+     "de $2/7$ a $4/7$", "de $2/7$ a $5/7$", "discussao"),
+    ("as 28 execuções dos cenários com paredes (28 -> 27)",
+     "convergem as 28 execuções", "convergem as 27 execuções", "discussao"),
+    ("razão de núcleos-hora (8x -> 6x)",
+     "uma razão de $\\approx 8\\times$ em núcleos-hora",
+     "uma razão de $\\approx 6\\times$ em núcleos-hora", "discussao"),
+    ("núcleos do evolutivo (30 -> 24)",
+     "195 minutos com $\\approx 30$ núcleos",
+     "195 minutos com $\\approx 24$ núcleos", "discussao"),
+    ("intervalo de retenção com paredes (58--90 -> 58--95)",
+     "reter $58$--$90\\%$ nos cenários com paredes",
+     "reter $58$--$95\\%$ nos cenários com paredes", "discussao"),
+    ("o Sandbox do GNN (5/7 -> 6/7)",
+     "cenários abertos (Sandbox 5/7)", "cenários abertos (Sandbox 6/7)",
+     "discussao"),
 ]
 
 VERIFICADORES = {
     "escala": lambda: V.verificar_escalabilidade_prosa(0.05),
     "simulador": V.verificar_simulador,
     "hiper": V.verificar_hiperparametros,
+    "discussao": lambda: V.verificar_discussao_global(0.05),
 }
 
 

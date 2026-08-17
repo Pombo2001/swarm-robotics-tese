@@ -7,18 +7,18 @@ O `verificar_numeros_tese.py` diz «tudo bate ✓». Este ficheiro diz **de quan
 | | tokens numéricos |
 |---|---|
 | no corpo do `main.tex` (sem comentários) | 1806 |
-| lidos por algum verificador | **474** (26%) |
-| por cobrir | 1332 |
+| lidos por algum verificador | **500** (28%) |
+| por cobrir | 1306 |
 
 «Lido» é um **majorante** de «verificado»: a medição regista o que os padrões dos verificadores apanham do `.tex`, e um padrão pode apanhar uma frase inteira e usar só metade dos números dela. Um token *não lido* é, esse sim, certo: ninguém olhou para ele.
 
 Método: instrumenta-se o módulo `re` e corre-se cada verificador, guardando o texto de cada match feito sobre o `.tex`. Não há lista de padrões escrita à mão para envelhecer.
 
-## (i) Automatizáveis — 381
+## (i) Automatizáveis — 362
 
 Números com um dado por trás e nenhum verificador a olhar para eles. É aqui que se acrescenta ao `verificar_numeros_tese.py`.
 
-### Por onde começar — onde estão os 381
+### Por onde começar — onde estão os 362
 
 A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por verificar no Resumo é lido por toda a gente e citado de volta na defesa; o mesmo valor no meio do Cap. 2 não.
 
@@ -26,7 +26,6 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 |---|---|
 | Deceção e Procura por Novidade (\textit{Novelty Search | 109 |
 | Resposta às Questões de Investigação | 34 |
-| Discussão Global e Validação da Hipótese | 27 |
 | Conclusões | 25 |
 | Convergência e Desempenho no Cenário Base (Sandbox) | 19 |
 | Desempenho Computacional do Simulador | 17 |
@@ -39,6 +38,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 | Limitações do Estudo | 9 |
 | Resumo | 8 |
 | Algoritmo 2: Otimização Bio-inspirada (Benchmark) | 8 |
+| Discussão Global e Validação da Hipótese | 8 |
 | Trabalhos Futuros | 7 |
 | Abordagem 1: Otimização Bio-inspirada | 6 |
 | Resiliência e Robustez a Falhas de Agentes | 6 |
@@ -56,7 +56,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 | O Ambiente de Simulação | 1 |
 | Desempenho Comparativo por Cenário (Curvas de Aprendizagem) | 1 |
 
-### contagem de execuções — 121
+### contagem de execuções — 114
 
 - `7` (linha 337) — …a à dimensão do enxame ---, avaliando-se ambos em sete cenários de dificuldade crescente (7 execuções independentes por combinação) sob tratamento est…
 - `7` (linha 337) — …textbf{adaptativa} --- decaindo a pressão exploratória após a descoberta --- preserva os $7/7$ \textit{runs} no Muro em U sem custo significativo nos …
@@ -72,9 +72,9 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `195` (linha 1210) — …s multi-\textit{run} com \textbf{orçamento igualado} ao da campanha final (7 execuções de 195 minutos por braço) nos dois cenários onde a otimização o…
 - `20` (linha 1225) — …2 & Avaliação Determinística (\texttt{eval\_all.py}) & 5 min & Desempenho sem exploração (20 episódios). & $P_{task}$ (Eval) \\ \hline 3 & Benchmark E…
 - `3` (linha 1226) — …ll.py}) & 5 min & Desempenho sem exploração (20 episódios). & $P_{task}$ (Eval) \\ \hline 3 & Benchmark Estatístico (execuções múltiplas) & 3--7 dias …
-- *(mais 107)*
+- *(mais 100)*
 
-### média ± desvio — 64
+### média ± desvio — 60
 
 - `41{,}4` (linha 1256) — …os físicos: no Gargalo apenas 5/7 \textit{runs} convergem (com magnitude muito dispersa, $41{,}4 \pm 36{,}8$) e no Muro U apenas 2/7. O \textbf{Muro U…
 - `36{,}8` (linha 1256) — …no Gargalo apenas 5/7 \textit{runs} convergem (com magnitude muito dispersa, $41{,}4 \pm 36{,}8$) e no Muro U apenas 2/7. O \textbf{Muro U} é o único …
@@ -90,7 +90,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `71{,}46` (linha 1319) — …} \\ \hline GNN (Evolutivo) & $38{,}31 \pm 31{,}03$ & $85{,}7\%$ & $5/7$ \\ \hline PPO & $71{,}46 \pm 0{,}98$ & $100\%$ & $7/7$ \\ \hline SAC & $69{,}…
 - `20` (linha 1492) — …itness} de \textit{homing}, 195 minutos), sob o mesmo protocolo de avaliação emparelhado (20 episódios, \textit{seeds} comuns). O controlador com novi…
 - `0{,}21` (linha 1504) — …os que a otimização objetiva já resolve, nenhuma diferença é significativa (todos $p \geq 0{,}21$); reportam-se com honestidade os desvios descritivos…
-- *(mais 50)*
+- *(mais 46)*
 
 ### episódios — 50
 
@@ -110,7 +110,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `5` (linha 1228) — …& Medir resiliência à perda súbita de robôs a meio do episódio. & $R_{robust}$ \\ \hline 5 & Escalabilidade Zero-Shot ($N \in \{10, 50, 100\}$) & 3h &…
 - *(mais 36)*
 
-### recolhas por episódio — 48
+### recolhas por episódio — 46
 
 - `88{,}7` (linha 337) — …s cenários e atinge, na Porta com Alternativa, o melhor resultado de toda a dissertação ($88{,}7$ recolhas/ep). Uma replicação com $28$ execuções por …
 - `28` (linha 337) — …iva, o melhor resultado de toda a dissertação ($88{,}7$ recolhas/ep). Uma replicação com $28$ execuções por braço confirmou-o com poder estatístico: a…
@@ -126,9 +126,9 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `1{,}9` (linha 1298) — …al de tarefa é praticamente idêntico (PPO $71{,}5 \pm 1{,}0$ recolhas/ep; SAC $69{,}2 \pm 1{,}9$), com o \textbf{SAC} (\textit{off-policy}) a subir ma…
 - `61,6` (linha 1298) — …de toda a campanha: quatro dos sete \textit{runs} convergem para políticas competitivas (61,6 a 64,7 recolhas/ep), dois degeneram por completo ($<1$ r…
 - `64,7` (linha 1298) — …a a campanha: quatro dos sete \textit{runs} convergem para políticas competitivas (61,6 a 64,7 recolhas/ep), dois degeneram por completo ($<1$ recolha…
-- *(mais 34)*
+- *(mais 32)*
 
-### estatística (p, δ) — 43
+### estatística (p, δ) — 41
 
 - `3` (linha 1226) — …isódios). & $P_{task}$ (Eval) \\ \hline 3 & Benchmark Estatístico (execuções múltiplas) & 3--7 dias & Validação de hipóteses estatísticas ($p < 0{,}05…
 - `7` (linha 1226) — …dios). & $P_{task}$ (Eval) \\ \hline 3 & Benchmark Estatístico (execuções múltiplas) & 3--7 dias & Validação de hipóteses estatísticas ($p < 0{,}05$).…
@@ -144,9 +144,9 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `4` (linha 1504) — …xtit{runs} a 100\% --- em contraste direto com o $\delta=-1{,}00$ do peso fixo. \textbf{(T4) Face ao peso fixo}, o adaptativo é indistinguível no Muro…
 - `0{,}80` (linha 1504) — …eso fixo. \textbf{(T4) Face ao peso fixo}, o adaptativo é indistinguível no Muro em U ($p=0{,}80$) e superior em magnitude no bypass ($77{,}2$ vs.\ $6…
 - `77{,}2` (linha 1504) — …adaptativo é indistinguível no Muro em U ($p=0{,}80$) e superior em magnitude no bypass ($77{,}2$ vs.\ $63{,}0$; $p=0{,}073$, $\delta=+0{,}59$ --- com…
-- *(mais 29)*
+- *(mais 27)*
 
-### dimensão amostral — 26
+### dimensão amostral — 22
 
 - `10` (linha 473) — …nada com $N=20$ agentes transfere-se, sem retreino, para enxames de dimensão distinta ($N=10$ a $N=100$)? Em que medida essa capacidade depende da arq…
 - `100` (linha 473) — …$N=20$ agentes transfere-se, sem retreino, para enxames de dimensão distinta ($N=10$ a $N=100$)? Em que medida essa capacidade depende da arquitetura …
@@ -162,7 +162,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `28` (linha 1514) — …/resultados/megatreino_u_wall_4bracos.png}{Muro em U: os quatro bracos do mega-treino a n=28} \caption[Muro em U: os quatro braços do mega-treino ($n=…
 - `20` (linha 1534) — …footnotesize \caption{Escalabilidade Zero-Shot do controlador de grafo nos sete cenários (20 episódios determinísticos por célula; modelo campeão da c…
 - `20` (linha 1534) — …0 episódios determinísticos por célula; modelo campeão da campanha final, treinado com $N=20$): recolhas \emph{por agente} e retenção da eficiência pe…
-- *(mais 12)*
+- *(mais 8)*
 
 ### taxa de sucesso — 18
 
@@ -199,7 +199,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 
 - `2` (linha 848) — …ia à dimensão do enxame é uma propriedade da \emph{representação}, e não do otimizador (QI2). (Recuperado pela pesquisa mas excluído na elegibilidade …
 
-## (ii) Precisam de leitura — 353
+## (ii) Precisam de leitura — 346
 
 Sem sinal automático que os ligue a um dado. Podem ser resultados escritos de outra maneira, números da literatura citada, ou escolhas de desenho.
 
@@ -243,7 +243,7 @@ Sem sinal automático que os ligue a um dado. Podem ser resultados escritos de o
 - `0,1` (linha 547) — …{E}\sum_{e=1}^{E} f_{k,e}$ é o número médio de recolhas (a tarefa pura) e $\bar{h}_k \in [0,1]$ é o \textbf{\textit{homing}}: a fração média…
 - `1` (linha 547) — …dio}, medida por agente como $\operatorname{clip}\!\left((\Phi_0 - \Phi_T)/\Phi_0,\, 0,\, 1\right)$, em que $\Phi$ é o potencial de navegaçã…
 - `88` (linha 549) — …pelo mapa maximizam-no sem nunca entrar no ninho (observaram-se retornos brutos $\approx 88\,000$ com zero recolhas) --- parar no ninho, a p…
-- *(mais 313)*
+- *(mais 306)*
 
 ## (iii) Não são resultados — 598
 

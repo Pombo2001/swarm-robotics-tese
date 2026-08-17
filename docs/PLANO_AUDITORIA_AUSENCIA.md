@@ -67,10 +67,15 @@ não está mapeada em lado nenhum.
       sobram, 495 são automatizáveis, 468 precisam de leitura, 631 não são
       resultados. O maior buraco é a secção do Novelty (**164**), que é onde
       vive a QI6. Ver *Achados*.
-- [~] **B2 — automatizar as (i).** EM CURSO. Feita a secção do Novelty (a maior):
-      **41 valores** passam a ser verificados, e o buraco dessa secção cai de
-      164 para 118. Cobertura global 12% → 14%. A seguir, por ordem: Resposta às
-      QI (61), Escalabilidade (35), Discussão Global (27), Conclusões (25).
+- [~] **B2 — automatizar as (i).** EM CURSO. Feitas: **Novelty** (41 valores),
+      **Resposta às QI** (38, por coerência interna), **Escalabilidade** (49),
+      **o simulador** (28) e as **três tabelas de configuração** (78).
+      Cobertura global 12% → **26%**. A seguir, por ordem: Discussão Global
+      (27), Conclusões (25), Sandbox (19).
+- [x] **B2b — os verificadores mordem?** FEITO a 17 ago —
+      `scripts/ensaiar_verificador.py`: 16 mutações na tese, 16 apanhadas.
+      Uma só passou a ser apanhada depois de corrigir a folga da retenção.
+      Ver *Achados*.
 - [ ] **B3 — o dashboard afirma números também.** O Overview diz 25 sessões,
       2940 episódios, 1671 h, 341 h, 6/7 cenários. Conferir contra as mesmas
       fontes da tese: **um número que apareça nos dois sítios tem de ser o mesmo
@@ -231,6 +236,58 @@ diferentes escritos na mesma forma de frase. Cada sítio passou a ter a sua
 na **mesma** ocorrência, e aí a verificação passa sempre sem nunca comparar nada.
 Aconteceu com as «28 combinações», em que o segundo padrão era um subconjunto do
 primeiro. Há agora uma guarda que o deteta, e está ensaiada a disparar.
+
+### 17 ago — B2 — a tese descreve um mundo em metros, e ninguém perguntava ao simulador
+
+A secção da Escalabilidade tinha a primeira tabela verificada e mais nada. Ao
+cobrir o resto apareceu uma classe de afirmações que **nenhum verificador podia
+apanhar, por não estar em CSV nenhum**: os metros com que o Capítulo 4 descreve
+os cenários — passagem de $2{,}5$\,m, aberturas de $7$\,m, porta de $3$\,m, $800$
+passos, $\mathbb{R}^{111}$. Saem da geometria construída em código e do
+`foraging.yaml`. Não é hipotético: as aberturas foram alargadas de 1,5 m para
+2,5 m a 22 jun e a altura das paredes mudou a 29 jul. Uma descrição escrita
+antes de uma dessas mudanças sobrevive calada.
+
+**Feito.** Três verificações, **155 valores**, cobertura global **17% → 26%**:
+
+1. `verificar_escalabilidade_prosa` (49) — a prosa, a `tab:res_scale` e, além
+   dos valores, os **ordinais**: «a retenção mais baixa pertence aos cenários
+   abertos», «o Gargalo é a mais baixa dos que têm paredes». Os valores podem
+   estar todos certos e o argumento cair na mesma se um CSV for regenerado.
+2. `verificar_simulador` (28) — **instancia o ambiente e mede**, em vez de ler o
+   código como texto. Mudar a geometria parte isto, que é o objetivo.
+3. `verificar_hiperparametros` (78) — a `tab:hyperparameters` e as duas tabelas
+   do apêndice contra o `foraging.yaml`. As do apêndice leem a **própria chave
+   do YAML**, por isso uma chave nova passa a ser verificada sozinha. O
+   «$\approx 8$k pesos» é contado no `GNNAgent3D` (8195).
+
+**Nada foi mudado na tese: os 155 batem todos.**
+
+**A medição de cobertura teve de ser corrigida pela terceira vez.** Só subiu de
+20% para 26% depois de as tabelas lidas à mão passarem por um `corpo_tabela()`
+que o medidor conhece. Quem parte a tabela com `find()` dentro de uma função
+escapa à instrumentação — é literalmente o mesmo defeito que deu 6% a 14 ago,
+cometido outra vez por mim. A lição é de desenho: **a leitura do `.tex` tem de
+passar por poucos sítios**, senão a medição mede o que calha.
+
+### 17 ago — B2b — «tudo bate ✓» é também o que se vê quando o padrão deixou de encontrar a frase
+
+Os dois desfechos — números certos, ou padrões que já não apanham nada — dão a
+**mesma saída**. Um verificador que passa sempre é pior do que nenhum, porque dá
+autorização. O `scripts/ensaiar_verificador.py` estraga uma cópia da tese, um
+número de cada vez, e exige que o verificador acuse: **16 mutações, 16
+apanhadas**.
+
+Uma delas só passou a ser apanhada por causa do ensaio: a retenção da
+escalabilidade era comparada com **1 pp de folga** quando a tese a escreve ao
+inteiro — trocar $90\%$ por $91\%$ não dava erro nenhum. A folga passou a ser a
+do próprio arredondamento (0,5 pp), e a mesma correção foi aplicada à
+verificação antiga da `tab:res_scale_all`, que tinha o mesmo defeito.
+
+⚠️ **Armadilha do próprio ensaio:** substituir só a *primeira* ocorrência dá
+falsos «não apanhado» — o $\mathbb{R}^{111}$ aparece em **oito** sítios da tese
+e a primeira está no Capítulo 2, fora da secção. Foi isso que revelou que a
+verificação devia correr sobre a tese toda, e não sobre a secção recortada.
 
 ⚠️ **Nota de trabalho, para não voltar a perder tempo:** neste Git Bash os
 *heredocs* (`<<'EOF'`) corrompem as barras invertidas do Python. Um teste da

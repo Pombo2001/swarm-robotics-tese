@@ -86,6 +86,12 @@ ROTULO_PARA_CENARIO = {
     "Beco Sem Saída (U)": "u_wall",
     "Porta Coop. c/ Alternativa": "cooperative_door_bypass",
     "Porta Cooperativa com Alternativa": "cooperative_door_bypass",
+    # Como a prosa os escreve (§Discussão Global), que não é como as tabelas os
+    # escrevem. O mapa é de rótulo literal para chave: acrescentar aqui é a
+    # forma de a prosa poder ser lida sem duplicar listas de cenários no código.
+    "Porta com Alternativa": "cooperative_door_bypass",
+    "Muro em U": "u_wall",
+    "Muro U": "u_wall",
 }
 ALGOS = ("GNN", "PPO", "SAC")
 DIR_ESCALA = os.path.join(PROJECT_ROOT, "results", "estatisticas")
@@ -243,27 +249,19 @@ def verificar_escalabilidade(tolerancia):
 # ── §Escalabilidade: a prosa, a segunda tabela, e o que o simulador diz ──────
 #
 # A `verificar_escalabilidade` acima cobre a tab:res_scale_all e mais nada. O
-# resto da secção — a tab:res_scale, os números citados no texto corrido, as
-# afirmações ordinais («a retenção mais alta pertence a…») e duas afirmações
-# sobre o próprio simulador ($\mathbb{R}^{111}$ e a passagem de 2,5 m) — ficava
-# por conferir: 33 tokens, segundo o docs/COBERTURA_VERIFICADOR.md.
+# resto da secção — a tab:res_scale e os números citados no texto corrido —
+# ficava por conferir: 33 tokens, segundo o docs/COBERTURA_VERIFICADOR.md.
 #
-# Duas coisas aqui são novas neste ficheiro:
+# O que é novo aqui são as **afirmações ordinais**. A tese não diz só «Gargalo
+# 58%»; diz que é «a retenção mais baixa de todos os cenários com paredes». Um
+# valor pode estar certo e a ordenação ficar falsa se outro cenário for
+# regenerado — e é a ordenação que sustenta o argumento (a estrutura física
+# atenua a diluição em vez de a agravar). Verificam-se as duas coisas.
 #
-# 1. **Afirmações ordinais.** A tese não diz só «Gargalo 58%»; diz que é «a
-#    retenção mais baixa de todos os cenários com paredes». Um valor pode estar
-#    certo e a ordenação ficar falsa se outro cenário for regenerado — e é a
-#    ordenação que sustenta o argumento (estrutura física atenua a diluição).
-#    Verificam-se as duas coisas em separado.
-# 2. **Afirmações sobre o simulador, verificadas contra o simulador a correr.**
-#    O $\mathbb{R}^{111}$ e a passagem de $2{,}5$\,m não estão em CSV nenhum:
-#    saem da geometria e do espaço de observação. Instancia-se o ambiente e
-#    lê-se de lá. Assim, mudar a arena ou as ego-features parte esta verificação
-#    em vez de deixar a tese a afirmar uma dimensão que já não existe.
-#
-# ⚠️ A chave do cenário no config é `classic_scenario`. Um `scenario` escrito por
-# engano é ignorado em silêncio e devolve o cenário por omissão (u_wall) — foi o
-# que aconteceu a escrever isto, e as paredes lidas eram do cenário errado.
+# (As afirmações sobre o simulador — o $\mathbb{R}^{111}$ e a passagem de
+# 2,5 m — começaram aqui e mudaram-se para a `verificar_simulador`: aparecem
+# em oito e em dois sítios da tese, e verificar só a cópia desta secção deixava
+# as outras por conferir.)
 
 def _escala_por_cenario():
     """{cenário: DataFrame do GNN indexado por N} — a bateria de zero-shot."""
@@ -991,6 +989,299 @@ def _pesos_do_gnn():
                                                      "foraging.yaml"))
         _PESOS.append(round(sum(p.numel() for p in agente.parameters()) / 1000.0))
     return _PESOS[0]
+
+
+# ── §Discussão Global: as afirmações DERIVADAS ──────────────────────────────
+#
+# Esta secção quase não tem números próprios — tem **conclusões tiradas de
+# números que estão noutro lado**: «superior a ambos em três cenários», «nenhuma
+# comparação atinge significância no Muro U», «convergem as 28 execuções»,
+# «retém 58--90% nos cenários com paredes», «≈8× menos núcleos-hora».
+#
+# É a parte da tese que o júri lê primeiro e a que nenhum verificador podia
+# apanhar: as tabelas de onde estas frases saem já eram conferidas uma a uma,
+# mas **a contagem, o intervalo e a razão que a prosa tira delas, não**. Uma
+# célula que mude de significativa para não significativa não parte tabela
+# nenhuma — parte a frase que diz «em três cenários», e isso ninguém via.
+#
+# Por isso aqui recalculam-se as conclusões a partir dos mesmos CSV e
+# compara-se com o que a prosa afirma: contagens, mínimos, máximos e razões.
+
+def _convergencia_por_run(csv=None):
+    """{(cenário, algo): nº de runs com 100% de sucesso em todos os episódios}"""
+    d = pd.read_csv(csv or CSV_7D)
+    por_run = d.groupby(["Scenario", "Algorithm", "Run"])["success"].mean()
+    return {k: int((v == 1.0).sum())
+            for k, v in por_run.groupby(level=[0, 1])}
+
+
+def _cenarios_da_frase(txt):
+    """«Quatro Salas, Porta Cooperativa e Perceção Cooperativa» -> {chaves}.
+
+    Devolve None se algum nome não for reconhecido — é melhor dizer «não
+    percebi» do que comparar um conjunto incompleto e dar por bom.
+    """
+    nomes = re.split(r",| e ", re.sub(r"\\textit\{|\\textbf\{|\}", "", txt))
+    chaves = set()
+    for nome in nomes:
+        nome = nome.strip().rstrip(".")
+        if not nome:
+            continue
+        cen = ROTULO_PARA_CENARIO.get(nome)
+        if cen is None:
+            return None
+        chaves.add(cen)
+    return chaves
+
+
+def verificar_discussao_global(tolerancia):
+    """§res_discussao — as contagens, intervalos e razões que a prosa deriva."""
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: §Discussão Global (afirmações derivadas das tabelas)")
+    print("=" * 72)
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+    i = tex.find("\\label{sec:res_discussao}")
+    sec = tex[i:tex.find("\\chapter", i)]
+
+    fp = os.path.join(DIR_ESCALA, "testes_significancia_food_collected.csv")
+    if not os.path.exists(fp):
+        print("[!] sem %s — a saltar." % os.path.basename(fp))
+        return []
+    csv = pd.read_csv(fp, encoding="utf-8", encoding_errors="replace")
+
+    problemas, conferidos = [], 0
+
+    def achar(rot, padrao):
+        m = re.search(padrao, sec, re.DOTALL)
+        if m is None:
+            problemas.append("%s: não encontrei a frase (o texto mudou?)" % rot)
+        return m
+
+    def confere(rot, tese, calc, tol=0.0):
+        nonlocal conferidos
+        conferidos += 1
+        if tese is None:
+            problemas.append("%s: não consegui ler o valor" % rot)
+        elif abs(tese - calc) > tol:
+            problemas.append("%-46s tese=%s  calculado=%s" % (rot, tese, calc))
+
+    # ── quem é superior a quem, e em quantos cenários ───────────────────────
+    def venceu(cen, adversario):
+        """O GNN é significativamente superior a este adversário neste cenário?"""
+        linha = csv[(csv["Scenario"] == cen) & (csv["A"] == "GNN")
+                    & (csv["B"] == adversario)]
+        if linha.empty:
+            return None
+        r = linha.iloc[0]
+        return bool(r["significant"]) and float(r["cliffs_delta"]) > 0
+
+    cenarios = sorted(set(csv["Scenario"]))
+    ambos = [c for c in cenarios if venceu(c, "PPO") and venceu(c, "SAC")]
+    so_sac = [c for c in cenarios if venceu(c, "SAC") and not venceu(c, "PPO")]
+
+    m = achar("superior a ambos em três cenários",
+              r"superior a ambos os métodos de gradiente\}? em três cenários "
+              r"\(([^)]+), com \$\\delta \\geq \+([\d{},]+)\$\)")
+    if m:
+        conferidos += 1
+        # Os cenários vêm da PRÓPRIA frase, não de uma lista escrita aqui: se
+        # a tese trocar um nome, o verificador tem de dar por isso. Com a lista
+        # no código, trocar «Perceção Cooperativa» por «Gargalo» passava.
+        na_frase = _cenarios_da_frase(m.group(1))
+        if na_frase is None:
+            problemas.append("«superior a ambos em três cenários»: não "
+                             "reconheci os cenários listados (%r)" % m.group(1))
+        elif set(ambos) != na_frase:
+            problemas.append("«superior a ambos em três cenários»: a tese lista "
+                             "%s, os testes dizem %s"
+                             % (sorted(na_frase), sorted(ambos)))
+        else:
+            deltas = [min(float(csv[(csv["Scenario"] == c) & (csv["A"] == "GNN")
+                                    & (csv["B"] == adv)]["cliffs_delta"].iloc[0])
+                          for adv in ("PPO", "SAC")) for c in ambos]
+            confere("δ mínimo dos três cenários", numero(m.group(2)),
+                    min(deltas), tol=0.005)
+            print("   [ 2] superior a ambos em %d cenários, δ ≥ %.2f"
+                  % (len(ambos), min(deltas)))
+
+    m = achar("superior ao SAC em mais dois",
+              r"superior ao SAC em mais dois \(([^)]+), \$\\delta = "
+              r"\+([\d{},]+)\$\), empatando com o PPO")
+    if m:
+        conferidos += 1
+        na_frase = _cenarios_da_frase(m.group(1))
+        if na_frase is None:
+            problemas.append("«superior ao SAC em mais dois»: não reconheci os "
+                             "cenários listados (%r)" % m.group(1))
+        elif set(so_sac) != na_frase:
+            problemas.append("«superior ao SAC em mais dois»: a tese lista %s, "
+                             "os testes dizem %s"
+                             % (sorted(na_frase), sorted(so_sac)))
+        else:
+            d_sac = [float(csv[(csv["Scenario"] == c) & (csv["A"] == "GNN")
+                               & (csv["B"] == "SAC")]["cliffs_delta"].iloc[0])
+                     for c in so_sac]
+            confere("δ dos dois cenários vs SAC", numero(m.group(2)),
+                    min(d_sac), tol=0.005)
+            print("   [ 2] superior só ao SAC em %d cenários, δ = %.2f"
+                  % (len(so_sac), min(d_sac)))
+
+    # ── o Muro em U: nenhuma comparação significativa ───────────────────────
+    if achar("Muro U sem significância",
+             r"No \\textbf\{Muro U\}, nenhuma comparação atinge significância"):
+        conferidos += 1
+        sig = csv[(csv["Scenario"] == "u_wall") & (csv["significant"])]
+        if len(sig):
+            problemas.append("«nenhuma comparação atinge significância» no Muro "
+                             "em U, mas o CSV marca %d como significativa(s): %s"
+                             % (len(sig), list(zip(sig["A"], sig["B"]))))
+        else:
+            print("   [ 1] Muro em U: nenhuma das 3 comparações é significativa")
+
+    convergencia = _convergencia_por_run()
+    m = achar("taxas de convergência no Muro U",
+              r"distinguir taxas de convergência de \$(\d)/7\$ a \$(\d)/7\$")
+    if m:
+        u = [convergencia[("u_wall", a)] for a in ALGOS]
+        confere("Muro em U: menor taxa de convergência",
+                numero(m.group(1)), float(min(u)))
+        confere("Muro em U: maior taxa de convergência",
+                numero(m.group(2)), float(max(u)))
+        print("   [ 2] Muro em U: convergência de %d/7 a %d/7 (GNN %d, PPO %d, "
+              "SAC %d)" % (min(u), max(u), u[0], u[1], u[2]))
+
+    # ── as 28 execuções dos quatro cenários de gargalo ──────────────────────
+    m = achar("28 execuções nos cenários de gargalo",
+              r"convergem as (\d+) execuções que perfazem os quatro cenários de "
+              r"gargalo \(sete por cenário\)")
+    if m:
+        gargalos = ("bottleneck", "four_rooms", "cooperative_door",
+                    "cooperative_door_bypass")
+        total = sum(convergencia[(c, "GNN")] for c in gargalos)
+        confere("execuções do GNN a convergir nos 4 cenários com paredes",
+                numero(m.group(1)), float(total))
+        conferidos += 1
+        if total != 4 * 7:
+            problemas.append("a tese diz que convergem TODAS as %s execuções, "
+                             "mas só %d dos 28 runs do GNN chegam a 100%%"
+                             % (m.group(1), total))
+        else:
+            print("   [ 2] os 4 cenários com paredes: 28/28 execuções do GNN a "
+                  "100%")
+
+    # ── a variância entre execuções ─────────────────────────────────────────
+    d7 = pd.read_csv(CSV_7D)
+    med = d7.groupby(["Scenario", "Algorithm", "Run"])["food_collected"].mean()
+    for rot, padrao, cen, algo in (
+            ("Sandbox bimodal (GNN)", r"cenários abertos \(Sandbox (\d)/7\)",
+             "none", "GNN"),
+            ("Gargalo, lotaria do SAC",
+             r"\(Gargalo \$41\{,\}4 \\pm 36\{,\}8\$, (\d)/7\)", "bottleneck",
+             "SAC"),
+            ("PPO: único cenário bimodal",
+             r"um único cenário bimodal \(Muro U, (\d)/7\)", "u_wall", "PPO")):
+        m = achar(rot, padrao)
+        if m:
+            confere(rot, numero(m.group(1)),
+                    float(convergencia[(cen, algo)]))
+    # «um único cenário bimodal» é uma afirmação ordinal: se outro cenário do
+    # PPO deixar de convergir a 7/7, o valor 4/7 continua certo e a frase fica
+    # falsa. É o mesmo tipo de defeito da retenção na escalabilidade.
+    conferidos += 1
+    ppo_incompletos = [c for (c, a), n in convergencia.items()
+                       if a == "PPO" and n < 7]
+    if ppo_incompletos != ["u_wall"]:
+        problemas.append("«o PPO tem um único cenário bimodal»: os cenários do "
+                         "PPO abaixo de 7/7 são %s" % sorted(ppo_incompletos))
+    else:
+        print("   [ 4] bimodalidade: Sandbox/GNN, Gargalo/SAC e o Muro em U "
+              "como único caso do PPO")
+
+    m = achar("desvios de 1--2 recolhas/ep",
+              r"desvios de (\d)--(\d) recolhas/ep na Porta Cooperativa e na "
+              r"Porta com Alternativa")
+    if m:
+        conferidos += 2
+        lo, hi = float(m.group(1)), float(m.group(2))
+        # O intervalo está escrito em números inteiros, por isso julga-se com a
+        # folga do arredondamento (0,5). Sem ela, o desvio de 0,95 da Porta
+        # Cooperativa era acusado de estar fora de «1--2» — e arredonda a 1.
+        # Nota: a tab:res_eval imprime esse mesmo desvio como 0,9 (o `round`
+        # do Python leva o 0,95 para baixo). Nenhum dos dois está errado; é a
+        # mesma medida escrita com arredondamentos diferentes.
+        for cen in ("cooperative_door", "cooperative_door_bypass"):
+            dp = med.loc[cen, "GNN"].std(ddof=1)
+            if not (lo - 0.5 <= dp <= hi + 0.5):
+                problemas.append("«desvios de %g--%g recolhas/ep»: o GNN em %s "
+                                 "tem %.2f" % (lo, hi, cen, dp))
+        print("   [ 2] desvios do GNN nas duas portas dentro de %g--%g "
+              "(%.2f e %.2f)" % (lo, hi,
+                                 med.loc["cooperative_door", "GNN"].std(ddof=1),
+                                 med.loc["cooperative_door_bypass",
+                                         "GNN"].std(ddof=1)))
+
+    # ── o custo computacional e a razão de núcleos-hora ─────────────────────
+    m = achar("núcleos-hora",
+              r"consumiu (\d+) minutos com \$\\approx (\d+)\$ núcleos.{0,80}?"
+              r"contra (\d+) minutos com (\d+) núcleos.{0,60}?razão de "
+              r"\$\\approx (\d+)\\times\$")
+    if m:
+        import yaml
+        cfg = yaml.safe_load(open(os.path.join(PROJECT_ROOT, "configs",
+                                               "foraging.yaml"),
+                                  encoding="utf-8"))
+        # Os dois «números de núcleos» não são estimativas: são a população do
+        # evolutivo e o num_cpu do PPO/SAC, que estão no config.
+        confere("núcleos do evolutivo (= pop_size)", numero(m.group(2)),
+                float(cfg["evolution"]["pop_size"]))
+        confere("núcleos do PPO/SAC (= num_cpu)", numero(m.group(4)),
+                float(cfg["ppo"]["num_cpu"]))
+        razao = (numero(m.group(1)) * numero(m.group(2))) / (
+            numero(m.group(3)) * numero(m.group(4)))
+        confere("razão em núcleos-hora (≈8×)", numero(m.group(5)),
+                round(razao), tol=0.0)
+        print("   [ 3] núcleos-hora: %g×%g / (%g×%g) = %.1f ⇒ ≈%d×"
+              % (numero(m.group(1)), numero(m.group(2)), numero(m.group(3)),
+                 numero(m.group(4)), razao, round(razao)))
+
+    # ── os intervalos de retenção que a secção repete ───────────────────────
+    m = achar("retenção 58--90 vs 39--45",
+              r"reter \$(\d+)\$--\$(\d+)\\%\$ nos cenários com paredes \(contra "
+              r"\$(\d+)\$--\$(\d+)\\%\$ nos abertos\)")
+    if m:
+        dados = _escala_por_cenario()
+        ret = {}
+        for cen, d in dados.items():
+            g = d[d["Algorithm"] == "GNN"].set_index("N")
+            ret[cen] = 100.0 * (g.loc[100, "food_per_agent"]
+                                / g.loc[20, "food_per_agent"])
+        abertos = {"none", "cooperative_perception"}
+        com_paredes = [v for c, v in ret.items() if c not in abertos]
+        so_abertos = [v for c, v in ret.items() if c in abertos]
+        for k, (rot, calc) in enumerate((
+                ("mínimo com paredes", min(com_paredes)),
+                ("máximo com paredes", max(com_paredes)),
+                ("mínimo nos abertos", min(so_abertos)),
+                ("máximo nos abertos", max(so_abertos)))):
+            confere("retenção: %s" % rot, numero(m.group(k + 1)), calc, tol=0.5)
+        print("   [ 4] retenção %.0f--%.0f%% com paredes, %.0f--%.0f%% nos "
+              "abertos" % (min(com_paredes), max(com_paredes),
+                           min(so_abertos), max(so_abertos)))
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nAs %d afirmações derivadas batem com os testes e os CSV."
+              % conferidos)
+    print("NOTA: aqui não se conferem células — conferem-se as CONCLUSÕES tiradas")
+    print("      delas. Uma célula que passe de significativa a não significativa")
+    print("      não parte tabela nenhuma; parte a frase «em três cenários».")
+    return problemas
 
 
 def verificar_significancia(tolerancia):
@@ -2105,6 +2396,7 @@ def main():
     problemas += verificar_escalabilidade_prosa(a.tolerancia)
     problemas += verificar_simulador()
     problemas += verificar_hiperparametros()
+    problemas += verificar_discussao_global(a.tolerancia)
     problemas += verificar_coerencia_interna()
     problemas += verificar_artigo(a.tolerancia)
     problemas += verificar_megatreino_artigo(a.tolerancia)
