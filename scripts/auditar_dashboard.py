@@ -281,6 +281,16 @@ def audita_funcoes_data() -> None:
     cenarios = data.scalability_scenarios() or []
     pngs = data.list_pngs(sessoes[0]) if sessoes else []
     videos = data.video_sessions() or []
+    # O par (algo, cenário) do `video_for` sai de um GIF que a sessão TEM, não
+    # de um par escrito à mão. Estava fixo em ("gnn", "u_wall"), e no dia em que
+    # a sessão mais recente com vídeos passou a ser a do mapa grande — que só
+    # tem `gnn_mapa_grande.gif` — a auditoria acusou a função de devolver vazio.
+    # A função estava certa: a pergunta é que era sobre um vídeo inexistente.
+    par_video = ["gnn", "u_wall"]
+    if videos:
+        gifs = data.list_videos(videos[0])
+        if gifs:
+            par_video = list(data.parse_video(gifs[0]))
     ARGS = {
         "session_metrics": (com_eval[:1] or sessoes[:1]),
         "descricao_sessao": sessoes[:1],
@@ -295,7 +305,7 @@ def audita_funcoes_data() -> None:
         "idade_legivel": [os.path.getmtime("configs/foraging.yaml")],
         "proveniencia": ["configs/foraging.yaml"],
         "parse_video": ["gnn_u_wall.gif"],
-        "video_for": (videos[:1] or sessoes[:1]) + ["gnn", "u_wall"],
+        "video_for": (videos[:1] or sessoes[:1]) + par_video,
     }
     # `send_to_thesis` COPIA ficheiros para a tese: não se chama numa auditoria.
     NAO_CHAMAR = {"send_to_thesis"}

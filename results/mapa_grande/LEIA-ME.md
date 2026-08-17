@@ -119,3 +119,28 @@ scripts/trazer_do_servidor.sh \
 
 ⚠️ Use `-p` (o script já usa) para **preservar as datas** — sem isso a guarda de
 campanha do `eval_zeroshot_mapa.py` deixa passar qualquer modelo.
+
+## F2 — o braço GNN, fechado a 16 ago 2026
+
+A campanha nativa do GNN (21 execuções × 780 min) concluiu a **16 ago 16:21 UTC**.
+Onde ficou cada coisa, e porquê em sítios diferentes:
+
+| | Onde | Versionado? |
+|---|---|---|
+| 420 episódios de avaliação | `f2_gnn/evaluation/eval_by_run.csv` | sim (`git add -f`) |
+| 21 CSV de treino + sentinelas | `f2_gnn/logs/` | sim |
+| 22 campeões (`.pth`, um por execução + o global) | `results/models_f2_gnn/` | sim |
+| GIF do enxame a resolver o mapa | `f2_gnn/videos/gnn_mapa_grande.gif` | sim |
+| Sessão completa (figuras, heatmaps, manifesto) | `results/graficos_tese/16-08-2026_16h14m/` | **não** |
+
+A sessão fica de fora do git como todas as outras 48 (`results/graficos_tese/` é
+ignorado por inteiro): é **dela** que o dashboard lê os vídeos, por isso tem de
+existir localmente, mas as figuras regeneram-se dos CSV. O que está versionado é
+o que **não se regenera**: os episódios, as curvas de treino e os pesos.
+
+O GIF está de propósito nos dois sítios. O dashboard só olha para
+`results/graficos_tese/<sessão>/videos/`, e essa árvore não vai para o git — a
+cópia em `f2_gnn/videos/` é a que sobrevive a um disco novo.
+
+O campeão global (`gnn_3d_best_mapa_grande.pth`) é o do **seed 19**, uma das
+quatro execuções que resolvem o mapa. É com ele que o GIF foi gravado.
