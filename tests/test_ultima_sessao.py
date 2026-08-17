@@ -69,6 +69,38 @@ def test_sem_sessoes_devolve_none(tmp_path, monkeypatch):
     assert vs.ultima_sessao() is None
 
 
+# ── O contrato aplica-se ao que a campanha treinou, não a sete cenários ──────
+def _sessao_com_eval(tmp_path, linhas):
+    pasta = tmp_path / "16-08-2026_16h14m"
+    pasta.mkdir()
+    (pasta / "eval_by_run.csv").write_text(
+        "Scenario,ScenarioLabel,Algorithm,Run,food_collected,success\n" + linhas,
+        encoding="utf-8")
+    return pasta
+
+
+def test_escopo_vem_dos_dados_da_propria_sessao(tmp_path):
+    """Uma campanha de 1 cenário × 1 algoritmo não deve o contrato dos sete.
+
+    O caso real: correr o verificador à mão na sessão do mapa grande escrevia-lhe
+    «30 artefactos essenciais em falta» — e o manifesto ficava no disco a acusar
+    de incompleta uma campanha que estava completa.
+    """
+    pasta = _sessao_com_eval(tmp_path, "mapa_grande,Mapa Grande,GNN,1,0.0,False\n")
+    algos, cens = vs.escopo_da_sessao(str(pasta))
+    assert algos == ("gnn",)
+    assert cens == ("mapa_grande",)
+    itens = vs.contrato(algos, cens)
+    essenciais = [n for n, e, _ in itens if e]
+    assert not any("u_wall" in str(n) or "ppo" in str(n) for n in essenciais)
+
+
+def test_sem_dados_para_inferir_devolve_none(tmp_path):
+    pasta = tmp_path / "01-08-2026_09h00m"
+    pasta.mkdir()
+    assert vs.escopo_da_sessao(str(pasta)) == (None, None)
+
+
 # ── E a mesma regra onde ela decide que modelos ficam ATIVOS ────────────────
 import scripts.restaurar_modelos as rm  # noqa: E402
 

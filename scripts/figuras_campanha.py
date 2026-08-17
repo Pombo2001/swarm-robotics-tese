@@ -103,6 +103,18 @@ def _campanhas():
         if os.path.isdir(d):
             camp["mega_" + os.path.basename(d).replace("mega_", "").replace("_fase", "")] = (
                 d, f"Mega-treino · {os.path.basename(d)}")
+    # F2 do mapa grande: os três braços numa só campanha, porque a figura que
+    # interessa é a que os põe lado a lado. A origem é a pasta-mãe e o
+    # `carregar_eval` apanha os três `eval_by_run.csv` — de propósito.
+    #
+    # ⚠️ É esta entrada que impede a repetição do defeito medido a 17 ago: as
+    # figuras desta campanha que vieram do servidor foram desenhadas a partir do
+    # `eval_summary.csv`, que só tem o **modelo campeão**, e mostravam 7,6
+    # recolhas/ep onde as 21 execuções dão 1,69. Aqui a fonte é sempre o
+    # `eval_by_run.csv`.
+    f2 = os.path.join(RAIZ, "results", "mapa_grande")
+    if glob.glob(os.path.join(f2, "f2_*", "**", "eval_by_run.csv"), recursive=True):
+        camp["mapa_grande_f2"] = (f2, "Mapa Grande · F2 (3 algoritmos × 21 execuções)")
     return camp
 
 

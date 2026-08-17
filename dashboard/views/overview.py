@@ -136,6 +136,13 @@ _CAMPANHAS = [
     ("Mega-treino de 1 mês (stream A)", 317),
     ("Mega-treino de 1 mês (stream B)", 341),
     ("Mapa grande (F0 e F1)", 70),
+    # F2 do mapa grande, fechado a 16 ago: 21 execuções × 780 min no evolutivo e
+    # 42 × 192 min nos dois gradientes. São os orçamentos PRÉ-REGISTADOS (emenda
+    # 19), não o tempo de parede — que é maior, porque inclui filas e a avaliação
+    # no fim. As 27 h que o braço errado consumiu antes de ser descartado
+    # (emenda 23) ficam de fora de propósito: não produziram campanha.
+    ("Mapa grande F2 · evolutivo (21 execuções)", 273),
+    ("Mapa grande F2 · gradientes (42 execuções)", 134),
 ]
 
 # Linha do tempo do projeto (editar aqui à medida que há marcos novos).

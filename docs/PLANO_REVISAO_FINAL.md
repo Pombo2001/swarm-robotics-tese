@@ -257,6 +257,58 @@ mais.
 execuções que resolvem e execuções a zero; o SAC não chega sequer a metade da
 magnitude dos outros braços em nenhuma das 28».
 
+### 17 ago — 2.1, 2.2 e 2.3 — o dashboard: a tabela bate, o inventário não batia, e três figuras mostravam o melhor caso
+
+**2.1 — feito.** `scripts/verificar_dashboard.py` compara o que o dashboard
+mostra com o que a dissertação imprime. A **tabela científica bate inteira**: 42
+valores (7 cenários × 3 algoritmos × sucesso e recolhas) idênticos à
+`tab:res_eval`, lida do `.tex`. Os KPIs do Overview batem com as suas fontes —
+2940 episódios, 7 cenários no denominador da cobertura.
+
+**O que não batia era o inventário de horas.** A maior campanha do projeto — o
+F2 do mapa grande, 21 execuções de 780 min mais 42 de 192 — **não estava lá**. O
+KPI dizia $1671$ h; com ela diz $2078$. Não é um erro de cálculo: é uma lista
+escrita à mão que ninguém atualizou quando a campanha fechou, e é por isso que a
+verificação passou a procurar, para cada campanha com sentinela de conclusão, a
+linha correspondente no inventário.
+
+**2.2 (a parte que me cabia) — as três figuras do melhor caso, refeitas.** As
+figuras de avaliação que o servidor produziu no fim da campanha do GNN saíram do
+`eval_summary.csv`, que tem **um único modelo**: mostravam **80%** de sucesso e
+**7,6** recolhas/ep onde as 21 execuções dão **17,4%** e **1,69**. Nenhuma
+errava o cálculo; erravam o universo — e numa campanha cujo resultado *é* a
+fiabilidade, isso é a diferença entre um resultado e uma vitrine. Regeneradas do
+`eval_by_run.csv`; as originais ficam ao lado com o sufixo `_MODELO_CAMPEAO` e a
+razão escrita em `NOTA_FIGURAS.md`. O `figuras_campanha.py` ganhou a campanha
+`mapa_grande_f2` (os três algoritmos lado a lado), que é a que a vista Arquivo
+passa a apontar.
+
+⚠️ **E o verificador de sessões escreveu um manifesto falso — a corrigir isto.**
+Corrido à mão sobre a sessão do mapa grande, aplicou-lhe o contrato dos **sete**
+cenários × três algoritmos e gravou-lhe «30 artefactos essenciais em falta» numa
+campanha completa. O contrato passa a ser inferido dos dados da própria sessão
+(`escopo_da_sessao`), com teste.
+
+**2.3 — feito, e apanhou 17 leituras.** `scripts/verificar_paridade_pi.py` corre
+as 16 vistas com as leituras de ficheiro instrumentadas, recolhe os **316**
+ficheiros do repositório que elas abrem, e confronta-os com o array de caminhos
+do `atualizar_pi.sh`. Não falava com o Pi — a pergunta é sobre o script de
+publicação. Estavam de fora: os `eval_by_run.csv` das **12 fases do mega-treino**
+e das **5 da campanha adaptativa** (as duas que sustentam a QI6 apareceriam no Pi
+com zero ficheiros), as curvas do PPO e do SAC, e o `main.pdf`/`main.log` de que
+a vista Prontidão tira as páginas, os *overfulls* e as referências. Todos com o
+mesmo modo de falha: a vista não rebenta, devolve `None` e cala-se.
+
+⚠️ **Duas armadilhas encontradas a construir isto, ambas do género que passa
+despercebido:** o `tar` do publicador tinha `--exclude='*.log'`, que teria
+apagado o `Tese/main.log` do pacote **em silêncio** — o caminho na lista e o
+ficheiro a não chegar (o exclude passou a ser ancorado a `results/`); e a
+primeira versão do verificador lia o array com um regex e contava as palavras
+dos **comentários** como caminhos enviados — 766 «caminhos» onde há 34, e
+qualquer leitura mencionada num comentário passava a contar como coberta. Um
+verificador que se deixa convencer por um comentário não verifica nada. Seis
+ensaios prendem as duas.
+
 ### 17 ago — 1.4 — pré-registo vs reportado: 28 compromissos cumpridos, e o que faltava era um braço que nunca correu
 
 **Feito.** `scripts/verificar_preregistos.py` põe os três pré-registos lado a

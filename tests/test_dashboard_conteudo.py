@@ -101,6 +101,25 @@ def test_mensagens_de_vazio_sao_encontradas_no_codigo():
     print("OK  %d mensagens de estado vazio extraídas do código" % len(msgs))
 
 
+def test_os_numeros_do_dashboard_sao_os_da_tese():
+    """Um número que aparece nos dois sítios tem de ser o mesmo número.
+
+    Corre o `scripts/verificar_dashboard.py`: a tabela científica contra a
+    `tab:res_eval` do `.tex`, os KPIs contra as suas fontes, e o inventário de
+    horas contra as campanhas que fecharam. Falhou uma vez de verdade — o F2 do
+    mapa grande fechou a 16 ago com 407 h e ninguém as somou.
+    """
+    import importlib.util
+    caminho = os.path.join(os.path.dirname(__file__), "..", "scripts",
+                           "verificar_dashboard.py")
+    spec = importlib.util.spec_from_file_location("verificar_dashboard", caminho)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod.main() == 0, "dashboard vs tese: %s" % mod.falhas
+    print("OK  %d valores do dashboard batem com as fontes da tese"
+          % mod.conferidos)
+
+
 TESTES = [
     test_todas_as_vistas_constroem,
     test_nenhuma_vista_mostra_estado_vazio_inesperado,
@@ -108,6 +127,7 @@ TESTES = [
     test_funcoes_de_dados_respondem,
     test_modo_leitura_do_pi,
     test_mensagens_de_vazio_sao_encontradas_no_codigo,
+    test_os_numeros_do_dashboard_sao_os_da_tese,
 ]
 
 

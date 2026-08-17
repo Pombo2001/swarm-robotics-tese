@@ -181,13 +181,49 @@ def ultima_sessao():
     return max(cands, key=chave_de_recencia) if cands else None
 
 
+def escopo_da_sessao(pasta):
+    """(algos, cenários) que esta sessão de facto treinou — dos seus dados.
+
+    ⚠️ Sem isto, correr o verificador à mão numa campanha de **um** cenário e
+    **um** algoritmo — como a do mapa grande — aplica-lhe o contrato dos sete
+    cenários × três algoritmos e escreve-lhe no MANIFESTO «30 artefactos
+    essenciais em falta». O manifesto passa a acusar uma campanha completa de
+    estar partida, e é o manifesto que fica no disco a dizê-lo. Aconteceu a 17
+    ago, nesta pasta.
+
+    Devolve `(None, None)` quando não há por onde inferir: aí valem os defaults.
+    """
+    import glob as _glob
+
+    import pandas as pd
+    for nome in ('eval_by_run.csv', 'eval_summary.csv'):
+        for caminho in _glob.glob(os.path.join(pasta, '**', nome), recursive=True):
+            try:
+                df = pd.read_csv(caminho)
+            except Exception:  # noqa: BLE001
+                continue
+            if not {'Scenario', 'Algorithm'}.issubset(df.columns):
+                continue
+            algos = tuple(sorted(a.lower() for a in df['Algorithm'].unique()))
+            cens = tuple(s for s in SCENARIOS if s in set(df['Scenario']))
+            if algos and cens:
+                return algos, cens
+    return None, None
+
+
 def main():
     pasta = sys.argv[1] if len(sys.argv) > 1 else ultima_sessao()
     if not pasta or not os.path.isdir(pasta):
         print('[!] Sessão não encontrada.')
         return 1
 
-    faltam, n_ok, n_tot, n_vid = verificar(pasta)
+    algos, cens = escopo_da_sessao(pasta)
+    if algos:
+        print(f'  escopo lido da própria sessão: {"/".join(algos)} × '
+              f'{", ".join(cens)}')
+        faltam, n_ok, n_tot, n_vid = verificar(pasta, algos=algos, scenarios=cens)
+    else:
+        faltam, n_ok, n_tot, n_vid = verificar(pasta)
     print(f'\nSESSÃO: {os.path.basename(pasta)}')
     print(f'  artefactos: {n_ok}/{n_tot}   vídeos: {n_vid}')
     if faltam:

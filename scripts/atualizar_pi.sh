@@ -74,18 +74,44 @@ else
     #     `resultados/`. Vão inteiras (14 MB): ao contrário das figuras das
     #     campanhas, estas não passam pela janela do `-newermt`, porque uma
     #     imagem que falte não dá erro — tira um selo em silêncio.
+    # E, desde 17 ago, sete caminhos que a verificação de paridade apanhou —
+    # `scripts/verificar_paridade_pi.py` corre as 16 vistas com as leituras de
+    # ficheiro instrumentadas e compara-as com esta lista. Todos pequenos exceto
+    # o PDF, e todos com o mesmo modo de falha: a vista não rebenta, cala-se.
+    #   · mega_1mes/*/evaluation e novelty_adaptativo/*/evaluation (0,4 MB) — a
+    #     vista Arquivo conta os CSV de cada campanha canónica e a Ciência lê-os;
+    #     sem eles, as duas campanhas que sustentam a QI6 apareciam no Pi com
+    #     zero ficheiros;
+    #   · logs_ppo/logs_sac (1 KB) — as curvas dos métodos de gradiente;
+    #   · Tese/main.pdf e main.log (12 MB) — a vista Prontidão compara a data do
+    #     PDF com a do `.tex` para dizer se a compilação está em dia. Sem eles
+    #     mostra «sem main.tex ou main.pdf», que num ecrã de defesa é pior do que
+    #     não mostrar nada. É o único caminho pesado desta lista: quem quiser um
+    #     delta leve passa os caminhos à mão.
     CAMINHOS=(dashboard scripts src configs
               results/episodios_3d results/mapa_grande
               results/mega_1mes/resumo_megatreino.json
               results/estado_f2.json results/estatisticas results/evaluation
-              Tese/main.tex Tese/images "${FIGS[@]}")
+              results/mega_1mes/*/evaluation
+              results/novelty_adaptativo/*/evaluation
+              results/logs_ppo results/logs_sac
+              Tese/main.tex Tese/main.pdf Tese/main.log
+              Tese/images "${FIGS[@]}")
 fi
 
 echo "[pi] a enviar:"
 printf '     %s\n' "${CAMINHOS[@]}"
 
 TAR=$(mktemp -t delta_pi_XXXX.tar.gz)
-tar czf "$TAR" --exclude=__pycache__ --exclude='*.pyc' --exclude='*.log' "${CAMINHOS[@]}"
+# ⚠️ O exclude dos logs é ANCORADO a `results/`. Era `--exclude='*.log'`, e a
+# partir do momento em que o `Tese/main.log` entrou na lista (é dele que a vista
+# Prontidão tira as páginas, os overfulls e as referências indefinidas) esse
+# padrão apagava-o do pacote em silêncio — o caminho ia na lista e o ficheiro não
+# chegava. O que se quer excluir são os logs de treino em bruto, que vivem todos
+# sob `results/` e chegam a MB.
+tar czf "$TAR" --exclude=__pycache__ --exclude='*.pyc' \
+    --exclude='results/*.log' --exclude='results/*/*.log' \
+    --exclude='results/*/*/*.log' "${CAMINHOS[@]}"
 echo "[pi] pacote: $(du -h "$TAR" | cut -f1)"
 
 scp -o BatchMode=yes "$TAR" "$PI:~/delta_pi.tar.gz"
