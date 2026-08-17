@@ -36,6 +36,12 @@ REMOTO='
   echo -e "grad_runs_previstos\t$(grep -o "@192x[0-9]*" ~/mapa_F2grad_master.log 2>/dev/null | tail -1 | tr -d "@" | cut -dx -f2)"
   # --- braço do GNN: um CSV por run, e o melhor best_task_food de cada --------
   echo -e "gnn_runs_previstos\t$(grep -o "@780x[0-9]*" ~/mapa_F2gnn_master.log 2>/dev/null | tail -1 | tr -d "@" | cut -dx -f2)"
+  # A sentinela de conclusão, no diretório vivo E no arquivo (a campanha move
+  # os logs para ~/mapa_F2_gnn ao fechar). Sem isto, o último run aparecia
+  # eternamente "a correr" — foi o que se viu a 17 ago, com a campanha fechada
+  # desde o dia 16 e o run 21 marcado como vivo: ficava de fora dos fechados e
+  # da contagem de convergentes.
+  echo -e "gnn_concluida\t$(cat ~/swarm-mapa-f2g/logs/_campanha_concluida.txt ~/mapa_F2_gnn/logs/_campanha_concluida.txt 2>/dev/null | head -1)"
   for f in ~/swarm-mapa-f2g/results/logs/gnn_3d_training_mapa_grande_run*.csv; do
     [ -e "$f" ] || continue
     n=$(basename "$f" | sed "s/.*run//;s/\.csv//")
@@ -82,9 +88,16 @@ for linha in bruto.splitlines():
         factos[chave] = valor
 
 runs_gnn.sort(key=lambda r: r["run"])
-# O run com o índice mais alto é o que está a correr (os anteriores fecharam).
+# O run com o índice mais alto é o que está a correr (os anteriores fecharam)
+# — **enquanto a campanha estiver viva**. Depois de ela escrever a sentinela
+# `_campanha_concluida.txt`, TODOS estão fechados. Sem esta condição, o último
+# run ficava para sempre marcado como a correr e não entrava nem em
+# `runs_fechados` nem na contagem dos que recolheram: a 17 ago o instantâneo
+# dizia «20 runs fechados» de uma campanha de 21 terminada na véspera.
+concluida = factos.get("gnn_concluida", "").strip()
 for r in runs_gnn:
-    r["a_correr"] = (r["run"] == runs_gnn[-1]["run"]) if runs_gnn else False
+    r["a_correr"] = (not concluida) and bool(runs_gnn) and \
+        r["run"] == runs_gnn[-1]["run"]
 
 def inteiro(chave):
     m = re.search(r"\d+", factos.get(chave, ""))
@@ -103,6 +116,7 @@ estado = {
     },
     "gnn": {
         "runs_previstos": inteiro("gnn_runs_previstos"),
+        "concluida": concluida or None,
         "runs": runs_gnn,
         "runs_fechados": [r for r in runs_gnn if not r["a_correr"]],
     },
@@ -121,5 +135,6 @@ print(f"  grad: PPO {estado['grad']['ppo_runs_concluidos']}"
       f"/{estado['grad']['runs_previstos']} runs, SAC "
       f"{estado['grad']['sac_runs_concluidos']}")
 print(f"  GNN: {estado['gnn']['fechados']} runs fechados, "
-      f"{estado['gnn']['fechados_com_recolha']} com recolha")
+      f"{estado['gnn']['fechados_com_recolha']} com recolha"
+      + (f" · CAMPANHA CONCLUÍDA {concluida[:19]}" if concluida else ""))
 PY

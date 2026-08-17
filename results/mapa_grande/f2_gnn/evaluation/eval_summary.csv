@@ -1,0 +1,21 @@
+Scenario,ScenarioLabel,Algorithm,food_collected,success,total_reward,door_opened
+mapa_grande,Mapa Grande,GNN,10.0,True,29960.040116937365,True
+mapa_grande,Mapa Grande,GNN,9.0,True,30507.180935861048,True
+mapa_grande,Mapa Grande,GNN,0.0,False,24000.960676915885,True
+mapa_grande,Mapa Grande,GNN,0.0,False,20018.819678499898,True
+mapa_grande,Mapa Grande,GNN,0.0,False,22064.573065328044,True
+mapa_grande,Mapa Grande,GNN,11.0,True,30356.77845412674,True
+mapa_grande,Mapa Grande,GNN,10.0,True,27497.471466981267,True
+mapa_grande,Mapa Grande,GNN,11.0,True,29383.64385087124,True
+mapa_grande,Mapa Grande,GNN,12.0,True,30649.153749603443,True
+mapa_grande,Mapa Grande,GNN,11.0,True,28787.9192554751,True
+mapa_grande,Mapa Grande,GNN,10.0,True,30384.21395213902,True
+mapa_grande,Mapa Grande,GNN,0.0,False,19393.380668435835,True
+mapa_grande,Mapa Grande,GNN,11.0,True,30124.447891378266,True
+mapa_grande,Mapa Grande,GNN,5.0,True,24080.65643241234,True
+mapa_grande,Mapa Grande,GNN,4.0,True,23569.21031670294,True
+mapa_grande,Mapa Grande,GNN,10.0,True,30169.17689535398,True
+mapa_grande,Mapa Grande,GNN,8.0,True,29495.42699662169,True
+mapa_grande,Mapa Grande,GNN,10.0,True,26170.31375498104,True
+mapa_grande,Mapa Grande,GNN,9.0,True,28770.252877499515,True
+mapa_grande,Mapa Grande,GNN,11.0,True,29588.421802412875,True

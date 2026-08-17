@@ -1,0 +1,145 @@
+environment:
+  arena_radius: 15.0
+  classic_scenario: mapa_grande
+  dynamic_nest: true
+  dynamic_obstacles: true
+  # RECOMPENSA SIMPLES (Prof. Nunes + utilizador, 22 jun): manter o sistema com o
+  # MINIMO de termos e 2 focos -- EXPLORAR e ENCONTRAR O NINHO. A exploracao e
+  # PEQUENA (0.5/celula) de proposito: incentiva cobrir o mapa, mas o ninho (300,
+  # repetivel) domina sempre, evitando o vaguear que estragava o PPO no u_wall
+  # (que acontecia porque o ninho exigia 3 agentes; agora exige 1 na navegacao).
+  exploration_bonus: 0.5
+  exploration_cell_size: 2.0
+  forbidden_area: 2.2
+  geodesic_cell_size: 0.4
+  hunger_timer_max: 250
+  # Alcance do LiDAR: subido de 5->8m para o agente "ver" o desvio dos labirintos
+  # a tempo (o contorno do u_wall fica a ~8m, antes fora de alcance). Mantem-se
+  # observabilidade parcial (nao ve o mapa todo nem a direcao geodesica).
+  lidar_range: 8.0
+  max_steps: 500
+  max_steps_cooperative_door: 800
+  max_steps_cooperative_door_bypass: 1000
+  # mapa_grande: percurso ~4,5x mais longo (155 m de pior caso contra 34 m do
+  # Quatro Salas) -> precisa de episodios proporcionalmente maiores. A arena
+  # tambem e maior, e SO neste cenario (arena_radius_mapa_grande): mexer no
+  # arena_radius global alteraria os 7 cenarios das campanhas ja fechadas.
+  #
+  # 2000 passos, nao 1200. Tomando 0,2 m/passo (o limite POR EIXO de
+  # move_local, clipado a +-1 x 0,2), o pior ponto do mapa fica a ~777 passos
+  # do ninho SO DE IDA: com 1200 nem a ida-e-volta cabia, e o agente teria de
+  # ir em linha reta sem explorar nem errar uma vez. 2000 da folga 2,6x sobre
+  # essa ida (2,9x a partir do pior spawn), acima do minimo de 2,5x pre-
+  # registado. E conservador: o deslocamento e a soma vetorial de tres
+  # componentes ortogonais, logo o modulo maximo real e 0,2*raiz(3)=0,346 m.
+  max_steps_mapa_grande: 2000
+  arena_radius_mapa_grande: 60.0
+  # O bonus de exploracao paga por CELULA nova (2x2 m), logo o seu tecto cresce
+  # com a area navegavel. Medido a 30 jul: 200-256 celulas nos 7 cenarios (tecto
+  # 100-128) contra 1506 no mapa_grande (tecto 753, 6,5x). A razao "recompensa de
+  # uma entrega / tecto da exploracao" e 2,34-3,00 nos sete e ficava em 0,40 aqui
+  # -- ou seja, VAGUEAR pagava melhor que recolher, o que desfaz a decisao de
+  # 22 jun de subir a comida 100->300 (ver o comentario em rewards). Escala-se o
+  # bonus, e nao o tamanho da celula: 2 m e a resolucao certa para corredores de
+  # 2,5 m. Com 0.08 o tecto fica em 120,5 e a razao em 2,49, dentro dos sete.
+  exploration_bonus_mapa_grande: 0.08
+  # obs_norm_radius (NAO definido de proposito): raio que normaliza as
+  # distancias da observacao. Por omissao e o raio da arena do cenario -- o que
+  # significa que o mapa_grande comprime todas as distancias 4x face aos 7
+  # cenarios (/120 em vez de /30). Isso e um CONFUNDENTE do zero-shot de
+  # topologia, tratado com uma condicao de controlo em
+  # scripts/eval_zeroshot_mapa.py --norm-obs treino (ver o pre-registo, sec. 3).
+  # Defini-lo aqui mudaria TODOS os cenarios: nao definir.
+  #
+  # num_obstacles_mapa_grande e obs_zero_door_feats (NAO definidos de proposito):
+  # as outras duas condicoes de CONTROLO do zero-shot (pre-registo, sec. 3). Um
+  # zero no F1 tem QUATRO causas possiveis e a normalizacao acima so separa uma:
+  #   (1) topologia composta -- o que o F1 quer medir;
+  #   (2) distancias comprimidas 4x     -> controlo --norm-obs treino;
+  #   (3) 106 obstaculos dispersos      -> controlo --controlo sem_obstaculos.
+  #       Dos 8 cenarios so o Sandbox e o mapa_grande tem obstaculos: os 5
+  #       labirintos tem ZERO, logo os seus campeoes nunca viram um obstaculo.
+  #   (4) as 4 features da porta (obs[12:16]), identicamente 0 no treino de
+  #       quem nao tem porta e vivas no mapa -> controlo --controlo sem_porta_obs.
+  # Sao no-op por omissao (os 7 cenarios ficam bit-a-bit iguais); quem os liga e
+  # o scripts/eval_zeroshot_mapa.py, num config temporario. Nao definir aqui.
+  min_spread_distance: 1.0
+  nest_radius: 1.5
+  nest_velocity: 0.015
+  num_agents: 20
+  num_obstacles: 100
+  # Penalizacoes secundarias DESLIGADAS (recompensa simples -- nao baralhar): a
+  # fisica de colisao/separacao mantem-se (os agentes nao se sobrepoem nem
+  # atravessam paredes), so se removeu o sinal de RECOMPENSA destes termos.
+  # Se aparecer clustering ou agentes colados as paredes, readicionar aos poucos.
+  obstacle_penalty: 0.0
+  obstacle_radius: 0.2
+  obstacle_velocity: 0.02
+  progress_reward_factor: 10.0
+  # required_to_eat e o valor dos cenarios COOPERATIVOS (porta, percecao). Nos
+  # labirintos de NAVEGACAO (u_wall, bottleneck, four_rooms) o ambiente forca =1
+  # no reset: exigir 3 agentes simultaneos ali transformava navegacao em
+  # cooperacao artificial e dava 0 recolhas mesmo chegando 1-2 agentes ao ninho.
+  required_to_eat: 3
+  spreading_penalty_factor: 0.0
+evolution:
+  novelty_adaptive: true
+  novelty_weight: 0.5
+  eval_episodes: 4
+  mutation_rate: 0.1
+  pop_size: 30
+  sigma: 0.1
+  # Exploração: manter viva ao longo das gerações para não convergir cedo demais
+  # (sigma a colapsar = campeão decora as seeds de avaliação -> overfitting).
+  sigma_min: 0.03
+  sigma_decay: 0.999
+  # Fitness = food*food_weight + shaping_amplitude*homing, onde homing e a fracao
+  # [0,1] de aproximacao ao ninho NO FIM do episodio (potencial geodesico).
+  # O homing e NAO-FARMAVEL (so conta o estado final): vaguear nao o aumenta. Foi o
+  # que curou o colapso do GNN nos labirintos -- a fitness anterior somava um tanh do
+  # RETORNO ACUMULADO, que a evolucao maximizava deambulando sem nunca recolher
+  # (fitness exploitation). Assim que um genoma come, food*food_weight domina.
+  fitness_food_weight: 10000.0
+  fitness_shaping_amplitude: 5000.0
+gnn_agent:
+  hidden_dim: 32
+physics:
+  agent_radius: 0.15
+  collision_penalty: 0.0
+plotting:
+  smoothing_window: 10
+ppo:
+  batch_size: 512
+  checkpoint_interval_min: 30
+  learning_rate: 0.0001
+  log_interval: 2000
+  n_epochs: 4
+  n_steps: 64
+  net_arch:
+  - 256
+  - 256
+  num_cpu: 16
+rewards:
+  energy_cost: -0.05
+  # Recompensa de tarefa SUBIDA de 100->300 (Prof. Nunes): com a exploracao
+  # pequena, a comida tem de dominar claramente o shaping de progresso para a
+  # politica convergir para "recolher", nao para "vaguear".
+  food_collected: 300.0
+sac:
+  buffer_size: 500000
+  checkpoint_interval_min: 30
+  ent_coef: 0.1
+  learning_rate: 0.0001
+  log_interval: 2000
+  net_arch:
+  - 256
+  - 256
+  num_cpu: 16
+simulation:
+  guillotine_threshold: -200
+  max_steps: 500
+  render_mode: rgb_array
+visualization:
+  speed_slider_default: 30
+  speed_slider_max: 120
+  speed_slider_min: 1
