@@ -53,6 +53,7 @@ import os
 import re
 import sys
 
+import numpy as np
 import pandas as pd
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -106,6 +107,25 @@ def numero(s):
         return float(s)
     except ValueError:
         return None
+
+
+def corpo_tabela(tex, label):
+    """O corpo de uma tabela, do `\\label` ao `\\end{tabular}`.
+
+    Existe para as tabelas que não são indexadas por cenário (a `ler_tabela`
+    só devolve essas) e que, por isso, se leem à mão: tab:res_scale, indexada
+    por algoritmo, e as três de configuração, indexadas pelo nome do
+    hiperparâmetro. Está separada por uma segunda razão: o
+    `cobertura_verificador.py` embrulha estas funções para saber que trechos do
+    `.tex` foram lidos. Quem parta a tabela com `find()` no meio de uma função
+    escapa à medição — foi o que aconteceu à `ler_tabela` e deu uma cobertura
+    medida de 6%.
+    """
+    i = tex.find("\\label{%s}" % label)
+    if i < 0:
+        return None
+    fim = tex.find("\\end{tabular}", i)
+    return tex[i:fim if fim > i else i + 4000]
 
 
 def ler_tabela(caminho, label):
@@ -201,7 +221,10 @@ def verificar_escalabilidade(tolerancia):
             csv_ret = 100.0 * percapita[100] / percapita[20]
             if tese_ret is None:
                 problemas.append("%s retenção: não consegui ler a tese" % rotulo)
-            elif abs(tese_ret - csv_ret) > 1.0:   # a tese arredonda ao inteiro
+            # A tese escreve a retenção ao inteiro: a folga é a do próprio
+            # arredondamento (0,5 pp). Estava em 1,0 pp, e com isso um 90% que
+            # devesse ser 91% passava.
+            elif abs(tese_ret - csv_ret) > 0.5:
                 problemas.append("%-22s retenção tese=%5.1f%%  csv=%5.1f%%  "
                                  "(Δ=%+.1f pp)" % (rotulo, tese_ret, csv_ret,
                                                    tese_ret - csv_ret))
@@ -215,6 +238,759 @@ def verificar_escalabilidade(tolerancia):
     print("NOTA: a tabela é só do GNN — as MLP do PPO/SAC são incompatíveis com")
     print("      N≠20 por construção, que é o resultado da QI2 e não uma falta.")
     return problemas
+
+
+# ── §Escalabilidade: a prosa, a segunda tabela, e o que o simulador diz ──────
+#
+# A `verificar_escalabilidade` acima cobre a tab:res_scale_all e mais nada. O
+# resto da secção — a tab:res_scale, os números citados no texto corrido, as
+# afirmações ordinais («a retenção mais alta pertence a…») e duas afirmações
+# sobre o próprio simulador ($\mathbb{R}^{111}$ e a passagem de 2,5 m) — ficava
+# por conferir: 33 tokens, segundo o docs/COBERTURA_VERIFICADOR.md.
+#
+# Duas coisas aqui são novas neste ficheiro:
+#
+# 1. **Afirmações ordinais.** A tese não diz só «Gargalo 58%»; diz que é «a
+#    retenção mais baixa de todos os cenários com paredes». Um valor pode estar
+#    certo e a ordenação ficar falsa se outro cenário for regenerado — e é a
+#    ordenação que sustenta o argumento (estrutura física atenua a diluição).
+#    Verificam-se as duas coisas em separado.
+# 2. **Afirmações sobre o simulador, verificadas contra o simulador a correr.**
+#    O $\mathbb{R}^{111}$ e a passagem de $2{,}5$\,m não estão em CSV nenhum:
+#    saem da geometria e do espaço de observação. Instancia-se o ambiente e
+#    lê-se de lá. Assim, mudar a arena ou as ego-features parte esta verificação
+#    em vez de deixar a tese a afirmar uma dimensão que já não existe.
+#
+# ⚠️ A chave do cenário no config é `classic_scenario`. Um `scenario` escrito por
+# engano é ignorado em silêncio e devolve o cenário por omissão (u_wall) — foi o
+# que aconteceu a escrever isto, e as paredes lidas eram do cenário errado.
+
+def _escala_por_cenario():
+    """{cenário: DataFrame do GNN indexado por N} — a bateria de zero-shot."""
+    dados = {}
+    for cen in set(ROTULO_PARA_CENARIO.values()):
+        fp = os.path.join(DIR_ESCALA, "escalabilidade_%s.csv" % cen)
+        if os.path.exists(fp):
+            d = pd.read_csv(fp)
+            dados[cen] = d
+    return dados
+
+
+def verificar_escalabilidade_prosa(tolerancia):
+    """§Escalabilidade: prosa, tab:res_scale, ordinais e o simulador."""
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: §Escalabilidade (prosa + tab:res_scale + simulador)")
+    print("=" * 72)
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+    i = tex.find("\\label{sec:res_scale}")
+    j = tex.find("\\section", i + 10)
+    sec = tex[i:j]
+
+    dados = _escala_por_cenario()
+    problemas, conferidos = [], 0
+
+    def gnn(cen, n, coluna):
+        d = dados[cen]
+        linha = d[(d["Algorithm"] == "GNN") & (d["N"] == n)]
+        return float(linha[coluna].iloc[0])
+
+    def confere(rot, tese, csv_, tol=None):
+        nonlocal conferidos
+        conferidos += 1
+        if tese is None:
+            problemas.append("%s: não consegui ler o valor na tese" % rot)
+        elif abs(tese - csv_) > (tolerancia if tol is None else tol):
+            problemas.append("%-46s tese=%8.2f  dados=%8.2f  (Δ=%+.2f)"
+                             % (rot, tese, csv_, tese - csv_))
+
+    def achar(rot, padrao):
+        m = re.search(padrao, sec, re.DOTALL)
+        if m is None:
+            problemas.append("%s: não encontrei a frase (o texto mudou?)" % rot)
+        return m
+
+    # ── 1. as 28 combinações a 100% ─────────────────────────────────────────
+    celulas = [(cen, n) for cen in dados for n in (10, 20, 50, 100)]
+    cem = [(cen, n) for cen, n in celulas if gnn(cen, n, "success_rate") == 1.0]
+    m = re.search(r"\\textbf\{100\\% de sucesso nas (\d+) combina", sec)
+    if m:
+        conferidos += 1
+        tese_n = int(m.group(1))
+        if tese_n != len(celulas):
+            problemas.append("a tese diz %d combinações, a bateria tem %d "
+                             "(%d cenários × 4 dimensões)"
+                             % (tese_n, len(celulas), len(dados)))
+        elif len(cem) != len(celulas):
+            faltam = [c for c in celulas if c not in cem]
+            problemas.append("a tese diz 100%% nas %d combinações, mas %d não "
+                             "estão a 100%%: %s" % (tese_n, len(faltam), faltam))
+        else:
+            print("   [%2d] 28 combinações a 100%%                    "
+                  "%d cenários × 4 dimensões, todas a 1,0" % (1, len(dados)))
+    else:
+        problemas.append("28 combinações: não encontrei a frase")
+
+    # ── 2. o ponto de comparação no tamanho de treino ───────────────────────
+    m = achar("Sandbox N=20 (três algoritmos)",
+              r"Sandbox, \$N=20\$: GNN \$([\d{},]+)\$, PPO \$([\d{},]+)\$, "
+              r"SAC \$([\d{},]+)\$ recolhas/ep")
+    if m:
+        d = dados["none"]
+        for k, algo in enumerate(ALGOS):
+            linha = d[(d["Algorithm"] == algo) & (d["N"] == 20)]
+            confere("Sandbox N=20 %s" % algo, numero(m.group(k + 1)),
+                    float(linha["mean_food"].iloc[0]))
+        print("   [ 3] Sandbox N=20: os três algoritmos batem")
+
+    # ── 3. a gama de dimensões, dita em palavras ────────────────────────────
+    m = achar("gama de dimensões", r"\$N \\in \\\{10, 50, 100\\\}\$")
+    m2 = achar("de metade a cinco vezes", r"de metade a cinco vezes o enxame "
+                                          r"de treino")
+    if m and m2:
+        conferidos += 2
+        ns = sorted(int(x) for x in dados["none"]["N"].unique())
+        if ns != [10, 20, 50, 100]:
+            problemas.append("a tese promete N ∈ {10,20,50,100}; o CSV tem %s"
+                             % ns)
+        elif not (min(ns) / 20.0 == 0.5 and max(ns) / 20.0 == 5.0):
+            problemas.append("«de metade a cinco vezes»: %s/20 não dá 0,5–5×"
+                             % ns)
+        else:
+            print("   [ 2] «de metade a cinco vezes o enxame de treino»  "
+                  "N=%s ⇒ 0,5× a 5,0×" % ns)
+
+    # ── 4. as retenções citadas na prosa (e a ordem que sustenta o argumento)
+    retencao = {cen: 100.0 * gnn(cen, 100, "food_per_agent")
+                / gnn(cen, 20, "food_per_agent") for cen in dados}
+    prosa_ret = [
+        ("Porta com Alternativa", "cooperative_door_bypass",
+         r"Porta com Alternativa \$(\d+)\\%\$"),
+        ("Porta Cooperativa", "cooperative_door",
+         r"Porta Cooperativa \$(\d+)\\%\$"),
+        ("Muro em U", "u_wall", r"Muro em U \$(\d+)\\%\$"),
+        ("Sandbox", "none", r"Sandbox \$(\d+)\\%\$"),
+        ("Perceção Cooperativa", "cooperative_perception",
+         r"Perceção Cooperativa \$(\d+)\\%\$"),
+        ("Quatro Salas", "four_rooms", r"Quatro Salas retém \$(\d+)\\%\$"),
+        ("Gargalo", "bottleneck", r"\\textbf\{Gargalo\} \$(\d+)\\%\$"),
+    ]
+    for rot, cen, padrao in prosa_ret:
+        m = achar("retenção %s (prosa)" % rot, padrao)
+        if m:
+            # A tolerância sai das casas decimais que a tese escreveu: um valor
+            # escrito ao inteiro julga-se ao inteiro (0,5 pp), não a 1 pp. Com
+            # 1 pp de folga, trocar 90% por 91% passava despercebido — foi o
+            # ensaio de mutações que o mostrou.
+            confere("retenção %s (prosa)" % rot, numero(m.group(1)),
+                    retencao[cen], tol=0.5)
+    print("   [ 7] as 7 retenções citadas na prosa batem com os CSV")
+
+    # A afirmação ordinal: as duas piores são os cenários ABERTOS e a melhor é
+    # um cenário com paredes. Se um CSV for regenerado, os valores podem
+    # continuar certos e o argumento cair na mesma.
+    conferidos += 3
+    ordem = sorted(retencao, key=retencao.get)
+    abertos = {"none", "cooperative_perception"}
+    if set(ordem[:2]) != abertos:
+        problemas.append("«a retenção mais baixa aos cenários abertos» é falsa: "
+                         "as duas mais baixas são %s" % ordem[:2])
+    elif ordem[-1] != "cooperative_door_bypass":
+        problemas.append("«a retenção mais alta … Porta com Alternativa» é "
+                         "falsa: a mais alta é %s" % ordem[-1])
+    else:
+        print("   [ 3] ordenação: as 2 mais baixas são os abertos, a mais alta "
+              "é a Porta c/ Alternativa")
+
+    # E o Gargalo como pior dos cenários COM PAREDES.
+    conferidos += 1
+    com_paredes = [c for c in retencao if c not in abertos]
+    pior = min(com_paredes, key=retencao.get)
+    if pior != "bottleneck":
+        problemas.append("«a retenção mais baixa de todos os cenários com "
+                         "paredes» é falsa: é %s (%.0f%%), não o Gargalo (%.0f%%)"
+                         % (pior, retencao[pior], retencao["bottleneck"]))
+    else:
+        print("   [ 1] o Gargalo é mesmo a retenção mais baixa entre os que têm "
+              "paredes")
+
+    # ── 5. o Gargalo cresce em termos absolutos ─────────────────────────────
+    m = achar("Gargalo, recolhas totais",
+              r"\(\$([\d{},]+)\$ em \$N=20\$ para \$([\d{},]+)\$ em \$N=100\$\)")
+    if m:
+        confere("Gargalo total N=20", numero(m.group(1)),
+                gnn("bottleneck", 20, "mean_food"))
+        confere("Gargalo total N=100", numero(m.group(2)),
+                gnn("bottleneck", 100, "mean_food"))
+
+    # ── 6. tab:res_scale — o contraste arquitetural no Sandbox ──────────────
+    d = dados["none"]
+    # A `ler_tabela` só devolve linhas cujo rótulo seja um cenário; esta tabela
+    # é indexada por algoritmo, por isso lê-se aqui. O rótulo perde o que vem
+    # entre parênteses («GNN (Evolutivo)» → «GNN»).
+    corpo = corpo_tabela(sec, "tab:res_scale") or ""
+    linhas_tab = {}
+    for bruta in corpo.split("\\\\"):
+        bruta = bruta.replace("\\hline", "").strip()
+        campos_ = [c.strip() for c in bruta.split("&")]
+        rot_ = re.sub(r"\(.*?\)|\\[a-zA-Z]+\{|[{}$]", "", campos_[0]).strip()
+        if rot_ in ALGOS:
+            linhas_tab[rot_] = campos_[1:]
+
+    for algo in ALGOS:
+        campos = linhas_tab.get(algo)
+        if campos is None:
+            problemas.append("tab:res_scale: não encontrei a linha do %s" % algo)
+            continue
+        for k, n in enumerate((10, 20, 50, 100)):
+            linha = d[(d["Algorithm"] == algo) & (d["N"] == n)]
+            compativel = bool(linha["compatible"].iloc[0])
+            celula = campos[k] if k < len(campos) else ""
+            conferidos += 1
+            if not compativel:
+                # O CSV diz incompatível: a tese TEM de dizer N/A, e vice-versa.
+                if "N/A" not in celula:
+                    problemas.append("tab:res_scale %s N=%d: a tese diz %r mas o "
+                                     "CSV marca incompatível" % (algo, n, celula))
+                continue
+            if "N/A" in celula:
+                problemas.append("tab:res_scale %s N=%d: a tese diz N/A mas o "
+                                 "CSV tem dados" % (algo, n))
+                continue
+            # A célula é «taxa / recolhas» — `$100\%$ / $37{,}4$`. Parte-se na
+            # barra e deixa-se o `numero()` limpar os $ e o \%.
+            partes = celula.split("/")
+            if len(partes) != 2:
+                problemas.append("tab:res_scale %s N=%d: não li a célula %r"
+                                 % (algo, n, celula))
+                continue
+            confere("tab:res_scale %s N=%d sucesso" % (algo, n),
+                    numero(partes[0]),
+                    100.0 * float(linha["success_rate"].iloc[0]))
+            confere("tab:res_scale %s N=%d recolhas" % (algo, n),
+                    numero(partes[1]), float(linha["mean_food"].iloc[0]))
+    print("   [12] tab:res_scale: as células do GNN, e os N/A do PPO/SAC onde o "
+          "CSV marca incompatível")
+
+    # A legenda repete os extremos do GNN e afirma crescimento monotónico.
+    m = achar("legenda: 37,4 → 127,3",
+              r"crescem monotonicamente com \$N\$ \(\$([\d{},]+) \\rightarrow "
+              r"([\d{},]+)\$\)")
+    if m:
+        totais = [gnn("none", n, "mean_food") for n in (10, 20, 50, 100)]
+        confere("legenda tab:res_scale N=10", numero(m.group(1)), totais[0])
+        confere("legenda tab:res_scale N=100", numero(m.group(2)), totais[-1])
+        conferidos += 1
+        if totais != sorted(totais):
+            problemas.append("a legenda diz «monotonicamente» mas as recolhas "
+                             "do GNN no Sandbox são %s" % totais)
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nOs %d valores da secção da escalabilidade batem." % conferidos)
+    print("NOTA: além dos valores, confere ORDINAIS («a retenção mais baixa é a")
+    print("      dos cenários abertos»), que é o que sustenta o argumento —")
+    print("      os valores podem estar certos e a ordenação cair na mesma.")
+    return problemas
+
+
+# ── o mundo que a tese descreve  vs  o mundo que o simulador constrói ───────
+#
+# O Capítulo 4 descreve os cenários em metros: «passagem de 2,5 m», «parede
+# superior de 14 m», «aberturas de 7 m», «porta de 3 m», «800 passos». Nenhum
+# destes números está num CSV — saem da geometria construída em
+# `swarm_env_3d.py` e do `configs/foraging.yaml`. Até agora, **nenhum
+# verificador olhava para eles**: a tese podia descrever um mundo e o
+# simulador construir outro, e tudo continuava a «bater ✓».
+#
+# Não é hipotético neste projeto: as aberturas foram alargadas de 1,5 m para
+# 2,5 m a 22 jun, e a altura das paredes mudou a 29 jul (os robôs voavam por
+# cima). Uma descrição escrita antes de uma dessas mudanças sobrevive calada.
+#
+# Por isso aqui não se lê o código como texto — **instancia-se o ambiente e
+# mede-se**. Se alguém mudar a geometria, isto parte, que é o objetivo.
+#
+# ⚠️ A chave do cenário no config é `classic_scenario`. Um `scenario` escrito
+# por engano é ignorado em silêncio e devolve o cenário por omissão (u_wall) —
+# foi o que aconteceu a escrever isto, e as paredes lidas eram do cenário
+# errado.
+
+def _env(cen, n=20):
+    import yaml
+    from src.environment.swarm_env_3d import SwarmForagingEnv3D
+    cfg = yaml.safe_load(open(os.path.join(PROJECT_ROOT, "configs",
+                                           "foraging.yaml"), encoding="utf-8"))
+    cfg["environment"]["num_agents"] = n
+    cfg["environment"]["classic_scenario"] = cen
+    e = SwarmForagingEnv3D(config=cfg)
+    e.reset(seed=0)
+    return e
+
+
+def _vaos(paredes, eixo=0, excluir=()):
+    """Vãos entre paredes consecutivas ao longo de um eixo.
+
+    A largura de uma passagem não está escrita em lado nenhum como constante:
+    é a consequência de onde acabam as paredes. Mede-se, portanto, como a tese
+    a descreve — o espaço livre entre elas.
+    """
+    segs = sorted((w["pos"][eixo] - w["size"][eixo] / 2.0,
+                   w["pos"][eixo] + w["size"][eixo] / 2.0)
+                  for k, w in enumerate(paredes) if k not in excluir)
+    return [round(b[0] - a[1], 6) for a, b in zip(segs, segs[1:])
+            if b[0] - a[1] > 1e-6]
+
+
+def _factos_do_simulador():
+    """O que o simulador afirma, medido nele. {rótulo: valor}"""
+    from src.environment.swarm_env_3d import DOOR_PUSHERS_REQUIRED
+
+    f = {}
+    e20 = _env("bottleneck", 20)
+    f["dim_obs"] = float(e20.observation_space_val.shape[0])
+    f["ego_feats"] = float(e20.ego_feats_dim)
+    # A fórmula 16 + (N-1)×5 verifica-se medindo, não lendo: instanciar com
+    # outro N e ver se a dimensão anda de 5 em 5 por vizinho.
+    e10 = _env("bottleneck", 10)
+    f["por_vizinho"] = (f["dim_obs"] - e10.observation_space_val.shape[0]) / 10.0
+    f["lidar"] = float(e20.lidar_range)
+    f["arena"] = float(e20.arena_radius)
+    f["gargalo_passagem"] = _vaos(e20.walls)[0]
+    f["max_steps"] = float(e20.max_steps)
+
+    u = _env("u_wall")
+    barra = max(u.walls, key=lambda w: w["size"][0])
+    perna = min(u.walls, key=lambda w: w["size"][0])
+    f["u_barra"] = float(barra["size"][0])
+    f["u_perna"] = float(perna["size"][1])
+    # A «abertura de 7 m» é o espaço livre entre a perna e a fronteira da arena.
+    # (Com a perna da esquerda, x=-7, é preciso o módulo: sem ele dava 21 m e
+    # acusava a tese de errada — a folga é a mesma dos dois lados.)
+    f["u_lateral"] = float(u.arena_radius
+                           - (abs(perna["pos"][0]) + perna["size"][0] / 2.0))
+
+    q = _env("four_rooms")
+    horizontais = [w for w in q.walls if w["size"][0] > w["size"][1]]
+    f["salas_abertura"] = max(_vaos(horizontais))
+
+    p = _env("cooperative_door")
+    f["porta_largura"] = float(p.door_size[0])
+    f["porta_agentes"] = float(DOOR_PUSHERS_REQUIRED)
+    f["porta_passos"] = float(p.max_steps)
+
+    b = _env("cooperative_door_bypass")
+    f["bypass_porta"] = float(b.door_size[0])
+    # A alternativa é o que sobra entre o fim do segmento direito e a arena.
+    barreira = [w for w in b.walls if abs(w["pos"][1]) < 1e-6
+                and w is not b.walls[b.door_wall_index]]
+    fim_direito = max(w["pos"][0] + w["size"][0] / 2.0 for w in barreira)
+    f["bypass_alternativa"] = float(b.arena_radius - fim_direito)
+    f["bypass_passos"] = float(b.max_steps)
+
+    c = _env("cooperative_perception")
+    f["alvo_velocidade"] = float(np.linalg.norm(c.nest_velocity))
+    f["captura_agentes"] = float(c.required_to_eat)
+    return f
+
+
+# Cada afirmação: rótulo, padrão (procurado em TODA a tese, todas as
+# ocorrências), o facto medido, e a tolerância. Se um padrão deixar de
+# encontrar seja o que for, é problema — a frase pode ter sido reescrita e
+# ficado sem quem a confira.
+#
+# ⚠️ Os padrões são ANCORADOS no cenário (`\item \textbf{Nome:}`) porque as
+# descrições partilham a forma da frase: «aberturas de $X$\,m» aparece no Muro
+# em U (7 m) e no Quatro Salas (2,5 m), e «passagem de $X$\,m de largura» no
+# Gargalo (2,5 m) e na Porta Cooperativa (3 m). Sem âncora, a primeira versão
+# comparou o Quatro Salas com a geometria do Muro em U e acusou a tese de dois
+# erros que não existiam. É a mesma armadilha da coerência interna.
+AFIRMACOES_SIMULADOR = [
+    ("dimensão da observação", r"\\mathbb\{R\}\^\{(\d+)\}", "dim_obs", 0.0),
+    ("ego-features na fórmula",
+     r"\(\$?(\d+) \+ \(N-1\)\\times 5\$?\)", "ego_feats", 0.0),
+    ("Muro em U: parede superior",
+     r"Muro em U\):\}.{0,400}?A parede superior tem \$([\d{},]+)\$\\,m",
+     "u_barra", 0.01),
+    ("Muro em U: pernas",
+     r"Muro em U\):\}.{0,400}?as pernas laterais têm \$([\d{},]+)\$\\,m",
+     "u_perna", 0.01),
+    ("Muro em U: aberturas laterais",
+     r"Muro em U\):\}.{0,600}?aberturas de \$([\d{},]+)\$\\,m",
+     "u_lateral", 0.01),
+    ("Gargalo: passagem (Cap. 4)",
+     r"Gargalo \(Porta Estreita\):\}.{0,400}?passagem de \$([\d{},]+)\$\\,m",
+     "gargalo_passagem", 0.01),
+    ("Gargalo: passagem (§escalabilidade)",
+     r"\\emph\{única\} passagem de \$([\d{},]+)\$\\,m",
+     "gargalo_passagem", 0.01),
+    ("Quatro Salas: aberturas",
+     r"Quatro Salas \(Labirinto\):\}.{0,400}?aberturas de \$([\d{},]+)\$\\,m",
+     "salas_abertura", 0.01),
+    ("Porta Cooperativa: largura",
+     r"a passagem de \$([\d{},]+)\$\\,m de largura encontra-se bloqueada",
+     "porta_largura", 0.01),
+    ("Porta Cooperativa: agentes na zona de pressão",
+     r"quando no mínimo (\d+) agentes ocupam a zona de pressão",
+     "porta_agentes", 0.0),
+    ("Porta Cooperativa: horizonte",
+     r"horizonte temporal alargado de \$(\d+)\$ passos", "porta_passos", 0.0),
+    ("horizonte dos restantes cenários",
+     r"face aos \$(\d+)\$ dos restantes", "max_steps", 0.0),
+    ("Perceção: velocidade do alvo",
+     r"ao dobro da velocidade normal \(\$([\d{},]+)\$\\,m/s\)",
+     "alvo_velocidade", 0.001),
+    ("Perceção: agentes para capturar",
+     r"quando \$(\d+)\$ agentes se aproximam", "captura_agentes", 0.0),
+    ("Bypass: porta central",
+     r"mantém a porta central de \$([\d{},]+)\$\\,m", "bypass_porta", 0.01),
+    ("Bypass: abertura alternativa",
+     r"abertura permanentemente livre de \$([\d{},]+)\$\\,m",
+     "bypass_alternativa", 0.01),
+    ("Bypass: horizonte",
+     r"limite temporal é alargado para \$(\d+)\$ passos", "bypass_passos", 0.0),
+    ("alcance do LiDAR",
+     r"LiDAR.{0,400}?alcance (?:máximo )?de \$?([\d{},]+)\$?\\,?m",
+     "lidar", 0.01),
+    ("raio da arena", r"raio \$r_\{arena\} = ([\d{},]+)\$\\,m", "arena", 0.01),
+    ("raio da arena (legenda das renderizações)",
+     r"uma \\textbf\{esfera\} de raio \$([\d{},]+)\$\\,m", "arena", 0.01),
+]
+
+
+def verificar_simulador():
+    """As descrições do mundo, confrontadas com o mundo a correr."""
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: o mundo descrito na tese  vs  o simulador instanciado")
+    print("=" * 72)
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+
+    try:
+        factos = _factos_do_simulador()
+    except Exception as e:
+        print("   [X] não consegui instanciar o ambiente: %s: %s"
+              % (type(e).__name__, e))
+        return ["simulador: não consegui instanciar o ambiente (%s)"
+                % type(e).__name__]
+
+    # A fórmula da observação é ela própria uma afirmação: 16 + (N-1)×5.
+    problemas, conferidos = [], 0
+    conferidos += 1
+    esperado = factos["ego_feats"] + 19 * factos["por_vizinho"]
+    if factos["dim_obs"] != esperado or factos["por_vizinho"] != 5.0:
+        problemas.append("a fórmula 16+(N-1)×5 não descreve o ambiente: "
+                         "ego=%g, por vizinho=%g, dim(N=20)=%g"
+                         % (factos["ego_feats"], factos["por_vizinho"],
+                            factos["dim_obs"]))
+    else:
+        print("   [ 1] a dimensão medida anda de %g em %g por vizinho: "
+              "%g + 19×%g = %g"
+              % (factos["por_vizinho"], factos["por_vizinho"],
+                 factos["ego_feats"], factos["por_vizinho"], factos["dim_obs"]))
+
+    for rot, padrao, chave, tol in AFIRMACOES_SIMULADOR:
+        valor = factos[chave]
+        ocorrencias = list(re.finditer(padrao, tex, re.DOTALL))
+        if not ocorrencias:
+            problemas.append("%s: não encontrei a afirmação na tese (foi "
+                             "reescrita? deixou de ser verificada)" % rot)
+            continue
+        divergiu = 0
+        for mm in ocorrencias:
+            conferidos += 1
+            tese = numero(mm.group(1))
+            if tese is None or abs(tese - valor) > tol:
+                divergiu += 1
+                problemas.append("%-42s linha %-5d tese=%s  simulador=%g"
+                                 % (rot, tex.count("\n", 0, mm.start()) + 1,
+                                    mm.group(1), valor))
+        if not divergiu:
+            print("   [%2d] %-44s %g" % (len(ocorrencias), rot[:44], valor))
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nOs %d valores batem com o ambiente instanciado." % conferidos)
+    print("NÃO cobre: a distância de captura de 4 m da Perceção Cooperativa, que")
+    print("      é uma constante local dentro do passo de simulação e só se")
+    print("      verificaria por experiência — fica por fazer, e está dito.")
+    return problemas
+
+
+# ── tab:hyperparameters: «Valor Real» tem de ser o valor real ───────────────
+#
+# A tabela chama-se «Hiperparâmetros reais utilizados» e é a primeira coisa que
+# alguém consulta para reproduzir o trabalho. Nenhum dos seus 27 valores era
+# verificado: se o `configs/foraging.yaml` mudar — e mudou, várias vezes: a
+# recompensa de comida, o alcance do LiDAR, o required_to_eat — a tabela
+# continua a afirmar o valor antigo sem que nada acuse.
+#
+# Cada linha declara o caminho no config (ou o valor medido) e os números que a
+# célula deve conter, por ordem. A célula é livre em prosa («$3$ ag. ($1$ nos
+# labirintos)», «$64$ (por CPU)»), por isso extraem-se dela todos os números e
+# comparam-se com a lista esperada.
+
+def _numeros_da_celula(celula):
+    """Todos os números de uma célula da tabela, por ordem de aparição.
+
+    Trata as quatro notações que as tabelas usam: `10^{-4}`, os dois
+    separadores de milhares que aparecem misturados (`500,000` no Capítulo 4 e
+    `500\\,000` no apêndice) e o decimal PT-PT `0{,}015`.
+    """
+    celula = re.sub(r"(\d)\\,(\d{3})", r"\1\2", celula)
+    vals = []
+    # O sinal faz parte do número: sem ele, `$-0{,}05$` do custo energético lia-se
+    # como 0,05 e batia com um config que diz −0,05 — um verificador que confirma
+    # o valor errado é pior do que não o verificar. (`--` é o travessão, não um
+    # sinal, e por isso é excluído.)
+    sinal = r"(?<!-)([-+]?)"
+    for m in re.finditer(r"10\^\{(-?\d+)\}|" + sinal + r"(\d{1,3}(?:,\d{3})+)|"
+                         + sinal + r"(\d+\{,\}\d+|\d+(?:\.\d+)?)", celula):
+        if m.group(1) is not None:
+            vals.append(10.0 ** int(m.group(1)))
+        elif m.group(3) is not None:
+            vals.append(float(m.group(2) + m.group(3).replace(",", "")))
+        else:
+            vals.append(float(m.group(4) + m.group(5).replace("{,}", ".")))
+    return vals
+
+
+def verificar_hiperparametros():
+    """tab:hyperparameters (e o apêndice) vs configs/foraging.yaml."""
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: tab:hyperparameters  vs  configs/foraging.yaml")
+    print("=" * 72)
+
+    import yaml
+    cfg = yaml.safe_load(open(os.path.join(PROJECT_ROOT, "configs",
+                                           "foraging.yaml"), encoding="utf-8"))
+    amb, ppo, sac, evo = (cfg["environment"], cfg["ppo"], cfg["sac"],
+                          cfg["evolution"])
+
+    # (categoria, pedaço do nome do hiperparâmetro, valores esperados)
+    esperado = [
+        ("Ambiente", "Raio da Arena", [amb["arena_radius"]]),
+        ("Ambiente", "Número de Agentes", [amb["num_agents"]]),
+        ("Ambiente", "Número de Obstáculos", [amb["num_obstacles"]]),
+        ("Ambiente", "Raio dos Obstáculos", [amb["obstacle_radius"]]),
+        ("Ambiente", "Velocidade dos Obstáculos", [amb["obstacle_velocity"]]),
+        ("Ambiente", "Raio do Ninho", [amb["nest_radius"]]),
+        ("Ambiente", "Velocidade do Ninho", [amb["nest_velocity"]]),
+        ("Ambiente", "Temporizador de Fome", [amb["hunger_timer_max"]]),
+        # O «(1 nos labirintos)» não está no config: é uma regra do ambiente.
+        # Mede-se instanciando um labirinto.
+        ("Ambiente", "Cooperação Mínima",
+         [amb["required_to_eat"], _env("u_wall").required_to_eat]),
+        ("Ambiente", "Alcance do LiDAR", [amb["lidar_range"]]),
+        ("Ambiente", "Fator de Progresso", [amb["progress_reward_factor"]]),
+        ("Ambiente", "Resolução do Campo Geodésico", [amb["geodesic_cell_size"]]),
+        ("PPO", "Taxa de Aprendizagem", [ppo["learning_rate"]]),
+        ("PPO", "Passos por Rollout", [ppo["n_steps"]]),
+        ("PPO", "Batch Size", [ppo["batch_size"]]),
+        ("PPO", "Número de Épocas", [ppo["n_epochs"]]),
+        ("PPO", "Arquitetura da Rede", [float(x) for x in ppo["net_arch"]]),
+        ("PPO", "Número de CPUs", [ppo["num_cpu"]]),
+        ("SAC", "Buffer de Replay", [sac["buffer_size"]]),
+        ("SAC", "Coeficiente de Entropia", [sac["ent_coef"]]),
+        ("SAC", "Taxa de Aprendizagem", [sac["learning_rate"]]),
+        ("SAC", "Arquitetura da Rede", [float(x) for x in sac["net_arch"]]),
+        ("Evolutivo", "Tamanho da População", [evo["pop_size"]]),
+        ("Evolutivo", "Taxa de Mutação", [evo["mutation_rate"]]),
+        ("Evolutivo", "Desvio Padrão Inicial",
+         [evo["sigma"], evo["sigma_decay"], evo["sigma_min"]]),
+        ("Evolutivo", "Episódios de Avaliação", [evo["eval_episodes"]]),
+        # O «≈8k pesos» conta-se: instancia-se o agente e somam-se os parâmetros.
+        ("Evolutivo", "Dimensão Oculta",
+         [cfg["gnn_agent"]["hidden_dim"], _pesos_do_gnn()]),
+    ]
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+    corpo = corpo_tabela(tex, "tab:hyperparameters") or ""
+
+    lidas, categoria = [], None
+    for bruta in corpo.split("\\\\"):
+        bruta = bruta.replace("\\hline", "").strip()
+        campos = [c.strip() for c in bruta.split("&")]
+        if len(campos) != 3:
+            continue
+        if campos[0]:
+            cat = re.sub(r"\\textbf\{|\}|\(.*?\)", "", campos[0]).strip()
+            if cat and cat != "Categoria":
+                categoria = cat
+        if campos[1] in ("\\textbf{Hiperparâmetro}", "Hiperparâmetro"):
+            continue
+        lidas.append((categoria, campos[1], campos[2]))
+
+    problemas, conferidos = [], 0
+    for cat, pedaco, valores in esperado:
+        alvo = [l for l in lidas if l[0] == cat and pedaco in l[1]]
+        if not alvo:
+            problemas.append("%s / %s: não encontrei a linha na tabela"
+                             % (cat, pedaco))
+            continue
+        if len(alvo) > 1:
+            problemas.append("%s / %s: %d linhas correspondem — o padrão não "
+                             "distingue" % (cat, pedaco, len(alvo)))
+            continue
+        na_tese = _numeros_da_celula(alvo[0][2])
+        conferidos += len(valores)
+        esp = [float(v) for v in valores]
+        if len(na_tese) != len(esp) or any(
+                abs(a - b) > max(1e-9, abs(b) * 1e-6)
+                for a, b in zip(na_tese, esp)):
+            problemas.append("%-10s %-32s tese=%s  config=%s"
+                             % (cat, pedaco[:32], na_tese, esp))
+
+    if problemas:
+        print("DIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("Os %d valores de tab:hyperparameters batem com o config "
+              "(%d linhas)." % (conferidos, len(esperado)))
+    print("NOTA: o «$\\approx 8$k pesos» não é lido de lado nenhum — é contado,")
+    print("      instanciando o GNNAgent3D e somando os parâmetros (%d)."
+          % _pesos_do_gnn())
+
+    # As duas tabelas do apêndice listam as próprias chaves do YAML. Aí não é
+    # preciso mapa escrito à mão: lê-se a chave da tabela e procura-se no
+    # config. Uma chave nova no apêndice passa a ser verificada sozinha.
+    for label in ("tab:apx_env", "tab:apx_train"):
+        problemas += _verificar_tabela_apendice(tex, label, cfg)
+
+    # As duas linhas da novidade não existem no foraging.yaml: os seus valores
+    # são os *defaults* do treinador, dados no `evo_config.get(...)`. Ficariam
+    # por verificar — e são precisamente os parâmetros da QI6. Leem-se do
+    # código-fonte, que é a fonte real deles.
+    fonte = open(os.path.join(PROJECT_ROOT, "src", "training",
+                              "evo_trainer_3d.py"), encoding="utf-8").read()
+
+    def default(nome):
+        m = re.search(r"evo_config\.get\('%s',\s*([-\d.]+)\)" % nome, fonte)
+        return float(m.group(1)) if m else None
+
+    for chave, esperados, rot in (
+            ("novelty_weight", [default("novelty_weight")], "peso base"),
+            ("novelty_k", [default("novelty_k"),
+                           default("novelty_archive_max"),
+                           default("novelty_add_per_gen")],
+             "k / arquivo / novos por geração")):
+        m = re.search(r"\\texttt\{%s\}[^&]*&([^\\\n]*(?:\\[^\\\n]*)*?)\\\\"
+                      % chave.replace("_", r"\\_"), tex)
+        if m is None:
+            problemas.append("apêndice: não encontrei a linha do %s" % chave)
+            continue
+        if None in esperados:
+            problemas.append("não consegui ler o default de %s no "
+                             "evo_trainer_3d.py (mudou a forma da chamada?)"
+                             % chave)
+            continue
+        na_tese = _numeros_da_celula(m.group(1))[:len(esperados)]
+        conferidos += len(esperados)
+        if na_tese != esperados:
+            problemas.append("apêndice %-20s (%s) tese=%s  evo_trainer=%s"
+                             % (chave, rot, na_tese, esperados))
+        else:
+            print("   %-22s %-32s %s" % (chave, rot, esperados))
+    print("      (o \\texttt{novelty\\_weight} de 0,5 das campanhas de Novelty")
+    print("      vem da linha de comando, não de config nenhum — não verificado.)")
+    return problemas
+
+
+def _procurar_no_config(cfg, chave):
+    """Valor de uma chave, procurada em todas as secções do YAML."""
+    achados = []
+    if chave in cfg and not isinstance(cfg[chave], dict):
+        achados.append(cfg[chave])
+    for seccao, conteudo in cfg.items():
+        if isinstance(conteudo, dict) and chave in conteudo:
+            achados.append(conteudo[chave])
+    # A mesma chave em duas secções com valores diferentes seria uma
+    # ambiguidade real (qual delas é a que a tese reporta?) — não acontece
+    # hoje, mas se acontecer é para dar erro, não para escolher a primeira.
+    if len({str(v) for v in achados}) > 1:
+        return "AMBÍGUA", achados
+    return ("OK", achados[0]) if achados else ("AUSENTE", None)
+
+
+def _verificar_tabela_apendice(tex, label, cfg):
+    """As tabelas do apêndice que listam as chaves do YAML uma a uma."""
+    corpo = corpo_tabela(tex, label)
+    if corpo is None:
+        return ["%s: não encontrei a tabela" % label]
+
+    problemas, conferidos, sem_config = [], 0, []
+    for bruta in corpo.split("\\\\"):
+        bruta = bruta.replace("\\hline", "").strip()
+        campos = [c.strip() for c in bruta.split("&")]
+        idx = next((k for k, c in enumerate(campos)
+                    if c.startswith("\\texttt{")), None)
+        if idx is None or idx + 1 >= len(campos):
+            continue
+        chave = re.match(r"\\texttt\{(.+?)\}", campos[idx]).group(1)
+        chave = chave.replace("\\_", "_")
+        estado, valor = _procurar_no_config(cfg, chave)
+        if estado == "AUSENTE":
+            sem_config.append(chave)
+            continue
+        if estado == "AMBÍGUA":
+            problemas.append("%s: a chave %s aparece com valores diferentes em "
+                             "secções diferentes do config: %s"
+                             % (label, chave, valor))
+            continue
+        na_tese = _numeros_da_celula(campos[idx + 1])
+        esp = ([float(v) for v in valor] if isinstance(valor, list)
+               else [float(valor)])
+        # Fora das listas, compara-se o PRIMEIRO número da célula: os restantes
+        # são anotações («$\times 0{,}999$/geração», «$\sigma_{\min}=0{,}03$»)
+        # e essas já são conferidas na tab:hyperparameters.
+        na_tese = na_tese[:len(esp)]
+        conferidos += len(esp)
+        if len(na_tese) != len(esp) or any(
+                abs(a - b) > max(1e-9, abs(b) * 1e-6)
+                for a, b in zip(na_tese, esp)):
+            problemas.append("%s %-38s tese=%s  config=%s"
+                             % (label, chave, na_tese, esp))
+
+    if problemas:
+        print("\n%s — DIVERGÊNCIAS (%d de %d):"
+              % (label, len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("%s: %d valores lidos diretamente das chaves do YAML — batem."
+              % (label, conferidos))
+    if sem_config:
+        print("   (fora do foraging.yaml — verificados a seguir contra os "
+              "defaults do treinador: %s)" % ", ".join(sem_config))
+    return problemas
+
+
+_PESOS = []
+
+
+def _pesos_do_gnn():
+    """Milhares de pesos do controlador evolutivo, contados no modelo."""
+    if not _PESOS:
+        import gymnasium as gym
+        from src.agents.gnn_agent_3d import GNNAgent3D
+        agente = GNNAgent3D("robot_0",
+                            gym.spaces.Box(-1, 1, (3,), dtype=np.float32),
+                            config_path=os.path.join(PROJECT_ROOT, "configs",
+                                                     "foraging.yaml"))
+        _PESOS.append(round(sum(p.numel() for p in agente.parameters()) / 1000.0))
+    return _PESOS[0]
 
 
 def verificar_significancia(tolerancia):
@@ -1326,6 +2102,9 @@ def main():
     problemas += verificar_legendas_trajetorias()
     problemas += verificar_megatreino(a.tolerancia)
     problemas += verificar_novelty(a.tolerancia)
+    problemas += verificar_escalabilidade_prosa(a.tolerancia)
+    problemas += verificar_simulador()
+    problemas += verificar_hiperparametros()
     problemas += verificar_coerencia_interna()
     problemas += verificar_artigo(a.tolerancia)
     problemas += verificar_megatreino_artigo(a.tolerancia)

@@ -138,6 +138,23 @@ def _instrumentar_tabelas(mod, marcas):
 
     mod.ler_tabela = embrulhado
 
+    # As tabelas indexadas por algoritmo ou por hiperparâmetro não passam pela
+    # `ler_tabela` (que só devolve linhas de cenários): passam pelo
+    # `corpo_tabela`, que já recebe o `.tex` em memória. Sem este segundo
+    # embrulho, as três tabelas de configuração e a tab:res_scale ficavam de
+    # fora da medição — 45 valores conferidos que a cobertura não via.
+    corpo = getattr(mod, "corpo_tabela", None)
+    if corpo is None:
+        return
+
+    def corpo_embrulhado(tex, label, *a, **k):
+        saida = corpo(tex, label, *a, **k)
+        if saida:
+            marcas.append(saida)
+        return saida
+
+    mod.corpo_tabela = corpo_embrulhado
+
 
 def correr_verificadores():
     """Corre-os todos, calados, e devolve os trechos que leram do `.tex`."""
