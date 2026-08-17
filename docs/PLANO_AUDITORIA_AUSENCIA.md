@@ -206,3 +206,34 @@ verificação nova recorta a secção (14 636) e busca só dentro dela. Uma medi
 que não vê o instrumento novo dá a ilusão de que nada mudou.
 
 **Nada foi mudado na tese.** Os 41 valores batem todos.
+
+### 15 ago — B2 — a Resposta às QI não precisava dos CSV, precisava de ser confrontada com o Cap. 5
+
+A cobertura acusava 61 valores por verificar nesta secção, mas ela quase não tem
+números próprios: é o Capítulo 5 recontado. Confrontá-los outra vez com os CSV
+era fazer duas vezes o mesmo trabalho — e deixava passar o defeito que esta
+secção **pode mesmo ter**: alguém corrigir um resultado no Cap. 5 e esquecer o
+eco no Cap. 6. A tese passaria a afirmar duas coisas sobre o mesmo facto, e
+nenhum verificador que olhe para uma fonte de cada vez daria por isso. Já
+aconteceu no artigo (`a533be4`).
+
+**Feito.** `verificar_coerencia_interna()`: sete factos ditos em mais do que um
+sítio, **38 valores**, comparados *da tese consigo própria*. Concordam todos.
+Cobertura global **14% → 17%**.
+
+**A primeira versão acusou duas contradições que não existiam.** Um padrão só,
+à solta sobre a tese toda, apanhou o mega-treino ($n=28$) com o padrão da
+campanha final ($n=7$), e o adaptativo a 390 minutos com o de 195 — factos
+diferentes escritos na mesma forma de frase. Cada sítio passou a ter a sua
+âncora. Um verificador que grita lobo gasta-se depressa.
+
+**E uma armadilha do próprio método, agora com guarda:** dois padrões podem cair
+na **mesma** ocorrência, e aí a verificação passa sempre sem nunca comparar nada.
+Aconteceu com as «28 combinações», em que o segundo padrão era um subconjunto do
+primeiro. Há agora uma guarda que o deteta, e está ensaiada a disparar.
+
+⚠️ **Nota de trabalho, para não voltar a perder tempo:** neste Git Bash os
+*heredocs* (`<<'EOF'`) corrompem as barras invertidas do Python. Um teste da
+guarda deu falso negativo por isso — o padrão chegava partido ao `re`, não a
+guarda é que estava mal. Testes com regex escrevem-se num **ficheiro** e correm-se
+com `python ficheiro.py`.

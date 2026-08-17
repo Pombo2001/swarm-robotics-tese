@@ -1093,6 +1093,155 @@ def verificar_novelty(tolerancia):
     return problemas
 
 
+# ── coerência interna: o mesmo facto, contado duas vezes ─────────────────────
+#
+# A «Resposta às Questões de Investigação» quase não tem números próprios: é o
+# Capítulo 5 recontado. A medição de cobertura acusa lá 61 valores por
+# verificar, mas confrontá-los outra vez com os CSV seria fazer duas vezes o
+# mesmo trabalho — e deixaria passar o defeito que esta secção pode mesmo ter:
+# **alguém corrige um resultado no Capítulo 5 e esquece o eco no Capítulo 6.**
+# A tese fica então a afirmar duas coisas diferentes sobre o mesmo facto, e
+# nenhum verificador que olhe para uma fonte de cada vez dá por isso. Já
+# aconteceu no artigo (a533be4: a limitação dizia que faltava a bateria maior,
+# duas secções depois de a reportar).
+#
+# Por isso aqui não se compara com dados: procura-se cada facto em TODA a tese e
+# exige-se que as ocorrências concordem entre si.
+
+# Cada facto declara os SÍTIOS onde é dito, um padrão por sítio. A primeira
+# versão usava um padrão só, à solta sobre a tese toda, e acusou duas
+# contradições que não existiam: apanhou o mega-treino ($n=28$) com o padrão da
+# campanha final ($n=7$), e o adaptativo a 390 minutos com o de 195. Factos
+# diferentes escritos na mesma forma de frase. Um verificador que grita lobo
+# gasta-se depressa — daí cada sítio ter a sua âncora.
+#
+# `ordem` diz por que ordem os grupos daquele sítio correspondem aos do
+# primeiro: a mesma comparação aparece escrita nas duas direções («A contra B»
+# e «B vs. A»), e isso não é uma divergência.
+FACTOS_REPETIDOS = [
+    {"rot": "Muro em U — novidade fixa vs objetivo",
+     "sitios": [
+         {"re": r"hibridiza[çc][ãa]o elevou a taxa.{0,120}?com \$([\d{},]+) "
+                r"\\pm ([\d{},]+)\$ recolhas/ep contra \$([\d{},]+) \\pm "
+                r"([\d{},]+)\$ do objetivo puro"},
+         {"re": r"7/7 \\textit\{runs\} a 100\\% de sucesso e \$([\d{},]+) \\pm "
+                r"([\d{},]+)\$ recolhas/ep, contra 3/7 e \$([\d{},]+) \\pm "
+                r"([\d{},]+)\$"},
+     ]},
+    {"rot": "Porta c/ Alternativa — objetivo vs novidade fixa",
+     "sitios": [
+         {"re": r"\$([\d{},]+) \\pm ([\d{},]+)\$ contra \$([\d{},]+) \\pm "
+                r"([\d{},]+)\$ recolhas/ep com novidade"},
+         {"re": r"degradou a magnitude \(\$([\d{},]+) \\pm ([\d{},]+)\$ vs\.\\ "
+                r"\$([\d{},]+) \\pm ([\d{},]+)\$", "ordem": (2, 3, 0, 1)},
+     ]},
+    {"rot": "Adaptativo no Muro em U (T2, 195 min)",
+     "sitios": [
+         {"re": r"\(T2\).{0,80}?\$7/7\$ \\textit\{runs\} a 100\\% e "
+                r"\$([\d{},]+) \\pm ([\d{},]+)\$"},
+         {"re": r"manteve os \$7/7\$ \\textit\{runs\} no Muro em U "
+                r"\(\$([\d{},]+) \\pm ([\d{},]+)\$"},
+     ]},
+    {"rot": "Melhor bypass da dissertação (adaptativo, 390 min)",
+     "sitios": [
+         {"re": r"melhor resultado desta disserta[çc][ãa]o\}? \(\$([\d{},]+) "
+                r"\\pm ([\d{},]+)\$"},
+         {"re": r"melhor bypass da disserta[çc][ãa]o \(\$([\d{},]+) \\pm "
+                r"([\d{},]+)\$\)"},
+     ]},
+    {"rot": "Mega-treino — adaptativo vs objetivo puro no Muro em U",
+     "sitios": [
+         {"re": r"\\textbf\{\$?(\d+)/28\$? execu[çc][õo]es a 100\\% de sucesso "
+                r"contra \$?(\d+)/28\$?\}"},
+         {"re": r"resolve o Muro em U em \$(\d+)/28\$ execu[çc][õo]es contra "
+                r"\$(\d+)/28\$"},
+     ]},
+    {"rot": "Escalabilidade — as 28 combinações a 100%",
+     "sitios": [
+         {"re": r"O resultado é inequívoco.{0,120}?100\\% de sucesso nas (\d+) "
+                r"combina[çc][õo]es"},
+         {"re": r"QI2 --- Escalabilidade\.\].{0,260}?100\\% de sucesso nas "
+                r"(\d+) combina[çc][õo]es"},
+     ]},
+    {"rot": "Planalto — células ainda a subir no fim do orçamento",
+     "sitios": [
+         {"re": r"\\textbf\{(\d+) das (\d+) combina[çc][õo]es ainda subiam de "
+                r"forma significativa no fim\}.{0,140}?Gargalo \(\$\+(\d+)"
+                r"\\%\$\) e na Porta com Alternativa \(\$\+(\d+)\\%\$\)"},
+         {"re": r"em \$(\d+)\$ das \$(\d+)\$ combina[çc][õo]es a curva ainda "
+                r"subia.{0,160}?Gargalo \(\$\+(\d+)\\%\$\) e na Porta com "
+                r"Alternativa \(\$\+(\d+)\\%\$\)"},
+     ]},
+]
+
+
+def verificar_coerencia_interna():
+    """O mesmo facto, dito em sítios diferentes, diz o mesmo número?"""
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: coerência interna (o mesmo facto em capítulos diferentes)")
+    print("=" * 72)
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+
+    problemas, conferidos, repetidos = [], 0, 0
+    for facto in FACTOS_REPETIDOS:
+        achados = []
+        for sitio in facto["sitios"]:
+            m = re.search(sitio["re"], tex, re.DOTALL)
+            if m is None:
+                problemas.append("%s: não encontrei um dos sítios onde é dito "
+                                 "(o texto mudou de forma?)" % facto["rot"])
+                continue
+            vals = [numero(v) for v in m.groups() if v is not None]
+            ordem = sitio.get("ordem")
+            if ordem:
+                vals = [vals[i] for i in ordem]
+            # Dois padrões a caírem no MESMO sítio não são uma verificação
+            # cruzada — são a mesma frase lida duas vezes, e passariam sempre.
+            # Aconteceu com as «28 combinações»: o segundo padrão era um
+            # subconjunto do primeiro e o `search` devolvia a mesma ocorrência.
+            if any(p == m.start() for _, _, p in achados):
+                problemas.append("%s: dois sítios apanham a mesma ocorrência "
+                                 "(linha %d) — a verificação não é cruzada"
+                                 % (facto["rot"], tex.count("\n", 0, m.start()) + 1))
+                continue
+            achados.append((tuple(vals), tex.count("\n", 0, m.start()) + 1,
+                            m.start()))
+        if len(achados) < 2:
+            if achados:
+                print("   [1] %-52s só um sítio encontrado (linha %d)"
+                      % (facto["rot"][:52], achados[0][1]))
+            continue
+        conferidos += sum(len(v) for v, _, _ in achados)
+        repetidos += 1
+        base, linha0, _ = achados[0]
+        divergiu = False
+        for vals, linha, _ in achados[1:]:
+            if vals != base:
+                divergiu = True
+                problemas.append(
+                    "%s: linha %d diz %s, linha %d diz %s — a tese contradiz-se"
+                    % (facto["rot"], linha0, base, linha, vals))
+        if not divergiu:
+            print("   [%d] %-52s coerente (linhas %s)"
+                  % (len(achados), facto["rot"][:52],
+                     ", ".join(str(l) for _, l, _ in achados)))
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nOs %d valores repetidos concordam entre si (%d factos ditos "
+              "mais do que uma vez)." % (conferidos, repetidos))
+    print("NOTA: isto não compara com dados — compara a tese consigo própria.")
+    print("      Um facto corrigido no Cap. 5 e esquecido no Cap. 6 aparece aqui")
+    print("      e em mais lado nenhum.")
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tolerancia", type=float, default=0.05,
@@ -1177,6 +1326,7 @@ def main():
     problemas += verificar_legendas_trajetorias()
     problemas += verificar_megatreino(a.tolerancia)
     problemas += verificar_novelty(a.tolerancia)
+    problemas += verificar_coerencia_interna()
     problemas += verificar_artigo(a.tolerancia)
     problemas += verificar_megatreino_artigo(a.tolerancia)
 
