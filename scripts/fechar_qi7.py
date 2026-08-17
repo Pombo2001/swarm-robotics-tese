@@ -256,7 +256,14 @@ def preencher_restantes(texto, m):
         # não tocar no que está comentado: são as leituras não escolhidas
         linha = texto.rfind("\n", 0, i) + 1
         comentado = texto[linha:i].lstrip().startswith("%")
-        chave = next((k for k in numericos if conteudo.startswith(k)), None)
+        # A chave MAIS LONGA que corresponda, não a primeira: `k100` começa por
+        # `k`, e como `k` vinha antes no dicionário o buraco «quantas chegam aos
+        # 100% de sucesso» ficava com o número de execuções convergentes. Na
+        # primeira escrita (17 ago) isso pôs «4 chegam aos 100%» numa secção
+        # onde a M2, duas linhas acima, dizia 2 — a tese a contradizer-se a si
+        # própria por um prefixo.
+        chave = max((k for k in numericos if conteudo.startswith(k)),
+                    key=len, default=None)
         if comentado or chave is None:
             if not comentado:
                 ficaram.append(conteudo[:60])

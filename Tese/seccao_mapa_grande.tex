@@ -169,7 +169,7 @@ comparação justa. O orçamento foi, por isso, fixado em $780$ minutos por exec
 do controlador evolutivo --- o que iguala às campanhas dos sete cenários as
 $13{,}7$ gerações que cada execução perfaz --- e $192$ minutos por execução de
 cada método de gradiente, ambos registados antes de qualquer análise.
-\PORPREENCHER{gerações efetivamente alcançadas por execução, média e amplitude}
+Em execução, o orçamento de $780$ minutos traduziu-se em $165{,}3$ gerações por execução em média (amplitude de $132$ a $191$, sobre as 21 execuções fechadas), contra as $13{,}7$ gerações que as campanhas dos sete cenários perfazem.
 
 \subsection{Transferência sem retreino (F1)}
 
@@ -231,17 +231,26 @@ navegação, e falha cedo.
 
 \subsection{Treino nativo (F2)}
 
-\PORPREENCHER{tabela dos $3$ algoritmos $\times$ $21$ execuções: média $\pm$
-desvio-padrão das recolhas/ep, taxa de sucesso, execuções convergentes}
+\begin{table}[!htbp]
+\centering
+\caption{Treino nativo no mapa composto (F2): 21 execuções independentes por algoritmo, avaliação determinística de $20$ episódios com sementes emparelhadas.}
+\label{tab:f2_mapa_grande}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Algoritmo} & \textbf{Recolhas/ep} & \textbf{Desvio-padrão} & \textbf{Sucesso} & \textbf{Convergentes} \\
+\hline
+GNN & $1{,}7$ & $3{,}6$ & $17\%$ & 4/21 \\
+PPO & $0{,}0$ & $0{,}0$ & $0\%$ & 0/21 \\
+SAC & $0{,}0$ & $0{,}0$ & $0\%$ & 0/21 \\
+\hline
+\end{tabular}
+\end{table}
 
-\PORPREENCHER{M1 --- Mann-Whitney U bilateral sobre médias por execução ($n=21$),
-GNN vs PPO e GNN vs SAC, com $\delta$ de Cliff}
+\textbf{M1 (magnitude).} Mann-Whitney $U$ bilateral sobre as médias por execução ($n = 21$): GNN \emph{vs.}\ PPO: $p = 0{,}3058$, $\delta = +0{,}19$; GNN \emph{vs.}\ SAC: $p = 0{,}3058$, $\delta = +0{,}19$; PPO \emph{vs.}\ SAC: $p = 1{,}0000$, $\delta = +0{,}00$. O peso da evidência está no tamanho de efeito, como a limitação desta campanha declara.
 
-\PORPREENCHER{M2 --- taxa de execuções que atingem pelo menos uma recolha, e
-execuções a $100\%$ (descritivo, por compromisso pré-registado)}
+\textbf{M2 (convergência, descritivo).} Execuções que atingem pelo menos uma recolha na avaliação determinística: GNN em 4/21, das quais 2 a $100\%$ de sucesso; PPO em 0/21, das quais 0 a $100\%$ de sucesso; SAC em 0/21, das quais 0 a $100\%$ de sucesso. Pelo compromisso pré-registado (emenda 19), não se infere sobre proporções: a contagem é reportada como descritivo.
 
-\PORPREENCHER{M3 --- fração de episódios em que a porta cooperativa é aberta,
-por algoritmo}
+\textbf{M3 (porta cooperativa).} Fração de episódios em que a porta é aberta: GNN $43\%$, PPO $0\%$, SAC $0\%$.
 
 \subsection{Discussão}
 
@@ -282,37 +291,35 @@ por algoritmo}
 % $2{,}9\times$ a partir do pior \textit{spawn}. O mapa é resolúvel; o que estes
 % algoritmos não fazem, com este sinal de treino e este orçamento, é aprendê-lo.
 
-% ── LEITURA C: algumas execuções convergem, mas abaixo do limiar ─────────────
-% O mapa composto é resolúvel por \PORPREENCHER{algoritmo}, mas não de forma
-% fiável: \PORPREENCHER{k} das $21$ execuções atingem pelo menos uma recolha e
-% \PORPREENCHER{k100} chegam aos $100\%$ de sucesso, abaixo do limiar de $15$ que
-% o pré-registo fixou. Pela regra de decisão pré-comprometida, \textbf{a QI7 não
-% sobe a resultado afirmativo}, e o número de execuções convergentes é declarado
-% aqui para que quem prefira outro critério o tenha à frente. A distribuição
-% entre execuções é o resultado, e não a média: \PORPREENCHER{média e amplitude,
-% e a forma da distribuição --- se é tudo-ou-nada, dizê-lo}.
-%
-% Esta é a assinatura que a dissertação já documentou no Muro em U
-% (Secção~\ref{sec:res_boxplots}), onde a mesma configuração ora resolve o
-% cenário por completo ora fica a zero, e onde a média entre execuções não
-% descreve nenhuma execução real. O que o mapa composto acrescenta é que a
-% bimodalidade \emph{sobrevive à escala}: multiplicar por quatro o raio da arena
-% e compor quatro dificuldades não a substitui por um colapso uniforme --- o que
-% seria a hipótese natural --- mas amplia a fração de execuções que ficam do lado
-% errado. A leitura honesta da QI7 é, portanto, intermédia: as conclusões dos
-% cenários isolados transferem-se \emph{parcialmente} e ao preço da fiabilidade,
-% e é a variabilidade entre execuções --- não a magnitude média --- que a
-% composição degrada.
-%
-% Sob esta leitura, o que a QI7 responde às Conclusões é uma condição, não um
-% veredicto: um enxame treinado de raiz resolve o mapa composto em
-% \PORPREENCHER{k}/$21$ tentativas de treino independentes, pelo que qualquer
-% aplicação teria de treinar várias vezes e selecionar --- que é exatamente a
-% prática que a Secção~\ref{sec:res_novelty} mostra ser dispensável nos sete
-% cenários quando a exploração é doseada adaptativamente. Fica em aberto, e como
-% trabalho futuro declarado, se a mesma dosagem adaptativa recupera a fiabilidade
-% neste mapa; o braço exploratório de orçamento longo responde apenas à objeção
-% do orçamento, não a esta.
+O mapa composto é resolúvel por GNN, mas não de forma
+fiável: 4 das $21$ execuções atingem pelo menos uma recolha e
+2 chegam aos $100\%$ de sucesso, abaixo do limiar de $15$ que
+o pré-registo fixou. Pela regra de decisão pré-comprometida, \textbf{a QI7 não
+sobe a resultado afirmativo}, e o número de execuções convergentes é declarado
+aqui para que quem prefira outro critério o tenha à frente. A distribuição
+entre execuções é o resultado, e não a média: média de $8{,}9$ recolhas por episódio entre as que recolhem (amplitude de $7{,}6$ a $10{,}6$), contra $0{,}00$ nas restantes --- a distribuição é de tudo-ou-nada: as execuções que resolvem o mapa resolvem-no com magnitude comparável entre si.
+
+Esta é a assinatura que a dissertação já documentou no Muro em U
+(Secção~\ref{sec:res_boxplots}), onde a mesma configuração ora resolve o
+cenário por completo ora fica a zero, e onde a média entre execuções não
+descreve nenhuma execução real. O que o mapa composto acrescenta é que a
+bimodalidade \emph{sobrevive à escala}: multiplicar por quatro o raio da arena
+e compor quatro dificuldades não a substitui por um colapso uniforme --- o que
+seria a hipótese natural --- mas amplia a fração de execuções que ficam do lado
+errado. A leitura honesta da QI7 é, portanto, intermédia: as conclusões dos
+cenários isolados transferem-se \emph{parcialmente} e ao preço da fiabilidade,
+e é a variabilidade entre execuções --- não a magnitude média --- que a
+composição degrada.
+
+Sob esta leitura, o que a QI7 responde às Conclusões é uma condição, não um
+veredicto: um enxame treinado de raiz resolve o mapa composto em
+4/$21$ tentativas de treino independentes, pelo que qualquer
+aplicação teria de treinar várias vezes e selecionar --- que é exatamente a
+prática que a Secção~\ref{sec:res_novelty} mostra ser dispensável nos sete
+cenários quando a exploração é doseada adaptativamente. Fica em aberto, e como
+trabalho futuro declarado, se a mesma dosagem adaptativa recupera a fiabilidade
+neste mapa; o braço exploratório de orçamento longo responde apenas à objeção
+do orçamento, não a esta.
 
 \subsection{Limitações desta campanha}
 

@@ -336,19 +336,11 @@ Gostaria de expressar a minha gratidão aos meus familiares, por me terem apoiad
 \chapter*{Resumo}
 Esta dissertação apresenta um estudo comparativo rigoroso entre a Aprendizagem por Reforço Multiagente (MARL) e a Otimização Bio-inspirada para o controlo de enxames robóticos. Através de um simulador de alta fidelidade, implementou-se o \textit{framework} MARL RS2C (com os algoritmos PPO e SAC, sob partilha de parâmetros) e um controlador bio-inspirado neuroevolutivo assente numa rede neuronal de grafos com atenção --- responsável pela invariância à dimensão do enxame ---, avaliando-se ambos em sete cenários de dificuldade crescente (7 execuções independentes por combinação) sob tratamento estatístico não-paramétrico. Os resultados mostram que, com o desenho adequado da função de \textit{fitness} (\textit{shaping} de \textit{homing} geodésico), o controlador evolutivo é estatisticamente superior aos métodos de gradiente em três cenários de navegação e cooperação, indistinguível do melhor deles em mais dois, e é o único a permitir transferência \textit{Zero-Shot} para enxames de dimensão não vista ($N$ de $10$ a $100$, com 100\% de sucesso) sem retreino; os métodos de gradiente preservam a fiabilidade em espaço aberto e uma vantagem clara de eficiência computacional. O cenário de deceção espacial (Muro em U), bimodal para os três algoritmos base, só foi resolvido de forma fiável pela hibridização da neuroevolução com procura por novidade (\textit{Novelty Search}); uma campanha final \textbf{pré-registada} demonstrou ainda que dosear essa novidade de forma \textbf{adaptativa} --- decaindo a pressão exploratória após a descoberta --- preserva os $7/7$ \textit{runs} no Muro em U sem custo significativo nos restantes cenários e atinge, na Porta com Alternativa, o melhor resultado de toda a dissertação ($88{,}7$ recolhas/ep). Uma replicação com $28$ execuções por braço confirmou-o com poder estatístico: a dosagem adaptativa é a única condição estudada a resolver o Muro em U em \textbf{todas} as execuções ($28/28$, contra $15/28$ do objetivo puro, $14/28$ do PPO e $14/28$ do SAC). A hipótese de que a inteligência adaptativa supera a robustez estática confirma-se, assim, apenas parcialmente: a vantagem de escala reside na \emph{representação} (grafo com atenção), não no algoritmo de otimização, enquanto nos cenários de gradiente enganador é o desenho do sinal de treino --- e a exploração doseada adaptativamente --- que decide.
 
-% ── Frase da QI7 no Resumo — escolher UMA, colar no fim do parágrafo acima ───
-% (A) Um oitavo cenário, que compõe num só labirinto de $103 \times 62$\,m as
-%     dificuldades que os sete isolam, mostra que a transferência sem retreino
-%     falha por completo (84 células a $0{,}00$) mas que o mapa é aprendível de
-%     raiz (\PORPREENCHER{k}/$21$ execuções).
-% (B) Um oitavo cenário, que compõe num só labirinto de $103 \times 62$\,m as
-%     dificuldades que os sete isolam, delimita o alcance destes resultados:
-%     nenhum dos três controladores o resolve, nem por transferência nem com
-%     treino nativo, embora o mapa seja demonstravelmente resolúvel.
-% (C) Um oitavo cenário, que compõe num só labirinto de $103 \times 62$\,m as
-%     dificuldades que os sete isolam, mostra que o que a composição degrada é a
-%     fiabilidade e não a magnitude: o mapa é resolvido em \PORPREENCHER{k} das
-%     $21$ execuções independentes, abaixo do limiar pré-registado.
+Um oitavo cenário, que compõe num só labirinto de $103 \times 62$\,m as
+    dificuldades que os sete isolam, mostra que o que a composição degrada é a
+    fiabilidade e não a magnitude: o mapa é resolvido em 4 das
+    $21$ execuções independentes, abaixo do limiar pré-registado.
+
 
 \vspace{3ex}
 \textsc{Palavras Chave:} Robótica de Enxame, MARL, Otimização Bio-inspirada, GNNs.
@@ -356,20 +348,12 @@ Esta dissertação apresenta um estudo comparativo rigoroso entre a Aprendizagem
 \chapter*{Abstract}
 This dissertation presents a rigorous comparative study between Multi-Agent Reinforcement Learning (MARL) and Bio-inspired Optimization for the control of robotic swarms. Using a high-fidelity simulator, we implemented the MARL framework RS2C (with the PPO and SAC algorithms, under parameter sharing) and a neuroevolutionary bio-inspired controller built on a graph neural network with attention --- responsible for invariance to swarm size ---, evaluating both across seven scenarios of increasing difficulty (7 independent runs per combination) under non-parametric statistical treatment. The results show that, given an adequate fitness design (geodesic \emph{homing} shaping), the evolutionary controller is statistically superior to the gradient-based methods in three navigation and cooperation scenarios, indistinguishable from the best of them in two more, and is the only one enabling Zero-Shot transfer to unseen swarm sizes ($N$ from $10$ to $100$, at 100\% success) without retraining; the gradient-based methods retain reliability in open space and a clear computational efficiency advantage. The spatial-deception scenario (U-shaped wall), bimodal for all three base algorithms, was only reliably solved by hybridizing neuroevolution with \emph{Novelty Search}; a final \textbf{pre-registered} campaign further showed that dosing this novelty \textbf{adaptively} --- decaying the exploratory pressure after discovery --- preserves the $7/7$ runs on the U-shaped wall at no significant cost in the remaining scenarios and attains, on the Alternative-Path Door, the best result of the entire dissertation ($88.7$ collections/ep). A replication with $28$ runs per arm subsequently confirmed this with statistical power: adaptive dosing is the only condition studied that solves the U-shaped wall in \textbf{every} run ($28/28$, against $15/28$ for the pure objective, $14/28$ for PPO and $14/28$ for SAC). The hypothesis that adaptive intelligence surpasses static robustness is therefore only partially confirmed: the scaling advantage lies in the \emph{representation} (graph with attention), not in the optimization algorithm, whereas in deceptive-gradient scenarios it is the design of the training signal --- and adaptively dosed exploration --- that proves decisive.
 
-% ── QI7 sentence for the Abstract — pick ONE, append to the paragraph above ──
-% (A) An eighth scenario, composing in a single $103 \times 62$\,m maze the
-%     difficulties the other seven isolate, shows that zero-shot transfer fails
-%     outright (84 cells at $0.00$) while the map remains learnable from scratch
-%     (\PORPREENCHER{k}/$21$ runs).
-% (B) An eighth scenario, composing in a single $103 \times 62$\,m maze the
-%     difficulties the other seven isolate, bounds these results: none of the
-%     three controllers solves it, neither by transfer nor by native training,
-%     although the map is demonstrably solvable.
-% (C) An eighth scenario, composing in a single $103 \times 62$\,m maze the
-%     difficulties the other seven isolate, shows that what composition degrades
-%     is reliability rather than magnitude: the map is solved in
-%     \PORPREENCHER{k} of $21$ independent runs, below the pre-registered
-%     threshold.
+An eighth scenario, composing in a single $103 \times 62$\,m maze the
+    difficulties the other seven isolate, shows that what composition degrades
+    is reliability rather than magnitude: the map is solved in
+    4 of $21$ independent runs, below the pre-registered
+    threshold.
+
 
 \vspace{3ex}
 \textsc{Keywords:} Swarm Robotics, MARL, Bio-inspired Optimization, GNNs.
@@ -477,11 +461,11 @@ Decorrentes da definição do problema e dos três eixos de avaliação enunciad
 % ── QI7, a declarar aqui quando a secção do mapa grande entrar (ver o bloco
 % antes de \input{seccao_mapa_grande}). O texto é o mesmo da secção, e não
 % depende do resultado: é a PERGUNTA, não a resposta.
-%    \item[\textbf{QI7.}] \textbf{Composição de dificuldades:} As conclusões
-%          obtidas em sete cenários de dificuldade isolada transferem-se para um
-%          ambiente que \textbf{combina} essas dificuldades a uma escala
-%          substancialmente maior, ou a composição faz emergir modos de falha que
-%          os cenários isolados não revelam?
+   \item[\textbf{QI7.}] \textbf{Composição de dificuldades:} As conclusões
+         obtidas em sete cenários de dificuldade isolada transferem-se para um
+         ambiente que \textbf{combina} essas dificuldades a uma escala
+         substancialmente maior, ou a composição faz emergir modos de falha que
+         os cenários isolados não revelam?
     \item[\textbf{QI6.}] \textbf{Deceção e procura por novidade:} Em cenários cujo gradiente de recompensa é enganador (\textit{deceptive}), a hibridização da neuroevolução com procura por novidade (\textit{Novelty Search}) melhora o resultado final face à otimização puramente objetiva?
 \end{enumerate}
 
@@ -1674,44 +1658,18 @@ Esta dissertação incidiu sobre um dos desafios mais prementes na robótica con
 
 Os resultados (Capítulo~\ref{ch:results}) não elegem um vencedor universal, mas desenham um mapa de escolha claro. No cumprimento efetivo da tarefa, e ao contrário do que as campanhas exploratórias sugeriam, o controlador evolutivo com \textit{fitness} de \textit{homing} é \textbf{estatisticamente superior} aos métodos de gradiente em três cenários (Quatro Salas, Porta Cooperativa e Perceção Cooperativa) e indistinguível do PPO nos restantes cenários de gargalo, convergindo em todos os \textit{runs} dos quatro cenários de gargalo; o antigo ``colapso do evolutivo'' revelou-se um artefacto do desenho da \textit{fitness} (\textit{fitness exploitation}), curado pela substituição do retorno acumulado pelo \textit{homing} terminal. Os métodos de gradiente preservam a fiabilidade em espaço aberto (onde o evolutivo ocasionalmente degenera) e uma vantagem de $\approx 8\times$ em núcleos-hora por execução. Na transferência \textbf{\textit{Zero-Shot}}, só a arquitetura de atenção sobre grafo escala de $N=10$ a $N=100$ sem retreino, mantendo 100\% de sucesso, enquanto as políticas MLP de dimensão fixa do PPO/SAC são estruturalmente incompatíveis com $N\neq 20$ --- a adaptabilidade que a hipótese atribuía ao MARL manifesta-se, afinal, na \emph{representação}, não no algoritmo de otimização. Perante falhas de 10\% dos agentes, todos os paradigmas exibem resiliência elevada (retenção de 92--106\%), conferida pela partilha de parâmetros e pela observação local. O cenário de deceção espacial (Muro U), bimodal para os três algoritmos base, só foi resolvido de forma consistente pela hibridização da neuroevolução com procura por novidade (7/7 execuções com orçamento igualado) --- mecanismo que, com peso fixo, degradou simetricamente o desempenho no cenário \textit{deceptive} que o objetivo puro já resolvia, mostrando que a exploração por novidade é um instrumento direcionado e não um melhoramento universal. Uma campanha final \textbf{pré-registada} de \textbf{dosagem adaptativa} do peso de novidade (decaimento após a descoberta) fechou esta tensão: manteve os 7/7 no Muro U ($p=0{,}009$ face ao objetivo), não pagou custo significativo em nenhum dos restantes seis cenários, e --- com o dobro do orçamento, no braço exploratório --- atingiu no cenário \textit{deceptive} o melhor resultado da dissertação ($88{,}7 \pm 0{,}6$ recolhas/ep), enquanto o objetivo puro, mesmo com esse dobro do tempo, continuou bimodal no Muro U (4/7): o ganho é do mecanismo, não do orçamento. Uma replicação final com $28$ execuções por braço elevou este resultado de indicação a evidência robusta --- $28/28$ execuções resolvidas contra $15/28$ do objetivo puro e $14/28$ de cada método de gradiente ---, mostrando ainda que o GNN \emph{objetivo} e o PPO são indistinguíveis entre si neste cenário: o que separa os braços não é o paradigma de otimização, mas a dosagem da exploração.
 
-% ── Parágrafo da QI7 nas Conclusões — escolher UM e apagar os outros dois ────
-% Entra aqui, antes do parágrafo de fecho, quando a secção do mapa grande entrar.
-%
-% (A) ≥15/21 num algoritmo:
-% Um oitavo cenário, construído para \emph{compor} as dificuldades que os sete
-% isolam --- gargalo, beco em U, quatro salas e porta cooperativa, num labirinto
-% de $103 \times 62$\,m ---, acrescenta a estas conclusões uma distinção que os
-% cenários isolados não permitiam fazer. Nenhum dos vinte e um campeões entrega
-% um único item neste mapa sem retreino, e as três causas alternativas ao efeito
-% da topologia foram excluídas por condições de controlo; mas
-% \PORPREENCHER{algoritmo}, treinado de raiz, resolve-o em \PORPREENCHER{k} das
-% $21$ execuções. O que a composição quebra é a transferência, não a
-% aprendibilidade.
-%
-% (B) 0 execuções convergentes:
-% Um oitavo cenário, construído para \emph{compor} as dificuldades que os sete
-% isolam --- gargalo, beco em U, quatro salas e porta cooperativa, num labirinto
-% de $103 \times 62$\,m ---, delimita o alcance destas conclusões. Nenhum dos
-% vinte e um campeões entrega um único item neste mapa sem retreino, e nenhum dos
-% três algoritmos o resolve com treino nativo dentro do orçamento pré-registado,
-% embora o mapa seja demonstravelmente resolúvel (um oráculo geodésico recolhe
-% $53$ itens por episódio). O resultado é negativo e é reportado como tal: as
-% conclusões desta dissertação valem para dificuldades isoladas, e a sua
-% composição a esta escala está fora do alcance dos três métodos como aqui
-% treinados.
-%
-% (C) entre 1 e 14 convergentes:
-% Um oitavo cenário, construído para \emph{compor} as dificuldades que os sete
-% isolam --- gargalo, beco em U, quatro salas e porta cooperativa, num labirinto
-% de $103 \times 62$\,m ---, mostra onde estas conclusões se degradam primeiro.
-% Nenhum dos vinte e um campeões entrega um único item sem retreino; com treino
-% nativo, \PORPREENCHER{algoritmo} resolve o mapa em \PORPREENCHER{k} das $21$
-% execuções, abaixo do limiar fixado antes dos dados. O que a composição degrada
-% não é a magnitude do que se consegue, mas a \emph{fiabilidade} com que se
-% consegue --- a mesma bimodalidade que o Muro em U já expunha, agora num mapa
-% quatro vezes maior. Para uma aplicação, isto significa treinar várias vezes e
-% selecionar, que é precisamente a prática que a dosagem adaptativa de novidade
-% torna dispensável nos sete cenários.
+Um oitavo cenário, construído para \emph{compor} as dificuldades que os sete
+isolam --- gargalo, beco em U, quatro salas e porta cooperativa, num labirinto
+de $103 \times 62$\,m ---, mostra onde estas conclusões se degradam primeiro.
+Nenhum dos vinte e um campeões entrega um único item sem retreino; com treino
+nativo, GNN resolve o mapa em 4 das $21$
+execuções, abaixo do limiar fixado antes dos dados. O que a composição degrada
+não é a magnitude do que se consegue, mas a \emph{fiabilidade} com que se
+consegue --- a mesma bimodalidade que o Muro em U já expunha, agora num mapa
+quatro vezes maior. Para uma aplicação, isto significa treinar várias vezes e
+selecionar, que é precisamente a prática que a dosagem adaptativa de novidade
+torna dispensável nos sete cenários.
+
 
 Confirma-se, assim, apenas \emph{parcialmente} a hipótese: a escolha do paradigma deve ser ditada pelos eixos de exigência dominantes da aplicação --- estrutura do cenário e orçamento de cómputo (favoráveis ao gradiente em espaço aberto e a orçamentos curtos) versus navegação estruturada e escalabilidade a dimensões não vistas (favoráveis ao controlador de grafo com \textit{fitness} bem desenhada). Estas conclusões assentam em 7 execuções independentes por configuração, com significância avaliada ao nível do \textit{run} --- com exceção do único cenário em que a leitura depende de contagens e não de médias, o Muro em U, que a replicação final elevou a 28 execuções por braço. Onde o alargamento não chegou (Secção~\ref{sec:limitacoes_trabalho_futuro}), as estimativas de variância dos cenários bimodais continuam por refinar.
 
@@ -1726,47 +1684,17 @@ Retomam-se as questões de investigação enunciadas na Secção~\ref{sec:questo
     \item[QI4 --- Critério de escolha.] Não há um vencedor universal: em enxames de dimensão fixa e conhecida, com prioridade na eficiência da tarefa, o MARL por gradiente é preferível; quando a dimensão do enxame é variável ou desconhecida à partida, ou a missão exige escalar sem retreino, a arquitetura de grafo com atenção (aqui otimizada por neuroevolução) é a única opção viável entre as estudadas. A robustez a falhas, sendo transversal, não constitui critério discriminante.
     \item[QI5 --- Desenho da função de \textit{fitness}.] Sim, de forma decisiva: o desempenho da neuroevolução revelou-se mais sensível ao desenho da \textit{fitness} do que ao orçamento de treino. Com a \textit{fitness} inicial --- recolha mais o retorno acumulado do episódio, \emph{farmável} por deambulação ---, o controlador colapsa nos cenários de navegação complexa; a substituição desse termo pelo \textit{homing} terminal (proximidade ao ninho no \emph{fim} do episódio, medida no potencial geodésico, e por isso não-farmável) desbloqueou os quatro cenários de gargalo, elevando a taxa de sucesso de 0\% para 100\% na totalidade dos 28 \textit{runs} correspondentes e tornando o controlador evolutivo competitivo --- e, em cenários seleccionados, superior --- face aos métodos de gradiente (Capítulo~\ref{ch:results}). O ``colapso do evolutivo'' é, portanto, um artefacto do desenho da \textit{fitness}, e não uma limitação intrínseca do paradigma. A ressalva é o Muro em U: mesmo com o potencial geodésico a apontar corretamente para o desvio, o desempenho permanece bimodal (3/7 \textit{runs}), tal como sucede nos métodos de gradiente. O desenho da \textit{fitness} é, pois, condição necessária mas não suficiente --- resolve a atribuição de crédito, não a descoberta do desvio comprido, que veio a exigir pressão explícita por novidade (QI6).
     \item[QI6 --- Deceção e procura por novidade.] Sim onde a deceção efetivamente morde --- e com custo onde não morde. Nas campanhas com orçamento igualado (7 \textit{runs} de 195 minutos por braço), a hibridização com \textit{Novelty Search} ($w=0{,}5$) resolveu o Muro em U de forma consistente --- 7/7 \textit{runs} a 100\% de sucesso e $69{,}8 \pm 5{,}9$ recolhas/ep, contra 3/7 e $24{,}5 \pm 32{,}6$ do objetivo puro (Mann--Whitney $p=0{,}026$, $\delta=+0{,}71$) ---, tornando-se a única configuração estudada a dominar o cenário que resistia aos três algoritmos base. Simetricamente, na Porta com Alternativa, onde o \textit{homing} já convergia em 7/7 \textit{runs}, a mesma pressão por novidade degradou a magnitude ($63{,}0 \pm 21{,}9$ vs.\ $86{,}7 \pm 2{,}0$; $p=0{,}0006$, $\delta=-1{,}00$), desmascarando o $+26\%$ da comparação preliminar como artefacto do orçamento triplo. Com peso fixo, a resposta seria condicional: a procura por novidade melhora o resultado quando a otimização objetiva é inconsistente e prejudica-o quando o gradiente da tarefa basta --- a exploração tem preço. A campanha final \textbf{pré-registada} de \textbf{dosagem adaptativa} ($w$ decai após a descoberta sustentada) removeu, porém, a condição: manteve os $7/7$ \textit{runs} no Muro em U ($68{,}5 \pm 13{,}1$; $p=0{,}009$, $\delta=+0{,}76$ vs.\ objetivo), não degradou significativamente nenhum dos restantes seis cenários (T1/T3 do pré-registo) e superou o peso fixo em magnitude no bypass ($77{,}2$ vs.\ $63{,}0$; $\delta=+0{,}59$). O braço de controlo exploratório fecha o argumento: o objetivo puro com o \emph{dobro} do orçamento continua bimodal no Muro em U ($4/7$), pelo que o ganho é do mecanismo e não do tempo de treino --- e o adaptativo com esse orçamento atinge o melhor bypass da dissertação ($88{,}7 \pm 0{,}6$). A resposta final à QI6 é, pois, \textbf{afirmativa quando a novidade é doseada adaptativamente}: com anilamento após a descoberta, a pressão por novidade domina tanto o objetivo puro como o peso fixo, sem custo mensurável onde a deceção não morde (Secção~\ref{sec:res_novelty}). Uma campanha de replicação com $n=28$ execuções por braço --- quatro vezes a dimensão amostral dos testes acima --- fecha a questão no plano da fiabilidade, que é o que o cenário exige: a dosagem adaptativa resolve o Muro em U em $28/28$ execuções contra $15/28$ do objetivo puro (Fisher exato, $p<0{,}0001$), $14/28$ do PPO e $14/28$ do SAC, sendo a única condição de toda a dissertação sem uma única execução falhada neste cenário; e supera o peso fixo na Porta com Alternativa com significância ($80{,}9$ vs.\ $63{,}0$; $p=0{,}0016$, $\delta=+0{,}77$), confirmando o tamanho de efeito que a $n=7$ ficara aquém do limiar convencional.
-% ── RESPOSTA À QI7 — escolher UMA e apagar as outras duas ────────────────────
-% ⚠️ Fica DENTRO do `description` de propósito: descomentado a seguir ao
-% \end{description}, o \item ficava órfão e o LaTeX dava «Lonely \item». O ensaio
-% (scripts/testes/ensaio_integracao_qi7.py) apanhou-o hoje; a 16 de agosto teria
-% custado o tempo que não há.
-% As três leituras seguem a regra pré-comprometida (⌈5/7 × 21⌉ = 15 execuções
-% convergentes em pelo menos um algoritmo, emendas 19 e 21 do pré-registo).
-%
-% (A) quinze ou mais execuções convergentes num algoritmo:
-%    \item[\textbf{QI7 --- Composição de dificuldades.}] Sim, com retreino: o
-%          \PORPREENCHER{algoritmo} resolve o mapa composto em
-%          \PORPREENCHER{k}/$21$ execuções, com \PORPREENCHER{valor} recolhas por
-%          episódio. O contraste com o zero-shot é a resposta: as políticas
-%          treinadas nos sete cenários isolados não entregam um único item neste
-%          mapa (84 células a $0{,}00$), mas o mesmo algoritmo, treinado de raiz,
-%          resolve-o --- o que falha na composição é a \emph{transferência}, não
-%          a aprendibilidade (Secção~\ref{sec:res_mapa_grande}).
-%
-% (B) nenhuma execução convergente --- resultado negativo honesto:
-%    \item[\textbf{QI7 --- Composição de dificuldades.}] Não, dentro do orçamento
-%          pré-registado: nenhum dos três controladores resolve o mapa composto,
-%          nem por transferência (84 células a $0{,}00$) nem com treino nativo.
-%          Três verificações independentes excluem que a causa seja o desenho do
-%          mapa --- existe caminho para todos os agentes, um oráculo geodésico
-%          recolhe $53$ itens por episódio, e a folga do orçamento é de
-%          $2{,}9\times$ ---, pelo que o resultado delimita o alcance dos três
-%          métodos sob composição e escala. Um mapa que nenhum algoritmo resolve
-%          é um resultado, não uma campanha falhada
-%          (Secção~\ref{sec:res_mapa_grande}).
-%
-% (C) entre uma e catorze --- negativo pela regra, com o número declarado:
-%    \item[\textbf{QI7 --- Composição de dificuldades.}] Parcialmente, e ao preço
-%          da fiabilidade: o mapa composto é resolúvel por
-%          \PORPREENCHER{algoritmo}, mas só em \PORPREENCHER{k} das $21$ execuções
-%          --- abaixo do limiar de $15$ fixado antes dos dados, pelo que a QI7
-%          \textbf{não sobe a resposta afirmativa}. O que a composição degrada é a
-%          \emph{variabilidade entre execuções}, não a magnitude: é a assinatura
-%          bimodal que a dissertação já documenta no Muro em U
-%          (Secção~\ref{sec:res_boxplots}), agora à escala de um mapa quatro vezes
-%          maior e com quatro dificuldades encadeadas
-%          (Secção~\ref{sec:res_mapa_grande}).
+\item[\textbf{QI7 --- Composição de dificuldades.}] Parcialmente, e ao preço
+         da fiabilidade: o mapa composto é resolúvel por
+         GNN, mas só em 4 das $21$ execuções
+         --- abaixo do limiar de $15$ fixado antes dos dados, pelo que a QI7
+         \textbf{não sobe a resposta afirmativa}. O que a composição degrada é a
+         \emph{variabilidade entre execuções}, não a magnitude: é a assinatura
+         bimodal que a dissertação já documenta no Muro em U
+         (Secção~\ref{sec:res_boxplots}), agora à escala de um mapa quatro vezes
+         maior e com quatro dificuldades encadeadas
+         (Secção~\ref{sec:res_mapa_grande}).
+
 \end{description}
 
 % ── A QI7 (mapa grande) entra AQUI, se o F2 fechar antes de 22 ago ───────────
@@ -1785,7 +1713,7 @@ Retomam-se as questões de investigação enunciadas na Secção~\ref{sec:questo
 % Se o F2 NÃO fechar a tempo, fica tudo como está — a regra 4 dos compromissos de
 % reporte do pré-registo manda-o para a defesa, e a tese está completa sem ele.
 %
-% \input{seccao_mapa_grande}
+\input{seccao_mapa_grande}
 
 \section{Limitações do Estudo}
 \label{sec:limitacoes}

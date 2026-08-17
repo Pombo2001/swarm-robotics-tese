@@ -65,6 +65,26 @@ def le(padrao, texto, nome):
     return float(m.group(1).replace("{,}", ".").replace(",", "."))
 
 
+
+def _n(s):
+    r"""'1{,}7', '+0{,}19' ou '17\%' -> float. None se não for número.
+
+    ⚠️ A ordem importa: o separador decimal PT-PT é `{,}` e tem de ser
+    resolvido ANTES de se limparem as chavetas, senão `1{,}7` fica `1{,7` e não
+    converte. É a mesma armadilha que o `numero()` do verificar_numeros_tese
+    documenta — e que aqui se voltou a cair, por o helper ter sido escrito à
+    pressa dentro de um heredoc que comeu as barras invertidas.
+    """
+    if s is None:
+        return None
+    s = str(s).replace("{,}", ".")
+    s = re.sub(r"\\%|\\textbf|\\emph|[{}$%]", "", s)
+    s = s.replace(",", ".").strip()
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
 def compara(nome, medido, na_tese, tol=0.05):
     global conferidos
     if na_tese is None:
@@ -261,9 +281,127 @@ def f2(texto):
               % (algo, len(por_run), por_run.mean(), por_run.std(ddof=1),
                  conv, len(por_run)))
     # Só compara com o texto se os buracos já tiverem sido preenchidos.
-    if "PORPREENCHER" in open(SECCAO, encoding="utf-8").read():
+    #
+    # ⚠️ Lia o ficheiro CRU. Depois de a secção ser preenchida (17 ago), as
+    # leituras alternativas que não foram escolhidas ficam em comentário — com
+    # os seus `\PORPREENCHER` lá dentro, mais a `\providecommand` que define o
+    # próprio comando. O verificador dizia «ainda tem \PORPREENCHER» sobre uma
+    # secção inteiramente preenchida, e a linha que a compara com os dados
+    # nunca chegava a correr. É a mesma armadilha da vista Defesa a 14 ago:
+    # quem lê o `.tex` por regex tem de ignorar os comentários.
+    # E procura-se a UTILIZAÇÃO (`\PORPREENCHER{...}`), não a palavra: a secção
+    # define o próprio comando com `\providecommand{\PORPREENCHER}[1]{...}`, e
+    # essa linha fica lá para sempre. Um teste que a conta nunca dá a secção
+    # por preenchida.
+    if re.search(r"\\PORPREENCHER\{", texto):
         print("  [!] a secção ainda tem \\PORPREENCHER — preencher antes de "
               "comparar.")
+        return
+    _f2_contra_texto(texto)
+
+
+def _f2_contra_texto(texto):
+    """A tabela, o M1--M3 e a Discussão do F2 contra o `medir_f2()`.
+
+    Enquanto a secção teve `\\PORPREENCHER`, esta comparação não existia — só o
+    aviso acima. No dia em que ela foi preenchida (17 ago) isso deixou **os
+    números acabados de escrever sem ninguém a conferi-los**, e o primeiro
+    defeito apareceu de imediato: a Discussão dizia «4 chegam aos 100% de
+    sucesso» onde a M2, duas linhas acima, dizia 2. Não foi erro de dados — foi
+    o `fechar_qi7.py` a resolver a chave `k100` pelo prefixo `k`.
+
+    ⚠️ Isto compara com a MESMA função que escreve (`medir_f2`), e por isso não
+    prova que a regra esteja certa. Prova outra coisa, que é o que falha na
+    prática: que o texto continua a dizer o que os CSV dizem hoje — depois de
+    uma edição à mão, de um CSV regenerado, ou de um bug de preenchimento como
+    aquele.
+    """
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from analise_mapa_grande import medir_f2
+    m = medir_f2()
+    if not m:
+        return
+    print()
+    print("  a secção  vs  medir_f2()")
+
+    def confere(rot, na_tese, medido, tol=0.05):
+        if na_tese is None:
+            falhas.append("%s: não consegui ler o valor na secção" % rot)
+            print("  [X] %-46s não consegui ler na secção" % rot)
+            return
+        compara(rot, medido, na_tese, tol)
+
+    # ── a tabela: uma linha por algoritmo ───────────────────────────────────
+    # As linhas da tabela leem-se por LINHA de ficheiro, não por regex sobre o
+    # texto todo: as células trazem `\%` e a linha acaba em `\\`, e um padrão
+    # que exclua barras invertidas (para não saltar linhas) não apanha nenhuma
+    # das três.
+    linhas_tab = {}
+    for bruta in texto.splitlines():
+        campos_ = [c.strip() for c in bruta.replace("\\\\", "").split("&")]
+        if campos_ and campos_[0] in m["por_algo"]:
+            linhas_tab[campos_[0]] = campos_[1:]
+
+    for algo, v in m["por_algo"].items():
+        campos = linhas_tab.get(algo)
+        if campos is None:
+            print("  [X] tab:f2_mapa_grande: não encontrei a linha do %s" % algo)
+            falhas.append("tab:f2_mapa_grande: sem linha do %s" % algo)
+            continue
+        vals = [_n(c) for c in campos]
+        confere("%s: recolhas/ep" % algo, vals[0], v["media"], 0.05)
+        confere("%s: desvio-padrão" % algo, vals[1], v["dp"], 0.05)
+        confere("%s: sucesso (%%)" % algo, vals[2], 100.0 * v["sucesso"], 0.5)
+        conv = re.search(r"(\d+)/(\d+)", campos[3]) if len(campos) > 3 else None
+        confere("%s: convergentes" % algo,
+                float(conv.group(1)) if conv else None, v["convergentes"], 0.0)
+
+    # ── M1: os três pares ───────────────────────────────────────────────────
+    for t in m["m1"]:
+        pad = (r"%s \\emph\{vs\.\}\\ %s: \$p = ([\d{},]+)\$, "
+               r"\$\\delta = ([+-][\d{},]+)\$" % (t["a"], t["b"]))
+        mm = re.search(pad, texto)
+        if not mm:
+            print("  [X] M1 %s vs %s: não encontrei a frase" % (t["a"], t["b"]))
+            continue
+        confere("M1 %s vs %s: p" % (t["a"], t["b"]), _n(mm.group(1)),
+                t["p"], 0.0005)
+        confere("M1 %s vs %s: δ" % (t["a"], t["b"]), _n(mm.group(2)),
+                t["delta"], 0.005)
+
+    # ── M2 e M3 ─────────────────────────────────────────────────────────────
+    for algo, v in m["por_algo"].items():
+        mm = re.search(r"%s em (\d+)/(\d+), das quais (\d+) a \$100" % algo,
+                       texto)
+        if not mm:
+            print("  [X] M2 %s: não encontrei a frase" % algo)
+            continue
+        confere("M2 %s: convergentes" % algo, _n(mm.group(1)),
+                v["convergentes"], 0.0)
+        confere("M2 %s: a 100%% de sucesso" % algo, _n(mm.group(3)),
+                v["cem_por_cento"], 0.0)
+    mm = re.search(r"porta é aberta: GNN \$(\d+)\\%\$, PPO \$(\d+)\\%\$, "
+                   r"SAC \$(\d+)\\%\$", texto)
+    if mm:
+        for k, algo in enumerate(("GNN", "PPO", "SAC")):
+            if algo in m["por_algo"]:
+                confere("M3 %s: porta aberta (%%)" % algo, _n(mm.group(k + 1)),
+                        100.0 * (m["por_algo"][algo]["porta"] or 0.0), 0.5)
+    else:
+        print("  [X] M3: não encontrei a frase da porta")
+
+    # ── a Discussão repete o k e o k100: têm de bater com a M2 ──────────────
+    campeao = m["algo_campeao"]
+    v = m["por_algo"][campeao]
+    mm = re.search(r"fiável: (\d+) das \$21\$ execuções atingem pelo menos uma "
+                   r"recolha e\s+(\d+) chegam aos \$100", texto)
+    if mm:
+        confere("Discussão: k (convergentes)", _n(mm.group(1)),
+                v["convergentes"], 0.0)
+        confere("Discussão: k a 100% de sucesso", _n(mm.group(2)),
+                v["cem_por_cento"], 0.0)
+    else:
+        print("  [X] Discussão: não encontrei a frase do k/k100")
 
 
 def main():
