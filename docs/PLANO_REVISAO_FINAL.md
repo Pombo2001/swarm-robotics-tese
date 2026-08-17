@@ -307,8 +307,29 @@ coerência interna passou de 7 para **10 factos cruzados** (54 valores): o k/n d
 QI7, a retenção per capita da QI2 e a janela de robustez, cada um lido nos dois
 sítios onde é dito e obrigado a concordar consigo próprio.
 
-As **27 mutações** do `ensaiar_verificador.py` (eram 24) continuam todas a ser
-apanhadas, incluindo as três novas, que estragam o **eco** e não o resultado.
+**(c) A secção do Novelty, que era o maior buraco que restava (78 tokens).** O
+bloco que confere a QI6 passou de 41 para **59 valores**, e as três verificações
+novas são as que não cabiam numa comparação simples: o **Sandbox de T1** (o único
+cenário onde o adaptativo sobe, e por isso o mais citado de volta), as **duas
+metades de T4** (adaptativo contra peso fixo), o **«todos $p \geq 0{,}21$»** —
+uma afirmação sobre cinco testes ao mesmo tempo, que fica falsa se um deles
+descer **sem que nenhum número escrito mude** — e a **ablação do anilamento**,
+cujos limites (59,7--69,1 e 74,8--82,4) são o mínimo e o máximo das médias das
+quatro variantes, recalculados das 8 células.
+
+⚠️ **E aqui a palavra «convergentes» quer dizer duas coisas.** No mapa composto
+conta «pelo menos uma recolha»; na campanha da QI6, o `[6/7]` do pré-registo são
+as execuções que resolvem o cenário **em todos os episódios**. Aplicar a primeira
+definição ao Sandbox dá 7/7 e o verificador acusou a tese de errar um número que
+está certo — foi o primeiro resultado desta extensão, e está agora escrito no
+código para não voltar a acontecer.
+
+As **31 mutações** do `ensaiar_verificador.py` (eram 24) continuam todas a ser
+apanhadas, incluindo as sete novas — três que estragam o **eco** e não o
+resultado, e quatro na secção do Novelty.
+
+**Cobertura final da sessão: 28% → 43%** (518 → 794 tokens lidos), com os
+automatizáveis por cobrir a caírem de 371 para **232**.
 
 ### 17 ago — 3.3 — limpeza: seis figuras fantasma fora, quatro entradas do `.bib` ficam
 

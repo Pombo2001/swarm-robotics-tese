@@ -2045,6 +2045,29 @@ def _por_run(chave, cen):
     return d.groupby("Run")["food_collected"].mean().sort_index()
 
 
+def _runs_a_100(chave, cen):
+    r"""Execuções com $100\%$ de sucesso — a «convergência» desta secção.
+
+    ⚠️ Aqui `convergentes` não quer dizer o mesmo que no mapa grande. No mapa
+    composto conta-se «pelo menos uma recolha» (porque quase tudo dá zero); na
+    campanha da QI6 o `[6/7]` do pré-registo são as execuções que resolvem o
+    cenário **em todos os episódios**. Contar recolhas > 0 no Sandbox dá 7/7 e
+    faria o verificador acusar a tese de errar um número que está certo — foi
+    exatamente o que fez à primeira.
+    """
+    fp = os.path.join(RAIZ_NOV, *FONTES_NOV[chave])
+    if not os.path.exists(fp):
+        return None
+    d = pd.read_csv(fp)
+    d = d[d["Algorithm"].astype(str).str.upper() == "GNN"]
+    if "Scenario" in d.columns:
+        d = d[d["Scenario"] == cen]
+    if d.empty or "success" not in d.columns:
+        return None
+    por_run = d.groupby("Run")["success"].mean()
+    return float((por_run >= 1.0).sum())
+
+
 def _mw(a, b, unilateral):
     from scipy.stats import mannwhitneyu
     alt = "greater" if unilateral else "two-sided"
@@ -2136,6 +2159,36 @@ AFIRMACOES_NOV = [
         "B": ("objetivo", "cooperative_perception"),
         "unilateral": False, "delta_negativo": True,
     },
+    # ── 17 ago: as três que faltavam ────────────────────────────────────────
+    # A medição de cobertura ainda dava 78 tokens por verificar nesta secção —
+    # o maior grupo da dissertação. Estes são os que têm CSV por trás: o
+    # Sandbox de T1 (o único cenário onde o adaptativo SOBE, e por isso o mais
+    # citado de volta) e as duas metades de T4, que é o teste que compara os
+    # dois mecanismos de novidade entre si.
+    {
+        "rot": "T1 — Sandbox (o adaptativo sobe descritivamente)",
+        "re": r"no Sandbox o adaptativo até sobe descritivamente "
+              r"\(\$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$, (?P<conv>\d+)/7, "
+              r"vs\.\\ \$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$, "
+              r"(?P<convb>\d+)/7\)",
+        "A": ("adapt_A1", "none"), "B": ("objetivo", "none"),
+        "unilateral": False, "conv_a_100": True,
+    },
+    {
+        "rot": "T4 — adaptativo vs peso fixo no Muro em U",
+        "re": r"indistinguível no Muro em U \(\$p=(?P<p>[\d{},]+)\$\)",
+        "A": ("adapt_A1", "u_wall"), "B": ("fixo_uwall", "u_wall"),
+        "unilateral": False,
+    },
+    {
+        "rot": "T4 — adaptativo vs peso fixo no bypass",
+        "re": r"superior em magnitude no bypass \(\$(?P<m>[\d{},]+)\$ vs\.\\ "
+              r"\$(?P<mo>[\d{},]+)\$; \$p=(?P<p>[\d{},]+)\$, "
+              r"\$\\delta=\+(?P<d>[\d{},]+)\$",
+        "A": ("adapt_B1", "cooperative_door_bypass"),
+        "B": ("fixo_bypass", "cooperative_door_bypass"),
+        "unilateral": False,
+    },
 ]
 
 
@@ -2173,8 +2226,19 @@ def verificar_novelty(tolerancia):
         if b_serie is not None:
             alvos += [("média (B)", g.get("mo"), b_serie.mean()),
                       ("desvio (B)", g.get("so"), b_serie.std())]
+        # `conv100`: a frase conta execuções a 100% de sucesso (o `[6/7]` do
+        # pré-registo); `conv`: execuções com pelo menos uma recolha.
+        cem = af.get("conv_a_100")
         if g.get("conv") is not None:
-            alvos.append(("convergentes", g["conv"], float((a_serie > 0).sum())))
+            alvos.append(("convergentes",
+                          g["conv"],
+                          _runs_a_100(*af["A"]) if cem
+                          else float((a_serie > 0).sum())))
+        if g.get("convb") is not None and b_serie is not None:
+            alvos.append(("convergentes (B)",
+                          g["convb"],
+                          _runs_a_100(*af["B"]) if cem
+                          else float((b_serie > 0).sum())))
         if g.get("p") is not None and b_serie is not None:
             alvos.append(("p", g["p"], _mw(a_serie, b_serie, af["unilateral"])))
         if g.get("d") is not None and b_serie is not None:
@@ -2203,6 +2267,94 @@ def verificar_novelty(tolerancia):
                 problemas.append("%-44s %-13s tese=%8.4f  dados=%8.4f  (Δ=%+.4f)"
                                  % (af["rot"], nome, tese, esperado,
                                     tese - esperado))
+
+    # ── T1: «todos $p \geq 0{,}21$» ─────────────────────────────────────────
+    # Uma afirmação sobre CINCO testes de uma vez, e a única da secção que não
+    # cabe na estrutura acima: o que a tese diz é que o menor dos cinco p é
+    # 0,21. Se um deles descer, esta frase passa a ser falsa sem que nenhum
+    # número escrito na tese mude — o defeito mais difícil de ver à vista.
+    m = re.search(r"nenhuma diferença é significativa \(todos \$p \\geq "
+                  r"(?P<p>[\d{},]+)\$\)", sec)
+    if m:
+        cinco = [("adapt_A1", "none"), ("adapt_A1", "bottleneck"),
+                 ("adapt_A1", "four_rooms"), ("adapt_B1", "cooperative_door"),
+                 ("adapt_B1", "cooperative_perception")]
+        ps = []
+        for chave, cen in cinco:
+            a, b = _por_run(chave, cen), _por_run("objetivo", cen)
+            if a is None or b is None:
+                continue
+            valor = _mw(a, b, False)
+            if valor is not None:
+                ps.append((cen, valor))
+        if len(ps) == 5:
+            conferidos += 1
+            menor_cen, menor = min(ps, key=lambda x: x[1])
+            tese = numero(str(m.group("p")))
+            # A tese arredonda para baixo o menor p; exige-se que o menor p real
+            # não seja INFERIOR ao afirmado (senão a frase é falsa) e que seja o
+            # mesmo número a duas casas.
+            if menor + 5e-3 < tese:
+                problemas.append(
+                    "T1 — «todos p ≥ %s»: o menor é %.4f (%s), abaixo do "
+                    "afirmado" % (m.group("p"), menor, menor_cen))
+            elif abs(round(menor, 2) - tese) > 0.005:
+                problemas.append(
+                    "T1 — «todos p ≥ %s»: o menor dos cinco é %.4f (%s) — a "
+                    "frase é verdadeira mas o número não é o menor"
+                    % (m.group("p"), menor, menor_cen))
+            else:
+                print("   [5] T1 — o menor dos cinco p é %.4f (%s), e a tese "
+                      "diz «todos ≥ %s»" % (menor, menor_cen, m.group("p")))
+        else:
+            problemas.append("T1 — «todos p ≥ …»: só consegui recalcular %d "
+                             "dos 5 testes" % len(ps))
+
+    # ── A ablação do anilamento (as quatro variantes) ──────────────────────
+    # «não é sensível à afinação» é uma conclusão sobre 8 células de uma vez, e
+    # nenhuma delas tem tabela. Os limites citados são o mínimo e o máximo das
+    # médias das quatro variantes — se uma variante nova entrar, ou uma sair,
+    # os limites mudam e mais nada no texto muda com eles.
+    m = re.search(r"as quatro variantes convergem em \$7/7\$ execuções nos dois "
+                  r"cenários, com médias entre \$(?P<u0>[\d{},]+)\$ e "
+                  r"\$(?P<u1>[\d{},]+)\$ recolhas/ep no Muro em U e entre "
+                  r"\$(?P<b0>[\d{},]+)\$ e \$(?P<b1>[\d{},]+)\$", sec)
+    if m:
+        fases = ["mega_B_fase%d" % i for i in (1, 2, 3, 4)]
+        for cen, g0, g1 in (("u_wall", "u0", "u1"),
+                            ("cooperative_door_bypass", "b0", "b1")):
+            medias, cem_a_cem = [], True
+            for fase in fases:
+                fp = os.path.join(PROJECT_ROOT, "results", "mega_1mes", fase,
+                                  "evaluation", "eval_by_run.csv")
+                if not os.path.exists(fp):
+                    continue
+                d = pd.read_csv(fp)
+                d = d[(d["Algorithm"].astype(str).str.upper() == "GNN") &
+                      (d["Scenario"] == cen)]
+                if d.empty:
+                    continue
+                medias.append(d.groupby("Run")["food_collected"].mean().mean())
+                if (d.groupby("Run")["success"].mean() >= 1.0).sum() != 7:
+                    cem_a_cem = False
+            if len(medias) != 4:
+                problemas.append("Ablação (%s): encontrei %d das 4 variantes"
+                                 % (cen, len(medias)))
+                continue
+            conferidos += 3
+            if not cem_a_cem:
+                problemas.append("Ablação (%s): a tese diz 7/7 em todas as "
+                                 "variantes, e alguma não o é" % cen)
+            bateu = True
+            for grupo, esperado in ((g0, min(medias)), (g1, max(medias))):
+                tese = numero(str(m.group(grupo)))
+                if tese is None or abs(tese - esperado) > max(0.05, tolerancia):
+                    bateu = False
+                    problemas.append("Ablação (%s) %s: tese=%s dados=%.2f"
+                                     % (cen, grupo, m.group(grupo), esperado))
+            if bateu and cem_a_cem:
+                print("   [4] Ablação do anilamento (%s): médias de %.1f a %.1f, "
+                      "7/7 nas quatro" % (cen, min(medias), max(medias)))
 
     if problemas:
         print("DIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))

@@ -114,6 +114,19 @@ MUTACOES = [
      "retém $58$--$88\\%$ nos cenários com paredes", "coerencia"),
     ("eco da robustez nos Contributos (92--106 -> 92--104)",
      "(retenção de 92--106\\%", "(retenção de 92--104\\%", "coerencia"),
+    # ── A secção do Novelty, nas três frases que passaram a ter rede ────────
+    ("T1: o limiar dos cinco p (0,21 -> 0,45)",
+     "nenhuma diferença é significativa (todos $p \\geq 0{,}21$)",
+     "nenhuma diferença é significativa (todos $p \\geq 0{,}45$)", "novelty"),
+    ("T1: convergência do Sandbox (6/7 -> 7/7)",
+     "descritivamente ($47{,}5 \\pm 28{,}1$, 6/7",
+     "descritivamente ($47{,}5 \\pm 28{,}1$, 7/7", "novelty"),
+    ("ablação: o topo do Muro em U (69,1 -> 71,1)",
+     "e $69{,}1$ recolhas/ep no Muro em U", "e $71{,}1$ recolhas/ep no Muro em U",
+     "novelty"),
+    ("T4: o p do Muro em U contra o peso fixo (0,80 -> 0,40)",
+     "indistinguível no Muro em U ($p=0{,}80$)",
+     "indistinguível no Muro em U ($p=0{,}40$)", "novelty"),
 ]
 
 VERIFICADORES = {
@@ -122,6 +135,7 @@ VERIFICADORES = {
     "hiper": V.verificar_hiperparametros,
     "discussao": lambda: V.verificar_discussao_global(0.05),
     "coerencia": V.verificar_coerencia_interna,
+    "novelty": lambda: V.verificar_novelty(0.05),
 }
 
 
