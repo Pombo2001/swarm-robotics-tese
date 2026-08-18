@@ -265,6 +265,31 @@ MUTACOES = [
     ("eco das Conclusões: o 14/28 dos gradientes (14 -> 13)",
      "$14/28$ de cada método de gradiente",
      "$13/28$ de cada método de gradiente", "coerencia"),
+    # ── O Sandbox: a tabela e a FORMA da distribuição (18 ago) ──────────────
+    # A `tab:res_sandbox` é a única tabela de resultados com rótulos de
+    # algoritmo em vez de cenário, e escapava ao leitor genérico de tabelas. A
+    # frase da decomposição — quatro competitivas, duas a zero, uma intermédia
+    # — é o argumento do cenário, e sobrevive a mudanças de dados que nenhuma
+    # média denuncia.
+    ("tab:res_sandbox: a média do GNN (38,31 -> 39,31)",
+     "GNN (Evolutivo) & $38{,}31 \\pm 31{,}03$",
+     "GNN (Evolutivo) & $39{,}31 \\pm 31{,}03$", "sandbox"),
+    ("tab:res_sandbox: os runs funcionais do GNN (5/7 -> 6/7)",
+     "$85{,}7\\%$ & $5/7$", "$85{,}7\\%$ & $6/7$", "sandbox"),
+    ("tab:res_sandbox: o P_task do PPO (100% -> 98%)",
+     "PPO & $71{,}46 \\pm 0{,}98$ & $100\\%$",
+     "PPO & $71{,}46 \\pm 0{,}98$ & $98\\%$", "sandbox"),
+    ("prosa do Sandbox: a média do SAC (69,2 -> 68,2)",
+     "SAC $69{,}2 \\pm 1{,}9$)", "SAC $68{,}2 \\pm 1{,}9$)", "sandbox"),
+    ("forma do Sandbox: o limite inferior das competitivas (61,6 -> 60,0)",
+     "competitivas (61,6 a 64,7 recolhas/ep)",
+     "competitivas (60,0 a 64,7 recolhas/ep)", "sandbox"),
+    ("forma do Sandbox: quantas degeneram (dois -> três)",
+     "dois degeneram por completo ($<1$ recolha/ep)",
+     "três degeneram por completo ($<1$ recolha/ep)", "sandbox"),
+    ("forma do Sandbox: a execução intermédia (15,8 -> 25,8)",
+     "regime intermédio (15,8 recolhas/ep",
+     "regime intermédio (25,8 recolhas/ep", "sandbox"),
 ]
 
 VERIFICADORES = {
@@ -276,6 +301,7 @@ VERIFICADORES = {
     "novelty": lambda: V.verificar_novelty(0.05),
     "mega": lambda: V.verificar_megatreino(0.05),
     "questoes": V.verificar_questoes_investigacao,
+    "sandbox": lambda: V.verificar_sandbox(0.05),
 }
 
 

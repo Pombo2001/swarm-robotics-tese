@@ -2857,6 +2857,160 @@ FACTOS_REPETIDOS = [
 ]
 
 
+def verificar_sandbox(tolerancia):
+    """§Sandbox — a tabela própria do cenário e a FORMA da distribuição.
+
+    O Sandbox é o cenário de referência da dissertação («o mais simples é o
+    menos fiável para o evolutivo»), e o argumento não está na média: está na
+    decomposição das sete execuções — quatro competitivas, duas degeneradas e
+    uma intermédia. Uma média pode manter-se com a distribuição a mudar por
+    completo, e era precisamente isso que aqui não tinha rede: a `tab:res_sandbox`
+    é a única tabela de resultados da tese com rótulos de algoritmo em vez de
+    cenário, e por isso escapava ao leitor de tabelas genérico.
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: §Sandbox (tab:res_sandbox + a forma da distribuição)")
+    print("=" * 72)
+
+    fp = os.path.join(PROJECT_ROOT, "results", "graficos_tese", "final_7d",
+                      "eval_by_run_7d.csv")
+    if not os.path.exists(fp):
+        print("[!] falta o %s — a saltar." % os.path.relpath(fp, PROJECT_ROOT))
+        return []
+    d = pd.read_csv(fp)
+    d = d[d["Scenario"] == "none"]
+
+    por_algo = {}
+    for algo in ("GNN", "PPO", "SAC"):
+        s = d[d["Algorithm"].astype(str).str.upper() == algo]
+        if s.empty:
+            continue
+        por_algo[algo] = s.groupby("Run").agg(food=("food_collected", "mean"),
+                                              suc=("success", "mean"))
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+
+    problemas, conferidos = [], 0
+
+    def confere(rot, tese, calc, exato=False, tol=None):
+        nonlocal conferidos
+        conferidos += 1
+        if tese is None or calc is None:
+            problemas.append("%s: não consegui ler no main.tex "
+                             "(mudou a redação?)" % rot)
+        elif exato and int(tese) != int(calc):
+            problemas.append("%-38s tese=%d  csv=%d" % (rot, tese, calc))
+        elif not exato and abs(tese - calc) > (tol if tol else tolerancia):
+            problemas.append("%-38s tese=%.3f  csv=%.3f" % (rot, tese, calc))
+
+    # ── a tabela ───────────────────────────────────────────────────────────
+    for rotulo, algo in (("GNN \\(Evolutivo\\)", "GNN"), ("PPO", "PPO"),
+                         ("SAC", "SAC")):
+        m = re.search(rotulo + r" & \$([\d{},]+) \\pm ([\d{},]+)\$ & \$([\d{},]+)"
+                      r"\\?%?\$ & \$(\d+)/(\d+)\$", tex)
+        g = por_algo.get(algo)
+        if g is None:
+            problemas.append("tab:res_sandbox (%s): sem dados no CSV" % algo)
+            continue
+        vals = [numero(x) for x in m.groups()] if m else [None] * 5
+        confere("tab %s: média" % algo, vals[0], float(g["food"].mean()))
+        confere("tab %s: desvio" % algo, vals[1], float(g["food"].std()))
+        # P_task da tabela é a taxa de sucesso média entre execuções, em %
+        confere("tab %s: P_task" % algo, vals[2],
+                100.0 * float(g["suc"].mean()), tol=0.05)
+        confere("tab %s: runs funcionais" % algo, vals[3],
+                int((g["suc"] >= 1.0).sum()), exato=True)
+        confere("tab %s: n" % algo, vals[4], len(g), exato=True)
+        print("  %-4s n=%d  %6.2f ± %5.2f   P_task %5.1f%%   funcionais %d/%d"
+              % (algo, len(g), g["food"].mean(), g["food"].std(),
+                 100 * g["suc"].mean(), int((g["suc"] >= 1.0).sum()), len(g)))
+
+    # ── a prosa: as duas médias dos gradientes e a do evolutivo ────────────
+    m = re.search(r"\(PPO \$([\d{},]+) \\pm ([\d{},]+)\$ recolhas/ep; SAC "
+                  r"\$([\d{},]+) \\pm ([\d{},]+)\$\)", tex)
+    if m and "PPO" in por_algo and "SAC" in por_algo:
+        for i, (rot, algo, campo) in enumerate((
+                ("prosa PPO: média", "PPO", "mean"),
+                ("prosa PPO: desvio", "PPO", "std"),
+                ("prosa SAC: média", "SAC", "mean"),
+                ("prosa SAC: desvio", "SAC", "std"))):
+            serie = por_algo[algo]["food"]
+            confere(rot, numero(m.group(i + 1)),
+                    float(getattr(serie, campo)()), tol=max(0.05, tolerancia))
+    else:
+        problemas.append("prosa do Sandbox: não encontrei as médias do PPO/SAC")
+
+    # ── a FORMA: quatro competitivas, duas degeneradas, uma intermédia ─────
+    #
+    # É esta frase que sustenta o argumento do capítulo, e é a que sobrevive a
+    # uma mudança de dados sem que nenhuma média mude o suficiente para dar
+    # sinal. Verifica-se por construção: contam-se as execuções em cada
+    # regime, e exige-se que os limites citados sejam mesmo o mínimo e o
+    # máximo do grupo competitivo.
+    m = re.search(r"quatro dos sete \\textit\{runs\} convergem para políticas "
+                  r"competitivas \(([\d,]+) a ([\d,]+) recolhas/ep\), dois "
+                  r"degeneram por completo \(\$<(\d+)\$ recolha/ep\) e um fica "
+                  r"num regime intermédio \(([\d,]+) recolhas/ep, com sucesso "
+                  r"em todos os episódios", tex)
+    g = por_algo.get("GNN")
+    if m is None:
+        problemas.append("forma da distribuição do GNN: não encontrei a frase")
+    elif g is not None:
+        lo, hi = numero(m.group(1)), numero(m.group(2))
+        limiar_zero, intermedio = numero(m.group(3)), numero(m.group(4))
+        food = g["food"].sort_values()
+        # a folga e a do ARREDONDAMENTO a uma casa (0,05), com um epsilon
+        # por cima: 61,55 escreve-se 61,6, e sem o epsilon o proprio
+        # valor que a tese cita caia fora do grupo por erro de virgula
+        # flutuante (61,6 - 0,05 = 61,550000000000004).
+        folga = 0.05 + 1e-9
+        competitivas = food[food >= lo - folga]
+        degeneradas = food[food < limiar_zero]
+        meio = food[(food >= limiar_zero) & (food < lo - folga)]
+        conferidos += 5
+        if len(competitivas) != 4:
+            problemas.append("a tese diz quatro execuções competitivas; são %d"
+                             % len(competitivas))
+        if len(degeneradas) != 2:
+            problemas.append("a tese diz duas execuções degeneradas (<%g); são "
+                             "%d" % (limiar_zero, len(degeneradas)))
+        if len(meio) != 1:
+            problemas.append("a tese diz uma execução intermédia; são %d"
+                             % len(meio))
+        if len(competitivas):
+            confere("limite inferior das competitivas", lo,
+                    float(competitivas.min()), tol=folga)
+            confere("limite superior das competitivas", hi,
+                    float(competitivas.max()), tol=folga)
+        if len(meio) == 1:
+            confere("execução intermédia", intermedio, float(meio.iloc[0]),
+                    tol=folga)
+            # «com sucesso em todos os episódios» — a metade da frase que não
+            # é um número, e que distingue esta execução das degeneradas.
+            conferidos += 1
+            run_meio = g[g["food"] == meio.iloc[0]]
+            if float(run_meio["suc"].iloc[0]) < 1.0:
+                problemas.append("a execução intermédia não tem sucesso em "
+                                 "todos os episódios (%.2f)"
+                                 % run_meio["suc"].iloc[0])
+            else:
+                print("  [4] a forma: %d competitivas (%.1f a %.1f), %d a zero "
+                      "(<%g) e 1 intermédia (%.1f, sucesso pleno)"
+                      % (len(competitivas), competitivas.min(),
+                         competitivas.max(), len(degeneradas), limiar_zero,
+                         meio.iloc[0]))
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nOs %d valores do Sandbox batem com o CSV." % conferidos)
+    return problemas
+
+
 def verificar_questoes_investigacao():
     """As QI são sete, aparecem por ordem, e cada pergunta tem resposta.
 
@@ -3090,6 +3244,7 @@ def main():
     problemas += verificar_simulador()
     problemas += verificar_hiperparametros()
     problemas += verificar_discussao_global(a.tolerancia)
+    problemas += verificar_sandbox(a.tolerancia)
     problemas += verificar_questoes_investigacao()
     problemas += verificar_coerencia_interna()
     problemas += verificar_artigo(a.tolerancia)
