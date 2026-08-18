@@ -54,7 +54,10 @@ adaptativa}, validada em campanha pré-registada, elimina esse custo mantendo o
 ganho. Uma replicação com $n=28$ por braço fixa-o em $28/28$ execuções contra
 $15/28$ (Fisher exato, $p<0{,}0001$) e mostra que, \emph{sem} essa dosagem, o
 controlador evolutivo é indistinguível do PPO: o que separa os braços é a
-exploração, não o paradigma. A hipótese de que a inteligência adaptativa domina a
+exploração, não o paradigma. Um oitavo cenário, que compõe quatro dificuldades
+num labirinto quatro vezes maior, delimita o alcance destas conclusões: sem
+retreino nada transfere, e com treino nativo só o controlador evolutivo o
+resolve, em $4$ de $21$ execuções. A hipótese de que a inteligência adaptativa domina a
 robustez estática é, por isso, apenas \emph{parcialmente} confirmada --- a
 vantagem decisiva reside na \emph{representação} e no desenho do sinal de treino,
 não no algoritmo de otimização.
@@ -426,21 +429,19 @@ sendo o ninho. Nenhum dos mecanismos de exploração estudados (entropia,
 motivação da procura por novidade, avaliada de seguida.
 
 \subsection{Deceção e procura por novidade}
-Numa experiência preliminar na Porta Cooperativa com Alternativa --- desenhada
-como armadilha \emph{deceptive}: o gradiente de \emph{homing} aponta para a porta
-bloqueada e o caminho viável exige afastamento temporário do ninho ---, um
-controlador com \emph{blend} de novidade \citep{lehman2011abandoning} ($w=0{,}5$,
-$600$ minutos) obteve $81{,}3\pm1{,}9$ recolhas/ep contra $64{,}5$ do melhor controlador
-puramente objetivo então disponível ($+26\%$; Wilcoxon emparelhado
-$p=8{,}7\times10^{-5}$). Duas ressalvas eram incontornáveis: a execução com novidade
-dispôs de um orçamento $\approx 3\times$ superior, e este é o único teste do artigo
-cuja unidade estatística é o episódio ($n=20$, um só modelo por braço) e não a
-execução de treino, pelo que o seu $p$ não é comparável com os restantes (os
-artefactos brutos desta execução preliminar não foram retidos; os valores são o
-registo da altura). Para isolar o efeito,
-corremos duas campanhas com \textbf{orçamento igualado} ao da campanha final
-(sete execuções de $195$ minutos por braço, mesmo protocolo e \emph{seeds}), nos
-dois cenários vulneráveis à deceção.
+% ⚠️ 18 ago: o parágrafo da experiência PRELIMINAR (o +26% com orçamento triplo,
+% 600 min, unidade = episódio) foi retirado daqui para abrir espaço à secção do
+% mapa composto sem passar das 8 páginas. Era o candidato nº 2 do GUIA_LEITURA, e
+% por boa razão: o parágrafo seguinte desmascarava-o como artefacto do orçamento,
+% pelo que a história fecha sem ele — e os artefactos brutos dessa execução nem
+% sequer foram retidos. A dissertação continua a reportá-lo por inteiro.
+A Porta Cooperativa com Alternativa é uma armadilha \emph{deceptive}: o gradiente
+de \emph{homing} aponta para a porta bloqueada e o caminho viável exige
+afastamento temporário do ninho. Para medir o efeito da procura por novidade
+\citep{lehman2011abandoning} nesse regime, corremos duas campanhas com
+\textbf{orçamento igualado} ao da campanha final (sete execuções de $195$ minutos
+por braço, mesmo protocolo e \emph{seeds}), nos dois cenários vulneráveis à
+deceção.
 
 No Muro em U, a hibridização elevou a taxa de convergência de $3/7$ para
 $\mathbf{7/7}$ execuções a $100\%$ de sucesso, com $69{,}8\pm5{,}9$ recolhas/ep
@@ -449,8 +450,8 @@ contra $24{,}5\pm32{,}6$ do objetivo puro (Mann--Whitney $p=0{,}026$, $\delta=+0
 cenário que resistia aos três controladores base. Na Porta com Alternativa, onde
 o \emph{homing} já convergia em $7/7$ execuções, o quadro inverte-se: a mesma
 pressão por novidade degradou a magnitude ($63{,}0\pm21{,}9$ vs.\ $86{,}7\pm2{,}0$;
-$p=0{,}0006$, $\delta=-1{,}00$), desmascarando o $+26\%$ preliminar como artefacto do
-orçamento triplo.
+$p=0{,}0006$, $\delta=-1{,}00$): todas as execuções objetivas superam todas as
+execuções com novidade.
 
 Com peso fixo, a pressão por novidade é, pois, um instrumento direcionado, não um
 melhoramento universal: compra a descoberta do desvio onde a otimização objetiva é
@@ -521,6 +522,25 @@ resolver.}
 \label{fig:megatreino}
 \end{figure}
 
+\subsection{Composição de dificuldades: um mapa quatro vezes maior}
+\label{sec:mapa_composto}
+Cada um dos sete cenários isola uma dificuldade. Para medir o que sucede quando
+se compõem, construímos um oitavo --- um labirinto de $103\times62$\,m que
+encadeia gargalo, beco em U, quatro salas e porta cooperativa --- e corremos nele
+duas fases \textbf{pré-registadas}. Sem retreino, nenhum dos $21$ campeões dos
+sete cenários entrega um único item, e três condições de controlo (normalização
+das distâncias, obstáculos dispersos e dimensões da observação associadas à
+porta) devolvem, célula a célula, o mesmo: $84$ células a zero em $1680$
+episódios. Com treino nativo ($21$ execuções por controlador, $780$ minutos para
+o evolutivo e $192$ para os métodos de gradiente), só o evolutivo resolve o mapa
+--- em $4$ das $21$ execuções, contra $0$ de $21$ do PPO e $0$ de $21$ do SAC
+---, abaixo do limiar de $15$ execuções convergentes fixado antes dos dados: a
+resposta é \textbf{negativa} e reporta-se com a contagem à vista. A leitura está
+na forma e não na média: as execuções que resolvem fazem-no com magnitude
+comparável entre si e as restantes ficam a zero --- a assinatura bimodal do Muro
+em U, agora à escala de quatro dificuldades encadeadas. O que a composição
+degrada é a \emph{fiabilidade} do treino, não o desempenho de quem aprende.
+
 \subsection{Escalabilidade \emph{zero-shot}}
 Apenas o controlador baseado em atenção é viável para $N\neq 20$: transferindo sem
 qualquer retreino a política aprendida com $N=20$ para $N\in\{10,50,100\}$, mantém
@@ -572,8 +592,10 @@ observação local conferem ao enxame uma redundância funcional em que nenhum
 agente é insubstituível.
 
 \subsection{Significância estatística}
-A Tabela~\ref{tab:signif} apresenta as $21$ comparações par a par sobre as médias
-de recolhas por execução ($n=7$ por grupo). O controlador evolutivo é
+As $21$ comparações par a par sobre as médias de recolhas por execução
+($n=7$ por grupo; teste $U$ de Mann--Whitney com $\delta$ de Cliff,
+$\alpha=0{,}05$) constam por inteiro da dissertação; resume-se aqui o que
+decidem. O controlador evolutivo é
 significativamente superior a \emph{ambos} os métodos de gradiente em três
 cenários (Quatro Salas, Porta Cooperativa e Perceção Cooperativa) e superior ao
 SAC em mais dois (Gargalo e Porta com Alternativa), empatando com o PPO nesses
@@ -581,43 +603,10 @@ dois. Os métodos de gradiente são superiores no Sandbox, onde as execuções
 degeneradas do evolutivo pesam ($\delta=\pm1{,}00$). No Muro em U nenhuma
 comparação atinge significância.
 
-\begin{table}[t]
-\centering
-\caption{As $21$ comparações par a par sobre as \emph{médias de recolhas por
-execução} ($n=7$ por grupo; teste $U$ de Mann--Whitney com $\delta$ de Cliff,
-$\alpha=0{,}05$; $\bullet$ assinala significância). A unidade independente é a
-execução de treino, não o episódio; as médias de cada braço constam da
-Tabela~\ref{tab:task}.}
-\label{tab:signif}
-\footnotesize
-\begin{tabular}{llrrc}
-\toprule
-Cenário & Par & $p$ & $\delta$ & \\
-\midrule
-Sandbox        & GNN vs PPO & $0{,}0006$ & $-1{,}00$ & $\bullet$ \\
-               & GNN vs SAC & $0{,}0021$ & $-1{,}00$ & $\bullet$ \\
-               & PPO vs SAC & $0{,}0297$ & $+0{,}71$ & $\bullet$ \\
-Muro em U      & GNN vs PPO & $0{,}1552$ & $-0{,}47$ & \\
-               & GNN vs SAC & $0{,}5714$ & $+0{,}18$ & \\
-               & PPO vs SAC & $0{,}0526$ & $+0{,}63$ & \\
-Gargalo        & GNN vs PPO & $0{,}2086$ & $+0{,}43$ & \\
-               & GNN vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
-               & PPO vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
-Quatro Salas   & GNN vs PPO & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
-               & GNN vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
-               & PPO vs SAC & $0{,}3374$ & $+0{,}33$ & \\
-Porta Coop.    & GNN vs PPO & $0{,}0262$ & $+0{,}71$ & $\bullet$ \\
-               & GNN vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
-               & PPO vs SAC & $0{,}0175$ & $+0{,}76$ & $\bullet$ \\
-Perceção Coop. & GNN vs PPO & $0{,}0297$ & $+0{,}71$ & $\bullet$ \\
-               & GNN vs SAC & $0{,}0297$ & $+0{,}71$ & $\bullet$ \\
-               & PPO vs SAC & $0{,}0547$ & $-0{,}63$ & \\
-Porta c/ Alt.  & GNN vs PPO & $0{,}8477$ & $+0{,}08$ & \\
-               & GNN vs SAC & $0{,}0006$ & $+1{,}00$ & $\bullet$ \\
-               & PPO vs SAC & $0{,}0021$ & $+1{,}00$ & $\bullet$ \\
-\bottomrule
-\end{tabular}
-\end{table}
+% ⚠️ 18 ago: a Tabela das 21 comparações par a par foi RETIRADA daqui — o
+% artigo tem limite de 8 páginas e a secção do mapa composto entrou hoje. A
+% prosa acima diz o que a tabela decide, e a dissertação reporta-a por
+% inteiro. Era o candidato nº 3 do GUIA_LEITURA; nenhum número se perdeu.
 
 \section{Discussão}
 \label{sec:discussion}
@@ -672,7 +661,7 @@ opção viável entre as estudadas.
 
 \section{Limitações do estudo}
 \label{sec:limitacoes}
-Três limitações enquadram o alcance das conclusões. Primeira, e mais importante, a
+Quatro limitações enquadram o alcance das conclusões. Primeira, e mais importante, a
 comparação é \emph{assimétrica}: o controlador evolutivo usa uma arquitetura de
 grafo com atenção, os \emph{baselines} de gradiente um perceptrão de entrada fixa;
 isolar o efeito do otimizador exigiria treinar a mesma arquitetura por gradiente.
@@ -680,7 +669,11 @@ Segunda, a replicação a $n=28$ cobriu apenas o Muro em U: as restantes
 combinações mantêm sete execuções por configuração, e é aí que o poder
 estatístico continua a faltar --- nos cenários que ficaram bimodais a $n=7$
 (Sandbox, $5/7$; SAC no Gargalo, $5/7$), distinguir taxas de convergência exige
-uma bateria maior. Terceira, todos os
+uma bateria maior. Terceira, a composição de dificuldades foi medida num
+\emph{único} mapa (Secção~\ref{sec:mapa_composto}): o que dele se conclui delimita
+o alcance destes controladores nesta composição e não em qualquer outra, e a
+contagem de execuções que o resolvem é reportada como descritiva, por compromisso
+fixado antes dos dados. Quarta, todos os
 resultados são em simulação, com o \emph{reality gap} por medir
 \citep{tobin2017domain}. Nenhuma invalida os achados centrais --- a dependência da
 neuroevolução face ao desenho da aptidão e o contraste de escalabilidade são
@@ -703,7 +696,10 @@ adaptativamente --- $28/28$ execuções contra $15/28$ na replicação a $n=28$
 essa dosagem, o evolutivo é indistinguível do PPO ($p=0{,}088$). O que a evidência
 sustenta não é a superioridade de um paradigma de otimização, mas a de um
 \emph{mecanismo} --- a exploração doseada ao longo do treino --- em princípio
-transponível para qualquer um deles. Como trabalho futuro ficam uma política de
+transponível para qualquer um deles. Um oitavo cenário, que compõe quatro destas
+dificuldades, delimita o alcance de tudo isto: sem retreino nada transfere e, com
+treino nativo, só o evolutivo o resolve --- em $4$ de $21$ execuções, abaixo do
+limiar pré-registado. Como trabalho futuro ficam uma política de
 atenção treinada por gradiente, que separaria o otimizador da arquitetura, o
 alargamento da bateria aos restantes cenários bimodais, o re-armamento do
 \emph{schedule} adaptativo sob estagnação e a validação

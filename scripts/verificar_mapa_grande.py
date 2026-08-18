@@ -20,6 +20,7 @@ Uso:
     .venv/Scripts/python.exe scripts/verificar_mapa_grande.py
 """
 import glob
+import math
 import os
 import re
 import sys
@@ -310,6 +311,86 @@ def medir_f2_seguro():
         return None
 
 
+def artigo():
+    """A secção do mapa composto no ARTIGO, contra as mesmas fontes da tese.
+
+    O artigo é um documento à parte, com o seu próprio `.tex` e a sua própria
+    bibliografia, e já divergiu da tese duas vezes (as figuras, a 21 jul e a
+    4 ago). Ganhou a QI7 a 18 ago, em versão destilada: se algum destes números
+    for recalculado do lado da dissertação, aqui não muda nada — e é por isso
+    que a comparação é com os CSV, e não com o `main.tex`.
+    """
+    art = os.path.join(RAIZ, "Artigo", "artigo.tex")
+    if not os.path.exists(art):
+        return
+    with open(art, encoding="utf-8") as fh:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", fh.read())
+    i = tex.find("Composição de dificuldades: um mapa quatro vezes maior")
+    if i < 0:
+        print("\n  [i] o artigo não tem a secção do mapa composto — nada a "
+              "verificar. (A dissertação tem: são dois documentos a dizer "
+              "coisas diferentes sobre o mesmo trabalho.)")
+        return
+    sec = tex[i:i + 2500]
+
+    print()
+    print("=" * 74)
+    print("ARTIGO (secção do mapa composto)  vs  os mesmos CSV da tese")
+    print("=" * 74)
+
+    # ── F1: as células e os episódios das quatro condições ─────────────────
+    csvs = sorted(glob.glob(os.path.join(F1_DIR, "zeroshot_*.csv")))
+    if csvs:
+        dfs = {os.path.basename(c): pd.read_csv(c) for c in csvs}
+        natural = next((d for n, d in dfs.items() if "natural" in n), None)
+        col_cen = "Origem" if natural is not None and "Origem" in natural \
+            else "Scenario"
+        col_alg = "Algorithm" if natural is not None and "Algorithm" in natural \
+            else "algorithm"
+        total_cel = sum(d.groupby([col_cen, col_alg]).ngroups
+                        for d in dfs.values())
+        total_ep = sum(len(d) for d in dfs.values())
+        compara("artigo: células a zero", float(total_cel),
+                le(r"o mesmo: \$(\d+)\$ células a zero", sec,
+                   "células a zero (artigo)"), tol=0.01)
+        compara("artigo: episódios do F1", float(total_ep),
+                le(r"células a zero em \$(\d+)\$\n?episódios", sec,
+                   "episódios do F1 (artigo)"), tol=0.01)
+        if natural is not None:
+            compara("artigo: campeões que não transferem",
+                    float(natural.groupby([col_cen, col_alg]).ngroups),
+                    le(r"nenhum dos \$(\d+)\$ campeões", sec,
+                       "campeões (artigo)"), tol=0.01)
+
+    # ── F2: quem resolve o mapa, e o limiar ────────────────────────────────
+    m = medir_f2_seguro()
+    if m and m.get("por_algo"):
+        conv = {a: int(v["convergentes"]) for a, v in m["por_algo"].items()}
+        n_exec = {a: int(v["n"]) for a, v in m["por_algo"].items()}
+        g = re.search(r"em \$(\d+)\$ das \$(\d+)\$ execuções,\s+contra \$(\d+)\$"
+                      r"\s+de \$(\d+)\$ do PPO e \$(\d+)\$ de \$(\d+)\$ do SAC",
+                      sec)
+        if g is None:
+            falhas.append("artigo: não encontrei a frase do F2 (mudou a "
+                          "redação?)")
+        else:
+            alvos = (("GNN", 0, 1), ("PPO", 2, 3), ("SAC", 4, 5))
+            for algo, i_c, i_n in alvos:
+                if algo.lower() in conv or algo in conv:
+                    chave = algo if algo in conv else algo.lower()
+                    compara("artigo: %s resolve" % algo, float(conv[chave]),
+                            float(g.group(i_c + 1)), tol=0.01)
+                    compara("artigo: %s n" % algo, float(n_exec[chave]),
+                            float(g.group(i_n + 1)), tol=0.01)
+        # o limiar sai do n, não de um número escrito à mão: ⌈5/7 × n⌉
+        n_gnn = n_exec.get("GNN", n_exec.get("gnn", 0))
+        if n_gnn:
+            limiar = math.ceil(5.0 / 7.0 * n_gnn)
+            compara("artigo: limiar pré-registado", float(limiar),
+                    le(r"abaixo do limiar de \$(\d+)\$ execuções convergentes",
+                       sec, "limiar (artigo)"), tol=0.01)
+
+
 def trabalho_futuro():
     """O item do mapa composto nos Trabalhos Futuros (está no `main.tex`).
 
@@ -582,6 +663,7 @@ def main():
     f1(texto)
     orcamento(texto)
     f2(texto)
+    artigo()
     trabalho_futuro()
 
     print()

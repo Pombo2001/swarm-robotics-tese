@@ -22,7 +22,10 @@ RAIZ="$(git rev-parse --show-toplevel)"
 ALVOS='^(Tese/main\.tex|results/graficos_tese/final_7d/|results/estatisticas/escalabilidade_)'
 # A secção do mapa grande tem verificador próprio (o `main.tex` não a inclui
 # enquanto não houver dados do F2, por isso nunca entraria pelos ALVOS acima).
-ALVOS_MAPA='^(Tese/seccao_mapa_grande\.tex|results/mapa_grande/)'
+# 18 ago: o ARTIGO tambem entra aqui. Ganhou nesse dia a seccao do mapa composto,
+# e o verificar_mapa_grande.py passou a conferi-la contra os MESMOS CSV da tese —
+# o artigo e um documento a parte e ja divergiu da dissertacao duas vezes.
+ALVOS_MAPA='^(Tese/seccao_mapa_grande\.tex|results/mapa_grande/|Artigo/artigo\.tex)'
 
 MEXEU_TESE=0
 MEXEU_MAPA=0

@@ -1,11 +1,25 @@
 # Guia de leitura — o artigo da dissertação
 
-> Estado em **4 ago 2026**: o artigo foi reescrito de raiz a 10 jul com os dados
-> da campanha de 7 dias, e hoje ganhou a **replicação a $n=28$** (mega-treino de
-> um mês) mais as figuras corrigidas da tese. Está em **português**, compila sem
-> erros nem referências por resolver, e tem **10 páginas** — 8,5 de corpo e 1,5
-> de bibliografia. ⚠️ **O Prof. pediu 6 a 8**: ver o ponto 3 de «O que depende de
-> ti». Este guia diz: (1) o que o **professor** pretende; (2) o que **mudou** face
+> Estado em **18 ago 2026**: o artigo foi reescrito de raiz a 10 jul com os dados
+> da campanha de 7 dias, ganhou a 4 ago a **replicação a $n=28$** (mega-treino de
+> um mês) e hoje a **QI7 — o mapa composto**. Está em **português**, compila sem
+> erros nem referências por resolver, e tem **8 páginas**: dentro das 6 a 8 que o
+> Prof. pediu.
+>
+> ⚠️ **A QI7 entrou com dois cortes, e é isso que a mantém em 8 páginas.** Saíram
+> (1) o parágrafo da experiência preliminar do Novelty — o $+26\%$ com orçamento
+> triplo, que o parágrafo seguinte já desmascarava como artefacto — e (2) a
+> **tabela das 21 comparações par a par**, cujo conteúdo passou a prosa e cuja
+> versão completa está na dissertação. Eram os candidatos nº 2 e nº 3 da lista de
+> cortes que este guia já tinha. Nenhum número se perdeu: a dissertação reporta
+> ambos por inteiro.
+>
+> Os dez valores da secção nova são conferidos contra os **mesmos CSV que a tese
+> usa** por `scripts/verificar_mapa_grande.py` (secção «ARTIGO»), que passou a
+> correr no `pre-commit` quando o `artigo.tex` muda — porque o artigo é um
+> documento à parte e já divergiu da dissertação duas vezes.
+>
+> Este guia diz: (1) o que o **professor** pretende; (2) o que **mudou** face
 > ao draft de junho e porquê; (3) o que ainda depende de ti.
 
 ---
@@ -109,10 +123,11 @@ robustez a falhas.
    contraste "adaptativo vs. estático" e passou a ser o **desenho da aptidão**. Se
    quiseres, proponho títulos alternativos.
 
-3. ⚠️ **10 páginas contra as 6–8 pedidas.** O corpo são 8,5 e a bibliografia 1,5;
-   já estava assim antes desta atualização (o mega-treino entrou sem acrescentar
-   página, por reflow das colunas). Se for para cortar até 8, os candidatos, por
-   ordem de custo:
+3. ~~⚠️ **10 páginas contra as 6–8 pedidas.**~~ ✅ **Resolvido a 18 ago: 8
+   páginas**, já com a QI7 lá dentro. Foram usados os candidatos nº 2 e nº 3 da
+   lista abaixo (a experiência preliminar do Novelty e a tabela das 21
+   comparações). Fica a lista original, porque **a Robustez continua por cortar**
+   se precisares de mais espaço — é o candidato nº 1 e o que menos custa:
    - **Robustez** (§4.6 + Figura 7): a própria secção conclui que a robustez *não*
      discrimina entre paradigmas — é a que menos sustenta a tese central. ≈¾ pág.
    - **Experiência preliminar do Novelty** (o parágrafo do $+26\%$ com orçamento
