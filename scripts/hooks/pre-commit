@@ -64,6 +64,10 @@ if [ "$MEXEU_TESE" -eq 1 ]; then
     # ler 24 ficheiros onde a tese fala de 21 celulas (tres controladores x
     # SETE cenarios). E barato (<1 s) e le a geometria do simulador.
     "$PY" "$RAIZ/scripts/verificar_vertical.py" || OK=0
+    # 18 ago: as REMISSOES (245). O LaTeX nao acusa uma remissao com o TIPO trocado - a
+    # referencia resolve e manda o leitor ao sitio errado -, nem uma tabela que
+    # nenhuma frase chama. Custa milissegundos: le dois .tex.
+    "$PY" "$RAIZ/scripts/verificar_remissoes.py" || OK=0
 fi
 if [ "$MEXEU_MAPA" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_mapa_grande.py" || OK=0
