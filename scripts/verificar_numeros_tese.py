@@ -2675,7 +2675,9 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"O resultado é inequívoco.{0,120}?100\\% de sucesso nas (\d+) "
                 r"combina[çc][õo]es"},
-         {"re": r"QI2 --- Escalabilidade\.\].{0,260}?100\\% de sucesso nas "
+         # `\.?` — o rótulo perdeu o ponto final a 18 ago (a classe `amsbook`
+         # já lhe acrescenta dois pontos, e saía «Escalabilidade.:»).
+         {"re": r"QI2 --- Escalabilidade\.?\].{0,260}?100\\% de sucesso nas "
                 r"(\d+) combina[çc][õo]es"},
      ]},
     # ── Os ecos do Capítulo 6 (17 ago) ──────────────────────────────────────
@@ -2813,6 +2815,72 @@ FACTOS_REPETIDOS = [
                 r"Alternativa \(\$\+(\d+)\\%\$\)"},
      ]},
 ]
+
+
+def verificar_questoes_investigacao():
+    """As QI são sete, aparecem por ordem, e cada pergunta tem resposta.
+
+    Escrito a 18 de agosto, depois de a QI7 ter passado quatro dias impressa
+    **antes** da QI6 na lista de questões do Capítulo 1: o bloco dela viveu
+    meses em comentário nesse sítio, à espera do resultado do mapa composto, e
+    ao ser descomentado ficou onde estava. A lista lia-se 1, 2, 3, 4, 5, 7, 6.
+
+    Nenhum verificador de números veria isto — todos os números estavam certos.
+    É o mesmo feitio dos defeitos que o eixo 2 do plano de qualidade persegue:
+    uma afirmação sobre a tese (as questões estão em ordem, e a cada uma
+    corresponde uma resposta) que ninguém tinha testado.
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: as questões de investigação (ordem e correspondência)")
+    print("=" * 72)
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+
+    problemas = []
+    # As perguntas (Cap. 1) e as respostas (Cap. 7) usam formas de rótulo
+    # diferentes de propósito — «\textbf{QI1.}» e «QI1 --- …» —, e é por isso
+    # que se distinguem sem depender da posição no ficheiro.
+    listas = (("perguntas (Secção das Questões de Investigação)",
+               r"\\item\[\\textbf\{QI(\d)\.\}\]"),
+              ("respostas (Secção da Resposta às Questões)",
+               r"\\item\[QI(\d) ---"))
+    conjuntos = {}
+    for rot, padrao in listas:
+        nums = [int(m.group(1)) for m in re.finditer(padrao, tex)]
+        conjuntos[rot] = nums
+        if not nums:
+            problemas.append("%s: não encontrei a lista (mudou a forma dos "
+                             "\\item?)" % rot)
+            continue
+        if nums != sorted(nums):
+            problemas.append("%s: estão fora de ordem — %s"
+                             % (rot, ", ".join("QI%d" % n for n in nums)))
+        if len(set(nums)) != len(nums):
+            problemas.append("%s: há uma QI repetida — %s" % (rot, nums))
+        print("   [%d] %-46s %s" % (len(nums), rot[:46],
+                                    ", ".join("QI%d" % n for n in nums)))
+
+    vals = list(conjuntos.values())
+    if len(vals) == 2 and all(vals):
+        if set(vals[0]) != set(vals[1]):
+            so_pergunta = sorted(set(vals[0]) - set(vals[1]))
+            so_resposta = sorted(set(vals[1]) - set(vals[0]))
+            problemas.append(
+                "perguntadas sem resposta: %s | respondidas sem pergunta: %s"
+                % (so_pergunta or "nenhuma", so_resposta or "nenhuma"))
+        else:
+            print("   [%d] cada questão perguntada tem resposta, e vice-versa"
+                  % len(vals[0]))
+
+    if problemas:
+        print("\nDIVERGÊNCIAS:")
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nAs questões de investigação estão em ordem e emparelhadas.")
+    return problemas
 
 
 def verificar_coerencia_interna():
@@ -2982,6 +3050,7 @@ def main():
     problemas += verificar_simulador()
     problemas += verificar_hiperparametros()
     problemas += verificar_discussao_global(a.tolerancia)
+    problemas += verificar_questoes_investigacao()
     problemas += verificar_coerencia_interna()
     problemas += verificar_artigo(a.tolerancia)
     problemas += verificar_megatreino_artigo(a.tolerancia)

@@ -227,6 +227,18 @@ MUTACOES = [
     ("eco do mapa: o δ de M1 (0,19 -> 0,29)",
      "$\\delta = +0{,}19$ entre o evolutivo",
      "$\\delta = +0{,}29$ entre o evolutivo", "coerencia"),
+    # ── A ORDEM das questões (18 ago) ───────────────────────────────────────
+    # A QI7 esteve quatro dias impressa ANTES da QI6 na lista do Capítulo 1:
+    # todos os números certos, e a lista a ler-se 1, 2, 3, 4, 5, 7, 6. Estas
+    # duas mutações reproduzem o defeito e o seu primo — uma questão
+    # perguntada que fica sem resposta.
+    ("a lista das questões deixa de estar por ordem",
+     "\\item[\\textbf{QI6.}] \\textbf{Deceção e procura por novidade:}",
+     "\\item[\\textbf{QI8.}] \\textbf{Deceção e procura por novidade:}",
+     "questoes"),
+    ("uma questão perguntada deixa de ter resposta",
+     "\\item[QI3 --- Robustez a falhas]",
+     "\\item[QI9 --- Robustez a falhas]", "questoes"),
 ]
 
 VERIFICADORES = {
@@ -237,6 +249,7 @@ VERIFICADORES = {
     "coerencia": V.verificar_coerencia_interna,
     "novelty": lambda: V.verificar_novelty(0.05),
     "mega": lambda: V.verificar_megatreino(0.05),
+    "questoes": V.verificar_questoes_investigacao,
 }
 
 
