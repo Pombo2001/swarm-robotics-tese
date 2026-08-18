@@ -183,6 +183,34 @@ MUTACOES = [
     ("B6: a média da campanha final (41,4 -> 44,4)",
      "com os $41{,}4 \\pm 36{,}8$ da campanha final",
      "com os $44{,}4 \\pm 36{,}8$ da campanha final", "mega"),
+    # ── Os ecos dos testes da QI6 no Capítulo 6 (18 ago) ────────────────────
+    # Cada uma destas mutações estraga **só o eco**, deixando o Capítulo 5
+    # intacto: é o defeito que a coerência interna existe para apanhar, e
+    # nenhum verificador que compare com os CSV o veria — o número do sítio
+    # onde o resultado é produzido continua certo.
+    ("eco da QI6: o p do Muro em U com peso fixo (0,026 -> 0,036)",
+     "(Mann--Whitney $p=0{,}026$, $\\delta=+0{,}71$)",
+     "(Mann--Whitney $p=0{,}036$, $\\delta=+0{,}71$)", "coerencia"),
+    ("eco da QI6: o δ da Porta com Alternativa (-1,00 -> -0,90)",
+     "$p=0{,}0006$, $\\delta=-1{,}00$), desmascarando",
+     "$p=0{,}0006$, $\\delta=-0{,}90$), desmascarando", "coerencia"),
+    ("eco da QI6: o δ de T2 (0,76 -> 0,66)",
+     "$p=0{,}009$, $\\delta=+0{,}76$ vs.\\ objetivo",
+     "$p=0{,}009$, $\\delta=+0{,}66$ vs.\\ objetivo", "coerencia"),
+    ("eco da QI6: a magnitude de T4 (77,2 -> 79,2)",
+     "superou o peso fixo em magnitude no bypass ($77{,}2$",
+     "superou o peso fixo em magnitude no bypass ($79{,}2$", "coerencia"),
+    ("eco da QI6: o controlo de orçamento (4/7 -> 3/7)",
+     "continua bimodal no Muro em U ($4/7$)",
+     "continua bimodal no Muro em U ($3/7$)", "coerencia"),
+    ("eco da QI6: o p do Fisher (1e-4 -> 1e-3)",
+     "(Fisher exato, $p<0{,}0001$)", "(Fisher exato, $p<0{,}001$)", "coerencia"),
+    ("eco da QI6: a contagem do PPO no mega-treino (14 -> 13)",
+     "$14/28$ do PPO e $14/28$ do SAC, sendo a única",
+     "$13/28$ do PPO e $14/28$ do SAC, sendo a única", "coerencia"),
+    ("eco da QI6: o p de M3 (0,0016 -> 0,0026)",
+     "($80{,}9$ vs.\\ $63{,}0$; $p=0{,}0016$, $\\delta=+0{,}77$)",
+     "($80{,}9$ vs.\\ $63{,}0$; $p=0{,}0026$, $\\delta=+0{,}77$)", "coerencia"),
 ]
 
 VERIFICADORES = {

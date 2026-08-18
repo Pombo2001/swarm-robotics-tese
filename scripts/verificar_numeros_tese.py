@@ -2710,6 +2710,63 @@ FACTOS_REPETIDOS = [
          {"re": r"falhas de 10\\% dos agentes.{0,90}?retenção de "
                 r"(\d+)--(\d+)\\%"},
      ]},
+    # ── Os ecos dos TESTES da QI6 (18 ago) ──────────────────────────────────
+    # A resposta à QI6 é o parágrafo mais denso do Capítulo 6: reconta oito
+    # comparações do Capítulo 5, cada uma com o seu p e o seu δ. Os factos
+    # acima já cruzavam as médias; estes cruzam os testes, que são o que muda
+    # quando os dados mudam — uma média pode sobreviver a um recálculo e o p
+    # não. É o mesmo defeito de sempre visto do outro lado: corrigir o
+    # resultado onde ele é produzido e deixar o eco a dizer o antigo.
+    {"rot": "QI6 — o teste do Muro em U com peso fixo",
+     "sitios": [
+         {"re": r"do objetivo puro \(\$p = ([\d{},]+)\$, \$\\delta = \+"
+                r"([\d{},]+)\$\)\. A pressão"},
+         {"re": r"\(Mann--Whitney \$p=([\d{},]+)\$, \$\\delta=\+([\d{},]+)\$\)"},
+     ]},
+    {"rot": "QI6 — o teste da Porta com Alternativa com peso fixo",
+     "sitios": [
+         {"re": r"recolhas/ep com novidade \(\$p = ([\d{},]+)\$, \$\\delta = -"
+                r"([\d{},]+)\$"},
+         {"re": r"\$p=([\d{},]+)\$, \$\\delta=-([\d{},]+)\$\), desmascarando"},
+     ]},
+    {"rot": "QI6 — T2, o teste do adaptativo no Muro em U",
+     "sitios": [
+         {"re": r"do objetivo \(\$p=([\d{},]+)\$ unilateral, \$\\delta=\+"
+                r"([\d{},]+)\$\)"},
+         {"re": r"\$p=([\d{},]+)\$, \$\\delta=\+([\d{},]+)\$ vs\.\\ objetivo"},
+     ]},
+    {"rot": "QI6 — T4, o adaptativo contra o peso fixo no bypass",
+     "sitios": [
+         {"re": r"superior em magnitude no bypass \(\$([\d{},]+)\$ vs\.\\ \$"
+                r"([\d{},]+)\$; \$p=[\d{},]+\$, \$\\delta=\+([\d{},]+)\$"},
+         {"re": r"superou o peso fixo em magnitude no bypass \(\$([\d{},]+)\$ "
+                r"vs\.\\ \$([\d{},]+)\$; \$\\delta=\+([\d{},]+)\$\)"},
+     ]},
+    {"rot": "QI6 — o controlo de orçamento continua bimodal",
+     "sitios": [
+         {"re": r"\(390 min/\\textit\{run\}\) continua bimodal --- \$(\d+)/(\d+)\$"},
+         {"re": r"continua bimodal no Muro em U \(\$(\d+)/(\d+)\$\)"},
+     ]},
+    {"rot": "Mega-treino — o p do Fisher exato",
+     "sitios": [
+         {"re": r"\(Fisher exato, \$p < ([\d{},]+)\$\)"},
+         {"re": r"\(Fisher exato, \$p<([\d{},]+)\$\)"},
+     ]},
+    {"rot": "Mega-treino — as contagens do PPO e do SAC (três sítios)",
+     "sitios": [
+         {"re": r"PPO \$[^$]+\$ \(\$(\d+)/(\d+)\$;.{0,90}?SAC \$[^$]+\$ "
+                r"\(\$(\d+)/(\d+)\$"},
+         {"re": r"\$(\d+)/(\d+)\$ do PPO e \$(\d+)/(\d+)\$ do SAC\)"},
+         {"re": r"\$(\d+)/(\d+)\$ do PPO e \$(\d+)/(\d+)\$ do SAC, sendo a única"},
+     ]},
+    {"rot": "Mega-treino — M3 (adaptativo vs peso fixo no bypass)",
+     "sitios": [
+         {"re": r"o adaptativo faz \$([\d{},]+) \\pm [\d{},]+\$ recolhas/ep em "
+                r"\$\d+/\d+\$ execuções contra \$([\d{},]+) \\pm [\d{},]+\$ do "
+                r"peso fixo \(\$p = ([\d{},]+)\$, \$\\delta = \+([\d{},]+)\$\)"},
+         {"re": r"com significância \(\$([\d{},]+)\$ vs\.\\ \$([\d{},]+)\$; \$p="
+                r"([\d{},]+)\$, \$\\delta=\+([\d{},]+)\$\)"},
+     ]},
     {"rot": "Planalto — células ainda a subir no fim do orçamento",
      "sitios": [
          {"re": r"\\textbf\{(\d+) das (\d+) combina[çc][õo]es ainda subiam de "
