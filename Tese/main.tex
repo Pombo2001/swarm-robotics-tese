@@ -360,7 +360,7 @@ An eighth scenario, composing in a single $103 \times 62$\,m maze the
 
 \tableofcontents
 \listoffigures
-% \listoftables
+\listoftables
 \cleardoublepage
 
 \chapter*{Lista de Acrónimos}
@@ -1194,7 +1194,7 @@ O \textit{pipeline} experimental é segmentado em cinco avaliações prioritári
 \begin{table}[!htbp]
 \centering
 \footnotesize
-\caption{Plano de testes experimentais e métricas associadas.}
+\caption[Plano de testes experimentais]{Plano de testes experimentais e métricas associadas.}
 \label{tab:experiments_priority}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{|c|p{4cm}|c|p{3.5cm}|p{2cm}|}
@@ -1288,7 +1288,7 @@ A Tabela~\ref{tab:res_sandbox} sintetiza o desempenho de avaliação neste cená
 \begin{table}[!htbp]
 \centering
 \footnotesize
-\caption{Desempenho no cenário Sandbox (avaliação determinística; recolhas/ep em média $\pm$ desvio padrão entre os 7 \textit{runs}; $P_{task}$ sobre os 140 episódios).}
+\caption[Desempenho no cenário Sandbox]{Desempenho no cenário Sandbox (avaliação determinística; recolhas/ep em média $\pm$ desvio padrão entre os 7 \textit{runs}; $P_{task}$ sobre os 140 episódios).}
 \label{tab:res_sandbox}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|l|c|c|c|}
@@ -1423,7 +1423,7 @@ A Tabela~\ref{tab:res_eval} reúne a métrica mais honesta do desempenho real na
 \begin{table}[!htbp]
 \centering
 \footnotesize
-\caption{Avaliação determinística (7 \textit{runs} $\times$ 20 episódios emparelhados): taxa de sucesso ($P_{task}$, sobre os 140 episódios) e recolhas por episódio (média $\pm$ desvio padrão entre \textit{runs}). A negrito, a melhor média de recolhas de cada cenário.}
+\caption[Avaliação determinística nos sete cenários]{Avaliação determinística (7 \textit{runs} $\times$ 20 episódios emparelhados): taxa de sucesso ($P_{task}$, sobre os 140 episódios) e recolhas por episódio (média $\pm$ desvio padrão entre \textit{runs}). A negrito, a melhor média de recolhas de cada cenário.}
 \label{tab:res_eval}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|l|c|c|c|c|c|c|}
@@ -1522,7 +1522,7 @@ O resultado é inequívoco: o controlador de grafo mantém \textbf{100\% de suce
 \begin{table}[!htbp]
 \centering
 \footnotesize
-\caption{Escalabilidade Zero-Shot do controlador de grafo nos sete cenários (20 episódios determinísticos por célula; modelo campeão da campanha final, treinado com $N=20$): recolhas \emph{por agente} e retenção da eficiência per capita em $N=100$ face a $N=20$. Taxa de sucesso: $100\%$ em todas as células.}
+\caption[Escalabilidade \textit{Zero-Shot} nos sete cenários]{Escalabilidade Zero-Shot do controlador de grafo nos sete cenários (20 episódios determinísticos por célula; modelo campeão da campanha final, treinado com $N=20$): recolhas \emph{por agente} e retenção da eficiência per capita em $N=100$ face a $N=20$. Taxa de sucesso: $100\%$ em todas as células.}
 \label{tab:res_scale_all}
 \renewcommand{\arraystretch}{1.25}
 \begin{tabular}{|l|c|c|c|c|c|}
@@ -1545,7 +1545,7 @@ A leitura honesta exige, porém, registar os dois casos intermédios: o Quatro S
 \begin{table}[!htbp]
 \centering
 \footnotesize
-\caption{O contraste arquitetural no cenário Sandbox (20 episódios/dimensão): taxa de sucesso e recolhas totais por episódio ao transferir a política treinada com $N=20$, sem retreino.}
+\caption[O contraste arquitetural no Sandbox]{O contraste arquitetural no cenário Sandbox (20 episódios/dimensão): taxa de sucesso e recolhas totais por episódio ao transferir a política treinada com $N=20$, sem retreino.}
 \label{tab:res_scale}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|l|c|c|c|c|}
@@ -1589,7 +1589,7 @@ O treino dos métodos de gradiente escapa a este limite por \textbf{paralelizaç
 \begin{table}[!htbp]
 \centering
 \footnotesize
-\caption{Desempenho computacional do simulador (\textit{throughput} de referência, $N=20$).}
+\caption[Desempenho computacional do simulador]{Desempenho computacional do simulador (\textit{throughput} de referência, $N=20$).}
 \label{tab:res_computacional}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|l|c|}
