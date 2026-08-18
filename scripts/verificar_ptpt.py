@@ -1,0 +1,128 @@
+# -*- coding: utf-8 -*-
+"""A dissertação está em português de Portugal?
+
+Porque existe
+-------------
+A tese e o artigo são escritos em PT-PT por decisão declarada (22 jun 2026), e
+uma parte do texto passou por ferramentas que produzem PT-BR por omissão. A
+diferença não é de estilo: um júri português lê «usuário» ou «treinamento» como
+texto que não foi escrito por quem assina.
+
+Procura marcadores LEXICAIS inequívocos (palavras que só existem numa das
+variantes) e a opção de língua do `babel`. Não tenta adivinhar por gramática:
+o que aqui aparece é para ser lido, não corrigido às cegas.
+
+Uso:
+    python scripts/verificar_ptpt.py
+"""
+import os
+import re
+import sys
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:                                            # noqa: BLE001
+    pass
+
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DOCS = [os.path.join(RAIZ, "Tese", "main.tex"),
+        os.path.join(RAIZ, "Tese", "seccao_mapa_grande.tex"),
+        os.path.join(RAIZ, "Tese", "apendice_slr.tex"),
+        os.path.join(RAIZ, "Artigo", "artigo.tex")]
+
+# (marcador PT-BR, o que se usa em PT-PT). Só palavras inequívocas: fora
+# ficam as que as duas variantes partilham depois do Acordo de 1990
+# («otimização», «ação», «objetivo», «projeto» são iguais nas duas).
+BRASILEIRISMOS = [
+    (r"\busuári[oa]s?\b", "utilizador(es)"),
+    (r"\btreinamentos?\b", "treino(s)"),
+    (r"\baprendizados?\b", "aprendizagem"),
+    (r"\bgerenciamentos?\b", "gestão"),
+    (r"\bgerenciar\b", "gerir"),
+    (r"\bequipes?\b", "equipa(s)"),
+    (r"\btelas?\b", "ecrã(s)"),
+    (r"\bcontatos?\b", "contacto(s)"),
+    (r"\bfatos?\b", "facto(s)"),
+    (r"\bregistros?\b", "registo(s)"),
+    (r"\bacurácia\b", "exatidão"),
+    (r"\bplanejamentos?\b", "planeamento"),
+    (r"\bplanejar\b", "planear"),
+    (r"\brodar\b", "correr / executar"),
+    (r"\bcaix[ao] de ferramentas\b", "conjunto de ferramentas"),
+    (r"\bcelulares?\b", "telemóvel(eis)"),
+    (r"\bmidia\b", "suporte / meios"),
+    (r"\bônibus\b", "autocarro"),
+    (r"\bxícara\b", "chávena"),
+    (r"\bbanheir[oa]s?\b", "casa de banho"),
+    (r"\bgeladeiras?\b", "frigorífico"),
+    (r"\btime\b(?![ -]?step)", "equipa"),
+    (r"\bestoques?\b", "existências"),
+    (r"\bsuco\b", "sumo"),
+    (r"\bônus\b", "bónus"),
+    (r"\banônim[oa]s?\b", "anónimo(a)"),
+    (r"\bgênero\b", "género"),
+    (r"\bcenári[oa] de teste do usuário\b", "—"),
+    # acentuação divergente (PT-BR usa ô/ê onde PT-PT usa ó/é)
+    (r"\bconsensos? econômic", "económic"),
+    (r"\beconômic[oa]s?\b", "económico(a)"),
+    (r"\bacadêmic[oa]s?\b", "académico(a)"),
+    (r"\bautônom[oa]s?\b", "autónomo(a)"),
+    (r"\beletrônic[oa]s?\b", "eletrónico(a)"),
+    (r"\bfenômen[oa]s?\b", "fenómeno(s)"),
+    (r"\bparâmetros? dinâmic", "—"),
+    (r"\btônic[oa]s?\b", "tónico(a)"),
+    (r"\bcotidian[oa]s?\b", "quotidiano(a)"),
+]
+
+
+def sem_comentarios(t):
+    return re.sub(r"(?<!\\)%[^\n]*", "", t)
+
+
+def main():
+    print("=" * 74)
+    print("PT-PT: marcadores lexicais brasileiros e opção do babel")
+    print("=" * 74)
+    problemas = []
+
+    for f in DOCS:
+        if not os.path.exists(f):
+            continue
+        tex = sem_comentarios(open(f, encoding="utf-8").read())
+        nome = os.path.relpath(f, RAIZ)
+
+        for padrao, alternativa in BRASILEIRISMOS:
+            for m in re.finditer(padrao, tex, re.IGNORECASE):
+                linha = tex.count("\n", 0, m.start()) + 1
+                ctx = " ".join(tex[max(0, m.start() - 45):m.end() + 45].split())
+                problemas.append("%s:%d  «%s» → %s\n        …%s…"
+                                 % (nome, linha, m.group(0), alternativa, ctx))
+
+        # o babel: `brazilian` mudaria hifenização, datas e nomes de secções
+        for m in re.finditer(r"\\usepackage\[([^\]]*)\]\{babel\}", tex):
+            opcoes = m.group(1).lower()
+            if "brazil" in opcoes:
+                problemas.append("%s: babel com opção `brazilian` — deve ser "
+                                 "`portuguese`" % nome)
+            elif "portug" not in opcoes:
+                problemas.append("%s: babel sem `portuguese` (opções: %s)"
+                                 % (nome, opcoes))
+            else:
+                print("   [v] %-34s babel: %s" % (nome, opcoes))
+
+    if problemas:
+        print("\n%d ocorrência(s) para ler:" % len(problemas))
+        for p in problemas:
+            print("   " + p)
+        print("=" * 74)
+        return 1
+    print("\nSem marcadores brasileiros nos %d documentos ✓" % len(DOCS))
+    print("NOTA: procura LÉXICO inequívoco. Palavras que as duas variantes")
+    print("      partilham desde o Acordo de 1990 («otimização», «ação»,")
+    print("      «projeto», «objetivo») não são sinal de nada.")
+    print("=" * 74)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -68,6 +68,10 @@ if [ "$MEXEU_TESE" -eq 1 ]; then
     # referencia resolve e manda o leitor ao sitio errado -, nem uma tabela que
     # nenhuma frase chama. Custa milissegundos: le dois .tex.
     "$PY" "$RAIZ/scripts/verificar_remissoes.py" || OK=0
+    # 18 ago: PT-PT. A dissertacao e o artigo sao em portugues de Portugal por
+    # decisao declarada (22 jun) e parte do texto passou por ferramentas que
+    # produzem PT-BR por omissao. Procura lexico inequivoco e a opcao do babel.
+    "$PY" "$RAIZ/scripts/verificar_ptpt.py" || OK=0
 fi
 if [ "$MEXEU_MAPA" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_mapa_grande.py" || OK=0
