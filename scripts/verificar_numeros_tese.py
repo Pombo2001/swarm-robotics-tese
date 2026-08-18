@@ -2728,6 +2728,9 @@ FACTOS_REPETIDOS = [
          # já lhe acrescenta dois pontos, e saía «Escalabilidade.:»).
          {"re": r"QI2 --- Escalabilidade\.?\].{0,260}?100\\% de sucesso nas "
                 r"(\d+) combina[çc][õo]es"},
+         # e uma terceira vez na Discussão do mapa composto (18 ago), onde o
+         # número serve para dizer o que o resultado negativo NÃO derruba
+         {"re": r"\$100\\%\$ de sucesso nas \$(\d+)\$\s*\n?\s*combinações cenário"},
      ]},
     # ── Os ecos do Capítulo 6 (17 ago) ──────────────────────────────────────
     # A «Resposta às Questões de Investigação» e as «Conclusões» são o Capítulo 5
