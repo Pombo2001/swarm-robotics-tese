@@ -2663,6 +2663,9 @@ FACTOS_REPETIDOS = [
                 r"\\pm ([\d{},]+)\$"},
          {"re": r"melhor bypass da disserta[çc][ãa]o \(\$([\d{},]+) \\pm "
                 r"([\d{},]+)\$\)"},
+         # e uma terceira vez, no parágrafo de abertura das Conclusões
+         {"re": r"melhor resultado da disserta[çc][ãa]o \(\$([\d{},]+) \\pm "
+                r"([\d{},]+)\$ recolhas/ep\)"},
      ]},
     {"rot": "Mega-treino — adaptativo vs objetivo puro no Muro em U",
      "sitios": [
@@ -2670,6 +2673,42 @@ FACTOS_REPETIDOS = [
                 r"contra \$?(\d+)/28\$?\}"},
          {"re": r"resolve o Muro em U em \$(\d+)/28\$ execu[çc][õo]es contra "
                 r"\$(\d+)/28\$"},
+         {"re": r"\$(\d+)/28\$ execuções resolvidas contra \$(\d+)/28\$ do "
+                r"objetivo puro"},
+     ]},
+    # ── Os ecos do parágrafo de abertura das Conclusões (18 ago) ────────────
+    # É o parágrafo mais lido da dissertação depois do Resumo, e reconta oito
+    # resultados de uma vez. Tinha 17 valores sem verificador nenhum.
+    {"rot": "Núcleos-hora — a razão dita em três sítios",
+     "sitios": [
+         {"re": r"uma razão de \$\\approx (\d+)\\times\$ em núcleos-hora"},
+         {"re": r"eficiência computacional\}? \(\$\\approx (\d+)\\times\$ menos "
+                r"núcleos-hora"},
+         {"re": r"vantagem de \$\\approx (\d+)\\times\$ em núcleos-hora"},
+     ]},
+    {"rot": "Escalabilidade — a janela de N e o sucesso mantido",
+     "sitios": [
+         # a Discussão Global escreve o sucesso primeiro e a janela depois; as
+         # Conclusões ao contrário. É a mesma afirmação, não uma divergência.
+         {"re": r"mantendo (\d+)\\% de sucesso de \$N=(\d+)\$ a \$N=(\d+)\$ sem "
+                r"retreino", "ordem": (1, 2, 0)},
+         {"re": r"escala de \$N=(\d+)\$ a \$N=(\d+)\$ sem retreino, mantendo "
+                r"(\d+)\\% de sucesso"},
+     ]},
+    {"rot": "T2 — o p do adaptativo no Muro em U, em três sítios",
+     "sitios": [
+         {"re": r"do objetivo \(\$p=([\d{},]+)\$ unilateral"},
+         {"re": r"\$p=([\d{},]+)\$, \$\\delta=\+[\d{},]+\$ vs\.\\ objetivo"},
+         {"re": r"manteve os 7/7 no Muro U \(\$p=([\d{},]+)\$ face ao objetivo\)"},
+     ]},
+    {"rot": "Mega-treino — o 14/28 dos gradientes nas Conclusões",
+     # ⚠️ cruza-se com a célula do PPO; a frase das Conclusões diz «de cada
+     # método de gradiente», e o SAC ter a mesma contagem é conferido contra o
+     # CSV pelo `verificar_megatreino` — aqui só se garante que o número
+     # recontado não ficou para trás.
+     "sitios": [
+         {"re": r"PPO \$[^$]+\$ \(\$(\d+)/(\d+)\$;"},
+         {"re": r"\$(\d+)/(\d+)\$ de cada método de gradiente"},
      ]},
     {"rot": "Escalabilidade — as 28 combinações a 100%",
      "sitios": [
@@ -2750,6 +2789,7 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"\(390 min/\\textit\{run\}\) continua bimodal --- \$(\d+)/(\d+)\$"},
          {"re": r"continua bimodal no Muro em U \(\$(\d+)/(\d+)\$\)"},
+         {"re": r"continuou bimodal no Muro U \((\d+)/(\d+)\)"},
      ]},
     {"rot": "Mega-treino — o p do Fisher exato",
      "sitios": [

@@ -239,6 +239,32 @@ MUTACOES = [
     ("uma questão perguntada deixa de ter resposta",
      "\\item[QI3 --- Robustez a falhas]",
      "\\item[QI9 --- Robustez a falhas]", "questoes"),
+    # ── Os ecos do parágrafo de abertura das Conclusões (18 ago) ────────────
+    # O parágrafo reconta oito resultados de uma vez e é dos mais lidos da
+    # dissertação. Cada mutação estraga só o eco, nunca o sítio de origem.
+    ("eco das Conclusões: os núcleos-hora (8x -> 9x)",
+     "vantagem de $\\approx 8\\times$ em núcleos-hora",
+     "vantagem de $\\approx 9\\times$ em núcleos-hora", "coerencia"),
+    ("eco das Conclusões: a janela da escalabilidade (N=100 -> N=80)",
+     "escala de $N=10$ a $N=100$ sem retreino, mantendo 100\\% de sucesso",
+     "escala de $N=10$ a $N=80$ sem retreino, mantendo 100\\% de sucesso",
+     "coerencia"),
+    ("eco das Conclusões: o p de T2 (0,009 -> 0,019)",
+     "manteve os 7/7 no Muro U ($p=0{,}009$ face ao objetivo)",
+     "manteve os 7/7 no Muro U ($p=0{,}019$ face ao objetivo)", "coerencia"),
+    ("eco das Conclusões: o melhor bypass (88,7 -> 87,8)",
+     "melhor resultado da dissertação ($88{,}7 \\pm 0{,}6$ recolhas/ep)",
+     "melhor resultado da dissertação ($87{,}8 \\pm 0{,}6$ recolhas/ep)",
+     "coerencia"),
+    ("eco das Conclusões: o controlo de orçamento (4/7 -> 5/7)",
+     "continuou bimodal no Muro U (4/7)",
+     "continuou bimodal no Muro U (5/7)", "coerencia"),
+    ("eco das Conclusões: as contagens do mega-treino (15/28 -> 16/28)",
+     "resolvidas contra $15/28$ do objetivo puro",
+     "resolvidas contra $16/28$ do objetivo puro", "coerencia"),
+    ("eco das Conclusões: o 14/28 dos gradientes (14 -> 13)",
+     "$14/28$ de cada método de gradiente",
+     "$13/28$ de cada método de gradiente", "coerencia"),
 ]
 
 VERIFICADORES = {
