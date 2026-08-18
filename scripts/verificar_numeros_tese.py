@@ -2433,7 +2433,8 @@ AFIRMACOES_NOV = [
     },
     {
         "rot": "T4 — adaptativo vs peso fixo no bypass",
-        "re": r"superior em magnitude no bypass \(\$(?P<m>[\d{},]+)\$ vs\.\\ "
+        "re": r"superior em magnitude n[ao] (?:bypass|Porta com Alternativa) "
+              r"\(\$(?P<m>[\d{},]+)\$ vs\.\\ "
               r"\$(?P<mo>[\d{},]+)\$; \$p=(?P<p>[\d{},]+)\$, "
               r"\$\\delta=\+(?P<d>[\d{},]+)\$",
         "A": ("adapt_B1", "cooperative_door_bypass"),
@@ -2673,8 +2674,8 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"melhor resultado desta disserta[çc][ãa]o\}? \(\$([\d{},]+) "
                 r"\\pm ([\d{},]+)\$"},
-         {"re": r"melhor bypass da disserta[çc][ãa]o \(\$([\d{},]+) \\pm "
-                r"([\d{},]+)\$\)"},
+         {"re": r"melhor resultado da disserta[çc][ãa]o na Porta com "
+                r"Alternativa \(\$([\d{},]+) \\pm ([\d{},]+)\$\)"},
          # e uma terceira vez, no parágrafo de abertura das Conclusões
          {"re": r"melhor resultado da disserta[çc][ãa]o \(\$([\d{},]+) \\pm "
                 r"([\d{},]+)\$ recolhas/ep\)"},
@@ -2795,9 +2796,10 @@ FACTOS_REPETIDOS = [
      ]},
     {"rot": "QI6 — T4, o adaptativo contra o peso fixo no bypass",
      "sitios": [
-         {"re": r"superior em magnitude no bypass \(\$([\d{},]+)\$ vs\.\\ \$"
+         {"re": r"superior em magnitude n[ao] (?:bypass|Porta com Alternativa) "
+                r"\(\$([\d{},]+)\$ vs\.\\ \$"
                 r"([\d{},]+)\$; \$p=[\d{},]+\$, \$\\delta=\+([\d{},]+)\$"},
-         {"re": r"superou o peso fixo em magnitude no bypass \(\$([\d{},]+)\$ "
+         {"re": r"superou o peso fixo em magnitude n[ao] (?:bypass|Porta com Alternativa) \(\$([\d{},]+)\$ "
                 r"vs\.\\ \$([\d{},]+)\$; \$\\delta=\+([\d{},]+)\$\)"},
      ]},
     {"rot": "QI6 — o controlo de orçamento continua bimodal",
@@ -2889,8 +2891,8 @@ FACTOS_REPETIDOS = [
          {"re": r"\$\\delta=\+([\d{},]+)\$ --- com \$n=7\$"},
          {"re": r"o \$\\delta = \+([\d{},]+)\$ de \(T4\) ficou à espera"},
          {"re": r"pelo que o \$\\delta = \+([\d{},]+)\$ de \(T4\) --- que a \$n=7\$"},
-         {"re": r"no bypass \(\$77\{,\}2\$ vs\.\\ \$63\{,\}0\$; \$\\delta=\+"
-                r"([\d{},]+)\$\)"},
+         {"re": r"n[ao] (?:bypass|Porta com Alternativa) \(\$77\{,\}2\$ vs\.\\ "
+                r"\$63\{,\}0\$; \$\\delta=\+([\d{},]+)\$\)"},
      ]},
     {"rot": "QI6 — o δ do peso fixo no bypass",
      "sitios": [
