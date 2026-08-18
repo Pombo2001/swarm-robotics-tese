@@ -48,6 +48,8 @@ Uso:
 Devolve 0 se tudo bate; 1 se houver divergências (serve para um hook ou CI).
 """
 import argparse
+import contextlib
+import io
 import json
 import os
 import re
@@ -1796,7 +1798,7 @@ def verificar_megatreino(tolerancia):
 
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     try:
-        from analise_megatreino import FIXO_BYPASS, carregar
+        from analise_megatreino import FIXO_BYPASS, carregar, compara
     except Exception as e:                                   # pragma: no cover
         print("[!] não importei o analise_megatreino (%s) — a saltar." % e)
         return []
@@ -1937,6 +1939,131 @@ def verificar_megatreino(tolerancia):
         problemas.append("falta o CSV do peso fixo (%s) que a tese cita em M3"
                          % os.path.relpath(FIXO_BYPASS, PROJECT_ROOT))
 
+    # --- Os TESTES de M1, M2 e M3: os p e os δ ------------------------------
+    #
+    # Até 18 ago este verificador conferia as médias, os desvios e as contagens
+    # do mega-treino — e nenhum dos p nem dos δ que a tese escreve logo a
+    # seguir a elas. É a metade que decide: o «$28/28$ contra $15/28$» só
+    # responde à QI6 porque vem acompanhado de um Fisher exato, e o valor desse
+    # teste não tinha ninguém a olhar. Uma média pode continuar a bater com o
+    # CSV enquanto o p ao lado dela ficou de uma versão anterior dos dados.
+    #
+    # Os testes **não** são reimplementados aqui: importa-se o `compara` do
+    # `analise_megatreino`, que é o script que produziu estes valores — incluindo
+    # a escolha entre método exato e assintótico, que a $n=28+28$ não é a mesma
+    # que a $n=7+7$. Ter uma segunda régua para a mesma grandeza é o defeito
+    # que o eixo 2.4 do plano de qualidade já apanhou seis vezes.
+    def teste(a, b, alternativa="two-sided"):
+        if a is None or b is None:
+            return None, None
+        with contextlib.redirect_stdout(io.StringIO()):
+            r = compara("", a, b, alternativa)
+        return (r["p"], r["delta"]) if r else (None, None)
+
+    def _tol_escrita(txt):
+        """A tolerância sai das casas que a tese ESCREVEU, não de um número meu.
+
+        «$p = 0{,}14$» é uma afirmação a duas casas: exigir-lhe 0,1403 seria
+        acusar de erro um arredondamento correto.
+        """
+        casas = len((str(txt).replace("{,}", ".").split(".") + [""])[1])
+        return 0.5 * 10 ** (-casas) if casas else 0.5
+
+    def confere_p(rotulo, sinal, txt, calc):
+        """«$p < 0{,}0001$» é uma desigualdade — e verifica-se como tal."""
+        nonlocal conferidos
+        conferidos += 1
+        tese = numero(str(txt)) if txt is not None else None
+        if tese is None or calc is None:
+            problemas.append("%s: não consegui ler o p no main.tex ou "
+                             "recalculá-lo (mudou a redação?)" % rotulo)
+        elif sinal == "<":
+            if not calc < tese:
+                problemas.append("%-28s tese=p<%g  csv=p=%.6f  (a desigualdade "
+                                 "é falsa)" % (rotulo, tese, calc))
+        elif abs(tese - calc) > _tol_escrita(txt):
+            problemas.append("%-28s tese=%s  csv=%.6f" % (rotulo, txt, calc))
+
+    def confere_delta(rotulo, txt, calc):
+        nonlocal conferidos
+        conferidos += 1
+        tese = numero(str(txt)) if txt is not None else None
+        if tese is None or calc is None:
+            problemas.append("%s: não consegui ler o δ no main.tex ou "
+                             "recalculá-lo (mudou a redação?)" % rotulo)
+        elif abs(abs(tese) - abs(calc)) > _tol_escrita(txt):
+            problemas.append("%-28s tese=%s  csv=%+.4f" % (rotulo, txt, calc))
+        elif (tese >= 0) != (calc >= 0):
+            problemas.append("%-28s o SINAL do δ está trocado (tese=%s, "
+                             "csv=%+.4f)" % (rotulo, txt, calc))
+
+    def grupos(padrao):
+        """Como o `procura`, mas devolve os grupos em bruto: o sinal de «$p <
+        0{,}0001$» não é um número e o `numero()` deitá-lo-ia fora."""
+        m = re.search(padrao, tex)
+        return list(m.groups()) if m else None
+
+    def num(g, i):
+        """O i-ésimo grupo de um `grupos()`, já convertido — o `confere` espera
+        um número, e um grupo em bruto rebentaria lá dentro."""
+        return numero(str(g[i])) if g else None
+
+    serie = {rot: carregar(fase, cen) for rot, (fase, cen) in (
+        ("adaptativo", ("mega_A_fase1", "u_wall")),
+        ("objetivo", ("mega_A_fase2", "u_wall")),
+        ("PPO", ("mega_A_fase3", "u_wall")),
+        ("SAC", ("mega_A_fase4", "u_wall")),
+        ("bypass adaptativo", ("mega_B_fase5", "cooperative_door_bypass")))}
+    if os.path.exists(FIXO_BYPASS):
+        df = pd.read_csv(FIXO_BYPASS)
+        col = "Run" if "Run" in df.columns else df.columns[0]
+        serie["bypass fixo"] = df.groupby(col).agg(
+            food=("food_collected", "mean"), suc=("success", "mean"))
+
+    # M1 — magnitude (unilateral) e convergência (Fisher exato)
+    g = grupos(r"do objetivo puro \(\$p (<|=) " + N +
+               r"\$ unilateral, \$\\delta = \+" + N + r"\$\)")
+    p_m1, d_m1 = teste(serie["adaptativo"], serie["objetivo"], "greater")
+    confere_p("M1 p (unilateral)", g[0] if g else None,
+              g[1] if g else None, p_m1)
+    confere_delta("M1 δ", g[2] if g else None, d_m1)
+
+    g = grupos(r"\(Fisher exato, \$p (<|=) " + N + r"\$\)")
+    p_fisher = None
+    if serie["adaptativo"] is not None and serie["objetivo"] is not None:
+        from scipy.stats import fisher_exact
+        ca = int((serie["adaptativo"]["suc"] >= 1.0).sum())
+        cb = int((serie["objetivo"]["suc"] >= 1.0).sum())
+        p_fisher = float(fisher_exact([[ca, len(serie["adaptativo"]) - ca],
+                                       [cb, len(serie["objetivo"]) - cb]])[1])
+    confere_p("M1 Fisher exato", g[0] if g else None,
+              g[1] if g else None, p_fisher)
+
+    # M2 — os três pares que a tese cita dos seis que corre (p BRUTOS: o
+    # pré-registo manda assinalar a multiplicidade, não corrigi-la)
+    for algo, padrao in (
+            ("PPO", r"PPO \$[^$]+\$ \(\$\d+/\d+\$; \$p (<|=) " + N +
+                    r"\$, \$\\delta = \+" + N + r"\$\)"),
+            ("SAC", r"SAC \$[^$]+\$ \(\$\d+/\d+\$; \$p (<|=) " + N +
+                    r"\$, \$\\delta = \+" + N + r"\$\)")):
+        g = grupos(padrao)
+        p, d = teste(serie["adaptativo"], serie[algo])
+        confere_p("M2 adaptativo vs %s (p)" % algo, g[0] if g else None,
+                  g[1] if g else None, p)
+        confere_delta("M2 adaptativo vs %s (δ)" % algo, g[2] if g else None, d)
+
+    g = grupos(r"permanecem indistinguíveis \(\$p (<|=) " + N + r"\$\)")
+    p, _ = teste(serie["objetivo"], serie["PPO"])
+    confere_p("M2 objetivo vs PPO (p)", g[0] if g else None,
+              g[1] if g else None, p)
+
+    # M3 — entre campanhas, como a tese declara
+    g = grupos(r"do peso fixo \(\$p (<|=) " + N + r"\$, \$\\delta = \+" + N +
+               r"\$\)")
+    p, d = teste(serie.get("bypass adaptativo"), serie.get("bypass fixo"))
+    confere_p("M3 p", g[0] if g else None, g[1] if g else None, p)
+    confere_delta("M3 δ", g[2] if g else None, d)
+
     # O Resumo e o Abstract repetem as contagens dos quatro braços: são os
     # primeiros números que o leitor (e o júri) vê, e vivem a cem páginas do
     # capítulo que os produz. Verificam-se os DOIS idiomas porque a versão
@@ -1985,6 +2112,118 @@ def verificar_megatreino(tolerancia):
                                            (rot + " média", med, False),
                                            (rot + " desvio", dp, False))):
             confere(r, v[i] if v else None, calc, exato=ex)
+
+    # --- As exploratórias: a OUTRA metade de cada frase --------------------
+    #
+    # O bloco acima confere a célula nova (a $n=21$) e deixava por conferir
+    # tudo aquilo contra o que ela é lida: o braço da campanha final que lhe
+    # serve de referência, os p e os δ da comparação, e as percentagens de
+    # convergência — que estavam **fixas dentro dos padrões** ($95\%$, $81\%$,
+    # $33\%$). Uma percentagem fixa no regex não é verificada: é exigida. Se a
+    # contagem mudasse, o padrão deixaria de casar e o verificador diria «não
+    # encontrei a frase» em vez de «o número está errado» — e se alguém
+    # corrigisse o padrão em vez do texto, a percentagem errada ficava.
+    #
+    # A régua dos testes é a mesma do resto do mega-treino (o `compara` do
+    # `analise_megatreino`), e é bilateral: são comparações descritivas entre
+    # uma célula exploratória e o braço de julho, sem hipótese direcional
+    # pré-registada.
+    def serie_final(algo, cen):
+        """Médias por execução da campanha final ($n=7$), no formato do `compara`."""
+        fp = os.path.join(PROJECT_ROOT, "results", "graficos_tese", "final_7d",
+                          "eval_by_run_7d.csv")
+        if not os.path.exists(fp):
+            return None
+        d = pd.read_csv(fp)
+        d = d[(d["Algorithm"].astype(str).str.upper() == algo) &
+              (d["Scenario"] == cen)]
+        if d.empty:
+            return None
+        return d.groupby("Run").agg(food=("food_collected", "mean"),
+                                    suc=("success", "mean")).sort_index()
+
+    def confere_pct(rotulo, txt, conv, n):
+        """A percentagem que a tese escreve ao lado de «$k/n$»."""
+        nonlocal conferidos
+        conferidos += 1
+        tese = numero(str(txt)) if txt is not None else None
+        if tese is None or not n:
+            problemas.append("%s: não consegui ler a percentagem" % rotulo)
+        elif abs(tese - 100.0 * conv / n) > 0.5:
+            problemas.append("%-28s tese=%s%%  csv=%.1f%% (%d/%d)"
+                             % (rotulo, txt, 100.0 * conv / n, conv, n))
+
+    def descritivo(g):
+        return (float(g["food"].mean()), float(g["food"].std()),
+                int((g["suc"] >= 1.0).sum()), len(g))
+
+    # A5 Sandbox — a célula a n=21 contra o GNN objetivo da campanha final
+    g = grupos(r"eleva a convergência de \$(\d+)/(\d+)\$ \(\$(\d+)\\%\$\) do "
+               r"objetivo puro para \$\\mathbf\{(\d+)/(\d+)\}\$ \(\$(\d+)\\%\$\), "
+               r"com \$" + N + r" \\pm " + N + r"\$ contra \$" + N + r" \\pm " +
+               N + r"\$ recolhas/ep \(\$p (<|=) " + N + r"\$, \$\\delta = \+" +
+               N + r"\$\)")
+    ref = serie_final("GNN", "none")
+    cel = carregar("mega_A_fase5", "none")
+    if ref is None:
+        problemas.append("A5 Sandbox: falta o braço objetivo da campanha final")
+    else:
+        med_r, dp_r, conv_r, n_r = descritivo(ref)
+        confere("A5 ref objetivo convergentes", num(g, 0), conv_r, exato=True)
+        confere("A5 ref objetivo n", num(g, 1), n_r, exato=True)
+        confere_pct("A5 ref objetivo %", g[2] if g else None, conv_r, n_r)
+        if cel is not None:
+            _, _, conv_c, n_c = descritivo(cel)
+            confere_pct("A5 Sandbox %", g[5] if g else None, conv_c, n_c)
+        confere("A5 ref objetivo média", num(g, 8), med_r)
+        confere("A5 ref objetivo desvio", num(g, 9), dp_r)
+        p, d = teste(cel, ref)
+        confere_p("A5 Sandbox p", g[10] if g else None, g[11] if g else None, p)
+        confere_delta("A5 Sandbox δ", g[12] if g else None, d)
+
+    # B7 Perceção Cooperativa — idem, contra o mesmo braço no cenário dela
+    g = grupos(r"\$(\d+)/(\d+)\$ \(\$(\d+)\\%\$\) e \$" + N + r" \\pm " + N +
+               r"\$ contra \$(\d+)/(\d+)\$ \(\$(\d+)\\%\$\) e \$" + N +
+               r" \\pm " + N + r"\$ do objetivo \(\$p (<|=) " + N +
+               r"\$, \$\\delta = \+" + N + r"\$\)")
+    ref = serie_final("GNN", "cooperative_perception")
+    cel = carregar("mega_B_fase7", "cooperative_perception")
+    if ref is None:
+        problemas.append("B7 Perceção: falta o braço objetivo da campanha final")
+    else:
+        med_r, dp_r, conv_r, n_r = descritivo(ref)
+        if cel is not None:
+            _, _, conv_c, n_c = descritivo(cel)
+            confere_pct("B7 Perceção %", g[2] if g else None, conv_c, n_c)
+        confere("B7 ref objetivo convergentes", num(g, 5), conv_r, exato=True)
+        confere("B7 ref objetivo n", num(g, 6), n_r, exato=True)
+        confere_pct("B7 ref objetivo %", g[7] if g else None, conv_r, n_r)
+        confere("B7 ref objetivo média", num(g, 8), med_r)
+        confere("B7 ref objetivo desvio", num(g, 9), dp_r)
+        p, d = teste(cel, ref)
+        confere_p("B7 Perceção p", g[10] if g else None, g[11] if g else None, p)
+        confere_delta("B7 Perceção δ", g[12] if g else None, d)
+
+    # B6 SAC no Gargalo — aqui a tese diz explicitamente que os dois valores
+    # NÃO são comparáveis (orçamentos diferentes); o que se verifica é que
+    # ambos são o que o texto diz que são.
+    ref = serie_final("SAC", "bottleneck")
+    cel = carregar("mega_B_fase6", "bottleneck")
+    if ref is None:
+        problemas.append("B6 SAC Gargalo: falta o braço da campanha final")
+    else:
+        med_r, dp_r, conv_r, n_r = descritivo(ref)
+        g = grupos(r"resolvera em apenas \$(\d+)/(\d+)\$")
+        confere("B6 ref SAC convergentes", num(g, 0), conv_r, exato=True)
+        confere("B6 ref SAC n", num(g, 1), n_r, exato=True)
+        g = grupos(r"comparável com os \$" + N + r" \\pm " + N +
+                   r"\$ da campanha final")
+        confere("B6 ref SAC média", num(g, 0), med_r)
+        confere("B6 ref SAC desvio", num(g, 1), dp_r)
+        if cel is not None:
+            _, _, conv_c, n_c = descritivo(cel)
+            g = grupos(r"converge em \$\d+/\d+\$ \(\$(\d+)\\%\$\)")
+            confere_pct("B6 SAC Gargalo %", g[0] if g else None, conv_c, n_c)
 
     if problemas:
         print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))

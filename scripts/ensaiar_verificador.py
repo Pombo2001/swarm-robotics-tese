@@ -127,6 +127,62 @@ MUTACOES = [
     ("T4: o p do Muro em U contra o peso fixo (0,80 -> 0,40)",
      "indistinguível no Muro em U ($p=0{,}80$)",
      "indistinguível no Muro em U ($p=0{,}40$)", "novelty"),
+    # ── Os TESTES do mega-treino (18 ago) ───────────────────────────────────
+    # As médias e as contagens do mega-treino já tinham rede desde 3 ago; os p
+    # e os δ escritos ao lado delas não tinham nenhuma. São eles que sustentam
+    # a resposta à QI6 — o «$28/28$ contra $15/28$» só decide porque vem com um
+    # Fisher exato — e mudar um p não muda média nenhuma: nada o apanhava.
+    ("M1: o δ do adaptativo vs objetivo (0,61 -> 0,81)",
+     "do objetivo puro ($p < 0{,}0001$ unilateral, $\\delta = +0{,}61$)",
+     "do objetivo puro ($p < 0{,}0001$ unilateral, $\\delta = +0{,}81$)", "mega"),
+    ("M1: a desigualdade do p fica falsa (1e-4 -> 1e-7)",
+     "do objetivo puro ($p < 0{,}0001$ unilateral",
+     "do objetivo puro ($p < 0{,}0000001$ unilateral", "mega"),
+    ("M1: o p do Fisher exato sobre a convergência",
+     "(Fisher exato, $p < 0{,}0001$)", "(Fisher exato, $p < 0{,}0000001$)",
+     "mega"),
+    ("M2: o p contra o PPO (0,0010 -> 0,0100)",
+     "($14/28$; $p = 0{,}0010$, $\\delta = +0{,}51$)",
+     "($14/28$; $p = 0{,}0100$, $\\delta = +0{,}51$)", "mega"),
+    ("M2: o δ contra o SAC (0,99 -> 0,79)",
+     "($14/28$; $p < 0{,}0001$, $\\delta = +0{,}99$)",
+     "($14/28$; $p < 0{,}0001$, $\\delta = +0{,}79$)", "mega"),
+    ("M2: o p do par objetivo vs PPO (0,088 -> 0,188)",
+     "permanecem indistinguíveis ($p = 0{,}088$)",
+     "permanecem indistinguíveis ($p = 0{,}188$)", "mega"),
+    ("M3: o p entre campanhas (0,0016 -> 0,0106)",
+     "do peso fixo ($p = 0{,}0016$, $\\delta = +0{,}77$)",
+     "do peso fixo ($p = 0{,}0106$, $\\delta = +0{,}77$)", "mega"),
+    ("M3: o δ entre campanhas (0,77 -> 0,57)",
+     "do peso fixo ($p = 0{,}0016$, $\\delta = +0{,}77$)",
+     "do peso fixo ($p = 0{,}0016$, $\\delta = +0{,}57$)", "mega"),
+    # As percentagens viviam FIXAS dentro dos padrões do verificador: eram
+    # exigidas, não conferidas.
+    ("A5: a percentagem do Sandbox (95% -> 91%)",
+     "para $\\mathbf{20/21}$ ($95\\%$)", "para $\\mathbf{20/21}$ ($91\\%$)",
+     "mega"),
+    ("A5: o braço de referência do Sandbox (5/7 -> 4/7)",
+     "de $5/7$ ($71\\%$) do objetivo", "de $4/7$ ($71\\%$) do objetivo", "mega"),
+    ("A5: a média do braço de referência (38,3 -> 39,3)",
+     "contra $38{,}3 \\pm 31{,}0$", "contra $39{,}3 \\pm 31{,}0$", "mega"),
+    ("A5: o p da comparação com o objetivo (0,14 -> 0,04)",
+     "recolhas/ep ($p = 0{,}14$, $\\delta = +0{,}39$)",
+     "recolhas/ep ($p = 0{,}04$, $\\delta = +0{,}39$)", "mega"),
+    ("B7: a percentagem da Perceção (81% -> 87%)",
+     "$17/21$ ($81\\%$) e $17{,}5", "$17/21$ ($87\\%$) e $17{,}5", "mega"),
+    ("B7: o braço de referência da Perceção (6/7 -> 5/7)",
+     "contra $6/7$ ($86\\%$) e $18{,}98 \\pm 8{,}7$",
+     "contra $5/7$ ($86\\%$) e $18{,}98 \\pm 8{,}7$", "mega"),
+    ("B7: o p da comparação (1,00 -> 0,60)",
+     "do objetivo ($p = 1{,}00$, $\\delta = +0{,}01$)",
+     "do objetivo ($p = 0{,}60$, $\\delta = +0{,}01$)", "mega"),
+    ("B6: a percentagem do SAC no Gargalo (33% -> 30%)",
+     "converge em $7/21$ ($33\\%$)", "converge em $7/21$ ($30\\%$)", "mega"),
+    ("B6: o 5/7 da campanha final (5/7 -> 6/7)",
+     "resolvera em apenas $5/7$", "resolvera em apenas $6/7$", "mega"),
+    ("B6: a média da campanha final (41,4 -> 44,4)",
+     "com os $41{,}4 \\pm 36{,}8$ da campanha final",
+     "com os $44{,}4 \\pm 36{,}8$ da campanha final", "mega"),
 ]
 
 VERIFICADORES = {
@@ -136,6 +192,7 @@ VERIFICADORES = {
     "discussao": lambda: V.verificar_discussao_global(0.05),
     "coerencia": V.verificar_coerencia_interna,
     "novelty": lambda: V.verificar_novelty(0.05),
+    "mega": lambda: V.verificar_megatreino(0.05),
 }
 
 
