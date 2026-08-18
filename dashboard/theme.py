@@ -266,12 +266,27 @@ body.defesa .op-footer { display:none !important; }
 COUNTUP_JS = r"""
 window.monoCountUp = function (el, target, decimals, duration, suffix) {
   decimals = decimals || 0; duration = duration || 1200; suffix = suffix || '';
+  const fim = function () { el.textContent = target.toFixed(decimals) + suffix; };
+  // ⚠️ O requestAnimationFrame NÃO corre em separadores em segundo plano: quem
+  // abrisse o dashboard num separador que não está à frente (ou o deixasse a
+  // carregar enquanto trabalha noutro) via os seis KPIs a **zero** até voltar —
+  // e um número parado em zero lê-se como resultado, não como animação por
+  // começar. Com a página oculta escreve-se já o valor final; a animação fica
+  // para quando (e se) o separador aparecer.
+  if (document.hidden) {
+    fim();
+    document.addEventListener('visibilitychange', function uma() {
+      document.removeEventListener('visibilitychange', uma);
+      if (!document.hidden) window.monoCountUp(el, target, decimals, duration, suffix);
+    });
+    return;
+  }
   const t0 = performance.now();
   function tick(t) {
     const p = Math.min((t - t0) / duration, 1);
     const eased = 1 - Math.pow(1 - p, 3);            // ease-out cúbico
     el.textContent = (target * eased).toFixed(decimals) + suffix;
-    if (p < 1) requestAnimationFrame(tick);
+    if (p < 1) requestAnimationFrame(tick); else fim();
   }
   requestAnimationFrame(tick);
 };

@@ -328,6 +328,19 @@ def build(queue: JobQueue, goto=None):
                     ui.label("VPN necessária").classes("text-xs") \
                         .style(f"color:{theme.INK_MUTED}")
 
+        # ── Os melhores treinos, logo à entrada ───────────────────────────────
+        #
+        # O painel existia na Galeria e nos Vídeos, a três cliques de distância.
+        # Quem abre o dashboard — e quem o vir projetado numa defesa — encontrava
+        # primeiro seis KPIs e uma linha do tempo, e em nenhum sítio a resposta à
+        # pergunta mais simples que se pode fazer a este trabalho: *qual foi o
+        # melhor treino, e de quem?*. Cada linha abre para o ranking completo do
+        # cenário, e clicar leva à Galeria com essa campanha escolhida.
+        from . import ranking as _ranking
+        _ranking.painel(
+            titulo="Os melhores treinos, por cenário",
+            ao_escolher=(None if config.READONLY else (lambda _c: goto("resultados"))))
+
         # ── Linha do tempo ────────────────────────────────────────────────────
         with ui.card().classes(theme.CARD + " p-5 fade-up-3"):
             theme.section_title("timeline", "Linha do tempo do projeto")
