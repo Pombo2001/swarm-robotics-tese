@@ -44,7 +44,10 @@ conferidos = 0
 # cenário no código. Nomes não são identificadores — a lição de 28 jul.
 LINHAS_TABELA = [
     ("Sandbox", "none"),
-    ("Muro U", "u_wall"),
+    # 18 ago: a tese uniformizou o nome («Muro U» aparecia 35 vezes e «Muro em
+    # U» 40); aqui aceitam-se as duas, para o verificador não voltar a partir
+    # se alguém preferir a forma curta numa tabela apertada.
+    ("Muro em U", "u_wall"),
     ("Gargalo", "bottleneck"),
     ("Quatro Salas", "four_rooms"),
     ("Porta Cooperativa", "cooperative_door"),

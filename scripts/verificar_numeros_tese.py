@@ -76,6 +76,7 @@ CSV_7D = os.path.join(PROJECT_ROOT, "results", "graficos_tese", "final_7d",
 ROTULO_PARA_CENARIO = {
     "Sandbox": "none",
     "Muro U": "u_wall",
+    "Muro em U": "u_wall",
     "Gargalo": "bottleneck",
     "Quatro Salas": "four_rooms",
     "Porta Cooperativa": "cooperative_door",
@@ -94,6 +95,7 @@ ROTULO_PARA_CENARIO = {
     "Porta com Alternativa": "cooperative_door_bypass",
     "Muro em U": "u_wall",
     "Muro U": "u_wall",
+    "Muro em U": "u_wall",
 }
 ALGOS = ("GNN", "PPO", "SAC")
 DIR_ESCALA = os.path.join(PROJECT_ROOT, "results", "estatisticas")
@@ -1133,7 +1135,7 @@ def verificar_discussao_global(tolerancia):
 
     # ── o Muro em U: nenhuma comparação significativa ───────────────────────
     if achar("Muro U sem significância",
-             r"No \\textbf\{Muro U\}, nenhuma comparação atinge significância"):
+             r"No \\textbf\{Muro (?:em )?U\}, nenhuma comparação atinge significância"):
         conferidos += 1
         sig = csv[(csv["Scenario"] == "u_wall") & (csv["significant"])]
         if len(sig):
@@ -1184,7 +1186,7 @@ def verificar_discussao_global(tolerancia):
              r"\(Gargalo \$41\{,\}4 \\pm 36\{,\}8\$, (\d)/7\)", "bottleneck",
              "SAC"),
             ("PPO: único cenário bimodal",
-             r"um único cenário bimodal \(Muro U, (\d)/7\)", "u_wall", "PPO")):
+             r"um único cenário bimodal \(Muro (?:em )?U, (\d)/7\)", "u_wall", "PPO")):
         m = achar(rot, padrao)
         if m:
             confere(rot, numero(m.group(1)),
@@ -2709,7 +2711,7 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"do objetivo \(\$p=([\d{},]+)\$ unilateral"},
          {"re": r"\$p=([\d{},]+)\$, \$\\delta=\+[\d{},]+\$ vs\.\\ objetivo"},
-         {"re": r"manteve os 7/7 no Muro U \(\$p=([\d{},]+)\$ face ao objetivo\)"},
+         {"re": r"manteve os 7/7 no Muro (?:em )?U \(\$p=([\d{},]+)\$ face ao objetivo\)"},
      ]},
     {"rot": "Mega-treino — o 14/28 dos gradientes nas Conclusões",
      # ⚠️ cruza-se com a célula do PPO; a frase das Conclusões diz «de cada
@@ -2802,7 +2804,7 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"\(390 min/\\textit\{run\}\) continua bimodal --- \$(\d+)/(\d+)\$"},
          {"re": r"continua bimodal no Muro em U \(\$(\d+)/(\d+)\$\)"},
-         {"re": r"continuou bimodal no Muro U \((\d+)/(\d+)\)"},
+         {"re": r"continuou bimodal no Muro (?:em )?U \((\d+)/(\d+)\)"},
      ]},
     {"rot": "Mega-treino — o p do Fisher exato",
      "sitios": [
@@ -3116,7 +3118,7 @@ def verificar_ptask_prosa(tolerancia):
     # ── o PPO é o mais consistente ─────────────────────────────────────────
     m = re.search(r"100\\% de sucesso em (\w+) dos sete cenários, com a menor "
                   r"variância entre \\textit\{runs\} \(desvios padrão de "
-                  r"([\d,]+) a ([\d,]+) recolhas/ep fora do Muro U\)", tex)
+                  r"([\d,]+) a ([\d,]+) recolhas/ep fora do Muro (?:em )?U\)", tex)
     if m is None:
         problemas.append("PPO consistente: não encontrei a frase")
     else:

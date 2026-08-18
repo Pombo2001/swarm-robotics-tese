@@ -98,7 +98,7 @@ def main():
         (r"PPO \d/\d, SAC (\d)/(\d)\)", "u_wall", "SAC", "Muro em U SAC"),
         (r"no Gargalo apenas (\d)/(\d) \\textit\{runs\} convergem", "bottleneck",
          "SAC", "Gargalo SAC"),
-        (r"e no Muro U apenas (\d)/(\d)", "u_wall", "SAC", "Muro em U SAC (2.ª menção)"),
+        (r"e no Muro (?:em )?U apenas (\d)/(\d)", "u_wall", "SAC", "Muro em U SAC (2.ª menção)"),
     ]
     for padrao, cenario, algo, rotulo in CASOS:
         m = re.search(padrao, corpo)
