@@ -1,15 +1,23 @@
 % =====================================================================
-% ESTADO DA AUDITORIA — 13 jul 2026
+% ESTADO DA AUDITORIA — 18 ago 2026
 % Este ficheiro foi originalmente povoado com entradas FABRICADAS (autores e/ou
 % títulos inventados). Todas as entradas abaixo foram verificadas contra a fonte
 % primária (arXiv / IEEE Xplore / MDPI / SciTePress / editor). Correções feitas nas
 % auditorias de 15 jun, 3 jul e 13 jul estão anotadas em comentário sobre cada entrada.
-% As CHAVES foram deliberadamente mantidas mesmo quando o nome já não corresponde ao
-% 1.º autor real (ex.: `chen2024graph` = Chen et al.; `he2024self` = Pina et al.;
-% `schmickl2025gnn` = Aguzzi et al.; `heimann2024runtime` = Liu & Li; `ekechi2025survey`
-% = Ekechi et al.; `wang2025lns2` = Wang et al.), para não partir as \cite do texto.
+%
+% 18 ago — as CHAVES passaram a dizer o 1.º autor real. Tinham ficado as antigas
+% «para não partir as \cite do texto», mas um `\citep{gupta2025influx}` cuja
+% entrada é de Somvanshi engana quem lê o fonte, e as \cite mudam-se com uma
+% substituição: gupta2025influx→somvanshi2025influx, lin2025survey→ekechi2025survey,
+% sun2024graph→chen2024graph, zheng2025lns2→wang2025lns2, he2024self→pina2024self.
+%
+% 18 ago — fora as quatro entradas que NENHUM dos dois documentos citava
+% (elrod2025gnn, heimann2024runtime, onori2024adaptive, schmickl2025gnn). Não
+% apareciam no PDF, mas num .bib de uma dissertação com revisão sistemática uma
+% entrada não citada parece parte do corpo revisto. Ficam 45, todas citadas.
 % ⚠️ Ao corrigir uma entrada, corrigir TAMBÉM `Artigo/references.bib` (dessincronizou-se
-% uma vez: manteve `roveda2026hybrid`, inexistente, já removida da tese).
+% uma vez: manteve `roveda2026hybrid`, inexistente, já removida da tese) — o
+% `scripts/verificar_bibliografia.py` compara os dois campo a campo.
 % =====================================================================
 
 @inproceedings{kennedy1995pso,
@@ -42,27 +50,6 @@
   author={Chen, Xingran and NaderiAlizadeh, Navid and Ribeiro, Alejandro and Saeedi Bidokhti, Shirin},
   journal={arXiv preprint arXiv:2404.03227},
   year={2024}
-}
-
-@article{elrod2025gnn,
-  title={Graph Based Deep Reinforcement Learning Aided by Transformers for Multi-Agent Cooperation},
-  author={Elrod, Michael and Mehrabi, Niloufar and Amin, Rahul and Kaur, Manveen and Cheng, Long and Martin, Jim and Razi, Abolfazl},
-  journal={arXiv preprint arXiv:2504.08195},
-  year={2025}
-}
-
-% Autores verificados a 3 jul 2026 (mdpi.com/2504-2289/8/5/49): Liu & Li — a
-% entrada anterior atribuía a "Heimann, D.", que NÃO é autor deste artigo.
-@article{heimann2024runtime,
-  title={Runtime Verification-Based Safe MARL for Optimized Safety Policy Generation for Multi-Robot Systems},
-  author={Liu, Yang and Li, Jiankun},
-  journal={Big Data and Cognitive Computing},
-  volume={8},
-  number={5},
-  pages={49},
-  year={2024},
-  publisher={MDPI},
-  doi={10.3390/bdcc8050049}
 }
 
 % Verificado a 13 jul 2026 (MDPI Drones 9(7):484). Autores = Ekechi et al. (a chave
@@ -163,30 +150,11 @@
   doi={10.3389/frobt.2025.1607978}
 }
 
-% Autores verificados a 3 jul 2026 (mdpi.com/2673-2688/6/11/282): a entrada
-% anterior atribuía a "Schmickl, T.", que NÃO é autor. A chave manteve-se para
-% não partir as \cite.
-% ⚠️ CORRIGIDO a 5 ago 2026: a verificação de 3 jul apanhou apenas TRÊS dos
-% quatro autores — faltava o PRIMEIRO, Gianluca Aguzzi. Confirmado em duas
-% fontes independentes (DOAJ e o repositório CRIS da Univ. de Bolonha): a ordem
-% é Aguzzi, G.; Domini, D.; Venturini, F.; Viroli, M. Com três autores, uma
-% citação em texto sairia como "Domini et al.", que é o autor errado.
-@article{schmickl2025gnn,
-  title={Scaling Swarm Coordination with {GNNs}---How Far Can We Go?},
-  author={Aguzzi, Gianluca and Domini, Davide and Venturini, Filippo and Viroli, Mirko},
-  journal={AI},
-  volume={6},
-  number={11},
-  pages={282},
-  year={2025},
-  doi={10.3390/ai6110282}
-}
-
 % Autores/venue verificados a 13 jul 2026 no PDF das atas (SciTePress ID 124628,
 % pp. 410-417): os autores são Pina, De Silva & Artaud (Loughborough Univ. London)
 % e a conferência é a ICPRAM 2024 — a entrada anterior atribuía a "He, J. and others"
 % e à ICAART, ambos ERRADOS. A chave manteve-se para não partir as \cite.
-@inproceedings{he2024self,
+@inproceedings{pina2024self,
   title={Towards Self-Adaptive Resilient Swarms Using Multi-Agent Reinforcement Learning},
   author={Pina, Rafael and De Silva, Varuna and Artaud, Corentin},
   booktitle={Proceedings of the 13th International Conference on Pattern Recognition Applications and Methods (ICPRAM)},
@@ -218,21 +186,6 @@
   booktitle={Proceedings of the 16th International Conference on Machine Learning (ICML)},
   pages={278--287},
   year={1999}
-}
-
-% SUBSTITUÍDA a 3 jul 2026: a entrada anterior ("Roveda, L., RCIM/Elsevier 2026")
-% NÃO existe — não foi encontrada em nenhuma base. O artigo real equivalente
-% (RL+EA para manipulação, com Roveda como coautor) é este, verificado no Springer
-% (doi 10.1007/s10846-024-02138-8):
-@article{onori2024adaptive,
-  title={Adaptive Optimization of Hyper-Parameters for Robotic Manipulation through Evolutionary Reinforcement Learning},
-  author={Onori, Giulio and Shahid, Asad Ali and Braghin, Francesco and Roveda, Loris},
-  journal={Journal of Intelligent \& Robotic Systems},
-  volume={110},
-  pages={108},
-  year={2024},
-  publisher={Springer},
-  doi={10.1007/s10846-024-02138-8}
 }
 
 % ✅ CONFIRMADA no IEEE Xplore a 3 jul 2026 (documento 11537199, adicionado ao
