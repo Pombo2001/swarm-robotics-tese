@@ -55,6 +55,12 @@ if [ "$MEXEU_TESE" -eq 1 ]; then
     # minutos», «20 episodios», «n=28» — contra as campanhas que correram. Le a
     # seccao do mapa grande tambem, por isso corre nos dois ramos.
     "$PY" "$RAIZ/scripts/verificar_protocolo.py" || OK=0
+    # 18 ago: a LIMITACAO DA DIMENSAO VERTICAL (8 valores). Entrou porque
+    # falhava ha dias sem ninguem dar por isso: os episodios do mapa grande
+    # foram exportados para `results/episodios_3d/` e o verificador passou a
+    # ler 24 ficheiros onde a tese fala de 21 celulas (tres controladores x
+    # SETE cenarios). E barato (<1 s) e le a geometria do simulador.
+    "$PY" "$RAIZ/scripts/verificar_vertical.py" || OK=0
 fi
 if [ "$MEXEU_MAPA" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_mapa_grande.py" || OK=0

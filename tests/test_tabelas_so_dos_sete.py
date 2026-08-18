@@ -45,3 +45,26 @@ def test_o_ficheiro_usa_mesmo_thesis_scenarios():
     linha = next(l for l in fonte.splitlines() if "scen_present = " in l)
     assert "THESIS_SCENARIOS" in linha, \
         f"o filtro das tabelas voltou a incluir o 8.º cenário: {linha.strip()}"
+
+
+def test_a_limitacao_vertical_ignora_os_episodios_do_oitavo_cenario():
+    """A frase da tese diz «$21$ células (três controladores × sete cenários)».
+
+    A pasta `results/episodios_3d/` passou a ter 24 ficheiros quando o mapa
+    grande foi exportado, e o `verificar_vertical.py` lia-os todos: a contagem
+    dos cenários onde quem voa mais alto recolhe menos subia de 5 (o que a tese
+    escreve) para 6, e o verificador acusava a tese de errar um número certo.
+    O mesmo padrão do filtro das tabelas, noutro sítio.
+    """
+    fonte = open(os.path.join(RAIZ, "scripts", "verificar_vertical.py"),
+                 encoding="utf-8").read()
+    assert "THESIS_SCENARIOS" in fonte, \
+        "o verificador da dimensão vertical voltou a aceitar o 8.º cenário"
+
+    eps = os.path.join(RAIZ, "results", "episodios_3d")
+    if not os.path.isdir(eps):
+        return
+    dos_sete = [f for f in os.listdir(eps) if f.endswith(".json")
+                and f[:-5].split("_", 1)[1] in THESIS_SCENARIOS]
+    assert len(dos_sete) == 21, \
+        f"esperava 21 episódios dos sete cenários, encontrei {len(dos_sete)}"

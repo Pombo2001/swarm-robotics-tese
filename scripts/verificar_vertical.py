@@ -62,15 +62,30 @@ def altitudes():
     print("=" * 74)
     print("1. ALTITUDE NOS EPISÓDIOS EXPORTADOS (21 células)")
     print("=" * 74)
-    linhas = []
+    # ⚠️ Só os SETE. A frase da tese diz «$21$ células (três controladores ×
+    # sete cenários)», e a pasta passou a ter 24 ficheiros quando o mapa grande
+    # foi exportado — o 8.º cenário entrava aqui calado e mudava a contagem dos
+    # cenários concordantes de 5 para 6. É a armadilha do ponto 1.7 do plano de
+    # qualidade outra vez: a garantia de que o 8.º cenário fica de fora não pode
+    # depender de ele ainda não ter dados. A lista vem do `src/scenarios.py`,
+    # que é a fonte única.
+    from src.scenarios import THESIS_SCENARIOS
+    linhas, fora = [], []
     for p in sorted(glob.glob(os.path.join(EPISODIOS, "*.json"))):
+        algo, cen = os.path.basename(p)[:-5].split("_", 1)
+        if cen not in THESIS_SCENARIOS:
+            fora.append(os.path.basename(p))
+            continue
         d = json.load(open(p, encoding="utf-8"))
         zs = [abs(a[2]) for q in d["quadros"] for a in q]
-        algo, cen = os.path.basename(p)[:-5].split("_", 1)
         linhas.append((cen, algo, float(np.mean(zs)), float(np.max(zs)),
                        int(d["meta"]["recolhas"])))
+    if fora:
+        print(f"  [i] {len(fora)} episódio(s) fora dos sete cenários, "
+              f"ignorados: {', '.join(fora)}")
     if len(linhas) != 21:
-        falhas.append(f"esperava 21 episódios exportados, encontrei {len(linhas)}")
+        falhas.append(f"esperava 21 episódios dos sete cenários, "
+                      f"encontrei {len(linhas)}")
     meds = [r[2] for r in linhas]
     compara("altitude média mínima (m)", min(meds), ESPERADO["z_med_min"])
     compara("altitude média máxima (m)", max(meds), ESPERADO["z_med_max"])
