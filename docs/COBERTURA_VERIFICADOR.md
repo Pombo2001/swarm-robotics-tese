@@ -6,19 +6,19 @@ O `verificar_numeros_tese.py` diz «tudo bate ✓». Este ficheiro diz **de quan
 
 | | tokens numéricos |
 |---|---|
-| no corpo do `main.tex` (sem comentários) | 1863 |
-| lidos por algum verificador | **854** (46%) |
-| por cobrir | 1009 |
+| no corpo do `main.tex` (sem comentários) | 1871 |
+| lidos por algum verificador | **858** (46%) |
+| por cobrir | 1013 |
 
 «Lido» é um **majorante** de «verificado»: a medição regista o que os padrões dos verificadores apanham do `.tex`, e um padrão pode apanhar uma frase inteira e usar só metade dos números dela. Um token *não lido* é, esse sim, certo: ninguém olhou para ele.
 
 Método: instrumenta-se o módulo `re` e corre-se cada verificador, guardando o texto de cada match feito sobre o `.tex`. Não há lista de padrões escrita à mão para envelhecer.
 
-## (i) Automatizáveis — 187
+## (i) Automatizáveis — 189
 
 Números com um dado por trás e nenhum verificador a olhar para eles. É aqui que se acrescenta ao `verificar_numeros_tese.py`.
 
-### Por onde começar — onde estão os 187
+### Por onde começar — onde estão os 189
 
 A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por verificar no Resumo é lido por toda a gente e citado de volta na defesa; o mesmo valor no meio do Cap. 2 não.
 
@@ -29,9 +29,9 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 | Conclusões | 17 |
 | Desempenho de Tarefa por Cenário ($P_{task | 11 |
 | Desempenho Computacional do Simulador | 11 |
+| Limitações do Estudo | 10 |
 | Contributos | 10 |
 | Resposta às Questões de Investigação | 9 |
-| Limitações do Estudo | 8 |
 | Fiabilidade e Variância entre \textit{Runs | 7 |
 | Metodologia de Avaliação e Notas de Leitura | 6 |
 | Resumo | 5 |
@@ -54,7 +54,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 | Plano de Experiências e Tratamento Estatístico | 1 |
 | Análise Qualitativa da Navegação: Mapas de Calor | 1 |
 
-### contagem de execuções — 54
+### contagem de execuções — 56
 
 - `7` (linha 337) — …textbf{adaptativa} --- decaindo a pressão exploratória após a descoberta --- preserva os $7/7$ \textit{runs} no Muro em U sem custo significativo nos …
 - `7` (linha 349) — …iance to swarm size ---, evaluating both across seven scenarios of increasing difficulty (7 independent runs per combination) under non-parametric sta…
@@ -70,7 +70,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `100` (linha 1234) — …alternativa estão resolvidos pelos três algoritmos. O \textbf{PPO} é o mais consistente: 100\% de sucesso em seis dos sete cenários, com a menor variâ…
 - `86,7` (linha 1234) — …ca de $1{,}8\times$ o melhor método de gradiente) e na Porta Cooperativa com Alternativa (86,7), mas exibe \textit{runs} degenerados precisamente nos …
 - `100` (linha 1234) — …(Sandbox: 5/7 \textit{runs} funcionais; Perceção Cooperativa: 6/7). O \textbf{SAC} mantém 100\% nos cenários cooperativos e no Quatro Salas, mas é o m…
-- *(mais 40)*
+- *(mais 42)*
 
 ### episódios — 33
 
@@ -139,9 +139,9 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `10` (linha 1667) — …erência \textbf{\textit{Zero-Shot}}, só a arquitetura de atenção sobre grafo escala de $N=10$ a $N=100$ sem retreino, mantendo 100\% de sucesso, enqua…
 - `100` (linha 1667) — …textbf{\textit{Zero-Shot}}, só a arquitetura de atenção sobre grafo escala de $N=10$ a $N=100$ sem retreino, mantendo 100\% de sucesso, enquanto as po…
 - `100` (linha 1667) — …só a arquitetura de atenção sobre grafo escala de $N=10$ a $N=100$ sem retreino, mantendo 100\% de sucesso, enquanto as políticas MLP de dimensão fixa…
-- `10` (linha 1734) — …ação:} mostrou-se empiricamente que o controlador com atenção sobre grafo transfere de $N=10$ para $N=100$ agentes sem retreino e sem perda de sucesso…
-- `100` (linha 1734) — …ou-se empiricamente que o controlador com atenção sobre grafo transfere de $N=10$ para $N=100$ agentes sem retreino e sem perda de sucesso (100\% nas …
-- `100` (linha 1734) — …sobre grafo transfere de $N=10$ para $N=100$ agentes sem retreino e sem perda de sucesso (100\% nas 28 combinações cenário $\times$ dimensão), retendo…
+- `10` (linha 1735) — …ação:} mostrou-se empiricamente que o controlador com atenção sobre grafo transfere de $N=10$ para $N=100$ agentes sem retreino e sem perda de sucesso…
+- `100` (linha 1735) — …ou-se empiricamente que o controlador com atenção sobre grafo transfere de $N=10$ para $N=100$ agentes sem retreino e sem perda de sucesso (100\% nas …
+- `100` (linha 1735) — …sobre grafo transfere de $N=10$ para $N=100$ agentes sem retreino e sem perda de sucesso (100\% nas 28 combinações cenário $\times$ dimensão), retendo…
 - *(mais 3)*
 
 ### dimensão amostral — 16
@@ -176,7 +176,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `7` (linha 1667) — …tativa} do peso de novidade (decaimento após a descoberta) fechou esta tensão: manteve os 7/7 no Muro U ($p=0{,}009$ face ao objetivo), não pagou cust…
 - `7` (linha 1667) — …tiva} do peso de novidade (decaimento após a descoberta) fechou esta tensão: manteve os 7/7 no Muro U ($p=0{,}009$ face ao objetivo), não pagou custo …
 - `0{,}009` (linha 1667) — …novidade (decaimento após a descoberta) fechou esta tensão: manteve os 7/7 no Muro U ($p=0{,}009$ face ao objetivo), não pagou custo significativo em …
-- `0{,}39` (linha 1744) — …ssa assimetria de dimensões amostrais, e não a direção do efeito, que mantém o $\delta = +0{,}39$ do Sandbox longe do limiar convencional, pelo que al…
+- `0{,}39` (linha 1746) — …ssa assimetria de dimensões amostrais, e não a direção do efeito, que mantém o $\delta = +0{,}39$ do Sandbox longe do limiar convencional, pelo que al…
 
 ### robustez — 6
 
@@ -191,7 +191,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 
 - `2` (linha 832) — …ia à dimensão do enxame é uma propriedade da \emph{representação}, e não do otimizador (QI2). (Recuperado pela pesquisa mas excluído na elegibilidade …
 
-## (ii) Precisam de leitura — 269
+## (ii) Precisam de leitura — 270
 
 Sem sinal automático que os ligue a um dado. Podem ser resultados escritos de outra maneira, números da literatura citada, ou escolhas de desenho.
 
@@ -235,14 +235,14 @@ Sem sinal automático que os ligue a um dado. Podem ser resultados escritos de o
 - `2` (linha 392) — …y, Value (projeções do mecanismo de atenção)} \acro{RL}{Reinforcement Learning} \acro{RS2C}{Robust and Scalable Swarm Control} \acro{SAC}{So…
 - `1` (linha 519) — …anho real em adaptabilidade face às soluções otimizadas tradicionais. \section{Abordagem 1: Otimização Bio-inspirada} Esta abordagem utiliza…
 - `1` (linha 523) — …mos Evolutivos} O processo evolutivo opera sobre uma \textbf{população} $\Pi_g = \{\theta_1, \theta_2, \ldots, \theta_K\}$ de $K$ controlado…
-- *(mais 229)*
+- *(mais 230)*
 
-## (iii) Não são resultados — 553
+## (iii) Não são resultados — 554
 
 Anos, referências internas, dimensões de figura, medidas de composição. Não há dado com que os confrontar.
 
 - referência interna/citação: 257
-- comando LaTeX: 128
+- comando LaTeX: 129
 - medida de composição: 82
 - ano: 47
 - dimensão de figura: 39

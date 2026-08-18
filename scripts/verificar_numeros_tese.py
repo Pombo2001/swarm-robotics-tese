@@ -2688,6 +2688,8 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"GNN, mas só em (\d+) das \$(\d+)\$\s*\n?\s*execuções"},
          {"re": r"resolve o mapa em (\d+) das \$(\d+)\$\s*\n?\s*execuções"},
+         # o item dos Contributos (18 ago) diz o mesmo pela terceira vez
+         {"re": r"resolve o mapa, em \$(\d+)\$ de \$(\d+)\$ execuções"},
      ]},
     {"rot": "QI2 — retenção per capita em N=100 (paredes e abertos)",
      "sitios": [
