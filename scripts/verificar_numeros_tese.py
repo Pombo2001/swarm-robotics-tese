@@ -3061,6 +3061,127 @@ def verificar_sandbox(tolerancia):
     return problemas
 
 
+def verificar_ptask_prosa(tolerancia):
+    """§P_task — as afirmações do parágrafo de leitura da `tab:res_eval`.
+
+    A tabela tem verificador desde julho; o parágrafo que a lê, não. E é ele
+    que o leitor retém: «o PPO é o mais consistente», «o GNN iguala o PPO no
+    Gargalo», «cerca de 1,8× o melhor método de gradiente». São afirmações
+    derivadas — sobrevivem a uma mudança de dados que mexa nas células sem
+    mexer na conclusão, e é aí que passam a estar erradas sem dar sinal.
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: §P_task (o parágrafo que LÊ a tabela)  vs  eval_by_run_7d")
+    print("=" * 72)
+
+    fp = os.path.join(PROJECT_ROOT, "results", "graficos_tese", "final_7d",
+                      "eval_by_run_7d.csv")
+    if not os.path.exists(fp):
+        print("[!] falta o eval_by_run_7d.csv — a saltar.")
+        return []
+    # os SETE, da fonte única — nunca uma lista escrita aqui
+    sys.path.insert(0, PROJECT_ROOT)
+    from src.scenarios import THESIS_SCENARIOS
+    d = pd.read_csv(fp)
+    d["Algorithm"] = d["Algorithm"].astype(str).str.upper()
+    por = {}
+    for (cen, algo), g in d.groupby(["Scenario", "Algorithm"]):
+        r = g.groupby("Run").agg(food=("food_collected", "mean"),
+                                 suc=("success", "mean"))
+        por[(cen, algo)] = r
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+
+    problemas, conferidos = [], 0
+
+    def confere(rot, tese, calc, tol=None, exato=False):
+        nonlocal conferidos
+        conferidos += 1
+        if tese is None:
+            problemas.append("%s: não consegui ler no main.tex (mudou a "
+                             "redação?)" % rot)
+        elif exato and int(tese) != int(calc):
+            problemas.append("%-42s tese=%d  csv=%d" % (rot, tese, calc))
+        elif not exato and abs(tese - calc) > (tol or tolerancia):
+            problemas.append("%-42s tese=%.4g  csv=%.4g" % (rot, tese, calc))
+        else:
+            print("   [v] %-44s %8.4g" % (rot, calc))
+
+    def media(cen, algo):
+        r = por.get((cen, algo))
+        return None if r is None else float(r["food"].mean())
+
+    # ── o PPO é o mais consistente ─────────────────────────────────────────
+    m = re.search(r"100\\% de sucesso em (\w+) dos sete cenários, com a menor "
+                  r"variância entre \\textit\{runs\} \(desvios padrão de "
+                  r"([\d,]+) a ([\d,]+) recolhas/ep fora do Muro U\)", tex)
+    if m is None:
+        problemas.append("PPO consistente: não encontrei a frase")
+    else:
+        POR_EXTENSO = {"um": 1, "dois": 2, "três": 3, "quatro": 4, "cinco": 5,
+                       "seis": 6, "sete": 7}
+        cheios = sum(1 for (cen, algo), r in por.items()
+                     if algo == "PPO" and cen in THESIS_SCENARIOS
+                     and float(r["suc"].mean()) >= 1.0)
+        confere("PPO: cenários a 100% de sucesso",
+                POR_EXTENSO.get(m.group(1).lower()), cheios, exato=True)
+        dps = [float(r["food"].std()) for (cen, algo), r in por.items()
+               if algo == "PPO" and cen in THESIS_SCENARIOS and cen != "u_wall"]
+        confere("PPO: menor desvio fora do Muro em U",
+                numero(m.group(2).replace(",", ".")), min(dps), tol=0.05)
+        confere("PPO: maior desvio fora do Muro em U",
+                numero(m.group(3).replace(",", ".")), max(dps), tol=0.05)
+
+    # ── as três médias do GNN citadas em prosa, e o rácio do Quatro Salas ──
+    m = re.search(r"igualando o PPO no Gargalo \(([\d,]+) recolhas/ep em média.{0,60}?"
+                  r"destacando-se no Quatro Salas \(([\d,]+), cerca de "
+                  r"\$([\d{},]+)\\times\$ o melhor método de gradiente\).{0,80}?"
+                  r"com Alternativa \(([\d,]+)\)", tex, re.DOTALL)
+    if m is None:
+        problemas.append("médias do GNN em prosa: não encontrei a frase")
+    else:
+        confere("GNN no Gargalo (prosa)", numero(m.group(1).replace(",", ".")),
+                media("bottleneck", "GNN"), tol=0.05)
+        confere("GNN no Quatro Salas (prosa)",
+                numero(m.group(2).replace(",", ".")),
+                media("four_rooms", "GNN"), tol=0.05)
+        melhor_grad = max(media("four_rooms", "PPO"), media("four_rooms", "SAC"))
+        confere("Quatro Salas: rácio face ao melhor gradiente",
+                numero(m.group(3)), media("four_rooms", "GNN") / melhor_grad,
+                tol=0.05)
+        confere("GNN na Porta c/ Alternativa (prosa)",
+                numero(m.group(4).replace(",", ".")),
+                media("cooperative_door_bypass", "GNN"), tol=0.05)
+
+    # ── o SAC: onde mantém 100% e onde é frágil ────────────────────────────
+    m = re.search(r"O \\textbf\{SAC\} mantém 100\\% nos cenários cooperativos e "
+                  r"no Quatro Salas", tex)
+    if m is None:
+        problemas.append("SAC a 100%: não encontrei a frase")
+    else:
+        conferidos += 1
+        falham = [cen for cen in ("cooperative_door", "cooperative_perception",
+                                  "cooperative_door_bypass", "four_rooms")
+                  if por.get((cen, "SAC")) is not None
+                  and float(por[(cen, "SAC")]["suc"].mean()) < 1.0]
+        if falham:
+            problemas.append("a tese diz SAC a 100%% nos cooperativos e no "
+                             "Quatro Salas, e falha em: %s" % ", ".join(falham))
+        else:
+            print("   [4] SAC a 100% nos três cooperativos e no Quatro Salas")
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nOs %d valores do parágrafo do P_task batem com o CSV."
+              % conferidos)
+    return problemas
+
+
 def verificar_computacional():
     """§Desempenho Computacional — a aritmética que liga os seis números.
 
@@ -3399,6 +3520,7 @@ def main():
     problemas += verificar_hiperparametros()
     problemas += verificar_discussao_global(a.tolerancia)
     problemas += verificar_sandbox(a.tolerancia)
+    problemas += verificar_ptask_prosa(a.tolerancia)
     problemas += verificar_computacional()
     problemas += verificar_questoes_investigacao()
     problemas += verificar_coerencia_interna()

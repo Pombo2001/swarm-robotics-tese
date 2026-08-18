@@ -326,6 +326,22 @@ MUTACOES = [
     ("computacional: a tabela deixa de bater com a prosa (420 -> 460)",
      "(1 arena) & $\\approx 420$ passos/s",
      "(1 arena) & $\\approx 460$ passos/s", "computacional"),
+    # ── O parágrafo que LÊ a tabela do P_task (18 ago) ──────────────────────
+    # A tabela tinha verificador desde julho; a leitura dela, não — e é a
+    # leitura que fica na cabeça de quem lê.
+    ("P_task: os cenários do PPO a 100% (seis -> cinco)",
+     "100\\% de sucesso em seis dos sete cenários",
+     "100\\% de sucesso em cinco dos sete cenários", "ptask"),
+    ("P_task: o maior desvio do PPO (4,0 -> 6,0)",
+     "desvios padrão de 0,4 a 4,0 recolhas/ep",
+     "desvios padrão de 0,4 a 6,0 recolhas/ep", "ptask"),
+    ("P_task: o GNN no Gargalo (121,4 -> 131,4)",
+     "no Gargalo (121,4 recolhas/ep", "no Gargalo (131,4 recolhas/ep", "ptask"),
+    ("P_task: o rácio do Quatro Salas (1,8 -> 2,4)",
+     "cerca de $1{,}8\\times$ o melhor método",
+     "cerca de $2{,}4\\times$ o melhor método", "ptask"),
+    ("P_task: o GNN na Porta c/ Alternativa (86,7 -> 88,7)",
+     "com Alternativa (86,7)", "com Alternativa (88,7)", "ptask"),
 ]
 
 VERIFICADORES = {
@@ -339,6 +355,7 @@ VERIFICADORES = {
     "questoes": V.verificar_questoes_investigacao,
     "sandbox": lambda: V.verificar_sandbox(0.05),
     "computacional": V.verificar_computacional,
+    "ptask": lambda: V.verificar_ptask_prosa(0.05),
 }
 
 
