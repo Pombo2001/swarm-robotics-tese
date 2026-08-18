@@ -3061,6 +3061,110 @@ def verificar_sandbox(tolerancia):
     return problemas
 
 
+def verificar_computacional():
+    """§Desempenho Computacional — a aritmética que liga os seis números.
+
+    É a única secção de resultados cujos valores não saem de um CSV: são
+    medições de máquina (`scripts/benchmark_sim.py`), e re-medi-las noutro
+    computador daria outro número sem que nada estivesse errado. O que **tem**
+    de bater é a aritmética que as liga entre si, e essa não depende de
+    hardware nenhum:
+
+        agente-passos/s = passos/s × N          (N = 20, dito na mesma frase)
+        segundos/episódio = passos do episódio ÷ passos/s
+        ganho = passos/s (depois) ÷ passos/s (antes)
+
+    E a tabela repete os mesmos valores da prosa — o sítio clássico onde um
+    número corrigido num lado fica por corrigir no outro.
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: §Desempenho Computacional (a aritmética entre os valores)")
+    print("=" * 72)
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+
+    problemas, conferidos = [], 0
+
+    def confere(rot, tese, calc, tol):
+        nonlocal conferidos
+        conferidos += 1
+        if tese is None:
+            problemas.append("%s: não consegui ler no main.tex (mudou a "
+                             "redação?)" % rot)
+        elif abs(tese - calc) > tol:
+            problemas.append("%-40s tese=%.4g  aritmética=%.4g" % (rot, tese, calc))
+        else:
+            print("   [v] %-44s %8.4g  (tese %.4g)" % (rot, calc, tese))
+
+    m = re.search(
+        r"\$N=(?P<n>\d+)\$ agentes, (?P<bench>[\d\\,]+) passos com ações "
+        r"aleatórias.{0,200}?\\textbf\{(?P<antes>[\d\\,]+) passos de simulação "
+        r"por segundo\} \(\$\\approx\$(?P<ag_antes>[\d\\,]+) atualizações de "
+        r"agente por segundo; \$\\approx\$(?P<s_antes>[\d,]+)\\,s por episódio "
+        r"de (?P<passos_ep>\d+) passos\).{0,120}?\\textbf\{(?P<depois>[\d\\,]+) "
+        r"passos/s\} \(\$\\approx\$(?P<ag_depois>[\d\\,]+) agente-passos/s; "
+        r"\$\\approx\$(?P<s_depois>[\d,]+)\\,s por episódio\) --- um ganho de "
+        r"\$\\approx (?P<ganho>[\d{},]+)\\times\$", tex, re.DOTALL)
+
+    def n_(s):
+        """'2\\,770' e '3,6' -> float (o `\\,` é o separador de milhares)."""
+        return numero(str(s).replace("\\,", "").replace(",", ".")) if s else None
+
+    if m is None:
+        problemas.append("não encontrei a frase do throughput (mudou a redação?)")
+    else:
+        g = m.groupdict()
+        n_ag = n_(g["n"])
+        antes, depois = n_(g["antes"]), n_(g["depois"])
+        passos_ep = n_(g["passos_ep"])
+        # ⚠️ o separador decimal PT-PT: «3,6\,s» é 3,6 segundos, não 36.
+        s_antes = numero(g["s_antes"].replace(",", "."))
+        s_depois = numero(g["s_depois"].replace(",", "."))
+        confere("agente-passos/s antes da vetorização", n_(g["ag_antes"]),
+                antes * n_ag, tol=15)
+        confere("agente-passos/s depois", n_(g["ag_depois"]),
+                depois * n_ag, tol=15)
+        confere("segundos por episódio antes", s_antes, passos_ep / antes,
+                tol=0.05)
+        confere("segundos por episódio depois", s_depois, passos_ep / depois,
+                tol=0.05)
+        confere("ganho da vetorização (×)", n_(g["ganho"]), depois / antes,
+                tol=0.05)
+
+        # A tabela diz os mesmos números — e é aqui que um deles fica para trás.
+        t = re.search(
+            r"pré-vetorização \(1 arena\) & \$\\approx (?P<a>\d+)\$ passos/s "
+            r"\(\$\\approx (?P<aa>[\d\\,]+)\$ ag\.-passo/s\).{0,220}?"
+            r"pós-vetorização\}? \(1 arena\) & \$\\approx (?P<d>\d+)\$ passos/s "
+            r"\(\$\\approx (?P<dd>[\d\\,]+)\$ ag\.-passo/s\).{0,200}?"
+            r"\((?P<pe>\d+) passos\), pós-vetorização & \$\\approx "
+            r"(?P<sd>[\d{},]+)\$", tex, re.DOTALL)
+        if t is None:
+            problemas.append("tab:res_computacional: não encontrei as células")
+        else:
+            for rot, na_tabela, na_prosa in (
+                    ("tabela: passos/s antes", n_(t.group("a")), antes),
+                    ("tabela: ag.-passos/s antes", n_(t.group("aa")), n_(g["ag_antes"])),
+                    ("tabela: passos/s depois", n_(t.group("d")), depois),
+                    ("tabela: ag.-passos/s depois", n_(t.group("dd")), n_(g["ag_depois"])),
+                    ("tabela: passos do episódio", n_(t.group("pe")), passos_ep),
+                    ("tabela: segundos por episódio", n_(t.group("sd")), s_depois)):
+                confere(rot, na_tabela, na_prosa, tol=0.05)
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nOs %d valores do desempenho computacional são coerentes entre si."
+              % conferidos)
+    print("NOTA: não se re-mede o hardware — mede-se a ARITMÉTICA que liga os")
+    print("      números, e a igualdade entre a prosa e a tabela.")
+    return problemas
+
+
 def verificar_questoes_investigacao():
     """As QI são sete, aparecem por ordem, e cada pergunta tem resposta.
 
@@ -3295,6 +3399,7 @@ def main():
     problemas += verificar_hiperparametros()
     problemas += verificar_discussao_global(a.tolerancia)
     problemas += verificar_sandbox(a.tolerancia)
+    problemas += verificar_computacional()
     problemas += verificar_questoes_investigacao()
     problemas += verificar_coerencia_interna()
     problemas += verificar_artigo(a.tolerancia)

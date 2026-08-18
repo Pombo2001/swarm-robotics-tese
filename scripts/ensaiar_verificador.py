@@ -306,6 +306,26 @@ MUTACOES = [
     ("o 5/7 da Perceção Cooperativa de 19 de julho (5 -> 6)",
      "se o $5/7$ observado a 19 de julho",
      "se o $6/7$ observado a 19 de julho", "novelty"),
+    # ── O desempenho computacional (18 ago) ─────────────────────────────────
+    # Aqui não há CSV: o que se verifica é a aritmética entre os seis números
+    # e a igualdade entre a prosa e a tabela. Cada mutação parte uma dessas
+    # relações sem tocar nas outras — que é como um número corrigido a meio
+    # fica sozinho.
+    ("computacional: o throughput antes da vetorização (139 -> 200)",
+     "\\textbf{139 passos de simulação por segundo}",
+     "\\textbf{200 passos de simulação por segundo}", "computacional"),
+    ("computacional: os agente-passos/s depois (8400 -> 9400)",
+     "$\\approx$8\\,400 agente-passos/s", "$\\approx$9\\,400 agente-passos/s",
+     "computacional"),
+    ("computacional: os segundos por episódio (1,2 -> 2,2)",
+     "$\\approx$1,2\\,s por episódio)", "$\\approx$2,2\\,s por episódio)",
+     "computacional"),
+    ("computacional: o ganho da vetorização (3,0 -> 4,0)",
+     "um ganho de $\\approx 3{,}0\\times$", "um ganho de $\\approx 4{,}0\\times$",
+     "computacional"),
+    ("computacional: a tabela deixa de bater com a prosa (420 -> 460)",
+     "(1 arena) & $\\approx 420$ passos/s",
+     "(1 arena) & $\\approx 460$ passos/s", "computacional"),
 ]
 
 VERIFICADORES = {
@@ -318,6 +338,7 @@ VERIFICADORES = {
     "mega": lambda: V.verificar_megatreino(0.05),
     "questoes": V.verificar_questoes_investigacao,
     "sandbox": lambda: V.verificar_sandbox(0.05),
+    "computacional": V.verificar_computacional,
 }
 
 
