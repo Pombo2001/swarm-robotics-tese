@@ -483,3 +483,97 @@ Fica uma questão para leitura, não um erro: o DataCite dá `publicationYear:
 2026` à tese de Iskandar e o `.bib` diz 2025. Fui à capa do PDF: diz **«Miskolc
 2025»**. O 2026 é o ano do depósito do DOI (registado a 27 fev 2026). Cita-se o
 documento, não o depósito — está declarado no verificador com essa razão.
+
+### 18 ago — os testes que sustentam a QI6 não tinham verificador
+
+O `verificar_megatreino` conferia médias, desvios e contagens do mega-treino e
+**nenhum dos p nem dos δ** escritos ao lado delas. É a metade que decide: o
+«28/28 contra 15/28» só responde à QI6 porque vem com um Fisher exato, e mudar um
+p não mexe em média nenhuma — nada o apanhava. Passam a ser recalculados M1
+(magnitude unilateral + Fisher), os três pares de M2 que a tese cita, M3 e as
+comparações das duas células exploratórias (Sandbox e Perceção) contra o braço da
+campanha final. **54 → 86 valores**, e todos batem.
+
+Os testes não são reimplementados: importa-se o `compara` do
+`analise_megatreino`, que produziu os valores publicados — incluindo a escolha
+entre método exato e assintótico, que a $n=28+28$ não é a mesma que a $n=7+7$.
+
+⚠️ **Achado do caminho: as percentagens de convergência das células exploratórias
+(95%, 81%, 33%) viviam FIXAS dentro dos padrões do verificador.** Uma
+percentagem escrita no regex não é conferida — é exigida: se a contagem mudasse,
+o verificador diria «não encontrei a frase» em vez de «o número está errado», e
+quem corrigisse o padrão em vez do texto deixava lá o erro. Vale a pena procurar
+o mesmo feitio nos outros verificadores.
+
+### 18 ago — os ecos do Capítulo 7 passam a cruzar os testes, não só as médias
+
+A «Resposta às Questões de Investigação» reconta oito comparações do Capítulo 6.
+A coerência interna já cruzava as médias desses factos; passou a cruzar os p e os
+δ, que são o que muda quando os dados mudam — uma média pode sobreviver a um
+recálculo e o p não. Mais os quatro factos do mapa composto (o zero da
+transferência, quem resolve com treino nativo, o limiar pré-registado e o M1), e
+o verificador passou a juntar ao `main.tex` o ficheiro que este inclui por
+`\input` — sem isso, os sítios que vivem lá dentro apareciam como «frase não
+encontrada». **54 → 123 valores, 10 → 22 factos.**
+
+### 18 ago — o 8.º cenário entrava calado na limitação da dimensão vertical
+
+O `verificar_vertical.py` **falhava, e falhava há dias sem ninguém dar por isso**
+— não corria no hook. A causa não era a tese: os episódios do mapa grande foram
+exportados para `results/episodios_3d/`, a pasta passou de 21 para 24 ficheiros,
+e o verificador lia-os todos. A frase diz «21 células (três controladores × sete
+cenários)», e com o oitavo lá dentro a contagem dos cenários onde quem voa mais
+alto recolhe menos subia de 5 para 6: o verificador acusava a tese de errar um
+número certo.
+
+É o ponto 1.7 deste projeto outra vez — a garantia de que o 8.º cenário fica de
+fora não pode depender de ele ainda não ter dados. Filtra por
+`THESIS_SCENARIOS`, diz quais ignorou, tem teste no
+`test_tabelas_so_dos_sete.py` e passou a correr no **pre-commit** (custa menos de
+um segundo).
+
+### 18 ago — a secção do mapa composto estava no capítulo das Conclusões
+
+E a Discussão Global não sabia que o oitavo cenário existia.
+
+A secção entrou a 17 de agosto por onde o esqueleto da QI7 tinha sido preparado a
+6 — dentro do **Capítulo 7**. Mas traz motivação, geometria, protocolo,
+resultados, discussão e limitações próprias: é uma secção de resultados, e o
+`\label` sempre o disse (`sec:res_...`). Passou para o fim do Capítulo 6, a
+seguir à do Novelty, que é o sítio que o cabeçalho do próprio
+`seccao_mapa_grande.tex` indicava. Nem uma linha do texto dela mudou.
+
+Com ela no sítio certo, a **Discussão Global** — que fecha o capítulo e é onde a
+tese decide o que os resultados querem dizer — ganhou o parágrafo que lhe
+faltava: o zero da transferência (84 células, 1680 episódios), quem resolve com
+treino nativo (GNN 4/21 contra 0/21 dos dois métodos de gradiente) e as duas
+leituras que isso acrescenta — a composição degrada a **fiabilidade** do treino,
+não a magnitude de quem aprende, e os eixos de escolha mapeados valem no regime
+em que uma dificuldade domina de cada vez.
+
+Pela mesma razão, **Limitações** ganhou o «alcance do estudo de composição» (um
+só mapa; contagem descritiva por compromisso; 780 minutos que não chegaram ao
+planalto) e **Contributos** ganhou o mapa composto nas suas duas metades — a
+substantiva e a metodológica (pré-registo com regra de decisão fixada antes dos
+dados, resultado negativo reportado com a contagem à vista, emendas datadas, e um
+braço pré-registado que não chegou a correr).
+
+### 18 ago — a QI7 esteve quatro dias impressa ANTES da QI6
+
+Na lista de questões do Capítulo 1. O bloco dela viveu meses em comentário nesse
+sítio, à espera do resultado, e ao ser descomentado a 17 de agosto ficou onde
+estava: a lista lia-se **1, 2, 3, 4, 5, 7, 6**. Nenhum verificador de números
+veria isto — todos os números estavam certos.
+
+Fica com rede: o `verificar_questoes_investigacao` confere que as questões
+aparecem por ordem nas duas listas e que cada pergunta tem resposta e cada
+resposta tem pergunta. Pelo caminho, dois acertos de forma: a resposta à QI7 usava
+um rótulo em negrito que as outras seis não usam, e os sete rótulos acabavam em
+ponto quando a classe `amsbook` já lhes acrescenta dois pontos — saía
+«Desempenho de tarefa.:» nas sete respostas.
+
+**Estado ao fim do dia 18:** tese em **131 páginas**, 0 overfull, 0 referências
+indefinidas. **176 testes**, todos os verificadores verdes, **63 mutações** no
+ensaio e todas apanhadas. Cobertura dos tokens numéricos do `main.tex`: **46%**
+(era 28% a 17 de agosto de manhã). Por cobrir, por ordem: Novelty 31, Sandbox 18,
+Conclusões 17, Desempenho Computacional 11, Contributos 10, QI 9.
