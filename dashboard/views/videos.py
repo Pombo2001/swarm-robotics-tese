@@ -42,7 +42,7 @@ def _metric_chip(session: str, algo: str, scenario: str):
     icon = "check_circle" if p >= 80 else ("error" if p >= 40 else "cancel")
     with ui.row().classes("items-center gap-1 no-wrap mt-1"):
         ui.icon(icon).style(f"color:{color}").classes("text-sm")
-        ui.label(f"{p:.0f}% · {info['recolhas']:.1f} rec/ep").classes("text-xs") \
+        ui.label(f"{p:.0f}% · {theme.num(info['recolhas'])} rec/ep").classes("text-xs") \
             .style(f"color:{color};font-weight:600")
         if info.get("convergentes") is not None:
             ui.label("(%d/%d execuções)" % (info["convergentes"], info["runs"])) \

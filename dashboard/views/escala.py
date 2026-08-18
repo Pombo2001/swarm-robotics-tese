@@ -200,7 +200,7 @@ def build():
                                  for _, g in compat) / len(compat)
                         suc = sum(float(g["success_rate"].iloc[0])
                                   for _, g in compat) / len(compat)
-                        ui.label("%.2f" % pc).classes(
+                        ui.label(theme.num(pc, 2)).classes(
                             "text-3xl font-bold mono-num mt-2")
                         ui.label("recolhas por agente · média de %d cenários"
                                  % len(compat)).classes("text-xs") \
@@ -316,8 +316,8 @@ def build():
                                 continue
                             rrows.append({
                                 "Cenário": config.SCENARIO_LABEL_SHORT[k], "Algo": a,
-                                "Base": f"{info['base']:.1f}",
-                                "10% falhas": f"{info['fail']:.1f}",
+                                "Base": theme.num(info['base']),
+                                "10% falhas": theme.num(info['fail']),
                                 "Retenção": (f"{info['retencao']:.0f}%"
                                              if info["retencao"] is not None else "—"),
                                 "n": info["n"],

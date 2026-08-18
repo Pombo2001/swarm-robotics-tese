@@ -151,10 +151,11 @@ def build():
                                     .style(f"color:{theme.INK_MUTED}")
                                 ui.label(
                                     "—" if med is None else
-                                    "%.1f ± %.1f" % (med, dp)
+                                    "%s ± %s" % (theme.num(med), theme.num(dp))
                                 ).classes("text-2xl font-bold mono-num")
                                 ui.label(
-                                    "—" if suc is None else "%.1f%% sucesso" % suc
+                                    "—" if suc is None
+                                    else "%s%% sucesso" % theme.num(suc)
                                 ).classes("text-xs mono-num") \
                                     .style(f"color:{theme.INK_MUTED}")
 
@@ -241,7 +242,7 @@ def build():
                     ui.label(rotulo).classes("text-xs py-2 pr-2")
                     for a in ALGOS:
                         m = medidas.get((cen, a))
-                        texto = "—" if not m else "%.1f" % m["media"]
+                        texto = "—" if not m else theme.num(m["media"])
                         b = ui.button(
                             texto,
                             on_click=lambda r=rotulo, al=a: mostrar(r, al))

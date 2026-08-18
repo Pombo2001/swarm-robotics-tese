@@ -153,7 +153,8 @@ def _eta_block(eta: dict | None, training: bool):
             _info("play_arrow", "Início", _fmt_dt(eta["start"]) + " (servidor)")
             if eta.get("now") and eta.get("start"):
                 horas_dec = (eta["now"] - eta["start"]).total_seconds() / 3600
-                dec = f"{horas_dec:.1f}h" if horas_dec >= 1 else f"{int(horas_dec * 60)} min"
+                dec = (theme.num(horas_dec) + "h" if horas_dec >= 1
+                       else f"{int(horas_dec * 60)} min")
                 _info("timelapse", "Decorrido", dec)
             if eta.get("eta"):
                 _info("flag", "Fim estimado", _fmt_dt(eta["eta"]) + " (servidor)")

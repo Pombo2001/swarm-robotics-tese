@@ -486,6 +486,29 @@ window.monoDefesa = function (ligar) {
 """
 
 
+def num(valor, casas: int = 1, sinal: bool = False) -> str:
+    """Um número como o resto do projeto o escreve: com **vírgula**.
+
+    A dissertação é PT-PT e escreve `38,3`; o dashboard escrevia `38.3` em
+    quinze sítios e `38,3` noutros tantos — às vezes na mesma linha («δ = +0.77»
+    debaixo de «δ = +0,61»). Não é um erro de valor, é um ecrã que se lê a duas
+    velocidades, e num que vai ser projetado numa defesa isso conta.
+
+    Devolve «—» para `None`/`NaN`, que é o que as tabelas já mostravam nos
+    buracos.
+    """
+    if valor is None:
+        return "—"
+    try:
+        v = float(valor)
+    except (TypeError, ValueError):
+        return "—"
+    if v != v:                                   # NaN
+        return "—"
+    fmt = "%+." + str(casas) + "f" if sinal else "%." + str(casas) + "f"
+    return (fmt % v).replace(".", ",")
+
+
 def defesa_button():
     """Botão do Modo Defesa (usar no header). Devolve o ui.button."""
     b = ui.button(icon="present_to_all",

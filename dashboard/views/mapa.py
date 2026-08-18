@@ -169,7 +169,7 @@ def _texto_f2():
         # «o mapa grande foi resolvido» — é uma proporção, e é ela que M1 mede.
         partes.append("%d de %d com recolha (%s)"
                       % (com, fechados,
-                         ", ".join("%.2f" % r["recolhas"]
+                         ", ".join(theme.num(r["recolhas"], 2)
                                    for r in n.get("runs_fechados", []))))
     if e.get("exploratorio_armado"):
         partes.append("exploratório armado (f2lwatch)")
@@ -313,7 +313,8 @@ def _painel_f2():
                     lbl.style("color:#4ade80")
                 elif a["convergentes"] == 0:
                     lbl.style(f"color:{theme.INK_MUTED}")
-                ui.label("%.2f ± %.2f" % (a["media"], a["dp"])) \
+                ui.label("%s ± %s" % (theme.num(a["media"], 2),
+                                     theme.num(a["dp"], 2))) \
                     .classes("text-xs mono-num py-1")
                 ui.label("—" if a["porta"] is None else "%.0f%%" % (100 * a["porta"])) \
                     .classes("text-xs mono-num py-1")
@@ -474,7 +475,7 @@ def build():
                         for a in ALGOS:
                             v = g.get((cen, a))
                             txt = "—" if v is None else ("0" if v == 0
-                                                         else "%.1f" % v)
+                                                         else theme.num(v))
                             lbl = ui.label(txt).classes(
                                 "text-xs mono-num text-center py-1 rounded")
                             if v:

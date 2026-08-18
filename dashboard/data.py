@@ -548,6 +548,34 @@ _PREFIXOS = (
 _ALIAS = {"eval_7d": "final_7d"}
 
 
+def condicao_da_campanha(nome: str) -> str:
+    """`'mega_A1'` -> `'GNN adaptativo · Muro em U (28/28)'`, ou `''`.
+
+    A pasta de gráficos de uma fase do mega-treino chama-se `mega_A1` e a de
+    modelos `mega_A_fase1`; só a segunda tinha rótulo a dizer a CONDIÇÃO. Sem
+    ele, o seletor da galeria oferece «Mega-treino A1» e «Mega-treino A2» como
+    se fossem intercambiáveis — quando um é o braço com novidade adaptativa e o
+    outro o controlo com objetivo puro, que é a comparação que sustenta a QI6.
+
+    A fonte é o `MEGA_FASES` deste módulo, que já existia para o visualizador.
+    """
+    m = re.match(r"^mega_([AB])(\d+)$", nome or "")
+    if not m:
+        return ""
+    alvo = "mega_%s_fase%s" % (m.group(1), m.group(2))
+    for rotulo, sub in MEGA_FASES:
+        if sub == alvo:
+            return rotulo.replace("▣ Mega-treino · ", "").strip()
+    # As três fases de GRADIENTE não estão no MEGA_FASES — não têm modelos
+    # próprios arquivados (ver a nota lá em cima) e por isso não aparecem no
+    # visualizador. Os GRÁFICOS delas existem, e o seletor da galeria oferecia-as
+    # como «Mega-treino A3» e «Mega-treino A4», sem dizer qual é o PPO e qual é
+    # o SAC. Sem contagens: estas são só a identificação da condição.
+    return {"mega_A_fase3": "PPO · Muro em U",
+            "mega_A_fase4": "SAC · Muro em U",
+            "mega_B_fase6": "SAC · Gargalo"}.get(alvo, "")
+
+
 def rotulo_campanha(nome: str) -> tuple:
     """`('Mega-treino A1', True)` — nome legível e se a tese a cita."""
     if nome in _CAMPANHAS:
@@ -903,7 +931,10 @@ def estado_curvas_locais():
     recente = min(c["idade_h"] for c in curvas.values())
     if recente > IDADE_OBSOLETA_H:
         dias = recente / 24.0
-        quando = f"{recente:.1f} h" if dias < 1 else f"{dias:.1f} dias"
+        # Vírgula, como o resto do dashboard (e «22 dias», não «22,0 dias»:
+        # ao fim de três semanas a casa decimal não informa ninguém).
+        quando = (("%.1f h" % recente).replace(".", ",") if dias < 1
+                  else "%d dias" % round(dias))
         return False, (f"Nenhum treino local a decorrer — o CSV mais recente não é "
                        f"escrito há {quando}. As curvas abaixo são de um treino "
                        f"antigo. O treino a decorrer no servidor vê-se na vista "

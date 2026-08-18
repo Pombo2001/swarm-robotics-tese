@@ -60,7 +60,21 @@ def _pretty_title(f: str) -> str:
     if rest in SCEN_LABEL:
         bits.append(SCEN_LABEL[rest])
     elif rest:
-        bits.append(rest.replace("_", " ").title())
+        # O cenário pode estar colado a um prefixo que esta função não conhece:
+        # `painel_videos_none` dava «Painel Videos None» em dez figuras da
+        # galeria — e `none` é o Sandbox, o cenário de referência da tese. Um
+        # título que diz «None» parece um erro do gráfico quando é só do nome do
+        # ficheiro. Procura-se o cenário no FIM (chaves longas primeiro, senão
+        # `cooperative_door` engolia `cooperative_door_bypass`).
+        cen = next((c for c in sorted(SCEN_LABEL, key=len, reverse=True)
+                    if rest.endswith("_" + c)), None)
+        if cen:
+            cabeca = rest[:-len(cen) - 1].replace("_", " ").strip()
+            if cabeca:
+                bits.append(cabeca.title())
+            bits.append(SCEN_LABEL[cen])
+        else:
+            bits.append(rest.replace("_", " ").title())
     return " · ".join(bits) if bits else name
 
 
@@ -71,6 +85,52 @@ _section_title = theme.section_title
 
 def _url(session: str, filename: str) -> str:
     return f"/graficos/{session}/{filename}"
+
+
+def _opcoes_de_sessao(sessions):
+    """As campanhas do seletor, **as da tese primeiro**.
+
+    A galeria abria na campanha mais RECENTE por data — que a 18 de agosto é o
+    mapa grande, um cenário à parte cujos gráficos são de $0$ a $10$ recolhas.
+    Quem abrisse a vista via o resultado mais atípico do projeto como se fosse o
+    principal, e as sete campanhas que a dissertação cita ficavam a meio de uma
+    lista de 48 nomes de pasta.
+
+    A ordem passa a ser: as **canónicas** (as que a tese cita), depois as
+    exploratórias por data. O rótulo diz o que a pasta é — `mega_A1` não o diz.
+    """
+    canonicas, resto = [], []
+    for s in sessions:
+        rot, canon = data.rotulo_campanha(s)
+        # A descrição diz o que a pasta é (cenário, execuções, data); o rótulo
+        # sozinho não distingue `mega_A1` de `mega_A2`, que são o braço com
+        # novidade adaptativa e o braço de controlo do mesmo cenário.
+        desc = data.condicao_da_campanha(s) or data.descricao_sessao(s)
+        etiqueta = "%s%s%s" % ("★ " if canon else "", rot,
+                               ("  ·  %s" % desc) if desc else "")
+        (canonicas if canon else resto).append((s, etiqueta))
+    # Entre as canónicas, a campanha final vem primeiro: é a que produz as
+    # tabelas da dissertação. O mapa composto vai para o fim das canónicas — é
+    # um cenário à parte, e abrir a galeria nele mostra o resultado mais atípico
+    # do projeto como se fosse o principal.
+    ordem = {"final_7d": 0, "eval_7d": 1, "mega_treino": 2, "mapa_grande": 9}
+    canonicas.sort(key=lambda sv: (ordem.get(sv[0], 5), sv[0]))
+    ordenadas = canonicas + resto
+    return {s: e for s, e in ordenadas}, (ordenadas[0][0] if ordenadas else None)
+
+
+# As comparações que valem a pena ver lado a lado, e porquê. Cada uma preenche
+# A e B de uma vez: escolher duas campanhas certas num seletor de 48 pastas
+# exige saber de cor o que cada nome significa — que é o problema que o painel
+# do melhor treino já resolvia para uma campanha só.
+COMPARACOES = (
+    ("Novidade adaptativa vs objetivo puro", "mega_A1", "mega_A2",
+     "o resultado central da QI6, a n=28: 28/28 execuções contra 15/28"),
+    ("Evolutivo vs PPO no Muro em U", "mega_A1", "mega_A3",
+     "o mesmo cenário, o mesmo n, o outro paradigma"),
+    ("Campanha final vs mapa composto", "final_7d", "mapa_grande",
+     "o que a composição de dificuldades degrada (QI7)"),
+)
 
 
 def build():
@@ -108,14 +168,35 @@ def build():
     with ui.column().classes("w-full gap-4 p-4"):
         with ui.card().classes(CARD):
             _section_title("photo_library", "Galeria de resultados")
+            opcoes, primeira = _opcoes_de_sessao(sessions)
             with ui.row().classes("w-full gap-2 no-wrap items-center mt-1"):
-                sess_a = ui.select(sessions, value=sessions[0], label="Sessão A") \
+                sess_a = ui.select(opcoes, value=primeira, label="Sessão A") \
                     .props("outlined dense").classes("flex-1")
-                sess_b = ui.select([NONE] + sessions, value=NONE, label="Sessão B (A/B)") \
+                opcoes_b = {NONE: NONE}
+                opcoes_b.update(opcoes)
+                sess_b = ui.select(opcoes_b, value=NONE, label="Sessão B (A/B)") \
                     .props("outlined dense").classes("flex-1")
-                tipos = ["Todos"] + sorted({data.graph_type(f) for f in data.list_pngs(sessions[0])})
+                tipos = ["Todos"] + sorted({data.graph_type(f)
+                                            for f in data.list_pngs(primeira)})
                 tipo = ui.select(tipos, value="Todos", label="Tipo") \
                     .props("outlined dense").classes("flex-1")
+
+            # Comparações prontas: um clique põe as duas campanhas certas nos
+            # seletores. Sem isto, ver o resultado central da QI6 lado a lado
+            # exigia saber que ele vive em `mega_A1` e `mega_A2`.
+            existentes = set(sessions)
+            prontas = [c for c in COMPARACOES
+                       if c[1] in existentes and c[2] in existentes]
+            if prontas:
+                with ui.row().classes("w-full gap-2 items-center mt-2 flex-wrap"):
+                    ui.label("Comparações que valem a pena:") \
+                        .classes("text-[11px] uppercase tracking-wide text-gray-500")
+                    for rot, a, b, porque in prontas:
+                        def _por(a=a, b=b):
+                            sess_a.value, sess_b.value = a, b
+                        ui.button(rot, on_click=_por) \
+                            .props("flat dense no-caps color=secondary") \
+                            .classes("text-[12px]").tooltip(porque)
             # Só em modo A/B. Por defeito a galeria mostra apenas os gráficos que
             # EXISTEM NAS DUAS sessões: cada fase do mega-treino treina um cenário
             # só, pelo que comparar duas quaisquer enchia o ecrã de "(não existe
@@ -124,6 +205,17 @@ def build():
                 .classes("mt-2").props("dense")
             so_pares.bind_visibility_from(sess_b, "value",
                                           backward=lambda v: v != NONE)
+            # ⚠️ Os dois lados são PNG independentes, cada um com o eixo que o
+            # matplotlib lhe deu: no par A1/A2 o eixo da esquerda vai a 80 e o da
+            # direita a 60, e as duas barras parecem mais próximas do que são.
+            # Quem compara alturas lê o gráfico errado; os números certos estão
+            # na tabela do melhor treino, aqui em cima.
+            aviso_escala = ui.label(
+                "As duas imagens são independentes — as escalas dos eixos podem "
+                "não ser as mesmas. Comparar os valores, não a altura das barras."
+            ).classes("text-[11px] text-amber-300/80 mt-1")
+            aviso_escala.bind_visibility_from(sess_b, "value",
+                                              backward=lambda v: v != NONE)
             # Das 1099 figuras da galeria, umas dezenas é que estão mesmo na
             # dissertação, e nada as distinguia: para mostrar uma a alguém era
             # preciso saber de cor quais entraram.

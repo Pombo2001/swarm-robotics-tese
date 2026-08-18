@@ -60,7 +60,7 @@ def _linha(d, melhor, destacar, ao_escolher=None):
             desc = data.descricao_sessao(d["campanha"])
             ui.label("%s%s" % (d["campanha"], " · " + desc if desc else "")) \
                 .classes("text-[10px] truncate").style(f"color:{theme.INK_MUTED}")
-        ui.label("%.1f" % d["recolhas"]).classes("text-sm mono-num font-bold w-16 text-right")
+        ui.label(theme.num(d["recolhas"])).classes("text-sm mono-num font-bold w-16 text-right")
         conv = ("%d/%d" % (d["convergentes"], d["runs"])
                 if d["convergentes"] is not None else "—")
         ui.label(conv).classes("text-[10px] mono-num w-12 text-right") \
@@ -108,7 +108,7 @@ def painel(campanha_atual=None, titulo="Qual foi o melhor treino, por cenário",
                             f"background:{_COR_ALGO.get(melhor['algo'], theme.INK_MUTED)}")
                         ui.label("%s · %s" % (melhor["algo"], rotulo)) \
                             .classes("text-xs flex-1 truncate")
-                        ui.label("%.1f rec/ep" % melhor["recolhas"]) \
+                        ui.label("%s rec/ep" % theme.num(melhor["recolhas"])) \
                             .classes("text-xs mono-num font-bold")
                 # Dentro: o ranking completo do cenário.
                 for d in linhas:

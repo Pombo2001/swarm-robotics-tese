@@ -136,3 +136,36 @@ if __name__ == "__main__":
         t()
     print("\n%d/%d testes de conteúdo do dashboard passaram ✅"
           % (len(TESTES), len(TESTES)))
+
+
+def test_os_numeros_do_dashboard_levam_virgula():
+    """PT-PT: `38,3`, não `38.3` — e não os dois no mesmo ecrã.
+
+    A 18 de agosto a vista Ciência mostrava «δ = +0.77» na linha abaixo de
+    «δ = +0,61», e a tabela por cenário dizia «38.3 rec/ep» ao lado de médias
+    com vírgula. Não é um erro de valor: é um ecrã que se lê a duas velocidades,
+    e este vai ser projetado numa defesa.
+
+    A formatação passou a sair do `theme.num()`. Este teste guarda a regra:
+    nenhuma vista volta a formatar um número decimal à mão.
+    """
+    import glob
+    import re as _re
+
+    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    padrao = _re.compile(r"(:\.\d+f\}|%\.\d+f)")
+    faltas = []
+    for f in sorted(glob.glob(os.path.join(raiz, "dashboard", "views", "*.py"))):
+        for n, linha in enumerate(open(f, encoding="utf-8").read().splitlines(), 1):
+            if not padrao.search(linha):
+                continue
+            # `.replace(".", ",")` na própria linha é a formatação à mão que já
+            # estava certa; `theme.num` é o caminho novo. As percentagens
+            # inteiras (`%.0f`) e as opacidades CSS (`{alfa:.3f}`) não são
+            # números que o leitor compare.
+            if ('replace(".", ",")' in linha or "theme.num" in linha
+                    or "%.0f" in linha or ":.0f}" in linha
+                    or "rgba" in linha or "alfa" in linha or "style" in linha):
+                continue
+            faltas.append("%s:%d %s" % (os.path.basename(f), n, linha.strip()[:70]))
+    assert not faltas, "números formatados com ponto decimal:\n" + "\n".join(faltas)

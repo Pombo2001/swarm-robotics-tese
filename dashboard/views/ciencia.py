@@ -115,12 +115,13 @@ def _comparison_html(metrics_a: dict, metrics_b: dict) -> str:
             return f"<span style='color:{theme.INK_MUTED}'>0</span>"
         col = "#0ca30c" if d > 0 else "#d03b3b"
         sign = "+" if d > 0 else "−"
-        return f"<span style='color:{col};font-weight:600'>{sign}{abs(d):.1f}{unit}</span>"
+        return (f"<span style='color:{col};font-weight:600'>{sign}"
+                f"{theme.num(abs(d))}{unit}</span>")
 
-    def cell(m, key, fmt):
+    def cell(m, key, casas=1):
         if m is None:
             return f"<span style='color:{theme.INK_MUTED}'>n/d</span>"
-        return fmt.format(m[key])
+        return theme.num(m[key], casas)
 
     th = (f"padding:6px 12px;text-align:center;border-bottom:1px solid {theme.BORDER};"
           f"font-weight:600;color:{theme.INK_SOFT};font-size:13px")
@@ -137,11 +138,11 @@ def _comparison_html(metrics_a: dict, metrics_b: dict) -> str:
             rows.append(
                 f"<tr>{scen_cell}"
                 f"<td style='{td};text-align:left;color:#e2e8f0'>{alg}</td>"
-                f"<td style='{td}'>{cell(ma, 'ptask', '{:.0f}%')}</td>"
-                f"<td style='{td}'>{cell(mb, 'ptask', '{:.0f}%')}</td>"
+                f"<td style='{td}'>{cell(ma, 'ptask', 0)}%</td>"
+                f"<td style='{td}'>{cell(mb, 'ptask', 0)}%</td>"
                 f"<td style='{td}'>{delta(ma['ptask'] if ma else None, mb['ptask'] if mb else None, '%')}</td>"
-                f"<td style='{td}'>{cell(ma, 'recolhas', '{:.1f}')}</td>"
-                f"<td style='{td}'>{cell(mb, 'recolhas', '{:.1f}')}</td>"
+                f"<td style='{td}'>{cell(ma, 'recolhas')}</td>"
+                f"<td style='{td}'>{cell(mb, 'recolhas')}</td>"
                 f"<td style='{td}'>{delta(ma['recolhas'] if ma else None, mb['recolhas'] if mb else None)}</td>"
                 f"</tr>")
     return (
@@ -178,7 +179,7 @@ def _cell(info: dict, algo: str = ""):
         if p < 40:
             ui.html('<span class="text-[11px] leading-tight" title="abaixo de 40% '
                     'de sucesso">▲ crítico</span>')
-        ui.label(f"{info['recolhas']:.1f} rec/ep").classes("text-xs opacity-80 leading-tight")
+        ui.label(f"{theme.num(info['recolhas'])} rec/ep").classes("text-xs opacity-80 leading-tight")
         ui.label(f"n={info['n']}").classes("text-[10px] opacity-50 leading-tight")
     delay = 0.15 + (_cell_seq % 24) * 0.04          # cascata pela grelha
     theme.js_diferido(f"var e=document.getElementById('{el_id}');"
@@ -256,10 +257,13 @@ def _megatreino_card():
             .classes("w-full rounded mt-3").style("background:#fff")
 
         if m3:
-            ui.label("Porta com Alternativa (M3): %s vs %s — %s, δ = %+.2f. %s"
+            # O δ leva vírgula como tudo o resto desta vista: escrevia-se
+            # «δ = +0.77» ao lado de «δ = +0,61» na linha de cima.
+            ui.label("Porta com Alternativa (M3): %s vs %s — %s, δ = %s. %s"
                      % (("%.1f" % m3["a"]["media"]).replace(".", ","),
                         ("%.1f" % m3["b"]["media"]).replace(".", ","),
-                        _p_legivel(m3["p"]), m3["delta"],
+                        _p_legivel(m3["p"]),
+                        ("%+.2f" % m3["delta"]).replace(".", ","),
                         m3.get("aviso", ""))) \
                 .classes("text-xs mt-2").style(f"color:{theme.INK_MUTED}")
 
@@ -334,7 +338,8 @@ def build():
                             .classes("w-full"):
                         rows = [{
                             "Cenário": r["Label"], "Par": f"{r['A']} vs {r['B']}",
-                            "p": f"{r['p_value']:.3g}", "δ Cliff": f"{r['cliffs_delta']:.2f}",
+                            "p": f"{r['p_value']:.3g}".replace(".", ","),
+                            "δ Cliff": theme.num(r['cliffs_delta'], 2, sinal=True),
                             "Sig.": "✓" if r["significant"] else "—", "Vencedor": r["winner"],
                         } for _, r in sig.iterrows()]
                         ui.table(rows=rows, columns=[
