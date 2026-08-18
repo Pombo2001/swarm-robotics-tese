@@ -2848,6 +2848,12 @@ FACTOS_REPETIDOS = [
                 r"pré-registo fixou"},
          {"re": r"abaixo do limiar de \$(\d+)\$ fixado antes dos dados"},
      ]},
+    {"rot": "Mapa composto — o orçamento que não chegou ao planalto",
+     "sitios": [
+         {"re": r"Em \$(\d+)\$ das \$(\d+)\$ execuções o melhor \\textit\{fitness\}"},
+         {"re": r"em \$(\d+)\$ das \$(\d+)\$ execuções o melhor\s*\n?\s*"
+                r"\\textit\{fitness\} ainda subia"},
+     ]},
     {"rot": "Mapa composto — M1, o teste entre paradigmas",
      "sitios": [
          {"re": r"GNN \\emph\{vs\.\}\\ PPO: \$p = ([\d{},]+)\$, \$\\delta = \+"
