@@ -2767,6 +2767,40 @@ FACTOS_REPETIDOS = [
          {"re": r"com significância \(\$([\d{},]+)\$ vs\.\\ \$([\d{},]+)\$; \$p="
                 r"([\d{},]+)\$, \$\\delta=\+([\d{},]+)\$\)"},
      ]},
+    # ── O mapa composto, recontado fora da sua secção (18 ago) ──────────────
+    # A secção do mapa grande entra por `\input` e vive noutro ficheiro; os seus
+    # resultados são recontados na Discussão Global (Cap. 6), na resposta à QI7
+    # e nas Conclusões (Cap. 7). É o caso com mais risco de eco desatualizado da
+    # dissertação: o texto de fora foi escrito depois, à pressa, e num ficheiro
+    # diferente daquele onde os números são produzidos.
+    {"rot": "Mapa composto — o zero da transferência (F1)",
+     "sitios": [
+         {"re": r"o que perfaz\s*\n?\s*\$(\d+)\$ células a zero em \$(\d+)\$ "
+                r"episódios"},
+         {"re": r"as \$(\d+)\$ células do estudo de transferência ficam todas a "
+                r"\$0\{,\}00\$ recolhas por episódio, em \$(\d+)\$ episódios"},
+     ]},
+    {"rot": "Mapa composto — quem resolve o mapa com treino nativo",
+     "sitios": [
+         {"re": r"GNN em (\d+)/(\d+), das quais \d+ a \$100\\%\$ de sucesso; PPO "
+                r"em (\d+)/(\d+),.{0,60}?SAC em (\d+)/(\d+),"},
+         {"re": r"em \$(\d+)\$ das \$(\d+)\$ execuções, contra \$(\d+)\$ de \$(\d+)"
+                r"\$ do PPO e \$(\d+)\$ de \$(\d+)\$ do SAC"},
+     ]},
+    {"rot": "Mapa composto — o limiar fixado antes dos dados (três sítios)",
+     "sitios": [
+         {"re": r"abaixo do limiar de \$(\d+)\$ que\s*\n?\s*o pré-registo fixou"},
+         {"re": r"abaixo do limiar de \$(\d+)\$ execuções convergentes que o "
+                r"pré-registo fixou"},
+         {"re": r"abaixo do limiar de \$(\d+)\$ fixado antes dos dados"},
+     ]},
+    {"rot": "Mapa composto — M1, o teste entre paradigmas",
+     "sitios": [
+         {"re": r"GNN \\emph\{vs\.\}\\ PPO: \$p = ([\d{},]+)\$, \$\\delta = \+"
+                r"([\d{},]+)\$"},
+         {"re": r"\(\$p = ([\d{},]+)\$ e \$\\delta = \+([\d{},]+)\$ entre o "
+                r"evolutivo"},
+     ]},
     {"rot": "Planalto — células ainda a subir no fim do orçamento",
      "sitios": [
          {"re": r"\\textbf\{(\d+) das (\d+) combina[çc][õo]es ainda subiam de "
@@ -2788,6 +2822,18 @@ def verificar_coerencia_interna():
 
     with open(MAIN_TEX, encoding="utf-8") as f:
         tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+
+    # A secção do mapa composto entra na tese por `\input` e o seu texto não está
+    # dentro do `main.tex` — mas é tese impressa como o resto, e os factos dela
+    # são recontados na Discussão Global e nas Conclusões. Sem esta junção, os
+    # sítios que vivem lá dentro apareceriam como «não encontrei a frase». As
+    # linhas do ficheiro incluído contam-se a partir do fim do `main.tex`; é por
+    # isso que aparecem com números altos no relatório.
+    incluido = os.path.join(os.path.dirname(MAIN_TEX), "seccao_mapa_grande.tex")
+    if re.search(r"^\s*\\input\{seccao_mapa_grande\}", tex, re.M) and \
+            os.path.exists(incluido):
+        with open(incluido, encoding="utf-8") as f:
+            tex += "\n" + re.sub(r"(?<!\\)%[^\n]*", "", f.read())
 
     problemas, conferidos, repetidos = [], 0, 0
     for facto in FACTOS_REPETIDOS:

@@ -1500,6 +1500,18 @@ Por fim, uma ablação exploratória do próprio anilamento --- duas durações 
 
 As restantes três células exploratórias do pré-registo respondem no mesmo sentido, e reportam-se aqui por inteiro --- o pré-registo compromete-se a divulgar \emph{todas} as fases, e não apenas as que confirmam a hipótese. No \textbf{Sandbox}, o cenário em que o controlador evolutivo mais degenera, a dosagem adaptativa em $21$ execuções eleva a convergência de $5/7$ ($71\%$) do objetivo puro para $\mathbf{20/21}$ ($95\%$), com $55{,}7 \pm 20{,}1$ contra $38{,}3 \pm 31{,}0$ recolhas/ep ($p = 0{,}14$, $\delta = +0{,}39$): a assimetria das dimensões amostrais e a variância do braço objetivo mantêm o teste longe do limiar convencional, mas a direção do efeito e a queda da dispersão são as previstas --- a novidade compra descoberta também onde não há paredes que canalizem o \textit{homing}. Na \textbf{Perceção Cooperativa}, onde a pergunta era se o $5/7$ observado a 19 de julho representava um custo real da pressão por novidade, $21$ execuções mostram que não representava: $17/21$ ($81\%$) e $17{,}5 \pm 9{,}3$ contra $6/7$ ($86\%$) e $18{,}98 \pm 8{,}7$ do objetivo ($p = 1{,}00$, $\delta = +0{,}01$) --- o mecanismo é neutro onde a deceção não morde, que é exatamente o que o anilamento promete. Por fim, a célula do \textbf{SAC no Gargalo} repetiu com $21$ execuções a combinação que a campanha final resolvera em apenas $5/7$: com o orçamento reduzido de $48$ minutos por execução fixado no pré-registo para esta célula, converge em $7/21$ ($33\%$), com $21{,}3 \pm 37{,}5$ recolhas/ep. O valor \emph{não} é comparável com os $41{,}4 \pm 36{,}8$ da campanha final, que dispôs de $195$ minutos por execução; serve para confirmar, com o triplo das execuções, o carácter tudo-ou-nada já descrito na Secção~\ref{sec:res_boxplots}.
 
+% ── A QI7 (mapa composto) vive AQUI, no capítulo dos Resultados ──────────────
+% Esteve, entre 17 e 18 de agosto, dentro do capítulo das Conclusões: era onde o
+% esqueleto da QI7 tinha sido preparado a 6 de agosto, e descomentar ali era o
+% caminho mais curto no dia em que os dados chegaram. Mas a secção traz
+% motivação, geometria, protocolo, resultados, discussão e limitações próprias —
+% é uma secção de resultados, e o `\label` sempre o disse (`sec:res_...`). Fica
+% a seguir à do Novelty e antes da escalabilidade, que é o sítio que o cabeçalho
+% do próprio `seccao_mapa_grande.tex` indicava; assim a Discussão Global
+% (Secção~\ref{sec:res_discussao}), que fecha o capítulo, já a tem em cima da
+% mesa em vez de a anteceder.
+\input{seccao_mapa_grande}
+
 \section{Análise de Escalabilidade (Zero-Shot Transfer)}
 \label{sec:res_scale}
 Para além do desempenho de tarefa, é na \textbf{escalabilidade} que reside o contributo distintivo do controlador evolutivo --- e a justificação arquitetural da abordagem por atenção sobre grafo. Avaliou-se a transferência, \emph{sem qualquer retreino}, da política aprendida com $N=20$ agentes para enxames de $N \in \{10, 50, 100\}$ --- e, ao contrário do que é prática comum na literatura (onde a escalabilidade, quando é medida, se limita a arenas abertas), a bateria cobre \textbf{os sete cenários}, incluindo os labirintos e as tarefas cooperativas. Em cada célula (cenário $\times$ dimensão) correram-se 20 episódios determinísticos com o modelo campeão da campanha final.
@@ -1642,6 +1654,8 @@ A leitura da tabela desfaz a narrativa simples de um paradigma dominante. O cont
 
 \paragraph{Robustez.} Perante falhas de 10\% dos agentes, todos os paradigmas exibem resiliência elevada (retenção de 92--106\%, Secção~\ref{sec:res_robustez}), sem o colapso que a hipótese poderia antecipar para o controlador estático --- o \textit{parameter sharing} confere redundância funcional transversal.
 
+\paragraph{Composição de dificuldades.} Cada um dos sete cenários isola uma dificuldade; o oitavo compõe quatro delas num só labirinto, quatro vezes maior (Secção~\ref{sec:res_mapa_grande}), e é aí que o quadro acima encontra o seu limite. Sem retreino, nada transfere: as $84$ células do estudo de transferência ficam todas a $0{,}00$ recolhas por episódio, em $1680$ episódios, e três condições de controlo excluem que a causa seja a escala da observação, os obstáculos dispersos ou as dimensões associadas à porta. Com treino nativo no mapa, o controlador evolutivo é o único que o resolve --- em $4$ das $21$ execuções, contra $0$ de $21$ do PPO e $0$ de $21$ do SAC ---, abaixo do limiar de $15$ execuções convergentes que o pré-registo fixou antes dos dados. Duas leituras se somam ao que precede. A primeira é sobre a \emph{forma} do resultado e não sobre a sua média: as execuções que resolvem o mapa fazem-no com magnitude comparável entre si e as restantes ficam a zero, ou seja, a composição de dificuldades degrada a \textbf{fiabilidade} com que se aprende, não o desempenho de quem aprende --- é a assinatura bimodal do Muro em U, à escala de um mapa com quatro dificuldades encadeadas. A segunda é sobre o alcance dos eixos de escolha mapeados nesta secção: eles valem no regime em que uma dificuldade domina de cada vez; composta a dificuldade, a diferença entre paradigmas ($p = 0{,}3058$ e $\delta = +0{,}19$ entre o evolutivo e cada um dos métodos de gradiente) torna-se menor do que a diferença entre execuções do \emph{mesmo} paradigma. É a fiabilidade do treino, e não a escolha do paradigma, que passa a ser o problema dominante --- e é também a razão pela qual a dosagem adaptativa da novidade, que é o mecanismo que nesta dissertação demonstrou comprar fiabilidade, é o candidato mais imediato a trabalho futuro neste mapa.
+
 \paragraph{Veredicto.} A hipótese confirma-se apenas \emph{parcialmente}, e o quadro final é mais rico do que o antecipado. Com o desenho adequado da \textit{fitness}, o controlador evolutivo com atenção sobre grafo deixou de ser o elo fraco na tarefa: é estatisticamente superior aos métodos de gradiente em três dos sete cenários, indistinguível do melhor deles em mais dois, e é o único a escalar para dimensões de enxame não vistas. Os métodos de gradiente preservam duas vantagens sólidas: a \textbf{fiabilidade em espaço aberto} (onde o evolutivo ocasionalmente degenera) e a \textbf{eficiência computacional} ($\approx 8\times$ menos núcleos-hora por \textit{run}). O resultado mais valioso para a engenharia de enxames não é eleger um vencedor, mas mapear estes eixos de escolha --- estrutura do cenário, variabilidade da dimensão do enxame e orçamento de cómputo --- e assinalar o resultado que fecha o quadro: a exploração fiável sob deceção espacial (Muro U), que nenhum dos três algoritmos base resolveu de forma consistente, só cedeu à hibridização com pressão por novidade ($7/7$ \textit{runs}, Secção~\ref{sec:res_novelty}) --- um mecanismo que, com peso fixo, degrada o desempenho onde o gradiente da tarefa já basta, mas cuja \textbf{dosagem adaptativa} (campanha pré-registada, mesma secção) elimina esse custo mantendo o ganho, reforçando a tese central de que a escolha \emph{e a dosagem} dos ingredientes de treino devem responder à estrutura do cenário.
 
 % --- CAPÍTULO 7 ---
@@ -1691,23 +1705,12 @@ Retomam-se as questões de investigação enunciadas na Secção~\ref{sec:questo
 
 \end{description}
 
-% ── A QI7 (mapa grande) entra AQUI, se o F2 fechar antes de 22 ago ───────────
-% A secção está escrita e é a última coisa a entrar na tese; descomentar a linha
-% do \input é tudo o que é preciso do lado do LaTeX. Ensaiado a 6 ago com a
-% secção incluída: compila em 129 páginas (+8), 0 referências indefinidas, 0
-% overfull e 0 floats grandes demais — o que falta a 16 ago é preencher os cinco
-% \PORPREENCHER e escolher UMA das três leituras, não descobrir problemas.
-%
-% Os outros TRÊS sítios onde a QI7 tem de aparecer estão todos escritos em
-% comentário, nos três desfechos, para que nesse dia seja escolher e descomentar:
-%   1. a PERGUNTA, na lista de questões (Secção~\ref{sec:questoes_investigacao});
-%   2. a RESPOSTA, no fim da lista acima (aqui em baixo);
-%   3. uma frase no Resumo e outra no Abstract.
-%
-% Se o F2 NÃO fechar a tempo, fica tudo como está — a regra 4 dos compromissos de
-% reporte do pré-registo manda-o para a defesa, e a tese está completa sem ele.
-%
-\input{seccao_mapa_grande}
+% A QI7 fechou a 17 de agosto e está respondida acima. A SECÇÃO que a sustenta
+% não vive aqui: está no capítulo dos Resultados, a seguir à do Novelty (ver o
+% comentário junto a \ref{sec:res_scale}). Este era o sítio onde o esqueleto
+% dela tinha sido preparado a 6 de agosto, e foi onde entrou no dia em que os
+% dados chegaram; mudou de capítulo a 18 de agosto, sem uma linha do texto dela
+% ser alterada.
 
 \section{Limitações do Estudo}
 \label{sec:limitacoes}

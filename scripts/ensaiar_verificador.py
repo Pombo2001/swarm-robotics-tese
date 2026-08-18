@@ -211,6 +211,22 @@ MUTACOES = [
     ("eco da QI6: o p de M3 (0,0016 -> 0,0026)",
      "($80{,}9$ vs.\\ $63{,}0$; $p=0{,}0016$, $\\delta=+0{,}77$)",
      "($80{,}9$ vs.\\ $63{,}0$; $p=0{,}0026$, $\\delta=+0{,}77$)", "coerencia"),
+    # ── Os ecos do mapa composto (18 ago) ───────────────────────────────────
+    # A secção do mapa entra por `\input` e vive noutro ficheiro: os números
+    # dela são recontados na Discussão Global e nas Conclusões, e são os mais
+    # novos da dissertação. Estas mutações estragam o eco, nunca a secção.
+    ("eco do mapa: as células do F1 (84 -> 82)",
+     "as $84$ células do estudo de transferência",
+     "as $82$ células do estudo de transferência", "coerencia"),
+    ("eco do mapa: quem resolve com treino nativo (4/21 -> 5/21)",
+     "em $4$ das $21$ execuções, contra $0$ de $21$ do PPO",
+     "em $5$ das $21$ execuções, contra $0$ de $21$ do PPO", "coerencia"),
+    ("eco do mapa: o limiar pré-registado (15 -> 12)",
+     "abaixo do limiar de $15$ execuções convergentes",
+     "abaixo do limiar de $12$ execuções convergentes", "coerencia"),
+    ("eco do mapa: o δ de M1 (0,19 -> 0,29)",
+     "$\\delta = +0{,}19$ entre o evolutivo",
+     "$\\delta = +0{,}29$ entre o evolutivo", "coerencia"),
 ]
 
 VERIFICADORES = {
@@ -235,6 +251,16 @@ def main():
     tmp = os.path.join(tempfile.gettempdir(), "main_mutado_ensaio.tex")
     V.MAIN_TEX = tmp
     shutil.copy(os.path.join(RAIZ, "Tese", "main.tex"), tmp)
+    # A coerência interna junta ao `main.tex` a secção que este inclui por
+    # `\input`, e procura-a AO LADO dele. Sem esta cópia, os factos do mapa
+    # composto ficariam sem um dos sítios durante o ensaio — e o controlo
+    # acusaria quatro problemas que a tese não tem.
+    incluido = os.path.join(RAIZ, "Tese", "seccao_mapa_grande.tex")
+    tmp_incluido = os.path.join(os.path.dirname(tmp), "seccao_mapa_grande.tex")
+    if os.path.exists(incluido):
+        shutil.copy(incluido, tmp_incluido)
+    else:                                                    # pragma: no cover
+        tmp_incluido = None
 
     print("=" * 72)
     print("ENSAIO: a tese estragada de propósito, uma mutação de cada vez")
@@ -265,6 +291,8 @@ def main():
             falhas += 1
 
     os.remove(tmp)
+    if tmp_incluido and os.path.exists(tmp_incluido):
+        os.remove(tmp_incluido)
     print()
     if falhas or any(base.values()):
         print("%d de %d mutações NÃO foram apanhadas — há buracos."
