@@ -2367,7 +2367,7 @@ AFIRMACOES_NOV = [
     },
     {
         "rot": "Controlo de orçamento — objetivo puro a 390 min",
-        "re": r"\$(?P<conv>\d+)/7\$ \\textit\{runs\}, \$(?P<m>[\d{},]+) \\pm "
+        "re": r"\$(?P<conv>\d+)/7\$ (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)), \$(?P<m>[\d{},]+) \\pm "
               r"(?P<s>[\d{},]+)\$",
         "A": ("adapt_A2", "u_wall"), "B": None, "unilateral": False,
     },
@@ -2652,7 +2652,7 @@ FACTOS_REPETIDOS = [
          {"re": r"hibridiza[çc][ãa]o elevou a taxa.{0,120}?com \$([\d{},]+) "
                 r"\\pm ([\d{},]+)\$ recolhas/ep contra \$([\d{},]+) \\pm "
                 r"([\d{},]+)\$ do objetivo puro"},
-         {"re": r"7/7 \\textit\{runs\} a 100\\% de sucesso e \$([\d{},]+) \\pm "
+         {"re": r"7/7 (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) a 100\\% de sucesso e \$([\d{},]+) \\pm "
                 r"([\d{},]+)\$ recolhas/ep, contra 3/7 e \$([\d{},]+) \\pm "
                 r"([\d{},]+)\$"},
      ]},
@@ -2665,9 +2665,9 @@ FACTOS_REPETIDOS = [
      ]},
     {"rot": "Adaptativo no Muro em U (T2, 195 min)",
      "sitios": [
-         {"re": r"\(T2\).{0,80}?\$7/7\$ \\textit\{runs\} a 100\\% e "
+         {"re": r"\(T2\).{0,80}?\$7/7\$ (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) a 100\\% e "
                 r"\$([\d{},]+) \\pm ([\d{},]+)\$"},
-         {"re": r"manteve os \$7/7\$ \\textit\{runs\} no Muro em U "
+         {"re": r"manteve os \$7/7\$ (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) no Muro em U "
                 r"\(\$([\d{},]+) \\pm ([\d{},]+)\$"},
      ]},
     {"rot": "Melhor bypass da dissertação (adaptativo, 390 min)",
@@ -2804,7 +2804,7 @@ FACTOS_REPETIDOS = [
      ]},
     {"rot": "QI6 — o controlo de orçamento continua bimodal",
      "sitios": [
-         {"re": r"\(390 min/\\textit\{run\}\) continua bimodal --- \$(\d+)/(\d+)\$"},
+         {"re": r"\(390 min/(?:\\\\textit\\{runs?\\}|execuç(?:ão|ões))\) continua bimodal --- \$(\d+)/(\d+)\$"},
          {"re": r"continua bimodal no Muro em U \(\$(\d+)/(\d+)\$\)"},
          {"re": r"continuou bimodal no Muro (?:em )?U \((\d+)/(\d+)\)"},
      ]},
@@ -3003,7 +3003,8 @@ def verificar_sandbox(tolerancia):
     # sinal. Verifica-se por construção: contam-se as execuções em cada
     # regime, e exige-se que os limites citados sejam mesmo o mínimo e o
     # máximo do grupo competitivo.
-    m = re.search(r"quatro dos sete \\textit\{runs\} convergem para políticas "
+    m = re.search(r"quatro d[oa]s sete (?:\\textit\{runs?\}|execuç(?:ão|ões)) "
+                  r"convergem para políticas "
                   r"competitivas \(([\d,]+) a ([\d,]+) recolhas/ep\), dois "
                   r"degeneram por completo \(\$<(\d+)\$ recolha/ep\) e um fica "
                   r"num regime intermédio \(([\d,]+) recolhas/ep, com sucesso "
@@ -3119,7 +3120,7 @@ def verificar_ptask_prosa(tolerancia):
 
     # ── o PPO é o mais consistente ─────────────────────────────────────────
     m = re.search(r"100\\% de sucesso em (\w+) dos sete cenários, com a menor "
-                  r"variância entre \\textit\{runs\} \(desvios padrão de "
+                  r"variância entre (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) \(desvios padrão de "
                   r"([\d,]+) a ([\d,]+) recolhas/ep fora do Muro (?:em )?U\)", tex)
     if m is None:
         problemas.append("PPO consistente: não encontrei a frase")

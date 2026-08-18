@@ -89,14 +89,14 @@ def main():
     # (rótulo na tese, cenário, algoritmo) — o padrão procura a fração junto ao
     # rótulo, para não apanhar um «5/7» de outro sítio.
     CASOS = [
-        (r"Sandbox: (\d)/(\d) \\textit\{runs\} funcionais", "none", "GNN",
+        (r"Sandbox: (\d)/(\d) (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) funcionais", "none", "GNN",
          "Sandbox GNN"),
         (r"Perceção Cooperativa: (\d)/(\d)\)", "cooperative_perception", "GNN",
          "Perceção Cooperativa GNN"),
-        (r"GNN (\d)/(\d) \\textit\{runs\}, PPO", "u_wall", "GNN", "Muro em U GNN"),
-        (r"\\textit\{runs\}, PPO (\d)/(\d), SAC", "u_wall", "PPO", "Muro em U PPO"),
+        (r"GNN (\d)/(\d) (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)), PPO", "u_wall", "GNN", "Muro em U GNN"),
+        (r"(?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)), PPO (\d)/(\d), SAC", "u_wall", "PPO", "Muro em U PPO"),
         (r"PPO \d/\d, SAC (\d)/(\d)\)", "u_wall", "SAC", "Muro em U SAC"),
-        (r"no Gargalo apenas (\d)/(\d) \\textit\{runs\} convergem", "bottleneck",
+        (r"no Gargalo apenas (\d)/(\d) (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) convergem", "bottleneck",
          "SAC", "Gargalo SAC"),
         (r"e no Muro (?:em )?U apenas (\d)/(\d)", "u_wall", "SAC", "Muro em U SAC (2.ª menção)"),
     ]
