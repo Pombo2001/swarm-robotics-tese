@@ -36,7 +36,7 @@
 % Marcador bem visível: se isto for compilado por engano com buracos, salta à vista.
 \providecommand{\PORPREENCHER}[1]{\textcolor{red}{\textbf{[POR PREENCHER: #1]}}}
 
-\section{Composição de dificuldades: o mapa grande}
+\section{Composição de dificuldades: o mapa composto}
 \label{sec:res_mapa_grande}
 
 \subsection{Motivação e questão}
@@ -57,7 +57,7 @@ modos de falha que os cenários isolados não revelam?
 A pergunta é a extensão natural da contribuição mais forte desta dissertação. A
 transferência \textit{Zero-Shot} para dimensões de enxame não vistas
 (Secção~\ref{sec:res_scale}) mostra invariância à \textbf{cardinalidade} do
-enxame; o mapa grande estende a mesma pergunta à \textbf{topologia} não vista. Se
+enxame; o mapa composto estende a mesma pergunta à \textbf{topologia} não vista. Se
 o controlador de grafo transferir, o argumento da representação passa de
 ``invariante a $N$'' a ``invariante a $N$ e robusto a composição''.
 
@@ -99,8 +99,8 @@ geometria do próprio simulador.
 
 \begin{figure}[H]
     \centering
-    \figresultado{0.9}{images/resultados/mapa_grande_planta.png}{Planta do mapa grande}
-    \caption[Planta do mapa composto]{Planta do mapa grande, lida da geometria do próprio simulador:
+    \figresultado{0.9}{images/resultados/mapa_grande_planta.png}{Planta do mapa composto}
+    \caption[Planta do mapa composto]{Planta do mapa composto, lida da geometria do próprio simulador:
       cinco zonas de oeste para este, $106$ obstáculos, ninho na câmara a este e
       caixa de \textit{spawn} a oeste. O beco em U da zona A tem a boca virada a
       oeste, para o lado de onde o enxame chega.}
@@ -267,8 +267,8 @@ uma execução particularmente má.
 \begin{figure}[!htbp]
     \centering
     \figresultado{0.74}{images/resultados/mapa_grande_rastos.png}{Percursos dos
-      agentes no mapa grande: GNN, PPO e SAC}
-    \caption[Percursos dos agentes no mapa grande, por controlador]{Percurso de
+      agentes no mapa composto: GNN, PPO e SAC}
+    \caption[Percursos dos agentes no mapa composto, por controlador]{Percurso de
       cada um dos $20$ agentes ao longo de um episódio completo ($2000$ passos),
       sobre a planta do mapa. Pontos brancos: posições iniciais; pontos cheios:
       posições finais. O controlador de grafo atravessa as cinco zonas e
