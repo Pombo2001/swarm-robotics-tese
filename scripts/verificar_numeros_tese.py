@@ -2414,6 +2414,16 @@ AFIRMACOES_NOV = [
         "unilateral": False, "conv_a_100": True,
     },
     {
+        # 18 ago: o `5/7` da Perceção Cooperativa que a célula exploratória do
+        # mega-treino foi responder. É um número da campanha de 19 de julho
+        # citado a meio de uma frase sobre outra campanha — o tipo de valor que
+        # ninguém regenera e que sobrevive a qualquer recálculo.
+        "rot": "Perceção Cooperativa — o 5/7 de 19 de julho",
+        "re": r"se o \$(?P<conv>\d+)/7\$ observado a 19 de julho",
+        "A": ("adapt_B1", "cooperative_perception"), "B": None,
+        "unilateral": False, "conv_a_100": True,
+    },
+    {
         "rot": "T4 — adaptativo vs peso fixo no Muro em U",
         "re": r"indistinguível no Muro em U \(\$p=(?P<p>[\d{},]+)\$\)",
         "A": ("adapt_A1", "u_wall"), "B": ("fixo_uwall", "u_wall"),
@@ -2844,6 +2854,37 @@ FACTOS_REPETIDOS = [
                 r"([\d{},]+)\$"},
          {"re": r"\(\$p = ([\d{},]+)\$ e \$\\delta = \+([\d{},]+)\$ entre o "
                 r"evolutivo"},
+     ]},
+    # ── Os números da QI6 que são ditos três e quatro vezes (18 ago) ────────
+    # A secção do Novelty conta a mesma história em camadas — comparação
+    # preliminar, campanhas com orçamento igualado, campanha adaptativa,
+    # mega-treino — e alguns números atravessam-nas todas. São os que ficam
+    # para trás quando uma camada é recalculada.
+    {"rot": "QI6 — o +26% da comparação preliminar (três sítios)",
+     "sitios": [
+         {"re": r"do objetivo puro --- \$\+(\d+)\\%\$, Wilcoxon"},
+         {"re": r"O ganho de \$\+(\d+)\\%\$ da comparação preliminar"},
+         {"re": r"desmascarando o \$\+(\d+)\\%\$ da comparação preliminar"},
+     ]},
+    {"rot": "QI6 — o objetivo puro na Porta com Alternativa (três sítios)",
+     "sitios": [
+         {"re": r"em magnitude --- \$([\d{},]+) \\pm ([\d{},]+)\$ contra"},
+         {"re": r"vs\.\\ \$([\d{},]+) \\pm ([\d{},]+)\$ \(\$p=0\{,\}32\$"},
+         {"re": r"superando o próprio objetivo puro \(\$([\d{},]+) \\pm "
+                r"([\d{},]+)\$\)"},
+     ]},
+    {"rot": "QI6 — o δ de T4 no bypass (quatro sítios)",
+     "sitios": [
+         {"re": r"\$\\delta=\+([\d{},]+)\$ --- com \$n=7\$"},
+         {"re": r"o \$\\delta = \+([\d{},]+)\$ de \(T4\) ficou à espera"},
+         {"re": r"pelo que o \$\\delta = \+([\d{},]+)\$ de \(T4\) --- que a \$n=7\$"},
+         {"re": r"no bypass \(\$77\{,\}2\$ vs\.\\ \$63\{,\}0\$; \$\\delta=\+"
+                r"([\d{},]+)\$\)"},
+     ]},
+    {"rot": "QI6 — o δ do peso fixo no bypass",
+     "sitios": [
+         {"re": r"\$\\delta = -([\d{},]+)\$: todas as execuções objetivas"},
+         {"re": r"em contraste direto com o \$\\delta=-([\d{},]+)\$ do peso fixo"},
      ]},
     {"rot": "Planalto — células ainda a subir no fim do orçamento",
      "sitios": [

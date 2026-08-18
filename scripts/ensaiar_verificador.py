@@ -290,6 +290,22 @@ MUTACOES = [
     ("forma do Sandbox: a execução intermédia (15,8 -> 25,8)",
      "regime intermédio (15,8 recolhas/ep",
      "regime intermédio (25,8 recolhas/ep", "sandbox"),
+    # ── Os números da QI6 ditos três e quatro vezes (18 ago) ────────────────
+    ("eco da QI6: o +26% desmascarado (26 -> 24)",
+     "O ganho de $+26\\%$ da comparação preliminar",
+     "O ganho de $+24\\%$ da comparação preliminar", "coerencia"),
+    ("eco da QI6: o objetivo puro no bypass (86,7 -> 85,7)",
+     "superando o próprio objetivo puro ($86{,}7 \\pm 2{,}0$)",
+     "superando o próprio objetivo puro ($85{,}7 \\pm 2{,}0$)", "coerencia"),
+    ("eco da QI6: o δ de T4 no mega-treino (0,59 -> 0,69)",
+     "o $\\delta = +0{,}59$ de (T4) ficou à espera",
+     "o $\\delta = +0{,}69$ de (T4) ficou à espera", "coerencia"),
+    ("eco da QI6: o δ do peso fixo em T3 (-1,00 -> -0,90)",
+     "em contraste direto com o $\\delta=-1{,}00$ do peso fixo",
+     "em contraste direto com o $\\delta=-0{,}90$ do peso fixo", "coerencia"),
+    ("o 5/7 da Perceção Cooperativa de 19 de julho (5 -> 6)",
+     "se o $5/7$ observado a 19 de julho",
+     "se o $6/7$ observado a 19 de julho", "novelty"),
 ]
 
 VERIFICADORES = {
