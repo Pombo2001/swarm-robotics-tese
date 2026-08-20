@@ -169,3 +169,42 @@ def test_os_numeros_do_dashboard_levam_virgula():
                 continue
             faltas.append("%s:%d %s" % (os.path.basename(f), n, linha.strip()[:70]))
     assert not faltas, "números formatados com ponto decimal:\n" + "\n".join(faltas)
+
+
+def test_a_defesa_mostra_a_resposta_inteira_a_cada_questao():
+    """Cada ecrã da Defesa mostra a resposta COMPLETA, não a primeira linha.
+
+    A vista lê as respostas do `main.tex` com uma expressão regular. Enquanto
+    todas as respostas couberam numa linha do `.tex`, um `(.+)` bastou; a da
+    QI7, escrita pelo `fechar_qi7.py` com o parágrafo mudado de linha, passou a
+    aparecer no ecrã como «Parcialmente, e ao preço» — meia frase, e é o ÚLTIMO
+    ecrã da apresentação.
+
+    O que se exige: uma resposta por questão perguntada, cada uma acabada em
+    ponto final e sem restos de LaTeX. É o mínimo que distingue uma frase
+    inteira de uma frase cortada a meio.
+    """
+    import sys
+    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if raiz not in sys.path:
+        sys.path.insert(0, raiz)
+    from dashboard.views import defesa
+
+    perguntas, respostas = defesa._questoes(), defesa._respostas()
+    assert perguntas, "nenhuma questão lida do main.tex"
+    faltam = sorted(set(perguntas) - set(respostas))
+    assert not faltam, "questões sem resposta na vista: %s" % faltam
+
+    curtas, cortadas, latex = [], [], []
+    for n, r in sorted(respostas.items()):
+        if len(r) < 80:
+            curtas.append("QI%d (%d caracteres): %s" % (n, len(r), r))
+        if not r.rstrip().endswith((".", "!", "?")):
+            cortadas.append("QI%d acaba em «%s»" % (n, r[-40:]))
+        if "\\" in r or "{" in r or "}" in r:
+            latex.append("QI%d: %s" % (n, r[:60]))
+    assert not curtas, "respostas curtas de mais (cortadas?):\n" + "\n".join(curtas)
+    assert not cortadas, "respostas sem pontuação final:\n" + "\n".join(cortadas)
+    assert not latex, "restos de LaTeX na resposta:\n" + "\n".join(latex)
+    print("OK  %d respostas inteiras na vista Defesa (a mais curta tem %d caracteres)"
+          % (len(respostas), min(len(r) for r in respostas.values())))

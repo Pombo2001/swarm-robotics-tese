@@ -124,10 +124,10 @@ def _status_card(icon: str, title: str, goto=None, view: str = ""):
 _CAMPANHAS = [
     ("Treinos locais no PC (rotina noturna, mai–jun)", 65),
     ("Treino 24h", 24), ("Treino 48h", 48), ("Treino 24h v2", 24),
-    ("Fase B (3 runs)", 45), ("GNN-48h", 48),
+    ("Fase B (3 execuções)", 45), ("GNN-48h", 48),
     ("Fim-de-semana (recompensa simplificada)", 90),
     ("Validações homing", 4), ("Treino 3 dias (GNN homing)", 68),
-    ("Novelty Search (bypass)", 10), ("Re-runs seed 2", 7),
+    ("Novelty Search (bypass)", 10), ("Repetições seed 2", 7),
     # julho em diante — as campanhas que sustentam a tese
     ("Campanha final de 7 dias", 168),
     ("Novelty de peso fixo", 30),
@@ -149,13 +149,13 @@ _CAMPANHAS = [
 _TIMELINE = [
     ("08 jun", "Acesso aos servidores ISCTE", "Treinos longos passam para a .14 (64 vCPU)."),
     ("09–14 jun", "Treinos 24h e 48h (baseline)", "PPO/SAC convergem; GNN colapsa nos labirintos."),
-    ("16–18 jun", "Fase B — 3 runs", "Variância estatística; boxplots reais."),
+    ("16–18 jun", "Fase B — 3 execuções", "Variância estatística; boxplots reais."),
     ("24–28 jun", "Recompensa simplificada", "Cura o reward hacking do PPO (Muro U 0→100%)."),
     ("28 jun", "Fitness de homing (GNN)", "O GNN come em labirintos pela primeira vez."),
     ("30 jun", "Novelty Search", "Ataque ao ótimo deceptive do bypass."),
     ("01 jul", "Treino de 3 dias fecha", "GNN come nos 7/7 cenários (números de treino)."),
-    ("02–09 jul", "Campanha final de 7 dias", "3 algos × 7 cenários × 7 runs = 147 treinos."),
-    ("10 jul", "Resultados fechados", "GNN 28/28 runs nos labirintos; Muro U bimodal p/ os 3."),
+    ("02–09 jul", "Campanha final de 7 dias", "3 algos × 7 cenários × 7 execuções = 147 treinos."),
+    ("10 jul", "Resultados fechados", "GNN 28/28 execuções nos labirintos; Muro U bimodal p/ os 3."),
     ("13 jul", "Revisão sistemática a sério", "883 registos → 58 estudos; só 1 compara os paradigmas."),
     ("18–19 jul", "Novelty adaptativo fecha", "Muro U 7/7 a 100%; bypass @390 = 88,7 — o melhor da tese."),
     ("19 jul", "Mega-treino de 1 mês", "u_wall n=28 nos 4 braços + ablação do anneal (megaA/megaB)."),
@@ -170,7 +170,7 @@ _TIMELINE = [
      "1680 episódios, 84 de 84 células a 0,00: as três causas alternativas excluídas. "
      "O zero mede transferência (o navegador geodésico faz 53 rec/ep no mesmo mapa)."),
     ("02 ago", "megaA concluído; F2 pronto",
-     "5 fases arquivadas. O F2 arranca a 3 ago com 21 runs por algoritmo (emenda 19)."),
+     "5 fases arquivadas. O F2 arranca a 3 ago com 21 execuções por algoritmo (emenda 19)."),
     ("03 ago", "Mega-treino fecha — e entra na tese",
      "12 de 12 fases sem falhas. No Muro em U a n=28, a dosagem adaptativa resolve "
      "28/28 execuções contra 15/28 do objetivo puro e 14/28 de cada método de "
@@ -185,13 +185,13 @@ _TIMELINE = [
      "27 h descartadas; relançado a 4 ago às 22:57 com o braço certo, e o script "
      "passa a escrever, reler e abortar se não bater."),
     ("05 ago", "A primeira recolha que o mapa composto alguma vez deu",
-     "Com o braço adaptativo, 4,75 recolhas à geração 140 (era 0,00 em dois runs "
+     "Com o braço adaptativo, 4,75 recolhas à geração 140 (era 0,00 em duas execuções "
      "completos do objetivo puro, guardados como controlo). O GNN fecha ~16 ago; "
      "o braço exploratório arranca sozinho quando os gradientes largarem a máquina."),
-    ("06 ago", "O mapa composto resolve-se num run e não no seguinte",
-     "O run que dava 4,75 fechou com 6,00 recolhas; o run 2 fechou a 0,00. É a "
+    ("06 ago", "O mapa composto resolve-se numa execução e não na seguinte",
+     "A execução que dava 4,75 fechou com 6,00 recolhas; a 2.ª fechou a 0,00. É a "
      "bimodalidade do Muro em U outra vez, agora no 8.º cenário — e é por isso "
-     "que M1 precisa dos 21 runs: a resposta vai ser uma PROPORÇÃO de execuções "
+     "que M1 precisa das 21 execuções: a resposta vai ser uma PROPORÇÃO de execuções "
      "que resolvem, não um «resolve». O estado deixa de ser escrito à mão: "
      "scripts/estado_f2.sh grava um instantâneo datado e as vistas leem-no."),
     ("07–10 ago", "O braço dos gradientes fecha — e fica três dias parado",
@@ -210,6 +210,25 @@ _TIMELINE = [
      "exploratório é cancelado: a n=3 não mexe no veredicto e competiria pelo "
      "CPU. Falta o eval_by_run do GNN para saber em quantas execuções, se "
      "alguma, o mapa chega a ser resolvido."),
+    ("16–17 ago", "A QI7 fecha com número, e é escrita na dissertação",
+     "O braço do GNN fecha as 21 execuções e a avaliação determinística responde "
+     "à pergunta que faltava: 4 de 21 resolvem o mapa (limiar 15) — negativo, "
+     "leitura (C), com a porta cooperativa aberta em 43% dos episódios do "
+     "evolutivo e 0% dos gradientes. Os três pré-registos são verificados a 29 "
+     "compromissos, e o achado é um braço pré-registado que nunca correu "
+     "(emenda 24)."),
+    ("18 ago", "Cinco defeitos estruturais, e nenhum era um número errado",
+     "A QI7 esteve quatro dias impressa ANTES da QI6 na lista das questões, e a "
+     "secção do mapa composto vivia dentro do capítulo das Conclusões — passa a "
+     "ser a 6.11, no fim dos Resultados. A Discussão Global, as Limitações e os "
+     "Contributos ganham o oitavo cenário. O ensaio de mutações sobe a 82, todas "
+     "apanhadas."),
+    ("20 ago", "As figuras que não se liam",
+     "Medido o fator de redução das 46 figuras do PDF: 23 chegavam ao papel com "
+     "menos de 4,5 pt. Vinte são regeradas mais pequenas e com fontes maiores; a "
+     "da robustez passa a três painéis empilhados. O 8.º cenário passa a "
+     "chamar-se «mapa composto» também no código, nas figuras e neste "
+     "dashboard."),
 ]
 
 

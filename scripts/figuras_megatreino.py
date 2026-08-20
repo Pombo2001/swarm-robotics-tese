@@ -88,9 +88,9 @@ def figura_uwall():
         "Muro em U — os quatro braços do mega-treino (n=%d por braço)" % n,
         caminho,
         ordem=BRACOS_UWALL, cores=CORES_UWALL, n_por_algo=n,
-        nota_extra=(" O braço objetivo é bimodal: os runs que resolvem fazem-no "
-                    "bem, e os que não resolvem ficam a zero — a média sozinha "
-                    "não descreve run nenhum."),
+        nota_extra=(" O braço objetivo é bimodal: as execuções que resolvem "
+                    "fazem-no bem, e as que não resolvem ficam a zero — a média "
+                    "sozinha não descreve execução nenhuma."),
     )
     print("  [v] %s" % os.path.relpath(caminho, BASE))
     return d

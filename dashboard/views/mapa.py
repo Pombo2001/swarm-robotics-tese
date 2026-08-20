@@ -89,6 +89,29 @@ def _veredicto_final():
     return m
 
 
+def _estado_na_dissertacao():
+    """A QI7 já está escrita no `.tex`? A frase da vista sai daqui, não à mão.
+
+    Duas condições, ambas lidas do `Tese/main.tex` e ambas necessárias: a
+    resposta à QI7 na secção das respostas, e a secção do mapa composto
+    incluída (ela viveu meses em comentário, e um `\\input` comentado não
+    imprime nada). Enquanto isto foi uma frase fixa, a vista pediu o
+    `fechar_qi7.py --escrever` durante três dias depois de a QI7 estar escrita.
+    """
+    tex_path = os.path.join(_RAIZ, "Tese", "main.tex")
+    if not os.path.exists(tex_path):
+        return "Falta escrever na dissertação: scripts/fechar_qi7.py --escrever."
+    vivas = [linha for linha in open(tex_path, encoding="utf-8").read().splitlines()
+             if not linha.lstrip().startswith("%")]
+    tem_resposta = any("\\item[QI7" in linha for linha in vivas)
+    tem_seccao = any("seccao_mapa_grande" in linha for linha in vivas)
+    if tem_resposta and tem_seccao:
+        return "Escrito na dissertação: secção do mapa composto e resposta à QI7."
+    if tem_seccao:
+        return "Secção escrita; falta a resposta à QI7: scripts/fechar_qi7.py --escrever."
+    return "Falta escrever na dissertação: scripts/fechar_qi7.py --escrever."
+
+
 def _limiar_projetado():
     """O limiar ainda é alcançável? Aritmética sobre o que já fechou.
 
@@ -135,13 +158,16 @@ def _limiar_projetado():
         # para não ter. O k final sai do `medir_f2()`, que é onde a regra vive.
         final = _veredicto_final()
         if final:
+            # O «falta escrever» era uma frase FIXA: continuou a pedir o
+            # `fechar_qi7.py --escrever` durante os três dias em que a QI7 já
+            # estava escrita, impressa e verificada. Passa a ser lida do
+            # `.tex`, como tudo o resto nesta vista.
             texto, cor = (
                 "QI7 FECHADA: %d execuções convergentes de %d na avaliação "
                 "determinística (limiar %d) ⇒ negativo, leitura (%s). O GNN é o "
-                "único que alguma vez resolve o mapa; PPO e SAC ficam a 0. "
-                "Falta escrever na dissertação: scripts/fechar_qi7.py --escrever."
+                "único que alguma vez resolve o mapa; PPO e SAC ficam a 0. %s"
                 % (final["max_convergentes"], final["n_runs"], final["limiar"],
-                   final["leitura"]), "#4ade80")
+                   final["leitura"], _estado_na_dissertacao()), "#4ade80")
     ui.label(texto).classes("text-xs mb-2").style(f"color:{cor}")
     ui.label("Projeção sobre o instantâneo de %s · scripts/projetar_limiar_f2.py"
              % p["medido_utc"]).classes("text-[10px] mb-2") \
@@ -152,21 +178,22 @@ def _texto_f2():
     """A linha do F2 nas fases, construída do instantâneo (nunca inventada)."""
     e = _estado_f2()
     if e is None:
-        return ("lançado a 3 ago (3 algoritmos × 21 runs, emenda 19); sem "
+        return ("lançado a 3 ago (3 algoritmos × 21 execuções, emenda 19); sem "
                 "instantâneo do servidor — correr scripts/estado_f2.sh")
     g, n = e.get("grad", {}), e.get("gnn", {})
     prev = g.get("runs_previstos") or 21
     partes = [
-        "PPO %s/%s runs" % (g.get("ppo_runs_concluidos", "?"), prev),
+        "PPO %s/%s execuções" % (g.get("ppo_runs_concluidos", "?"), prev),
         "SAC %s/%s" % (g.get("sac_runs_concluidos", "?"), prev),
-        "GNN adaptativo %s/%s runs fechados"
+        "GNN adaptativo %s/%s execuções fechadas"
         % (n.get("fechados", "?"), n.get("runs_previstos") or prev),
     ]
     fechados, com = n.get("fechados", 0), n.get("fechados_com_recolha", 0)
     if fechados:
-        # O número que interessa e que nenhuma frase dizia: em quantos runs o
-        # mapa composto é RESOLVIDO. Um run com 6 recolhas e outro com 0 não é
-        # «o mapa composto foi resolvido» — é uma proporção, e é ela que M1 mede.
+        # O número que interessa e que nenhuma frase dizia: em quantas
+        # execuções o mapa composto é RESOLVIDO. Uma execução com 6 recolhas e
+        # outra com 0 não é «o mapa composto foi resolvido» — é uma proporção, e
+        # é ela que M1 mede.
         partes.append("%d de %d com recolha (%s)"
                       % (com, fechados,
                          ", ".join(theme.num(r["recolhas"], 2)
@@ -177,10 +204,25 @@ def _texto_f2():
 
 
 def _cor_f2():
+    """Verde quando corre — e também quando ACABOU.
+
+    A cor era `verde se tmux_vivos else laranja`, o que servia enquanto a
+    campanha estava viva: parada = alguma coisa a precisar de atenção. Fechadas
+    as 21 execuções dos três braços, o F2 ficou laranja por baixo de um F0 e um
+    F1 verdes, a dizer «pendente» sobre a campanha que respondeu à QI7.
+    """
     e = _estado_f2()
     if e is None:
         return theme.INK_MUTED
-    return "#4ade80" if e.get("tmux_vivos") else "#ffb020"
+    if e.get("tmux_vivos"):
+        return "#4ade80"
+    g, n = e.get("grad", {}), e.get("gnn", {})
+    prev = g.get("runs_previstos") or 21
+    prev_gnn = n.get("runs_previstos") or prev
+    concluido = (g.get("ppo_runs_concluidos", 0) >= prev
+                 and g.get("sac_runs_concluidos", 0) >= prev
+                 and n.get("fechados", 0) >= prev_gnn)
+    return "#4ade80" if concluido else "#ffb020"
 
 
 def _carregar():
@@ -282,8 +324,9 @@ def _painel_f2():
     `projetar_limiar_f2.py` cometeu e que se corrigiu a 13 ago — continuam
     separadas, cada uma com a sua régua.
 
-    Escrever isto na dissertação continua a ser um ato à parte
-    (`fechar_qi7.py --escrever`), e a vista só o lembra.
+    Escrever isto na dissertação é um ato à parte (`fechar_qi7.py --escrever`).
+    A vista diz em que pé está — lendo o `.tex`, não uma frase fixa: a QI7 foi
+    escrita a 17 de agosto e o painel continuou a pedir que a escrevessem.
     """
     r = data.f2_resultados()
     if not r:

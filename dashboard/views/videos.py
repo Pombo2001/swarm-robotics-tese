@@ -45,7 +45,13 @@ def _metric_chip(session: str, algo: str, scenario: str):
         ui.label(f"{p:.0f}% · {theme.num(info['recolhas'])} rec/ep").classes("text-xs") \
             .style(f"color:{color};font-weight:600")
         if info.get("convergentes") is not None:
-            ui.label("(%d/%d execuções)" % (info["convergentes"], info["runs"])) \
+            # «a 100%» não é enfeite: esta contagem são as execuções em que
+            # TODOS os episódios têm sucesso, e a dissertação, no mapa composto,
+            # conta outra coisa — as execuções com pelo menos uma recolha (4 de
+            # 21). Sem a qualificação, o cartão dizia «2/21 execuções» ao lado
+            # de um texto que diz 4, e as duas contagens estão ambas certas.
+            ui.label("(%d/%d execuções a 100%%)"
+                     % (info["convergentes"], info["runs"])) \
                 .classes("text-[10px]").style(f"color:{theme.INK_MUTED}")
 
 

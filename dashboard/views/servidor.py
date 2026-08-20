@@ -159,7 +159,7 @@ def _eta_block(eta: dict | None, training: bool):
             if eta.get("eta"):
                 _info("flag", "Fim estimado", _fmt_dt(eta["eta"]) + " (servidor)")
             if eta.get("runs") and eta.get("cenarios") and eta.get("algos"):
-                cfg = (f"{eta['runs']} runs × {eta['cenarios']} cenários × "
+                cfg = (f"{eta['runs']} execuções × {eta['cenarios']} cenários × "
                        f"{len(eta['algos'])} algos ({'/'.join(eta['algos'])})")
                 _info("tune", "Plano", cfg)
             if pct is not None:
@@ -179,7 +179,7 @@ def _eta_block(eta: dict | None, training: bool):
             # tempo decorrido) — antes do 1º treino fechar não há ritmo.
             ui.label("⏳ 1º treino da campanha ainda a decorrer — a estimativa de fim "
                      "aparece quando ele fechar (é calculada pelo ritmo real, não por "
-                     "tempos teóricos). Com runs de 195 min, conta ~3h15 até à 1ª estimativa.") \
+                     "tempos teóricos). Com execuções de 195 min, conta ~3h15 até à 1ª estimativa.") \
                 .classes("text-xs text-amber-200 mt-1")
         elif not training:
             ui.label("Sem treino ativo — a estimativa refere o último plano registado.") \

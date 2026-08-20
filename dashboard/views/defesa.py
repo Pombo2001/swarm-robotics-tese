@@ -43,7 +43,7 @@ def _estado_f2_curto():
     n, g = e.get("gnn", {}), e.get("grad", {})
     if not e.get("tmux_vivos"):
         return "F2 sem sessões vivas em %s" % e.get("medido_utc", "?")
-    return ("F2 a correr em %s: PPO %s/%s runs, GNN %s de %s runs fechados com "
+    return ("F2 a correr em %s: PPO %s/%s execuções, GNN %s de %s execuções fechadas com "
             "recolha" % (e.get("medido_utc", "?"), g.get("ppo_runs_concluidos", "?"),
                          g.get("runs_previstos", "?"),
                          n.get("fechados_com_recolha", "?"), n.get("fechados", "?")))
@@ -125,14 +125,25 @@ def _questoes():
 
 
 def _respostas():
-    """{n: resposta} da secção «Resposta às Questões de Investigação»."""
+    """{n: resposta} da secção «Resposta às Questões de Investigação».
+
+    A resposta vai do fecho do `\\item[...]` até ao `\\item` seguinte — e não
+    até ao fim da linha. As respostas às QI1-QI6 estão escritas numa linha só e
+    o `(.+)` de antes servia-as por acaso; a da QI7, escrita pelo
+    `fechar_qi7.py` com o parágrafo mudado de linha, aparecia na vista da Defesa
+    como **«Parcialmente, e ao preço»** — meia frase, no último ecrã, que é o
+    que o júri lê no fim. Ver `test_dashboard_conteudo.py`, que passou a exigir
+    que cada resposta acabe em ponto final.
+    """
     if not os.path.exists(MAIN_TEX):
         return {}
     tex = open(MAIN_TEX, encoding="utf-8").read()
     i = tex.find("\\label{sec:resposta_qi}")
     bloco = tex[i:tex.find("\\section{Limitações", i)] if i >= 0 else ""
     saida = {}
-    for m in re.finditer(r"\\item\[QI(\d) --- ([^\]]*)\]\s*(.+)", bloco):
+    padrao = (r"\\item\[QI(\d) --- ([^\]]*)\]\s*(.+?)"
+              r"(?=\\item\[QI|\\end\{description\}|\\end\{itemize\}|\Z)")
+    for m in re.finditer(padrao, bloco, re.DOTALL):
         saida[int(m.group(1))] = _limpar(m.group(3))
     return saida
 

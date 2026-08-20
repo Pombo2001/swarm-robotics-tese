@@ -16,9 +16,9 @@ from ..jobs import Job, JobQueue
 # Presets: nome -> (algo, cenários, minutos, runs, eval_episodes, ícone, descrição)
 PRESETS = {
     "Rápido":  ("PPO",   ["none"],                   5,  1, 10, "flash_on",
-                "1 run PPO no Sandbox — fumo em ~5 min"),
+                "1 execução PPO no Sandbox — fumo em ~5 min"),
     "Tour":    ("GNN",   list(config.SCENARIO_KEYS), 15, 3, 20, "tour",
-                "GNN em todos os cenários, 3 runs curtos"),
+                "GNN em todos os cenários, 3 execuções curtas"),
     "Noturna": ("Todos", list(config.SCENARIO_KEYS), 60, 5, 20, "nights_stay",
                 "Pipeline completo — deixar a correr de noite"),
 }

@@ -87,8 +87,12 @@ def _robustez_option(table: dict) -> dict:
         series[0]["markLine"] = {
             "silent": True, "symbol": "none",
             "lineStyle": {"color": theme.AXIS_LINE, "type": "dashed"},
+            # `insideStartTop`: por omissão o ECharts escreve a etiqueta no FIM
+            # da linha, encostada à margem direita da grelha — e ela saía do
+            # gráfico, cortada a meio do «100» («10(»). No início, cabe.
             "data": [{"yAxis": 100,
                       "label": {"formatter": "100% · imune",
+                                "position": "insideStartTop",
                                 "color": theme.INK_MUTED, "fontSize": 12}}]}
     base = theme.echart_chrome(y_nome="Retenção (%)", rotacao_x=18)
     base["xAxis"]["data"] = labels
