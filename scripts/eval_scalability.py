@@ -72,27 +72,53 @@ def eval_at_size(algo, model, base_config, scenario, num_agents, n_episodes):
 
 
 def plot_scalability(df, scenario, label, sizes):
-    """Gera o PNG a partir do DataFrame (mesmo formato do CSV escalabilidade_*.csv)."""
-    fig, ax = plt.subplots(figsize=(10, 6))
+    """Gera o PNG a partir do DataFrame (mesmo formato do CSV escalabilidade_*.csv).
+
+    A figura é desenhada em 8x5 polegadas (e não 10x6): impressa a 0,95 da
+    largura do texto, a redução fica em ~0,75, pelo que os 13 pt do eixo chegam
+    à página com ~10 pt. Com 10x6 chegavam com 6,6 pt — o que valia a queixa de
+    que «não se lê».
+    """
+    fig, ax = plt.subplots(figsize=(8, 5))
+    # Marcadores e tamanhos DECRESCENTES para os algoritmos de ponto único: o
+    # PPO (3,59) e o SAC (3,57) caem a 0,02 um do outro em N=20 e, com o mesmo
+    # símbolo, o segundo tapava o primeiro por inteiro.
+    solteiros = [(15, "D"), (9, "s"), (6, "^")]
+    n_solteiro = 0
     for algo in df["Algorithm"].unique():
         d = df[(df["Algorithm"] == algo) & (df["compatible"])].sort_values("N")
         if d.empty:
             continue
-        ax.plot(d["N"], d["food_per_agent"], "o-", linewidth=2.5, markersize=8,
-                color=PALETTE.get(algo, "#888"), label=algo)
+        # Um algoritmo com UM único N compatível (o PPO e o SAC, presos ao
+        # N=20 da MLP) não desenha linha nenhuma: com "o-" ficava um ponto de
+        # 8 px que se lia como ausência do algoritmo, e a legenda ainda lhe
+        # punha um traço ao lado, prometendo uma curva que não existe. Passa a
+        # marcador grande, de contorno preto, com o «só N=20» dito na legenda.
+        if len(d) == 1:
+            size, marker = solteiros[min(n_solteiro, len(solteiros) - 1)]
+            n_solteiro += 1
+            n_unico = int(d["N"].iloc[0])
+            ax.plot(d["N"], d["food_per_agent"], marker=marker, markersize=size,
+                    linestyle="none", color=PALETTE.get(algo, "#888"),
+                    markeredgecolor="black", markeredgewidth=1.2,
+                    label=f"{algo} (só N={n_unico})", zorder=5 + n_solteiro)
+        else:
+            ax.plot(d["N"], d["food_per_agent"], "o-", linewidth=2.5, markersize=9,
+                    color=PALETTE.get(algo, "#888"), label=algo)
     ax.set_title(f"Escalabilidade Zero-Shot — {label}\n(treino com N=20, sem retreino)",
-                 fontsize=14, fontweight="bold")
-    ax.set_xlabel("Número de agentes (N)", fontsize=11)
-    ax.set_ylabel("Recolhas por agente (eficiência normalizada)", fontsize=11)
+                 fontsize=15, fontweight="bold")
+    ax.set_xlabel("Número de agentes (N)", fontsize=13)
+    ax.set_ylabel("Recolhas por agente (eficiência normalizada)", fontsize=13)
     ax.set_xticks(sizes)
+    ax.tick_params(labelsize=12)
     ax.grid(True, linestyle="--", alpha=0.5)
-    ax.legend(title="Algoritmo", fontsize=11)
+    ax.legend(title="Algoritmo", fontsize=12, title_fontsize=12)
     incompat = df[~df["compatible"]]["Algorithm"].unique()
     if len(incompat):
         fig.text(0.5, 0.01,
                  f"{', '.join(incompat)}: MLP de entrada fixa — incompatível com N≠20 "
                  "(só a GNN faz transferência Zero-Shot).",
-                 ha="center", va="bottom", fontsize=8.5, color="#AA5500", style="italic")
+                 ha="center", va="bottom", fontsize=10.5, color="#AA5500", style="italic")
         fig.subplots_adjust(bottom=0.13)
     plt.tight_layout(rect=[0, 0.06, 1, 1])
     png_path = os.path.join(OUT_STATS, f"escalabilidade_zeroshot_{scenario}.png")

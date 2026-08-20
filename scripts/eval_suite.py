@@ -150,20 +150,24 @@ def plot_evaluation(summary=None, out_dir=None):
     # ── 1. Taxa de sucesso (Ptask) por cenário ───────────────────────────────
     succ = (summary.groupby(["ScenarioLabel", "Algorithm"])["success"]
             .mean().mul(100).reset_index(name="SuccessRate"))
-    fig, ax = plt.subplots(figsize=(13, 7))
+    # 8,5x5 polegadas (era 13x7): a figura entra na tese a 0,98 da largura do
+    # texto, o que reduz tudo para ~0,73 — com 13x7 a redução era 0,50 e os
+    # rótulos dos cenários chegavam ao papel com 5 pt.
+    fig, ax = plt.subplots(figsize=(8.5, 5))
     sns.barplot(data=succ, x="ScenarioLabel", y="SuccessRate", hue="Algorithm",
                 order=scen_order, hue_order=algo_order, palette=palette, ax=ax)
     for c in ax.containers:
-        ax.bar_label(c, fmt="%.0f%%", fontsize=8, padding=2)
+        ax.bar_label(c, fmt="%.0f%%", fontsize=8.5, padding=2)
     ax.set_title("Taxa de Sucesso por Cenário (Ptask) — avaliação determinística",
-                 fontsize=15, fontweight="bold", pad=14)
-    ax.set_ylabel("Episódios com sucesso (%)", fontsize=11)
-    ax.set_xlabel("Cenário", fontsize=11)
+                 fontsize=14, fontweight="bold", pad=12)
+    ax.set_ylabel("Episódios com sucesso (%)", fontsize=12)
+    ax.set_xlabel("Cenário", fontsize=12)
+    ax.tick_params(labelsize=10.5)
     ax.set_ylim(0, 105)
     # Legenda FORA dos eixos: dentro tapava as barras (todas chegam aos 100%).
     ax.legend(title="Algoritmo", loc="upper left", bbox_to_anchor=(1.01, 1.0),
               borderaxespad=0)
-    plt.xticks(rotation=15, ha="right")
+    plt.xticks(rotation=20, ha="right", fontsize=10.5)
     fig.text(0.5, 0.005, "Sucesso = pelo menos 1 recolha no episódio. Métrica de tarefa, "
              "comparável entre algoritmos (ao contrário do reward de treino).",
              ha="center", fontsize=8.5, color="#555555", style="italic")
@@ -175,17 +179,18 @@ def plot_evaluation(summary=None, out_dir=None):
     print(f"[OK] Gráfico de taxa de sucesso: {p1}")
 
     # ── 2. Recolhas/ep por cenário (média ± desvio) ──────────────────────────
-    fig, ax = plt.subplots(figsize=(13, 7))
+    fig, ax = plt.subplots(figsize=(8.5, 5))
     sns.barplot(data=summary, x="ScenarioLabel", y="food_collected", hue="Algorithm",
                 order=scen_order, hue_order=algo_order, palette=palette,
                 errorbar="sd", ax=ax)
     ax.set_title("Recolhas por Episódio por Cenário — avaliação determinística",
-                 fontsize=15, fontweight="bold", pad=14)
-    ax.set_ylabel("Recolhas por episódio (média ± desvio)", fontsize=11)
-    ax.set_xlabel("Cenário", fontsize=11)
+                 fontsize=14, fontweight="bold", pad=12)
+    ax.set_ylabel("Recolhas por episódio (média ± desvio)", fontsize=12)
+    ax.set_xlabel("Cenário", fontsize=12)
+    ax.tick_params(labelsize=10.5)
     ax.set_ylim(bottom=0)  # recolhas nunca são negativas — corta os bigodes de sd abaixo de 0
     ax.legend(title="Algoritmo", loc="upper right")
-    plt.xticks(rotation=15, ha="right")
+    plt.xticks(rotation=20, ha="right", fontsize=10.5)
     fig.text(0.5, 0.005, "Média de recolhas (food_collected) por episódio; barras de erro = "
              "desvio padrão entre episódios. Mede magnitude do desempenho, não só sucesso/falha.",
              ha="center", fontsize=8.5, color="#555555", style="italic")

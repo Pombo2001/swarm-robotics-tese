@@ -1229,7 +1229,7 @@ Este capítulo é dedicado à apresentação e análise rigorosa dos dados recol
 \label{sec:res_metodologia}
 Os resultados reportados provêm de uma \textbf{campanha de treino contínua de sete dias} nos servidores de cálculo, executada com a configuração final do sistema (recompensa simplificada da Secção~\ref{sec:reward_design}, \textit{fitness} de \textit{homing} da Eq.~\ref{eq:fitness}, LiDAR de $8$\,m). Antes da análise, importa fixar as convenções de leitura:
 \begin{itemize}
-    \item \textbf{Runs independentes:} Cada combinação (algoritmo, cenário) foi treinada em \textbf{7 execuções independentes} com sementes distintas, nos \textbf{7 cenários} do protocolo ($3 \times 7 \times 7 = 147$ treinos). As curvas reportam a média entre execuções e a banda sombreada o desvio padrão.
+    \item \textbf{Execuções independentes:} Cada combinação (algoritmo, cenário) foi treinada em \textbf{7 execuções independentes} com sementes distintas, nos \textbf{7 cenários} do protocolo ($3 \times 7 \times 7 = 147$ treinos). As curvas reportam a média entre execuções e a banda sombreada o desvio padrão.
     \item \textbf{Orçamentos de treino por paradigma:} cada execução do controlador evolutivo dispôs de 195 minutos (população de 30 genomas avaliada em paralelo), e cada execução do PPO/SAC de 48 minutos (16 ambientes vetorizados). Os orçamentos foram calibrados, com base nas campanhas exploratórias, para levar cada paradigma ao seu planalto de convergência --- e, na maioria das células, é o que se observa. Uma verificação \textit{a posteriori} sobre as curvas (comparação emparelhada, por execução, entre a média do último quinto do orçamento e a do quinto anterior; \path{scripts/verificar_planalto.py}) mostra, porém, que \textbf{7 das 21 combinações ainda subiam de forma significativa no fim} --- e duas delas de forma marcada: o SAC no Gargalo ($+112\%$) e na Porta com Alternativa ($+105\%$), seguidos do GNN no Muro em U ($+33\%$) e do PPO no Quatro Salas ($+27\%$). A comparação mede, portanto, o \textbf{desempenho atingível dentro do orçamento concedido}, e não o desempenho assintótico de cada paradigma nem a eficiência amostral a cómputo igual; nas quatro células assinaladas, os valores do algoritmo em causa devem ser lidos como \emph{limite inferior}. A implicação mais forte é para o SAC nos gargalos físicos: a fragilidade que a Secção~\ref{sec:res_boxplots} lhe atribui é indistinguível, com os dados retidos, de sub-treino --- os históricos da campanha final guardaram a recompensa episódica mas não a métrica de tarefa por passo, pelo que não é possível decidir se o crescimento final corresponde a mais recolhas ou apenas a mais \textit{shaping}. A assimetria de cómputo (favorável ao evolutivo) é retomada na discussão (Secção~\ref{sec:res_discussao}).
     \item \textbf{Avaliação determinística por execução:} cada um dos 7 modelos finais de cada célula foi avaliado em \textbf{20 episódios determinísticos emparelhados} (\textit{seeds} comuns aos três algoritmos), num total de 140 episódios por combinação (algoritmo, cenário). A \textbf{unidade estatística é a execução}: os testes entre algoritmos usam as médias por execução ($n=7$ por grupo, Mann-Whitney U + $\delta$ de Cliff), evitando inflacionar $n$ com episódios correlacionados do mesmo modelo.
     \item \textbf{Métrica de tarefa pura ($P_{task}$):} Para além da recompensa total (que inclui \textit{shaping}), reportam-se a taxa de sucesso (fração de episódios com pelo menos uma recolha) e as recolhas por episódio, obtidas em avaliação determinística, por serem as medidas não-enviesadas e \emph{comparáveis} do cumprimento da missão.
@@ -1246,14 +1246,14 @@ O \textbf{Muro em U} é o único cenário que nenhum algoritmo resolve de forma 
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.9}{images/resultados/taxa_sucesso_por_cenario.png}{Taxa de sucesso por cenario e algoritmo}
+    \figresultado{0.98}{images/resultados/taxa_sucesso_por_cenario.png}{Taxa de sucesso por cenario e algoritmo}
     \caption[Taxa de sucesso ($P_{task}$) por cenário e algoritmo]{Taxa de sucesso ($P_{task}$) por cenário, em avaliação determinística (7 execuções $\times$ 20 episódios emparelhados por algoritmo).}
     \label{fig:res_ptask_sucesso}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.9}{images/resultados/recolhas_por_cenario.png}{Recolhas por episodio, por cenario e algoritmo}
+    \figresultado{0.98}{images/resultados/recolhas_por_cenario.png}{Recolhas por episodio, por cenario e algoritmo}
     \caption[Recolhas por episódio, por cenário e algoritmo]{Recolhas por episódio, por cenário. Barra = média sobre os 140 episódios de avaliação (7 execuções $\times$ 20); barra de erro = desvio padrão \emph{entre episódios}, que nos cenários de convergência bimodal (Muro em U, Sandbox-GNN, Gargalo-SAC) chega a exceder a própria média --- a dispersão que lhe está por trás é a dispersão entre execuções da Secção~\ref{sec:res_boxplots}. Mede a magnitude do desempenho, para além do sucesso binário.}
     \label{fig:res_ptask_recolhas}
 \end{figure}
@@ -1264,7 +1264,7 @@ Para fundamentar a opção pelo potencial geodésico no termo de progresso e dia
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.95}{images/resultados/heatmap_geodesico_u_wall.png}{Potencial euclidiano vs geodesico no Muro em U}
+    \figresultado{0.98}{images/resultados/heatmap_geodesico_u_wall.png}{Potencial euclidiano vs geodesico no Muro em U}
     \caption[Potencial de navegação no Muro em U: euclidiano vs.\ geodésico]{Potencial de navegação no Muro em U: euclidiano (esquerda) vs.\ geodésico (direita). As curvas de nível indicam a direção para a qual o termo de progresso atrai o agente; só o geodésico contorna a barra do U.}
     \label{fig:res_heatmap_geo}
 \end{figure}
@@ -1286,7 +1286,7 @@ O cenário Sandbox --- arena aberta, sem paredes interiores --- isola a capacida
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.85}{images/resultados/comparacao_mapa_none.png}{Curva de aprendizagem no Sandbox (3 algoritmos)}
+    \figresultado{0.98}{images/resultados/comparacao_mapa_none.png}{Curva de aprendizagem no Sandbox (3 algoritmos)}
     \caption[Curvas de aprendizagem no cenário Sandbox]{Curvas de aprendizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do orçamento de treino); linha = média de 7 execuções, banda = $\pm 1$ desvio padrão.}
     \label{fig:res_sandbox_curva}
 \end{figure}
@@ -1301,7 +1301,7 @@ A Tabela~\ref{tab:res_sandbox} sintetiza o desempenho de avaliação neste cená
 \renewcommand{\arraystretch}{1.3}
 \begin{tabular}{|l|c|c|c|}
 \hline
-\textbf{Algoritmo} & \textbf{Recolhas/ep} & \textbf{$P_{task}$} & \textbf{\textit{Runs} funcionais} \\ \hline
+\textbf{Algoritmo} & \textbf{Recolhas/ep} & \textbf{$P_{task}$} & \textbf{Execuções funcionais} \\ \hline
 GNN (Evolutivo) & $38{,}31 \pm 31{,}03$ & $85{,}7\%$ & $5/7$ \\ \hline
 PPO & $71{,}46 \pm 0{,}98$ & $100\%$ & $7/7$ \\ \hline
 SAC & $69{,}24 \pm 1{,}88$ & $100\%$ & $7/7$ \\ \hline
@@ -1319,47 +1319,47 @@ Nos cenários de navegação por gargalos (\textbf{Gargalo}, Figura~\ref{fig:res
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/comparacao_mapa_u_wall.png}{Curva de aprendizagem --- Beco Sem Saída (Muro em U)}
+    \figresultado{0.98}{images/resultados/comparacao_mapa_u_wall.png}{Curva de aprendizagem --- Beco Sem Saída (Muro em U)}
     \caption{Curvas de aprendizagem no cenário Beco Sem Saída (Muro em U).}
     \label{fig:res_curva_uwall}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/comparacao_mapa_bottleneck.png}{Curva de aprendizagem --- Gargalo (Porta Estreita)}
+    \figresultado{0.98}{images/resultados/comparacao_mapa_bottleneck.png}{Curva de aprendizagem --- Gargalo (Porta Estreita)}
     \caption{Curvas de aprendizagem no cenário Gargalo.}
     \label{fig:res_curva_bottleneck}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/comparacao_mapa_four_rooms.png}{Curva de aprendizagem --- Quatro Salas (Labirinto)}
+    \figresultado{0.98}{images/resultados/comparacao_mapa_four_rooms.png}{Curva de aprendizagem --- Quatro Salas (Labirinto)}
     \caption{Curvas de aprendizagem no cenário Quatro Salas (Labirinto).}
     \label{fig:res_curva_fourrooms}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/comparacao_mapa_cooperative_door.png}{Curva de aprendizagem --- Porta Cooperativa}
+    \figresultado{0.98}{images/resultados/comparacao_mapa_cooperative_door.png}{Curva de aprendizagem --- Porta Cooperativa}
     \caption{Curvas de aprendizagem no cenário Porta Cooperativa.}
     \label{fig:res_curva_door}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/comparacao_mapa_cooperative_perception.png}{Curva de aprendizagem --- Perceção Cooperativa (Alvo Móvel)}
+    \figresultado{0.98}{images/resultados/comparacao_mapa_cooperative_perception.png}{Curva de aprendizagem --- Perceção Cooperativa (Alvo Móvel)}
     \caption{Curvas de aprendizagem no cenário Perceção Cooperativa (Alvo Móvel).}
     \label{fig:res_curva_perception}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/comparacao_mapa_cooperative_door_bypass.png}{Curva de aprendizagem --- Porta Cooperativa com Alternativa (deceptive)}
+    \figresultado{0.98}{images/resultados/comparacao_mapa_cooperative_door_bypass.png}{Curva de aprendizagem --- Porta Cooperativa com Alternativa (deceptive)}
     \caption{Curvas de aprendizagem no cenário Porta Cooperativa com Alternativa (\textit{deceptive}).}
     \label{fig:res_curva_bypass}
 \end{figure}
 
-\section{Fiabilidade e Variância entre \textit{Runs}}
+\section{Fiabilidade e Variância entre Execuções}
 \label{sec:res_boxplots}
 A análise da fiabilidade de treino requer múltiplas execuções independentes por configuração, de modo a distinguir o desempenho sistemático do ruído de inicialização. As Figuras~\ref{fig:res_box_1}--\ref{fig:res_box_4} mostram, para cada cenário, \textbf{um ponto por execução} --- as recolhas por episódio desse execução (média dos 20 episódios de avaliação; 7 pontos por algoritmo) --- com a média reportada na tese marcada a traço vertical. A métrica é de tarefa, na mesma unidade para os três algoritmos, ao contrário dos \textit{scores} de treino. Com $n=7$ mostram-se as execuções um a um em vez de um diagrama de caixa: nestes dados a distribuição é frequentemente \emph{bimodal} --- execuções que resolvem o cenário e execuções que ficam a zero, sem nada pelo meio --- e uma caixa a cobrir todo esse intervalo sugeriria densidade onde não existe uma única execução.
 
@@ -1367,34 +1367,34 @@ A leitura por cenário quantifica o que as secções anteriores anteciparam. Nos
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.49}{images/resultados/dotplot_eval_none.png}{Fiabilidade entre runs --- Sandbox}
+    \figresultado{0.49}{images/resultados/dotplot_eval_none.png}{Fiabilidade entre execuções --- Sandbox}
     \hfill
-    \figresultado{0.49}{images/resultados/dotplot_eval_u_wall.png}{Fiabilidade entre runs --- Muro em U}
+    \figresultado{0.49}{images/resultados/dotplot_eval_u_wall.png}{Fiabilidade entre execuções --- Muro em U}
     \caption{Recolhas/ep por execução (7 execuções, 20 ep cada): Sandbox (esq.) e Muro em U (dir.).}
     \label{fig:res_box_1}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.49}{images/resultados/dotplot_eval_bottleneck.png}{Fiabilidade entre runs --- Gargalo}
+    \figresultado{0.49}{images/resultados/dotplot_eval_bottleneck.png}{Fiabilidade entre execuções --- Gargalo}
     \hfill
-    \figresultado{0.49}{images/resultados/dotplot_eval_four_rooms.png}{Fiabilidade entre runs --- Quatro Salas}
+    \figresultado{0.49}{images/resultados/dotplot_eval_four_rooms.png}{Fiabilidade entre execuções --- Quatro Salas}
     \caption{Recolhas/ep por execução: Gargalo (esq.) e Quatro Salas (dir.).}
     \label{fig:res_box_2}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_door.png}{Fiabilidade entre runs --- Porta Cooperativa}
+    \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_door.png}{Fiabilidade entre execuções --- Porta Cooperativa}
     \hfill
-    \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_perception.png}{Fiabilidade entre runs --- Perceção Cooperativa}
+    \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_perception.png}{Fiabilidade entre execuções --- Perceção Cooperativa}
     \caption{Recolhas/ep por execução: Porta Cooperativa (esq.) e Perceção Cooperativa (dir.).}
     \label{fig:res_box_3}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_door_bypass.png}{Fiabilidade entre runs --- Porta Cooperativa com Alternativa}
+    \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_door_bypass.png}{Fiabilidade entre execuções --- Porta Cooperativa com Alternativa}
     \caption{Recolhas/ep por execução: Porta Cooperativa com Alternativa (\textit{deceptive}).}
     \label{fig:res_box_4}
 \end{figure}
@@ -1405,21 +1405,21 @@ Consolidando o desempenho ao longo dos sete cenários (Figuras~\ref{fig:res_glob
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/desempenho_global_gnn.png}{Desempenho global do GNN em todos os cenários}
+    \figresultado{0.95}{images/resultados/desempenho_global_gnn.png}{Desempenho global do GNN em todos os cenários}
     \caption[Desempenho do GNN (evolutivo) nos sete cenários]{Desempenho do GNN (evolutivo) nos sete cenários (linha = média entre as 7 execuções por progresso de treino).}
     \label{fig:res_global_gnn}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/desempenho_global_ppo.png}{Desempenho global do PPO em todos os cenários}
+    \figresultado{0.95}{images/resultados/desempenho_global_ppo.png}{Desempenho global do PPO em todos os cenários}
     \caption[Desempenho do PPO nos sete cenários]{Desempenho do PPO nos sete cenários (linha = média entre as 7 execuções por progresso de treino).}
     \label{fig:res_global_ppo}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/desempenho_global_sac.png}{Desempenho global do SAC em todos os cenários}
+    \figresultado{0.95}{images/resultados/desempenho_global_sac.png}{Desempenho global do SAC em todos os cenários}
     \caption[Desempenho do SAC nos sete cenários]{Desempenho do SAC nos sete cenários (linha = média entre as 7 execuções por progresso de treino).}
     \label{fig:res_global_sac}
 \end{figure}
@@ -1570,8 +1570,8 @@ SAC & N/A$^{\dagger}$ & $100\%$ / $71{,}3$ & N/A$^{\dagger}$ & N/A$^{\dagger}$ \
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/escalabilidade_zeroshot_none.png}{Grafico de barras/linhas --- desempenho vs. numero de agentes}
-    \caption[Eficiência por agente com o aumento do enxame (Sandbox), sem retreino]{Eficiência \emph{por agente} (recolhas por episódio a dividir pelo número de agentes) com o aumento do enxame, sem retreino, no cenário Sandbox. Só a linha do controlador de grafo atravessa toda a gama: o PPO e o SAC têm um único ponto, em $N=20$, porque a política MLP de entrada fixa não admite outras dimensões de enxame.}
+    \figresultado{0.92}{images/resultados/escalabilidade_zeroshot_none.png}{Grafico de barras/linhas --- desempenho vs. numero de agentes}
+    \caption[Eficiência por agente com o aumento do enxame (Sandbox), sem retreino]{Eficiência \emph{por agente} (recolhas por episódio a dividir pelo número de agentes) com o aumento do enxame, sem retreino, no cenário Sandbox. Só a linha do controlador de grafo atravessa toda a gama: o PPO e o SAC têm um único ponto, em $N=20$ (o losango e o quadrado de contorno preto, sobrepostos porque distam $0{,}02$ recolhas por agente), porque a política MLP de entrada fixa não admite outras dimensões de enxame.}
     \label{fig:res_escalabilidade}
 \end{figure}
 
@@ -1583,7 +1583,7 @@ O resultado evidencia uma resiliência elevada e \emph{transversal aos paradigma
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.8}{images/resultados/robustez_falhas.png}{Grafico --- desempenho antes/depois da falha de 10\% dos agentes}
+    \figresultado{0.85}{images/resultados/robustez_falhas.png}{Grafico --- desempenho antes/depois da falha de 10\% dos agentes}
     \caption[Resiliência à perda súbita de 10\% dos agentes ($R_{robust}$)]{Resiliência do enxame perante a perda súbita de 10\% dos agentes a meio do episódio ($R_{robust}$). Os três painéis partilham a escala vertical, pelo que as alturas são comparáveis entre algoritmos; o rótulo é a percentagem de recolhas retida face à avaliação sem falhas, nas mesmas \textit{seeds}. \textbf{A base de cada barra é o modelo campeão de cada célula}, e não a média das sete execuções da Tabela~\ref{tab:res_eval}: nos cenários de convergência bimodal os dois valores afastam-se bastante (no Muro em U, $79$ contra $24{,}5$ recolhas/ep), porque a média entre execuções inclui as que ficam a zero. A retenção não é afetada por essa escolha --- é um rácio entre duas avaliações da mesma fonte, com e sem falhas. Os $106\%$ do SAC na Perceção Cooperativa não são um erro de medida: nesse cenário o alvo é móvel e um enxame ligeiramente menor congestiona-o menos --- a diferença ($16{,}5 \rightarrow 17{,}5$ recolhas/ep) está dentro do desvio entre episódios.}
     \label{fig:res_robustez}
 \end{figure}

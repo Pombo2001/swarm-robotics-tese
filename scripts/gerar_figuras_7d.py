@@ -80,8 +80,9 @@ def cliffs_delta(a, b):
 
 
 def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algorithm",
-                    col_sucesso="sucesso", unidade="run independente",
-                    nota_extra="", n_por_algo=None, ordem=None, cores=None):
+                    col_sucesso="sucesso", unidade="execução independente",
+                    nota_extra="", n_por_algo=None, ordem=None, cores=None,
+                    largura=9.0):
     """Um ponto por RUN, em vez de uma caixa. Guarda o PNG em `caminho`.
 
     PORQUÊ (e porque é que não é só estética): com n=7, os quartis de um boxplot
@@ -113,7 +114,14 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
     ordem = ordem if ordem is not None else ALGOS
     cores = cores if cores is not None else ALGO_COLORS
     algos_presentes = [a for a in ordem if a in set(d[col_algo])]
-    fig, ax = plt.subplots(figsize=(9, 1.35 * len(algos_presentes) + 2.4))
+    # `largura` em polegadas. Quem entra na tese a meia largura de página (os
+    # dotplots por cenário, dois por linha) pede uma figura ESTREITA: desenhada
+    # a 9 polegadas e reduzida para 7,8 cm, o eixo chegava ao papel com 3,4 pt.
+    # As fontes acompanham a largura (`esc`), para que a figura estreita não
+    # fique com letra proporcionalmente minúscula.
+    esc = min(1.15, 9.0 / largura)
+    altura = (1.35 * len(algos_presentes) + 2.4) * (largura / 9.0) * 1.15
+    fig, ax = plt.subplots(figsize=(largura, altura))
     rng = np.random.default_rng(7)          # jitter reprodutível
 
     x_max = float(d[col_valor].max()) if len(d) else 1.0
@@ -131,22 +139,30 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
         perto_da_esquerda = m < 0.12 * max(x_max, 1e-9)
         ax.text(m, i + 0.40, f"média {m:.1f}",
                 ha="left" if perto_da_esquerda else "center", va="bottom",
-                fontsize=9, color="#222222", fontweight="bold")
+                fontsize=9 * esc, color="#222222", fontweight="bold")
         if col_sucesso in sub.columns:
             n_ok = int((sub[col_sucesso] >= 1.0).sum())
             ax.text(1.02, i, f"{n_ok}/{len(sub)} a 100%",
                     transform=ax.get_yaxis_transform(), ha="left", va="center",
-                    fontsize=9.5, color="#444444")
+                    fontsize=9.5 * esc, color="#444444")
 
     ax.set_yticks(range(len(algos_presentes)))
-    ax.set_yticklabels(algos_presentes, fontsize=12, fontweight="bold")
+    ax.set_yticklabels(algos_presentes, fontsize=12 * esc, fontweight="bold")
     ax.set_ylim(len(algos_presentes) - 0.45, -0.55)      # GNN no topo
     # Folga à esquerda do zero: os runs que NÃO resolvem valem 0 exato e, com
     # `clip_on=False`, empilham-se por cima do rótulo do eixo. A n=7 passava
     # despercebido; a n=28 são catorze pontos e o "PPO" deixa de se ler.
     ax.set_xlim(left=-0.035 * max(x_max, 1e-9))
-    ax.set_xlabel("Recolhas por episódio (média do run, 20 episódios)", fontsize=10)
-    ax.set_title(titulo, fontsize=14, fontweight="bold", pad=12)
+    # Numa figura estreita, o rótulo longo do eixo e o título de uma linha
+    # saem pelas bordas: encurta-se um e quebra-se o outro.
+    estreita = largura < 7.0
+    ax.set_xlabel("Recolhas/ep (média da execução, 20 ep)" if estreita
+                  else "Recolhas por episódio (média da execução, 20 episódios)",
+                  fontsize=10 * esc)
+    ax.tick_params(axis="x", labelsize=10 * esc)
+    titulo_desenhado = "\n".join(textwrap.wrap(titulo, 34)) if estreita else titulo
+    ax.set_title(titulo_desenhado, fontsize=(12 if estreita else 14) * esc,
+                 fontweight="bold", pad=10)
     ax.grid(True, axis="x", linestyle="--", alpha=.4)
     ax.grid(False, axis="y")
     ax.tick_params(axis="y", length=0)                   # sem traços de escala
@@ -158,8 +174,10 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
     nota = (f"Cada ponto = 1 {unidade} ({n} por algoritmo). A barra vertical é a "
             f"média reportada na tese.{nota_extra}")
     # Quebrar a nota: numa linha só, saía pelos dois lados da figura.
-    fig.text(0.5, 0.015, "\n".join(textwrap.wrap(nota, 118)),
-             ha="center", va="bottom", fontsize=8.5, color="#555555", style="italic")
+    largura_nota = max(28, int(118 * (largura / 9.0) / esc))
+    fig.text(0.5, 0.015, "\n".join(textwrap.wrap(nota, largura_nota)),
+             ha="center", va="bottom", fontsize=8.5 * esc, color="#555555",
+             style="italic")
     plt.tight_layout(rect=[0, 0.10, 0.86, 1])
     fig.savefig(caminho, dpi=300)
     plt.close(fig)
@@ -217,29 +235,39 @@ def main():
         algos_here = [a for a in ALGOS if a in set(d['Algorithm'])]
         if not algos_here:
             continue
-        fig, axes = plt.subplots(1, len(algos_here), figsize=(5.2 * len(algos_here), 6), squeeze=False)
+        # 3,15x4,2 polegadas por painel (era 5,2x6): a figura entra na tese a
+        # 0,98 da largura do texto, pelo que tudo o que aqui se desenha chega a
+        # papel reduzido a ~0,65. Com os 5,2x6 antigos a reducao era 0,32 e os
+        # rotulos dos eixos chegavam com ~3 pt.
+        fig, axes = plt.subplots(1, len(algos_here),
+                                 figsize=(3.15 * len(algos_here), 4.2), squeeze=False)
         pontos_grelha = {}
         for ax, algo in zip(axes[0], algos_here):
             da = d[d['Algorithm'] == algo]
             pontos_grelha[algo] = desenhar_curva_media(ax, da, cor=ALGO_COLORS[algo])
             nr = da['Run'].nunique()
-            ax.set_title(f"{algo} ({nr} runs)", fontsize=13, fontweight='bold')
-            ax.set_xlabel('Progresso do Treino (%)', fontsize=10)
-            ax.set_ylabel(YLABEL_TREINO.get(algo, 'Score'), fontsize=10)
+            # pad=14: no Gargalo o fitness do GNN chega a 1,2 milhões e o
+            # matplotlib escreve o fator ("1e6") por cima do título do painel.
+            ax.set_title(f"{algo} ({nr} execuções)", fontsize=12.5,
+                         fontweight='bold', pad=14)
+            ax.yaxis.get_offset_text().set_fontsize(8.5)
+            ax.set_xlabel('Progresso do Treino (%)', fontsize=11)
+            ax.set_ylabel(YLABEL_TREINO.get(algo, 'Score'), fontsize=10.5)
+            ax.tick_params(labelsize=9.5)
             ax.set_xlim(0, 100)
             ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0f}%'))
             ax.grid(True, linestyle='--', alpha=0.5)
         fig.suptitle(f"Curvas de Aprendizagem — {SCENARIO_LABELS.get(scen, scen)}",
-                     fontsize=15, fontweight='bold')
+                     fontsize=14, fontweight='bold')
         grelhas = "/".join(str(pontos_grelha[a]) for a in algos_here)
         fig.text(0.5, 0.005,
-                 "Linha = média entre os 7 runs; banda = ±1 desvio padrão entre runs. Cada run é interpolado "
-                 f"numa grelha comum de progresso ({grelhas} pontos, {'/'.join(algos_here)}), porque os runs "
+                 "Linha = média entre as 7 execuções; banda = ±1 desvio padrão entre execuções. Cada execução é interpolada "
+                 f"numa grelha comum de progresso ({grelhas} pontos, {'/'.join(algos_here)}), porque as execuções "
                  "não logam nos mesmos passos. Painéis separados porque as métricas não são comparáveis "
                  "(GNN = fitness evolutiva; PPO/SAC = recompensa episódica); o eixo X (0–100% do orçamento "
                  "de treino) é que é comparável.",
-                 ha='center', va='bottom', fontsize=8, color='#555555', style='italic', wrap=True)
-        plt.tight_layout(rect=[0, 0.06, 1, 0.95])
+                 ha='center', va='bottom', fontsize=7.5, color='#555555', style='italic', wrap=True)
+        plt.tight_layout(rect=[0, 0.11, 1, 0.94])
         fig.savefig(os.path.join(OUT, f'comparacao_mapa_{scen}.png'), dpi=300)
         plt.close(fig)
         print(f"[OK] comparacao_mapa_{scen}.png")
@@ -256,7 +284,9 @@ def main():
         da = curves[curves['Algorithm'] == algo].copy()
         if da.empty:
             continue
-        fig, ax = plt.subplots(figsize=(12, 7))
+        # 8x4,8 polegadas (era 12x7): impressa a 0,95 da largura do texto, a
+        # redução fica em ~0,75 e os 11 pt do eixo chegam ao papel com 8 pt.
+        fig, ax = plt.subplots(figsize=(8, 4.8))
         pontos = 0
         for color, scen in zip(pal_scen, scen_present):
             sub = da[da['Scenario'] == scen]
@@ -268,18 +298,19 @@ def main():
             pontos = max(pontos, n_grelha)
             ax.plot(x, media, color=color, linewidth=2.5,
                     label=SCENARIO_LABELS.get(scen, scen))
-        ax.set_title(f'Desempenho Global — {algo} ({da["Run"].nunique()} runs)',
+        ax.set_title(f'Desempenho Global — {algo} ({da["Run"].nunique()} execuções)',
                      fontsize=15, fontweight='bold', pad=14)
-        ax.set_xlabel('Progresso do Treino (%)', fontsize=11)
-        ax.set_ylabel(YLABEL_TREINO.get(algo, 'Score'), fontsize=11)
+        ax.set_xlabel('Progresso do Treino (%)', fontsize=12)
+        ax.set_ylabel(YLABEL_TREINO.get(algo, 'Score'), fontsize=12)
+        ax.tick_params(labelsize=10.5)
         ax.set_xlim(0, 100)
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0f}%'))
-        ax.legend(title='Cenário', fontsize=9, title_fontsize=10,
+        ax.legend(title='Cenário', fontsize=9.5, title_fontsize=10,
                   loc='upper left', framealpha=0.9)
         ax.grid(True, linestyle='--', alpha=0.5)
         fig.text(0.5, 0.005,
-                 f"Linha = média entre os 7 runs, cada um interpolado numa grelha comum "
-                 f"de {pontos} pontos de progresso. A dispersão por run está nos painéis "
+                 f"Linha = média entre as 7 execuções, cada uma interpolada numa grelha comum "
+                 f"de {pontos} pontos de progresso. A dispersão por execução está nos painéis "
                  "por cenário (curvas de aprendizagem).",
                  ha='center', va='bottom', fontsize=8.5, color='#555555', style='italic')
         plt.tight_layout(rect=[0, 0.04, 1, 1])
@@ -307,7 +338,7 @@ def main():
                     palette=ALGO_COLORS, ax=ax)
         sns.stripplot(data=d, x='Algorithm', y='recolhas', order=ALGOS,
                       color='black', size=5, alpha=0.6, jitter=0.12, ax=ax)
-        ax.set_title(f'Fiabilidade entre Runs — {SCENARIO_LABELS.get(scen, scen)}',
+        ax.set_title(f'Fiabilidade entre Execuções — {SCENARIO_LABELS.get(scen, scen)}',
                      fontsize=14, fontweight='bold', pad=12)
         ax.set_ylabel('Recolhas por episódio (média do run, 20 ep)', fontsize=10)
         ax.set_xlabel('Algoritmo', fontsize=11)
@@ -327,8 +358,9 @@ def main():
         # não em vez dele: a escolha de qual entra na tese é do autor, e nos
         # cenários bimodais (Muro U, Sandbox, Gargalo) a diferença é grande.
         dotplot_por_run(
-            d, f'Fiabilidade entre Runs — {SCENARIO_LABELS.get(scen, scen)}',
-            os.path.join(OUT, f'dotplot_eval_{scen}.png'), n_por_algo=nr)
+            d, f'Fiabilidade entre Execuções — {SCENARIO_LABELS.get(scen, scen)}',
+            os.path.join(OUT, f'dotplot_eval_{scen}.png'), n_por_algo=nr,
+            largura=5.0)   # entra na tese a 0,49 da largura do texto
         print(f"[OK] dotplot_eval_{scen}.png")
 
     # ── 4. Barras agregadoras (recolhas/ep, avaliação) ──────────────────────

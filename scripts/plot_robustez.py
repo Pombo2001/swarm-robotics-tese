@@ -71,7 +71,13 @@ def main():
     # (recolhas por episódio). Com eixos independentes, o Gargalo do PPO (123
     # recolhas) desenhava-se com a mesma altura que o do GNN (88) e a figura
     # convidava a uma comparação entre painéis que as escalas desmentiam.
-    fig, axes = plt.subplots(1, 3, figsize=(16, 6), sharey=True)
+    # Três painéis EMPILHADOS, e não lado a lado. Em 16x6 impressas a 0,8 da
+    # largura do texto, cada painel ficava com ~4 cm para sete rótulos de
+    # cenário rodados: o texto chegava à página com ~2 pt. Empilhados em 8x10,5,
+    # a redução é ~0,75 e os mesmos rótulos chegam com ~9 pt. O sharey mantém-se
+    # (medem a mesma coisa na mesma unidade) e o sharex passa a fazer sentido:
+    # os cenários são os mesmos nos três, e só o painel de baixo os nomeia.
+    fig, axes = plt.subplots(3, 1, figsize=(8, 10.5), sharey=True, sharex=True)
     scen_order = [SCENARIO_LABELS[s] for s in ALL_SCENARIOS
                   if SCENARIO_LABELS[s] in completos]
     x = np.arange(len(scen_order))
@@ -93,19 +99,22 @@ def main():
             if bm and bm > 0.5:
                 topo = fm + (fsd if np.isfinite(fsd) else 0.0)
                 ax.text(xi + w / 2, topo + folga, f"{fm / bm * 100:.0f}%",
-                        ha="center", va="bottom", fontsize=8)
-        ax.set_title(algo, fontweight="bold", color=c)
+                        ha="center", va="bottom", fontsize=10)
+        ax.set_title(algo, fontweight="bold", color=c, fontsize=14)
         ax.set_xticks(x)
-        ax.set_xticklabels(scen_order, rotation=30, ha="right", fontsize=8)
-        ax.legend(fontsize=8)
-        ax.set_ylabel("Recolhas por episódio" if algo == "GNN" else "")
-    fig.suptitle("Robustez a Falhas de Agentes (Rrobust) — 10% dos agentes falham a meio do episódio",
-                 fontweight="bold")
+        ax.set_xticklabels(scen_order, rotation=20, ha="right", fontsize=12)
+        ax.tick_params(axis="y", labelsize=11)
+        ax.legend(fontsize=11)
+        # Com os painéis empilhados, cada um tem o seu eixo à esquerda: o rótulo
+        # deixa de ser exclusivo do primeiro.
+        ax.set_ylabel("Recolhas por episódio", fontsize=12)
+    fig.suptitle("Robustez a Falhas de Agentes (Rrobust)\n10% dos agentes falham a meio do episódio",
+                 fontweight="bold", fontsize=15)
     fig.text(0.5, 0.005,
              "Avaliação determinística emparelhada (20 episódios, mesmas seeds); "
              "rótulo = % de recolhas retidas face à avaliação sem falhas.",
-             ha="center", fontsize=8, style="italic")
-    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+             ha="center", fontsize=10, style="italic")
+    fig.tight_layout(rect=[0, 0.025, 1, 0.955])
     out = os.path.join(EVAL_DIR, "robustez_falhas.png")
     fig.savefig(out, dpi=300)
     print(f"[OK] {out}")

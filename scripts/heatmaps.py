@@ -167,7 +167,10 @@ def run_geodesic(scenario, config_path, out_dir=None):
             y = -R + (j + 0.5) * res
             eucl[i, j] = np.hypot(x - env.nest_pos[0], y - env.nest_pos[1])
 
-    fig, axes = plt.subplots(1, 2, figsize=(15, 7))
+    # 9,5x4,6 polegadas (era 15x7): a figura entra na tese a 0,95 da largura do
+    # texto e, com 15 polegadas de origem, tudo o que aqui se escreve chegava ao
+    # papel reduzido a 0,40 — os eixos com 4 pt.
+    fig, axes = plt.subplots(1, 2, figsize=(9.5, 4.6))
     for ax, field, title in (
             (axes[0], eucl, "Euclidiano (ANTES) — atravessa as paredes"),
             (axes[1], geo_masked, "Geodésico (DEPOIS) — contorna as paredes")):
@@ -176,12 +179,15 @@ def run_geodesic(scenario, config_path, out_dir=None):
         cs = ax.contour(np.linspace(-R, R, n), np.linspace(-R, R, n), field.T,
                         levels=12, colors="white", linewidths=0.5, alpha=0.6)
         _draw_walls_and_nest(ax, env)
-        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04).set_label("distância ao ninho (m)")
-        ax.set_title(title)
+        cb = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        cb.set_label("distância ao ninho (m)", fontsize=11)
+        cb.ax.tick_params(labelsize=10)
+        ax.set_title(title, fontsize=12.5)
+        ax.tick_params(labelsize=10.5)
 
     fig.suptitle(f"Potencial de navegação — {SCENARIO_LABELS.get(scenario, scenario)}\n"
                  "As linhas de nível mostram para onde o progress reward 'puxa' o robô",
-                 fontsize=12)
+                 fontsize=13)
     out_dir = out_dir or OUT_DIR
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, f"heatmap_geodesico_{scenario}.png")
