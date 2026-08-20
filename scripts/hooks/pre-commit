@@ -34,14 +34,22 @@ ALVOS_MAPA='^(Tese/seccao_mapa_grande\.tex|results/mapa_grande/|Artigo/artigo\.t
 # que foi o que aconteceu ao commit que as instalou.
 ALVOS_DASH='^(dashboard/|configs/vitrine\.yaml)'
 
+# 20 ago: o INDICE DOS SCRIPTS. A regua existia e nunca travou nada — imprimia
+# os scripts em falta e saia com 0 —, e foi assim que dois verificadores novos
+# ficaram de fora do indice sem ninguem dar por isso.
+ALVOS_SCRIPTS='^scripts/'
+
 MEXEU_TESE=0
 MEXEU_MAPA=0
 MEXEU_DASH=0
+MEXEU_SCRIPTS=0
 git diff --cached --name-only | grep -qE "$ALVOS"      && MEXEU_TESE=1
 git diff --cached --name-only | grep -qE "$ALVOS_MAPA" && MEXEU_MAPA=1
 git diff --cached --name-only | grep -qE "$ALVOS_DASH" && MEXEU_DASH=1
+git diff --cached --name-only | grep -qE "$ALVOS_SCRIPTS" && MEXEU_SCRIPTS=1
 
-if [ "$MEXEU_TESE" -eq 0 ] && [ "$MEXEU_MAPA" -eq 0 ] && [ "$MEXEU_DASH" -eq 0 ]; then
+if [ "$MEXEU_TESE" -eq 0 ] && [ "$MEXEU_MAPA" -eq 0 ] &&
+   [ "$MEXEU_DASH" -eq 0 ] && [ "$MEXEU_SCRIPTS" -eq 0 ]; then
     exit 0
 fi
 
@@ -110,6 +118,10 @@ if [ "$MEXEU_DASH" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_vitrine.py" || OK=0
     "$PY" "$RAIZ/scripts/verificar_comandos_dashboard.py" || OK=0
     "$PY" "$RAIZ/scripts/verificar_ptpt.py" || OK=0
+fi
+# O indice de scripts/README.md nomeia todos os scripts, e so os que existem.
+if [ "$MEXEU_SCRIPTS" -eq 1 ]; then
+    "$PY" "$RAIZ/scripts/testes/conferir_readme_scripts.py" || OK=0
 fi
 [ "$OK" -eq 1 ] && exit 0
 

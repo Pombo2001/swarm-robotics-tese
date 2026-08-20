@@ -6,6 +6,7 @@ Correr da raiz do repositório: python scripts/testes/conferir_readme_scripts.py
 import io
 import os
 import re
+import sys
 
 D = 'scripts'
 texto = io.open(os.path.join(D, 'README.md'), encoding='utf-8').read()
@@ -35,3 +36,9 @@ if esquecidos:
         print("   " + f)
 if not fantasmas and not esquecidos:
     print("\nO índice cobre exatamente o que está na pasta.")
+
+# Sem isto, esta régua IMPRIMIA os esquecidos e saía com 0 — e foi o que
+# aconteceu: dois verificadores novos ficaram de fora do índice, o relatório
+# disse-o, e quem correu o script leu «OK». Um aviso que não trava é um aviso
+# que se aprende a ignorar.
+sys.exit(1 if (fantasmas or esquecidos) else 0)

@@ -42,7 +42,9 @@ mudam, e recusam o commit se um número deixar de bater
 | `verificar_figuras_tese.py` | cada figura do PDF é a que os dados produzem hoje |
 | `verificar_figuras_artigo.py` **⟨hook⟩** | as figuras do artigo acompanham as da tese (cópias idênticas, versões da coluna não mais velhas) |
 | `verificar_planalto.py` | as curvas estabilizaram dentro do orçamento |
-| `verificar_dashboard.py` | os números do dashboard são os da tese |
+| `verificar_dashboard.py` **⟨hook⟩** | os números do dashboard são os da tese, e o vocabulário do ecrã é o da dissertação |
+| `verificar_vitrine.py` **⟨hook⟩** | as legendas escritas à mão da Vitrine batem com os CSV que a figura ao lado mostra |
+| `verificar_comandos_dashboard.py` **⟨hook⟩** | os comandos que o dashboard manda copiar existem e aceitam o que lhes passa |
 | `verificar_paridade_pi.py` | tudo o que as vistas leem é enviado para o Raspberry Pi |
 | `verificar_sessao.py` | uma sessão de treino produziu todos os artefactos |
 | `cobertura_verificador.py` | **que afirmações da tese ainda não têm verificador** (gera `docs/COBERTURA_VERIFICADOR.md`) |
