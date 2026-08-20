@@ -27,12 +27,21 @@ ALVOS='^(Tese/main\.tex|results/graficos_tese/final_7d/|results/estatisticas/esc
 # o artigo e um documento a parte e ja divergiu da dissertacao duas vezes.
 ALVOS_MAPA='^(Tese/seccao_mapa_grande\.tex|results/mapa_grande/|Artigo/artigo\.tex)'
 
+# 20 ago: o DASHBOARD. Nao e entregavel, mas e o que se projeta na defesa, e a
+# revisao das 16 vistas encontrou defeitos que nenhum verificador via. Tem de
+# entrar JA AQUI: com o corte de saida so a olhar para a tese e para o mapa, um
+# commit que so mexesse no dashboard saia antes de chegar as suas verificacoes —
+# que foi o que aconteceu ao commit que as instalou.
+ALVOS_DASH='^(dashboard/|configs/vitrine\.yaml)'
+
 MEXEU_TESE=0
 MEXEU_MAPA=0
+MEXEU_DASH=0
 git diff --cached --name-only | grep -qE "$ALVOS"      && MEXEU_TESE=1
 git diff --cached --name-only | grep -qE "$ALVOS_MAPA" && MEXEU_MAPA=1
+git diff --cached --name-only | grep -qE "$ALVOS_DASH" && MEXEU_DASH=1
 
-if [ "$MEXEU_TESE" -eq 0 ] && [ "$MEXEU_MAPA" -eq 0 ]; then
+if [ "$MEXEU_TESE" -eq 0 ] && [ "$MEXEU_MAPA" -eq 0 ] && [ "$MEXEU_DASH" -eq 0 ]; then
     exit 0
 fi
 
@@ -40,7 +49,7 @@ PY="$RAIZ/.venv/Scripts/python.exe"
 [ -x "$PY" ] || PY="$RAIZ/.venv/bin/python"
 [ -x "$PY" ] || PY=python
 
-echo "[pre-commit] a tese ou os dados mudaram — a verificar os números..."
+echo "[pre-commit] a tese, os dados ou o dashboard mudaram — a verificar..."
 # Três verificadores. As TABELAS (352 valores) e as CONTAGENS EM PROSA — o
 # segundo entrou a 5 ago, depois de três erros seguidos aparecerem todos em
 # afirmações sobre os números, e não nos números, que já tinham rede. E, desde
@@ -72,15 +81,41 @@ if [ "$MEXEU_TESE" -eq 1 ]; then
     # decisao declarada (22 jun) e parte do texto passou por ferramentas que
     # produzem PT-BR por omissao. Procura lexico inequivoco e a opcao do babel.
     "$PY" "$RAIZ/scripts/verificar_ptpt.py" || OK=0
+    # 20 ago: ESTRUTURA (acronimos e flutuantes). Nao olha para numeros: garante
+    # que a Lista de Acronimos descreve o que a tese usa - o `QI`, usado 30
+    # vezes, nao estava la - e que nenhuma figura ou tabela fica orfa, com as
+    # citacoes por intervalo resolvidas. Le o .tex e o .aux, custa milissegundos.
+    "$PY" "$RAIZ/scripts/verificar_estrutura_tese.py" || OK=0
 fi
 if [ "$MEXEU_MAPA" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_mapa_grande.py" || OK=0
+fi
+# As figuras do artigo sao copias das da tese e ja ficaram para tras duas vezes
+# (oito numa revisao, tres noutra). Compara-as: as copias tem de ser identicas e
+# as versoes proprias da coluna nao podem ser mais velhas do que a fonte.
+if git diff --cached --name-only | grep -qE '^(Artigo/|Tese/images/)'; then
+    "$PY" "$RAIZ/scripts/verificar_figuras_artigo.py" || OK=0
+fi
+# 20 ago: o DASHBOARD. Nao e entregavel, mas e o que se projeta na defesa - e a
+# revisao das 16 vistas encontrou defeitos que nenhum verificador via, porque
+# todos olhavam para numeros e nenhum para o que o ecra DIZ. Corre quando se
+# mexe no dashboard ou na selecao da vitrine (o plano esta em
+# docs/PLANO_REVISAO_DASHBOARD.md):
+#   · verificar_dashboard    os 51 valores + o vocabulario (cinco variantes dos
+#                            nomes dos cenarios chegaram a conviver no ecra);
+#   · verificar_vitrine      as legendas escritas a mao contra os CSV;
+#   · verificar_comandos_    os comandos que a Proveniencia manda copiar.
+if [ "$MEXEU_DASH" -eq 1 ]; then
+    "$PY" "$RAIZ/scripts/verificar_dashboard.py" || OK=0
+    "$PY" "$RAIZ/scripts/verificar_vitrine.py" || OK=0
+    "$PY" "$RAIZ/scripts/verificar_comandos_dashboard.py" || OK=0
+    "$PY" "$RAIZ/scripts/verificar_ptpt.py" || OK=0
 fi
 [ "$OK" -eq 1 ] && exit 0
 
 cat >&2 <<'FIM'
 
-[pre-commit] COMMIT RECUSADO: há números na tese que não batem com os CSV.
+[pre-commit] COMMIT RECUSADO: alguma coisa não bate com as fontes.
 
   · Se os CSV é que são os novos, regenera as tabelas antes de commitar.
   · Se estás a escrever números de uma campanha que ainda não chegou, ou a
