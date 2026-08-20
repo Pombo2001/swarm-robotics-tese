@@ -127,6 +127,52 @@ def acronimos(tex):
     return problemas
 
 
+def _sem_acentos(t):
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", t)
+                   if unicodedata.category(c) != "Mn").lower()
+
+
+# Formas que a tese deixou de usar, e o nome que ficou. As tabelas diziam
+# «Beco Sem Saída (U)» onde o corpo diz «Muro em U».
+FORMAS_ABANDONADAS = {
+    "Beco Sem Saída (U)": "Muro em U",
+    "Beco Sem Saída (Muro U)": "Muro em U",
+    "Muro U": "Muro em U",
+    "Perceção Coop.": "Perceção Cooperativa",
+    "Porta c/ Alternativa": "Porta com Alternativa",
+    "Porta Coop. c/ Alternativa": "Porta com Alternativa",
+}
+
+
+def rotulos_das_tabelas(tex):
+    """A primeira coluna das tabelas usa o nome que o corpo usa?"""
+    print()
+    print("=" * 74)
+    print("RÓTULOS: as tabelas chamam aos cenários o mesmo que o corpo")
+    print("=" * 74)
+    problemas, tabelas = [], 0
+    velhos = {_sem_acentos(v): (v, n) for v, n in FORMAS_ABANDONADAS.items()}
+    for m in re.finditer(r"\\begin\{table\}.*?\\end\{table\}", tex, re.S):
+        tabelas += 1
+        linha0 = tex.count("\n", 0, m.start()) + 1
+        for linha in m.group(0).splitlines():
+            if "&" not in linha:
+                continue
+            primeiro = linha.strip().split("&")[0].strip()
+            primeiro = re.sub(r"\\(hline|textbf|midrule|toprule)\b\{?", "",
+                              primeiro).strip("{} \\")
+            achado = velhos.get(_sem_acentos(primeiro))
+            if achado:
+                problemas.append("tabela na linha %d chama-lhe «%s»; "
+                                 "o corpo diz «%s»"
+                                 % (linha0, achado[0], achado[1]))
+    print("   [i] %d tabelas lidas" % tabelas)
+    if not problemas:
+        print("   [v] nenhuma tabela usa um nome que o corpo abandonou")
+    return problemas
+
+
 def _numeros_do_aux():
     """{rótulo: número impresso} para figuras e tabelas."""
     if not os.path.exists(AUX):
@@ -260,7 +306,8 @@ def paginas_orfas():
 
 def main():
     tex = _tex()
-    problemas = acronimos(tex) + flutuantes(tex) + paginas_orfas()
+    problemas = (acronimos(tex) + rotulos_das_tabelas(tex)
+                 + flutuantes(tex) + paginas_orfas())
     print()
     print("=" * 74)
     if problemas:

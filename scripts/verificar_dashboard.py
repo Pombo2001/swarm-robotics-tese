@@ -51,8 +51,8 @@ LINHAS_TABELA = [
     ("Gargalo", "bottleneck"),
     ("Quatro Salas", "four_rooms"),
     ("Porta Cooperativa", "cooperative_door"),
-    ("Perceção Coop.", "cooperative_perception"),
-    ("Porta c/ Alternativa", "cooperative_door_bypass"),
+    ("Perceção Cooperativa", "cooperative_perception"),
+    ("Porta com Alternativa", "cooperative_door_bypass"),
 ]
 
 
