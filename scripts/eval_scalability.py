@@ -71,15 +71,21 @@ def eval_at_size(algo, model, base_config, scenario, num_agents, n_episodes):
     }
 
 
-def plot_scalability(df, scenario, label, sizes):
+def plot_scalability(df, scenario, label, sizes, figsize=(8, 5),
+                     escala_fontes=1.0, sufixo=""):
     """Gera o PNG a partir do DataFrame (mesmo formato do CSV escalabilidade_*.csv).
 
     A figura é desenhada em 8x5 polegadas (e não 10x6): impressa a 0,95 da
     largura do texto, a redução fica em ~0,75, pelo que os 13 pt do eixo chegam
     à página com ~10 pt. Com 10x6 chegavam com 6,6 pt — o que valia a queixa de
     que «não se lê».
+
+    `figsize` e `escala_fontes` servem a versão estreita do artigo, que sai numa
+    coluna de 8,9 cm (ver `scripts/figuras_artigo.py`); `sufixo` mantém as duas
+    versões lado a lado sem se sobreporem.
     """
-    fig, ax = plt.subplots(figsize=(8, 5))
+    e = escala_fontes
+    fig, ax = plt.subplots(figsize=figsize)
     # Marcadores e tamanhos DECRESCENTES para os algoritmos de ponto único: o
     # PPO (3,59) e o SAC (3,57) caem a 0,02 um do outro em N=20 e, com o mesmo
     # símbolo, o segundo tapava o primeiro por inteiro.
@@ -106,22 +112,27 @@ def plot_scalability(df, scenario, label, sizes):
             ax.plot(d["N"], d["food_per_agent"], "o-", linewidth=2.5, markersize=9,
                     color=PALETTE.get(algo, "#888"), label=algo)
     ax.set_title(f"Escalabilidade Zero-Shot — {label}\n(treino com N=20, sem retreino)",
-                 fontsize=15, fontweight="bold")
-    ax.set_xlabel("Número de agentes (N)", fontsize=13)
-    ax.set_ylabel("Recolhas por agente (eficiência normalizada)", fontsize=13)
+                 fontsize=15 * e, fontweight="bold")
+    ax.set_xlabel("Número de agentes (N)", fontsize=13 * e)
+    ax.set_ylabel("Recolhas por agente (eficiência normalizada)", fontsize=13 * e)
     ax.set_xticks(sizes)
-    ax.tick_params(labelsize=12)
+    ax.tick_params(labelsize=12 * e)
     ax.grid(True, linestyle="--", alpha=0.5)
-    ax.legend(title="Algoritmo", fontsize=12, title_fontsize=12)
+    ax.legend(title="Algoritmo", fontsize=12 * e, title_fontsize=12 * e)
     incompat = df[~df["compatible"]]["Algorithm"].unique()
     if len(incompat):
-        fig.text(0.5, 0.01,
-                 f"{', '.join(incompat)}: MLP de entrada fixa — incompatível com N≠20 "
-                 "(só a GNN faz transferência Zero-Shot).",
-                 ha="center", va="bottom", fontsize=10.5, color="#AA5500", style="italic")
-        fig.subplots_adjust(bottom=0.13)
+        import textwrap
+        nota = (f"{', '.join(incompat)}: MLP de entrada fixa — incompatível com "
+                "N≠20 (só a GNN faz transferência Zero-Shot).")
+        # Numa figura estreita a nota não cabe numa linha e sai pela margem.
+        largura_nota = max(40, int(62 * figsize[0] / 8.0 / max(e, 0.5)))
+        linhas_nota = textwrap.wrap(nota, largura_nota)
+        fig.text(0.5, 0.01, "\n".join(linhas_nota), ha="center", va="bottom",
+                 fontsize=10.5 * e, color="#AA5500", style="italic")
+        fig.subplots_adjust(bottom=0.13 + 0.05 * (len(linhas_nota) - 1))
     plt.tight_layout(rect=[0, 0.06, 1, 1])
-    png_path = os.path.join(OUT_STATS, f"escalabilidade_zeroshot_{scenario}.png")
+    nome = f"escalabilidade_zeroshot_{scenario}{sufixo}.png"
+    png_path = os.path.join(OUT_STATS, nome)
     plt.savefig(png_path, dpi=300)
     plt.close()
     return png_path

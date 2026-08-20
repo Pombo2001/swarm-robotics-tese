@@ -82,7 +82,7 @@ def cliffs_delta(a, b):
 def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algorithm",
                     col_sucesso="sucesso", unidade="execução independente",
                     nota_extra="", n_por_algo=None, ordem=None, cores=None,
-                    largura=9.0):
+                    largura=9.0, altura_rel=1.0):
     """Um ponto por RUN, em vez de uma caixa. Guarda o PNG em `caminho`.
 
     PORQUÊ (e porque é que não é só estética): com n=7, os quartis de um boxplot
@@ -119,8 +119,12 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
     # a 9 polegadas e reduzida para 7,8 cm, o eixo chegava ao papel com 3,4 pt.
     # As fontes acompanham a largura (`esc`), para que a figura estreita não
     # fique com letra proporcionalmente minúscula.
-    esc = min(1.15, 9.0 / largura)
-    altura = (1.35 * len(algos_presentes) + 2.4) * (largura / 9.0) * 1.15
+    # Numa figura muito estreita (a coluna do artigo, 4,6 pol) as fontes
+    # ampliadas deixam de caber: os nomes das séries encostam aos pontos e o
+    # rótulo da média escreve por cima deles. Aí encolhem-se em vez de crescer.
+    esc = 0.85 if largura < 5.5 else min(1.15, 9.0 / largura)
+    altura = ((1.35 * len(algos_presentes) + 2.4) * (largura / 9.0)
+              * 1.15 * altura_rel)
     fig, ax = plt.subplots(figsize=(largura, altura))
     rng = np.random.default_rng(7)          # jitter reprodutível
 
@@ -152,7 +156,8 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
     # Folga à esquerda do zero: os runs que NÃO resolvem valem 0 exato e, com
     # `clip_on=False`, empilham-se por cima do rótulo do eixo. A n=7 passava
     # despercebido; a n=28 são catorze pontos e o "PPO" deixa de se ler.
-    ax.set_xlim(left=-0.035 * max(x_max, 1e-9))
+    folga = 0.08 if largura < 5.5 else 0.035
+    ax.set_xlim(left=-folga * max(x_max, 1e-9))
     # Numa figura estreita, o rótulo longo do eixo e o título de uma linha
     # saem pelas bordas: encurta-se um e quebra-se o outro.
     estreita = largura < 7.0
@@ -175,10 +180,14 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
             f"média reportada na tese.{nota_extra}")
     # Quebrar a nota: numa linha só, saía pelos dois lados da figura.
     largura_nota = max(28, int(118 * (largura / 9.0) / esc))
-    fig.text(0.5, 0.015, "\n".join(textwrap.wrap(nota, largura_nota)),
-             ha="center", va="bottom", fontsize=8.5 * esc, color="#555555",
-             style="italic")
-    plt.tight_layout(rect=[0, 0.10, 0.86, 1])
+    linhas_nota = textwrap.wrap(nota, largura_nota)
+    fig.text(0.5, 0.015, "\n".join(linhas_nota), ha="center", va="bottom",
+             fontsize=8.5 * esc, color="#555555", style="italic")
+    # A margem de baixo acompanha o número de linhas da nota: numa figura
+    # estreita ela quebra em quatro e, com a margem fixa, escrevia por cima do
+    # rótulo do eixo.
+    margem = min(0.34, 0.06 + 0.16 * len(linhas_nota) * esc / max(altura, 1.0))
+    plt.tight_layout(rect=[0, margem, 0.80 if largura < 5.5 else 0.86, 1])
     fig.savefig(caminho, dpi=300)
     plt.close(fig)
 

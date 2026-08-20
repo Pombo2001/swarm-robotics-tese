@@ -144,7 +144,8 @@ def run_occupancy(algo, scenario, episodes, bins, config_path, out_dir=None, mod
     return out
 
 
-def run_geodesic(scenario, config_path, out_dir=None):
+def run_geodesic(scenario, config_path, out_dir=None, figsize=(9.5, 4.6),
+                 escala_fontes=1.0, sufixo=""):
     env = SwarmForagingEnv3D(config_path=config_path)
     env.config["environment"]["classic_scenario"] = scenario
     env.reset(seed=0)
@@ -170,7 +171,8 @@ def run_geodesic(scenario, config_path, out_dir=None):
     # 9,5x4,6 polegadas (era 15x7): a figura entra na tese a 0,95 da largura do
     # texto e, com 15 polegadas de origem, tudo o que aqui se escreve chegava ao
     # papel reduzido a 0,40 — os eixos com 4 pt.
-    fig, axes = plt.subplots(1, 2, figsize=(9.5, 4.6))
+    e = escala_fontes
+    fig, axes = plt.subplots(1, 2, figsize=figsize)
     for ax, field, title in (
             (axes[0], eucl, "Euclidiano (ANTES) — atravessa as paredes"),
             (axes[1], geo_masked, "Geodésico (DEPOIS) — contorna as paredes")):
@@ -180,17 +182,17 @@ def run_geodesic(scenario, config_path, out_dir=None):
                         levels=12, colors="white", linewidths=0.5, alpha=0.6)
         _draw_walls_and_nest(ax, env)
         cb = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        cb.set_label("distância ao ninho (m)", fontsize=11)
-        cb.ax.tick_params(labelsize=10)
-        ax.set_title(title, fontsize=12.5)
-        ax.tick_params(labelsize=10.5)
+        cb.set_label("distância ao ninho (m)", fontsize=11 * e)
+        cb.ax.tick_params(labelsize=10 * e)
+        ax.set_title(title, fontsize=12.5 * e)
+        ax.tick_params(labelsize=10.5 * e)
 
     fig.suptitle(f"Potencial de navegação — {SCENARIO_LABELS.get(scenario, scenario)}\n"
                  "As linhas de nível mostram para onde o progress reward 'puxa' o robô",
-                 fontsize=13)
+                 fontsize=13 * e)
     out_dir = out_dir or OUT_DIR
     os.makedirs(out_dir, exist_ok=True)
-    out = os.path.join(out_dir, f"heatmap_geodesico_{scenario}.png")
+    out = os.path.join(out_dir, f"heatmap_geodesico_{scenario}{sufixo}.png")
     fig.tight_layout(rect=[0, 0, 1, 0.95])
     # bbox_inches="tight": o tight_layout com colorbars deixava o rótulo "x (m)" cortado
     fig.savefig(out, dpi=150, bbox_inches="tight")

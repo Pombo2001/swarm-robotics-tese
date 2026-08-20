@@ -46,6 +46,7 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MAIN_TEX = os.path.join(RAIZ, "Tese", "main.tex")
 SECCAO = os.path.join(RAIZ, "Tese", "seccao_mapa_grande.tex")
 AUX = os.path.join(RAIZ, "Tese", "main.aux")
+ARTIGO = os.path.join(RAIZ, "Artigo", "artigo.tex")
 
 # Siglas que não são acrónimos da tese: formatos de ficheiro, instituições,
 # unidades e o ruído dos comandos do preâmbulo (`pdftitle`, `ABS`, `KEY`).
@@ -74,6 +75,12 @@ def _tex():
     if os.path.exists(SECCAO):
         t += "\n" + _sem_comentarios(open(SECCAO, encoding="utf-8").read())
     return t
+
+
+def _artigo():
+    if not os.path.exists(ARTIGO):
+        return ""
+    return _sem_comentarios(open(ARTIGO, encoding="utf-8").read())
 
 
 def acronimos(tex):
@@ -153,7 +160,9 @@ def rotulos_das_tabelas(tex):
     print("=" * 74)
     problemas, tabelas = [], 0
     velhos = {_sem_acentos(v): (v, n) for v, n in FORMAS_ABANDONADAS.items()}
-    for m in re.finditer(r"\\begin\{table\}.*?\\end\{table\}", tex, re.S):
+    # `table*` (a tabela que atravessa as duas colunas) conta: é a forma que o
+    # artigo usa, e foi por ela que a tabela dele escapou à primeira versão.
+    for m in re.finditer(r"\\begin\{table\*?\}.*?\\end\{table\*?\}", tex, re.S):
         tabelas += 1
         linha0 = tex.count("\n", 0, m.start()) + 1
         for linha in m.group(0).splitlines():
@@ -308,6 +317,11 @@ def main():
     tex = _tex()
     problemas = (acronimos(tex) + rotulos_das_tabelas(tex)
                  + flutuantes(tex) + paginas_orfas())
+    # O artigo traz as mesmas tabelas, reformatadas, e já chamou aos cenários
+    # nomes que a tese abandonou.
+    artigo = _artigo()
+    if artigo:
+        problemas += ["artigo: " + p for p in rotulos_das_tabelas(artigo)]
     print()
     print("=" * 74)
     if problemas:

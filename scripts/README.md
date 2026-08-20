@@ -40,6 +40,7 @@ mudam, e recusam o commit se um número deixar de bater
 | `verificar_bibliografia.py` | as referências existem e são o que a bibliografia diz |
 | `verificar_preregistos.py` | os compromissos dos três pré-registos foram cumpridos e reportados |
 | `verificar_figuras_tese.py` | cada figura do PDF é a que os dados produzem hoje |
+| `verificar_figuras_artigo.py` **⟨hook⟩** | as figuras do artigo acompanham as da tese (cópias idênticas, versões da coluna não mais velhas) |
 | `verificar_planalto.py` | as curvas estabilizaram dentro do orçamento |
 | `verificar_dashboard.py` | os números do dashboard são os da tese |
 | `verificar_paridade_pi.py` | tudo o que as vistas leem é enviado para o Raspberry Pi |
@@ -115,6 +116,7 @@ Os `.sh` correm no servidor do ISCTE (ver `servidor.sh` para o acesso).
 | `gerar_figuras_mapa_grande.py` | planta e figuras do 8.º cenário |
 | `figuras_campanha.py` | as mesmas figuras para qualquer campanha |
 | `figuras_megatreino.py` | M1, M2 e M3 do mega-treino |
+| `figuras_artigo.py` | as versões estreitas, desenhadas para a coluna de 8,9 cm do artigo |
 | `plot_results.py`, `plot_robustez.py` | curvas de treino e robustez a falhas |
 | `heatmaps.py` | ocupação dos robôs e potencial geodésico |
 | `render_maps.py` | renders 3D dos cenários (PyVista) |
