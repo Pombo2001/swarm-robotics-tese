@@ -154,7 +154,6 @@ Os `.sh` correm no servidor do ISCTE (ver `servidor.sh` para o acesso).
 |---|---|
 | `test_cenario_bypass.py` | validação do 7.º cenário: geometria, porta e caminho alternativo. Vive aqui e não em `tests/` porque é um ensaio manual, não parte da suite |
 | `preview_mapa_grande.py` | **retirado** — a geometria do mapa composto passou para o simulador; o ficheiro fica como nota de que já ali esteve |
-| `noite.ps1` | runner de trabalho autónomo, com condição de paragem mecânica. Não produz nada que a dissertação use |
 
 ## Subpastas
 
