@@ -148,7 +148,7 @@ def kpis():
     df = pd.read_csv(data.EVAL_SUMMARY)
     compara("episódios avaliados (KPI)", n_epis, float(len(df)), tol=0.5)
 
-    # 7 cenários na tabela; o 8.º (mapa grande) tem campanha própria e uma
+    # 7 cenários na tabela; o 8.º (mapa composto) tem campanha própria e uma
     # secção própria — não entra no denominador da cobertura (compromisso 3 do
     # pré-registo, e a razão pela qual o KPI dizia 6/8 em vez de 6/7).
     compara("cenários na tabela de avaliação", float(len(dash)), 7.0, tol=0.5)
@@ -167,14 +167,14 @@ def kpis():
     print("  [i] %d campanhas no inventário, %d h no total"
           % (len(horas), sum(horas.values())))
     esperadas = {
-        "mapa grande F2 (GNN)": (
+        "mapa composto F2 (GNN)": (
             os.path.join(RAIZ, "results", "mapa_grande", "f2_gnn",
                          "logs", "_campanha_concluida.txt"),
-            r"[Mm]apa grande.*F2|F2.*GNN"),
-        "mapa grande F2 (gradientes)": (
+            r"[Mm]apa composto.*F2|F2.*GNN"),
+        "mapa composto F2 (gradientes)": (
             os.path.join(RAIZ, "results", "mapa_grande", "f2_grad_sac",
                          "logs", "_campanha_concluida.txt"),
-            r"[Mm]apa grande.*gradientes|F2.*gradientes"),
+            r"[Mm]apa composto.*gradientes|F2.*gradientes"),
     }
     for nome, (marcador, padrao) in esperadas.items():
         if not os.path.exists(marcador):

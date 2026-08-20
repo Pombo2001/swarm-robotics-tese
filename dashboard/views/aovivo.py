@@ -249,8 +249,8 @@ def build():
             # O texto dizia "ainda NÃO está no simulador" — verdade quando foi
             # escrito (23 jul), falso desde 24 jul: o mapa_grande é o 8.º cenário
             # do simulador e já correu campanhas. Ficava aqui a desmentir a vista
-            # Mapa grande, ao lado.
-            _section_title("construction", "Mapa grande — pré-visualização 3D",
+            # Mapa composto, ao lado.
+            _section_title("construction", "Mapa composto — pré-visualização 3D",
                            "O cenário está no simulador desde 24 jul; isto é só a "
                            "planta, para ver tamanho e aspeto. A altura das paredes "
                            "aqui é da PRÉ-VISUALIZAÇÃO — no simulador é 2× o raio da "
@@ -289,7 +289,7 @@ def build():
                     procs["mapa"] = subprocess.Popen(
                         cmd, cwd=config.BASE_DIR, creationflags=flags,
                         stdout=fh, stderr=subprocess.STDOUT)
-                ui.notify("Mapa grande — a abrir a janela 3D (demora uns segundos)…",
+                ui.notify("Mapa composto — a abrir a janela 3D (demora uns segundos)…",
                           type="positive")
 
                 def _verificar():

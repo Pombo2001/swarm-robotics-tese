@@ -85,7 +85,7 @@ def build():
         with ui.card().classes(CARD):
             ui.label(
                 "As paredes são desenhadas com 2,2 m de altura VISUAL. No simulador têm "
-                "2× o raio da arena (30 m nos sete cenários, 120 no mapa grande) — é o "
+                "2× o raio da arena (30 m nos sete cenários, 120 no mapa composto) — é o "
                 "que as torna estanques desde a correção de 29 de julho, mas desenhadas "
                 "assim tapavam a cena inteira."
             ).classes("text-xs").style(f"color:{theme.INK_MUTED}")

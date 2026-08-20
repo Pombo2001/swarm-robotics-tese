@@ -91,7 +91,7 @@ def _opcoes_de_sessao(sessions):
     """As campanhas do seletor, **as da tese primeiro**.
 
     A galeria abria na campanha mais RECENTE por data — que a 18 de agosto é o
-    mapa grande, um cenário à parte cujos gráficos são de $0$ a $10$ recolhas.
+    mapa composto, um cenário à parte cujos gráficos são de $0$ a $10$ recolhas.
     Quem abrisse a vista via o resultado mais atípico do projeto como se fosse o
     principal, e as sete campanhas que a dissertação cita ficavam a meio de uma
     lista de 48 nomes de pasta.

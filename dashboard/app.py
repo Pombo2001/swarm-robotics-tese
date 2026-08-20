@@ -40,7 +40,7 @@ _episodios = os.path.join(config.BASE_DIR, "results", "episodios_3d")
 if os.path.isdir(_episodios):
     app.add_static_files("/episodios", _episodios)
 
-# Figuras instaladas na tese (a vista Mapa usa a planta do mapa grande).
+# Figuras instaladas na tese (a vista Mapa usa a planta do mapa composto).
 _fig_tese = os.path.join(config.BASE_DIR, "Tese", "images", "resultados")
 if os.path.isdir(_fig_tese):
     app.add_static_files("/figuras_tese", _fig_tese)
@@ -119,7 +119,7 @@ def index():
                 t_ciencia = ui.tab("Ciência", icon="science")
                 t_escala  = ui.tab("Escala e robustez", icon="groups")
                 # Última: é a questão em aberto, e vem depois do que já fechou.
-                t_mapa    = ui.tab("Mapa grande", icon="map")
+                t_mapa    = ui.tab("Mapa composto", icon="map")
 
                 _sec("DEFESA")
                 t_defesa  = ui.tab("Defesa", icon="record_voice_over")

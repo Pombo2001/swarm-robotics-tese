@@ -79,7 +79,10 @@ def fig_planta(mapa, raio=60.0):
     env.reset(seed=7)
 
     R = env.arena_radius
-    fig, ax = plt.subplots(figsize=(13, 13))
+    # 8,5x8,5 polegadas (era 13x13): a planta entra na tese a 0,90 da largura do
+    # texto, pelo que a redução passa de 0,44 para 0,67 — os rótulos das
+    # dificuldades deixam de chegar ao papel com 4,5 pt.
+    fig, ax = plt.subplots(figsize=(8.5, 8.5))
     ax.add_patch(Circle((0, 0), R, facecolor="#EAEDF2", edgecolor="#94A3B8",
                         lw=2, ls="--", zorder=0))
     for i, w in enumerate(env.walls):
@@ -93,18 +96,21 @@ def fig_planta(mapa, raio=60.0):
     ax.add_patch(Circle(env.nest_pos[:2], 1.5, facecolor="#22C55E",
                         edgecolor="white", lw=2, zorder=6))
     ax.text(env.nest_pos[0], env.nest_pos[1] + 3, "NINHO", ha="center",
-            fontsize=12, fontweight="bold", color="#166534", zorder=6)
+            fontsize=10, fontweight="bold", color="#166534", zorder=6)
     for p in env.agent_positions:
         ax.add_patch(Circle(p[:2], 0.5, facecolor="#3D9EFF",
                             edgecolor="white", lw=0.8, zorder=6))
 
     k = 2 * R / np.sqrt(34)
     W, H = 5 * k, 3 * k
-    for frac, txt in [(0.10, "S · Partida"), (0.32, "A · Gargalo + U"),
-                      (0.53, "B · Quatro Salas"), (0.73, "C · Porta coop."),
+    # Rótulos curtos e a 8,5 pt: com a figura desenhada em 8,5 polegadas, os
+    # nomes por extenso a 10,5 pt encavalitavam-se uns nos outros («B · Quatro
+    # Salas» entrava por cima do «C · Porta coop.»).
+    for frac, txt in [(0.10, "S · Partida"), (0.32, "A · Gargalo+U"),
+                      (0.53, "B · 4 Salas"), (0.73, "C · Porta coop."),
                       (0.93, "D · Ninho")]:
         ax.text(-W / 2 + frac * W, H / 2 - 0.05 * H, txt, ha="center",
-                fontsize=10.5, fontweight="bold", zorder=6,
+                fontsize=8.5, fontweight="bold", zorder=6,
                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="#CBD5E1"))
 
     # barra de escala
@@ -117,7 +123,7 @@ def fig_planta(mapa, raio=60.0):
                  f"labirinto {W:.0f}×{H:.0f} m\n"
                  f"pior percurso ao ninho: {dmax:.0f} m  ·  "
                  f"{len(env.obstacles)} obstáculos  ·  {env.num_agents} robôs",
-                 fontsize=14, fontweight="bold", pad=14)
+                 fontsize=11.5, fontweight="bold", pad=12)
     ax.set_xlim(-R * 1.02, R * 1.02)
     ax.set_ylim(-R * 1.02, R * 1.02)
     ax.set_aspect("equal")
@@ -246,7 +252,7 @@ def figs_campanha(mapa):
                 palette=ALGO_COLORS, ax=ax)
     sns.stripplot(data=rm, x="Algorithm", y="recolhas", order=ALGOS,
                   color="black", size=5, alpha=0.6, jitter=0.12, ax=ax)
-    ax.set_title(f"Fiabilidade entre Runs — {SCENARIO_LABELS.get(mapa, mapa)}",
+    ax.set_title(f"Fiabilidade entre Execuções — {SCENARIO_LABELS.get(mapa, mapa)}",
                  fontsize=14, fontweight="bold", pad=12)
     ax.set_ylabel("Recolhas por episódio (média do run)")
     ax.grid(True, ls="--", alpha=0.4, axis="y")

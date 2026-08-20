@@ -72,7 +72,7 @@ CANONICAS = [
      "replicação da QI6 com 4× o n — concluída a 3 ago: 28/28 do adaptativo "
      "contra 15/28 do objetivo, e as 4 ablações do anilamento",
      "graficos_tese/mega_*"),
-    ("Mapa grande — F1 (fechado)", "mapa_grande",
+    ("Mapa composto — F1 (fechado)", "mapa_grande",
      "zero-shot de topologia: 4 condições × 21 células × 20 ep = 1680 episódios",
      "QI7 — 84 de 84 células a 0,00 recolhas/ep; os 3 confundentes EXCLUÍDOS. "
      "Repetido de raiz a 31 jul (o 1.º correu com paredes atravessáveis e está "
@@ -82,7 +82,7 @@ CANONICAS = [
     # na sessão datada de 16 ago saíram do `eval_summary.csv`, que só tem o
     # modelo campeão, e mostram 7,6 recolhas/ep onde a campanha dá 1,69 — não
     # servem para projetar.
-    ("Mapa grande — F2 (fechado)", "mapa_grande",
+    ("Mapa composto — F2 (fechado)", "mapa_grande",
      "treino nativo: 3 algoritmos × 21 execuções × 20 ep = 1260 episódios "
      "(evolutivo @780 min, gradientes @192 min)",
      "QI7 — o evolutivo resolve o mapa em 4 das 21 execuções (limiar 15), os "

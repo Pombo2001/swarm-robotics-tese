@@ -114,7 +114,7 @@ def _campanhas():
     # `eval_by_run.csv`.
     f2 = os.path.join(RAIZ, "results", "mapa_grande")
     if glob.glob(os.path.join(f2, "f2_*", "**", "eval_by_run.csv"), recursive=True):
-        camp["mapa_grande_f2"] = (f2, "Mapa Grande · F2 (3 algoritmos × 21 execuções)")
+        camp["mapa_grande_f2"] = (f2, "Mapa Composto · F2 (3 algoritmos × 21 execuções)")
     return camp
 
 

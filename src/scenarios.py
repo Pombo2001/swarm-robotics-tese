@@ -40,7 +40,7 @@ SCENARIO_LABELS = {
     "cooperative_door": "Porta Cooperativa (3 Robôs)",
     "cooperative_perception": "Perceção Cooperativa (Alvo Móvel)",
     "cooperative_door_bypass": "Porta Cooperativa c/ Alternativa",
-    "mapa_grande": "Mapa Grande (Labirinto Composto)",
+    "mapa_grande": "Mapa Composto",
 }
 
 # Rótulos curtos — para eixos/legendas apertadas.
@@ -52,7 +52,7 @@ SCENARIO_LABELS_SHORT = {
     "cooperative_door": "Porta Cooperativa",
     "cooperative_perception": "Perceção Cooperativa",
     "cooperative_door_bypass": "Porta Coop. c/ Alternativa",
-    "mapa_grande": "Mapa Grande",
+    "mapa_grande": "Mapa Composto",
 }
 
 ALGO_LABELS = {"gnn": "GNN (Evolutivo)", "ppo": "PPO", "sac": "SAC"}

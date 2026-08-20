@@ -94,7 +94,7 @@ def _questoes():
       parava na primeira, e a QI7 aparecia na defesa como «Composição de
       dificuldades: As conclusões» — cortada a meio da frase, num ecrã feito
       para ser projetado;
-    · a QI7 vive em COMENTÁRIO até a secção do mapa grande entrar, e o regex
+    · a QI7 vive em COMENTÁRIO até a secção do mapa composto entrar, e o regex
       não distinguia comentário de texto. A pergunta mostra-se na mesma (não
       depende do resultado — é a pergunta, não a resposta), mas quem defende
       tem de saber que ainda não está na tese: é para isso que serve o segundo
@@ -249,7 +249,7 @@ def build():
                         + ("" if declarada else " mb-1"))
                     if not declarada:
                         ui.label("· pergunta ainda não declarada na tese — "
-                                 "entra com a secção do mapa grande") \
+                                 "entra com a secção do mapa composto") \
                             .classes("text-xs mb-4") \
                             .style(f"color:{theme.INK_MUTED}")
                     else:

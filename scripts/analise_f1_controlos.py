@@ -287,8 +287,8 @@ def figura(d, presentes, caminho):
         ax.set_xlabel("algoritmo do campeão")
 
     eixos[0].set_ylabel("cenário onde o campeão foi treinado")
-    fig.colorbar(im, ax=eixos, shrink=0.75, label="recolhas/ep no mapa grande")
-    fig.suptitle("F1 — zero-shot de topologia no mapa grande, por condição",
+    fig.colorbar(im, ax=eixos, shrink=0.75, label="recolhas/ep no mapa composto")
+    fig.suptitle("F1 — zero-shot de topologia no mapa composto, por condição",
                  fontsize=14, fontweight="bold")
     fig.savefig(caminho, dpi=160, bbox_inches="tight")
     plt.close(fig)

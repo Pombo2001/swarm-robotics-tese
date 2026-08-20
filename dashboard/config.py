@@ -63,7 +63,7 @@ SCENARIO_LABEL_SHORT.update({
 # ou, pior, calada.
 # Vem de `THESIS_SCENARIOS` (src/scenarios.py) e NÃO se escreve aqui: era uma
 # cópia à mão da mesma lista, exatamente o que o docstring deste ficheiro diz
-# para não fazer. Quando o mapa grande tiver campanha, promove-se num sítio só.
+# para não fazer. Quando o mapa composto tiver campanha, promove-se num sítio só.
 MAIN_SCENARIO_KEYS = list(_SRC_THESIS)
 
 ALGOS = ["GNN", "PPO", "SAC"]

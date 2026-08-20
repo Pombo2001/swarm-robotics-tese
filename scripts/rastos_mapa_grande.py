@@ -107,7 +107,7 @@ def main():
         ax.set_xticks([])
         ax.set_yticks([])
 
-    fig.suptitle("Mapa grande: por onde andam os 20 agentes num episódio "
+    fig.suptitle("Mapa composto: por onde andam os 20 agentes num episódio "
                  "(2000 passos)", fontsize=13, weight="bold", y=0.995)
     fig.text(0.5, 0.005,
              "Rasto de cada agente ao longo do episódio inteiro. Pontos brancos: "

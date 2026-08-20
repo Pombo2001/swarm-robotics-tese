@@ -135,14 +135,14 @@ _CAMPANHAS = [
     ("Novelty adaptativo (stream B)", 168),
     ("Mega-treino de 1 mês (stream A)", 317),
     ("Mega-treino de 1 mês (stream B)", 341),
-    ("Mapa grande (F0 e F1)", 70),
-    # F2 do mapa grande, fechado a 16 ago: 21 execuções × 780 min no evolutivo e
+    ("Mapa composto (F0 e F1)", 70),
+    # F2 do mapa composto, fechado a 16 ago: 21 execuções × 780 min no evolutivo e
     # 42 × 192 min nos dois gradientes. São os orçamentos PRÉ-REGISTADOS (emenda
     # 19), não o tempo de parede — que é maior, porque inclui filas e a avaliação
     # no fim. As 27 h que o braço errado consumiu antes de ser descartado
     # (emenda 23) ficam de fora de propósito: não produziram campanha.
-    ("Mapa grande F2 · evolutivo (21 execuções)", 273),
-    ("Mapa grande F2 · gradientes (42 execuções)", 134),
+    ("Mapa composto F2 · evolutivo (21 execuções)", 273),
+    ("Mapa composto F2 · gradientes (42 execuções)", 134),
 ]
 
 # Linha do tempo do projeto (editar aqui à medida que há marcos novos).
@@ -159,14 +159,14 @@ _TIMELINE = [
     ("13 jul", "Revisão sistemática a sério", "883 registos → 58 estudos; só 1 compara os paradigmas."),
     ("18–19 jul", "Novelty adaptativo fecha", "Muro U 7/7 a 100%; bypass @390 = 88,7 — o melhor da tese."),
     ("19 jul", "Mega-treino de 1 mês", "u_wall n=28 nos 4 braços + ablação do anneal (megaA/megaB)."),
-    ("24–25 jul", "Mapa grande (8.º cenário)", "Labirinto composto de 103×62 m; pré-registo da QI7."),
+    ("24–25 jul", "Mapa composto (8.º cenário)", "Labirinto composto de 103×62 m; pré-registo da QI7."),
     ("27 jul", "Auditoria de física ao mapa", "Enxame amontoado atravessava a porta — corrigido antes de treinar."),
     ("29–30 jul", "Os robôs voavam por cima das paredes",
      "Arena r=60 com paredes de 30 m: 45 m de céu aberto. O F1 é anulado e repetido; "
      "teto de ±2 m tira o incentivo a subir."),
     ("31 jul", "O dashboard sai da torre",
      "Publicado no Raspberry Pi para o orientador; o 3D passa a ser desenhado no browser."),
-    ("01–02 ago", "F1 do mapa grande fecha",
+    ("01–02 ago", "F1 do mapa composto fecha",
      "1680 episódios, 84 de 84 células a 0,00: as três causas alternativas excluídas. "
      "O zero mede transferência (o navegador geodésico faz 53 rec/ep no mesmo mapa)."),
     ("02 ago", "megaA concluído; F2 pronto",
@@ -176,7 +176,7 @@ _TIMELINE = [
      "28/28 execuções contra 15/28 do objetivo puro e 14/28 de cada método de "
      "gradiente (Fisher exato, p<0,0001): a única condição da tese sem uma execução "
      "falhada neste cenário."),
-    ("03 ago", "F2 do mapa grande lançado",
+    ("03 ago", "F2 do mapa composto lançado",
      "Os dois streams principais a treinar no 8.º cenário."),
     ("04 ago", "O stream do GNN treinava o braço errado",
      "O script da campanha não escrevia as chaves de novidade no config e o treino "
@@ -184,11 +184,11 @@ _TIMELINE = [
      "(w₀=0,5). Pior: o lançador verificava «sem novidade» e certificava o erro. "
      "27 h descartadas; relançado a 4 ago às 22:57 com o braço certo, e o script "
      "passa a escrever, reler e abortar se não bater."),
-    ("05 ago", "A primeira recolha que o mapa grande alguma vez deu",
+    ("05 ago", "A primeira recolha que o mapa composto alguma vez deu",
      "Com o braço adaptativo, 4,75 recolhas à geração 140 (era 0,00 em dois runs "
      "completos do objetivo puro, guardados como controlo). O GNN fecha ~16 ago; "
      "o braço exploratório arranca sozinho quando os gradientes largarem a máquina."),
-    ("06 ago", "O mapa grande resolve-se num run e não no seguinte",
+    ("06 ago", "O mapa composto resolve-se num run e não no seguinte",
      "O run que dava 4,75 fechou com 6,00 recolhas; o run 2 fechou a 0,00. É a "
      "bimodalidade do Muro em U outra vez, agora no 8.º cenário — e é por isso "
      "que M1 precisa dos 21 runs: a resposta vai ser uma PROPORÇÃO de execuções "
@@ -271,7 +271,7 @@ def build(queue: JobQueue, goto=None):
             best = "/".join(a for a in config.ALGOS
                             if covered.get(a) == topo) if table else "—"
             # O denominador é o nº de cenários NA TABELA de avaliação, não o
-            # `SCENARIO_KEYS` — que inclui o mapa grande (8.º cenário), ainda sem
+            # `SCENARIO_KEYS` — que inclui o mapa composto (8.º cenário), ainda sem
             # campanha avaliada. Com /8, o KPI dizia "6/8" quando o universo
             # possível era 7: um cenário que nunca poderia contar aparecia no
             # denominador e fazia a cobertura parecer pior do que é.

@@ -1,4 +1,4 @@
-"""Vista «Mapa grande» — o 8.º cenário e a QI7, que é o trabalho em curso.
+"""Vista «Mapa composto» — o 8.º cenário e a QI7, que é o trabalho em curso.
 
 O mapa composto (103×62 m, cinco zonas, 106 obstáculos) é a única questão de
 investigação ainda aberta, e não tinha representação nenhuma no dashboard: quem
@@ -165,8 +165,8 @@ def _texto_f2():
     fechados, com = n.get("fechados", 0), n.get("fechados_com_recolha", 0)
     if fechados:
         # O número que interessa e que nenhuma frase dizia: em quantos runs o
-        # mapa grande é RESOLVIDO. Um run com 6 recolhas e outro com 0 não é
-        # «o mapa grande foi resolvido» — é uma proporção, e é ela que M1 mede.
+        # mapa composto é RESOLVIDO. Um run com 6 recolhas e outro com 0 não é
+        # «o mapa composto foi resolvido» — é uma proporção, e é ela que M1 mede.
         partes.append("%d de %d com recolha (%s)"
                       % (com, fechados,
                          ", ".join(theme.num(r["recolhas"], 2)
@@ -339,7 +339,7 @@ def _painel_f2():
 def build():
     with ui.column().classes("w-full gap-4 p-4"):
         theme.section_title(
-            "map", "Mapa grande (8.º cenário)",
+            "map", "Mapa composto (8.º cenário)",
             "QI7 — as conclusões dos sete cenários transferem para um mapa "
             "que os compõe?")
 

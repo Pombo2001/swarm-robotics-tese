@@ -535,7 +535,7 @@ _CAMPANHAS = {
     # avaliação. Dá os mesmos valores, e sem esta linha apareciam duas
     # campanhas empatadas no topo de cada cenário, como se fossem duas.
     "eval_7d":    ("Campanha final · avaliação bruta", False),
-    "mapa_grande": ("Mapa grande · 8.º cenário", True),
+    "mapa_grande": ("Mapa composto · 8.º cenário", True),
     "mega_treino": ("Mega-treino · agregado", True),
 }
 _PREFIXOS = (
@@ -742,7 +742,7 @@ def figuras_da_tese():
             tex = fh.read()
     except OSError:
         return {}
-    # Sem as linhas comentadas: a secção do mapa grande ainda está por entrar, e
+    # Sem as linhas comentadas: a secção do mapa composto ainda está por entrar, e
     # as figuras dela não estão na tese enquanto o `\input` não for descomentado.
     tex = "\n".join(l for l in tex.split("\n") if not l.strip().startswith("%"))
     out = {}
@@ -990,7 +990,7 @@ def scenarios_with_video(session: str):
     return [k for k in config.SCENARIO_KEYS if k in present]
 
 
-# ── F2 do mapa grande: os resultados MEDIDOS ─────────────────────────────────
+# ── F2 do mapa composto: os resultados MEDIDOS ─────────────────────────────────
 F2_GLOB = os.path.join(config.BASE_DIR, "results", "mapa_grande", "f2*", "**",
                        "eval_by_run.csv")
 
