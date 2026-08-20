@@ -446,6 +446,76 @@ def audita_campanhas() -> None:
     I("galeria", "%d campanhas no seletor" % len(no_seletor))
 
 
+def audita_exibicao() -> None:
+    """O que se vai MOSTRAR está todo lá: curva, dotplot, heatmap e vídeo.
+
+    A pergunta é a de quem prepara a defesa: para cada um dos sete cenários,
+    o treino que vou mostrar tem as figuras todas? São duas perguntas, na
+    verdade, e ambas se respondem aqui:
+
+    · a matriz da campanha final — 7 cenários × 3 algoritmos — tem heatmap e
+      vídeo em todas as 21 células, que é o que permite comparar paradigmas
+      lado a lado;
+    · o MELHOR treino de cada cenário (que nem sempre é o da campanha final:
+      três deles vêm das campanhas de novidade) tem, na campanha dele, curva,
+      dotplot, heatmap e vídeo.
+
+    O mapa composto fica de fora de propósito: é o 8.º cenário, tem campanha
+    própria e o seu estado vive na vista «Mapa composto».
+    """
+    from dashboard import data
+    from src.scenarios import THESIS_SCENARIOS
+
+    raiz = os.path.join("results", "graficos_tese")
+    final = os.path.join(raiz, "final_7d")
+    algos = ("gnn", "ppo", "sac")
+
+    faltam = 0
+    for cen in THESIS_SCENARIOS:
+        for a in algos:
+            if not os.path.exists(os.path.join(
+                    final, "heatmap_ocupacao_%s_%s.png" % (a, cen))):
+                X("galeria", "final_7d sem heatmap de %s no %s" % (a.upper(), cen))
+                faltam += 1
+            if not os.path.exists(os.path.join(
+                    final, "videos", "%s_%s.gif" % (a, cen))):
+                X("vídeos", "final_7d sem vídeo de %s no %s" % (a.upper(), cen))
+                faltam += 1
+    if not faltam:
+        I("galeria", "campanha final completa: %d células com heatmap e vídeo"
+          % (len(THESIS_SCENARIOS) * len(algos)))
+
+    ranking = data.ranking_por_cenario()
+    incompletos = 0
+    for cen in THESIS_SCENARIOS:
+        linhas = ranking.get(cen) or []
+        if not linhas:
+            X("ranking", "sem melhor treino para %s" % cen)
+            continue
+        melhor = max(linhas, key=lambda x: (x.get("recolhas") or 0))
+        camp = melhor.get("campanha") or ""
+        algo = (melhor.get("algo") or "").lower()
+        d = os.path.join(raiz, camp)
+        esperados = {
+            "curva": os.path.join(d, "comparacao_mapa_%s.png" % cen),
+            "heatmap": os.path.join(d, "heatmap_ocupacao_%s_%s.png" % (algo, cen)),
+            "vídeo": os.path.join(d, "videos", "%s_%s.gif" % (algo, cen)),
+        }
+        for nome, caminho in esperados.items():
+            if not os.path.exists(caminho):
+                X("galeria", "o melhor treino do %s (%s / %s) não tem %s"
+                  % (cen, camp, algo.upper(), nome))
+                incompletos += 1
+        dot = any(os.path.exists(os.path.join(d, p % cen))
+                  for p in ("dotplot_eval_%s.png", "boxplot_eval_%s.png"))
+        if not dot:
+            X("galeria", "o melhor treino do %s (%s) não tem dot plot" % (cen, camp))
+            incompletos += 1
+    if not incompletos:
+        I("galeria", "os %d melhores treinos têm curva, dot plot, heatmap e vídeo"
+          % len(THESIS_SCENARIOS))
+
+
 def audita_robustez() -> None:
     """Retenção com 10% de falhas: base e falhas da MESMA corrida.
 
@@ -521,6 +591,7 @@ def main() -> int:
     audita_3d()
     audita_estaticos()
     audita_campanhas()
+    audita_exibicao()
     audita_robustez()
     audita_numeros()
 
