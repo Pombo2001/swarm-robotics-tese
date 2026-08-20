@@ -2758,6 +2758,29 @@ FACTOS_REPETIDOS = [
                 r"cenários com paredes.{0,180}?\$(\d+)\\%\$ no Sandbox, "
                 r"\$(\d+)\\%\$ na Perceção"},
      ]},
+    # A mesma janela dita uma quarta vez, nos Contributos — e escrita de outra
+    # maneira («entre 58% e 90%», em vez de «58--90%»), que é precisamente como
+    # um número se desalinha sem ninguém dar por isso. Aqui compara-se só a
+    # janela: o parágrafo dos Contributos não repete os cenários abertos, e um
+    # facto com mais valores de um lado do que do outro acusaria uma
+    # divergência que não existe.
+    {"rot": "Contributos — a janela de retenção per capita (58--90%)",
+     "sitios": [
+         {"re": r"retendo entre \$(\d+)\\%\$ e \$(\d+)\\%\$ da eficiência per "
+                r"capita"},
+         {"re": r"per capita em \$N=100\$ a reter \$(\d+)\$--\$(\d+)\\%\$"},
+         {"re": r"per capita em \$N=100\$ retém \$(\d+)\$--\$(\d+)\\%\$"},
+     ]},
+    # O δ do Sandbox exploratório é dito nos Resultados e outra vez nos
+    # Trabalhos Futuros, onde sustenta a proposta de alargar o braço de
+    # controlo. Se um deles for corrigido sozinho, a proposta passa a
+    # argumentar a partir de um número que a secção já não tem.
+    {"rot": "Sandbox exploratório — o δ que os Trabalhos Futuros citam",
+     "sitios": [
+         {"re": r"\$p = 0\{,\}14\$, \$\\delta = \+([\d{},]+)\$\): a assimetria"},
+         {"re": r"mantém o \$\\delta = \+([\d{},]+)\$ do Sandbox longe do "
+                r"limiar convencional"},
+     ]},
     {"rot": "Robustez — a janela de retenção com 10% de falhas",
      "sitios": [
          # Só a JANELA (92--106) é o mesmo facto nos dois sítios: o Cap. 5
@@ -3005,8 +3028,12 @@ def verificar_sandbox(tolerancia):
     # máximo do grupo competitivo.
     m = re.search(r"quatro d[oa]s sete (?:\\textit\{runs?\}|execuç(?:ão|ões)) "
                   r"convergem para políticas "
-                  r"competitivas \(([\d,]+) a ([\d,]+) recolhas/ep\), dois "
-                  r"degeneram por completo \(\$<(\d+)\$ recolha/ep\) e um fica "
+                  # «dois … um» era o género de `run`; com «execuções» são
+                  # «duas … uma», e a frase foi corrigida a 20 de agosto. O
+                  # padrão aceita as duas formas para não partir com a
+                  # concordância — o que se confere são os números.
+                  r"competitivas \(([\d,]+) a ([\d,]+) recolhas/ep\), (?:dois|duas) "
+                  r"degeneram por completo \(\$<(\d+)\$ recolha/ep\) e (?:um|uma) fica "
                   r"num regime intermédio \(([\d,]+) recolhas/ep, com sucesso "
                   r"em todos os episódios", tex)
     g = por_algo.get("GNN")
@@ -3436,6 +3463,377 @@ def verificar_coerencia_interna():
     return problemas
 
 
+def verificar_fiabilidade_prosa(tolerancia):
+    """§Fiabilidade e Variância entre Execuções — a prosa que LÊ os dotplots.
+
+    A secção não tem tabela: descreve, cenário a cenário, a FORMA de sete
+    pontos. «As sete execuções ficam agrupadas e afastadas do zero», «o SAC
+    espalha-se de 0 a 88 recolhas/ep», «o GNN tem duas execuções degeneradas»,
+    «só o PPO tem a maioria das execuções funcionais». São afirmações
+    verificáveis uma a uma — e nenhuma delas era verificada: uma média pode
+    manter-se enquanto a forma que estas frases descrevem muda por completo.
+
+    A régua é sempre a média por execução do `eval_by_run_7d.csv`, a mesma da
+    tabela principal. «Degenerada» é o que a própria frase diz — abaixo de uma
+    recolha por episódio; «funcional» é a execução com sucesso em todos os
+    episódios, que é como o resto do capítulo conta convergência.
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: §Fiabilidade entre Execuções (a forma dos sete pontos)")
+    print("=" * 72)
+
+    if not os.path.exists(CSV_7D):
+        print("[!] sem eval_by_run_7d.csv — a saltar.")
+        return []
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+
+    d = pd.read_csv(CSV_7D)
+    por_run = (d.groupby(["Scenario", "Algorithm", "Run"])
+                .agg(food=("food_collected", "mean"), suc=("success", "mean"))
+                .reset_index())
+
+    def celula(cen, algo):
+        return por_run[(por_run["Scenario"] == cen) &
+                       (por_run["Algorithm"] == algo)]
+
+    problemas, conferidos = [], 0
+
+    def confere(rot, tese, calc, exato=True):
+        nonlocal conferidos
+        conferidos += 1
+        if tese is None:
+            problemas.append("%s: não encontrei a frase (mudou a redação?)" % rot)
+        elif exato and int(tese) != int(calc):
+            problemas.append("%-46s tese=%d  dados=%d" % (rot, tese, calc))
+        elif not exato and abs(tese - calc) > tolerancia:
+            problemas.append("%-46s tese=%.1f  dados=%.1f" % (rot, tese, calc))
+        else:
+            print("   [v] %-46s %s" % (rot, ("%d" % calc) if exato
+                                       else ("%.1f" % calc)))
+
+    def procura(padrao):
+        m = re.search(padrao, tex, re.DOTALL)
+        return [numero(g) for g in m.groups()] if m else None
+
+    # --- o protocolo que a secção enuncia ----------------------------------
+    v = procura(r"média dos (\d+) episódios de avaliação; (\d+) pontos por "
+                r"algoritmo")
+    if v:
+        n_ep = int(d.groupby(["Scenario", "Algorithm", "Run"]).size().min())
+        confere("episódios por ponto", v[0], n_ep)
+        confere("pontos por algoritmo", v[1],
+                int(celula("none", "GNN")["Run"].nunique()))
+    else:
+        problemas.append("protocolo dos dotplots: não encontrei a frase")
+
+    # --- Gargalo: PPO e GNN fiáveis, SAC de 0 a 88 -------------------------
+    v = procura(r"No \\textbf\{Gargalo\}, PPO e GNN são fiáveis \((\d+)/(\d+) "
+                r"execuções\), mas as execuções do SAC espalham-se de (\d+) a "
+                r"(\d+) recolhas/ep")
+    if v:
+        for algo in ("PPO", "GNN"):
+            g = celula("bottleneck", algo)
+            confere("Gargalo/%s: execuções a 100%%" % algo, v[0],
+                    int((g["suc"] >= 1.0).sum()))
+        confere("Gargalo: execuções por célula", v[1],
+                len(celula("bottleneck", "SAC")))
+        sac = celula("bottleneck", "SAC")["food"]
+        confere("Gargalo/SAC: mínimo (recolhas/ep)", v[2], float(sac.min()),
+                exato=False)
+        # A tese escreve «de 0 a 88», um arredondamento à unidade: comparar
+        # com a tolerância de uma casa decimal acusaria os 88,2 medidos.
+        conferidos += 1
+        if abs(v[3] - float(sac.max())) > 0.5:
+            problemas.append("Gargalo/SAC: máximo   tese=%.0f  dados=%.1f"
+                             % (v[3], sac.max()))
+        else:
+            print("   [v] %-46s %.1f" % ("Gargalo/SAC: máximo (recolhas/ep)",
+                                         sac.max()))
+    else:
+        problemas.append("Gargalo: não encontrei a frase do SAC «de 0 a 88»")
+
+    # --- Sandbox: o GNN com execuções degeneradas --------------------------
+    #
+    # «degeneradas» tem de ser um critério, não um adjetivo: a própria secção
+    # do Sandbox chama-lhes as que ficam abaixo de UMA recolha por episódio.
+    # O numeral vem por extenso — e é o número que se confere, não a palavra:
+    # trocar «duas» por «três» tem de acusar o valor errado, não um «não
+    # encontrei a frase» que se leria como problema do verificador.
+    EXTENSO = {"uma": 1, "um": 1, "duas": 2, "dois": 2, "três": 3, "tres": 3,
+               "quatro": 4, "cinco": 5, "seis": 6, "sete": 7}
+    m = re.search(r"GNN com (\w+) execuç(?:ão|ões) degenerada?s?", tex)
+    g = celula("none", "GNN")["food"]
+    if m and m.group(1).lower() in EXTENSO:
+        confere("Sandbox/GNN: execuções abaixo de 1 recolha/ep",
+                EXTENSO[m.group(1).lower()], int((g < 1.0).sum()))
+    else:
+        problemas.append("Sandbox: não encontrei a frase das execuções "
+                         "degeneradas (ou o numeral não é um que eu saiba ler)")
+
+    # --- Muro em U: os três têm execuções a zero, o PPO tem a maioria ------
+    v = procura(r"só o PPO tem a maioria das execuções funcionais \((\d+)/(\d+)\)")
+    if v:
+        ppo = celula("u_wall", "PPO")
+        confere("Muro em U/PPO: execuções a 100%", v[0],
+                int((ppo["suc"] >= 1.0).sum()))
+        confere("Muro em U: execuções por célula", v[1], len(ppo))
+        conferidos += 1
+        # «a zero» é o mesmo critério que a secção do Sandbox usa para
+        # «degenerada»: abaixo de UMA recolha por episódio. Exigir zero exato
+        # era mais estrito do que a tese — no Muro em U as execuções falhadas
+        # do PPO medem 0,10, 0,45 e 0,85 recolhas/ep, contra 67 a 72 das que
+        # resolvem, e ninguém as leria como outra coisa.
+        sem_zero = [a for a in ALGOS
+                    if int((celula("u_wall", a)["food"] < 1.0).sum()) == 0]
+        if sem_zero:
+            problemas.append("Muro em U: a tese diz que os três algoritmos têm "
+                             "execuções a zero, mas %s não tem nenhuma"
+                             % ", ".join(sem_zero))
+        else:
+            print("   [3] %-46s os três têm execuções a zero"
+                  % "Muro em U: bimodalidade")
+    else:
+        problemas.append("Muro em U: não encontrei a frase do «4/7» do PPO")
+
+    # --- os cenários onde treinar é fiável ---------------------------------
+    #
+    # «agrupadas e afastadas do zero» é uma afirmação sobre TODAS as sete
+    # execuções dos três algoritmos: basta uma a zero para deixar de ser
+    # verdade, e é isso que se testa — não a média, que sobreviveria a ela.
+    if re.search(r"as sete execuções dos três algoritmos ficam agrupadas e "
+                 r"afastadas do zero", tex):
+        for cen, rot in (("cooperative_door", "Porta Cooperativa"),
+                         ("cooperative_door_bypass", "Porta c/ Alternativa"),
+                         ("four_rooms", "Quatro Salas")):
+            conferidos += 1
+            minimos = {a: float(celula(cen, a)["food"].min()) for a in ALGOS}
+            if min(minimos.values()) < 1.0:
+                problemas.append("%s: a tese diz «afastadas do zero», mas há "
+                                 "execuções abaixo de 1 recolha/ep (%s)"
+                                 % (rot, minimos))
+            else:
+                print("   [v] %-46s mínimo %.1f recolhas/ep"
+                      % ("%s: nenhuma execução perto do zero" % rot,
+                         min(minimos.values())))
+    else:
+        problemas.append("cenários fiáveis: não encontrei a frase «agrupadas e "
+                         "afastadas do zero»")
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nOs %d valores da secção da fiabilidade batem com o CSV."
+              % conferidos)
+    print("NOTA: o que aqui se confere é a FORMA da distribuição — quantas")
+    print("      execuções ficam a zero, onde estão os extremos —, e não as")
+    print("      médias, que a tabela principal já verifica.")
+    return problemas
+
+
+def _numeros_do_bloco(texto):
+    """Os valores numéricos de um bloco de prosa, pela ordem em que aparecem.
+
+    Normaliza as duas escritas do mesmo número — o `88{,}7` do Resumo e o
+    `88.7` do Abstract são o mesmo valor — e deixa cair o que não é grandeza:
+    argumentos de comandos LaTeX (`\\vspace{3ex}`, `\\times`) e os índices de
+    referências. O que fica é o que um leitor leria em voz alta.
+
+    A procura corre sobre o texto ORIGINAL, e não sobre uma cópia limpa: o
+    `cobertura_verificador.py` mede o que os verificadores leem instrumentando
+    o módulo `re`, e só reconhece o que é procurado no `.tex` tal como ele
+    está. Com a cópia limpa, estes valores eram conferidos e continuavam a
+    aparecer no relatório como «por cobrir» — o instrumento a não ver o
+    instrumento.
+    """
+    vals = []
+    for m in re.finditer(r"(?<![\w.,])(\d+(?:(?:\{,\}|[.,])\d+)?)(?![\w])",
+                         texto):
+        bruto = m.group(1)
+        antes = texto[max(0, m.start() - 14):m.start()]
+        # O `3ex` de um `\vspace`, o ano de um `\cite` ou o número de um DOI
+        # não são grandezas que alguém leia em voz alta.
+        if re.search(r"\\(?:vspace|hspace|label|ref|cite|url|doi)\{[^}]*$",
+                     antes):
+            continue
+        if re.fullmatch(r"(19|20)\d{2}", bruto):
+            continue
+        vals.append(float(bruto.replace("{,}", ".").replace(",", ".")))
+    return vals
+
+
+def verificar_resumo_abstract():
+    """O Resumo e o Abstract dizem o mesmo, e o que dizem bate com os dados.
+
+    São as duas primeiras páginas — e as únicas que um leitor apressado lê por
+    inteiro. Nenhum verificador olhava para elas: os `782` valores conferidos
+    até aqui vivem todos do Capítulo 4 em diante.
+
+    Duas perguntas, e a primeira só faz sentido aqui:
+
+    1. **O Abstract é a tradução do Resumo?** Não em prosa — em números. Os
+       dois blocos têm de trazer a MESMA sequência de valores. Uma correção
+       feita num deles e esquecida no outro produz duas dissertações que
+       discordam na primeira página, e nenhuma régua deste ficheiro dava por
+       isso, porque cada valor, isoladamente, continua a bater com o seu CSV.
+    2. **Os números do Resumo são os medidos?** As afirmações que ele arrisca
+       — 7 execuções por combinação, `Zero-Shot` de 10 a 100 agentes a 100%,
+       os `7/7` do Muro em U, as `88,7` recolhas/ep da Porta com Alternativa,
+       o `28/28` contra `15/28`, e as `4` de `21` do mapa composto — são
+       reconferidas contra as mesmas fontes que sustentam o corpo.
+    """
+    print()
+    print("=" * 72)
+    print("VERIFICAÇÃO: Resumo e Abstract (paridade PT↔EN + valores)")
+    print("=" * 72)
+
+    with open(MAIN_TEX, encoding="utf-8") as f:
+        tex = re.sub(r"(?<!\\)%[^\n]*", "", f.read())
+
+    problemas, conferidos = [], 0
+
+    def bloco(inicio, fim):
+        i = tex.find(inicio)
+        if i < 0:
+            return None
+        j = tex.find(fim, i)
+        return tex[i + len(inicio):j if j > 0 else len(tex)]
+
+    pt = bloco(r"\chapter*{Resumo}", r"\textsc{Palavras Chave:}")
+    en = bloco(r"\chapter*{Abstract}", r"\textsc{Keywords:}")
+    if pt is None or en is None:
+        problemas.append("não encontrei o Resumo ou o Abstract (mudaram de "
+                         "forma? este verificador procura os \\chapter*)")
+        print("   [X] blocos não encontrados")
+        return problemas
+
+    v_pt, v_en = _numeros_do_bloco(pt), _numeros_do_bloco(en)
+    conferidos += len(v_pt)
+    if v_pt == v_en:
+        print("   [%d] Resumo e Abstract trazem a mesma sequência de valores"
+              % len(v_pt))
+    else:
+        # Mostrar ONDE divergem, não só que divergem: com quinze números, «são
+        # diferentes» manda procurar à mão.
+        for k, (a, b) in enumerate(zip(v_pt, v_en), 1):
+            if a != b:
+                problemas.append("Resumo vs Abstract, valor #%d: %s vs %s"
+                                 % (k, a, b))
+        if len(v_pt) != len(v_en):
+            problemas.append("Resumo tem %d valores e o Abstract %d — um deles "
+                             "ganhou ou perdeu uma afirmação" % (len(v_pt), len(v_en)))
+
+    def confere(rot, tese, calc, exato=True, tol=0.05):
+        nonlocal conferidos
+        conferidos += 1
+        if tese is None:
+            problemas.append("%s: não encontrei a frase no Resumo "
+                             "(mudou a redação?)" % rot)
+        elif exato and int(tese) != int(calc):
+            problemas.append("%-42s resumo=%d  dados=%d" % (rot, tese, calc))
+        elif not exato and abs(tese - calc) > tol:
+            problemas.append("%-42s resumo=%.2f  dados=%.2f" % (rot, tese, calc))
+        else:
+            print("   [v] %-42s %s" % (rot, ("%d" % calc) if exato
+                                       else ("%.1f" % calc)))
+
+    def le(padrao, texto=pt):
+        m = re.search(padrao, texto, re.DOTALL)
+        return [numero(g) for g in m.groups()] if m else None
+
+    # --- 1. sete execuções independentes por combinação ---------------------
+    v = le(r"\((\d+) execuções independentes por combinação\)")
+    if os.path.exists(CSV_7D):
+        d = pd.read_csv(CSV_7D)
+        por_celula = d.groupby(["Scenario", "Algorithm"])["Run"].nunique()
+        confere("execuções por combinação", v[0] if v else None,
+                int(por_celula.min()))
+        if v and int(por_celula.min()) != int(por_celula.max()):
+            problemas.append("as células não têm todas o mesmo n (%d a %d) — o "
+                             "Resumo afirma um número só"
+                             % (por_celula.min(), por_celula.max()))
+
+    # --- 2. Zero-Shot: de N=10 a N=100, a 100% de sucesso -------------------
+    v = le(r"\$N\$ de \$(\d+)\$ a \$(\d+)\$, com (\d+)\\% de sucesso")
+    csv_esc = os.path.join(PROJECT_ROOT, "results", "estatisticas",
+                           "escalabilidade_none.csv")
+    if os.path.exists(csv_esc):
+        e = pd.read_csv(csv_esc)
+        g = e[(e["Algorithm"] == "GNN") & (e["compatible"])]
+        confere("Zero-Shot: N mínimo", v[0] if v else None, int(g["N"].min()))
+        confere("Zero-Shot: N máximo", v[1] if v else None, int(g["N"].max()))
+        confere("Zero-Shot: sucesso (%)", v[2] if v else None,
+                int(round(100 * g["success_rate"].min())))
+
+    # --- 3. os 7/7 do Muro em U com dosagem adaptativa ----------------------
+    v = le(r"preserva os \$(\d+)/(\d+)\$ execuções no Muro em U")
+    r = _runs_a_100("adapt_B2", "u_wall")
+    n = _por_run("adapt_B2", "u_wall")
+    if r is not None and n is not None:
+        confere("Muro em U: execuções a 100%", v[0] if v else None, int(r))
+        confere("Muro em U: execuções na campanha", v[1] if v else None, len(n))
+
+    # --- 4. o melhor resultado da dissertação -------------------------------
+    v = le(r"melhor resultado de toda a dissertação \(\$([\d.,{}\\]+)\$ "
+           r"recolhas/ep\)")
+    b3 = _por_run("adapt_B3", "cooperative_door_bypass")
+    if b3 is not None:
+        confere("Porta c/ Alternativa: recolhas/ep", v[0] if v else None,
+                float(b3.mean()), exato=False)
+
+    # --- 5. a replicação a n=28 --------------------------------------------
+    v = le(r"\$(\d+)/(\d+)\$, contra \$(\d+)/28\$ do objetivo puro, "
+           r"\$(\d+)/28\$ do PPO e \$(\d+)/28\$ do SAC")
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from analise_megatreino import carregar as _carregar_mega
+    except Exception:                                        # pragma: no cover
+        _carregar_mega = None
+    if _carregar_mega is not None:
+        for k, (fase, rot) in enumerate((("mega_A_fase1", "adaptativo"),
+                                         ("mega_A_fase2", "objetivo puro"),
+                                         ("mega_A_fase3", "PPO"),
+                                         ("mega_A_fase4", "SAC"))):
+            g = _carregar_mega(fase, "u_wall")
+            if g is None:
+                problemas.append("mega-treino %s: sem dados" % rot)
+                continue
+            idx = 0 if k == 0 else k + 1        # o segundo valor lido é o n=28
+            confere("n=28, %s: execuções a 100%%" % rot,
+                    v[idx] if v else None, int((g["suc"] >= 1.0).sum()))
+            if k == 0:
+                confere("n=28: execuções por braço", v[1] if v else None, len(g))
+
+    # --- 6. o oitavo cenário -----------------------------------------------
+    v = le(r"resolvido em (\d+) das\s+\$(\d+)\$ execuções independentes")
+    try:
+        from analise_mapa_grande import medir_f2
+        m = medir_f2()
+    except Exception:                                        # pragma: no cover
+        m = None
+    if m:
+        confere("mapa composto: execuções que resolvem", v[0] if v else None,
+                int(m["max_convergentes"]))
+        confere("mapa composto: execuções por braço", v[1] if v else None,
+                int(m["n_runs"]))
+
+    if problemas:
+        print("\nDIVERGÊNCIAS (%d de %d valores):" % (len(problemas), conferidos))
+        for p in problemas:
+            print("   " + p)
+    else:
+        print("\nOs %d valores do Resumo batem com os dados, e o Abstract diz "
+              "o mesmo." % conferidos)
+    print("NOTA: a paridade PT↔EN é a única verificação deste ficheiro que não")
+    print("      olha para dados nenhuns — compara as duas primeiras páginas")
+    print("      uma com a outra, que é onde uma correção esquecida se instala.")
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tolerancia", type=float, default=0.05,
@@ -3528,6 +3926,8 @@ def main():
     problemas += verificar_ptask_prosa(a.tolerancia)
     problemas += verificar_computacional()
     problemas += verificar_questoes_investigacao()
+    problemas += verificar_resumo_abstract()
+    problemas += verificar_fiabilidade_prosa(a.tolerancia)
     problemas += verificar_coerencia_interna()
     problemas += verificar_artigo(a.tolerancia)
     problemas += verificar_megatreino_artigo(a.tolerancia)
