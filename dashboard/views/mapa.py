@@ -21,7 +21,7 @@ import sys
 import pandas as pd
 from nicegui import ui
 
-from .. import data, theme
+from .. import config, data, theme
 
 CARD = theme.CARD + " p-4"
 _RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -39,11 +39,9 @@ CONDICOES = [(("mapa", "base"), "natural"),
              (("mapa", "sem_obstaculos"), "sem obstáculos"),
              (("mapa", "sem_porta_obs"), "sem features da porta")]
 
-ORIGENS = [("none", "Sandbox"), ("u_wall", "Muro U"), ("bottleneck", "Gargalo"),
-           ("four_rooms", "Quatro Salas"),
-           ("cooperative_door", "Porta Cooperativa"),
-           ("cooperative_perception", "Perceção Coop."),
-           ("cooperative_door_bypass", "Porta c/ Alternativa")]
+# Os sete cenários de origem, com os nomes da dissertação (que vivem no
+# dashboard/config.py). Havia aqui uma cópia à mão, e dizia «Muro U».
+ORIGENS = [(k, config.SCENARIO_LABEL_SHORT[k]) for k in config.MAIN_SCENARIO_KEYS]
 
 
 ESTADO_F2 = os.path.join(_RAIZ, "results", "estado_f2.json")

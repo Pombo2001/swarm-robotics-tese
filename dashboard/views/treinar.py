@@ -54,7 +54,7 @@ def build(queue: JobQueue):
             f'<span class="mono-num" style="font-size:1.7rem;font-weight:600;'
             f'color:{theme.INK}">{_fmt_dur(total)}</span>')
         est_sub.text = (f"{n} treino(s) = {_n_algos()} algo(s) × "
-                        f"{len(state['cens'])} cenário(s) × {int(w['runs'].value or 1)} run(s)")
+                        f"{len(state['cens'])} cenário(s) × {int(w['runs'].value or 1)} execução(ões)")
 
     def apply_preset(name):
         algo, cens, mins, runs, ev, *_ = PRESETS[name]
@@ -172,10 +172,10 @@ def build(queue: JobQueue):
                 cen_chips()
 
                 with ui.row().classes("w-full gap-2 no-wrap"):
-                    w["min"]  = ui.number("Minutos/run", value=15, min=1, format="%d",
+                    w["min"]  = ui.number("Minutos/execução", value=15, min=1, format="%d",
                                           on_change=lambda _: _update_est()) \
                         .props("outlined dense").classes("flex-1")
-                    w["runs"] = ui.number("Runs/cenário", value=1, min=1, format="%d",
+                    w["runs"] = ui.number("Execuções/cenário", value=1, min=1, format="%d",
                                           on_change=lambda _: _update_est()) \
                         .props("outlined dense").classes("flex-1")
                     w["eval"] = ui.number("Eval ep. (0=não)", value=20, min=0, format="%d") \

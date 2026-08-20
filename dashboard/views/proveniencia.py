@@ -183,7 +183,7 @@ def build():
                                         max(2, int(70 * v / alto)), cor))
                                 ui.label("%.0f" % v).classes("text-[10px] mono-num") \
                                     .style(f"color:{theme.INK_MUTED}")
-                                ui.label("r%d" % run).classes("text-[9px] mono-num") \
+                                ui.label("#%d" % run).classes("text-[9px] mono-num") \
                                     .style(f"color:{theme.INK_MUTED}")
 
                     ui.separator().classes("my-3")
@@ -204,8 +204,16 @@ def build():
                              if quando else ""))
                          if fp_modelo else
                          "não está no disco (ver results/mapa_grande/LEIA-ME.md)"),
+                        # Os nomes das opções são os do `eval_by_run.py`, no
+                        # plural. Estiveram no singular e corriam à mesma —
+                        # o argparse aceita prefixos não ambíguos —, o que é
+                        # uma dependência que se parte sozinha no dia em que
+                        # o script ganhar outra opção começada por «algo».
+                        # `scripts/verificar_comandos_dashboard.py` confirma
+                        # que cada comando destes é aceite pelo script que
+                        # invoca.
                         ("reproduzir",
-                         "python scripts/eval_by_run.py --algo %s --scenario %s "
+                         "python scripts/eval_by_run.py --algos %s --scenarios %s "
                          "--episodes 20" % (algo.lower(), cen)),
                         ("verificar tudo",
                          "python scripts/verificar_numeros_tese.py"),

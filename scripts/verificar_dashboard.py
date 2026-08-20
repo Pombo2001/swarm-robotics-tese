@@ -218,10 +218,126 @@ def galeria():
           "verificadas por scripts/verificar_figuras_tese.py")
 
 
+# ── 4. o vocabulário do ecrã é o da dissertação ─────────────────────────────
+# As formas que a dissertação abandonou, e que o dashboard continuou a mostrar.
+# Os padrões são exatos de propósito: «Perceção Coop\.» não pode apanhar
+# «Perceção Cooperativa», que é a forma boa.
+FORMAS_ABANDONADAS = [
+    (r"Muro U\b", "Muro em U"),
+    (r"Beco Sem Sa", "Muro em U"),
+    (r"Perceção [Cc]oop\.", "Perceção Cooperativa"),
+    (r"Porta c/ [Aa]lt", "Porta com Alternativa"),
+    (r"Porta [Cc]oop\.", "Porta Cooperativa"),
+    (r"\b4 Salas\b", "Quatro Salas"),
+    (r"Mapa [Gg]rande", "mapa composto"),
+    # Com as duas caixas: um ensaio mostrou que «Runs/cenário» passava incólume
+    # por o padrão ser minúsculo, que é a forma que uma etiqueta de campo tem.
+    (r"\b[Rr]uns?\b", "execução/execuções"),
+]
+
+# Strings que contêm as palavras acima sem serem texto de ecrã: nomes de
+# ficheiro, chaves e padrões de leitura. Declaradas uma a uma — a lista curta é
+# o sinal de que a regra está a valer.
+VOCABULARIO_ACEITE = (
+    "Runs por algoritmo:",     # rótulo do ficheiro de metadados que se LÊ
+)
+
+
+def _literais_de_ecra(path):
+    """(linha, texto) dos literais de string que não são docstrings.
+
+    Ao contrário de um grep, isto não vê comentários — e os comentários deste
+    projeto citam as formas velhas para explicar porque foram abandonadas. Um
+    verificador que se queixasse da própria explicação seria ruído.
+    """
+    import ast
+    with open(path, encoding="utf-8") as fh:
+        arvore = ast.parse(fh.read())
+    docs = set()
+    for no in ast.walk(arvore):
+        corpo = getattr(no, "body", None)
+        if isinstance(no, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef,
+                           ast.ClassDef)) and corpo:
+            p = corpo[0]
+            if isinstance(p, ast.Expr) and isinstance(p.value, ast.Constant) \
+                    and isinstance(p.value.value, str):
+                docs.add(id(p.value))
+    for no in ast.walk(arvore):
+        if isinstance(no, ast.Constant) and isinstance(no.value, str) \
+                and id(no) not in docs:
+            yield no.lineno, no.value
+
+
+def vocabulario():
+    """O ecrã e a dissertação chamam o mesmo nome à mesma coisa.
+
+    Chegaram a existir CINCO vocabulários para os sete cenários: os de
+    `src/scenarios.py`, os do `dashboard/config.py`, e cópias próprias em duas
+    vistas — e o Overview dizia «Muro U» na primeira linha da cronologia.
+    Verifica duas coisas:
+
+    * os nomes que o dashboard publica são os que a dissertação imprime na
+      `tab:res_eval` (a lista `LINHAS_TABELA` é a mesma que serve para comparar
+      os números — nomes e valores lidos da mesma fonte);
+    * nenhuma string de ecrã usa uma forma abandonada.
+    """
+    global conferidos
+    from dashboard import config
+
+    for rotulo, chave in LINHAS_TABELA:
+        conferidos += 1
+        dado = config.SCENARIO_LABEL_SHORT.get(chave)
+        if dado != rotulo:
+            falhas.append("o dashboard chama %r ao %s; a dissertação imprime %r"
+                          % (dado, chave, rotulo))
+
+    base = os.path.join(RAIZ, "dashboard")
+    ficheiros = []
+    for pasta in (base, os.path.join(base, "views")):
+        ficheiros += [os.path.join(pasta, f) for f in sorted(os.listdir(pasta))
+                      if f.endswith(".py") and f != "__init__.py"]
+
+    # As chaves internas dos cenários são identificadores, não nomes: dentro de
+    # um caminho ou de um comando estão no sítio certo, numa frase não. O
+    # Arquivo dizia «12 fases (u_wall a n=28)» e um seletor oferecia «u_wall
+    # objetivo puro @390» a quem não sabe o que é um u_wall.
+    chaves = sorted(config.SCENARIO_KEYS, key=len, reverse=True)
+    tecnico = re.compile(r"[/\\]|\.(?:py|png|csv|gif|json|yaml|sh|md)\b|--|%s"
+                         r"|\{|;\s*[\w-]+:")   # o último ramo é CSS embutido
+
+    for path in ficheiros:
+        rel = os.path.relpath(path, RAIZ).replace(os.sep, "/")
+        for linha, texto in _literais_de_ecra(path):
+            if any(a in texto for a in VOCABULARIO_ACEITE):
+                continue
+            # Frases, não identificadores: uma chave («runs») ou um argumento
+            # de linha de comando («--runs») não é texto que alguém leia.
+            if " " not in texto:
+                continue
+            for padrao, certo in FORMAS_ABANDONADAS:
+                if re.search(padrao, texto):
+                    falhas.append("%s:%d mostra uma forma abandonada (usar %r): %s"
+                                  % (rel, linha, certo,
+                                     texto.strip()[:70].replace("\n", " ")))
+            if tecnico.search(texto):
+                continue
+            for chave in chaves:
+                if re.search(r"\b%s\b" % re.escape(chave), texto):
+                    falhas.append(
+                        "%s:%d mostra a chave interna %r em vez de %r: %s"
+                        % (rel, linha, chave,
+                           config.SCENARIO_LABEL_SHORT.get(chave, chave),
+                           texto.strip()[:60].replace("\n", " ")))
+                    break
+    print("[i] vocabulário  %d nomes de cenário e %d ficheiros do dashboard"
+          % (len(LINHAS_TABELA), len(ficheiros)))
+
+
 def main():
     tabela_cientifica()
     kpis()
     galeria()
+    vocabulario()
     print()
     print("=" * 78)
     if falhas:

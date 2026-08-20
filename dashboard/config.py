@@ -45,15 +45,23 @@ SCENARIO_KEYS = list(_SRC_SCENARIOS)
 SCENARIOS = [(_SRC_LABELS.get(k, k), k) for k in SCENARIO_KEYS]
 SCENARIO_LABEL_BY_KEY = {k: lbl for lbl, k in SCENARIOS}
 
-# Labels curtos. Partem dos de src/scenarios.py; o dashboard encurta alguns por
-# caber em tabelas/gráficos estreitos (só isso — as chaves são as mesmas).
+# Labels curtos. Partem dos de src/scenarios.py, mas quem lê o dashboard tem a
+# dissertação ao lado: os nomes aqui são os NOMES DA DISSERTAÇÃO, não formas
+# encurtadas à parte. Chegou a haver quatro vocabulários em circulação — estes,
+# os de src/, e cópias locais em duas vistas — e o ecrã dizia «Perceção Coop.»
+# onde o texto diz «Perceção Cooperativa». `verificar_dashboard.py` passou a
+# recusar as formas abandonadas, e as vistas não voltam a ter dicionário
+# próprio: consomem este.
 SCENARIO_LABEL_SHORT = dict(_SRC_LABELS_SHORT)
 SCENARIO_LABEL_SHORT.update({
+    "none": "Sandbox",
     "u_wall": "Muro em U",
-    "four_rooms": "4 Salas",
-    "cooperative_door": "Porta coop.",
-    "cooperative_perception": "Perceção coop.",
-    "cooperative_door_bypass": "Porta c/ alt.",
+    "bottleneck": "Gargalo",
+    "four_rooms": "Quatro Salas",
+    "cooperative_door": "Porta Cooperativa",
+    "cooperative_perception": "Perceção Cooperativa",
+    "cooperative_door_bypass": "Porta com Alternativa",
+    "mapa_grande": "Mapa Composto",
 })
 
 # Conjunto canónico de experiências DA TESE — os 7 cenários das campanhas

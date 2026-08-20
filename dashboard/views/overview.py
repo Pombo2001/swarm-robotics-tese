@@ -150,15 +150,15 @@ _TIMELINE = [
     ("08 jun", "Acesso aos servidores ISCTE", "Treinos longos passam para a .14 (64 vCPU)."),
     ("09–14 jun", "Treinos 24h e 48h (baseline)", "PPO/SAC convergem; GNN colapsa nos labirintos."),
     ("16–18 jun", "Fase B — 3 execuções", "Variância estatística; boxplots reais."),
-    ("24–28 jun", "Recompensa simplificada", "Cura o reward hacking do PPO (Muro U 0→100%)."),
+    ("24–28 jun", "Recompensa simplificada", "Cura o reward hacking do PPO (Muro em U 0→100%)."),
     ("28 jun", "Fitness de homing (GNN)", "O GNN come em labirintos pela primeira vez."),
-    ("30 jun", "Novelty Search", "Ataque ao ótimo deceptive do bypass."),
+    ("30 jun", "Novelty Search", "Ataque ao ótimo deceptive da Porta com Alternativa."),
     ("01 jul", "Treino de 3 dias fecha", "GNN come nos 7/7 cenários (números de treino)."),
     ("02–09 jul", "Campanha final de 7 dias", "3 algos × 7 cenários × 7 execuções = 147 treinos."),
-    ("10 jul", "Resultados fechados", "GNN 28/28 execuções nos labirintos; Muro U bimodal p/ os 3."),
+    ("10 jul", "Resultados fechados", "GNN 28/28 execuções nos labirintos; Muro em U bimodal p/ os 3."),
     ("13 jul", "Revisão sistemática a sério", "883 registos → 58 estudos; só 1 compara os paradigmas."),
-    ("18–19 jul", "Novelty adaptativo fecha", "Muro U 7/7 a 100%; bypass @390 = 88,7 — o melhor da tese."),
-    ("19 jul", "Mega-treino de 1 mês", "u_wall n=28 nos 4 braços + ablação do anneal (megaA/megaB)."),
+    ("18–19 jul", "Novelty adaptativo fecha", "Muro em U 7/7 a 100%; Porta com Alternativa @390 = 88,7 — o melhor da tese."),
+    ("19 jul", "Mega-treino de 1 mês", "Muro em U a n=28 nos 4 braços + ablação do anneal (megaA/megaB)."),
     ("24–25 jul", "Mapa composto (8.º cenário)", "Labirinto composto de 103×62 m; pré-registo da QI7."),
     ("27 jul", "Auditoria de física ao mapa", "Enxame amontoado atravessava a porta — corrigido antes de treinar."),
     ("29–30 jul", "Os robôs voavam por cima das paredes",
@@ -186,7 +186,7 @@ _TIMELINE = [
      "passa a escrever, reler e abortar se não bater."),
     ("05 ago", "A primeira recolha que o mapa composto alguma vez deu",
      "Com o braço adaptativo, 4,75 recolhas à geração 140 (era 0,00 em duas execuções "
-     "completos do objetivo puro, guardados como controlo). O GNN fecha ~16 ago; "
+     "completas do objetivo puro, guardadas como controlo). O GNN fecha ~16 ago; "
      "o braço exploratório arranca sozinho quando os gradientes largarem a máquina."),
     ("06 ago", "O mapa composto resolve-se numa execução e não na seguinte",
      "A execução que dava 4,75 fechou com 6,00 recolhas; a 2.ª fechou a 0,00. É a "
@@ -279,7 +279,7 @@ def build(queue: JobQueue, goto=None):
             # Só as sessões DATADAS: as pastas curadas (final_7d, adaptativo_*,
             # mega_*) são vistas das campanhas, não treinos que aconteceram — e
             # contá-las fazia o número saltar de 31 para 46 sem ter corrido nada.
-            _kpi("Sessões de treino", len(data.historical_sessions()))
+            _kpi("Sessões de treino datadas", len(data.historical_sessions()))
             _kpi("Cenários de estudo", len(config.SCENARIO_KEYS))
             _kpi("Episódios avaliados", n_epis)
             # Empate diz-se. O `max` devolvia o primeiro da lista e o cartão
@@ -329,7 +329,7 @@ def build(queue: JobQueue, goto=None):
                         ui.element("div").classes(
                             "live-dot " + ("live-dot--ok" if ok and not sem_modelos else ""))
                         ui.label("sem modelos nesta cópia" if sem_modelos
-                                 else ("em dia" if ok else "DESFASADA dos modelos")) \
+                                 else ("em dia com os modelos" if ok else "DESFASADA dos modelos")) \
                             .classes("text-sm").style(f"color:{theme.INK_SOFT}")
                     ui.label("eval: " + datetime.fromtimestamp(eval_t).strftime("%d %b %H:%M")) \
                         .classes("text-xs mono-num").style(f"color:{theme.INK_MUTED}")

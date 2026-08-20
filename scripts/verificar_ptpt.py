@@ -89,7 +89,13 @@ DETERMINANTES_MASC = (r"um|dois|todos|esse|este|desse|deste|nesse|neste|"
 PARTICIPIOS_MASC = (r"agrupados|falhados|resolvidos|degenerados|fechados|"
                     r"convergidos|realizados|analisados|reportados|"
                     r"guardados|excluídos|incluídos|contados|afastados|"
-                    r"agrupados|espalhados|repartidos|distribuídos")
+                    r"agrupados|espalhados|repartidos|distribuídos|"
+                    # Adjetivos, não particípios — mas concordam do mesmo modo,
+                    # e foi um deles que escapou: a cronologia do dashboard
+                    # dizia «duas execuções completos do objetivo puro».
+                    r"completos|incompletos|válidos|inválidos|novos|antigos|"
+                    r"lançados|perdidos|descartados|cancelados|usados|"
+                    r"escondidos|listados|mostrados|feitos|corridos")
 
 # Cada exceção é uma dívida declarada: a frase está certa e a regra é que não
 # a sabe ler. Vazio hoje — e é assim que se vê quando deixa de estar.
@@ -141,6 +147,64 @@ def sem_comentarios(t):
     return re.sub(r"(?<!\\)%[^\n]*", "", t)
 
 
+# ── o texto que o dashboard escreve no ecrã ──────────────────────────────────
+# A dissertação e o artigo passavam por aqui; o dashboard nunca passou. E é
+# prosa portuguesa como a outra: a cronologia do Overview dizia «duas execuções
+# completos do objetivo puro» — a mesma concordância que a dissertação já não
+# tinha. Como o dashboard é Python, não se pode ler o ficheiro inteiro (o código
+# à volta produziria ruído sem fim); lê-se só o que vai para o ecrã.
+DASH = os.path.join(RAIZ, "dashboard")
+
+# Frases do ecrã em que um marcador aparece com o sentido bom. «Rodar» é
+# brasileirismo quando quer dizer *executar*; em «arrasta para rodar» quer
+# dizer *girar a câmara*, que é português corrente. Declaradas uma a uma —
+# a lista curta é o que mantém a regra a valer.
+ACEITE_NO_ECRA = (
+    "arrasta para rodar",
+)
+
+
+def texto_de_ecra(path):
+    """O ficheiro reduzido aos seus literais de string, linha a linha.
+
+    Devolve um texto com o mesmo número de linhas do original e, em cada uma,
+    os literais que ali estão — para que as linhas comunicadas sejam as linhas
+    reais do ficheiro. Docstrings ficam de fora: são notas para quem lê o
+    código, não frases que alguém veja no ecrã.
+    """
+    import ast
+    fonte = open(path, encoding="utf-8").read()
+    try:
+        arvore = ast.parse(fonte)
+    except SyntaxError:
+        return ""
+    docs = set()
+    for no in ast.walk(arvore):
+        corpo = getattr(no, "body", None)
+        if isinstance(no, (ast.Module, ast.FunctionDef, ast.AsyncFunctionDef,
+                           ast.ClassDef)) and corpo:
+            p = corpo[0]
+            if isinstance(p, ast.Expr) and isinstance(p.value, ast.Constant) \
+                    and isinstance(p.value.value, str):
+                docs.add(id(p.value))
+    linhas = [[] for _ in range(fonte.count("\n") + 2)]
+    for no in ast.walk(arvore):
+        if isinstance(no, ast.Constant) and isinstance(no.value, str) \
+                and id(no) not in docs and " " in no.value:
+            linhas[no.lineno].append(no.value.replace("\n", " "))
+    return "\n".join(" ".join(l) for l in linhas)
+
+
+def ficheiros_do_dashboard():
+    saida = []
+    for pasta in (DASH, os.path.join(DASH, "views")):
+        if not os.path.isdir(pasta):
+            continue
+        saida += [os.path.join(pasta, f) for f in sorted(os.listdir(pasta))
+                  if f.endswith(".py") and f != "__init__.py"]
+    return saida
+
+
 def main():
     print("=" * 74)
     print("PT-PT: marcadores lexicais brasileiros e opção do babel")
@@ -174,13 +238,33 @@ def main():
             else:
                 print("   [v] %-34s babel: %s" % (nome, opcoes))
 
+    # ── e o texto que o dashboard mostra ─────────────────────────────────────
+    ficheiros = ficheiros_do_dashboard()
+    for f in ficheiros:
+        ecra = texto_de_ecra(f)
+        if not ecra.strip():
+            continue
+        nome = os.path.relpath(f, RAIZ)
+        for padrao, alternativa in BRASILEIRISMOS:
+            for m in re.finditer(padrao, ecra, re.IGNORECASE):
+                ctx = " ".join(ecra[max(0, m.start() - 45):m.end() + 45].split())
+                if any(a in ctx for a in ACEITE_NO_ECRA):
+                    continue
+                linha = ecra.count("\n", 0, m.start()) + 1
+                problemas.append("%s:%d  «%s» → %s\n        …%s…"
+                                 % (nome, linha, m.group(0), alternativa, ctx))
+        problemas += concordancia_execucao(ecra, nome)
+    print("   [v] %-34s %d ficheiros de ecrã"
+          % ("dashboard/", len(ficheiros)))
+
     if problemas:
         print("\n%d ocorrência(s) para ler:" % len(problemas))
         for p in problemas:
             print("   " + p)
         print("=" * 74)
         return 1
-    print("\nSem marcadores brasileiros nos %d documentos ✓" % len(DOCS))
+    print("\nSem marcadores brasileiros nos %d documentos nem nos %d ficheiros "
+          "de ecrã ✓" % (len(DOCS), len(ficheiros)))
     print("NOTA: procura LÉXICO inequívoco. Palavras que as duas variantes")
     print("      partilham desde o Acordo de 1990 («otimização», «ação»,")
     print("      «projeto», «objetivo») não são sinal de nada.")

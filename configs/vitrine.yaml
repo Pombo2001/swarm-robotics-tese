@@ -5,7 +5,7 @@
 # lista, para não haver duas listas que divirjam.
 #
 # Regra, em três linhas (o detalhe está no documento):
-#   1. a unidade é a CAMPANHA, nunca a execução — nada de "o melhor run";
+#   1. a unidade é a CAMPANHA, nunca a execução — nada de "a melhor execução";
 #   2. quando os três algoritmos correram, aparecem os três (um colapso é um
 #      resultado, não um problema de figura);
 #   3. métrica comparável (recolhas/episódio), nunca a fitness ao lado da
@@ -23,7 +23,7 @@ blocos:
       - figura: dotplot_eval_cooperative_door.png
         nota: "Vitória limpa do GNN — 69,8 ± 0,9, o desvio mais pequeno da tese"
       - figura: dotplot_eval_four_rooms.png
-        nota: "Vitória grande — 59,8 contra 33,6 (PPO) e 31,8 (SAC)"
+        nota: "Vitória grande do GNN — 59,8 contra 33,6 (PPO) e 31,8 (SAC)"
       - figura: dotplot_eval_none.png
         nota: "DERROTA do GNN para o PPO (38,3 vs 71,5) — não se escolheu o favorito"
       - figura: dotplot_eval_bottleneck.png
@@ -53,13 +53,13 @@ blocos:
     itens:
       - campanha: adaptativo_A1
         figura: dotplot_eval_u_wall.png
-        nota: "QI6 à escala pequena: 68,5 rec/ep, 7/7 a 100%"
+        nota: "QI6 à escala pequena: GNN adaptativo a 68,5 rec/ep, 7/7 a 100%"
       - campanha: adaptativo_A2
         figura: dotplot_eval_u_wall.png
         nota: "O controlo do mesmo desenho: objetivo puro, 31,5 e 4/7"
       - campanha: mega_B5
         figura: dotplot_eval_cooperative_door_bypass.png
-        nota: "Porta com Alternativa a n=21 — 80,9 rec/ep, 21/21 a 100%"
+        nota: "Porta com Alternativa a n=21 — GNN a 80,9 rec/ep, 21/21 a 100%"
       - campanha: final_7d
         figura: heatmap_ocupacao_gnn_u_wall.png
         nota: "Onde os agentes passam: o contorno do beco, aprendido"

@@ -33,11 +33,10 @@ ALGOS = ("GNN", "PPO", "SAC")
 DIMENSOES = (10, 20, 50, 100)
 N_TREINO = 20
 
-ROTULOS = {"none": "Sandbox", "u_wall": "Muro U", "bottleneck": "Gargalo",
-           "four_rooms": "Quatro Salas",
-           "cooperative_door": "Porta Cooperativa",
-           "cooperative_perception": "Perceção Coop.",
-           "cooperative_door_bypass": "Porta c/ Alternativa"}
+# Os nomes dos cenários vêm do dashboard/config.py — que é onde vivem os nomes
+# da dissertação. Havia aqui uma cópia própria, e dizia «Muro U» e «Perceção
+# Coop.» onde o texto diz «Muro em U» e «Perceção Cooperativa».
+ROTULOS = {k: config.SCENARIO_LABEL_SHORT[k] for k in config.MAIN_SCENARIO_KEYS}
 
 
 def _dados():

@@ -32,10 +32,10 @@ MODEL_DIRS = ("models", "models_ppo", "models_sac")
 ADAPT_DIR = os.path.join(config.BASE_DIR, "results", "novelty_adaptativo")
 ADAPT_FASES = [
     ("◆ Adaptativo · 7 cenários @195 (A1)",                       "week_A_fase1"),
-    ("◆ Adaptativo · u_wall objetivo puro @390 (A2, controlo)",   "week_A_fase2"),
-    ("◆ Adaptativo · coop/bypass/perceção @195 (B1)",             "week_B_fase1"),
-    ("◆ Adaptativo · u_wall adaptativo @390 (B2)",                "week_B_fase2"),
-    ("◆ Adaptativo · bypass adaptativo @390 (B3)",                "week_B_fase3"),
+    ("◆ Adaptativo · Muro em U objetivo puro @390 (A2, controlo)", "week_A_fase2"),
+    ("◆ Adaptativo · três cenários cooperativos @195 (B1)",       "week_B_fase1"),
+    ("◆ Adaptativo · Muro em U adaptativo @390 (B2)",             "week_B_fase2"),
+    ("◆ Adaptativo · Porta com Alternativa @390 (B3)",            "week_B_fase3"),
 ]
 ADAPT_LABEL_TO_DIR = {lbl: sub for lbl, sub in ADAPT_FASES}
 
@@ -64,8 +64,8 @@ MEGA_FASES = [
     ("▣ Mega-treino · anneal sustain=20",                  "mega_B_fase2"),
     ("▣ Mega-treino · anneal decay=0,95",                  "mega_B_fase3"),
     ("▣ Mega-treino · anneal decay=0,995",                 "mega_B_fase4"),
-    ("▣ Mega-treino · adaptativo · Porta c/ alternativa",  "mega_B_fase5"),
-    ("▣ Mega-treino · adaptativo · Perceção coop.",        "mega_B_fase7"),
+    ("▣ Mega-treino · adaptativo · Porta com Alternativa",  "mega_B_fase5"),
+    ("▣ Mega-treino · adaptativo · Perceção Cooperativa",  "mega_B_fase7"),
 ]
 
 
@@ -522,7 +522,7 @@ def descricao_sessao(session: str) -> str:
         if m:
             ns = re.findall(r":\s*(\d+)", m.group(1))
             if ns:
-                partes.append("%s runs" % (ns[0] if len(set(ns)) == 1 else "/".join(ns)))
+                partes.append("%s execuções" % (ns[0] if len(set(ns)) == 1 else "/".join(ns)))
 
     if quando is None:
         d = _data_da_sessao(session)

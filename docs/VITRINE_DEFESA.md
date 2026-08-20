@@ -10,7 +10,7 @@
 Mostrar tudo é o mesmo que não mostrar nada, mas escolher os melhores treinos é
 um convite a uma pergunta má na defesa. A regra, escrita antes de escolher:
 
-1. **A unidade é a campanha, nunca a execução.** Nada de "o melhor run do GNN":
+1. **A unidade é a campanha, nunca a execução.** Nada de "a melhor execução do GNN":
    mostra-se a distribuição das execuções (dot plot), com a média marcada e a
    contagem `n/N a 100%` visível. Se um algoritmo é mau, vê-se que é mau.
 2. **Quando os três correram, aparecem os três.** Um cenário onde o SAC colapsa

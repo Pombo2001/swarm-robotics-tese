@@ -22,7 +22,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime
+from datetime import date, datetime
 
 from nicegui import ui
 
@@ -109,18 +109,52 @@ def _hook():
     return AVISO, "não instalado — scripts/instalar_hooks.sh", ""
 
 
+# `strftime("%b")` segue o locale do sistema e escrevia «22 Aug» num painel em
+# português. Três letras, sem depender de locale nenhum.
+_MESES_PT = ("jan", "fev", "mar", "abr", "mai", "jun",
+             "jul", "ago", "set", "out", "nov", "dez")
+
+
+def _data_pt(d):
+    return "%02d %s" % (d.day, _MESES_PT[d.month - 1])
+
+
+def _dias_pt(n):
+    return "%d dia%s" % (n, "" if abs(n) == 1 else "s")
+
+
 def _prazo():
-    hoje = datetime.now()
-    marcos = [("versão composta ao orientador", datetime(2026, 9, 15)),
-              ("entrega", datetime(2026, 9, 30)),
-              ("hard stop de integração (mapa/mega-treino)", datetime(2026, 8, 22))]
+    """(cor, resumo, detalhe) dos marcos que faltam.
+
+    O resumo existe porque o cartão dos prazos era o único mudo: a lista das
+    datas ia toda para o «detalhe», fechado por omissão, e o cartão aparecia
+    sem cor e sem uma linha — a dois dias do hard stop de integração. Um painel
+    de prontidão que se cala precisamente no que está a chegar não serve.
+    """
+    # Contam-se DIAS DE CALENDÁRIO, não intervalos de 24 h: com `datetime.now()`
+    # a meio da tarde, o dia 22 ficava a «1 dia» a 20 de agosto — e quem lê um
+    # prazo conta os dias que faltam no calendário, não as horas.
+    hoje = datetime.now().date()
+    marcos = [("versão composta ao orientador", date(2026, 9, 15)),
+              ("entrega", date(2026, 9, 30)),
+              ("hard stop de integração (mapa/mega-treino)", date(2026, 8, 22))]
     marcos.sort(key=lambda kv: kv[1])
     linhas = []
     for nome, quando in marcos:
         dias = (quando - hoje).days
-        linhas.append("%-44s %s  (%d dias)"
-                      % (nome, quando.strftime("%d %b"), dias))
-    return "\n".join(linhas)
+        linhas.append("%-44s %s  (%s)"
+                      % (nome, _data_pt(quando), _dias_pt(dias)))
+
+    proximos = [(n, q, (q - hoje).days) for n, q in marcos if (q - hoje).days >= 0]
+    if not proximos:
+        return MAU, "todos os marcos já passaram", "\n".join(linhas)
+    nome, quando, dias = proximos[0]
+    resumo = "%s — %s, %s" % (nome, _data_pt(quando),
+                              "hoje" if dias == 0 else
+                              "amanhã" if dias == 1 else
+                              "daqui a %d dias" % dias)
+    cor = MAU if dias <= 1 else AVISO if dias <= 7 else NEUTRO
+    return cor, resumo, "\n".join(linhas)
 
 
 def build():
@@ -167,7 +201,8 @@ def build():
                 cor, corpo, det = _hook()
                 linha(cor, "O hook que trava números dessincronizados?", corpo, det)
 
-                linha(NEUTRO, "Prazos", "", _prazo())
+                cor_prazo, resumo_prazo, detalhe_prazo = _prazo()
+                linha(cor_prazo, "Prazos", resumo_prazo, detalhe_prazo)
 
         async def correr_testes():
             _testes.update(estado=AVISO, texto="a correr (~3 min)…",

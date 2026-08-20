@@ -9,7 +9,7 @@ sala com o relógio a andar — ali a pergunta é «mostra-me o essencial», e p
 
 Esta vista mostra uma seleção **declarada** em `configs/vitrine.yaml`, com a
 regra escrita ao lado de cada figura. A regra está em `docs/VITRINE_DEFESA.md`
-e resume-se a: a unidade é a campanha e não a execução (nada de «o melhor run»);
+e resume-se a: a unidade é a campanha e não a execução (nada de «a melhor execução»);
 quando os três algoritmos correram, aparecem os três; e a métrica é sempre
 recolhas/episódio, nunca a fitness ao lado da recompensa.
 
@@ -93,8 +93,8 @@ def build():
                            "a seleção, e a regra que a justifica")
             ui.label(
                 "A unidade é a campanha, nunca a execução — mostra-se a distribuição "
-                "das execuções com a média marcada e a contagem a 100%, não o melhor "
-                "run. Quando os três algoritmos correram, aparecem os três: um "
+                "das execuções com a média marcada e a contagem a 100%, não a melhor "
+                "execução. Quando os três algoritmos correram, aparecem os três: um "
                 "algoritmo que colapsa não sai da figura, porque o colapso é o "
                 "resultado. Seleção em configs/vitrine.yaml; regra em "
                 "docs/VITRINE_DEFESA.md."
