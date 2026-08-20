@@ -122,6 +122,8 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
 
 
 def build():
+    # `video_sessions()` dá todas as que têm GIF; a exibição fica pelas que a
+    # regra deixa mostrar (canónicas ou completas).
     sessions = data.video_sessions()
     if not sessions:
         with ui.column().classes("w-full items-center py-16 gap-3"):
@@ -136,10 +138,12 @@ def build():
 
     # Quantas campanhas ficam DE FORA deste seletor, e porquê. Sem esta linha, a
     # lista curta lia-se como "faltam vídeos" — quando o que falta são os
-    # MODELOS: as campanhas antigas foram sobrescritas pelas seguintes (só a
-    # partir de julho é que cada uma passou a arquivar os seus), e sem modelo não
-    # há episódio para gravar. Não é uma lacuna que se possa fechar.
-    todas = data.list_sessions()
+    # MODELOS: sem modelo arquivado não há episódio para gravar, e as fases de
+    # gradiente do mega-treino ficaram sem os seus (LEIA-ME_modelos.md). As
+    # exploratórias incompletas já não entram aqui: a galeria mostra as
+    # campanhas canónicas e as completas (ver `data.campanhas_visiveis`).
+    todas = data.campanhas_visiveis()
+    sessions = [s for s in sessions if s in todas]
     sem_video = [s for s in todas if s not in sessions]
 
     with ui.column().classes("w-full gap-4 p-4 max-w-[1400px] mx-auto"):
@@ -159,11 +163,12 @@ def build():
             fonte_lbl = theme.fonte("")
             if sem_video:
                 ui.label(
-                    f"{len(sem_video)} das {len(todas)} campanhas não aparecem aqui: são "
-                    "as antigas, cujos modelos foram sobrescritos pelos treinos "
-                    "seguintes. Sem modelo não há episódio para gravar — e um vídeo "
-                    "de ações aleatórias com o nome do algoritmo seria pior do que "
-                    "vídeo nenhum."
+                    f"{len(sem_video)} das {len(todas)} campanhas mostradas não têm "
+                    "vídeo: são fases cujos modelos não vieram do servidor "
+                    "(LEIA-ME_modelos.md). Sem modelo não há episódio para gravar — "
+                    "e um vídeo de ações aleatórias com o nome do algoritmo seria "
+                    "pior do que vídeo nenhum. As campanhas exploratórias "
+                    "incompletas não entram nesta lista: ficam no Arquivo."
                 ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
 
         # O mesmo painel da Galeria: o seletor «Treino» aqui em cima tem os

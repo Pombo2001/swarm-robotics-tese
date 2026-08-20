@@ -417,6 +417,67 @@ def list_sessions():
     return campanhas + sorted(curadas)
 
 
+# ── Que campanhas se MOSTRAM, e quais só contam ─────────────────────────────
+#
+# São 52 pastas de campanha no disco e as vistas mostravam-nas todas. A maioria
+# é de maio e junho: treinos exploratórios sem heatmaps nem vídeo, cujos números
+# a dissertação não usa. Numa galeria, cada uma delas é uma linha que o leitor
+# tem de descartar sozinho.
+#
+# A regra, decidida pelo autor: mostra-se uma campanha se ela for CANÓNICA (a
+# tese cita-a) ou se estiver COMPLETA — dados, figuras, curvas, heatmaps e
+# vídeo. Uma campanha fraca mas completa fica: serve de comparação. Uma
+# incompleta sai da exibição e continua a contar nas estatísticas, no inventário
+# de horas e no Arquivo, que é o sítio onde o percurso é suposto aparecer.
+CAMPANHAS_CANONICAS = ("final_7d", "mapa_grande_f2")
+PREFIXOS_CANONICOS = ("adaptativo_", "mega_")
+
+
+def _artefactos_da_campanha(nome):
+    d = os.path.join(GRAFICOS_DIR, nome)
+    return {
+        "csv": len(glob.glob(os.path.join(d, "*.csv"))),
+        "figuras": len(glob.glob(os.path.join(d, "*.png"))),
+        "curvas": len(glob.glob(os.path.join(d, "comparacao_mapa_*.png"))),
+        "heatmaps": len(glob.glob(os.path.join(d, "heatmap_*.png"))),
+        "videos": len(glob.glob(os.path.join(d, "videos", "*.gif"))),
+    }
+
+
+def campanha_e_canonica(nome):
+    """A dissertação cita-a?"""
+    return nome in CAMPANHAS_CANONICAS or nome.startswith(PREFIXOS_CANONICOS)
+
+
+def campanha_esta_completa(nome):
+    """Tem tudo o que é preciso para se comparar com outra."""
+    a = _artefactos_da_campanha(nome)
+    return all(a[k] for k in ("csv", "figuras", "curvas", "heatmaps", "videos"))
+
+
+def campanhas_visiveis():
+    """As campanhas que as vistas de EXIBIÇÃO mostram.
+
+    As estatísticas continuam a usar `list_sessions()`: o que sai daqui é o
+    ruído da galeria, não o registo do trabalho.
+    """
+    return [c for c in list_sessions()
+            if campanha_e_canonica(c) or campanha_esta_completa(c)]
+
+
+def campanhas_escondidas():
+    """As que ficam de fora da exibição, com a razão."""
+    saida = []
+    for c in list_sessions():
+        if campanha_e_canonica(c) or campanha_esta_completa(c):
+            continue
+        a = _artefactos_da_campanha(c)
+        faltam = [k for k in ("csv", "figuras", "curvas", "heatmaps", "videos")
+                  if not a[k]]
+        saida.append((c, faltam))
+    return saida
+
+
 _MESES_PT = ("jan", "fev", "mar", "abr", "mai", "jun",
              "jul", "ago", "set", "out", "nov", "dez")
 

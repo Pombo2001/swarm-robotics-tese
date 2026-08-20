@@ -134,7 +134,11 @@ COMPARACOES = (
 
 
 def build():
-    sessions = data.list_sessions()
+    # Só as campanhas que se mostram: canónicas, ou completas ao ponto de
+    # servirem de comparação. As outras continuam no Arquivo e nas contagens
+    # (ver `data.campanhas_visiveis`).
+    sessions = data.campanhas_visiveis()
+    escondidas = data.campanhas_escondidas()
 
     def open_zoom(session: str, filename: str):
         with ui.dialog() as dlg, ui.card().classes("max-w-[90vw]"):
@@ -168,6 +172,14 @@ def build():
     with ui.column().classes("w-full gap-4 p-4"):
         with ui.card().classes(CARD):
             _section_title("photo_library", "Galeria de resultados")
+            if escondidas:
+                # Dizer quantas ficaram de fora, e porquê: uma lista curta sem
+                # explicação lê-se como «perderam-se campanhas».
+                ui.label(
+                    "%d campanhas não aparecem aqui: são exploratórias sem o "
+                    "conjunto completo de figuras (falta-lhes vídeo ou "
+                    "heatmaps). Continuam no Arquivo e contam nas estatísticas."
+                    % len(escondidas)).classes("text-xs mt-1")                     .style("color:%s" % theme.INK_MUTED)
             opcoes, primeira = _opcoes_de_sessao(sessions)
             with ui.row().classes("w-full gap-2 no-wrap items-center mt-1"):
                 sess_a = ui.select(opcoes, value=primeira, label="Sessão A") \
