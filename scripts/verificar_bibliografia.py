@@ -370,7 +370,7 @@ def main():
     #
     # Sem DOI não há registo para consultar diretamente, mas há busca. Uma
     # entrada cujo título exista e cujos autores NÃO correspondam é o defeito
-    # de 16 jul — nomes fabricados sobre uma referência real. Uma entrada cujo
+    # nomes fabricados sobre uma referência real. Uma entrada cujo
     # título não apareça de todo pode ser um clássico que o CrossRef não
     # indexa (livros, pré-publicações do arXiv, atas antigas), e por isso a
     # ausência aqui **não** é acusação: é um «vai ver à mão».

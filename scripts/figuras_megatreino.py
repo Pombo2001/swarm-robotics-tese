@@ -43,7 +43,7 @@ from gerar_figuras_7d import dotplot_por_run  # noqa: E402
 # `mega_treino` e não `megatreino`: o empacotador do Pi só leva as campanhas cujo
 # nome começa por um dos prefixos canónicos, e um deles é "mega_". Sem o
 # underscore, estas figuras ficavam na torre e a vista do Pi mostrava molduras
-# vazias — o mesmo gap que deixou a campanha da QI6 sem imagens até 31 jul.
+# vazias — o mesmo gap que deixou a campanha da QI6 sem imagens.
 SAIDA = os.path.join(BASE, "results", "graficos_tese", "mega_treino")
 
 # Os quatro braços do u_wall. A família GNN mantém-se verde (a convenção do

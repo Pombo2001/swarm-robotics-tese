@@ -7,13 +7,10 @@ import heapq
 
 from src.scenarios import MAZE_SCENARIOS
 
-# ── Porta cooperativa (cenários cooperative_door / cooperative_door_bypass) ──
-# A "porta" é um painel (parede normal para física/LiDAR) que fecha a abertura
-# de 3 m no centro da barreira em y=0. Abre-se quando DOOR_PUSHERS_REQUIRED
-# agentes ativos ocupam em simultâneo a push zone (faixa imediatamente a sul da
-# abertura) — nesse momento o painel é removido e cada agente que empurrou
-# recebe DOOR_OPEN_REWARD. No campo geodésico a porta é sempre PASSÁVEL, para o
-# gradiente de progresso apontar para a push zone (o objetivo do cenário).
+# Porta cooperativa: painel (parede normal para física e LiDAR) que fecha a
+# abertura de 3 m no centro da barreira em y=0. Abre quando DOOR_PUSHERS_REQUIRED
+# agentes ocupam em simultâneo a push zone, a faixa a sul da abertura. No campo
+# geodésico a porta é sempre passável, para o gradiente apontar à push zone.
 DOOR_SCENARIOS = ("cooperative_door", "cooperative_door_bypass", "mapa_grande")
 DOOR_POS = (0.0, 0.0, 0.0)          # centro da abertura na barreira
 DOOR_SIZE = (3.0, 2.0, None)        # painel: largura 3 m (= abertura) × espessura 2 m
@@ -72,26 +69,13 @@ class SwarmForagingEnv3D(gym.Env):
         self.min_spread_distance = env_config.get('min_spread_distance', 1.0)
         self.exploration_bonus = env_config.get('exploration_bonus', 2.0)
         self.exploration_cell_size = env_config.get('exploration_cell_size', 2.0)
-        # O bónus paga por CÉLULA nova, logo o seu tecto cresce com a área
-        # navegável — e o mapa_grande tem uma arena com 4× o raio dos outros.
-        # Medido a 30 jul (células de exploração com espaço navegável, pelo campo
-        # geodésico do próprio ambiente):
-        #
-        #   os 7 cenários da tese   200-256 células   tecto 100-128
-        #   mapa_grande             1 506 células     tecto  753   (6,5×)
-        #
-        # A razão «recompensa de uma entrega / tecto da exploração» é 2,34-3,00 nos
-        # sete e ficava em 0,40 no mapa: INVERTIA-SE. Isso desfaz precisamente a
-        # decisão de 22 jun (food 100 -> 300, a pedido do Prof. Nunes), cuja razão
-        # está no comentário do foraging.yaml: «a comida tem de dominar claramente
-        # o shaping de progresso para a política convergir para recolher, não para
-        # vaguear». Com 753 de exploração contra 300 por entrega, vaguear paga
-        # melhor — e o mapa_grande é o cenário onde há mais espaço para o fazer.
-        #
-        # Corrigido escalando o bónus para BAIXO, não o tamanho da célula: células
-        # de 2 m são a resolução certa para corredores de 2,5 m, e agravá-las
-        # cegaria a exploração onde ela é mais precisa. Com 0,08 o tecto fica em
-        # 120,5 — dentro do intervalo dos sete (100-128) — e a razão em 2,49.
+        # O bónus paga por célula nova, pelo que o seu teto cresce com a área
+        # navegável: 200-256 células nos sete cenários (teto 100-128) contra
+        # 1506 no mapa composto (teto 753). Sem correção, a razão entre a
+        # recompensa de uma entrega e o teto da exploração cairia de 2,34-3,00
+        # para 0,40 — vaguear pagaria melhor do que recolher. Escala-se o bónus,
+        # e não o tamanho da célula: 2 m é a resolução certa para corredores de
+        # 2,5 m. Com 0,08 o teto fica em 120,5 e a razão em 2,49.
         self.exploration_bonus_base = self.exploration_bonus
         self.exploration_bonus_mapa_grande = env_config.get(
             'exploration_bonus_mapa_grande', 0.08)
@@ -103,46 +87,34 @@ class SwarmForagingEnv3D(gym.Env):
         if 'max_steps_mapa_grande' in env_config:
             self.max_steps_override['mapa_grande'] = env_config['max_steps_mapa_grande']
 
-        # O mapa_grande precisa de uma arena maior (r=60 vs 15). É um override
-        # POR CENÁRIO e não uma mudança do arena_radius global — mexer no global
-        # alteraria os 7 cenários das campanhas fechadas (spawn, normalização das
-        # observações, grelha geodésica), invalidando resultados já na tese.
+        # Arena maior para o mapa composto (r=60 vs 15), por cenário e não no
+        # `arena_radius` global: mexer no global mudaria o spawn, a normalização
+        # das observações e a grelha geodésica dos sete cenários já fechados.
         self.arena_radius_base = self.arena_radius
         self.arena_radius_mapa_grande = env_config.get(
             'arena_radius_mapa_grande', self.MAPA_GRANDE_RADIUS)
 
-        # Raio usado para NORMALIZAR as distâncias da observação (ninho, porta,
-        # vizinhos). Por omissão é o próprio raio da arena — o comportamento de
-        # sempre, bit-exacto nos 7 cenários. Pode ser fixado no config para
-        # desfazer um confundente do zero-shot de topologia: como o mapa_grande
-        # corre a r=60 e os 7 cenários a r=15, o MESMO modelo vê as distâncias
-        # comprimidas 4x (÷120 em vez de ÷30). Sem controlo, "o campeão do Quatro
-        # Salas faz 0 recolhas" confunde topologia nova com escala nova.
+        # Raio que normaliza as distâncias da observação (ninho, porta,
+        # vizinhos). Por omissão é o raio da arena. Fixá-lo no config isola um
+        # confundente do zero-shot de topologia: a r=60 o mesmo modelo vê as
+        # distâncias comprimidas 4× face aos r=15 do treino, e sem controlo a
+        # topologia nova fica indistinguível da escala nova.
         self.obs_norm_radius_cfg = env_config.get('obs_norm_radius', None)
         self.obs_norm_radius = self.arena_radius
 
-        # ── Condições de CONTROLO do zero-shot de topologia (F1) ─────────────
-        # Um zero no zero-shot tem mais do que uma causa possível, e sem estas
-        # duas o `obs_norm_radius` sozinho não as separa. Ambas são no-op por
-        # omissão (os 7 cenários e a condição natural do mapa ficam bit-exactos).
-        #  · num_obstacles_mapa_grande: dos 8 cenários só o Sandbox e o
-        #    mapa_grande têm obstáculos dispersos — os 5 labirintos têm ZERO.
-        #    O campeão do Gargalo nunca viu um obstáculo na vida, logo "0
-        #    recolhas no mapa" pode ser a topologia composta OU só os 106
-        #    obstáculos. Pôr a 0 mede a diferença.
-        #  · obs_zero_door_feats: as 4 features da porta (obs[12:16]) são
-        #    identicamente 0 no treino de todos os cenários SEM porta e ficam
-        #    vivas no mapa_grande (que tem porta) — 4 entradas mortas que passam
-        #    a carregar sinal, o que é distribuição nova à entrada da rede.
+        # Condições de controlo do zero-shot de topologia (F1), no-op por
+        # omissão. Separam do resultado duas causas alternativas ao zero:
+        #  · num_obstacles_mapa_grande=0 — os cinco labirintos não têm
+        #    obstáculos dispersos, e o campeão do Gargalo nunca viu nenhum;
+        #  · obs_zero_door_feats — as quatro features da porta (obs[12:16]) são
+        #    sempre 0 nos cenários sem porta e ficam vivas no mapa composto.
         self.num_obstacles_mapa_grande = env_config.get('num_obstacles_mapa_grande', None)
         self.obs_zero_door_feats = env_config.get('obs_zero_door_feats', False)
 
-        # ── Campo geodésico (BFS/Dijkstra) para o progress reward ────────────
-        # Em cenários com paredes, a distância euclidiana ao ninho cria mínimos
-        # locais: contornar uma parede AFASTA do ninho (progress negativo) → os
-        # agentes colam-se à parede mais próxima do ninho e nunca a contornam.
-        # A distância geodésica (caminho real que contorna as paredes) elimina
-        # esse mínimo: o gradiente passa a apontar SEMPRE para o desvio correto.
+        # Campo geodésico (Dijkstra) para o progress reward. Com paredes, a
+        # distância euclidiana cria mínimos locais — contornar uma parede afasta
+        # do ninho e dá progresso negativo, pelo que os agentes se colam a ela.
+        # A distância geodésica faz o gradiente apontar para o desvio correto.
         self.geo_res = env_config.get('geodesic_cell_size', 0.4)
         self.geo_field = None
         self.geo_n = 0
@@ -195,11 +167,9 @@ class SwarmForagingEnv3D(gym.Env):
         # terceiro elemento daria um array dtype=object e rebentava na primeira
         # divisão (size/2, em toda a física de colisão).
         self.door_size = np.array([DOOR_SIZE[0], DOOR_SIZE[1], 0.0], dtype=float)
-        # Push zone POR INSTÂNCIA (x_min, x_max, y_min, y_max) + o seu centro.
-        # Era fixa nas constantes DOOR_PUSH_*, o que assumia a barreira horizontal
-        # em (0,0) dos cenários cooperativos. O mapa grande tem a porta numa parede
-        # VERTICAL e noutro sítio, logo a zona tem de acompanhar a porta. Os valores
-        # por omissão são exatamente os das constantes — os 7 cenários não mudam.
+        # Push zone por instância (x_min, x_max, y_min, y_max) e o seu centro: a
+        # porta do mapa composto está numa parede vertical e noutro sítio, pelo
+        # que a zona acompanha a porta. Por omissão vale as constantes DOOR_PUSH_*.
         self.door_push_bounds = (-DOOR_PUSH_HALF_WIDTH, DOOR_PUSH_HALF_WIDTH,
                                  DOOR_PUSH_Y_MIN, DOOR_PUSH_Y_MAX)
         self.door_push_center = np.array(DOOR_PUSH_CENTER, dtype=np.float64)
@@ -215,13 +185,9 @@ class SwarmForagingEnv3D(gym.Env):
                 # South of the horizontal barrier (barrier covers y -1 to 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
             elif self.classic_scenario == "four_rooms":
-                # Spawn ESPALHADO pelas 3 salas opostas ao ninho (que está no
-                # quadrante NE). Antes os 20 agentes nasciam todos na sala SW, o
-                # que causava congestionamento e bloqueio nas passagens estreitas
-                # de 1.5m — a maioria ficava presa a empurrar-se na sala de origem.
-                # Distribuir por SW/NW/SE reduz a densidade por sala e por passagem,
-                # mantendo os agentes longe do ninho (navegação de longo termo).
-                # Limites a |coord|<=10 para ficar dentro da arena circular (r=15).
+                # Espalhados pelas três salas opostas ao ninho (quadrante NE):
+                # todos na mesma sala congestionavam as passagens de 1,5 m.
+                # |coord| <= 10 para ficar dentro da arena circular (r=15).
                 sala = np.random.randint(3)
                 if sala == 0:      # SW (a mais distante do ninho)
                     pos = np.array([np.random.uniform(-10, -2), np.random.uniform(-10, -2), 0.0])
@@ -230,11 +196,10 @@ class SwarmForagingEnv3D(gym.Env):
                 else:              # SE
                     pos = np.array([np.random.uniform(2, 10), np.random.uniform(-10, -2), 0.0])
             elif self.classic_scenario == "mapa_grande":
-                # Espalhados pela sala de partida (zona S, oeste). Nascem
-                # separados de propósito: amontoados, a separação física
-                # empurrava-os logo no primeiro passo. A caixa vem de
-                # _mapa_grande_spawn_box (a MESMA que define a clareira sem
-                # obstáculos) — ver lá porquê.
+                # Espalhados pela sala de partida (oeste), separados de
+                # propósito: amontoados, a separação física empurra-os logo no
+                # primeiro passo. A caixa é a de `_mapa_grande_spawn_box`, a
+                # mesma que define a clareira sem obstáculos.
                 c, hx, hy = self._mapa_grande_spawn_box()
                 pos = np.array([np.random.uniform(c[0] - hx, c[0] + hx),
                                 np.random.uniform(c[1] - hy, c[1] + hy), 0.0])
@@ -244,27 +209,17 @@ class SwarmForagingEnv3D(gym.Env):
             else:
                 pos = self._random_spawn()
 
-            # ⚠️ ARMADILHA CONHECIDA, deliberadamente NÃO corrigida (25 jul 2026).
-            # No reset, `self.walls` é esvaziada ANTES do spawn e só é preenchida
-            # DEPOIS (o `_spawn_obstacles_*` de cada cenário corre a seguir), logo
-            # esta verificação corre sempre sobre uma lista VAZIA: nunca deteta
-            # nada e o `for` de 50 tentativas termina sempre à primeira.
+            # Nota: no reset, `self.walls` é esvaziada antes do spawn e só
+            # preenchida depois, pelo que esta verificação corre sobre uma lista
+            # vazia e o ciclo termina sempre à primeira tentativa. Fica assim de
+            # propósito: as caixas de spawn estão desenhadas longe das paredes, e
+            # trocar a ordem mudaria a sequência de sorteios de `np.random` — o
+            # spawn de todos os cenários com a mesma seed, e com ele a
+            # reprodutibilidade das campanhas já reportadas.
             #
-            # Porque fica assim: hoje é inofensivo — as caixas de spawn de todos
-            # os cenários foram desenhadas longe das paredes e os testes
-            # confirmam-no episódio a episódio (`test_resets_consecutivos`,
-            # `test_escalabilidade_N`). Trocar a ordem para "paredes primeiro"
-            # mudaria a ORDEM DOS SORTEIOS de np.random e portanto o spawn de
-            # todos os cenários com a mesma seed: as campanhas fechadas (cujos
-            # números já estão na tese) deixavam de ser reproduzíveis, para
-            # corrigir código que não faz nada de errado.
-            #
-            # O que NÃO fazer sem pensar nisto: mexer na ordem, ou confiar que o
-            # fallback abaixo é seguro — o `_random_spawn()` sorteia em toda a
-            # arena e no mapa_grande 46% dessa área são bolsas seladas entre o
-            # retângulo do labirinto e o círculo r=60 (sem caminho ao ninho).
-            # Enquanto este `if` for vácuo, o fallback é inalcançável; a partir do
-            # momento em que deixar de o ser, passa a ser alcançável.
+            # Quem mexer nisto tem de rever o fallback: o `_random_spawn()`
+            # sorteia em toda a arena, e no mapa composto 46% dessa área são
+            # bolsas seladas sem caminho até ao ninho.
             colisao = False
             for wall in self.walls:
                 half_size = wall['size'] / 2.0
@@ -279,10 +234,9 @@ class SwarmForagingEnv3D(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        # Reprodutibilidade: o ambiente usa np.random global (spawns, obstáculos,
-        # falhas). Quando recebe uma seed explícita, fixa-a — essencial para
-        # avaliação emparelhada (mesmos episódios para todos os algoritmos) e
-        # para runs de treino reproduzíveis. seed=None mantém a cadeia aleatória.
+        # O ambiente usa `np.random` global (spawns, obstáculos, falhas). Com
+        # seed explícita fixa-a, o que dá a avaliação emparelhada — os mesmos
+        # episódios para todos os algoritmos. Com seed=None a cadeia continua.
         if seed is not None:
             np.random.seed(seed)
         self.steps = 0
@@ -356,10 +310,9 @@ class SwarmForagingEnv3D(gym.Env):
             self._spawn_obstacles_cooperative_door()
 
         elif self.classic_scenario == "cooperative_door_bypass":
-            # 7º cenário (sugestão do Prof. Nunes): igual à porta cooperativa, mas
-            # existe um percurso ALTERNATIVO mais longo, SEM porta. Testa se a
-            # aprendizagem descobre a cooperação (caminho curto pela porta, exige 3
-            # agentes) mesmo havendo uma saída sub-ótima que não obriga a cooperar.
+            # Porta cooperativa com um percurso alternativo mais longo e sem
+            # porta: mede se a cooperação é descoberta havendo uma saída
+            # sub-ótima que dispensa os três agentes.
             self.nest_pos = np.array([0.0, 12.0, 0.0])
             self.nest_velocity = np.zeros(3)
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
@@ -390,13 +343,10 @@ class SwarmForagingEnv3D(gym.Env):
             self._spawn_obstacles()
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
 
-        # Cenários com paredes e ninho estático usam o campo geodésico no progress
-        # reward (elimina o mínimo local). Os restantes (sandbox, perceção
-        # cooperativa) têm ninho móvel e sem paredes → euclidiano basta.
-        # Lista vinda de src/scenarios.py (MAZE_SCENARIOS) em vez de escrita à
-        # mão: estava duplicada aqui e o mapa_grande, ao ser acrescentado, ficou
-        # SEM campo geodésico — os agentes cair-se-iam no mínimo local que o
-        # geodésico existe para eliminar, num mapa de 143 m de percurso.
+        # Cenários com paredes e ninho estático usam o campo geodésico no
+        # progress reward; os de ninho móvel e sem paredes dispensam-no. A lista
+        # vem de `src/scenarios.py` e não escrita aqui: duplicada, um cenário
+        # novo entra sem campo geodésico e cai no mínimo local.
         self.use_geodesic = self.classic_scenario in MAZE_SCENARIOS
         if self.use_geodesic:
             self._build_geodesic_field()
@@ -470,13 +420,9 @@ class SwarmForagingEnv3D(gym.Env):
         self.obstacles = []
         self.obstacle_velocities = []
         H_PAREDE = self._altura_paredes
-        # Classic U-wall trap: opening faces SOUTH (toward agents).
-        # Agents approach from y=-12, walk north into the open bowl, hit the top bar at y=3,
-        # and must discover the detour around the legs at |x| > 8 (7m of free space per side).
-        # Top bar : x -7 to +7, y 3 to 5
-        # Left leg: x -8 to -6, y -5 to 5  (leg bottom at y=-5, leaving open entry from south)
-        # Right leg: x 6 to 8,  y -5 to 5
-        # Bypass space at |x| > 8 is ≈7m wide — discoverable but not trivial.
+        # Beco em U com a boca virada a sul, para o lado por onde os agentes
+        # chegam: entram na taça, batem na barra superior (y=3 a 5) e têm de
+        # descobrir o desvio pelas pernas em |x|>8, com 7 m de folga por lado.
         self.walls = [
             {'pos': np.array([0.0,  4.0, 0.0]), 'size': np.array([14.0, 2.0, H_PAREDE])},  # top bar
             {'pos': np.array([-7.0, 0.0, 0.0]), 'size': np.array([2.0, 10.0, H_PAREDE])},  # left leg
@@ -487,12 +433,8 @@ class SwarmForagingEnv3D(gym.Env):
         self.obstacles = []
         self.obstacle_velocities = []
         H_PAREDE = self._altura_paredes
-        # PORTAS ALARGADAS: Passagem central de 1.5 metros de largura.
-        # Barreira horizontal (y=0, espessura 8m) com uma ABERTURA central.
-        # Antes: paredes de 40m (saíam 25m fora da arena r=15) e abertura de 1.5m
-        # (20 agentes congestionavam). Agora: largura ajustada à arena e abertura
-        # alargada para 2.5m (22 jun, a pedido — reduz o congestionamento).
-        # Esq tapa x[-16,-1.25]; dir tapa x[1.25,16]; abertura = x[-1.25,1.25].
+        # Barreira horizontal (y=0, espessura 8 m) com abertura central de
+        # 2,5 m: esquerda tapa x[-16,-1.25], direita x[1.25,16].
         self.walls = [
             {'pos': np.array([-8.625, 0.0, 0.0]), 'size': np.array([14.75, 8.0, H_PAREDE])},
             {'pos': np.array([ 8.625, 0.0, 0.0]), 'size': np.array([14.75, 8.0, H_PAREDE])}
@@ -502,11 +444,9 @@ class SwarmForagingEnv3D(gym.Env):
         self.obstacles = []
         self.obstacle_velocities = []
         H_PAREDE = self._altura_paredes
-        # Cruz com 4 quadrantes. Espessura das paredes 1.5m. As passagens entre
-        # salas foram ALARGADAS de 1.5m → 2.5m (22 jun, a pedido): cada segmento
-        # adjacente a uma abertura foi encurtado 0.5m no lado da abertura, mantendo
-        # a estrutura. Aberturas resultantes (2.5m): no eixo horizontal em x≈±9.4;
-        # no eixo vertical em y≈±9.4 e no cruzamento central (y≈0).
+        # Cruz com quatro quadrantes, paredes de 1,5 m de espessura e passagens
+        # de 2,5 m: no eixo horizontal em x≈±9,4; no vertical em y≈±9,4 e no
+        # cruzamento central.
         self.walls = [
             # Eixo Horizontal Y=0  (aberturas em x[-10.675,-8.175] e x[8.175,10.675])
             {'pos': np.array([-12.8375, 0.0, 0.0]), 'size': np.array([4.325, 1.5, H_PAREDE])},
@@ -522,25 +462,19 @@ class SwarmForagingEnv3D(gym.Env):
             {'pos': np.array([0.0, 12.8375, 0.0]), 'size': np.array([1.5, 4.325, H_PAREDE])}
         ]
 
-    # ------------------------------------------------------------------
-    # MAPA GRANDE (mapa_grande) — labirinto composto, arena r=60
-    # ------------------------------------------------------------------
-    # Junta num só mapa as dificuldades já validadas nos 7 cenários, a uma escala
-    # ~4x maior (pior percurso 143 m vs 34 m do Quatro Salas). Cinco zonas de
-    # oeste para este: S sala de partida (aberta, com obstáculos) · A gargalo +
-    # beco em U · B quatro salas · C porta cooperativa + alternativa longa ·
-    # D câmara do ninho. Geometria desenhada e aprovada em planta 2D/3D antes de
-    # entrar aqui (scripts/preview_mapa_grande.py, visualize_mapa_grande.py).
+    # Mapa composto (arena r=60): junta num só labirinto as dificuldades dos
+    # sete cenários, a uma escala ~4× maior (pior percurso 143 m contra 34 m do
+    # Quatro Salas). Cinco zonas de oeste para este: S sala de partida · A
+    # gargalo e beco em U · B quatro salas · C porta cooperativa com alternativa
+    # longa · D câmara do ninho.
     #
-    # A proporção é 5:3 inscrita no círculo (W=5k, H=3k, W²+H²=(2R)² → k=2R/√34).
-    # As aberturas de zonas contíguas estão DESLOCADAS umas das outras de
-    # propósito: alinhadas, anulavam-se e o mapa ficava intransponível (bug
-    # apanhado na planta 2D antes de existir código).
+    # A proporção é 5:3 inscrita no círculo (W=5k, H=3k, W²+H²=(2R)²). As
+    # aberturas de zonas contíguas estão deslocadas de propósito: alinhadas,
+    # anulam-se e o mapa fica intransponível.
     MAPA_GRANDE_RADIUS = 60.0
 
-    # Teto vertical do mapa_grande, em metros (|z| <= este valor). Ver o bloco
-    # "TETO" no step(): sem ele, subir era uma fuga à economia da tarefa, e a
-    # evolução descobria-a em 25 gerações. Só se aplica a este cenário.
+    # Teto vertical do mapa composto, em metros (|z| <= este valor). Sem ele,
+    # subir é uma fuga à economia da tarefa que a evolução descobre depressa.
     MAPA_GRANDE_TETO = 2.0
 
     def _mapa_grande_dims(self):
@@ -552,11 +486,9 @@ class SwarmForagingEnv3D(gym.Env):
     def _mapa_grande_spawn_box(self):
         """(centro, meia-largura, meia-altura) da caixa de spawn na zona S.
 
-        FONTE ÚNICA: o spawn dos agentes e a clareira sem obstáculos derivam
-        daqui. Estavam escritos com as mesmas constantes em dois sítios e a
-        clareira era um CÍRCULO menor que a diagonal da caixa — os cantos
-        ficavam de fora e ~0,2% dos agentes nasciam dentro de um obstáculo
-        (penalização e empurrão no passo 0, sem qualquer erro visível).
+        Fonte única do spawn dos agentes e da clareira sem obstáculos. Em dois
+        sítios separados, a clareira era um círculo menor que a diagonal da
+        caixa e ~0,2% dos agentes nasciam dentro de um obstáculo.
         """
         W, H, x0, _, _, _ = self._mapa_grande_dims()
         return np.array([x0 + 0.10 * W, 0.0]), 0.075 * W, 0.12 * H
@@ -593,14 +525,11 @@ class SwarmForagingEnv3D(gym.Env):
         b_cima = y1 - (y_g + ab / 2)
         self.walls += [parede(xa, y0 + b_baixo / 2, t, b_baixo),
                        parede(xa, y1 - b_cima / 2, t, b_cima)]
-        # O beco em U: fundo a ESTE, boca virada a OESTE — para o lado por onde o
-        # enxame chega. A bússola do ninho é EUCLIDIANA, por isso um bolso só
-        # arma quando a linha reta agente→ninho lhe entra pela boca e bate no
-        # fundo. Com o fundo a oeste (como estava), os agentes chegavam-lhe pelas
-        # costas e contornavam-no: 0 de 60 pontos de entrada eram atraídos para
-        # dentro, e o caminho ótimo passava a 15 m — 162 m² de decoração. Virado
-        # ao contrário são 37%, e a zona A passa a compor de facto a dificuldade
-        # do u_wall (deceção sob observabilidade parcial), não só o gargalo.
+        # Beco em U com o fundo a este e a boca a oeste, o lado por onde o
+        # enxame chega: como a bússola do ninho é euclidiana, o bolso só arma
+        # quando a linha reta agente-ninho lhe entra pela boca. Ao contrário,
+        # atraía 0 de 60 pontos de entrada; assim atrai 37%, e a zona compõe a
+        # deceção do Muro em U e não apenas o gargalo.
         ux, uy = x0 + 0.315 * W, H * 0.14
         uw, uh = 0.085 * W, 0.30 * H
         self.walls += [parede(ux + uw / 2, uy, t, uh),
@@ -616,15 +545,11 @@ class SwarmForagingEnv3D(gym.Env):
         self.walls += [parede(xb, y0 + c_baixo / 2, t, c_baixo),
                        parede(xb, y1 - c_cima / 2, t, c_cima)]
 
-        # CRUZ interior: eixo horizontal (y=0) + eixo vertical (x=xm), como no
-        # four_rooms. Antes havia só o eixo horizontal com uma abertura ao meio,
-        # o que fazia DUAS salas — e a zona era rotulada "Quatro Salas" na planta,
-        # no pré-registo e na tese. Quatro salas exigem os dois eixos e quatro
-        # aberturas: NO-SO-SE-NE em ciclo, sem atalho pelo centro (os segmentos
-        # encostam no cruzamento, como no four_rooms).
-        # As aberturas ficam a 0,63 do meio-vão (a mesma proporção do four_rooms)
-        # e DESLOCADAS da entrada (y=-H/4) e da saída (y=+H/4) da zona: alinhadas,
-        # a travessia seria uma linha reta e as salas não custariam nada.
+        # Cruz interior (eixo horizontal em y=0 e vertical em x=xm), como no
+        # four_rooms: são precisos os dois eixos e quatro aberturas em ciclo
+        # NO-SO-SE-NE para haver mesmo quatro salas, sem atalho pelo centro. As
+        # aberturas ficam a 0,63 do meio-vão e deslocadas da entrada e da saída
+        # da zona — alinhadas, a travessia seria uma linha reta.
         xm = (xa + xb) / 2
         mv_x, mv_y = (xb - xa) / 2, H / 2
         ax = 0.63 * mv_x          # aberturas do eixo horizontal, em x = xm ± ax
@@ -740,8 +665,8 @@ class SwarmForagingEnv3D(gym.Env):
         self._add_cooperative_door()
 
     def _spawn_obstacles_cooperative_door_bypass(self):
-        # 7º cenário: porta cooperativa COM percurso alternativo longo (sem porta).
-        # Geometria (arena r=15; ninho em (0,12); agentes nascem a sul, y<0):
+        # Porta cooperativa com percurso alternativo longo e sem porta.
+        # Geometria (arena r=15, ninho em (0,12), agentes a nascer a sul):
         #  • Barreira horizontal em y=0 com PORTA de 3m no centro (caminho CURTO,
         #    exige 3 agentes a empurrar — idêntico à porta cooperativa).
         #  • O segmento DIREITO é mais curto (acaba em x=11) → deixa uma abertura
@@ -1043,26 +968,19 @@ class SwarmForagingEnv3D(gym.Env):
             dirs[~safe] = 0.0
             return dirs, np.where(safe, dist, 0.0)
 
-        # BÚSSOLA DE HOMING: a direção+distância (euclidiana) para o ninho está
-        # SEMPRE disponível, mesmo sem linha de visão. Justificação: em swarm
-        # robotics assume-se homing global para a base (bússola/GPS/beacon —
-        # cf. formigas/sol, pombos/campo magnético, drones/GPS), mas NÃO um mapa
-        # dos obstáculos. Os obstáculos continuam invisíveis até serem detetados
-        # localmente pelo LiDAR (5m) — observabilidade parcial genuína mantida.
-        # Antes zerava-se a direção sem line-of-sight, o que cegava os agentes em
-        # todos os cenários com paredes (u_wall, bottleneck, four_rooms, door).
+        # Bússola de homing: direção e distância euclidianas ao ninho, sempre
+        # disponíveis mesmo sem linha de visão. É o pressuposto habitual em
+        # robótica de enxame — homing global para a base, sem mapa dos
+        # obstáculos, que continuam invisíveis até o LiDAR os detetar.
         dir_nest, dist_nest = ego_to(self.nest_pos)         # (A,3), (A,)
         norm_dist_nest = dist_nest / arena2
 
-        # ── B1: BÚSSOLA DA PORTA/ENTRADA (direção+distância egocêntricas) ──
-        # Indica onde está a porta/passagem-objetivo do cenário. Preenchida
-        # apenas quando existe uma porta DEFINIDA (cooperative_door) — que é um
-        # sub-objetivo físico do cenário (como o ninho), não um waypoint de
-        # planeamento. Nos restantes cenários fica a zeros (não revela o caminho
-        # nos labirintos, o que seria batota). Mantém a dimensão da obs fixa.
-        # obs_zero_door_feats (controlo do F1): força os zeros do treino sem
-        # porta, mantendo a porta FÍSICA no mundo. Separa "a topologia é dura"
-        # de "estas 4 entradas nunca tinham sinal e agora têm". Ver __init__.
+        # Bússola da porta (direção e distância egocêntricas), preenchida só
+        # onde existe porta definida: é um sub-objetivo físico do cenário, como
+        # o ninho, e não um waypoint de planeamento. Nos restantes fica a zeros,
+        # para não revelar o caminho nos labirintos, e a dimensão da observação
+        # mantém-se. `obs_zero_door_feats` força esses zeros mantendo a porta
+        # física, que é a condição de controlo descrita no __init__.
         if self.has_door and not self.obs_zero_door_feats:
             dir_door, dist_door = ego_to(self.door_pos)
             norm_dist_door = dist_door / arena2
@@ -1178,7 +1096,6 @@ class SwarmForagingEnv3D(gym.Env):
                     self.nest_pos = self._random_spawn(max_radius=0.7)
                     vel = np.random.uniform(-1, 1, 3)
                     self.nest_velocity = (vel / (np.linalg.norm(vel) + 1e-6)) * self.nest_velocity_magnitude * 2.0
-        # --------------------------------------
 
         for idx, agent in enumerate(self.agents):
             if agent in actions:
@@ -1294,23 +1211,14 @@ class SwarmForagingEnv3D(gym.Env):
                     pen = self.spreading_penalty_factor * (1.0 - dist / spread_dist)
                     self._spreading_penalties[i] += pen
                     self._spreading_penalties[j] += pen
-        # ---------------------------------------------------------------
 
-        # --- 2.ª passagem do push-out das paredes (SÓ mapa_grande) -------
-        # A separação inter-agente acima empurra sem saber onde estão as paredes.
-        # Com o enxame amontoado contra uma parede, ela enterra um agente no
-        # painel; no passo seguinte o push-out escolhe o eixo de MENOR penetração
-        # e, se o agente já passou do meio, expulsa-o PELO LADO ERRADO — ou seja,
-        # atravessa. Medido antes desta correção: 20 agentes empurrados contra a
-        # divisória B→C durante 120 passos => 12 do outro lado; contra o painel da
-        # porta => 4 do outro lado (com 6 agentes: 0). Numa política de homing
-        # (120 000 passos-agente) não acontecia — mas a evolução procura
-        # exatamente este tipo de atalho, e aqui custaria a métrica M3 (uso da
-        # porta) do pré-registo.
-        #
-        # Limitado ao mapa_grande DE PROPÓSITO: os 7 cenários das campanhas
-        # fechadas têm de continuar bit-a-bit reproduzíveis (os números já estão
-        # na tese). Ver test_fisica_bit_a_bit_nos_7 e test_aperto_nao_atravessa.
+        # Segunda passagem do push-out das paredes, só no mapa composto. A
+        # separação inter-agente empurra sem saber onde as paredes estão e pode
+        # enterrar um agente no painel; o push-out escolhe então o eixo de menor
+        # penetração e, se o agente já passou do meio, expulsa-o pelo lado
+        # errado. Medido: 20 agentes contra a divisória B-C durante 120 passos
+        # punham 12 do outro lado. Fica limitado a este cenário para os sete
+        # continuarem bit-a-bit reproduzíveis (test_fisica_bit_a_bit_nos_7).
         if self.classic_scenario == "mapa_grande":
             for idx in range(self.num_agents):
                 for wall in self.walls:
@@ -1335,34 +1243,19 @@ class SwarmForagingEnv3D(gym.Env):
                     if sign == 0:
                         sign = 1.0
                     self.agent_positions[idx][eixo] += penetration[eixo] * sign
-        # ---------------------------------------------------------------
 
-        # --- TETO: o mapa_grande é um labirinto PLANAR ---------------------
-        # O simulador é 3D (`move_local[2]` dá componente vertical) e a arena é
-        # uma esfera. No mapa_grande, r=60 abre 45 m de altura acima das paredes
-        # onde não existe labirinto nenhum — e onde o agente também não é visto
-        # pelo LiDAR (raios horizontais) nem ganha exploração (células 2D).
-        #
-        # Isso não é só espaço morto: é uma FUGA À ECONOMIA DA TAREFA. Um agente
-        # encostado ao limite da esfera entra no ramo do empurrão da arena, que
-        # faz `continue` — nesse passo não paga o custo de energia e a variação
-        # de potencial é engolida. Como o empurrão é sempre na direção do centro
-        # e o potencial geodésico é da PROJEÇÃO horizontal, ser empurrado
-        # aproxima-o do ninho de graça.
-        #
-        # Medido a 30 jul, no modelo do shakedown local (25 gerações, o que
-        # mostra que a evolução acha isto depressa): agentes a |z| de 40 a 57 m,
-        # 10,7% dos passos-agente sem recompensa nenhuma, 47 887 de aproximação
-        # nunca creditada, e um shaping de −38 278 quando o telescópico é +9 609.
-        #
-        # O teto de ±2 m dá 13 raios de robô de folga vertical — manobra local
-        # sim, fuga não. É 1,3% dos 155 m do percurso, portanto irrelevante para
-        # a tarefa que a QI7 mede. SÓ no mapa_grande: os 7 cenários das campanhas
-        # fechadas ficam bit-a-bit iguais (ver test_fisica_dos_7_inalterada).
+        # Teto vertical: o mapa composto é um labirinto planar dentro de uma
+        # arena esférica de r=60, que abre 45 m de altura sem labirinto nenhum.
+        # Subir é uma fuga à economia da tarefa — encostado ao limite da esfera,
+        # o agente entra no ramo do empurrão, que salta o custo de energia, e o
+        # empurrão para o centro aproxima-o do ninho de graça. Medido num modelo
+        # de 25 gerações: agentes a |z| de 40 a 57 m e 10,7% dos passos-agente
+        # sem recompensa. O teto de ±2 m dá 13 raios de robô de folga vertical,
+        # 1,3% dos 155 m do percurso. Só aqui: os sete ficam bit-a-bit iguais
+        # (test_fisica_dos_7_inalterada).
         if self.classic_scenario == "mapa_grande":
             np.clip(self.agent_positions[:, 2], -self.MAPA_GRANDE_TETO,
                     self.MAPA_GRANDE_TETO, out=self.agent_positions[:, 2])
-        # ---------------------------------------------------------------
 
         robots_in_nest = []
         for idx in range(self.num_agents):
@@ -1408,73 +1301,38 @@ class SwarmForagingEnv3D(gym.Env):
                 self.prev_pot[idx] = self._potential(self.agent_positions[idx])
                 continue
 
-            # Um agente a SINALIZAR (a empurrar a porta) fica inerte e, nos 7
-            # cenários, o bloco de recompensa é saltado: não recebe nada, nem o
-            # custo de energia. Mas o `prev_pot` é atualizado no fim do passo — e
-            # se os vizinhos o empurrarem entretanto, a variação de potencial é
-            # ENGOLIDA: nunca é paga nem cobrada. Isso quebra a propriedade que dá
-            # validade ao shaping (Ng et al., 1999): a soma deixa de ser
-            # Φ_0 − Φ_T e passa a acumular sem limite.
-            #
-            # Medido a 30 jul, num episódio de cada cenário:
-            #   cooperative_door    4,7% dos passos-agente sem pagamento,
-            #   bypass              4,5%   desvio de 2 400-3 100 numa recompensa
-            #                              que a comida domina (+24 000/episódio)
-            #   os 5 sem porta      0,0%   telescópico ao oitavo decimal
-            #   mapa_grande         0,0%   — aqui o signaling NÃO era a causa dos
-            #                              zeros; era a fuga pela vertical, ver o
-            #                              bloco "TETO" mais acima no step()
-            #
-            # Corrigido SÓ no mapa_grande (como a 2.ª passagem do push-out a 27
-            # jul): quem sinaliza é pago como qualquer outro agente, o que repõe
-            # o telescópio exato. É prevenção, não a cura de um sintoma medido —
-            # com a porta a ser o único ponto de passagem de um percurso de 129 m,
-            # o mapa expõe este defeito muito mais do que os 7 cenários, e um
-            # sinal que penalize estar junto à porta esvaziaria a M3 do
-            # pré-registo (uso da porta cooperativa). Isentar de energia quem
-            # sinaliza também tornaria «parar o relógio» na push zone gratuito.
-            # Os 7 cenários ficam bit-a-bit iguais — as campanhas deles estão
-            # fechadas e os números estão na dissertação.
+            # Quem sinaliza (empurra a porta) fica inerte e, nos sete cenários,
+            # salta o bloco de recompensa. Como o `prev_pot` é atualizado no fim
+            # do passo, a variação de potencial provocada pelos vizinhos é
+            # engolida e o shaping deixa de ser telescópico (Ng et al., 1999):
+            # medido, 4,7% dos passos-agente na porta cooperativa e 4,5% no
+            # bypass. No mapa composto quem sinaliza é pago como os outros, o que
+            # repõe o telescópio — a porta é aí o único ponto de passagem de um
+            # percurso de 129 m, e penalizar quem está junto dela esvaziaria a
+            # métrica M3 do pré-registo. Os sete ficam bit-a-bit iguais.
             _paga_shaping = (self.signaling[idx] != 1.0
                              or self.classic_scenario == "mapa_grande")
             if not _paga_shaping:
                 pass
             else:
-                # ── Reward Structure ─────────────────────────────────────────
-                # NOTA: NÃO há ICM (Intrinsic Curiosity Module).
-                # A exploração é incentivada exclusivamente por reward shaping:
-                #
-                #   progress_reward = factor × (Φ_t-1 − Φ_t)
-                #     onde Φ é o POTENCIAL de navegação: distância GEODÉSICA ao
-                #     ninho nos cenários com paredes (contorna-as), euclidiana nos
-                #     restantes. Geodésico → contornar uma parede dá progress
-                #     POSITIVO (antes, com euclidiano, contornar = afastar =
-                #     negativo, prendendo os agentes nas paredes).
-                #     → "Potential-Based Reward Shaping" (Ng et al., 1999):
-                #        não altera a política óptima.
-                #
-                #   energy_cost = −0.05/passo
-                #     → pressão temporal para resolver a tarefa depressa
-                #
-                # Recompensa de tarefa pura (sem shaping):
-                #   food_collected_reward = +100 (quando required_to_eat
-                #   agentes chegam simultaneamente ao ninho)
-                # ─────────────────────────────────────────────────────────────
+                # Recompensa: progress_reward = factor × (Φ_t-1 − Φ_t), com Φ a
+                # distância geodésica ao ninho nos cenários com paredes e
+                # euclidiana nos restantes — potential-based shaping (Ng et al.,
+                # 1999), que não altera a política ótima. Mais energy_cost por
+                # passo (pressão temporal) e a recompensa de tarefa da entrega.
+                # Não há módulo de curiosidade intrínseca.
                 progress = self.prev_pot[idx] - pot
                 rewards[agent] += (progress * self.progress_reward_factor) + self.energy_cost
                 self.hunger_timers[idx] += 1
 
-                # ── Reward de Exploração (count-based) ───────────────────────
-                # Bónus por visitar pela primeira vez uma célula da grelha.
-                # Tira os agentes dos mínimos locais nas paredes (onde o progress
-                # euclidiano os prende) ao premiar a cobertura de zonas novas —
-                # essencial para descobrir desvios em u_wall/four_rooms/bottleneck.
+                # Exploração count-based: bónus na primeira visita a cada
+                # célula da grelha, que tira os agentes dos mínimos locais junto
+                # às paredes ao premiar cobertura.
                 cell = (int(self.agent_positions[idx][0] // self.exploration_cell_size),
                         int(self.agent_positions[idx][1] // self.exploration_cell_size))
                 if cell not in self.visited_cells[idx]:
                     self.visited_cells[idx].add(cell)
                     rewards[agent] += self.exploration_bonus
-                # ─────────────────────────────────────────────────────────────
 
             self.prev_dist_to_nest[idx] = dist_nest
             self.prev_pot[idx] = pot
@@ -1485,14 +1343,11 @@ class SwarmForagingEnv3D(gym.Env):
             if self._collision_penalties[idx] > 0:
                 rewards[agent] -= self._collision_penalties[idx]
 
-            # ── Hunger / respawn ─────────────────────────────────────────────
-            # Nos cenários de LABIRINTO o teleporte por hunger era "farmável":
-            # aproximar-se da parede (progress +) → reset para o spawn (sem cobrar
-            # o salto) → reaproximar (progress + outra vez). A política óptima
-            # aprendida passava a ser "colar à parede e esperar o reset" — daí o
-            # total_reward ≈ 20.000 com ZERO comida. Por isso o teleporte só está
-            # ativo no foraging contínuo (sandbox); nos labirintos a pressão
-            # temporal vem só do energy_cost.
+            # Nos labirintos o teleporte por fome era explorável: aproximar da
+            # parede dava progresso, o reset devolvia ao spawn sem cobrar o
+            # salto, e a política ótima passava a ser esperar pelo reset — 20 000
+            # de recompensa com zero comida. Só fica ativo no foraging contínuo;
+            # nos labirintos a pressão temporal vem do custo de energia.
             if (not self.use_geodesic
                     and self.hunger_timers[idx] > self.hunger_timer_max):
                 rewards[agent] -= 50.0

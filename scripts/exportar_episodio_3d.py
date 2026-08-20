@@ -55,7 +55,7 @@ def exportar(algo: str, cenario: str, seed: int = 2024, passo: int = 3,
 
     # Sem modelo NÃO se exporta: um episódio de ações aleatórias com o nome do
     # algoritmo por cima é pior do que episódio nenhum (a mesma regra que se
-    # aplicou aos GIFs a 31 jul).
+    # aplicou aos GIFs).
     modelo = load_model(algo, cenario, config_path, models_root=models_root)
 
     obs, _ = env.reset(seed=seed)

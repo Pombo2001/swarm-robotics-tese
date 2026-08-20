@@ -41,10 +41,10 @@ falhas = []
 conferidos = 0
 
 # Os rótulos da tabela da tese, na ordem em que lá aparecem, e a chave do
-# cenário no código. Nomes não são identificadores — a lição de 28 jul.
+# cenário no código: nomes não são identificadores.
 LINHAS_TABELA = [
     ("Sandbox", "none"),
-    # 18 ago: a tese uniformizou o nome («Muro U» aparecia 35 vezes e «Muro em
+    # A tese uniformizou o nome («Muro U» aparecia 35 vezes e «Muro em
     # U» 40); aqui aceitam-se as duas, para o verificador não voltar a partir
     # se alguém preferir a forma curta numa tabela apertada.
     ("Muro em U", "u_wall"),

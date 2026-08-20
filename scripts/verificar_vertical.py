@@ -62,7 +62,7 @@ def altitudes():
     print("=" * 74)
     print("1. ALTITUDE NOS EPISÓDIOS EXPORTADOS (21 células)")
     print("=" * 74)
-    # ⚠️ Só os SETE. A frase da tese diz «$21$ células (três controladores ×
+    # Só os SETE. A frase da tese diz «$21$ células (três controladores ×
     # sete cenários)», e a pasta passou a ter 24 ficheiros quando o mapa grande
     # foi exportado — o 8.º cenário entrava aqui calado e mudava a contagem dos
     # cenários concordantes de 5 para 6. É a armadilha do ponto 1.7 do plano de

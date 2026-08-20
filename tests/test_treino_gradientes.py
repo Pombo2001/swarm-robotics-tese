@@ -65,11 +65,9 @@ with open(CONFIG, "r") as f:
 MODULOS = [("ppo", mod_ppo), ("sac", mod_sac)]
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Duplos do VecEnv: o achatamento testa-se com observações IDENTIFICÁVEIS, não
 # com o ambiente real. obs[arena, agente] = arena*100 + agente diz, ao olhar
 # para o resultado, exatamente de onde veio cada linha.
-# ─────────────────────────────────────────────────────────────────────────────
 class VecEnvFalso:
     def __init__(self, num_arenas, num_agentes, obs_dim=4, act_dim=3):
         import gymnasium as gym
@@ -116,9 +114,7 @@ def _envolver(modulo, num_arenas, num_agentes, **kw):
         VecEnvFalso(num_arenas, num_agentes, **kw), num_agentes)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 1. Alinhamento (arena, agente) -> índice
-# ─────────────────────────────────────────────────────────────────────────────
 def test_achatamento_preserva_a_ordem():
     """O índice i tem de ser (arena i//N, agente i%N) — nas obs e nas rewards.
 
@@ -179,9 +175,7 @@ def test_done_de_uma_arena_marca_os_seus_agentes():
         print("OK  [%s] done de uma arena marca exatamente os seus agentes" % nome)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 2 e 3. Infos
-# ─────────────────────────────────────────────────────────────────────────────
 def test_observacao_terminal_e_a_do_proprio_agente():
     """No fim do episódio, cada agente recebe a SUA linha da observação terminal.
 
@@ -223,9 +217,7 @@ def test_infos_nao_sao_o_mesmo_objeto():
         print("OK  [%s] cada agente recebe uma cópia independente do info" % nome)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 4. O contrato do task_reward (ambiente real, episódio curto)
-# ─────────────────────────────────────────────────────────────────────────────
 def _env_curto(max_steps=3):
     cfg = copy.deepcopy(BASE_CFG)
     # `max_steps` vive em `environment` (o de `simulation` é lido por outra
@@ -303,9 +295,7 @@ def test_ordem_dos_agentes_e_a_do_ambiente():
         os.unlink(caminho)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 5. O callback
-# ─────────────────────────────────────────────────────────────────────────────
 class ModeloFalso:
     """O mínimo que o callback lê do modelo."""
     def __init__(self, ep_rew=1.0):
@@ -429,9 +419,7 @@ def test_sem_checkpoint_dir_nao_grava():
             print("OK  [%s] sem checkpoint_dir não se grava nada" % nome)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 6. make_env: semear por rank
-# ─────────────────────────────────────────────────────────────────────────────
 def test_make_env_semeia_por_rank(monkeypatch=None):
     """Cada subprocesso semeia `seed + rank`: arenas distintas entre si e
     reproduzíveis entre corridas. Com o mesmo seed em todos, as N arenas
@@ -466,9 +454,7 @@ class _AmbienteFalso:
         self.action_space_val = gym.spaces.Box(-1, 1, (2,))
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 7. Os gémeos não divergiram
-# ─────────────────────────────────────────────────────────────────────────────
 def _ast_normalizado(objeto, trocas=()):
     """AST em texto, para comparar CÓDIGO e não comentários nem espaços."""
     fonte = inspect.getsource(objeto)
@@ -510,9 +496,7 @@ def test_make_env_identico():
     print("OK  make_env idêntica nos dois módulos")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 8. O desalinhamento que ninguém guarda
-# ─────────────────────────────────────────────────────────────────────────────
 def test_num_agents_errado_nao_passa_em_silencio():
     """`FlattenMultiAgentVecEnv` recebe o `num_agents` do CONFIG
     (`config['environment'].get('num_agents', 25)`), não do ambiente — e o

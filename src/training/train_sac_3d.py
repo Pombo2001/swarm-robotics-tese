@@ -1,4 +1,3 @@
-# =============================================================================
 # SAC — Soft Actor-Critic  (Haarnoja et al., 2018)
 # Biblioteca: stable-baselines3
 #
@@ -21,7 +20,6 @@
 #   O SAC explora naturalmente pela estocasticidade da política (entropia).
 #
 # Rede: MLP [obs→256→256→actions] (net_arch configurável em foraging.yaml)
-# =============================================================================
 import os
 import sys
 import csv
@@ -245,7 +243,7 @@ def train_sac_3d(time_limit_minutes, seed=None, config_path=None):
     # o parameter sharing os torna enganadores: cada step() do VecEnv devolve
     # num_cpu × num_agents transições (com 5 e 20, são 100) e o SB3 faz UM
     # gradient step por step() — rácio de replay 0,01, quando o SAC é desenhado
-    # para ~1. Medido no F0 de 27 jul: n_updates=26 000 para 2,6M timesteps.
+    # para ~1. Medido no smoke test: n_updates=26 000 para 2,6M timesteps.
     # Subir isto troca amostras por aprendizagem (menos timesteps/s, mais
     # gradiente por transição); qual dos dois compensa é questão empírica — ver
     # docs/AB_SAC_MAPA_GRANDE.md.

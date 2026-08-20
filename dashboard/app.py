@@ -96,7 +96,7 @@ def index():
                 # Em modo leitura este separador também não existe. Não é só
                 # o painel do servidor que desaparece (esse já desaparecia, por
                 # causa da password SSH): o que sobrava eram as curvas do último
-                # treino LOCAL — de 27 jul, na torre —, sob o nome «Servidor», com
+                # treino LOCAL, na torre, sob o nome «Servidor», com
                 # um aviso a mandar ver o treino a decorrer «na vista Servidor»,
                 # que era aquela mesma. Um separador que não mostra o que promete
                 # e remete para si próprio.

@@ -51,7 +51,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-# ⚠️ O F1 estava a ser lido de `results/evaluation/zeroshot_mapa_grande.csv` — a
+# O F1 estava a ser lido de `results/evaluation/zeroshot_mapa_grande.csv` — a
 # corrida ANULADA a 29 jul (paredes de 30 m numa arena de raio 60: os agentes
 # voavam por cima do labirinto). Este script imprimia-a como se fosse o
 # resultado, 420 linhas e tudo. O F1 que vale são os quatro CSV da repetição, em

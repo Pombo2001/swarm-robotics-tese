@@ -1,53 +1,30 @@
-# =============================================================================
-# GNN — Algoritmo Neuro-Evolutivo com Rede Neuronal de Grafos
-# Desenvolvido de raiz (sem bibliotecas de RL externas)
+# Controlador neuroevolutivo: rede neuronal de grafos treinada por uma
+# estratégia evolutiva, implementada de raiz e sem bibliotecas de RL.
 #
-# Paradigma: ALGORITMO GENÉTICO / EVOLUTION STRATEGIES
-#   Baseado em: Salimans et al. (2017) "Evolution Strategies as a Scalable
-#   Alternative to Reinforcement Learning" — mutação Gaussiana element-wise.
+# Genoma: vetor 1D com todos os pesos e biases da GNNAgent3D. A topologia é
+#   fixa — evoluem os pesos, não a estrutura.
 #
-# Genoma: vector 1D contendo TODOS os pesos e biases da GNNAgent3D.
-#   A política é o mapeamento directo do genoma → acções.
-#   Topologia da rede é FIXA — não evolui estrutura, apenas pesos.
+# Mutação: gaussiana element-wise com máscara — cada peso do filho recebe
+#   N(0, sigma) com probabilidade mutation_rate (10%), o resto fica igual ao
+#   pai. Equivale a uma (1+λ)-ES esparsa; mutar todos os pesos de uma vez
+#   destruiria a diversidade em redes grandes. Ver Salimans et al. (2017).
 #
-# Estratégia de mutação (Element-wise Gaussian Mutation com máscara):
-#   Para cada peso w_i do filho:
-#     com probabilidade mutation_rate (10%): w_i += N(0, sigma)
-#     caso contrário: w_i permanece igual ao pai
-#   Isto é equivalente a (1+λ)-ES com mask esparsa — não muta todos os pesos
-#   em simultâneo (reduziria demasiado a diversidade com redes grandes).
+# Elitismo: os 20% melhores (6 de 30) passam intactos; o resto da população
+#   sai de cópias mutadas deles. Sigma decai 0,1%/geração de 0,1 até 0,03.
 #
-# Elitismo: os 20% melhores (elite_count=6 de 30) são preservados sem mutação.
-#   O restante da população é gerado a partir de cópias mutadas dos elites.
+# Fitness dominada pela tarefa: cada recolha vale 10000, muito acima de
+#   qualquer shaping, que entra apenas comprimido por 5000·tanh(reward/5000)
+#   para servir de desempate enquanto nenhum genoma recolhe. Sem isto a
+#   evolução maximiza o shaping sem cumprir a tarefa. A tanh substitui um
+#   clip(±5000) porque o clip saturava e deixava de dar gradiente: no Muro em U
+#   todos os genomas decentes ficavam com fitness exatamente 5000 e a seleção
+#   cegava.
 #
-# Sigma decay: sigma começa em 0.1 e decai 0.1%/geração (×0.999) até mín. 0.03.
-#   Exploração agressiva no início → refinamento gradual.
+# Avaliação: cada genoma corre eval_episodes episódios num conjunto de seeds
+#   fixo ao longo de todas as gerações. Com seeds a mudar por geração a fitness
+#   fica ruidosa e os elites reavaliados saltam sem razão.
 #
-# Fitness: DOMINADA PELA TAREFA. Cada recolha (food) vale 10000 — muito acima
-#   de qualquer reward de shaping —, e o shaping entra apenas COMPRIMIDO por uma
-#   tangente hiperbólica (5000·tanh(reward/5000)) como gradiente/desempate quando
-#   nenhum genoma ainda recolhe. Isto evita o reward hacking: a fitness anterior
-#   era o reward bruto (que inclui o shaping de progresso + exploração), pelo que
-#   a evolução maximizava o shaping sem cumprir a tarefa (ex.: 98k de fitness com
-#   0 recolhas no Muro U). A exploração vem da estocasticidade da mutação Gaussiana.
-#
-#   Porquê tanh e não clip(±5000): o clip SATURAVA no teto +5000 sempre que o
-#   shaping acumulado passava de 5000 (frequente: 500 passos × 20 agentes). Com o
-#   teto atingido o termo virava CONSTANTE → deixava de dar gradiente. No Muro U
-#   (food sempre 0) todos os genomas decentes ficavam com fitness=5000.0 EXACTO →
-#   seleção cega, o GNN nunca progredia (origem dos valores redondos 5000/15000/
-#   75000 nos logs). A tanh é monótona e nunca satura abruptamente: continua a
-#   distinguir um genoma que se aproxima do ninho de outro que vagueia, mantendo
-#   food a dominar (1 recolha = 10000 >> amplitude ±5000 do shaping).
-#
-# Avaliação: cada genoma corre eval_episodes episódios num conjunto de seeds FIXO
-#   ao longo de todas as gerações (eval_seed_base constante). Antes a seed mudava
-#   por geração (gen_seed = seed + gen), o que tornava a fitness ruidosa e fazia os
-#   elites re-avaliados saltar/cair — as "quedas estranhas na recompensa média".
-#   Conjunto fixo + eval_episodes>1 estabiliza a seleção e reduz overfitting a 1 mapa.
-#
-# Paralelismo: cada genoma é avaliado num processo separado (multiprocessing).
-# =============================================================================
+# Paralelismo: um processo por genoma (multiprocessing).
 import os
 import sys
 # Limitar BLAS/OpenMP a 1 thread ANTES de importar numpy/torch. Cada genoma é
@@ -172,14 +149,12 @@ def evaluate_genome(args):
     avg_reward = float(np.mean(episode_rewards))   # reward bruto (só diagnóstico)
     avg_food   = float(np.mean(episode_foods))     # recolhas (tarefa pura)
     avg_homing = float(np.mean(episode_homing))    # aproximação ao ninho [0,1]
-    # Fitness DOMINADA PELA TAREFA: cada recolha vale food_weight (>> shaping). O
-    # shaping é o HOMING (proximidade FINAL ao ninho), NÃO o reward acumulado.
-    # PORQUÊ: o reward acumulado (progresso + exploração) é FARMÁVEL — o GNN
-    # maximizava-o a vaguear/explorar sem nunca entrar no ninho (RewBruto ~88000,
-    # comida 0), porque parar no ninho corta o rendimento por passo. Selecionar pelo
-    # homing premeia genomas cujos agentes ACABAM no ninho (= pré-condição de comer,
-    # required_to_eat=1 nos labirintos); assim que um come, food*food_weight domina.
-    # O homing é não-farmável (só conta o estado final, não o caminho).
+    # Cada recolha vale food_weight, muito acima do shaping — e o shaping é o
+    # homing, a proximidade FINAL ao ninho, não o reward acumulado. O acumulado
+    # é explorável: vaguear rende mais por passo do que parar no ninho, e o
+    # controlador chegava a 88 000 com zero comida. O homing só conta o estado
+    # final, pelo que premeia os genomas que acabam no ninho — a pré-condição de
+    # comer.
     evo = config.get('evolution', {})
     food_weight = evo.get('fitness_food_weight', 10000.0)
     shaping_amp = evo.get('fitness_shaping_amplitude', 5000.0)
@@ -239,30 +214,23 @@ class GeneticTrainer3D:
         self.novelty_add_per_gen = evo_config.get('novelty_add_per_gen', 3)
         self.novelty_archive = []
 
-        # ── Novelty ADAPTATIVO — anneal do peso após a descoberta ──
-        # Evidência (campanhas de 11 jul 2026, orçamento igualado 7×195 min):
-        # w=0.5 FIXO ganha no u_wall (7/7 vs 3/7 — a novidade paga a DESCOBERTA do
-        # desvio) mas perde no bypass (63.0 vs 86.7 — depois de descobrir, metade da
-        # pressão seletiva continua gasta em diversidade redundante e custa
-        # MAGNITUDE). O anneal junta os dois regimes: w mantém-se cheio enquanto o
-        # melhor genoma não come; após novelty_sustain_gens gerações consecutivas
-        # com comida, decai ×novelty_decay/geração até 0 (seleção volta ao objetivo
-        # puro). Nunca re-arma: o elitismo preserva os genomas que comem, e re-armar
-        # tornaria a seleção não-estacionária.
+        # Dosagem adaptativa da novidade. Com peso fixo w=0,5 a novidade paga a
+        # descoberta do desvio no Muro em U (7/7 contra 3/7) mas custa magnitude
+        # na Porta com Alternativa (63,0 contra 86,7), onde metade da pressão
+        # seletiva continua gasta em diversidade já redundante. O anneal junta os
+        # dois regimes: w fica cheio enquanto o melhor genoma não come e, após
+        # novelty_sustain_gens gerações seguidas com comida, decai até 0. Nunca
+        # re-arma — re-armar tornaria a seleção não-estacionária.
         self.novelty_adaptive = evo_config.get('novelty_adaptive', False)
         self.novelty_decay = evo_config.get('novelty_decay', 0.98)
         self.novelty_sustain_gens = evo_config.get('novelty_sustain_gens', 10)
         self._food_streak = 0
         self._novelty_annealing = False
 
-        # ── Cache da fitness dos elites ──
-        # Os elites entram intactos na população seguinte e eram RE-avaliados em
-        # todas as gerações com as MESMAS seeds fixas e política determinística →
-        # resultado idêntico (verificável nos logs: fitness do melhor constante
-        # entre gerações sem melhoria). Guardar o resultado poupa elite_count/pop
-        # (~20%) das avaliações por geração. A novelty continua correta: recalcula-se
-        # em todas as gerações a partir dos BCs (cacheados para os elites), porque o
-        # arquivo cresce. Desligável no config para testes de equivalência.
+        # Cache da fitness dos elites: entram intactos na geração seguinte e,
+        # com seeds fixas e política determinística, a reavaliação dá o mesmo
+        # resultado — poupa ~20% das avaliações. A novidade continua recalculada
+        # em todas as gerações a partir dos BCs, porque o arquivo cresce.
         self.elite_cache = evo_config.get('elite_cache', True)
         self._elite_results = None   # resultados (na ordem 0..elite_count-1) dos elites
         self.elite_count = max(3, int(self.pop_size * 0.2))
@@ -399,8 +367,8 @@ class GeneticTrainer3D:
         print(f"[ACELERACAO] {num_cores} NUCLEOS DO RYZEN A AVALIAR EM PARALELO!")
         # O BRAÇO, impresso a partir do que está de facto configurado.
         # Esta linha era a constante "Pure Evolution + Guilhotina", que dizia o
-        # mesmo com ou sem novidade — e foi assim que o F2 do mapa grande correu
-        # 26 h com o objetivo puro onde o pré-registo mandava o adaptativo (4 ago):
+        # mesmo com ou sem novidade — e é assim que o F2 do mapa grande correu
+        # 26 h com o objetivo puro onde o pré-registo mandava o adaptativo:
         # nada, do arranque ao fim do run, dizia qual dos dois estava a treinar.
         if self.novelty_weight > 0:
             modo = (f"Novelty w={self.novelty_weight:g}"
@@ -428,20 +396,13 @@ class GeneticTrainer3D:
                     print(f"\n[FIM DO TEMPO] O cronometro atingiu o limite. A fechar e guardar o modelo...")
                     break
 
-                # Conjunto de seeds de avaliação FIXO entre gerações (ver __init__).
-                # Converte cada genoma (state_dict de tensores torch) para arrays
-                # NUMPY antes de o enviar aos workers. Motivo: o pickle de tensores
-                # torch usa memória partilhada/file-descriptors por tensor (com
-                # pop_size=30 são 450+ por geração) -> estoura o ulimit
-                # ("OSError: [Errno 24] Too many open files") e, mesmo subindo o
-                # ulimit, fica lentíssimo (o resource_sharer engasga e o Pool deixa
-                # de paralelizar: 1 geração passava de ~60s para >9min). Os arrays
-                # numpy fazem pickle POR VALOR — rápidos e sem FDs. São reconvertidos
-                # em tensores dentro de evaluate_genome.
-                # Cache dos elites: population[0..elite_count-1] são os elites da
-                # geração anterior (intactos, deep-copy) — o seu resultado com as
-                # seeds fixas é determinístico, logo reutiliza-se. Só os filhos
-                # mutados vão ao Pool. Na 1ª geração (sem cache) avalia-se tudo.
+                # Os genomas vão para os workers como arrays numpy, não como
+                # tensores torch: o pickle de tensores usa um descritor de
+                # ficheiro por tensor (450+ por geração com pop_size=30), estoura
+                # o ulimit e, mesmo com o limite subido, faz o Pool deixar de
+                # paralelizar. São reconvertidos dentro de `evaluate_genome`.
+                # Só os filhos mutados são avaliados: os elites reutilizam a
+                # fitness em cache, exceto na primeira geração.
                 cached = (self._elite_results if self.elite_cache else None) or []
                 args_list = [({k: v.detach().cpu().numpy() for k, v in self.population[i].items()},
                               self.config_path, self.eval_seed_base)
@@ -507,13 +468,11 @@ class GeneticTrainer3D:
                 best_food = food_counts[best_obj_idx]
                 best_reward = rewards_raw[best_obj_idx]
                 best_homing = homing_vals[best_obj_idx]
-                # Homing = proximidade final ao ninho do melhor genoma ([0,1]; 1=chegou).
-                # É o sinal de seleção dos labirintos: deve subir antes de aparecer
-                # comida. RewBruto fica só como diagnóstico (já não entra na fitness).
-                # w atual no log quando a novelty está ativa (com anneal vê-se o
-                # decaimento e o momento em que fecha em 0). flush=True fura o
-                # buffer de 8KB do pipe para o tee — sem isto as linhas Gen só
-                # apareciam no log a cada ~55 gerações.
+                # Homing: proximidade final ao ninho do melhor genoma, em [0,1].
+                # É o sinal de seleção nos labirintos e deve subir antes de
+                # aparecer comida; o reward bruto fica como diagnóstico. O
+                # flush=True fura o buffer do pipe, sem o qual as linhas só
+                # chegavam ao log a cada ~55 gerações.
                 novelty_str = (f"Novelty: {gen_novelty:.2f} | w: {self.novelty_weight:.3f} | "
                                if self.novelty_weight > 0.0 else "")
                 print(

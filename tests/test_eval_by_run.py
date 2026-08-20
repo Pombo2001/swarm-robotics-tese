@@ -43,9 +43,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from scripts import eval_by_run as mod  # noqa: E402
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Duplos
-# ─────────────────────────────────────────────────────────────────────────────
 def _episodios(n, recolhas=0.0, porta=None):
     return pd.DataFrame([{
         "food_collected": recolhas, "success": recolhas > 0,
@@ -122,9 +120,7 @@ class Ambiente:
         self._tmpdir.cleanup()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 1. _run_models
-# ─────────────────────────────────────────────────────────────────────────────
 def test_run_models_ordena_por_numero():
     """`run10` tem de vir DEPOIS de `run2`. Com ordenação de texto, a coluna Run
     do CSV sairia baralhada — e os rótulos não são identificadores (28 jul)."""
@@ -151,9 +147,7 @@ def test_run_models_nao_mistura_cenarios():
         print("OK  o sufixo vazio do Sandbox não apanha os outros cenários")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 2. Forma do CSV
-# ─────────────────────────────────────────────────────────────────────────────
 def test_csv_tem_uma_linha_por_episodio_e_as_colunas():
     with Ambiente(episodios=4) as amb:
         amb.prepara(runs=(1, 2, 3))
@@ -170,9 +164,7 @@ def test_csv_tem_uma_linha_por_episodio_e_as_colunas():
         print("OK  CSV com 1 linha por episódio, colunas e door_opened intactos")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 3, 4. Falhas
-# ─────────────────────────────────────────────────────────────────────────────
 def test_run_falhado_deixa_rasto_ao_lado_do_csv():
     """O teste que justifica o ficheiro: com um run a rebentar, o CSV sai com 2
     execuções em vez de 3 — e isso tem de ficar escrito ONDE os dados estão."""
@@ -223,9 +215,7 @@ def test_sem_falhas_nao_fica_sidecar_velho():
         print("OK  reavaliar sem falhas apaga o sidecar antigo")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 5. A análise lê o sidecar
-# ─────────────────────────────────────────────────────────────────────────────
 def test_analise_do_mapa_grande_mostra_o_sidecar(capsys=None):
     """Escrever o aviso ao lado dos dados não serve se o sítio onde o limiar é
     calculado não olhar para ele."""

@@ -273,3 +273,8 @@ results/estatisticas/*
 graphify-out/
 scripts/noite.log
 scripts/noite_achados.md
+
+# Restos de execução: logs soltos na raiz e o ficheiro que o ensaio do
+# fechar_qi7 compila. Os logs de campanha em results/ ficam versionados.
+/*.log
+Tese/_ensaio_*

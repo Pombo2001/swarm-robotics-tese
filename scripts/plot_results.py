@@ -25,7 +25,7 @@ if PROJECT_ROOT not in sys.path:
 # Rótulos e ordem vêm da FONTE ÚNICA (src/scenarios.py). Estavam aqui em duas
 # listas escritas à mão, ambas paradas nos 6 primeiros cenários: sem o
 # `cooperative_door_bypass` e sem o `mapa_grande`. Consequência medida no smoke
-# do F2 (2 ago): numa campanha só do mapa grande, a ordem dos boxplots ficava
+# do F2: numa campanha só do mapa grande, a ordem dos boxplots ficava
 # VAZIA e o seaborn rebentava com "List of boxplot statistics and positions
 # values must have same the length" — a campanha inteira acabava sem gráficos.
 # É a terceira vez que uma lista de cenários escrita à mão morde (7.º cenário
@@ -80,14 +80,12 @@ def create_thesis_plots_3d():
         df_curves = pd.read_csv(curves_csv)
         sns.set_theme(style="whitegrid")
         
-        # ==============================================================
         # 1. Gráficos "1 MAPA, 3 MODELOS" — PAINÉIS SEPARADOS por algoritmo.
         #    Cada algoritmo tem unidades diferentes E métricas diferentes (GNN:
         #    fitness evolutiva em dezenas de milhar; PPO/SAC: recompensa episódica).
         #    Sobrepô-los no mesmo eixo Y é enganador (escalas incomparáveis). Por
         #    isso usamos um subplot por algoritmo, cada um com o SEU eixo Y; o eixo
         #    X é o progresso do treino normalizado [0→100%], esse sim comparável.
-        # ==============================================================
         palette_models = {'GNN': '#2E7D32', 'PPO': '#E65100', 'SAC': '#0277BD'}
         ylabel_models = {
             'GNN': 'Fitness Evolutiva (melhor genoma)',
@@ -149,9 +147,7 @@ def create_thesis_plots_3d():
             plt.close()
             print(f"[*] Gerado grafico: 3 Modelos no mapa {scenario}")
             
-        # ==============================================================
         # 2. Gráficos "1 MODELO, TODOS OS MAPAS" (Curvas de Aprendizagem)
-        # ==============================================================
         algorithms = df_curves['Algorithm'].unique()
         # Paleta para diferenciar os mapas (ate 10 mapas suportados)
         palette_scenarios = sns.color_palette("husl", len(scenarios))
@@ -207,9 +203,7 @@ def create_thesis_plots_3d():
         print("[!] Para gerar graficos completos usa a Rotina Noturna (run_experiments.py).")
         print("[i] A tentar fallback com logs individuais...")
 
-    # ==============================================================
     # 3. BOXPLOTS e 4. BARRAS AGREGADORAS (Melhores Scores)
-    # ==============================================================
     if os.path.exists(best_csv):
         df_best = pd.read_csv(best_csv)
         sns.set_theme(style="whitegrid")
@@ -469,12 +463,10 @@ def create_thesis_plots_3d():
         plt.close()
         print(f"[i] Total: {max(plotted, plotted_time, plotted_task)} algoritmo(s) com dados")
         
-    # ==============================================================
     # 5. GRÁFICOS DE AVALIAÇÃO (métricas de TAREFA por cenário)
     #    Taxa de sucesso (Ptask) + recolhas/ep — honestos e comparáveis entre
     #    algoritmos, ao contrário do reward de treino (shaping + escalas mistas).
     #    Lê results/evaluation/eval_summary.csv (gerado pela rotina/eval_suite).
-    # ==============================================================
     set_progress(0.28, "Gráficos de avaliação (taxa de sucesso, recolhas)...")
     try:
         from scripts.eval_suite import plot_evaluation
@@ -484,10 +476,8 @@ def create_thesis_plots_3d():
     except Exception as e:
         print(f"[!] Graficos de avaliacao nao gerados (nao critico): {e}")
 
-    # ==============================================================
     # 6. HEATMAPS + MAPAS 3D na MESMA pasta da sessão (tudo organizado num só sítio)
     #    Heatmaps correm os modelos (lentos) mas ficam ao lado dos gráficos.
-    # ==============================================================
     config_src = os.path.join(base_dir, 'configs', 'foraging.yaml')
     set_progress(0.35, "Mapas de calor (heatmaps)...")
     try:
@@ -500,7 +490,7 @@ def create_thesis_plots_3d():
     # VTK/PyVista pode ABORTAR o processo (SIGABRT nativo, não é exceção
     # Python) — in-process, o abort matava o pipeline inteiro já depois de
     # todo o trabalho útil feito e fazia o watchdog relançar em loop
-    # (descoberto no smoke test de 2 jul).
+    # (descoberto no smoke test).
     try:
         import subprocess
         _code = (
@@ -530,11 +520,9 @@ def create_thesis_plots_3d():
         print("[i] Vídeos desligados (SWARM_VIDEOS=1 para gerar no pipeline; "
               "ou à parte: python scripts/record_episode.py --all).")
 
-    # ==============================================================
     # 7. ARQUIVAR MODELOS na pasta da sessão (backup + permite visualizar/comparar
     #    este treino mesmo depois de novos treinos sobrescreverem results/models*).
     #    Torna a pasta da sessão AUTO-CONTIDA: gráficos + heatmaps + mapas + modelos.
-    # ==============================================================
     set_progress(0.97, "A arquivar modelos da sessão...")
     try:
         mdl_dest = os.path.join(output_dir, 'modelos')

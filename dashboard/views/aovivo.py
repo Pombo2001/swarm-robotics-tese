@@ -28,7 +28,7 @@ CARD = theme.CARD + " p-4"
 _section_title = theme.section_title
 
 _ALGOS = {"gnn": "GNN (Evolutivo)", "ppo": "PPO", "sac": "SAC"}
-# Um só visualizador para os três algoritmos, escolhido por `--algo` (6 ago 2026).
+# Um só visualizador para os três algoritmos, escolhido por `--algo`.
 # Antes eram três ficheiros: o `ppo` e o `sac` diferiam em 12 linhas, e tinham já
 # divergido de facto (convenções de eixos diferentes, a porta que abria na
 # simulação mas não no ecrã só em dois deles).
@@ -247,7 +247,7 @@ def build():
         # ---------------- MAPA GRANDE (rascunho) — 3D no browser -------------
         with ui.card().classes(CARD):
             # O texto dizia "ainda NÃO está no simulador" — verdade quando foi
-            # escrito (23 jul), falso desde 24 jul: o mapa_grande é o 8.º cenário
+            # escrito, falso desde 24 jul: o mapa_grande é o 8.º cenário
             # do simulador e já correu campanhas. Ficava aqui a desmentir a vista
             # Mapa composto, ao lado.
             _section_title("construction", "Mapa composto — pré-visualização 3D",

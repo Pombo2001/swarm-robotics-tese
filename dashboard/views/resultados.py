@@ -205,7 +205,7 @@ def build():
                 .classes("mt-2").props("dense")
             so_pares.bind_visibility_from(sess_b, "value",
                                           backward=lambda v: v != NONE)
-            # ⚠️ Os dois lados são PNG independentes, cada um com o eixo que o
+            # Os dois lados são PNG independentes, cada um com o eixo que o
             # matplotlib lhe deu: no par A1/A2 o eixo da esquerda vai a 80 e o da
             # direita a 60, e as duas barras parecem mais próximas do que são.
             # Quem compara alturas lê o gráfico errado; os números certos estão
@@ -320,7 +320,7 @@ def build():
         def galeria():
             # Proveniência: que sessão está a ser mostrada, quantos artefactos tem e se
             # está completa. Sem isto, uma sessão incompleta parece uma sessão sem
-            # resultados — e foi assim que os heatmaps do treino de 7 dias passaram por
+            # resultados — e é assim que os heatmaps do treino de 7 dias passaram por
             # inexistentes quando o launcher abria (por engano) uma campanha de junho.
             todos = data.list_pngs(sess_a.value)
             n_heat = len([f for f in todos if f.startswith("heatmap")])

@@ -118,12 +118,12 @@ def medir():
 
 # ── O que a dissertação afirma ───────────────────────────────────────────────
 # (grupo, padrão). O `(?:\\textit\{|\\emph\{|\\textbf\{)?` cobre as três
-# maneiras como a tese escreve «runs» — foi assim que a contagem de cobertura os
+# maneiras como a tese escreve «runs» — é assim que a contagem de cobertura os
 # viu espalhados por dez secções.
 PADROES = [
     ("execuções", r"\$?(\d+)\$?\s*(?:\\textit\{|\\emph\{|\\textbf\{)?"
                   r"(?:execuções|execu\\c\{c\}ões|runs\}|runs\b)"),
-    # ⚠️ `\$n\s*=` e não `n\s*=`: sem o cifrão, o padrão apanhava
+    # `\$n\s*=` e não `n\s*=`: sem o cifrão, o padrão apanhava
     # `margin=2.5cm` do preâmbulo e o `\varepsilon = 0{,}2` da equação do PPO —
     # dois «achados» que eram pontuação.
     ("n", r"\$n\s*=\s*(\d+)\$?"),

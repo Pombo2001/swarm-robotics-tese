@@ -77,7 +77,7 @@ CANONICAS = [
      "QI7 — 84 de 84 células a 0,00 recolhas/ep; os 3 confundentes EXCLUÍDOS. "
      "Repetido de raiz a 31 jul (o 1.º correu com paredes atravessáveis e está "
      "anulado em f1_zeroshot/; o que vale é f1_zeroshot_v2/)", None),
-    # ⚠️ As figuras desta campanha são as de `graficos_tese/mapa_grande_f2/`,
+    # As figuras desta campanha são as de `graficos_tese/mapa_grande_f2/`,
     # geradas do `eval_by_run.csv` (as 21 execuções). As que vieram do servidor
     # na sessão datada de 16 ago saíram do `eval_summary.csv`, que só tem o
     # modelo campeão, e mostram 7,6 recolhas/ep onde a campanha dá 1,69 — não

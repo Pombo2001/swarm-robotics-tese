@@ -49,13 +49,13 @@ try:
 except Exception:
     pass
 
-# ⚠️ `f1_zeroshot_v2` e não `f1_zeroshot`: a pasta sem sufixo é a corrida
+# `f1_zeroshot_v2` e não `f1_zeroshot`: a pasta sem sufixo é a corrida
 # ANULADA a 29 jul (paredes de 30 m numa arena de raio 60 — os agentes voavam
 # por cima do labirinto), e era ELA o default deste script, tanto para ler como
 # para escrever. Corrido sem argumentos, analisava os dados inválidos e escrevia
 # o veredicto por cima deles; o comando certo — o que o dashboard cita — exigia
 # `--csv .../f1_zeroshot_v2/*.csv --saida .../f1_zeroshot_v2` de cada vez.
-# Corrigido a 5 ago. A pasta anulada fica no disco como registo, com o seu
+# A pasta anulada fica no disco como registo, com o seu
 # `ANULADO_29jul.md`.
 DEST = os.path.join(PROJECT_ROOT, "results", "mapa_grande", "f1_zeroshot_v2")
 ALGOS = ("GNN", "PPO", "SAC")
@@ -308,7 +308,7 @@ def main():
     a = ap.parse_args()
 
     # GUARDA: correr isto com um CSV de teste escrevia um veredicto FALSO por
-    # cima do real, na pasta que a tese cita. Aconteceu a 28 jul, ao validar o
+    # cima do real, na pasta que a tese cita — ao validar o
     # próprio script com dados sintéticos. Um ficheiro de fora da pasta canónica
     # obriga a dizer para onde vai a saída.
     dest = os.path.abspath(a.saida) if a.saida else DEST

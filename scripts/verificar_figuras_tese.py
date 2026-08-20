@@ -118,7 +118,7 @@ def procurar_fonte(base):
 
 
 # Quantos pixels têm de diferir para isto ser uma diferença, e não ruído.
-# ⚠️ O limiar é ABSOLUTO, e foi assim que ficou depois de um ensaio o desmentir.
+# O limiar é ABSOLUTO, e é assim que ficou depois de um ensaio o desmentir.
 # Estava em «0,05% dos pixels», que numa figura de 3000×2000 dá 3000 pixels de
 # tolerância: pintei um quadrado de 40×40 no meio de uma figura da tese e o
 # verificador deu-a por boa. Uma barra de erro com a altura errada, um ponto que

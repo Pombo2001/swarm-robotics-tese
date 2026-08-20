@@ -23,7 +23,7 @@ STATS_DIR = os.path.join(config.BASE_DIR, "results", "estatisticas")
 SIGNIF = os.path.join(STATS_DIR, "testes_significancia_food_collected.csv")
 MODEL_DIRS = ("models", "models_ppo", "models_sac")
 
-# Campanha Novelty adaptativa (19 jul): 5 fases GUARDADAS FORA de graficos_tese, em
+# Campanha Novelty adaptativa: 5 fases GUARDADAS FORA de graficos_tese, em
 # results/novelty_adaptativo/, para não sobrescrever os modelos campeões 7d (que
 # continuam a ser os ativos, de propósito). Cada fase é auto-contida (evaluation/ +
 # models/), por isso não passa pelo list_sessions() normal — é enxertada à parte na
@@ -40,7 +40,7 @@ ADAPT_FASES = [
 ADAPT_LABEL_TO_DIR = {lbl: sub for lbl, sub in ADAPT_FASES}
 
 
-# Mega-treino de 1 mês (fechado a 3 ago): a vista lê o RESUMO, não os CSV. Os
+# Mega-treino de 1 mês (fechado: ): a vista lê o RESUMO, não os CSV. Os
 # testes são do `scripts/analise_megatreino.py` — recalculá-los aqui era uma
 # segunda implementação da mesma estatística, com o risco de dar outra resposta;
 # e no Pi, que serve isto, seria lento sem necessidade.
@@ -48,19 +48,14 @@ MEGA_DIR = os.path.join(config.BASE_DIR, "results", "mega_1mes")
 MEGA_RESUMO = os.path.join(MEGA_DIR, "resumo_megatreino.json")
 
 # Fases do mega-treino com modelos próprios, para o visualizador. Os rótulos
-# dizem a CONDIÇÃO, não o número da fase — "mega_A_fase1" não diz a ninguém que
-# é o braço que resolve o Muro em U em 28 de 28 execuções.
+# dizem a condição e não o número da fase.
 #
-# As três fases de GRADIENTE (A3 = PPO, A4 = SAC, B6 = SAC) não estão aqui: o
-# arquivamento entre fases copia `results/models`, a pasta do GNN, e não os
-# modelos do algoritmo que a fase treinou — as três ficaram com cópias de GNN de
-# outras fases (mesmo sha256) e nenhum `.zip` próprio. As de A3/A4 foram
-# removidas a 3 ago para não serem abertas por engano (LEIA-ME_modelos.md).
-#
-# Verificado a 3 ago, fase a fase: TODAS as fases GNN têm os modelos do seu
-# próprio cenário, com um hash distinto por run (28/28, 21/21, 7/7) — a
-# armadilha nº8 está limpa. Os resultados das fases de gradiente continuam
-# válidos: vêm das avaliações, feitas no servidor com o modelo certo em memória.
+# As três fases de gradiente (A3, A4, B6) não estão aqui: o arquivamento entre
+# fases copia `results/models`, que é a pasta do GNN, pelo que ficaram com
+# cópias de GNN de outras fases e sem `.zip` próprio (ver LEIA-ME_modelos.md).
+# Os resultados delas continuam válidos — vêm das avaliações, feitas no servidor
+# com o modelo certo em memória. Todas as fases GNN têm os modelos do seu
+# cenário, com um hash distinto por execução.
 MEGA_FASES = [
     ("▣ Mega-treino · GNN adaptativo · Muro em U (28/28)", "mega_A_fase1"),
     ("▣ Mega-treino · GNN objetivo · Muro em U (15/28)",   "mega_A_fase2"),
@@ -229,7 +224,7 @@ def session_metrics(session: str):
 
 # ── PROVENIÊNCIA DOS DADOS ───────────────────────────────────────────────────
 # Todas as vistas passam a declarar O QUE estão a ler e DE QUANDO é. Sem isto, o
-# dashboard não distingue "não existe" de "não está aqui": foi assim que uma sessão
+# dashboard não distingue "não existe" de "não está aqui": é assim que uma sessão
 # antiga apareceu como se fosse a mais recente (ordenação por mtime), que curvas de há
 # 35 dias foram desenhadas como "ao vivo", e que a ausência de vídeos do PPO/SAC passou
 # por bug quando era apenas uma campanha que só treinou o GNN.
@@ -270,7 +265,7 @@ def eval_freshness():
         files += glob.glob(os.path.join(config.BASE_DIR, "results", d, "*"))
     # Os CHECKPOINTS intermédios (`*_ckpt_0091min.zip`) não são modelos a avaliar:
     # são fotografias do treino a meio, e o treinador escreve-os em qualquer
-    # campanha que passe por aqui. Seis deles, de 27 jul, eram da campanha do mapa
+    # campanha que passe por aqui. Seis deles,  eram da campanha do mapa
     # grande e faziam a vista Ciência gritar "avaliação DESATUALIZADA" contra uma
     # avaliação que está em dia — o alarme comparava a matriz dos 7 cenários com
     # ficheiros que nunca lhe pertenceram. Um alarme que toca sem motivo é pior do

@@ -250,17 +250,11 @@ def verificar_escalabilidade(tolerancia):
     return problemas
 
 
-# ── §Escalabilidade: a prosa, a segunda tabela, e o que o simulador diz ──────
-#
-# A `verificar_escalabilidade` acima cobre a tab:res_scale_all e mais nada. O
-# resto da secção — a tab:res_scale e os números citados no texto corrido —
-# ficava por conferir: 33 tokens, segundo o docs/COBERTURA_VERIFICADOR.md.
-#
-# O que é novo aqui são as **afirmações ordinais**. A tese não diz só «Gargalo
-# 58%»; diz que é «a retenção mais baixa de todos os cenários com paredes». Um
-# valor pode estar certo e a ordenação ficar falsa se outro cenário for
-# regenerado — e é a ordenação que sustenta o argumento (a estrutura física
-# atenua a diluição em vez de a agravar). Verificam-se as duas coisas.
+# §Escalabilidade: a prosa e a tab:res_scale, que a `verificar_escalabilidade`
+# não cobre. O que se acrescenta aqui são as afirmações ORDINAIS — a tese não diz
+# só «Gargalo 58%», diz que é «a retenção mais baixa dos cenários com paredes».
+# Um valor pode estar certo e a ordenação falsa, e é a ordenação que sustenta o
+# argumento: a estrutura física atenua a diluição em vez de a agravar.
 #
 # (As afirmações sobre o simulador — o $\mathbb{R}^{111}$ e a passagem de
 # 2,5 m — começaram aqui e mudaram-se para a `verificar_simulador`: aparecem
@@ -501,26 +495,16 @@ def verificar_escalabilidade_prosa(tolerancia):
     return problemas
 
 
-# ── o mundo que a tese descreve  vs  o mundo que o simulador constrói ───────
+# O mundo que a tese descreve vs o que o simulador constrói. O Capítulo 4 dá os
+# cenários em metros — «passagem de 2,5 m», «parede superior de 14 m», «porta de
+# 3 m», «800 passos» — e nenhum desses números está num CSV: saem da geometria
+# de `swarm_env_3d.py` e do `configs/foraging.yaml`. As aberturas já foram
+# alargadas de 1,5 m para 2,5 m e a altura das paredes já mudou; uma descrição
+# escrita antes de uma dessas mudanças sobrevive calada.
 #
-# O Capítulo 4 descreve os cenários em metros: «passagem de 2,5 m», «parede
-# superior de 14 m», «aberturas de 7 m», «porta de 3 m», «800 passos». Nenhum
-# destes números está num CSV — saem da geometria construída em
-# `swarm_env_3d.py` e do `configs/foraging.yaml`. Até agora, **nenhum
-# verificador olhava para eles**: a tese podia descrever um mundo e o
-# simulador construir outro, e tudo continuava a «bater ✓».
-#
-# Não é hipotético neste projeto: as aberturas foram alargadas de 1,5 m para
-# 2,5 m a 22 jun, e a altura das paredes mudou a 29 jul (os robôs voavam por
-# cima). Uma descrição escrita antes de uma dessas mudanças sobrevive calada.
-#
-# Por isso aqui não se lê o código como texto — **instancia-se o ambiente e
-# mede-se**. Se alguém mudar a geometria, isto parte, que é o objetivo.
-#
-# ⚠️ A chave do cenário no config é `classic_scenario`. Um `scenario` escrito
-# por engano é ignorado em silêncio e devolve o cenário por omissão (u_wall) —
-# foi o que aconteceu a escrever isto, e as paredes lidas eram do cenário
-# errado.
+# Não se lê o código como texto: instancia-se o ambiente e mede-se. A chave do
+# cenário no config é `classic_scenario` — um `scenario` escrito por engano é
+# ignorado em silêncio e devolve o cenário por omissão.
 
 def _env(cen, n=20):
     import yaml
@@ -605,7 +589,7 @@ def _factos_do_simulador():
 # encontrar seja o que for, é problema — a frase pode ter sido reescrita e
 # ficado sem quem a confira.
 #
-# ⚠️ Os padrões são ANCORADOS no cenário (`\item \textbf{Nome:}`) porque as
+# Os padrões são ANCORADOS no cenário (`\item \textbf{Nome:}`) porque as
 # descrições partilham a forma da frase: «aberturas de $X$\,m» aparece no Muro
 # em U (7 m) e no Quatro Salas (2,5 m), e «passagem de $X$\,m de largura» no
 # Gargalo (2,5 m) e na Porta Cooperativa (3 m). Sem âncora, a primeira versão
@@ -728,18 +712,11 @@ def verificar_simulador():
     return problemas
 
 
-# ── tab:hyperparameters: «Valor Real» tem de ser o valor real ───────────────
-#
-# A tabela chama-se «Hiperparâmetros reais utilizados» e é a primeira coisa que
-# alguém consulta para reproduzir o trabalho. Nenhum dos seus 27 valores era
-# verificado: se o `configs/foraging.yaml` mudar — e mudou, várias vezes: a
-# recompensa de comida, o alcance do LiDAR, o required_to_eat — a tabela
-# continua a afirmar o valor antigo sem que nada acuse.
-#
-# Cada linha declara o caminho no config (ou o valor medido) e os números que a
-# célula deve conter, por ordem. A célula é livre em prosa («$3$ ag. ($1$ nos
-# labirintos)», «$64$ (por CPU)»), por isso extraem-se dela todos os números e
-# comparam-se com a lista esperada.
+# tab:hyperparameters contra o `configs/foraging.yaml`: é a tabela que alguém
+# consulta para reproduzir o trabalho, e o config já mudou várias vezes (a
+# recompensa de comida, o alcance do LiDAR, o required_to_eat). Cada linha
+# declara o caminho no config e os números que a célula deve conter, por ordem;
+# como a célula é prosa livre, extraem-se dela todos os números.
 
 def _numeros_da_celula(celula):
     """Todos os números de uma célula da tabela, por ordem de aparição.
@@ -995,21 +972,13 @@ def _pesos_do_gnn():
     return _PESOS[0]
 
 
-# ── §Discussão Global: as afirmações DERIVADAS ──────────────────────────────
-#
-# Esta secção quase não tem números próprios — tem **conclusões tiradas de
-# números que estão noutro lado**: «superior a ambos em três cenários», «nenhuma
-# comparação atinge significância no Muro U», «convergem as 28 execuções»,
-# «retém 58--90% nos cenários com paredes», «≈8× menos núcleos-hora».
-#
-# É a parte da tese que o júri lê primeiro e a que nenhum verificador podia
-# apanhar: as tabelas de onde estas frases saem já eram conferidas uma a uma,
-# mas **a contagem, o intervalo e a razão que a prosa tira delas, não**. Uma
-# célula que mude de significativa para não significativa não parte tabela
-# nenhuma — parte a frase que diz «em três cenários», e isso ninguém via.
-#
-# Por isso aqui recalculam-se as conclusões a partir dos mesmos CSV e
-# compara-se com o que a prosa afirma: contagens, mínimos, máximos e razões.
+# §Discussão Global: as afirmações DERIVADAS. A secção quase não tem números
+# próprios — tem conclusões tiradas de números que estão noutro lado: «superior
+# a ambos em três cenários», «retém 58--90% nos cenários com paredes», «≈8×
+# menos núcleos-hora». As tabelas de origem já eram conferidas uma a uma, mas a
+# contagem, o intervalo e a razão que a prosa tira delas não: uma célula que
+# passe de significativa a não significativa não parte tabela nenhuma, parte a
+# frase. Recalculam-se as conclusões dos mesmos CSV e comparam-se com a prosa.
 
 def _convergencia_por_run(csv=None):
     """{(cenário, algo): nº de runs com 100% de sucesso em todos os episódios}"""
@@ -1941,20 +1910,12 @@ def verificar_megatreino(tolerancia):
         problemas.append("falta o CSV do peso fixo (%s) que a tese cita em M3"
                          % os.path.relpath(FIXO_BYPASS, PROJECT_ROOT))
 
-    # --- Os TESTES de M1, M2 e M3: os p e os δ ------------------------------
-    #
-    # Até 18 ago este verificador conferia as médias, os desvios e as contagens
-    # do mega-treino — e nenhum dos p nem dos δ que a tese escreve logo a
-    # seguir a elas. É a metade que decide: o «$28/28$ contra $15/28$» só
-    # responde à QI6 porque vem acompanhado de um Fisher exato, e o valor desse
-    # teste não tinha ninguém a olhar. Uma média pode continuar a bater com o
-    # CSV enquanto o p ao lado dela ficou de uma versão anterior dos dados.
-    #
-    # Os testes **não** são reimplementados aqui: importa-se o `compara` do
-    # `analise_megatreino`, que é o script que produziu estes valores — incluindo
-    # a escolha entre método exato e assintótico, que a $n=28+28$ não é a mesma
-    # que a $n=7+7$. Ter uma segunda régua para a mesma grandeza é o defeito
-    # que o eixo 2.4 do plano de qualidade já apanhou seis vezes.
+    # Os testes de M1, M2 e M3: os p e os δ, que são a metade que decide — o
+    # «28/28 contra 15/28» só responde à QI6 acompanhado do Fisher exato, e uma
+    # média pode continuar a bater com o CSV enquanto o p ao lado dela ficou de
+    # uma versão anterior dos dados. Os testes não são reimplementados aqui:
+    # importa-se o `compara` do `analise_megatreino`, que os produziu, incluindo
+    # a escolha entre método exato e assintótico.
     def teste(a, b, alternativa="two-sided"):
         if a is None or b is None:
             return None, None
@@ -2069,8 +2030,8 @@ def verificar_megatreino(tolerancia):
     # O Resumo e o Abstract repetem as contagens dos quatro braços: são os
     # primeiros números que o leitor (e o júri) vê, e vivem a cem páginas do
     # capítulo que os produz. Verificam-se os DOIS idiomas porque a versão
-    # anterior só cobria o Resumo — e a 14 de agosto encontrou-se o Abstract
-    # sem sequer a frase, que o Resumo tinha desde 3 de agosto. Uma tradução
+    # anterior só cobria o Resumo — e encontrou-se o Abstract
+    # sem sequer a frase, que o Resumo tinha. Uma tradução
     # que fica para trás não é um erro de número, e por isso nada a apanhava.
     med_p, dp_p, conv_p, n_p = dados["mega_A_fase3"]
     med_s, dp_s, conv_s, n_s = dados["mega_A_fase4"]
@@ -2236,21 +2197,12 @@ def verificar_megatreino(tolerancia):
     return problemas
 
 
-# ── Novelty Search (QI6) ─────────────────────────────────────────────────────
-#
-# A secção do Novelty é a que carrega a QI6 — o resultado central da tese — e a
-# medição de cobertura de 14 ago encontrou lá **164 valores que nenhum
-# verificador olhava**, o maior buraco da dissertação. Não tem tabela: os
-# números vivem em prosa, e por isso não há `ler_tabela()` que os apanhe.
-#
-# Diferença face às outras verificações deste ficheiro: os p e os δ **são
-# recalculados** aqui. Nas tabelas comparo a tese com o CSV que o
-# `statistical_tests.py` produziu, e digo que não repito os testes — porque
-# repetir seria ter duas implementações a poder discordar. Para o Novelty não
-# existe esse CSV: os testes correram nos scripts de análise e o resultado só
-# ficou na prosa. Recalcular é, portanto, a única verificação possível — e o
+# Novelty Search (QI6), o resultado central da tese. A secção não tem tabela —
+# os números vivem em prosa — e é aqui que os p e os δ são RECALCULADOS, ao
+# contrário do resto do ficheiro: para o Novelty não existe CSV de testes, os
+# resultados ficaram só na prosa, e recalcular é a única verificação possível. O
 # `cliffs_delta` vem importado do `statistical_tests`, para não haver uma
-# segunda implementação dele por aqui.
+# segunda implementação dele.
 
 RAIZ_NOV = os.path.join(PROJECT_ROOT, "results")
 FONTES_NOV = {
@@ -2400,7 +2352,7 @@ AFIRMACOES_NOV = [
         "B": ("objetivo", "cooperative_perception"),
         "unilateral": False, "delta_negativo": True,
     },
-    # ── 17 ago: as três que faltavam ────────────────────────────────────────
+    # As três que faltavam
     # A medição de cobertura ainda dava 78 tokens por verificar nesta secção —
     # o maior grupo da dissertação. Estes são os que têm CSV por trás: o
     # Sandbox de T1 (o único cenário onde o adaptativo SOBE, e por isso o mais
@@ -2416,7 +2368,7 @@ AFIRMACOES_NOV = [
         "unilateral": False, "conv_a_100": True,
     },
     {
-        # 18 ago: o `5/7` da Perceção Cooperativa que a célula exploratória do
+        # O `5/7` da Perceção Cooperativa que a célula exploratória do
         # mega-treino foi responder. É um número da campanha de 19 de julho
         # citado a meio de uma frase sobre outra campanha — o tipo de valor que
         # ninguém regenera e que sobrevive a qualquer recálculo.
@@ -2621,20 +2573,12 @@ def verificar_novelty(tolerancia):
     return problemas
 
 
-# ── coerência interna: o mesmo facto, contado duas vezes ─────────────────────
-#
-# A «Resposta às Questões de Investigação» quase não tem números próprios: é o
-# Capítulo 5 recontado. A medição de cobertura acusa lá 61 valores por
-# verificar, mas confrontá-los outra vez com os CSV seria fazer duas vezes o
-# mesmo trabalho — e deixaria passar o defeito que esta secção pode mesmo ter:
-# **alguém corrige um resultado no Capítulo 5 e esquece o eco no Capítulo 6.**
-# A tese fica então a afirmar duas coisas diferentes sobre o mesmo facto, e
-# nenhum verificador que olhe para uma fonte de cada vez dá por isso. Já
-# aconteceu no artigo (a533be4: a limitação dizia que faltava a bateria maior,
-# duas secções depois de a reportar).
-#
-# Por isso aqui não se compara com dados: procura-se cada facto em TODA a tese e
-# exige-se que as ocorrências concordem entre si.
+# Coerência interna: o mesmo facto, contado duas vezes. A «Resposta às Questões
+# de Investigação» é o Capítulo 5 recontado, e confrontá-la outra vez com os CSV
+# deixaria passar o defeito que ela pode mesmo ter — um resultado corrigido num
+# capítulo e esquecido no eco do outro, com a tese a afirmar duas coisas
+# diferentes sobre o mesmo facto. Aqui não se compara com dados: procura-se cada
+# facto em toda a tese e exige-se que as ocorrências concordem entre si.
 
 # Cada facto declara os SÍTIOS onde é dito, um padrão por sítio. A primeira
 # versão usava um padrão só, à solta sobre a tese toda, e acusou duas
@@ -2689,7 +2633,7 @@ FACTOS_REPETIDOS = [
          {"re": r"\$(\d+)/28\$ execuções resolvidas contra \$(\d+)/28\$ do "
                 r"objetivo puro"},
      ]},
-    # ── Os ecos do parágrafo de abertura das Conclusões (18 ago) ────────────
+    # ── Os ecos do parágrafo de abertura das Conclusões ────────────
     # É o parágrafo mais lido da dissertação depois do Resumo, e reconta oito
     # resultados de uma vez. Tinha 17 valores sem verificador nenhum.
     {"rot": "Núcleos-hora — a razão dita em três sítios",
@@ -2715,7 +2659,7 @@ FACTOS_REPETIDOS = [
          {"re": r"manteve os 7/7 no Muro (?:em )?U \(\$p=([\d{},]+)\$ face ao objetivo\)"},
      ]},
     {"rot": "Mega-treino — o 14/28 dos gradientes nas Conclusões",
-     # ⚠️ cruza-se com a célula do PPO; a frase das Conclusões diz «de cada
+     # cruza-se com a célula do PPO; a frase das Conclusões diz «de cada
      # método de gradiente», e o SAC ter a mesma contagem é conferido contra o
      # CSV pelo `verificar_megatreino` — aqui só se garante que o número
      # recontado não ficou para trás.
@@ -2727,15 +2671,15 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"O resultado é inequívoco.{0,120}?100\\% de sucesso nas (\d+) "
                 r"combina[çc][õo]es"},
-         # `\.?` — o rótulo perdeu o ponto final a 18 ago (a classe `amsbook`
+         # `\.?` — o rótulo pode não ter ponto final (a classe `amsbook`
          # já lhe acrescenta dois pontos, e saía «Escalabilidade.:»).
          {"re": r"QI2 --- Escalabilidade\.?\].{0,260}?100\\% de sucesso nas "
                 r"(\d+) combina[çc][õo]es"},
-         # e uma terceira vez na Discussão do mapa composto (18 ago), onde o
+         # e uma terceira vez na Discussão do mapa composto, onde o
          # número serve para dizer o que o resultado negativo NÃO derruba
          {"re": r"\$100\\%\$ de sucesso nas \$(\d+)\$\s*\n?\s*combinações cenário"},
      ]},
-    # ── Os ecos do Capítulo 6 (17 ago) ──────────────────────────────────────
+    # ── Os ecos do Capítulo 6 ──────────────────────────────────────
     # A «Resposta às Questões de Investigação» e as «Conclusões» são o Capítulo 5
     # recontado, e a medição de cobertura acusava-lhes 51 valores por verificar.
     # O risco aqui não é o número estar errado à nascença: é ficar para trás
@@ -2745,7 +2689,7 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"GNN, mas só em (\d+) das \$(\d+)\$\s*\n?\s*execuções"},
          {"re": r"resolve o mapa em (\d+) das \$(\d+)\$\s*\n?\s*execuções"},
-         # o item dos Contributos (18 ago) diz o mesmo pela terceira vez
+         # o item dos Contributos diz o mesmo pela terceira vez
          {"re": r"resolve o mapa, em \$(\d+)\$ de \$(\d+)\$ execuções"},
      ]},
     {"rot": "QI2 — retenção per capita em N=100 (paredes e abertos)",
@@ -2760,7 +2704,7 @@ FACTOS_REPETIDOS = [
      ]},
     # A mesma janela dita uma quarta vez, nos Contributos — e escrita de outra
     # maneira («entre 58% e 90%», em vez de «58--90%»), que é precisamente como
-    # um número se desalinha sem ninguém dar por isso. Aqui compara-se só a
+    # um número se desalinha sem dar sinal. Aqui compara-se só a
     # janela: o parágrafo dos Contributos não repete os cenários abertos, e um
     # facto com mais valores de um lado do que do outro acusaria uma
     # divergência que não existe.
@@ -2792,7 +2736,7 @@ FACTOS_REPETIDOS = [
          {"re": r"falhas de 10\\% dos agentes.{0,90}?retenção de "
                 r"(\d+)--(\d+)\\%"},
      ]},
-    # ── Os ecos dos TESTES da QI6 (18 ago) ──────────────────────────────────
+    # ── Os ecos dos TESTES da QI6 ──────────────────────────────────
     # A resposta à QI6 é o parágrafo mais denso do Capítulo 6: reconta oito
     # comparações do Capítulo 5, cada uma com o seu p e o seu δ. Os factos
     # acima já cruzavam as médias; estes cruzam os testes, que são o que muda
@@ -2851,7 +2795,7 @@ FACTOS_REPETIDOS = [
          {"re": r"com significância \(\$([\d{},]+)\$ vs\.\\ \$([\d{},]+)\$; \$p="
                 r"([\d{},]+)\$, \$\\delta=\+([\d{},]+)\$\)"},
      ]},
-    # ── O mapa composto, recontado fora da sua secção (18 ago) ──────────────
+    # ── O mapa composto, recontado fora da sua secção ──────────────
     # A secção do mapa grande entra por `\input` e vive noutro ficheiro; os seus
     # resultados são recontados na Discussão Global (Cap. 6), na resposta à QI7
     # e nas Conclusões (Cap. 7). É o caso com mais risco de eco desatualizado da
@@ -2891,7 +2835,7 @@ FACTOS_REPETIDOS = [
          {"re": r"\(\$p = ([\d{},]+)\$ e \$\\delta = \+([\d{},]+)\$ entre o "
                 r"evolutivo"},
      ]},
-    # ── Os números da QI6 que são ditos três e quatro vezes (18 ago) ────────
+    # ── Os números da QI6 que são ditos três e quatro vezes ────────
     # A secção do Novelty conta a mesma história em camadas — comparação
     # preliminar, campanhas com orçamento igualado, campanha adaptativa,
     # mega-treino — e alguns números atravessam-nas todas. São os que ficam
@@ -3029,7 +2973,7 @@ def verificar_sandbox(tolerancia):
     m = re.search(r"quatro d[oa]s sete (?:\\textit\{runs?\}|execuç(?:ão|ões)) "
                   r"convergem para políticas "
                   # «dois … um» era o género de `run`; com «execuções» são
-                  # «duas … uma», e a frase foi corrigida a 20 de agosto. O
+                  # «duas … uma», e a frase foi corrigida. O
                   # padrão aceita as duas formas para não partir com a
                   # concordância — o que se confere são os números.
                   r"competitivas \(([\d,]+) a ([\d,]+) recolhas/ep\), (?:dois|duas) "
@@ -3272,7 +3216,7 @@ def verificar_computacional():
         n_ag = n_(g["n"])
         antes, depois = n_(g["antes"]), n_(g["depois"])
         passos_ep = n_(g["passos_ep"])
-        # ⚠️ o separador decimal PT-PT: «3,6\,s» é 3,6 segundos, não 36.
+        # o separador decimal PT-PT: «3,6\,s» é 3,6 segundos, não 36.
         s_antes = numero(g["s_antes"].replace(",", "."))
         s_depois = numero(g["s_depois"].replace(",", "."))
         confere("agente-passos/s antes da vetorização", n_(g["ag_antes"]),

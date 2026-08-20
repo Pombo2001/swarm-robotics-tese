@@ -75,7 +75,7 @@ BRASILEIRISMOS = [
 ]
 
 
-# «run» era masculino; «execução» é feminino — e a migração de 18 de agosto
+# «run» era masculino; «execução» é feminino — e a migração de terminologia
 # trocou a palavra sem acertar o que a rodeava. Ficaram frases como «GNN com
 # dois execuções degeneradas», «em todos as execuções» e «execuções resolvidas
 # e falhados»: oito, todas no Capítulo 6, nenhuma visível a um verificador de
@@ -96,7 +96,7 @@ PARTICIPIOS_MASC = (r"agrupados|falhados|resolvidos|degenerados|fechados|"
 CONCORDANCIA_ACEITE = ()
 
 # O que ESTE verificador não apanha, medido e não suposto: das oito frases
-# corrigidas a 20 de agosto, sete voltam a ser acusadas se alguém as desfizer;
+# corrigidas, sete voltam a ser acusadas se alguém as desfizer;
 # a oitava não. Era «quatro das sete execuções convergem …, dois degeneram por
 # completo» — o sujeito de «dois» está elidido, e apanhá-lo exigiria decidir a
 # que substantivo se refere. Uma regra que o tentasse acusaria «os dois métodos

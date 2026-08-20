@@ -197,7 +197,7 @@ def verificar_alcancabilidade(envs, verboso=False):
     # defeito é uma bolsa DENTRO do labirinto — sala fechada, comida ou ninho
     # atrás de parede sem abertura. Medem-se as duas coisas em separado; dizer
     # só a percentagem global levaria a tese a afirmar que metade do mapa está
-    # inacessível, quando o labirinto está 100% ligado (medido, 5 ago).
+    # inacessível, quando o labirinto está 100% ligado.
     sete = [p for c, p in pcts.items() if c != ALVO]
     if ALVO in pcts and sete and pcts[ALVO] < min(sete) - 1.0:
         eixo, alc, livre = mapas[ALVO]

@@ -115,7 +115,7 @@ def _status_card(icon: str, title: str, goto=None, view: str = ""):
 # as sessões arquivadas não guardam a duração do treino. Inclui o servidor ISCTE
 # e os treinos locais deste PC (rotina noturna + testes, mai–jun; estimativa).
 #
-# ⚠️ Esta lista tinha ficado em junho: dizia 433 h quando só o mega-treino são
+# Esta lista tinha ficado em junho: dizia 433 h quando só o mega-treino são
 # mais de 600. O cartaz é a primeira coisa que se vê, e subestimava o trabalho
 # por um fator de quatro. As horas de julho em diante vêm das datas de arranque e
 # fecho registadas nos logs das campanhas (`mega_{A,B}_master.log`) e no
@@ -136,7 +136,7 @@ _CAMPANHAS = [
     ("Mega-treino de 1 mês (stream A)", 317),
     ("Mega-treino de 1 mês (stream B)", 341),
     ("Mapa composto (F0 e F1)", 70),
-    # F2 do mapa composto, fechado a 16 ago: 21 execuções × 780 min no evolutivo e
+    # F2 do mapa composto, fechado: 21 execuções × 780 min no evolutivo e
     # 42 × 192 min nos dois gradientes. São os orçamentos PRÉ-REGISTADOS (emenda
     # 19), não o tempo de parede — que é maior, porque inclui filas e a avaliação
     # no fim. As 27 h que o braço errado consumiu antes de ser descartado

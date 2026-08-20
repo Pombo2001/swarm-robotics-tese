@@ -47,7 +47,7 @@ SAIDA = os.path.join(RAIZ, "docs", "COBERTURA_VERIFICADOR.md")
 VERIFICADORES = ["verificar_numeros_tese", "verificar_contagens_prosa",
                  "verificar_parte1", "verificar_mapa_grande",
                  "verificar_slr_corpo", "verificar_planalto",
-                 # 17 ago: o vocabulário do protocolo («7 execuções», «195
+                 # O vocabulário do protocolo («7 execuções», «195
                  # minutos», «20 episódios») espalhado pela prosa — era o maior
                  # grupo por cobrir desta medição, com 124 tokens.
                  "verificar_protocolo",

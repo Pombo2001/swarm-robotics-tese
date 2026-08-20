@@ -121,7 +121,6 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
                 ui.label("sem vídeo").classes("text-xs")
 
 
-# ──────────────────────────────────────────────────────────────────────────────
 def build():
     sessions = data.video_sessions()
     if not sessions:

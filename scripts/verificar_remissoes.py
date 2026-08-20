@@ -100,7 +100,7 @@ def main():
     # leitor nunca é levado — e aconteceu com a `tab:f2_mapa_grande`, que é a
     # do treino nativo no mapa composto (o 4/21 contra 0/21).
     #
-    # ⚠️ Os INTERVALOS contam: «Figuras~\ref{a}--\ref{b}» refere também tudo o
+    # Os INTERVALOS contam: «Figuras~\ref{a}--\ref{b}» refere também tudo o
     # que está entre as duas. Sem isto, a primeira versão desta verificação
     # acusou quatro figuras que o texto chama por intervalo.
     tese = "\n".join(sem_comentarios(open(f, encoding="utf-8").read())

@@ -133,7 +133,7 @@ def geometria(texto):
         i, j = env._to_cell(p)
         return float(campo[i, j])
 
-    # ⚠️ Os extremos são propriedades da CAIXA de spawn, não de uma amostra de
+    # Os extremos são propriedades da CAIXA de spawn, não de uma amostra de
     # 20 agentes (com a semente 7 o máximo amostrado é 137,2 m contra os 139 m
     # que a caixa permite). E também não se medem só nos cantos: o campo
     # geodésico não é monótono dentro da caixa — a saída da sala não está num
@@ -283,12 +283,12 @@ def f2(texto):
                  conv, len(por_run)))
     # Só compara com o texto se os buracos já tiverem sido preenchidos.
     #
-    # ⚠️ Lia o ficheiro CRU. Depois de a secção ser preenchida (17 ago), as
+    # Lia o ficheiro CRU. Depois de a secção ser preenchida, as
     # leituras alternativas que não foram escolhidas ficam em comentário — com
     # os seus `\PORPREENCHER` lá dentro, mais a `\providecommand` que define o
     # próprio comando. O verificador dizia «ainda tem \PORPREENCHER» sobre uma
     # secção inteiramente preenchida, e a linha que a compara com os dados
-    # nunca chegava a correr. É a mesma armadilha da vista Defesa a 14 ago:
+    # nunca chegava a correr. É a mesma armadilha da vista Defesa:
     # quem lê o `.tex` por regex tem de ignorar os comentários.
     # E procura-se a UTILIZAÇÃO (`\PORPREENCHER{...}`), não a palavra: a secção
     # define o próprio comando com `\providecommand{\PORPREENCHER}[1]{...}`, e

@@ -102,7 +102,7 @@ MUTACOES = [
     ("o Sandbox do GNN (5/7 -> 6/7)",
      "cenários abertos (Sandbox 5/7)", "cenários abertos (Sandbox 6/7)",
      "discussao"),
-    # ── Os ecos do Capítulo 6 (17 ago) ──────────────────────────────────────
+    # ── Os ecos do Capítulo 6 ──────────────────────────────────────
     # Estas três mutações não estragam um resultado: estragam o **eco** dele no
     # capítulo seguinte, que é o defeito que a coerência interna existe para
     # apanhar — corrigir o Capítulo 5 e esquecer o Capítulo 6.
@@ -127,8 +127,8 @@ MUTACOES = [
     ("T4: o p do Muro em U contra o peso fixo (0,80 -> 0,40)",
      "indistinguível no Muro em U ($p=0{,}80$)",
      "indistinguível no Muro em U ($p=0{,}40$)", "novelty"),
-    # ── Os TESTES do mega-treino (18 ago) ───────────────────────────────────
-    # As médias e as contagens do mega-treino já tinham rede desde 3 ago; os p
+    # ── Os TESTES do mega-treino ───────────────────────────────────
+    # As médias e as contagens do mega-treino já tinham rede; os p
     # e os δ escritos ao lado delas não tinham nenhuma. São eles que sustentam
     # a resposta à QI6 — o «$28/28$ contra $15/28$» só decide porque vem com um
     # Fisher exato — e mudar um p não muda média nenhuma: nada o apanhava.
@@ -183,7 +183,7 @@ MUTACOES = [
     ("B6: a média da campanha final (41,4 -> 44,4)",
      "com os $41{,}4 \\pm 36{,}8$ da campanha final",
      "com os $44{,}4 \\pm 36{,}8$ da campanha final", "mega"),
-    # ── Os ecos dos testes da QI6 no Capítulo 6 (18 ago) ────────────────────
+    # ── Os ecos dos testes da QI6 no Capítulo 6 ────────────────────
     # Cada uma destas mutações estraga **só o eco**, deixando o Capítulo 5
     # intacto: é o defeito que a coerência interna existe para apanhar, e
     # nenhum verificador que compare com os CSV o veria — o número do sítio
@@ -211,7 +211,7 @@ MUTACOES = [
     ("eco da QI6: o p de M3 (0,0016 -> 0,0026)",
      "($80{,}9$ vs.\\ $63{,}0$; $p=0{,}0016$, $\\delta=+0{,}77$)",
      "($80{,}9$ vs.\\ $63{,}0$; $p=0{,}0026$, $\\delta=+0{,}77$)", "coerencia"),
-    # ── Os ecos do mapa composto (18 ago) ───────────────────────────────────
+    # ── Os ecos do mapa composto ───────────────────────────────────
     # A secção do mapa entra por `\input` e vive noutro ficheiro: os números
     # dela são recontados na Discussão Global e nas Conclusões, e são os mais
     # novos da dissertação. Estas mutações estragam o eco, nunca a secção.
@@ -227,7 +227,7 @@ MUTACOES = [
     ("eco do mapa: o δ de M1 (0,19 -> 0,29)",
      "$\\delta = +0{,}19$ entre o evolutivo",
      "$\\delta = +0{,}29$ entre o evolutivo", "coerencia"),
-    # ── A ORDEM das questões (18 ago) ───────────────────────────────────────
+    # ── A ORDEM das questões ───────────────────────────────────────
     # A QI7 esteve quatro dias impressa ANTES da QI6 na lista do Capítulo 1:
     # todos os números certos, e a lista a ler-se 1, 2, 3, 4, 5, 7, 6. Estas
     # duas mutações reproduzem o defeito e o seu primo — uma questão
@@ -239,7 +239,7 @@ MUTACOES = [
     ("uma questão perguntada deixa de ter resposta",
      "\\item[QI3 --- Robustez a falhas]",
      "\\item[QI9 --- Robustez a falhas]", "questoes"),
-    # ── Os ecos do parágrafo de abertura das Conclusões (18 ago) ────────────
+    # ── Os ecos do parágrafo de abertura das Conclusões ────────────
     # O parágrafo reconta oito resultados de uma vez e é dos mais lidos da
     # dissertação. Cada mutação estraga só o eco, nunca o sítio de origem.
     ("eco das Conclusões: os núcleos-hora (8x -> 9x)",
@@ -265,7 +265,7 @@ MUTACOES = [
     ("eco das Conclusões: o 14/28 dos gradientes (14 -> 13)",
      "$14/28$ de cada método de gradiente",
      "$13/28$ de cada método de gradiente", "coerencia"),
-    # ── O Sandbox: a tabela e a FORMA da distribuição (18 ago) ──────────────
+    # ── O Sandbox: a tabela e a FORMA da distribuição ──────────────
     # A `tab:res_sandbox` é a única tabela de resultados com rótulos de
     # algoritmo em vez de cenário, e escapava ao leitor genérico de tabelas. A
     # frase da decomposição — quatro competitivas, duas a zero, uma intermédia
@@ -290,7 +290,7 @@ MUTACOES = [
     ("forma do Sandbox: a execução intermédia (15,8 -> 25,8)",
      "regime intermédio (15,8 recolhas/ep",
      "regime intermédio (25,8 recolhas/ep", "sandbox"),
-    # ── Os números da QI6 ditos três e quatro vezes (18 ago) ────────────────
+    # ── Os números da QI6 ditos três e quatro vezes ────────────────
     ("eco da QI6: o +26% desmascarado (26 -> 24)",
      "O ganho de $+26\\%$ da comparação preliminar",
      "O ganho de $+24\\%$ da comparação preliminar", "coerencia"),
@@ -306,7 +306,7 @@ MUTACOES = [
     ("o 5/7 da Perceção Cooperativa de 19 de julho (5 -> 6)",
      "se o $5/7$ observado a 19 de julho",
      "se o $6/7$ observado a 19 de julho", "novelty"),
-    # ── O desempenho computacional (18 ago) ─────────────────────────────────
+    # ── O desempenho computacional ─────────────────────────────────
     # Aqui não há CSV: o que se verifica é a aritmética entre os seis números
     # e a igualdade entre a prosa e a tabela. Cada mutação parte uma dessas
     # relações sem tocar nas outras — que é como um número corrigido a meio
@@ -326,7 +326,7 @@ MUTACOES = [
     ("computacional: a tabela deixa de bater com a prosa (420 -> 460)",
      "(1 arena) & $\\approx 420$ passos/s",
      "(1 arena) & $\\approx 460$ passos/s", "computacional"),
-    # ── O parágrafo que LÊ a tabela do P_task (18 ago) ──────────────────────
+    # ── O parágrafo que LÊ a tabela do P_task ──────────────────────
     # A tabela tinha verificador desde julho; a leitura dela, não — e é a
     # leitura que fica na cabeça de quem lê.
     ("P_task: os cenários do PPO a 100% (seis -> cinco)",

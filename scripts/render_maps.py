@@ -42,12 +42,12 @@ C_NEST  = "#10B981"
 C_OBST  = "#9CA3AF"
 C_RING  = "#6B7280"
 C_DOMIN = "#94A3B8"
-# ⚠️ `WALL_H` é a altura a que a parede é desenhada CHEIA, e mais nada. Dizia-se
+# `WALL_H` é a altura a que a parede é desenhada CHEIA, e mais nada. Dizia-se
 # aqui que "o mundo é planar" e que o z do ambiente era só para colisão — não é
 # verdade, e a figura da tese herdava a afirmação. Os agentes têm componente
 # vertical (`move_local[2]`) e o domínio é uma ESFERA de raio `arena_radius`:
 # medido em 400 passos de PPO, |z| médio 2,35 m no Sandbox e máximo 11,8 m. Foi
-# exatamente por o z ser livre que, a 29 jul, se descobriu que os agentes
+# exatamente por o z ser livre que,  se descobriu que os agentes
 # passavam POR CIMA de paredes de 30 m (ver `_altura_paredes`). Por isso a
 # parede sólida fica baixa (para a planta se ler) mas leva por cima o volume
 # real, translúcido, e a esfera do domínio aparece em arame.

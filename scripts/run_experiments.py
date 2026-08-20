@@ -8,9 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# ==============================================================================
 # CONFIGURAÇÕES BASE DO SCRIPT
-# ==============================================================================
 ALGORITHMS = {
     'GNN': 'src/training/evo_trainer_3d.py',
     'PPO': 'src/training/train_ppo_3d.py',
@@ -105,7 +103,7 @@ BEST_CSV   = os.path.join(STATS_DIR, 'all_best_scores.csv')
 # Sentinela de CONCLUSÃO para o watchdog (launch_7d.sh). O exit code do
 # processo não chega como sinal: bibliotecas nativas (ex. VTK headless nos
 # mapas 3D) podem abortar o processo DEPOIS de todo o trabalho útil feito,
-# e o watchdog relançava em loop uma campanha já completa (smoke de 2 jul).
+# e o watchdog relançava em loop uma campanha já completa.
 DONE_SENTINEL = os.path.join(BASE_DIR, 'results', 'logs', '_campanha_concluida.txt')
 
 

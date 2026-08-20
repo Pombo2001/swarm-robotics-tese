@@ -34,7 +34,7 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EPISODIOS = os.path.join(RAIZ, "results", "episodios_3d")
 # O nome é o MESMO com que a figura entra na dissertação. Gerar com um
 # nome e copiar com outro quebra a única ligação automática que existe
-# entre a figura do PDF e o que a produziu — foi assim que esta ficou,
+# entre a figura do PDF e o que a produziu — é assim que esta ficou,
 # por uma hora, a única das 46 sem fonte identificável no repositório.
 SAIDA = os.path.join(RAIZ, "results", "mapa_grande", "mapa_grande_rastos.png")
 

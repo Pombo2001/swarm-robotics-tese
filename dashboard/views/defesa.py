@@ -214,7 +214,7 @@ def _numeros():
         celulas_f1 += len(por_celula)
         zeros += int((por_celula == 0).sum())
     if celulas_f1:
-        # ⚠️ Dizia «o F2 ainda não correu». Correu — desde 3 ago, e a 6 ago já
+        # Dizia «o F2 ainda não correu» depois de ele ter corrido, e de já
         # tinha runs fechados. O estado do F2 lê-se do instantâneo, para esta
         # frase não voltar a envelhecer sozinha (scripts/estado_f2.sh).
         n[7] = ("%d/%d" % (zeros, celulas_f1),

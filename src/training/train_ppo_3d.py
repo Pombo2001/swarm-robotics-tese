@@ -1,4 +1,3 @@
-# =============================================================================
 # PPO — Proximal Policy Optimization  (Schulman et al., 2017)
 # Biblioteca: stable-baselines3
 #
@@ -22,7 +21,6 @@
 #   Estes sinais guiam o agente para o ninho sem exploração intrínseca.
 #
 # Rede: MLP [obs→256→256→actions] (net_arch configurável em foraging.yaml)
-# =============================================================================
 import os
 import sys
 import csv

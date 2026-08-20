@@ -25,7 +25,7 @@ from .. import data, theme
 
 CARD = theme.CARD + " p-4"
 _RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-# ⚠️ `f1_zeroshot/` é a corrida ANULADA a 29 jul (paredes de 30 m numa arena de
+# `f1_zeroshot/` é a corrida ANULADA a 29 jul (paredes de 30 m numa arena de
 # raio 60: os agentes voavam por cima do labirinto, env_hash 267a7b547aed). Esta
 # vista lia-a — mostrava 4,96 recolhas/ep como se fosse o resultado do mapa. O F1
 # que vale é a repetição de 31 jul, `f1_zeroshot_v2/` (env_hash e930abe4d992).
@@ -152,7 +152,7 @@ def _limiar_projetado():
             % (p["faltam"], p["restantes"], p["n_convergentes"],
                p["n_fechados"], p["total"]), "#ffb020")
         # …e quando ela passa a existir, esta frase deixa de ser verdade. A
-        # avaliação do GNN chegou a 17 ago; sem esta condição, o dashboard
+        # avaliação do GNN chegou entretanto; sem esta condição, o dashboard
         # continuava a mandar esperar por um ficheiro que já está no disco —
         # exatamente o género de frase escrita à mão que este painel existe
         # para não ter. O k final sai do `medir_f2()`, que é onde a regra vive.

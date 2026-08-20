@@ -74,7 +74,7 @@ GRAFICOS = os.path.join(RAIZ, "results", "graficos_tese")
 
 # ── NOMES CANÓNICOS ──────────────────────────────────────────────────────────
 # Fonte única. Quem quiser mudar um nome muda-o aqui E nas referências do
-# main.tex/artigo.tex — nunca só num dos lados (foi assim que a pasta de imagens
+# main.tex/artigo.tex — nunca só num dos lados (é assim que a pasta de imagens
 # da tese ficou com `boxplot_u_wall.png` de junho ao lado de
 # `boxplot_eval_u_wall.png` de julho, com um nome a um caractere do outro).
 NOMES = {
@@ -107,7 +107,7 @@ def _campanhas():
     # interessa é a que os põe lado a lado. A origem é a pasta-mãe e o
     # `carregar_eval` apanha os três `eval_by_run.csv` — de propósito.
     #
-    # ⚠️ É esta entrada que impede a repetição do defeito medido a 17 ago: as
+    # É esta entrada que impede a repetição do defeito medido: as
     # figuras desta campanha que vieram do servidor foram desenhadas a partir do
     # `eval_summary.csv`, que só tem o **modelo campeão**, e mostravam 7,6
     # recolhas/ep onde as 21 execuções dão 1,69. Aqui a fonte é sempre o

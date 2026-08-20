@@ -229,7 +229,7 @@ def main():
     # logam em passos diferentes — o SAC escreve 7-11 pontos por run — e o
     # sns.lineplot, que agrupa pelos x EXATOS, desenhava um run de cada vez
     # sempre que os x não coincidiam. Daí os dentes de serra das figuras de
-    # 16 jul, e daí a legenda prometer uma média que a linha não era.
+    # e daí a legenda prometer uma média que a linha não era.
     for scen in scen_present:
         d = curves[curves['Scenario'] == scen]
         algos_here = [a for a in ALGOS if a in set(d['Algorithm'])]
@@ -273,7 +273,7 @@ def main():
         print(f"[OK] comparacao_mapa_{scen}.png")
 
     # ── 2. "1 modelo, todos os mapas" ───────────────────────────────────────
-    # Os bins de 2% (correção de 21 jul) resolveram a mancha ilegível, mas não o
+    # Os bins de 2% resolveram a mancha ilegível, mas não o
     # problema de fundo: com 51 bins e um SAC que loga 9 pontos por execução,
     # cada bin continuava a receber um punhado de execuções — e a linha do SAC
     # saía serrilhada, a saltar entre execuções. Aqui usa-se a mesma agregação
