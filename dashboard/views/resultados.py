@@ -42,9 +42,31 @@ _PREFIXES = ["comparacao_mapa", "curva_aprendizagem", "comparacao_barras",
              "desempenho_global", "taxa_sucesso", "recolhas", "dotplot_eval",
              "boxplot_eval", "boxplot"]
 
+# Figuras cujo título não se deriva do nome do ficheiro. São as quatro do
+# mega-treino, e são as que sustentam a QI6 — a questão com o resultado mais
+# forte da dissertação. O derivador dava-lhes «Megatreino U Wall 4Bracos»,
+# «Megatreino Ablacao Anneal Bypass»: chaves do código (família nº9) e
+# português sem acentos, porque um nome de ficheiro é ASCII e um `.title()`
+# sobre ASCII nunca produz «ablação» nem «braços».
+#
+# O nome do cenário NÃO se escreve aqui — vem do `SCEN_LABEL`, que é o
+# vocabulário único. Só o resto da frase é que é escrito à mão.
+_TITULOS_A_MAO = {
+    "megatreino_u_wall_4bracos.png":
+        "Mega-treino · {u_wall} · os quatro braços (n=28)",
+    "megatreino_ablacao_anneal_u_wall.png":
+        "Mega-treino · {u_wall} · ablação do anilamento",
+    "megatreino_ablacao_anneal_bypass.png":
+        "Mega-treino · {cooperative_door_bypass} · ablação do anilamento",
+    "megatreino_bypass_adaptativo_vs_fixo.png":
+        "Mega-treino · {cooperative_door_bypass} · adaptativo vs. peso fixo",
+}
+
 
 def _pretty_title(f: str) -> str:
     """'heatmap_ocupacao_gnn_u_wall.png' -> 'GNN · Muro em U' (título legível)."""
+    if f in _TITULOS_A_MAO:
+        return _TITULOS_A_MAO[f].format(**SCEN_LABEL)
     name = f[:-4] if f.lower().endswith(".png") else f
     rest = name
     for p in sorted(_PREFIXES, key=len, reverse=True):
@@ -147,6 +169,16 @@ def build():
             if na_tese:
                 ui.label(f"Está na dissertação como images/{na_tese}") \
                     .classes("text-xs text-emerald-300")
+                # E com que nome. O título do cartão é derivado do nome do
+                # ficheiro e diz o mínimo («Muro em U»); a dissertação deu-lhe
+                # um nome na Lista de Figuras, e é esse que se cita a falar
+                # dela. Aqui não há o risco que havia no cartão: quem abriu o
+                # zoom está a ver a figura inteira, e uma legenda que fala de
+                # dois painéis descreve o que ele tem à frente.
+                titulo = data.titulo_na_tese(session, filename)
+                if titulo:
+                    ui.label(f"«{titulo}»").classes("text-xs italic") \
+                        .style("color:#a7f3d0")
             else:
                 # Dizer que NÃO está é tão útil como dizer que está: é o aviso
                 # de que carregar em «Enviar para a Tese» muda mesmo o PDF.

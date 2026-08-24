@@ -333,11 +333,91 @@ def vocabulario():
           % (len(LINHAS_TABELA), len(ficheiros)))
 
 
+def titulos_da_galeria():
+    """Os títulos que a Galeria GERA, e não os que estão escritos no código.
+
+    A verificação acima lê os literais de string dos ficheiros do dashboard. Os
+    títulos dos cartões da Galeria não são literais: são derivados do nome do
+    ficheiro pelo `_pretty_title`, e por isso passaram-lhe ao lado durante toda
+    a segunda passagem — que foi a passagem que inventou a família nº9.
+
+    O que escapou: as quatro figuras do mega-treino, que são as que sustentam a
+    QI6. Liam-se «Megatreino U Wall 4Bracos» e «Megatreino Ablacao Anneal
+    Bypass» — a chave do código à vista, e português sem acentos.
+
+    Aqui gera-se o título de cada PNG das campanhas visíveis e exige-se dele o
+    mesmo que dos literais: nada de chaves internas, nada de formas
+    abandonadas. Verifica-se ainda que o dicionário escrito à mão não apodrece
+    — uma entrada para uma figura que já não existe é uma correção que deixou
+    de se aplicar sem ninguém dar por isso.
+    """
+    global conferidos
+    from dashboard import config, data
+    from dashboard.views import resultados
+
+    # Os títulos à mão vão buscar o nome do cenário ao vocabulário único, com
+    # um `{...}`. Um placeholder que não seja chave de cenário rebenta no
+    # `.format` — e rebentava aqui dentro, com um traceback em vez de uma
+    # frase. Conferido primeiro, para a régua dizer o que está mal.
+    maus = []
+    for f, modelo in sorted(resultados._TITULOS_A_MAO.items()):
+        conferidos += 1
+        for chave in re.findall(r"\{(\w+)\}", modelo):
+            if chave not in config.SCENARIO_LABEL_SHORT:
+                maus.append("o título à mão de %s usa {%s}, que não é chave "
+                            "de cenário nenhuma" % (f, chave))
+    if maus:
+        # Só desta verificação: gerar os títulos a seguir rebentaria no
+        # `.format`, e um traceback diz menos do que a frase acima.
+        falhas.extend(maus)
+        return
+
+    a_mao = set(resultados._TITULOS_A_MAO)
+    chaves = sorted(config.SCENARIO_KEYS, key=len, reverse=True)
+    vistos, n = set(), 0
+    for s in data.campanhas_visiveis():
+        d = os.path.join(RAIZ, "results", "graficos_tese", s)
+        if not os.path.isdir(d):
+            continue
+        for f in sorted(os.listdir(d)):
+            if not f.lower().endswith(".png"):
+                continue
+            a_mao.discard(f)
+            titulo = resultados._pretty_title(f)
+            n += 1
+            if titulo in vistos:
+                continue
+            vistos.add(titulo)
+            conferidos += 1
+            for padrao, certo in FORMAS_ABANDONADAS:
+                if re.search(padrao, titulo):
+                    falhas.append("a Galeria titula %r (forma abandonada; "
+                                  "usar %r) — de %s" % (titulo, certo, f))
+            for chave in chaves:
+                # Sem `\b`: a chave chega ao título já passada pelo `.title()`
+                # e com os `_` virados espaço («u_wall» vira «U Wall»), e é
+                # nessa forma que tem de ser apanhada.
+                solta = re.escape(chave).replace("_", r"[ _]")
+                if re.search(solta, titulo, re.I):
+                    falhas.append(
+                        "a Galeria titula %r com a chave interna %r em vez de "
+                        "%r — de %s"
+                        % (titulo, chave,
+                           config.SCENARIO_LABEL_SHORT.get(chave, chave), f))
+                    break
+    if a_mao:
+        falhas.append("títulos escritos à mão para figuras que já não existem "
+                      "em campanha visível nenhuma: %s" % sorted(a_mao))
+    print("[i] galeria      %d títulos distintos gerados de %d figuras"
+          % (len(vistos), n))
+
+
 def main():
     tabela_cientifica()
     kpis()
     galeria()
     vocabulario()
+    titulos_da_galeria()
     print()
     print("=" * 78)
     if falhas:

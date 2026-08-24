@@ -830,6 +830,83 @@ def figura_na_tese(session: str, filename: str):
     return alvos.get(_md5(p))
 
 
+_TITULOS_TESE = {"chave": None, "valor": None}
+
+
+def titulos_das_figuras_da_tese():
+    """`{caminho relativo: título curto}` das figuras, lido do `main.tex`.
+
+    O título curto é o argumento opcional do `\\caption[...]{...}` — o que o
+    autor escreveu para a Lista de Figuras. É o nome que a figura já tem na
+    dissertação, e é melhor do que qualquer título que se possa derivar do nome
+    do ficheiro: tem acentos, diz o cenário pelo nome da tese e não pela chave
+    do código, e não envelhece em separado, porque é o mesmo texto.
+
+    Sem argumento opcional, serve a legenda inteira: o `\\caption{...}` de uma
+    figura sem título curto costuma ser uma frase só.
+    """
+    if not os.path.exists(_TESE_TEX):
+        return {}
+    chave = _mtime(_TESE_TEX)
+    if _TITULOS_TESE["chave"] == chave:
+        return _TITULOS_TESE["valor"]
+    try:
+        with open(_TESE_TEX, encoding="utf-8") as fh:
+            tex = fh.read()
+    except OSError:
+        return {}
+    tex = "\n".join(l for l in tex.split("\n") if not l.strip().startswith("%"))
+    out = {}
+    # Cada `\includegraphics{images/...}` herda o `\caption` do MESMO ambiente
+    # figure. Percorrem-se os ambientes, e não o ficheiro inteiro, porque uma
+    # figura com dois painéis tem dois `includegraphics` e uma só legenda — e
+    # procurar «o caption mais próximo» atribuía a um painel a legenda da
+    # figura seguinte sempre que a ordem no `.tex` não fosse a esperada.
+    for amb in re.findall(r"\\begin\{figure\*?\}(.*?)\\end\{figure\*?\}",
+                          tex, re.S):
+        m = re.search(r"\\caption(?:\[([^\]]*)\])?\{", amb)
+        if not m:
+            continue
+        titulo = m.group(1)
+        if titulo is None:
+            # Sem título curto: apanhar o corpo do `\caption{...}` equilibrando
+            # as chavetas, senão um `\textit{...}` lá dentro corta a legenda.
+            i, prof = m.end(), 1
+            while i < len(amb) and prof:
+                prof += (amb[i] == "{") - (amb[i] == "}")
+                i += 1
+            titulo = amb[m.end():i - 1]
+        titulo = _texto_simples(titulo)
+        if not titulo:
+            continue
+        for rel in re.findall(r"\{images/([^}]+)\}", amb):
+            out.setdefault(rel, titulo)
+    _TITULOS_TESE.update(chave=chave, valor=out)
+    return out
+
+
+def _texto_simples(s):
+    """O texto de um `\\caption` sem a marcação do LaTeX."""
+    s = re.sub(r"\\(textbf|textit|emph|texttt|mathbf)\{([^{}]*)\}", r"\2", s)
+    s = re.sub(r"\\(label|index|cite)\{[^}]*\}", "", s)
+    s = re.sub(r"\\ref\{[^}]*\}", "", s)
+    s = s.replace("\\%", "%").replace("{,}", ",").replace("\\,", " ")
+    s = re.sub(r"\$([^$]*)\$", r"\1", s)
+    s = s.replace("\\times", "×").replace("\\pm", "±")
+    s = s.replace("\\ ", " ")
+    s = re.sub(r"\\[a-zA-Z]+", "", s)
+    s = s.replace("{", "").replace("}", "")
+    s = s.replace("---", "—").replace("--", "–")
+    s = s.replace("``", "\u201c").replace("''", "\u201d")
+    return re.sub(r"\s+", " ", s).strip().rstrip(".")
+
+
+def titulo_na_tese(session: str, filename: str):
+    """O título que a dissertação dá a esta figura, se for uma delas."""
+    rel = figura_na_tese(session, filename)
+    return titulos_das_figuras_da_tese().get(rel) if rel else None
+
+
 _TAMANHOS = {"chave": None, "valor": frozenset()}
 
 
