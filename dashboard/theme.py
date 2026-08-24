@@ -524,6 +524,22 @@ def num(valor, casas: int = 1, sinal: bool = False) -> str:
     return (fmt % v).replace(".", ",")
 
 
+def plural(n, singular: str, plural_: str = None) -> str:
+    """`1 vídeo`, `3 vídeos` — o número e o substantivo a concordar.
+
+    A vista Vídeos escrevia «sessão 16-08-2026_16h14m · 1 vídeos» sempre que a
+    campanha selecionada só tinha gravado um episódio, que é o caso de 2 das 30
+    campanhas exibidas. O plural em duro é barato de escrever e passa
+    despercebido a quem testa com os dados grandes — 21 execuções, 1680
+    episódios —, e só aparece na campanha pequena.
+
+    Sem o segundo argumento, o plural é o singular com «s»: chega para
+    «vídeo», «gráfico», «episódio», e não chega para «execução», que o tem de
+    declarar.
+    """
+    return "%d %s" % (n, singular if abs(n) == 1 else (plural_ or singular + "s"))
+
+
 def defesa_button():
     """Botão do Modo Defesa (usar no header). Devolve o ui.button."""
     b = ui.button(icon="present_to_all",

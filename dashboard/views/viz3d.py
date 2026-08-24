@@ -41,8 +41,22 @@ def _episodios():
                 m = json.load(fh).get("meta", {})
         except Exception:
             continue
-        rot = (f"{m.get('algo','?')} · {m.get('rotulo', m.get('cenario', f))} "
-               f"— {m.get('recolhas', 0)} recolhas")
+        # O nome do cenário vem do vocabulário do dashboard, pela CHAVE — e
+        # não do `rotulo` gravado dentro do JSON. O exportador escreveu esse
+        # rótulo com o `SCENARIO_LABELS` do `src/`, que é anterior à
+        # uniformização dos nomes, e o seletor oferecia «Beco Sem Saída (Muro
+        # U)», «Mapa Grande (Labirinto Composto)» e «Porta Cooperativa c/
+        # Alternativa»: três formas abandonadas, num seletor que se usa a
+        # projetar. Um ficheiro gravado em junho não se reescreve para mudar
+        # um nome; lê-se-lhe a chave e dá-se-lhe o nome de hoje.
+        #
+        # O `rotulo` só serve de recurso, para um cenário que o dashboard não
+        # conheça — aí é melhor um nome velho do que o nome do ficheiro.
+        cen = m.get("cenario")
+        nome = (config.SCENARIO_LABEL_SHORT.get(cen)
+                or m.get("rotulo") or cen or f)
+        rot = (f"{m.get('algo','?')} · {nome} "
+               f"— {theme.plural(m.get('recolhas', 0), 'recolha')}")
         out[rot] = f
     return out
 

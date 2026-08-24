@@ -200,7 +200,11 @@ def build():
             vids = data.list_videos(st["session"])
             algos = sorted({data.parse_video(v)[0] for v in vids} - {None})
             faltam = [a for a in data.VIDEO_ALGOS if a not in algos]
-            txt = f"sessão {st['session']} · {len(vids)} vídeos · algoritmos: " \
+            # `theme.plural` e não `{len(vids)} vídeos`: 14 das 30 campanhas
+            # exibidas gravaram UM episódio — a que abre por omissão é uma
+            # delas —, e a linha lia-se «· 1 vídeos ·».
+            txt = f"sessão {st['session']} · {theme.plural(len(vids), 'vídeo')}" \
+                  f" · algoritmos: " \
                   f"{', '.join(a.upper() for a in algos) or '—'}"
             if faltam:
                 txt += f"  (sem vídeo: {', '.join(a.upper() for a in faltam)} — " \

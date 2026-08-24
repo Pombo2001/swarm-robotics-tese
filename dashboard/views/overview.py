@@ -337,7 +337,8 @@ def build(queue: JobQueue, goto=None):
             with _status_card("history", "Última sessão", goto, "resultados"):
                 ui.label(sessions[0] if sessions else "—") \
                     .classes("text-sm mono-num").style(f"color:{theme.INK_SOFT}")
-                ui.label(f"{len(data.list_pngs(sessions[0]))} gráficos" if sessions else "") \
+                ui.label(theme.plural(len(data.list_pngs(sessions[0])),
+                                      "gráfico") if sessions else "") \
                     .classes("text-xs").style(f"color:{theme.INK_MUTED}")
 
             if not config.READONLY:

@@ -370,9 +370,12 @@ def build():
             n_heat = len([f for f in todos if f.startswith("heatmap")])
             n_vid = len(data.list_videos(sess_a.value))
             n_tese = len([f for f in todos if data.figura_na_tese(sess_a.value, f)])
-            theme.fonte(f"sessão {sess_a.value} · {len(todos)} gráficos "
-                        f"({n_heat} heatmaps · {n_tese} na dissertação) · "
-                        f"{n_vid} vídeos")
+            # `theme.plural` nas contagens: `n_vid` é 1 em 14 das 30 campanhas
+            # e `n_heat` em 3, e a linha lia-se «1 heatmaps · 1 vídeos».
+            theme.fonte(f"sessão {sess_a.value} · "
+                        f"{theme.plural(len(todos), 'gráfico')} "
+                        f"({theme.plural(n_heat, 'heatmap')} · {n_tese} na "
+                        f"dissertação) · {theme.plural(n_vid, 'vídeo')}")
 
             pngs = [f for f in todos
                     if tipo.value == "Todos" or data.graph_type(f) == tipo.value]

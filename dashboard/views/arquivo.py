@@ -33,7 +33,7 @@ def _rotulo(session: str) -> str:
     """Rótulo do seletor: data legível + natureza + nº de gráficos."""
     n = len(data.list_pngs(session))
     natureza = "avaliada" if data.session_is_evaluated(session) else "exploratória"
-    return f"{_data_legivel(session)} — {natureza} ({n} gráficos)"
+    return f"{_data_legivel(session)} — {natureza} ({theme.plural(n, 'gráfico')})"
 
 
 def _zoom(session: str, filename: str):
@@ -145,8 +145,8 @@ def _canonicas():
                 with ui.column().classes("gap-0 items-end shrink-0"):
                     ui.label("results/" + rel).classes("text-[11px] mono-num") \
                         .style(f"color:{theme.INK_MUTED}")
-                    ui.label(("%d CSV · %d gráficos" % (csv, png)) if existe
-                             else "não está neste disco") \
+                    ui.label(("%d CSV · %s" % (csv, theme.plural(png, "gráfico")))
+                             if existe else "não está neste disco") \
                         .classes("text-[11px] mono-num") \
                         .style(f"color:{theme.INK_MUTED}")
 
@@ -215,7 +215,8 @@ def build():
                     cor = "positive" if avaliada else "grey"
                     ui.badge("avaliada" if avaliada else "exploratória", color=cor) \
                         .props("rounded")
-                    ui.badge(f"{len(pngs)} gráficos", color="primary").props("rounded")
+                    ui.badge(theme.plural(len(pngs), "gráfico"),
+                             color="primary").props("rounded")
                     ui.space()
                     ui.label(session).classes("text-xs font-mono text-gray-600")
                 manifesto = data.session_manifesto(session)

@@ -412,12 +412,92 @@ def titulos_da_galeria():
           % (len(vistos), n))
 
 
+def rotulos_do_episodio_3d():
+    """Os rótulos do seletor do Episódio 3D, que vêm dos JSON gravados.
+
+    Mesmo mecanismo dos títulos da Galeria, outra fonte: o texto não está no
+    código do dashboard, está dentro dos ficheiros exportados. Estes foram
+    escritos com o `SCENARIO_LABELS` do `src/`, que é anterior à uniformização
+    dos nomes, e o seletor oferecia «Beco Sem Saída (Muro U)», «Mapa Grande
+    (Labirinto Composto)» e «Porta Cooperativa c/ Alternativa» — três formas
+    abandonadas, num seletor que se usa a projetar.
+
+    Um verificador que só lê o código nunca veria isto: o código estava certo,
+    era a origem dos dados que era velha.
+    """
+    global conferidos
+    from dashboard import config
+    from dashboard.views import viz3d
+
+    rotulos = viz3d._episodios()
+    if not rotulos:
+        print("[i] episódio 3D  sem episódios exportados nesta máquina")
+        return
+    chaves = sorted(config.SCENARIO_KEYS, key=len, reverse=True)
+    for rot in sorted(rotulos):
+        conferidos += 1
+        for padrao, certo in FORMAS_ABANDONADAS:
+            if re.search(padrao, rot):
+                falhas.append("o seletor do Episódio 3D oferece %r (forma "
+                              "abandonada; usar %r)" % (rot, certo))
+        for chave in chaves:
+            solta = re.escape(chave).replace("_", r"[ _]")
+            if re.search(solta, rot, re.I):
+                falhas.append("o seletor do Episódio 3D oferece %r com a chave "
+                              "interna %r" % (rot, chave))
+                break
+    print("[i] episódio 3D  %d rótulos do seletor" % len(rotulos))
+
+
+def concordancia_de_numero():
+    """Nenhuma frase do ecrã diz «1 vídeos».
+
+    O plural em duro é barato de escrever e passa despercebido a quem testa com
+    os dados grandes — 21 execuções, 1680 episódios. Só aparece na campanha
+    pequena: 14 das 30 campanhas exibidas gravaram UM episódio, e a vista
+    Vídeos lia-se «sessão ... · 1 vídeos ·» em quase metade dos casos, a
+    começar pela que abre por omissão.
+
+    Aqui não se lê código: geram-se as frases com as contagens que o disco tem,
+    e mais a contagem 1, que é a que parte. O `theme.plural` é o sítio único
+    onde a regra vive.
+    """
+    global conferidos
+    from dashboard import data, theme
+
+    # As contagens por campanha que aparecem em texto, e o substantivo que as
+    # acompanha. Se alguma valer 1 nesta máquina, a frase tem de concordar.
+    contagens = {
+        "vídeo": [len(data.list_videos(s)) for s in data.campanhas_visiveis()],
+        "gráfico": [len(data.list_pngs(s)) for s in data.campanhas_visiveis()],
+        "heatmap": [len([p for p in data.list_pngs(s) if "heatmap" in p])
+                    for s in data.campanhas_visiveis()],
+    }
+    for substantivo, valores in sorted(contagens.items()):
+        # O 1 entra sempre, mesmo que hoje nenhuma campanha o tenha: é
+        # precisamente o valor que ninguém testa.
+        for v in sorted(set(valores) | {0, 1}):
+            conferidos += 1
+            frase = theme.plural(v, substantivo)
+            esperado = "%d %s" % (v, substantivo if v == 1
+                                  else substantivo + "s")
+            if frase != esperado:
+                falhas.append("theme.plural(%d, %r) devolve %r, esperava %r"
+                              % (v, substantivo, frase, esperado))
+        um = sum(1 for v in valores if v == 1)
+        if um:
+            print("[i] plural       %d das %d campanhas têm 1 %s"
+                  % (um, len(valores), substantivo))
+
+
 def main():
     tabela_cientifica()
     kpis()
     galeria()
     vocabulario()
     titulos_da_galeria()
+    rotulos_do_episodio_3d()
+    concordancia_de_numero()
     print()
     print("=" * 78)
     if falhas:
