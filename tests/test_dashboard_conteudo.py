@@ -120,22 +120,6 @@ def test_os_numeros_do_dashboard_sao_os_da_tese():
           % mod.conferidos)
 
 
-TESTES = [
-    test_todas_as_vistas_constroem,
-    test_nenhuma_vista_mostra_estado_vazio_inesperado,
-    test_todas_as_imagens_referenciadas_existem,
-    test_funcoes_de_dados_respondem,
-    test_modo_leitura_do_pi,
-    test_mensagens_de_vazio_sao_encontradas_no_codigo,
-    test_os_numeros_do_dashboard_sao_os_da_tese,
-]
-
-
-if __name__ == "__main__":
-    for t in TESTES:
-        t()
-    print("\n%d/%d testes de conteúdo do dashboard passaram ✅"
-          % (len(TESTES), len(TESTES)))
 
 
 def test_os_numeros_do_dashboard_levam_virgula():
@@ -310,3 +294,100 @@ def test_a_defesa_so_admite_a_qi4_sem_numero_em_destaque():
     assert not vazios, "número ou legenda em branco: %s" % vazios
     print("OK  %d das %d questões com número em destaque (isenta: QI4)"
           % (len(numeros), len(perguntas)))
+
+
+def test_a_defesa_diz_do_f2_o_que_o_instantaneo_diz(tmp_path):
+    """«Parado» e «concluído» não são a mesma frase, e nem tudo é ISO.
+
+    A legenda do número da QI7 — o ÚLTIMO ecrã da defesa — acaba com uma frase
+    sobre o estado do F2, lida do instantâneo em `results/estado_f2.json`. A
+    versão anterior distinguia dois estados, «a correr» e tudo o resto, e para
+    tudo o resto escrevia «F2 sem sessões vivas em 2026-08-17T08:37Z»:
+
+      · «sessões vivas» é jargão de tmux, e num ecrã de defesa lê-se como
+        avaria. O F2 fechou — 21 execuções do GNN e 21 de cada gradiente —, e
+        estar sem sessões vivas é ali o fim do trabalho, não a interrupção
+        dele. É o defeito nº3 da segunda passagem, que tinha sido corrigido na
+        vista do mapa composto e sobreviveu aqui, em texto;
+      · o carimbo ISO/UTC é a forma certa de gravar a hora e não é a de a
+        mostrar. É o defeito que o cartão Prontidão teve com o `%b` a escrever
+        «22 Aug» num painel em português.
+
+    Exercitam-se os três estados com instantâneos sintéticos, porque o real só
+    tem um deles — e é o estado que NÃO está no disco que volta a partir.
+    """
+    import json
+    import re
+    import sys
+    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if raiz not in sys.path:
+        sys.path.insert(0, raiz)
+    from dashboard.views import defesa
+
+    def frase(estado):
+        p = tmp_path / "estado.json"
+        p.write_text(json.dumps(estado), encoding="utf-8")
+        original = defesa.ESTADO_F2
+        try:
+            defesa.ESTADO_F2 = str(p)
+            return defesa._estado_f2_curto()
+        finally:
+            defesa.ESTADO_F2 = original
+
+    cheio = {"medido_utc": "2026-08-17T08:37Z", "tmux_vivos": [],
+             "grad": {"runs_previstos": 21, "ppo_runs_concluidos": 21,
+                      "sac_runs_concluidos": 21},
+             "gnn": {"fechados": 21, "fechados_com_recolha": 4}}
+    meio = json.loads(json.dumps(cheio))
+    meio["gnn"]["fechados"] = 9
+    correr = json.loads(json.dumps(cheio))
+    correr["tmux_vivos"] = ["f2gnn"]
+
+    concluido, parado, a_correr = frase(cheio), frase(meio), frase(correr)
+
+    assert "concluído" in concluido, (
+        "com tudo fechado, a QI7 tem de dizer que o F2 concluiu: %r" % concluido)
+    assert "parado" in parado and "por fechar" in parado, (
+        "com execuções por fechar, a QI7 tem de o dizer: %r" % parado)
+    assert "a correr" in a_correr, (
+        "com sessões vivas, a QI7 tem de dizer que corre: %r" % a_correr)
+    assert concluido != parado, (
+        "concluído e parado a meio dão a MESMA frase — foi este colapso dos "
+        "dois estados num só que pôs «sem sessões vivas» no ecrã de defesa")
+
+    for f in (concluido, parado, a_correr):
+        assert not re.search(r"\d{4}-\d{2}-\d{2}T", f), (
+            "carimbo ISO/UTC num ecrã em português: %r" % f)
+        assert "tmux" not in f and "sessões vivas" not in f, (
+            "jargão de operação no ecrã de defesa: %r" % f)
+        assert "17 ago" in f, (
+            "a data do instantâneo perdeu-se ou não está em português: %r" % f)
+    print("OK  os três estados do F2 dão três frases, em português: %r" % concluido)
+
+
+if __name__ == "__main__":
+    # Os testes descobrem-se por introspeção, e não de uma lista escrita à mão.
+    # A lista existiu, ficou a meio do ficheiro — antes de metade dos testes
+    # sequer estarem definidos — e nunca mais foi atualizada: `python
+    # tests/test_dashboard_conteudo.py`, que é o uso que o cabeçalho documenta,
+    # corria 7 de 12 e imprimia «7/7 passaram OK». Um verde falso num ficheiro
+    # cujo trabalho é apanhar verdes falsos.
+    #
+    # `globals()` preserva a ordem de definição, que é a ordem por que foram
+    # escritos. Os que pedem uma fixture do pytest (têm parâmetros) só correm
+    # sob o pytest, e são anunciados aqui para não passarem por esquecidos.
+    import inspect
+
+    testes, com_fixture = [], []
+    for nome, fn in list(globals().items()):
+        if not (nome.startswith("test_") and callable(fn)):
+            continue
+        (com_fixture if inspect.signature(fn).parameters else testes).append(fn)
+
+    for t in testes:
+        t()
+    if com_fixture:
+        print("\n(%d teste(s) só sob o pytest, por pedirem fixtures: %s)"
+              % (len(com_fixture), ", ".join(f.__name__ for f in com_fixture)))
+    print("\n%d/%d testes de conteúdo do dashboard passaram ✅"
+          % (len(testes), len(testes)))

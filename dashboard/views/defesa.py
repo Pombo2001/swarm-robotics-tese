@@ -22,6 +22,10 @@ import pandas as pd
 from nicegui import ui
 
 from .. import theme
+# Os meses vêm do `data`, e não de uma cópia local: já há três listas iguais no
+# projeto, e cinco vocabulários de cenário foi o que a segunda passagem gastou
+# uma manhã a juntar.
+from ..data import _MESES_PT
 
 CARD = theme.CARD + " p-6"
 _RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -32,21 +36,62 @@ DIR_EST = os.path.join(_RAIZ, "results", "estatisticas")
 ESTADO_F2 = os.path.join(_RAIZ, "results", "estado_f2.json")
 
 
+def _data_pt(iso):
+    """'2026-08-17T08:37Z' -> '17 ago'.
+
+    O instantâneo é escrito por um script de shell e traz a hora em ISO/UTC,
+    que é a forma certa de a gravar. Não é a forma de a mostrar: este texto
+    aparece no ecrã da QI7 — o último da defesa — e lia-se «em
+    2026-08-17T08:37Z» num painel em português. É o mesmo defeito que a segunda
+    passagem encontrou no cartão Prontidão, onde o `%b` escrevia «22 Aug».
+    """
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", str(iso or ""))
+    if not m:
+        return None
+    return "%d %s" % (int(m.group(3)), _MESES_PT[int(m.group(2)) - 1])
+
+
 def _estado_f2_curto():
     """Uma frase sobre o F2, do instantâneo datado — ou o reconhecimento de que
-    não há instantâneo. Nunca uma afirmação escrita à mão sobre o presente."""
+    não há instantâneo. Nunca uma afirmação escrita à mão sobre o presente.
+
+    São TRÊS estados, e não dois. A versão anterior só distinguia «a correr» de
+    tudo o resto, e escrevia para tudo o resto «F2 sem sessões vivas» — jargão
+    de tmux, que num ecrã de defesa se lê como avaria. O F2 fechou: as 21
+    execuções do GNN e as 21 de cada gradiente estão todas concluídas. Estar
+    sem sessões vivas é, aqui, o fim do trabalho, e não a sua interrupção.
+
+    É o defeito nº3 da segunda passagem — «o F2 laranja por estar parado,
+    quando parado ali quer dizer concluído» —, que tinha sido corrigido na
+    vista do mapa composto e sobreviveu aqui, em texto.
+    """
     try:
         with open(ESTADO_F2, encoding="utf-8") as fh:
             e = json.load(fh)
     except (OSError, ValueError):
         return "estado do F2 por medir (scripts/estado_f2.sh)"
     n, g = e.get("gnn", {}), e.get("grad", {})
-    if not e.get("tmux_vivos"):
-        return "F2 sem sessões vivas em %s" % e.get("medido_utc", "?")
-    return ("F2 a correr em %s: PPO %s/%s execuções, GNN %s de %s execuções fechadas com "
-            "recolha" % (e.get("medido_utc", "?"), g.get("ppo_runs_concluidos", "?"),
-                         g.get("runs_previstos", "?"),
-                         n.get("fechados_com_recolha", "?"), n.get("fechados", "?")))
+    quando = _data_pt(e.get("medido_utc"))
+    em = " em %s" % quando if quando else ""
+    if e.get("tmux_vivos"):
+        return ("F2 a correr%s: PPO %s/%s execuções, GNN %s de %s execuções "
+                "fechadas com recolha"
+                % (em, g.get("ppo_runs_concluidos", "?"),
+                   g.get("runs_previstos", "?"),
+                   n.get("fechados_com_recolha", "?"), n.get("fechados", "?")))
+
+    # Parado. Concluído ou interrompido? Quem responde é a contagem, não o
+    # tmux: se as execuções previstas fecharam todas, o F2 acabou.
+    previstas = g.get("runs_previstos")
+    fecharam = [n.get("fechados"), g.get("ppo_runs_concluidos"),
+                g.get("sac_runs_concluidos")]
+    if previstas and all(x == previstas for x in fecharam):
+        return ("F2 concluído%s: %d execuções por algoritmo"
+                % (em, previstas))
+    return ("F2 parado%s com execuções por fechar (GNN %s, PPO %s, SAC %s "
+            "de %s)" % (em, n.get("fechados", "?"),
+                        g.get("ppo_runs_concluidos", "?"),
+                        g.get("sac_runs_concluidos", "?"), previstas or "?"))
 # v2 = a repetição do F1 no mundo corrigido; a pasta sem sufixo está ANULADA.
 DIR_F1_V2 = os.path.join(_RAIZ, "results", "mapa_grande", "f1_zeroshot_v2")
 
