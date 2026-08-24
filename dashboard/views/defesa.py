@@ -50,6 +50,14 @@ def _estado_f2_curto():
 # v2 = a repetição do F1 no mundo corrigido; a pasta sem sufixo está ANULADA.
 DIR_F1_V2 = os.path.join(_RAIZ, "results", "mapa_grande", "f1_zeroshot_v2")
 
+# QI6 — o mega-treino de um mês, no Muro em U. As duas fases são os dois braços
+# que o `verificar_numeros_tese.py` compara para o M1 do pré-registo: a fase 1 é
+# a dosagem adaptativa, a fase 2 o objetivo puro.
+MEGA_QI6 = {b: os.path.join(_RAIZ, "results", "mega_1mes", f,
+                            "evaluation", "eval_by_run.csv")
+            for b, f in (("adaptativo", "mega_A_fase1"),
+                         ("objetivo", "mega_A_fase2"))}
+
 # Cenários com gargalo — os quatro que a fitness de homing desbloqueou (QI5).
 GARGALOS = ("bottleneck", "four_rooms", "cooperative_door",
             "cooperative_door_bypass")
@@ -117,9 +125,24 @@ def _questoes():
                          bloco, re.S):
         linha = bloco.rfind("\n", 0, m.start()) + 1
         declarada = not bloco[linha:m.start()].lstrip().startswith("%")
-        # Numa pergunta comentada, o `%` que abre cada linha é decoração do
-        # ficheiro, não texto da pergunta.
-        texto = "\n".join(re.sub(r"^\s*%", "", l) for l in m.group(2).split("\n"))
+        # O `%` quer dizer coisas opostas conforme o item esteja comentado ou
+        # não, e tratá-lo de uma só maneira custou o ecrã da QI6.
+        #
+        # · Numa pergunta COMENTADA, o `%` que abre cada linha é decoração do
+        #   ficheiro, não texto da pergunta: tira-se e o texto fica.
+        # · Numa pergunta DECLARADA, uma linha comentada dentro do corpo é uma
+        #   nota do autor sobre o ficheiro. Tirar-lhe o `%` promove-a a texto.
+        #   Foi o que aconteceu quando a QI7 foi descomentada a 17 de agosto e
+        #   a nota que explicava a mudança ficou entre a QI6 e a QI7: a QI6
+        #   passou a ler-se, no ecrã projetado, «...face à otimização puramente
+        #   objetiva? ── QI7: a PERGUNTA, não a resposta. (...) Reposta na
+        #   ordem a 18 de agosto.» Aqui a linha inteira sai.
+        linhas = m.group(2).split("\n")
+        if declarada:
+            linhas = [l for l in linhas if not l.lstrip().startswith("%")]
+        else:
+            linhas = [re.sub(r"^\s*%", "", l) for l in linhas]
+        texto = "\n".join(linhas)
         saida[int(m.group(1))] = (_limpar(texto), declarada)
     return saida
 
@@ -154,6 +177,13 @@ def _numeros():
     Só para as questões cuja fonte está no disco: a QI4 é síntese das outras e
     não tem dados próprios. A QI7 passou a ter número a 2 ago — o F1 (zero-shot)
     fechou; o que falta é o F2 (treino nativo), e o ecrã di-lo.
+
+    A QI6 esteve sem número até 24 ago, e o ecrã dizia dela «número não
+    disponível no disco» — o que era falso. O mega-treino de um mês está em
+    `results/mega_1mes/` desde 3 de agosto, é dele que a tese tira o `28/28`
+    contra `15/28`, e é o resultado mais forte da dissertação: a única condição
+    sem uma única execução falhada no cenário que resistia aos três algoritmos
+    base. Ficar sem número em destaque punha-o abaixo da QI3 num ecrã de defesa.
     """
     n = {}
     if os.path.exists(CSV_7D):
@@ -203,6 +233,28 @@ def _numeros():
     if ret:
         n[3] = ("%.0f–%.0f%%" % (min(ret), max(ret)),
                 "retenção com 10%% de falhas, nas %d combinações" % len(ret))
+
+    # QI6 — dosagem adaptativa da novidade no Muro em U, no mega-treino (n=28).
+    # Uma execução conta como resolvida quando faz 100% dos episódios, que é o
+    # critério do Fisher exato do M1 — o mesmo que o verificador da tese aplica.
+    conv = {}
+    for braco, fp in MEGA_QI6.items():
+        if not os.path.exists(fp):
+            continue
+        d = pd.read_csv(fp)
+        d = d[d["Scenario"] == "u_wall"] if "Scenario" in d.columns else d
+        if d.empty:
+            continue
+        por_run = d.groupby("Run" if "Run" in d.columns else d.columns[0]) \
+                   ["success"].mean()
+        conv[braco] = (int((por_run >= 1.0).sum()), len(por_run))
+    if "adaptativo" in conv:
+        ok, tot = conv["adaptativo"]
+        contra = (", contra %d/%d do objetivo puro" % conv["objetivo"]
+                  if "objetivo" in conv else "")
+        n[6] = ("%d/%d" % (ok, tot),
+                "execuções da dosagem adaptativa a 100%% no Muro em U%s"
+                % contra)
 
     # QI7 — zero-shot de topologia (F1). Lê a pasta v2: a `f1_zeroshot/` é a
     # corrida anulada de 27-28 jul (mundo com 45 m de céu por cima das paredes).

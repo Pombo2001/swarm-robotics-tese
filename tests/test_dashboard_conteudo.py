@@ -208,3 +208,105 @@ def test_a_defesa_mostra_a_resposta_inteira_a_cada_questao():
     assert not latex, "restos de LaTeX na resposta:\n" + "\n".join(latex)
     print("OK  %d respostas inteiras na vista Defesa (a mais curta tem %d caracteres)"
           % (len(respostas), min(len(r) for r in respostas.values())))
+
+
+def test_a_defesa_mostra_a_pergunta_e_so_a_pergunta():
+    """Cada ecrã da Defesa mostra uma PERGUNTA, e nada além dela.
+
+    O irmão do teste acima, e nasceu do defeito simétrico. A vista lê as
+    perguntas do `main.tex` e tirava o `%` do início de cada linha, porque a
+    QI7 viveu meses inteira em comentário e era assim que se lia. Quando a QI7
+    foi descomentada a 17 de agosto ficou lá a NOTA que explicava a mudança —
+    quatro linhas de comentário entre a QI6 e a QI7 —, e a mesma regra que
+    salvava a QI7 promoveu essa nota a texto: a QI6 passou a ler-se, no ecrã
+    projetado, «...face à otimização puramente objetiva? ── QI7: a PERGUNTA,
+    não a resposta. Esteve aqui em comentário desde 6 de agosto (...) Reposta
+    na ordem a 18 de agosto.»
+
+    O que se exige é o que distingue uma pergunta de uma pergunta com um
+    bilhete colado: acaba em ponto de interrogação. Nenhuma nota do autor
+    sobrevive a esta régua, porque nenhuma nota acaba a perguntar.
+    """
+    import sys
+    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if raiz not in sys.path:
+        sys.path.insert(0, raiz)
+    from dashboard.views import defesa
+
+    perguntas, respostas = defesa._questoes(), defesa._respostas()
+    assert perguntas, "nenhuma questão lida do main.tex"
+
+    # As perguntas e as respostas vivem em capítulos diferentes do `.tex` e são
+    # lidas por expressões regulares diferentes. Exigir que os dois conjuntos
+    # coincidam é a única verificação aqui que não depende de nenhum dos dois
+    # parsers estar certo — e é a que apanha uma pergunta que se PERDEU, que
+    # nenhuma régua sobre o texto das perguntas lidas pode apanhar. Sem o
+    # `re.S` no regex das perguntas, por exemplo, a QI6 e a QI7 (as duas
+    # escritas em várias linhas) desaparecem e a Defesa projeta dois ecrãs com
+    # resposta e sem pergunta.
+    assert set(perguntas) == set(respostas), (
+        "perguntas e respostas não coincidem — perguntas sem resposta: %s; "
+        "respostas sem pergunta: %s"
+        % (sorted(set(perguntas) - set(respostas)),
+           sorted(set(respostas) - set(perguntas))))
+    assert sorted(perguntas) == list(range(1, len(perguntas) + 1)), (
+        "as questões lidas não são QI1..QI%d: %s"
+        % (len(perguntas), sorted(perguntas)))
+
+    nao_perguntam, latex, curtas = [], [], []
+    for n, (p, _declarada) in sorted(perguntas.items()):
+        if not p.rstrip().endswith("?"):
+            nao_perguntam.append("QI%d acaba em «%s»" % (n, p[-60:]))
+        if "\\" in p or "{" in p or "}" in p:
+            latex.append("QI%d: %s" % (n, p[:60]))
+        if len(p) < 60:
+            curtas.append("QI%d (%d caracteres): %s" % (n, len(p), p))
+    assert not nao_perguntam, (
+        "perguntas que não acabam a perguntar (nota do autor colada?):\n"
+        + "\n".join(nao_perguntam))
+    assert not latex, "restos de LaTeX na pergunta:\n" + "\n".join(latex)
+    assert not curtas, "perguntas curtas de mais (cortadas?):\n" + "\n".join(curtas)
+    print("OK  %d perguntas inteiras na vista Defesa (a mais longa tem %d caracteres)"
+          % (len(perguntas), max(len(p) for p, _ in perguntas.values())))
+
+
+def test_a_defesa_so_admite_a_qi4_sem_numero_em_destaque():
+    """A QI4 é a única questão que pode aparecer sem número em destaque.
+
+    O ecrã tem dois textos para a ausência de número: «a QI4 sintetiza as
+    outras» (verdade, e por desenho) e «número não disponível no disco» (uma
+    avaria). Até 24 de agosto a QI6 caía no segundo, e era falso: o mega-treino
+    de um mês está em `results/mega_1mes/` desde 3 de agosto, é dele que a tese
+    tira o 28/28 contra 15/28, e é o resultado mais forte da dissertação — a
+    única condição sem uma única execução falhada no Muro em U.
+
+    Esta régua fixa a lista das isentas em {QI4}. Qualquer outra questão sem
+    número passa a ser um erro, seja porque um CSV desapareceu, seja porque um
+    parser partiu, seja porque a questão é nova e ninguém lhe deu fonte.
+    """
+    import sys
+    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if raiz not in sys.path:
+        sys.path.insert(0, raiz)
+    from dashboard.views import defesa
+
+    perguntas, numeros = defesa._questoes(), defesa._numeros()
+    assert perguntas, "nenhuma questão lida do main.tex"
+
+    ISENTAS = {4}
+    sem_numero = set(perguntas) - set(numeros) - ISENTAS
+    assert not sem_numero, (
+        "questões sem número em destaque, e nenhuma delas é a QI4: %s "
+        "— o ecrã vai dizer «número não disponível no disco»"
+        % sorted(sem_numero))
+    a_mais = ISENTAS & set(numeros)
+    assert not a_mais, (
+        "a QI%s passou a ter número: tirá-la da lista das isentas, senão o "
+        "ecrã continua a explicar uma ausência que já não existe"
+        % sorted(a_mais))
+
+    vazios = ["QI%d" % n for n, (v, leg) in numeros.items()
+              if not str(v).strip() or not str(leg).strip()]
+    assert not vazios, "número ou legenda em branco: %s" % vazios
+    print("OK  %d das %d questões com número em destaque (isenta: QI4)"
+          % (len(numeros), len(perguntas)))
