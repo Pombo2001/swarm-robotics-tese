@@ -178,13 +178,83 @@ Réguas que saíram desta passagem — a parte que não é preciso rever outra v
 As quatro entraram no `pre-commit`, no ramo que dispara quando `dashboard/` ou
 `configs/vitrine.yaml` mudam.
 
+### 24 ago 2026 — terceira passagem (o texto que o dashboard GERA)
+
+Seis defeitos, e o achado que os une: **cinco dos seis estão em texto gerado em
+tempo de execução**, não em texto escrito no código. A régua de vocabulário lê
+os literais dos 23 ficheiros de ecrã — é exaustiva sobre o que lá está escrito,
+e cega para o que sai de um `_pretty_title`, de um `.json` gravado em junho ou
+de um `%d` colado a um plural. Foi por isso que a segunda passagem, que
+inventou a família nº9, os deixou todos passar.
+
+- [x] **Defesa, QI6** — a pergunta arrastava uma nota do autor: «...face à
+      otimização puramente objetiva? ── QI7: a PERGUNTA, não a resposta. (...)
+      Reposta na ordem a 18 de agosto.» A vista tirava o `%` do início de cada
+      linha porque a QI7 viveu meses em comentário; descomentada a 17 de
+      agosto, sobrou a nota que explicava a mudança, e a mesma regra que
+      salvava a QI7 promoveu-a a texto. O `%` quer dizer coisas opostas
+      conforme o item esteja comentado ou não.
+- [x] **Defesa, QI6** — dizia «número não disponível no disco», e era falso: o
+      mega-treino está em `results/mega_1mes/` desde 3 de agosto e é dele que
+      sai o 28/28 contra 15/28. A questão com o resultado mais forte da
+      dissertação era a única com dados sem número em destaque.
+- [x] **Defesa, QI7** — o último ecrã acabava em «F2 sem sessões vivas em
+      2026-08-17T08:37Z». Jargão de tmux, que ali se lê como avaria quando o F2
+      concluiu, mais um carimbo ISO num painel em português. A frase
+      distinguia dois estados; passam a ser três, e quem os separa é a
+      contagem das execuções, não o tmux.
+- [x] **Galeria** — «Megatreino U Wall 4Bracos», «Megatreino Ablacao Anneal
+      Bypass». Família nº9, nas quatro figuras que sustentam a QI6. Um nome de
+      ficheiro é ASCII e nenhum `.title()` sobre ASCII produz «ablação».
+- [x] **Vídeos, Galeria, Arquivo, Overview** — «1 vídeos». **Família nova, a
+      nº10: concordância de número.** O plural em duro passa despercebido a
+      quem testa com os dados grandes — 21 execuções, 1680 episódios — e só
+      aparece na campanha pequena. Só que a campanha pequena é a norma: 14 das
+      30 campanhas exibidas gravaram um episódio, e a que abre por omissão é
+      uma delas.
+- [x] **Episódio 3D** — o seletor oferecia «Beco Sem Saída (Muro U)», «Mapa
+      Grande (Labirinto Composto)» e «Porta Cooperativa c/ Alternativa». Não
+      vinham do código: vinham do `rotulo` gravado em cada JSON pelo
+      exportador, que usou o `SCENARIO_LABELS` do `src/` — anterior à
+      uniformização. Um ficheiro gravado em junho não se reescreve para mudar
+      um nome; lê-se-lhe a chave e dá-se-lhe o nome de hoje.
+
+Réguas que saíram desta passagem:
+
+| régua | apanha | ensaiada |
+|---|---|---|
+| `verificar_dashboard.py` → `titulos_da_galeria` | os títulos GERADOS dos 675 PNG: chaves internas, formas abandonadas, e o dicionário à mão a apodrecer | 4/4 mutações |
+| `verificar_dashboard.py` → `rotulos_do_episodio_3d` | as mesmas duas coisas nos 24 rótulos do seletor | 1/1 |
+| `verificar_dashboard.py` → `concordancia_de_numero` | «1 vídeos», com as contagens do disco e mais o 1 | 1/1 |
+| `test_..._mostra_a_pergunta_e_so_a_pergunta` | uma pergunta que não acaba a perguntar, e perguntas **perdidas** (cruza os dois blocos do `.tex`) | 3/3 |
+| `test_..._so_admite_a_qi4_sem_numero` | qualquer outra questão sem número em destaque | 4/4 |
+| `test_..._diz_do_f2_o_que_o_instantaneo_diz` | os três estados do F2, o carimbo ISO e o jargão | 3/3 |
+
+51 → **165 valores** conferidos pelo `verificar_dashboard.py`.
+
+**Um verde falso, no próprio ficheiro de testes.** O modo `__main__` — o uso
+que o cabeçalho documenta — corria 7 dos 12 testes e imprimia «7/7 passaram
+✅». A lista era escrita à mão e vivia a meio do ficheiro, antes de metade dos
+testes existirem. Passa a descobri-los por introspeção.
+
+**Para a próxima passagem, uma regra:** uma vista revê-se **com o dashboard
+reiniciado**. O `__pycache__` serviu código de antes da correção durante três
+capturas de ecrã seguidas, e a primeira leitura foi que a correção não pegara.
+
 ### Próxima passagem — por fazer
 
-- [ ] **Episódio 3D** — ver um episódio de cada algoritmo até ao fim.
-- [ ] **Galeria e Vídeos** — abrir dez figuras ao acaso e confirmar que a
-      legenda descreve o que a imagem mostra.
-- [ ] **Ciência e Defesa** — as sete respostas às QI, lidas do princípio ao fim.
+- [ ] **Ciência** — o painel do mega-treino, lido do princípio ao fim (nesta
+      passagem só se leu a Defesa; a Ciência foi vista, não lida).
 - [ ] **Treinar / Servidor / Ao vivo** — só na torre; confirmar que não prometem
       o que não podem fazer sem VPN.
 - [ ] **A cópia do Pi** — a última publicação é de 6 ago; tudo isto só lá chega
       quando `atualizar_pi.sh` correr.
+- [ ] **`src/scenarios.py`** — a fonte única ainda tem as formas abandonadas
+      (`"u_wall": "Beco Sem Saída (Muro U)"`, `"Porta Coop. c/ Alternativa"`).
+      O dashboard está protegido porque o `config.py` as sobrepõe; quem gera
+      figuras importa do `src/` e não está. É decisão de nomenclatura do autor:
+      a tese usa «Beco Sem Saída (Muro em U)» de propósito na secção dos
+      cenários, e o dashboard abandonou-a — as duas escolhas podem estar certas,
+      mas convém que sejam uma escolha e não um resíduo.
+- [ ] **Ordem do seletor do Episódio 3D** — é alfabética pela chave do
+      ficheiro, não a canónica da tese.

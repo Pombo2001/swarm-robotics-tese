@@ -229,6 +229,15 @@ _TIMELINE = [
      "da robustez passa a três painéis empilhados. O 8.º cenário passa a "
      "chamar-se «mapa composto» também no código, nas figuras e neste "
      "dashboard."),
+    ("24 ago", "O que o ecrã escreve sozinho",
+     "Terceira passagem de revisão: seis defeitos, e cinco deles em texto "
+     "gerado em tempo de execução — que é onde as réguas não olhavam, por "
+     "lerem os literais do código. A QI6 projetava uma nota do autor e dizia "
+     "não ter número quando tem o mais forte da tese; o último ecrã dizia «F2 "
+     "sem sessões vivas» de uma campanha concluída; a Galeria titulava "
+     "«Megatreino U Wall 4Bracos»; o seletor do Episódio 3D oferecia três "
+     "nomes que a tese abandonou; e metade das campanhas tinha «1 vídeos». O "
+     "verificador do dashboard sobe de 51 para 165 valores."),
 ]
 
 
