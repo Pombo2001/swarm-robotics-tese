@@ -682,13 +682,16 @@ no ponto certo da escrita. O que falta é exatamente o que o prof. diz que deve 
 ## 4. Servidores ISCTE — TUTORIAL: aceder, navegar e extrair resultados
 
 **Pré-requisito: a VPN do ISCTE TEM de estar ligada** (senão o `ssh` dá timeout).
-Máquinas: `SERVIDOR_DE_TREINO` (hostname `dellicious`) e `SEGUNDA_MAQUINA`.
-User `goncalo`; password é a pessoal do Gonçalo — **não está escrita aqui de propósito** (repo git).
-Host key (ed25519) da `.14`: `SHA256:HOSTKEY_REMOVIDA`.
+As duas máquinas de treino, o utilizador e a *host key* estão em
+`dashboard/remote.py` — não se repetem aqui. Descrevem infraestrutura do ISCTE e
+não este trabalho, e este ficheiro faz parte de um repositório que a dissertação
+anuncia como aberto. Abaixo, `$SERVIDOR` é `<utilizador>@<máquina>` e
+`$HOSTKEY` a impressão digital dessa máquina.
+A password é a pessoal e **nunca esteve escrita aqui** (repo git).
 
 ### 4.1 Ligar (sessão interativa)
 ```powershell
-ssh goncalo@SERVIDOR_DE_TREINO          # escreve a password quando aparecer "password:"
+ssh $SERVIDOR          # escreve a password quando aparecer "password:"
 ```
 
 ### 4.2 Onde estão as coisas no servidor (mapa de pastas)
@@ -714,15 +717,15 @@ Tudo vive em `~/swarm-robotics-tese/` (Python 3.12, `.venv`). O que interessa pa
 
 A pasta de cada treino tem o timestamp de **quando terminou**. Para saber qual é o mais recente:
 ```powershell
-ssh goncalo@SERVIDOR_DE_TREINO "ls -lt ~/swarm-robotics-tese/results/graficos_tese/"
+ssh $SERVIDOR "ls -lt ~/swarm-robotics-tese/results/graficos_tese/"
 ```
 (ex.: `11-06-2026_21h15m` = treino de 48h; `09-06-2026_15h34m` = treino de 24h)
 
 ### 4.3 Verificar um treino que ainda está a correr
 ```powershell
-ssh goncalo@SERVIDOR_DE_TREINO "tmux ls"                                  # sessões ativas
-ssh goncalo@SERVIDOR_DE_TREINO "tmux capture-pane -pt treino48h -S -60"   # últimas linhas SEM anexar
-ssh goncalo@SERVIDOR_DE_TREINO "uptime"                                   # load ~24 = a treinar a fundo
+ssh $SERVIDOR "tmux ls"                                  # sessões ativas
+ssh $SERVIDOR "tmux capture-pane -pt treino48h -S -60"   # últimas linhas SEM anexar
+ssh $SERVIDOR "uptime"                                   # load ~24 = a treinar a fundo
 ```
 Anexar: `tmux attach -t treino48h`. Sair **sem matar**: `Ctrl+B` depois `D`. **Nunca `Ctrl+C`.**
 O treino de 48h foi lançado **sem `tee`** → não tem ficheiro de log, só o buffer do tmux.
@@ -731,18 +734,18 @@ O treino de 48h foi lançado **sem `tee`** → não tem ficheiro de log, só o b
 A forma robusta é **empacotar no servidor e trazer 1 ficheiro** (evita scp recursivo lento):
 ```powershell
 # 1) Empacotar no servidor (ajusta a pasta <DD-MM-...>; --ignore-failed-read tolera pastas em falta)
-ssh goncalo@SERVIDOR_DE_TREINO "cd ~/swarm-robotics-tese && tar czf /tmp/res.tar.gz --ignore-failed-read results/graficos_tese/<PASTA> results/evaluation results/logs results/logs_ppo results/logs_sac && ls -lh /tmp/res.tar.gz"
+ssh $SERVIDOR "cd ~/swarm-robotics-tese && tar czf /tmp/res.tar.gz --ignore-failed-read results/graficos_tese/<PASTA> results/evaluation results/logs results/logs_ppo results/logs_sac && ls -lh /tmp/res.tar.gz"
 
 # 2) Trazer para o PC (pasta out/ do projeto)
-scp goncalo@SERVIDOR_DE_TREINO:/tmp/res.tar.gz "$env:USERPROFILE\Desktop\Tese\CODE\swarm-robotics-tese\out\res.tar.gz"
+scp $SERVIDOR:/tmp/res.tar.gz "$env:USERPROFILE\Desktop\Tese\CODE\swarm-robotics-tese\out\res.tar.gz"
 
 # 3) Extrair localmente
 New-Item -ItemType Directory -Force "out\res" | Out-Null
 tar xzf "out\res.tar.gz" -C "out\res"
 
 # (Opcional) Trazer também os MODELOS, p/ re-avaliar localmente com eval_suite
-ssh goncalo@SERVIDOR_DE_TREINO "cd ~/swarm-robotics-tese && tar czf /tmp/models.tar.gz results/models results/models_ppo results/models_sac && ls -lh /tmp/models.tar.gz"
-scp goncalo@SERVIDOR_DE_TREINO:/tmp/models.tar.gz "$env:USERPROFILE\Desktop\Tese\CODE\swarm-robotics-tese\out\models.tar.gz"
+ssh $SERVIDOR "cd ~/swarm-robotics-tese && tar czf /tmp/models.tar.gz results/models results/models_ppo results/models_sac && ls -lh /tmp/models.tar.gz"
+scp $SERVIDOR:/tmp/models.tar.gz "$env:USERPROFILE\Desktop\Tese\CODE\swarm-robotics-tese\out\models.tar.gz"
 ```
 Cada `ssh`/`scp` pede a password (uma vez cada). Se errares, é `Permission denied` — repete.
 
@@ -750,11 +753,11 @@ Cada `ssh`/`scp` pede a password (uma vez cada). Se errares, é `Permission deni
 instalar chave persistente): usar o PuTTY já instalado, passando a password e a host key na linha
 de comando — `plink` para comandos remotos, `pscp` para copiar:
 ```bash
-plink -ssh -batch -hostkey SHA256:HOSTKEY_REMOVIDA -pw '<PASS>' goncalo@SERVIDOR_DE_TREINO "<comando remoto>"
-pscp  -batch -hostkey SHA256:HOSTKEY_REMOVIDA -pw '<PASS>' goncalo@SERVIDOR_DE_TREINO:/tmp/res.tar.gz "<destino local>"
+plink -ssh -batch -hostkey $HOSTKEY -pw '<PASS>' $SERVIDOR "<comando remoto>"
+pscp  -batch -hostkey $HOSTKEY -pw '<PASS>' $SERVIDOR:/tmp/res.tar.gz "<destino local>"
 ```
 (o `-hostkey` evita o prompt interativo do cache do PuTTY; a fingerprint obtém-se com
-`plink -ssh -batch -pw x goncalo@SERVIDOR_DE_TREINO true` na 1ª tentativa falhada).
+`plink -ssh -batch -pw x $SERVIDOR true` na 1ª tentativa falhada).
 
 Detalhes adicionais (histórico, comando exato do treino, scp do código): `memory/server_training_setup.md`.
 
