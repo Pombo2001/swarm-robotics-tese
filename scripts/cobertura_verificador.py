@@ -84,7 +84,15 @@ VERIFICADORES = ["verificar_numeros_tese", "verificar_contagens_prosa",
                  # citados à volta dessas afirmações, que é onde esta medição
                  # via zeros: as tabelas de escalabilidade e de robustez e o
                  # diagnóstico da QI7 não tinham um único token lido.
-                 "verificar_afirmacoes"]
+                 "verificar_afirmacoes",
+                 # Três que leem o `.tex` e faltavam a esta lista — e a falta
+                 # dava-lhes o crédito a zero: os limites das distâncias no mapa
+                 # composto (37--79 m) apareciam «por cobrir» quando o
+                 # `verificar_vertical` os compara desde 5 de agosto. Uma
+                 # medição de cobertura que não conhece metade dos instrumentos
+                 # manda trabalhar onde já está feito.
+                 "verificar_vertical", "verificar_spawn_gargalo",
+                 "verificar_configuracao"]
 
 
 # ── instrumentação do `re` ───────────────────────────────────────────────────
@@ -167,6 +175,22 @@ def _instrumentar_tabelas(mod, marcas):
     Uma medição que só vê metade dos instrumentos mede o instrumento, não a
     tese. Aqui marca-se a tabela toda, do `\\label` ao `\\end{tabular}`.
     """
+    # Uma terceira forma de ler uma tabela: o `linhas_da_tabela` do
+    # `verificar_configuracao`, que recorta do rótulo ao fim do `tabular` e
+    # confere linha a linha contra o YAML. Tem de ser embrulhada ANTES dos
+    # `return` abaixo — esse verificador não tem `ler_tabela` nenhuma, e a
+    # função saía antes de chegar aqui: os 45 valores das tabelas de
+    # configuração continuavam a contar como «ninguém olhou para eles».
+    linhas = getattr(mod, "linhas_da_tabela", None)
+    if linhas is not None:
+        def linhas_embrulhado(tex, label, *a, **k):
+            i = tex.find("\\label{%s}" % label)
+            if i >= 0:
+                fim = tex.find("\\end{tabular}", i)
+                marcas.append(tex[i:fim if fim > i else i + 4000])
+            return linhas(tex, label, *a, **k)
+        mod.linhas_da_tabela = linhas_embrulhado
+
     original = getattr(mod, "ler_tabela", None)
     if original is None:
         return

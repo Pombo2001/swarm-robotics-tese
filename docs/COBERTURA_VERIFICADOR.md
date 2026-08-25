@@ -7,18 +7,18 @@ O `verificar_numeros_tese.py` diz «tudo bate ✓». Este ficheiro diz **de quan
 | | tokens numéricos |
 |---|---|
 | no corpo do `main.tex` (sem comentários) | 2286 |
-| lidos por algum verificador | **1025** (45%) |
-| por cobrir | 1261 |
+| lidos por algum verificador | **1034** (45%) |
+| por cobrir | 1252 |
 
 «Lido» é um **majorante** de «verificado»: a medição regista o que os padrões dos verificadores apanham do `.tex`, e um padrão pode apanhar uma frase inteira e usar só metade dos números dela. Um token *não lido* é, esse sim, certo: ninguém olhou para ele.
 
 Método: instrumenta-se o módulo `re` e corre-se cada verificador, guardando o texto de cada match feito sobre o `.tex`. Não há lista de padrões escrita à mão para envelhecer.
 
-## (i) Automatizáveis — 195
+## (i) Automatizáveis — 193
 
 Números com um dado por trás e nenhum verificador a olhar para eles. É aqui que se acrescenta ao `verificar_numeros_tese.py`.
 
-### Por onde começar — onde estão os 195
+### Por onde começar — onde estão os 193
 
 A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por verificar no Resumo é lido por toda a gente e citado de volta na defesa; o mesmo valor no meio do Cap. 2 não.
 
@@ -26,7 +26,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 |---|---|
 | Deceção e Procura por Novidade (\textit{Novelty Search | 54 |
 | Discussão Global e Validação da Hipótese | 30 |
-| Recursos Adicionais | 20 |
+| Recursos Adicionais | 18 |
 | Resposta às Questões de Investigação | 10 |
 | Metodologia de Avaliação e Notas de Leitura | 7 |
 | Análise de Escalabilidade (Zero-Shot Transfer) | 7 |
@@ -96,7 +96,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `0.49` (linha 1428) — …door.png}{Fiabilidade entre execuções --- Porta Cooperativa} \hfill \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_perception.png}{Fia…
 - *(mais 32)*
 
-### episódios — 32
+### episódios — 30
 
 - `0` (linha 545) — …ninho \emph{no fim do episódio}, medida por agente como $\operatorname{clip}\!\left((\Phi_0 - \Phi_T)/\Phi_0,\, 0,\, 1\right)$, em que $\Phi$ é o pote…
 - `0` (linha 545) — …m do episódio}, medida por agente como $\operatorname{clip}\!\left((\Phi_0 - \Phi_T)/\Phi_0,\, 0,\, 1\right)$, em que $\Phi$ é o potencial de navegaçã…
@@ -112,7 +112,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `20` (linha 1476) — …--- ou comprometem --- o desempenho de tarefa. As figuras traçam o percurso completo dos 20 agentes num episódio do modelo campeão da campanha final, …
 - `20` (linha 1484) — …navegação no Quatro Salas]{Trajetórias completas de um episódio do controlador evolutivo (20 agentes; cor = instante do episódio): contorno do obstácu…
 - `37` (linha 1645) — …{na horizontal}, tomada sobre os vinte agentes e todos os passos do episódio, fica entre $37$ e $79$\,m num percurso mínimo de $154$\,m --- os agentes…
-- *(mais 18)*
+- *(mais 16)*
 
 ### dimensão amostral — 24
 
@@ -182,7 +182,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 
 - `2` (linha 855) — …ia à dimensão do enxame é uma propriedade da \emph{representação}, e não do otimizador (QI2). (Recuperado pela pesquisa mas excluído na elegibilidade …
 
-## (ii) Precisam de leitura — 324
+## (ii) Precisam de leitura — 317
 
 Sem sinal automático que os ligue a um dado. Podem ser resultados escritos de outra maneira, números da literatura citada, ou escolhas de desenho.
 
@@ -226,7 +226,7 @@ Sem sinal automático que os ligue a um dado. Podem ser resultados escritos de o
 - `2` (linha 374) — …ords:} Swarm Robotics, MARL, Bio-inspired Optimization, GNNs. \setcounter{tocdepth}{2} \tableofcontents \listoffigures \listoftables \cleard…
 - `2` (linha 405) — …y, Value (projeções do mecanismo de atenção)} \acro{RL}{Reinforcement Learning} \acro{RS2C}{Robust and Scalable Swarm Control} \acro{SAC}{So…
 - `1` (linha 533) — …anho real em adaptabilidade face às soluções otimizadas tradicionais. \section{Abordagem 1: Otimização Bio-inspirada} Esta abordagem utiliza…
-- *(mais 284)*
+- *(mais 277)*
 
 ## (iii) Não são resultados — 742
 

@@ -29,6 +29,7 @@ mudam, e recusam o commit se um número deixar de bater
 | `verificar_numeros_tese.py` **⟨hook⟩** | o grosso: tabelas, prosa, Resumo/Abstract, coerência interna e o artigo — ~965 valores |
 | `verificar_mapa_grande.py` **⟨hook⟩** | os 72 valores da secção do mapa composto (QI7) |
 | `verificar_afirmacoes.py` **⟨hook⟩** | as frases onde o número está na palavra: «o único», «em todas as execuções», «nenhuma passa de» |
+| `verificar_configuracao.py` **⟨hook⟩** | as tabelas de configuração do Apêndice contra o `foraging.yaml` (45 valores: física, recompensa e hiperparâmetros dos três algoritmos) |
 | `verificar_estrutura_tese.py` **⟨hook⟩** | acrónimos, figuras/tabelas órfãs, páginas com uma linha só, rótulos das tabelas |
 | `verificar_ptpt.py` **⟨hook⟩** | português de Portugal: léxico, `babel`, e a concordância de «execução» |
 | `verificar_remissoes.py` **⟨hook⟩** | cada «Figura~\ref{...}» aponta mesmo para uma figura |
