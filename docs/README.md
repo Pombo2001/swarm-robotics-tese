@@ -45,11 +45,10 @@ frases da tese apoiam-se neles. Não são para atualizar.
 
 ## Correspondência com o orientador
 
-| Ficheiro | Estado |
-|---|---|
-| [`EMAIL_ORIENTADOR_24jul2026.md`](EMAIL_ORIENTADOR_24jul2026.md) | Draft pronto — **por enviar** |
-| [`REUNIAO_ORIENTADOR_22jun.md`](REUNIAO_ORIENTADOR_22jun.md) | Update levado à reunião de 22 jun |
-| [`resposta_prof_nunes.md`](resposta_prof_nunes.md) | Rascunho de 15 jun — por enviar |
+Não vive no repositório. São mensagens dirigidas a uma pessoa identificada, e este
+repositório é para publicar — publicá-las seria publicar comunicação de outrem sem
+ela saber. Ficam na máquina, em `Desktop/Tese/correspondencia-orientador/`, e o
+`.gitignore` impede que voltem a entrar.
 
 ## [`arquivo/`](arquivo/) — ultrapassado, guardado
 

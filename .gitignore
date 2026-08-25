@@ -280,3 +280,10 @@ Tese/_ensaio_*
 # Dados de ligacao ao servidor de treino (endereco, utilizador, host key).
 # Descrevem infraestrutura de terceiros e o repositorio e para publicar.
 configs/servidor.local.env
+
+# Correspondencia com o orientador: comunicacao com um terceiro identificado.
+# Fica na maquina (e em Desktop/Tese/correspondencia-orientador/), nao no
+# repositorio, que a dissertacao anuncia como aberto.
+docs/EMAIL_ORIENTADOR_*.md
+docs/REUNIAO_ORIENTADOR_*.md
+docs/resposta_prof_nunes.md

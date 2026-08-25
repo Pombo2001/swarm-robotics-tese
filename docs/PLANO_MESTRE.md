@@ -616,7 +616,7 @@ que o geodésico existe para eliminar. Passou a derivar de `MAZE_SCENARIOS`.
 
 - [x] **Pacote preparado (24 jul)**: PDFs datados em `out/envio_orientador_24jul2026/`
       (tese 121 págs + artigo 10 págs, do commit `704a36e` — fontes e PDF em sincronia)
-      e o corpo do e-mail em [`EMAIL_ORIENTADOR_24jul2026.md`](EMAIL_ORIENTADOR_24jul2026.md),
+      e o corpo do e-mail na pasta de correspondência (fora do repositório),
       com anexo opcional de resultados. Todos os números verificados contra `main.tex`.
       Na tabela do anexo só vão a negrito as superioridades **significativas** — o
       Gargalo (p=0,21), o Muro em U e a Porta c/ Alternativa (p=0,85) são empates, e
@@ -729,7 +729,7 @@ que o geodésico existe para eliminar. Passou a derivar de `MAZE_SCENARIOS`.
 | Pré-registo da campanha adaptativa | `docs/PRE_REGISTO_NOVELTY_ADAPTATIVO.md` |
 | Pré-registo do mega-treino (P1.5) | `docs/PRE_REGISTO_MEGATREINO.md` |
 | Pré-registo do mapa grande (P1.6) | `docs/PRE_REGISTO_MAPA_GRANDE.md` |
-| Draft do e-mail ao orientador (P2) | `docs/EMAIL_ORIENTADOR_24jul2026.md` |
+| Draft do e-mail ao orientador (P2) | fora do repositório (correspondencia-orientador/) |
 | Reprodutibilidade (número → CSV → script) | `docs/REPRODUZIR.md` |
 | Proposta/cautelas do treino final + títulos do artigo | `docs/PROPOSTA_TREINO_FINAL.md` |
 | SLR (protocolo, screening, pipeline) | `docs/PROTOCOLO_SLR.md`, `docs/slr/` |
