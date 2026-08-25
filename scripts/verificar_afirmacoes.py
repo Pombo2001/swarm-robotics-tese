@@ -313,12 +313,57 @@ def diagnostico_qi7():
               % ", ".join("%.1f" % x for x in paradas[paradas < num(v[1])]))
 
 
+# ------------------------------------------------------ aritmética declarada
+def aritmetica():
+    """Os números que a tese deriva uns dos outros continuam a bater entre si.
+
+    A secção do desempenho computacional não tem CSV: os valores vêm de uma
+    medição feita na máquina de desenvolvimento e não se reproduzem noutra. Mas
+    metade deles é aritmética da outra metade — os agente-passos por segundo são
+    os passos por segundo vezes os $20$ agentes, o tempo por episódio é os $500$
+    passos a dividir pelo débito, o ganho é o quociente dos dois débitos. Isso
+    verifica-se sem máquina nenhuma, e apanha o erro que aqui é possível: mudar
+    um número e esquecer os que dependem dele.
+    """
+    cabecalho("Aritmética declarada (o que a tese deriva de si própria)")
+    v = do_tex(r"cerca de \\textbf\{(\d+) passos de simulação por\s+segundo\} "
+               r"\(\$\\approx\$(\d[\d\\, ]*) atualizações de agente por segundo; "
+               r"\$\\approx\$([\d,]+)\\,s por episódio de (\d+) passos\)",
+               "débito antes da vetorização", 4)
+    if v:
+        passos, agente, seg, ep = (num(v[0]), num(v[1].replace("\\,", "")),
+                                   num(v[2]), num(v[3]))
+        confere("agente-passos/s = passos/s × 20 agentes", agente, passos * 20, 12)
+        confere("segundos por episódio = %g passos ÷ débito" % ep, seg, ep / passos, 0.06)
+
+    v = do_tex(r"sustenta \$\\approx\$\\textbf\{(\d+) passos/s\} "
+               r"\(\$\\approx\$(\d[\d\\, ]*) agente-passos/s; "
+               r"\$\\approx\$([\d,]+)\\,s por episódio\)[^)]*?ganho de "
+               r"\$\\approx ([\d{},]+)\\times\$", "débito depois da vetorização", 4)
+    if v:
+        passos2, agente2, seg2, ganho = (num(v[0]), num(v[1].replace("\\,", "")),
+                                         num(v[2]), num(v[3]))
+        confere("agente-passos/s = passos/s × 20 agentes", agente2, passos2 * 20, 12)
+        confere("segundos por episódio = 500 passos ÷ débito", seg2, 500 / passos2, 0.06)
+        antes = do_tex(r"cerca de \\textbf\{(\d+) passos de simulação", "débito antes")
+        if antes:
+            confere("ganho = débito depois ÷ débito antes", ganho,
+                    passos2 / num(antes[0]), 0.06)
+
+    v = do_tex(r"o \\textit\{rollout buffer\} acumula \$(\d+) \\times (\d+) "
+               r"\\times (\d+) = ([\d\\, ]+)\$ transições", "rollout buffer", 4)
+    if v:
+        confere("transições por iteração = %s × %s × %s" % (v[0], v[1], v[2]),
+                num(v[3].replace("\\,", "")), num(v[0]) * num(v[1]) * num(v[2]), 0)
+
+
 def main():
     campanha_final()
     mega_treino()
     escalabilidade()
     robustez()
     diagnostico_qi7()
+    aritmetica()
     print("\n" + "=" * 78)
     if falhas:
         print("%d afirmação(ões) que os dados não sustentam:" % len(falhas))
