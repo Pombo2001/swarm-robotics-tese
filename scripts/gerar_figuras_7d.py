@@ -354,7 +354,7 @@ def main():
         ax.grid(True, linestyle='--', alpha=0.4, axis='y')
         nr = int(d.groupby('Algorithm')['Run'].nunique().max())
         fig.text(0.5, 0.01,
-                 f"Cada ponto = 1 run independente ({nr} runs/algoritmo; média de 20 episódios "
+                 f"Cada ponto = 1 execução independente ({nr} por algoritmo; média de 20 episódios "
                  "determinísticos). Métrica de tarefa: mesma unidade para os três algoritmos.",
                  ha='center', va='bottom', fontsize=8.5, color='#555555', style='italic')
         fig.subplots_adjust(bottom=0.12)
@@ -380,7 +380,7 @@ def main():
     sns.barplot(data=dd, x='Cenário', y='food_collected', hue='Algorithm',
                 order=scen_lab_order, hue_order=ALGOS, errorbar='sd',
                 palette=ALGO_COLORS, ax=ax)
-    ax.set_title('Resumo Geral — Recolhas por Episódio (Avaliação, 7 runs × 20 ep)',
+    ax.set_title('Resumo Geral — Recolhas por Episódio (Avaliação, 7 execuções × 20 ep)',
                  fontsize=15, fontweight='bold', pad=14)
     ax.set_ylabel('Recolhas Médias por Episódio (± Desvio Padrão)', fontsize=11)
     ax.set_xlabel('Cenário', fontsize=11)

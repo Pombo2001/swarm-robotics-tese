@@ -256,8 +256,8 @@ def figs_campanha(mapa):
                  fontsize=14, fontweight="bold", pad=12)
     ax.set_ylabel("Recolhas por episódio (média do run)")
     ax.grid(True, ls="--", alpha=0.4, axis="y")
-    _rodape(fig, f"Cada ponto = 1 run independente "
-                 f"({rm.groupby('Algorithm')['Run'].nunique().max()} runs/algoritmo).")
+    _rodape(fig, f"Cada ponto = 1 execução independente "
+                 f"({rm.groupby('Algorithm')['Run'].nunique().max()} por algoritmo).")
     plt.tight_layout(rect=[0, 0.05, 1, 1])
     fig.savefig(os.path.join(OUT, f"{mapa}_boxplot.png"), dpi=300)
     plt.close(fig)

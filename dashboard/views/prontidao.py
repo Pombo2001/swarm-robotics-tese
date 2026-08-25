@@ -18,6 +18,7 @@ Três decisões de desenho, para não ser um botão que mente:
     `.tex` com a do `.pdf`, que é o que apanha o caso perigoso: o PDF no disco ser
     anterior à última edição, e alguém enviá-lo a pensar que é o de agora.
 """
+import hashlib
 import os
 import re
 import subprocess
@@ -60,6 +61,31 @@ def _numeros_da_tese():
     return MAU, "%s divergência(s) — ver detalhe" % n, saida
 
 
+def _tex_igual_ao_compilado(tex):
+    """O `.tex` mudou de CONTEÚDO desde a última compilação, ou só de data?
+
+    A data por si mente nos dois sentidos, e mentiu aqui: qualquer coisa que
+    reescreva o ficheiro com o mesmo texto — um ensaio de mutação que repõe o
+    original, um editor a gravar sem alterar, um `git checkout` — deixa o `.tex`
+    mais recente do que o PDF sem uma vírgula diferente. A vista mandava
+    recompilar uma tese que estava compilada, e quem mande recompilar sem
+    necessidade acaba por ser ignorado quando a necessidade for real.
+
+    O `latexmk` guarda no `main.fdb_latexmk` o md5 de cada ficheiro que leu na
+    última corrida. É a única fonte que sabe o que foi mesmo compilado — e é a
+    mesma que o `latexmk` usa para decidir se recompila.
+    """
+    fdb = os.path.join(os.path.dirname(tex), "main.fdb_latexmk")
+    if not os.path.exists(fdb):
+        return False                     # sem registo, a data é o que há
+    nome = os.path.basename(tex)
+    m = re.search(r'"%s"\s+[\d.]+\s+\d+\s+([0-9a-f]{32})' % re.escape(nome),
+                  open(fdb, encoding="utf-8", errors="replace").read())
+    if not m:
+        return False
+    return hashlib.md5(open(tex, "rb").read()).hexdigest() == m.group(1)
+
+
 def _pdf_em_dia():
     tex = os.path.join(_RAIZ, "Tese", "main.tex")
     pdf = os.path.join(_RAIZ, "Tese", "main.pdf")
@@ -80,7 +106,7 @@ def _pdf_em_dia():
         overfulls = txt.count("Overfull")
         refs = txt.count("LaTeX Warning: Reference")
 
-    if t_pdf < t_tex:
+    if t_pdf < t_tex and not _tex_igual_ao_compilado(tex):
         return MAU, "o PDF é ANTERIOR à última edição do .tex — recompilar", detalhe
     corpo = "%s págs · %s overfulls · %s refs indefinidas" % (
         paginas or "?", overfulls if overfulls is not None else "?",

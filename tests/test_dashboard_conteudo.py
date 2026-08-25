@@ -478,6 +478,53 @@ def test_o_mapa_composto_nao_legenda_o_veredicto_como_projecao(tmp_path):
 
     print("OK  o rodapé segue a fonte do número, e o erro chega ao ecrã")
 
+def test_a_prontidao_nao_manda_recompilar_uma_tese_compilada(tmp_path):
+    """Tocar no `.tex` sem lhe mudar uma vírgula não torna o PDF obsoleto.
+
+    A vista comparava as datas e mais nada. Qualquer coisa que reescreva o
+    ficheiro com o mesmo texto — um ensaio de mutação que repõe o original, um
+    editor a gravar sem alterar, um `git checkout` — punha o `.tex` à frente do
+    PDF e a Prontidão mandava recompilar uma tese que estava compilada. Um
+    alarme que dispara sem motivo ensina quem o lê a ignorá-lo, e é o mesmo
+    ecrã que tem de avisar quando o PDF estiver MESMO velho.
+
+    Exercitam-se os dois casos com um par `.tex`/`.fdb_latexmk` sintético: o
+    conteúdo que o `latexmk` registou (só a data mudou) e outro que ele nunca
+    viu (o texto mudou).
+    """
+    import hashlib
+    import os as _os
+    import sys
+    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if raiz not in sys.path:
+        sys.path.insert(0, raiz)
+    from dashboard.views import prontidao
+
+    tex = tmp_path / "main.tex"
+    tex.write_text(r"\documentclass{article}\begin{document}oi\end{document}",
+                   encoding="utf-8")
+    md5 = hashlib.md5(tex.read_bytes()).hexdigest()
+    (tmp_path / "main.fdb_latexmk").write_text(
+        '["pdflatex"] 1787656709 "main.tex" "main.pdf" "main" 1787656720 0\n'
+        '  "main.tex" 1787656696.14798 %d %s ""\n' % (len(tex.read_bytes()), md5),
+        encoding="utf-8")
+
+    assert prontidao._tex_igual_ao_compilado(str(tex)), (
+        "o .tex tem o md5 que o latexmk registou e a vista diz que mudou — "
+        "vai mandar recompilar uma tese compilada")
+
+    tex.write_text(r"\documentclass{article}\begin{document}outra coisa\end{document}",
+                   encoding="utf-8")
+    assert not prontidao._tex_igual_ao_compilado(str(tex)), (
+        "o .tex mudou de conteúdo e a vista diz que está compilado — este é o "
+        "caso perigoso: enviar um PDF que já não é o do texto")
+
+    # E sem registo do latexmk não se inventa: cai na comparação de datas.
+    _os.remove(str(tmp_path / "main.fdb_latexmk"))
+    assert not prontidao._tex_igual_ao_compilado(str(tex)), (
+        "sem fdb_latexmk a vista não tem como saber, e tem de ser conservadora")
+    print("OK  a Prontidão distingue «mudou de data» de «mudou de conteúdo»")
+
 if __name__ == "__main__":
     # Os testes descobrem-se por introspeção, e não de uma lista escrita à mão.
     # A lista existiu, ficou a meio do ficheiro — antes de metade dos testes

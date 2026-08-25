@@ -58,6 +58,12 @@ ISENTOS = {
     ".venv": "ambiente virtual",
     ".git": "repositório",
     "graphify-out": "índice de trabalho, não é conteúdo do dashboard",
+    # Registo do `latexmk`: a vista Prontidão lê-lhe o md5 do `.tex` para
+    # distinguir «o PDF está velho» de «o ficheiro só foi tocado». A Prontidão
+    # é uma vista de OPERAÇÃO e não existe no Pi (READONLY esconde-a), e no Pi
+    # ninguém compila — o ficheiro não teria nada que fazer lá.
+    "Tese/main.fdb_latexmk": "registo do latexmk; a vista que o lê não existe "
+                             "no modo leitura do Pi",
 }
 
 

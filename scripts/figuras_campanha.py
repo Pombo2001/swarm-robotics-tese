@@ -306,13 +306,13 @@ def figura_boxplot(run_means, scen, destino):
     sns.boxplot(data=d, x="Algorithm", y="recolhas", order=ALGOS, palette=ALGO_COLORS, ax=ax)
     sns.stripplot(data=d, x="Algorithm", y="recolhas", order=ALGOS,
                   color="black", size=5, alpha=0.6, jitter=0.12, ax=ax)
-    ax.set_title(f"Fiabilidade entre Runs — {SCENARIO_LABELS.get(scen, scen)}",
+    ax.set_title(f"Fiabilidade entre Execuções — {SCENARIO_LABELS.get(scen, scen)}",
                  fontsize=14, fontweight="bold", pad=12)
-    ax.set_ylabel("Recolhas por episódio (média do run, 20 ep)", fontsize=10)
+    ax.set_ylabel("Recolhas por episódio (média da execução, 20 ep)", fontsize=10)
     ax.set_xlabel("Algoritmo", fontsize=11)
     ax.grid(True, linestyle="--", alpha=0.4, axis="y")
     nr = int(d.groupby("Algorithm")["Run"].nunique().max())
-    fig.text(0.5, 0.01, f"Cada ponto = 1 run independente ({nr} runs/algoritmo, 20 episódios "
+    fig.text(0.5, 0.01, f"Cada ponto = 1 execução independente ({nr} por algoritmo, 20 episódios "
                         "determinísticos). Métrica de tarefa: mesma unidade para os três.",
              ha="center", va="bottom", fontsize=8.5, color="#555555", style="italic")
     plt.tight_layout(rect=[0, 0.07, 1, 1])
@@ -321,7 +321,7 @@ def figura_boxplot(run_means, scen, destino):
     plt.close(fig)
     # O dot plot vai a par (não em vez): com n pequeno os quartis são ruído e a
     # caixa cheia sugere densidade onde não há um único run.
-    dotplot_por_run(d, f"Fiabilidade entre Runs — {SCENARIO_LABELS.get(scen, scen)}",
+    dotplot_por_run(d, f"Fiabilidade entre Execuções — {SCENARIO_LABELS.get(scen, scen)}",
                     os.path.join(destino, NOMES["dotplot"].format(cenario=scen)), n_por_algo=nr)
     return saida
 
