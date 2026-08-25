@@ -313,6 +313,60 @@ def diagnostico_qi7():
               % ", ".join("%.1f" % x for x in paradas[paradas < num(v[1])]))
 
 
+# -------------------------------------------------- resumo contra o abstract
+def resumo_e_abstract():
+    """O Resumo e o Abstract contam a mesma história com os mesmos números?
+
+    São o mesmo texto em duas línguas, e são as duas páginas que toda a gente
+    lê. Traduzem-se uma vez e depois deixam de andar juntos: um número corrigido
+    no corpo entra no Resumo — que está em português, à mão — e o Abstract fica
+    com o valor antigo, sem que nada o denuncie. Não há CSV que apanhe isto,
+    porque cada um deles é internamente coerente.
+
+    A comparação é entre CONJUNTOS de números, não entre frases: a ordem e a
+    redação podem divergir (e divergem, são línguas diferentes), os valores não.
+    O decimal também muda de forma — $88{,}7$ em português, $88.7$ em inglês —,
+    e é por isso que se normalizam antes de comparar.
+    """
+    cabecalho("Resumo vs Abstract (as duas páginas que toda a gente lê)")
+    texto = corpo()
+
+    def numeros(nome):
+        # São `\chapter*`, não `\section*`: com o localizador errado a régua
+        # não encontrava nenhum dos dois, e imprimia uma secção vazia sem
+        # acusar nada — o modo de falhar que este ficheiro existe para não ter.
+        i = texto.find("\\chapter*{%s}" % nome)
+        if i < 0:
+            falhas.append("não encontrei o capítulo «%s» no main.tex" % nome)
+            return None
+        fim = min(x for x in (texto.find("\\chapter", i + 12), len(texto)) if x > 0)
+        bloco = texto[i:fim]
+        # Corta-se em «Palavras Chave»/«Keywords»: o que vem depois é a lista de
+        # palavras-chave e os comandos de índice, onde os `2` do `tocdepth` não
+        # são números da tese.
+        for corte in ("\\textsc{Palavras Chave", "\\textsc{Keywords"):
+            j = bloco.find(corte)
+            if j > 0:
+                bloco = bloco[:j]
+        crus = re.findall(r"\d+(?:[.,]|\{,\})?\d*(?:/\d+)?", bloco)
+        return sorted({c.replace("{,}", ".").replace(",", ".").rstrip(".") for c in crus})
+
+    pt, en = numeros("Resumo"), numeros("Abstract")
+    if pt is None or en is None:
+        return
+    so_pt, so_en = sorted(set(pt) - set(en)), sorted(set(en) - set(pt))
+    ok = not so_pt and not so_en
+    print("  [%s] %-52s %d números em cada"
+          % ("v" if ok else "!", "os mesmos valores nas duas versões", len(pt)))
+    if so_pt:
+        print("      só no Resumo:   %s" % ", ".join(so_pt))
+    if so_en:
+        print("      só no Abstract: %s" % ", ".join(so_en))
+    if not ok:
+        falhas.append("Resumo e Abstract divergem: só no Resumo %s; só no "
+                      "Abstract %s" % (so_pt or "—", so_en or "—"))
+
+
 # ------------------------------------------------------ aritmética declarada
 def aritmetica():
     """Os números que a tese deriva uns dos outros continuam a bater entre si.
@@ -363,6 +417,7 @@ def main():
     escalabilidade()
     robustez()
     diagnostico_qi7()
+    resumo_e_abstract()
     aritmetica()
     print("\n" + "=" * 78)
     if falhas:

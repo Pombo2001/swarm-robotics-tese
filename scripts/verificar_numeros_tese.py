@@ -2472,13 +2472,19 @@ def verificar_novelty(tolerancia):
                                  % (af["rot"], nome, tese, esperado,
                                     tese - esperado))
 
-    # ── T1: «todos $p \geq 0{,}21$» ─────────────────────────────────────────
+    # ── T1: «o menor dos cinco é $p = 0{,}21$» ──────────────────────────────
     # Uma afirmação sobre CINCO testes de uma vez, e a única da secção que não
-    # cabe na estrutura acima: o que a tese diz é que o menor dos cinco p é
-    # 0,21. Se um deles descer, esta frase passa a ser falsa sem que nenhum
-    # número escrito na tese mude — o defeito mais difícil de ver à vista.
-    m = re.search(r"nenhuma diferença é significativa \(todos \$p \\geq "
-                  r"(?P<p>[\d{},]+)\$\)", sec)
+    # cabe na estrutura acima. Se um dos cinco descer, esta frase passa a ser
+    # falsa sem que nenhum número escrito na tese mude — o defeito mais difícil
+    # de ver à vista.
+    #
+    # A frase dizia «todos $p \geq 0{,}21$», e o menor dos cinco é $0{,}2086$:
+    # verdadeiro a duas casas, falso a quatro. Escrita como «o menor dos cinco
+    # é $p = 0{,}21$», o valor citado é o que ele é — um p arredondado — em vez
+    # de um limite inferior que ele não respeita. O padrão aceita as duas
+    # formas, para que a régua não falhe a ler uma tese antiga.
+    m = re.search(r"nenhuma diferença é significativa \((?:todos \$p \\geq|"
+                  r"o menor dos cinco é \$p =) (?P<p>[\d{},]+)\$\)", sec)
     if m:
         cinco = [("adapt_A1", "none"), ("adapt_A1", "bottleneck"),
                  ("adapt_A1", "four_rooms"), ("adapt_B1", "cooperative_door"),
@@ -2498,18 +2504,16 @@ def verificar_novelty(tolerancia):
             # A tese arredonda para baixo o menor p; exige-se que o menor p real
             # não seja INFERIOR ao afirmado (senão a frase é falsa) e que seja o
             # mesmo número a duas casas.
-            if menor + 5e-3 < tese:
+            # A frase deixou de afirmar um limite inferior e passou a citar
+            # o menor dos cinco: o que se exige agora é que o valor citado SEJA
+            # esse menor, arredondado às duas casas com que a tese o escreve.
+            if abs(round(menor, 2) - tese) > 0.005:
                 problemas.append(
-                    "T1 — «todos p ≥ %s»: o menor é %.4f (%s), abaixo do "
-                    "afirmado" % (m.group("p"), menor, menor_cen))
-            elif abs(round(menor, 2) - tese) > 0.005:
-                problemas.append(
-                    "T1 — «todos p ≥ %s»: o menor dos cinco é %.4f (%s) — a "
-                    "frase é verdadeira mas o número não é o menor"
+                    "T1 — a tese cita %s e o menor dos cinco é %.4f (%s)"
                     % (m.group("p"), menor, menor_cen))
             else:
                 print("   [5] T1 — o menor dos cinco p é %.4f (%s), e a tese "
-                      "diz «todos ≥ %s»" % (menor, menor_cen, m.group("p")))
+                      "cita %s" % (menor, menor_cen, m.group("p")))
         else:
             problemas.append("T1 — «todos p ≥ …»: só consegui recalcular %d "
                              "dos 5 testes" % len(ps))
