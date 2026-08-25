@@ -7,8 +7,8 @@ O `verificar_numeros_tese.py` diz «tudo bate ✓». Este ficheiro diz **de quan
 | | tokens numéricos |
 |---|---|
 | no corpo do `main.tex` (sem comentários) | 2286 |
-| lidos por algum verificador | **1034** (45%) |
-| por cobrir | 1252 |
+| lidos por algum verificador | **1043** (46%) |
+| por cobrir | 1243 |
 
 «Lido» é um **majorante** de «verificado»: a medição regista o que os padrões dos verificadores apanham do `.tex`, e um padrão pode apanhar uma frase inteira e usar só metade dos números dela. Um token *não lido* é, esse sim, certo: ninguém olhou para ele.
 
@@ -68,8 +68,8 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 - `31{,}0` (linha 1323) — …episódios mas uma fração da magnitude dos melhores), arrastando a média para $38{,}3 \pm 31{,}0$. É um resultado à primeira vista paradoxal --- o cená…
 - `0` (linha 1323) — …prendizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do orçamento de treino); linha = média de 7 execuçõ…
 - `100` (linha 1323) — …ndizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do orçamento de treino); linha = média de 7 execuções,…
-- `0{,}21` (linha 1500) — …os que a otimização objetiva já resolve, nenhuma diferença é significativa (todos $p \geq 0{,}21$); reportam-se com honestidade os desvios descritivos…
-- `65{,}9` (linha 1500) — …\geq 0{,}21$); reportam-se com honestidade os desvios descritivos --- Porta Cooperativa $65{,}9 \pm 8{,}0$ vs.\ $69{,}8 \pm 0{,}9$ ($\delta=-0{,}45$),…
+- `0{,}21` (linha 1500) — …imização objetiva já resolve, nenhuma diferença é significativa (o menor dos cinco é $p = 0{,}21$); reportam-se com honestidade os desvios descritivos…
+- `65{,}9` (linha 1500) — …$p = 0{,}21$); reportam-se com honestidade os desvios descritivos --- Porta Cooperativa $65{,}9 \pm 8{,}0$ vs.\ $69{,}8 \pm 0{,}9$ ($\delta=-0{,}45$),…
 - `8{,}0` (linha 1500) — …1$); reportam-se com honestidade os desvios descritivos --- Porta Cooperativa $65{,}9 \pm 8{,}0$ vs.\ $69{,}8 \pm 0{,}9$ ($\delta=-0{,}45$), Perceção …
 - `69{,}8` (linha 1500) — …-se com honestidade os desvios descritivos --- Porta Cooperativa $65{,}9 \pm 8{,}0$ vs.\ $69{,}8 \pm 0{,}9$ ($\delta=-0{,}45$), Perceção $13{,}1 \pm 1…
 - `0{,}9` (linha 1500) — …estidade os desvios descritivos --- Porta Cooperativa $65{,}9 \pm 8{,}0$ vs.\ $69{,}8 \pm 0{,}9$ ($\delta=-0{,}45$), Perceção $13{,}1 \pm 10{,}0$ vs.\…
@@ -182,7 +182,7 @@ A ordem de ataque não é o tamanho do grupo, é a visibilidade: um valor por ve
 
 - `2` (linha 855) — …ia à dimensão do enxame é uma propriedade da \emph{representação}, e não do otimizador (QI2). (Recuperado pela pesquisa mas excluído na elegibilidade …
 
-## (ii) Precisam de leitura — 317
+## (ii) Precisam de leitura — 315
 
 Sem sinal automático que os ligue a um dado. Podem ser resultados escritos de outra maneira, números da literatura citada, ou escolhas de desenho.
 
@@ -226,14 +226,14 @@ Sem sinal automático que os ligue a um dado. Podem ser resultados escritos de o
 - `2` (linha 374) — …ords:} Swarm Robotics, MARL, Bio-inspired Optimization, GNNs. \setcounter{tocdepth}{2} \tableofcontents \listoffigures \listoftables \cleard…
 - `2` (linha 405) — …y, Value (projeções do mecanismo de atenção)} \acro{RL}{Reinforcement Learning} \acro{RS2C}{Robust and Scalable Swarm Control} \acro{SAC}{So…
 - `1` (linha 533) — …anho real em adaptabilidade face às soluções otimizadas tradicionais. \section{Abordagem 1: Otimização Bio-inspirada} Esta abordagem utiliza…
-- *(mais 277)*
+- *(mais 275)*
 
-## (iii) Não são resultados — 742
+## (iii) Não são resultados — 735
 
 Anos, referências internas, dimensões de figura, medidas de composição. Não há dado com que os confrontar.
 
-- referência interna/citação: 260
+- referência interna/citação: 258
 - ano: 210
-- comando LaTeX: 126
+- comando LaTeX: 121
 - medida de composição: 107
 - dimensão de figura: 39
