@@ -5,7 +5,7 @@
 > Este ficheiro fica como registo histórico (cronologia, armadilhas na origem,
 > tutorial completo do servidor na §4) e não deve voltar a ser editado.
 
-> **Para o Claude/assistente**: este documento é o ponto de re-entrada do projeto.
+> **Ao retomar**: este documento é o ponto de re-entrada do projeto.
 > Lê isto primeiro; o histórico detalhado (decisões, bugs corrigidos, armadilhas) está
 > na memória persistente (`memory/project_thesis_swarm.md` e `server_training_setup.md`).
 > **Para o Gonçalo**: atualiza as checkboxes à medida que avanças; quando algo mudar de
@@ -746,7 +746,7 @@ scp goncalo@SERVIDOR_DE_TREINO:/tmp/models.tar.gz "$env:USERPROFILE\Desktop\Tese
 ```
 Cada `ssh`/`scp` pede a password (uma vez cada). Se errares, é `Permission denied` — repete.
 
-**Para o Claude/assistente extrair sozinho** (a password é interativa e o classificador bloqueia
+**Para extrair sem prompt interativo** (a password é interativa e o classificador bloqueia
 instalar chave persistente): usar o PuTTY já instalado, passando a password e a host key na linha
 de comando — `plink` para comandos remotos, `pscp` para copiar:
 ```bash

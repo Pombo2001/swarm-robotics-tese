@@ -5,7 +5,7 @@
 > e é o único plano vivo. Lê e atualiza ESSE; este fica como registo do que foi
 > decidido a 15-16 jul.
 
-> **Este documento é um PROMPT para o Claude/Opus.** Lê-o do princípio ao fim antes de
+> **Este documento é o ponto de re-entrada do projeto.** Ler do princípio ao fim antes de
 > tocar em qualquer ficheiro. Ele substitui o topo do `PLANO_DE_ATAQUE.md` como lista
 > acionável; o `PLANO_DE_ATAQUE.md` continua a ser o registo histórico (armadilhas,
 > tutorial do servidor, resultados) e deve ser consultado, não reescrito.
@@ -17,7 +17,7 @@
 
 ---
 
-## 🔄 LOG DE SESSÃO — 15 jul 2026 (feito no PC do trabalho; para o Claude da torre)
+## 🔄 LOG DE SESSÃO — 15 jul 2026 (feito no PC do trabalho; a retomar na torre)
 
 > Resumo do que mudou neste PC nesta sessão, para quem fizer `git pull` na torre de casa.
 > **Trabalha na `main`** — a `feat/novelty-search` foi consolidada para lá e está congelada.

@@ -1,91 +1,94 @@
 # Aprendizagem por Reforço para Controlo de Enxames
 
-Simulador 3D de *swarm robotics* (forrageamento) e bancada de comparação entre três
-controladores descentralizados. Projeto de tese de mestrado em Inteligência Artificial
-(ISCTE-IUL).
+Simulador 3D de *swarm robotics* (forrageamento cooperativo) e bancada de comparação
+entre **três controladores descentralizados** — neuroevolução com rede de grafos, PPO e
+SAC — em oito cenários de dificuldade crescente.
 
-**Hipótese central:** a inteligência adaptativa (MARL com redes de grafos) supera a
-robustez estática (bio-inspirada) em cenários de *stress* dinâmico.
+Dissertação de Mestrado em Inteligência Artificial, ISCTE-IUL (2026).
+Orientação: Prof. Luís Nunes.
 
-> **Por onde começar:** [`docs/PLANO_MESTRE.md`](docs/PLANO_MESTRE.md) é o **único
-> ponto de re-entrada** do projeto (estado, o que está fechado, o que falta,
-> armadilhas). O mapa do resto da documentação está em
-> [`docs/README.md`](docs/README.md); a proveniência de cada número da tese está em
-> [`docs/REPRODUZIR.md`](docs/REPRODUZIR.md).
+**A pergunta:** a inteligência adaptativa (MARL) supera a robustez estática
+(bio-inspirada) em cenários de *stress* dinâmico? A resposta curta é *só em parte* — e
+a parte que se confirma não está onde a hipótese a punha.
 
 ---
 
-## Algoritmos comparados
+## O que este trabalho mede
 
-| Sigla | Ficheiro | Paradigma | Notas |
-|-------|----------|-----------|-------|
-| **GNN** | `src/training/evo_trainer_3d.py` | Neuro-evolução (Evolution Strategies) | Rede de grafos com atenção QKV sobre vizinhos; mutação Gaussiana com máscara + elitismo. Desenvolvido de raiz. |
-| **PPO** | `src/training/train_ppo_3d.py` | RL on-policy (Actor-Critic) | *stable-baselines3*; clipping do ratio de políticas. |
-| **SAC** | `src/training/train_sac_3d.py` | RL off-policy (entropia regularizada) | *stable-baselines3*; `ent_coef=0.1` fixo para evitar regressão em treinos longos. |
+Sete questões de investigação, sete campanhas fechadas, **2940 episódios de avaliação
+determinística** só na campanha principal. Os números abaixo saem todos de CSV
+versionados e são conferidos automaticamente (ver [Rigor](#rigor-o-que-impede-este-repositório-de-mentir)).
 
-Os três usam **parameter sharing**: 8 arenas × 20 agentes = 160 "agentes virtuais"
-partilham uma única política (`FlattenMultiAgentVecEnv` no PPO/SAC; um genoma avaliado
-em paralelo no GNN). A exploração é incentivada **apenas por reward shaping** (não há
-ICM/curiosidade intrínseca).
+| | Resultado |
+|---|---|
+| **Desempenho por tarefa** | O controlador evolutivo com *fitness* de *homing* é **estatisticamente superior** aos métodos de gradiente em três dos sete cenários e indistinguível do melhor deles em mais dois. O PPO é o generalista fiável (converge em todas as execuções de seis cenários); o SAC é o único que falha execuções no Gargalo. |
+| **Escalabilidade** | Só a arquitetura de grafo transfere de **N=10 para N=100 sem retreino** — 100 % de sucesso nas 28 combinações cenário × dimensão. O PPO e o SAC são **estruturalmente incompatíveis** com N≠20: a MLP tem entrada fixa. Não é um resultado fraco, é o resultado. |
+| **Robustez a falhas** | Com 10 % dos agentes a falhar a meio do episódio, os três paradigmas retêm **92–106 %** do desempenho nas 21 combinações algoritmo–cenário. A redundância vem do *parameter sharing*. |
+| **Deceção espacial** | O Muro em U é o único cenário que **nenhum** algoritmo base resolve de forma fiável — é bimodal nos três. Só a hibridização com procura por novidade o resolve, e uma replicação com **28 execuções por braço** mostra que a novidade **doseada adaptativamente** é a única condição de toda a dissertação sem uma execução falhada: **28/28**, contra 15/28 do objetivo puro e 14/28 de cada método de gradiente (Fisher exato, *p* < 0,0001). |
+| **Composição de dificuldades** | Um oitavo cenário compõe num só labirinto de **103 × 62 m** quatro das dificuldades que os outros isolam. Transferência sem retreino: **zero** em 84 de 84 células. Com treino nativo, só o evolutivo o resolve — em **4 de 21 execuções**, abaixo do limiar de 15 fixado *antes* dos dados. **Reportado como negativo**, com o número à vista. |
+| **Custo** | O evolutivo paga ≈ **8×** mais núcleos-hora por execução do que os métodos de gradiente. |
 
-## Cenários (`classic_scenario`)
-
-| Chave | Descrição |
-|-------|-----------|
-| `none` | Sandbox: arena aberta, ninho e obstáculos móveis. |
-| `u_wall` | Muro em U a bloquear o caminho direto ao ninho. |
-| `bottleneck` | Duas paredes com passagem estreita de 2,5 m. |
-| `four_rooms` | Labirinto de quatro salas com passagens de 2,5 m. |
-| `cooperative_door` | Porta que só abre com 3 robôs a empurrar em simultâneo. |
-| `cooperative_perception` | Alvo móvel capturado quando rodeado por 3+ robôs a 360°. |
-| `cooperative_door_bypass` | Como a porta cooperativa, mas com um corredor lateral alternativo — cenário *deceptive*. |
-| `mapa_grande` | **8.º cenário (24 jul 2026).** Labirinto composto de 103×62 m numa arena r=60: sala de partida → gargalo + beco em U → quatro salas → porta cooperativa com alternativa → câmara do ninho. Percurso de ~155 m (pior caso) contra 34 m do Quatro Salas. **Ainda sem campanha avaliada.** |
-
-> Fonte única dos cenários e das etiquetas: `src/scenarios.py` (não duplicar noutros ficheiros).
->
-> ⚠️ `SCENARIOS` (8) é **deliberadamente distinto** de `THESIS_SCENARIOS` (os 7 com
-> campanha fechada). O `mapa_grande` não entra nas tabelas de resultados da tese
-> enquanto não tiver dados — apareceria como célula vazia, ou pior, calada.
+O contributo metodológico principal é outro, e é uma correção: o «colapso do
+evolutivo» que a literatura reporta era, neste sistema, um **artefacto do sinal de
+treino**. Substituir o retorno acumulado por *homing* terminal levou o controlador de
+0 % a 100 % de sucesso nos quatro cenários de gargalo.
 
 ---
 
-## Estrutura do projeto
+## Rigor: o que impede este repositório de mentir
 
-```
-configs/foraging.yaml          Configuração única (ambiente, treino, visualização)
-dashboard/                     Dashboard NiceGUI (ponto de entrada: python -m dashboard.app)
-  app.py / views/ / remote.py  Vistas (Treinar/Servidor/Ciência/Resultados) + ligação ao servidor
-src/
-  environment/swarm_env_3d.py  Ambiente Gymnasium (física, LiDAR, recompensas)
-  agents/gnn_agent_3d.py       Rede de grafos com atenção (política do GNN)
-  training/                    evo_trainer_3d / train_ppo_3d / train_sac_3d
-scripts/
-  run_experiments.py           Automação de baterias de treino (Rotina Noturna / Tour)
-  run_eval.py                  Avaliação determinística de 1 algoritmo (+ Rrobust via --fail-frac)
-  eval_all.py                  Avaliação comparativa dos 3 algoritmos
-  eval_scalability.py          Sscale: transferência Zero-Shot para N variável
-  statistical_tests.py         Testes de significância (Mann-Whitney / t de Welch)
-  plot_results.py              Geração dos gráficos da tese
-  eval_by_run.py               Avaliação por run (unidade estatística da tese)
-  eval_zeroshot_mapa.py        F1: zero-shot dos campeões no mapa_grande (com guarda de campanha)
-  pos_campanha.py              Passo 1 obrigatório ao trazer uma campanha (armadilha nº9)
-  servidor.sh                  Ligação ao servidor ISCTE (host/user certos + estado das campanhas)
-  mega_stream{A,B}.sh          Campanhas longas em tmux, por fases, com config reposto no fim
-visualization/
-  visualize_{gnn,ppo,sac}.py   Visualizadores 3D Ursina (lançados pela vista «Ao vivo (3D)»)
-  main_visualizer.py           Visualizador 3D unificado (--algo)
-tests/                         test_simulation.py (smoke) + test_dashboard_jobs.py
-Tese/                          Dissertação LaTeX (main.tex, references.bib, images/)
-Artigo/                        Artigo destilado para a dissertação (Elsevier, PT)
-docs/                          Documentos de trabalho (plano, respostas, updates de reunião)
-results/                       Logs, modelos e gráficos gerados (não versionado)
-```
+Um número escrito à mão numa tese não tem como se defender de uma campanha que foi
+repetida. Por isso a proveniência é automática:
 
-**Convenção de nomes dos modelos:** o Sandbox (`none`) é guardado **sem** sufixo
-(`gnn_3d_best.pth`, `ppo_3d_final.zip`, `sac_3d_final.zip`); os restantes cenários com
-`_{scenario}` (ex.: `ppo_3d_final_four_rooms.zip`). Cada algoritmo tem as suas pastas:
-GNN em `results/{models,logs}/`, PPO em `results/{models_ppo,logs_ppo}/` e
-SAC em `results/{models_sac,logs_sac}/`.
+- **24 verificadores** (`scripts/verificar_*.py`) que leem o `.tex` e os CSV e falham
+  se discordarem — **849 valores** conferidos só no principal, mais as tabelas de
+  configuração contra o `foraging.yaml`, as figuras do PDF contra os dados que as
+  produzem (pixel a pixel), as referências contra o CrossRef/arXiv/OpenAlex, e as
+  frases onde o número está na palavra («o único», «nenhuma passa de»);
+- **183 testes** (`pytest tests/`), incluindo equivalência bit-a-bit do LiDAR
+  vetorizado e a física da porta cooperativa;
+- um **`pre-commit`** que corre os verificadores relevantes sempre que um commit toca
+  na tese, nos dados ou no dashboard (`scripts/instalar_hooks.sh`);
+- **três pré-registos** (`docs/PRE_REGISTO_*.md`) com hipótese, métricas e regra de
+  decisão fixadas antes de haver dados — incluindo as **emendas datadas** e um braço
+  pré-registado que acabou por não correr.
+
+A revisão sistemática que fundamenta o Capítulo 3 foi conduzida de facto: 883 registos
+identificados, 680 após desduplicação, **58 estudos incluídos**, com o registo de
+triagem completo em `docs/slr/screening.csv` — cada exclusão com o seu motivo.
+
+---
+
+## Os oito cenários
+
+| Chave | Nome na dissertação | O que testa |
+|-------|--------------------|-------------|
+| `none` | Sandbox | Arena aberta, ninho e obstáculos móveis — a linha de base. |
+| `u_wall` | Muro em U | Deceção espacial: o caminho direto ao ninho é uma armadilha. |
+| `bottleneck` | Gargalo | Passagem única de 2,5 m — congestionamento. |
+| `four_rooms` | Quatro Salas | Navegação em labirinto com quatro passagens. |
+| `cooperative_door` | Porta Cooperativa | Porta que só abre com 3 robôs em simultâneo. |
+| `cooperative_perception` | Perceção Cooperativa | Alvo móvel, capturado quando rodeado por 3+ robôs. |
+| `cooperative_door_bypass` | Porta com Alternativa | Como a anterior, mas com desvio lateral — cenário *deceptive*. |
+| `mapa_grande` | Mapa Composto | 103 × 62 m: partida → gargalo + beco em U → quatro salas → porta com alternativa → câmara do ninho. Percurso mínimo de ~155 m. |
+
+> Fonte única dos cenários e das etiquetas: **`src/scenarios.py`**. A lista esteve
+> espalhada por oito ficheiros e o sétimo cenário chegou a ser treinado e nunca
+> avaliado — não se duplica.
+
+## Os três controladores
+
+| Sigla | Ficheiro | Paradigma |
+|-------|----------|-----------|
+| **GNN** | `src/training/evo_trainer_3d.py` | Neuroevolução sobre rede de grafos com atenção QKV. Desenvolvido de raiz. |
+| **PPO** | `src/training/train_ppo_3d.py` | RL *on-policy* (*stable-baselines3*). |
+| **SAC** | `src/training/train_sac_3d.py` | RL *off-policy* com entropia regularizada (*stable-baselines3*). |
+
+Os três partilham uma única política entre os agentes (*parameter sharing*). A
+observação de cada agente tem `16 + (N−1) × 5 = 111` valores para N=20: direção e
+distância ao ninho, 8 raios de LiDAR (alcance 8 m) e, por vizinho, direção, distância e
+estado de sinalização. A exploração é incentivada **só por *reward shaping*** — não há
+curiosidade intrínseca.
 
 ---
 
@@ -97,132 +100,85 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Requer Python 3.10+. O treino tira partido de GPU (CUDA) se disponível (`device="auto"`).
+Python 3.10+. O treino usa GPU se houver (`device="auto"`).
 
-## Como usar
+## Utilização
 
-### Dashboard (recomendado)
+### Dashboard
 
 ```powershell
 python -m dashboard.app
 ```
 
-(ou duplo clique em `iniciar_dashboard.bat`, que ativa o `.venv` e abre o browser)
-
-Permite editar a configuração, treinar cada algoritmo, lançar a **Rotina Noturna**
-(treina os 7 cenários × 3 algoritmos distribuindo um orçamento de horas), visualizar
-modelos em 3D e gerar os gráficos da tese.
+Quinze vistas: da operação (treinar, servidor, visualizador 3D ao vivo) à leitura dos
+resultados (Ciência, Escala e robustez, Mapa composto, Defesa, Proveniência, Galeria,
+Vídeos, Episódio 3D, Arquivo). A vista **Proveniência** responde, célula a célula, à
+pergunta «de onde vem este número?».
 
 ### Linha de comandos
 
 ```powershell
-# Treino individual (minutos)
+# Treino
 python src/training/train_ppo_3d.py --time_limit 30
 python src/training/evo_trainer_3d.py --time_limit 30
 
-# Bateria de experiências (vários runs / cenários)
-python scripts/run_experiments.py --runs 5 --time 60 --time-ppo 84 --time-gnn 84
+# Avaliação determinística (a unidade estatística é a MÉDIA POR EXECUÇÃO)
+python scripts/eval_by_run.py --episodes 20 --scenario u_wall
 
-# Avaliação determinística
-python scripts/run_eval.py --algo ppo --episodes 20 --scenario four_rooms
-python scripts/eval_all.py --episodes 20 --scenario none
-
-# Visualização 3D
-python visualization/main_visualizer.py --algo sac
-
-# Gráficos da tese
-python scripts/plot_results.py
-
-# Smoke test
-python tests/test_simulation.py
-```
-
-O cenário ativo é o `classic_scenario` em `configs/foraging.yaml` (alterável pelo
-dashboard ou por `--scenario` nos scripts de avaliação).
-
----
-
-## Análise para a tese (métricas Ptask, Rrobust, Sscale)
-
-As três métricas definidas na proposta têm suporte direto:
-
-| Métrica | O que mede | Como obter |
-|---------|-----------|------------|
-| **Ptask** | Taxa de conclusão da missão | `eval_all.py` → `success` / `food_collected` por episódio |
-| **Rrobust** | Resiliência à falha de 10% dos agentes a meio do episódio | `run_eval.py --fail-frac 0.1` (comparar com `--fail-frac 0.0`) |
-| **Sscale** | Transferência Zero-Shot para N∈{10,20,50,100} sem retreino | `eval_scalability.py` |
-
-A **significância estatística** entre algoritmos obtém-se com `statistical_tests.py`,
-que opera sobre a métrica de tarefa da avaliação (comparável entre algoritmos, ao
-contrário da recompensa de treino) e gera tabela CSV + LaTeX.
-
-### Reproduzir os resultados da tese
-
-> ⚠️ **A sequência canónica está em [`docs/REPRODUZIR.md`](docs/REPRODUZIR.md)** — é
-> ela que diz de que ficheiro vem cada número da dissertação. O que está aqui é o
-> resumo; em caso de divergência, manda o `REPRODUZIR.md`.
->
-> O protocolo **realmente usado** nas campanhas fechadas foi **7 runs × 20 episódios
-> com sementes emparelhadas**, e a unidade estatística é a **média por run** (não o
-> episódio — juntar episódios de runs diferentes inflaciona o n e é a armadilha nº3).
-> Uma versão anterior deste README dizia "30 runs" e listava só 6 dos 7 cenários.
-
-```powershell
-# 1. Treinar a campanha (7 runs por cenário; no servidor, via scripts/launch_7d.sh)
-python scripts/run_experiments.py --runs 7 --time-gnn 195 --eval-episodes 20
-
-# 2. Ao TRAZER a campanha do servidor — sequência obrigatória (ver REPRODUZIR.md §2)
-python scripts/pos_campanha.py                      # sem isto, avalia-se a campanha ANTERIOR
-python scripts/gerar_figuras_7d.py --install-oficial # funde GNN + MLP; só este output é canónico
-
-# 3. Testes de significância (Mann-Whitney U + δ de Cliff, sobre médias por run)
-python scripts/statistical_tests.py --metric food_collected
-
-# 4. Resiliência (Rrobust): baseline vs 10% de falhas
-python scripts/run_eval.py --algo sac --scenario none --episodes 20
+# Escalabilidade Zero-Shot e resiliência a falhas
+python scripts/eval_scalability.py --episodes 20
 python scripts/run_eval.py --algo sac --scenario none --episodes 20 --fail-frac 0.1
 
-# 5. Escalabilidade Zero-Shot (Sscale)
-python scripts/eval_scalability.py --episodes 20
+# Visualizador 3D
+python visualization/visualize_algo.py --algo gnn
 
-# 6. Gráficos finais
-python scripts/plot_results.py
-
-# 7. VERIFICAR que a tese e o artigo dizem o que os CSV dizem (308 valores)
+# As réguas
 python scripts/verificar_numeros_tese.py
+pytest tests/ -q
 ```
 
-> **O passo 7 não é opcional.** É a regra 6(b) do `PLANO_MESTRE.md` — *"os números
-> citados batem com o CSV fonte?"* — e foi cumprida à mão três vezes antes de ser
-> automatizada. Cobre `tab:res_eval`, `tab:res_scale_all`, `tab:res_signif`, as
-> afirmações em prosa da §res_robustez e a `tab:task` do artigo. Devolve código de
-> saída, e `scripts/instalar_hooks.sh` põe-no a correr como `pre-commit` sempre que
-> um commit toca na tese ou nos CSV canónicos.
+### Reproduzir os resultados da dissertação
 
-> **Nota arquitetural (Sscale):** só a **GNN** é invariante ao número de agentes
-> (agrega vizinhos por atenção). O PPO e o SAC usam uma MLP de entrada fixa, pelo que
-> são incompatíveis com N≠20 — o `eval_scalability.py` deteta e regista isto como
-> evidência empírica da vantagem de escalabilidade da GNN.
+A sequência canónica está em **[`docs/REPRODUZIR.md`](docs/REPRODUZIR.md)** — é ela que
+diz de que ficheiro sai cada número. Duas notas que poupam um dia de trabalho:
+
+1. ao trazer uma campanha do servidor, `python scripts/pos_campanha.py` **antes** de
+   qualquer avaliação — sem isso avalia-se a campanha anterior;
+2. o protocolo é **7 execuções × 20 episódios** com sementes emparelhadas, e a unidade
+   estatística é a **média por execução**. Juntar episódios de execuções diferentes
+   inflaciona o *n*.
 
 ---
 
-## Modelo de observação e recompensa
+## Estrutura
 
-**Observação por agente** (`12 + (N−1)×5` valores):
-direção egocêntrica + distância ao ninho (bússola de *homing* sempre ativa) · 8 raios
-LiDAR (alcance 5 m, deteta paredes e obstáculos) · por cada vizinho: direção (3) +
-distância (1) + estado de sinalização (1).
+```
+configs/foraging.yaml      Configuração única (ambiente, recompensa, treino)
+src/
+  environment/             Ambiente Gymnasium: física, LiDAR vetorizado, recompensas
+  agents/                  Rede de grafos com atenção (política do controlador evolutivo)
+  training/                evo_trainer_3d · train_ppo_3d · train_sac_3d
+  scenarios.py             Fonte única dos oito cenários e das suas etiquetas
+scripts/                   90 guiões: campanhas, avaliação, estatística, figuras e as réguas
+  README.md                Índice de todos eles, um a um
+dashboard/                 Dashboard NiceGUI (python -m dashboard.app)
+visualization/             Visualizadores 3D (Ursina)
+tests/                     183 testes
+Tese/                      Dissertação LaTeX — 137 páginas
+Artigo/                    Artigo destilado da dissertação
+docs/                      Protocolo, pré-registos, reprodução, revisão sistemática
+results/                   Dados, modelos e figuras (não versionado — ver REPRODUZIR.md)
+```
 
-**Recompensa** = *progress shaping* (aproximar-se do ninho) + custo de energia
-(−0,05/passo) + bónus de exploração *count-based* (células novas) − penalizações
-(colisão, aglomeração fora de zonas de cooperação) + recompensa de tarefa pura
-(+100 quando `required_to_eat` agentes chegam ao ninho). A métrica reportada separa
-*task reward* (recolhas × 100, sem shaping) da recompensa total — para comparar treino
-com avaliação.
+---
 
-## Configuração
+## Citação
 
-Todos os hiperparâmetros estão em `configs/foraging.yaml`, divididos em secções:
-`environment`, `physics`, `rewards`, `evolution` (GNN), `ppo`, `sac`, `plotting`,
-`visualization` e `simulation`. Os scripts de treino reescrevem a chave
-`classic_scenario` consoante o cenário em curso.
+```bibtex
+@mastersthesis{pombo2026enxames,
+  title  = {Aprendizagem por Reforço para Controlo de Enxames},
+  author = {Pombo, Gonçalo},
+  school = {ISCTE --- Instituto Universitário de Lisboa},
+  year   = {2026},
+}
+```

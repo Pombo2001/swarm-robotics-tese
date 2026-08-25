@@ -254,7 +254,7 @@ results/*
 results/estatisticas/*
 !results/estatisticas/escalabilidade_*.csv
 
-# Config local do Claude Code (especifico da maquina)
+# Configuracao local de ferramentas de edicao (especifica da maquina)
 .claude/
 
 # Auxiliares de compilacao LaTeX (regeneraveis)

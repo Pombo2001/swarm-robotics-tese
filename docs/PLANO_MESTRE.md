@@ -6,7 +6,7 @@
 > `docs/arquivo/` a 25 jul; não os atualizes, atualiza ESTE.
 > O mapa do resto da pasta está em [`docs/README.md`](README.md).
 >
-> **Para o Claude/Opus:** lê este ficheiro do princípio ao fim antes de tocar em
+> **Ao retomar o trabalho:** ler este ficheiro do princípio ao fim antes de tocar em
 > qualquer coisa. Verifica `git log` e as checkboxes — NÃO refaças trabalho fechado.
 > A memória persistente (`memory/`) tem o detalhe de cada episódio; o índice é o
 > `MEMORY.md`.
@@ -702,7 +702,7 @@ que o geodésico existe para eliminar. Passou a derivar de `MAZE_SCENARIOS`.
 - **VPN do ISCTE ligada** primeiro, senão timeout. Máquina: `SERVIDOR_DE_TREINO` (`dellicious`),
   user `goncalo`, password pessoal (não está no repo). Host key ed25519:
   `SHA256:HOSTKEY_REMOVIDA`. 64 vCPU, 125 GiB RAM, sem GPU.
-- Para o Claude operar sozinho (password interativa bloqueada): `plink` (comandos) e
+- Para automatizar sem prompt interativo (a password bloqueia scripts): `plink` (comandos) e
   `pscp` (ficheiros) com `-batch -hostkey SHA256:... -pw '<PASS>'`.
 - Código vive em `~/swarm-robotics-tese/` (+ dirs isolados por campanha, ex.
   `~/week_{A,B}*`). Ver treinos: `tmux ls`; `tmux capture-pane -pt <sessão> -S -60`.

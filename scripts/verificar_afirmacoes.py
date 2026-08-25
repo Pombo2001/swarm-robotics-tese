@@ -313,6 +313,83 @@ def diagnostico_qi7():
               % ", ".join("%.1f" % x for x in paradas[paradas < num(v[1])]))
 
 
+# ------------------------------------------------------- o README do projeto
+def readme():
+    """Os números do README são os mesmos da dissertação?
+
+    O README é a primeira página que alguém lê no repositório — e é a que
+    ninguém regenera. Este já mentiu: dizia «30 runs» quando o protocolo é 7,
+    listava seis dos sete cenários, e anunciava um LiDAR de 5 m quando o
+    `foraging.yaml` diz 8. Cada um desses números vive verificado noutro lado
+    (na tese, no YAML), e o que falta é ligá-los.
+
+    A regra é simples e não julga a redação: um número que o README apresenta
+    como resultado tem de aparecer, com a mesma grafia, no corpo da tese — que
+    por sua vez é conferido contra os CSV. Se a campanha mudar, os dois caem
+    juntos em vez de o README ficar a dizer o que já não é verdade.
+    """
+    cabecalho("README do repositório (a primeira página que alguém lê)")
+    caminho = os.path.join(RAIZ, "README.md")
+    if not os.path.exists(caminho):
+        falhas.append("não há README.md na raiz")
+        return
+    texto = open(caminho, encoding="utf-8").read()
+    tese = corpo()
+
+    # (rótulo, o que procurar no README, como o mesmo facto está escrito no .tex)
+    # O total de episódios da campanha não está escrito na tese com esta grafia
+    # — lá aparece decomposto (3 × 7 cenários × 7 execuções × 20 episódios). O
+    # README dá-o feito, e por isso confere-se contra o CSV, que é a fonte.
+    m = re.search(r"\*\*(\d+) episódios de avaliação", texto)
+    if m:
+        confere("episódios da campanha final (README vs CSV)", m.group(1),
+                len(pd.read_csv(FINAL_7D)), 0)
+    else:
+        falhas.append("README: perdeu o total de episódios da campanha final")
+
+    factos = [
+        # O protocolo é o primeiro a apodrecer: a versão anterior deste README
+        # anunciava «30 runs» quando as campanhas correram 7 execuções.
+        ("protocolo das campanhas", "7 execuções × 20 episódios",
+         "7 execuções independentes"),
+        ("convergência do adaptativo", "28/28", "28/28"),
+        ("convergência do objetivo puro", "15/28", "15/28"),
+        ("convergência dos gradientes", "14/28", "14/28"),
+        ("retenção sob falhas", "92–106", "92\\% e 106\\%"),
+        ("combinações cenário × dimensão", "28 combinações", "28 combinações"),
+        ("execuções que resolvem o mapa composto", "4 de 21", "4 das $21$"),
+        ("limiar pré-registado da QI7", "limiar de 15", "limiar de $15$"),
+        ("dimensão do mapa composto", "103 × 62", "103 \\times 62"),
+        ("estudos incluídos na revisão", "58 estudos", "58 estudos"),
+        ("registos identificados", "883", "883"),
+        ("registos após desduplicação", "680", "680"),
+        ("dimensão da observação", "16 + (N−1) × 5 = 111", "16 + (N-1) \\times 5 = 111"),
+    ]
+    for rotulo, no_readme, no_tex in factos:
+        tem_readme = no_readme in texto
+        tem_tese = no_tex in tese
+        ok = tem_readme and tem_tese
+        print("  [%s] %-46s README %-3s tese %s"
+              % ("v" if ok else "!", rotulo,
+                 "sim" if tem_readme else "NÃO", "sim" if tem_tese else "NÃO"))
+        if not tem_readme:
+            falhas.append("README: perdeu «%s» (%s)" % (no_readme, rotulo))
+        elif not tem_tese:
+            falhas.append("README diz «%s» (%s) e a tese já não o diz — um dos "
+                          "dois ficou para trás" % (no_readme, rotulo))
+
+    # E o que o README afirma sobre o próprio simulador, contra o YAML.
+    import yaml as _yaml
+    cfg = _yaml.safe_load(open(os.path.join(RAIZ, "configs", "foraging.yaml"),
+                               encoding="utf-8"))
+    m = re.search(r"LiDAR \(alcance (\d+) m\)", texto)
+    if m:
+        confere("alcance do LiDAR anunciado no README", m.group(1),
+                cfg["environment"]["lidar_range"], 0)
+    else:
+        falhas.append("README: não encontrei o alcance do LiDAR")
+
+
 # -------------------------------------------------- resumo contra o abstract
 def resumo_e_abstract():
     """O Resumo e o Abstract contam a mesma história com os mesmos números?
@@ -417,6 +494,7 @@ def main():
     escalabilidade()
     robustez()
     diagnostico_qi7()
+    readme()
     resumo_e_abstract()
     aritmetica()
     print("\n" + "=" * 78)
