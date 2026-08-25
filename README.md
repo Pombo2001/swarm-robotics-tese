@@ -218,6 +218,16 @@ results/                   Dados, modelos e figuras (não versionado — ver REP
 
 ---
 
+## Licença
+
+O **código** — simulador, controladores, guiões e dashboard — está sob [MIT](LICENSE).
+O **texto da dissertação e do artigo** não: são obra académica sujeita às normas do
+ISCTE, podem ser lidos e citados, e para reutilização é preciso falar comigo.
+
+Para correr os guiões que falam com o servidor de treino, copia
+`configs/servidor.exemplo.env` para `configs/servidor.local.env` e preenche os dados da
+tua máquina — o ficheiro real não é versionado.
+
 ## Citação
 
 ```bibtex

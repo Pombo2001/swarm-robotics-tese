@@ -276,3 +276,7 @@ graphify-out/
 # fechar_qi7 compila. Os logs de campanha em results/ ficam versionados.
 /*.log
 Tese/_ensaio_*
+
+# Dados de ligacao ao servidor de treino (endereco, utilizador, host key).
+# Descrevem infraestrutura de terceiros e o repositorio e para publicar.
+configs/servidor.local.env

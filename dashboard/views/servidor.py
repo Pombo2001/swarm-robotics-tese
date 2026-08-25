@@ -61,6 +61,17 @@ def build():
             _section_title("dns", "Servidor de treino ISCTE")
             ui.label("Requer a VPN do ISCTE ligada. A password não é guardada.") \
                 .classes("text-xs text-gray-500")
+            if not remote.SERVERS:
+                # Sem `configs/servidor.local.env` não há máquina nenhuma: o
+                # endereço deixou de estar escrito no código para o repositório
+                # poder ser público. Dizer o que falta é melhor do que um
+                # seletor vazio — ou do que o IndexError que isto dava antes.
+                ui.label("Sem máquina configurada. Copia "
+                         "`configs/servidor.exemplo.env` para "
+                         "`configs/servidor.local.env` e preenche o endereço, o "
+                         "utilizador e a host key — o ficheiro não é versionado.") \
+                    .classes("text-xs mt-2").style("color:#ffb020")
+                return
             with ui.row().classes("w-full items-center gap-2 no-wrap mt-1"):
                 server_sel = ui.select(list(remote.SERVERS), value=list(remote.SERVERS)[0],
                                        label="Máquina").props("outlined dense").classes("flex-1")

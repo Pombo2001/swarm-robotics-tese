@@ -32,9 +32,15 @@
 # Requisitos: VPN do ISCTE ligada + PuTTY instalado (pscp).
 set -euo pipefail
 
-HOST=SERVIDOR_DE_TREINO           # dellicious
-USER=goncalo
-HOSTKEY=SHA256:HOSTKEY_REMOVIDA
+# Dados de ligação: fora do repositório (configs/servidor.local.env, não
+# versionado). Estiveram escritos aqui — endereço, utilizador e host key —, e
+# num repositório público seriam um alvo confirmado à espera de quem tente a
+# password. Modelo em configs/servidor.exemplo.env.
+_CFG="$(dirname "${BASH_SOURCE[0]}")/../configs/servidor.local.env"
+if [ -f "$_CFG" ]; then . "$_CFG"; fi
+HOST="${SWARM_HOST:?falta SWARM_HOST — copia configs/servidor.exemplo.env para configs/servidor.local.env}"
+USER="${SWARM_USER:?falta SWARM_USER em configs/servidor.local.env}"
+HOSTKEY="${SWARM_HOSTKEY:?falta SWARM_HOSTKEY em configs/servidor.local.env}"
 PSCP="/c/Program Files/PuTTY/pscp.exe"
 FICHEIRO_PASS="$HOME/.swarm_ssh_pass"
 

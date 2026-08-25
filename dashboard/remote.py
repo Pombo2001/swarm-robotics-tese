@@ -14,15 +14,48 @@ from datetime import datetime
 
 from . import config
 
-USER = "goncalo"
-REMOTE_DIR = "/home/goncalo/swarm-robotics-tese"
+def _ligacao():
+    """Endereço, utilizador e host key — lidos de fora do repositório.
 
-# Máquinas conhecidas: label -> (ip, host key ed25519). Só a .14 tem fingerprint
-# registada (a que usámos); a .26 pode ser adicionada quando tivermos a dela.
-SERVERS = {
-    "SERVIDOR_DE_TREINO (dellicious)": (
-        "SERVIDOR_DE_TREINO", "SHA256:HOSTKEY_REMOVIDA"),
-}
+    Estiveram escritos aqui. Não são segredos no sentido de uma password, mas
+    juntos descrevem infraestrutura do ISCTE — máquina, utilizador válido e a
+    impressão digital que faz uma ligação parecer legítima — e este repositório
+    é para publicar. Quem clona preenche o seu `configs/servidor.local.env` a
+    partir do modelo ao lado; sem ele, a vista «Servidor» diz o que falta em vez
+    de se ligar a uma máquina que não é a de ninguém.
+
+    Formato deliberadamente trivial (`CHAVE=valor`): o mesmo ficheiro é lido por
+    este módulo e pelos guiões de shell, e dois formatos seriam duas verdades.
+    """
+    caminho = os.path.join(config.BASE_DIR, "configs", "servidor.local.env")
+    valores = {}
+    if os.path.isfile(caminho):
+        for linha in open(caminho, encoding="utf-8"):
+            linha = linha.strip()
+            if linha and not linha.startswith("#") and "=" in linha:
+                chave, _, valor = linha.partition("=")
+                valores[chave.strip()] = valor.strip()
+    # As variáveis de ambiente ganham ao ficheiro: é como se passa isto numa
+    # máquina de trabalho sem lá deixar ficheiro nenhum.
+    for chave in ("SWARM_USER", "SWARM_HOST", "SWARM_HOST_ROTULO",
+                  "SWARM_HOSTKEY", "SWARM_REMOTE_DIR"):
+        if os.environ.get(chave):
+            valores[chave] = os.environ[chave]
+    return valores
+
+
+_LIGACAO = _ligacao()
+
+USER = _LIGACAO.get("SWARM_USER", "")
+REMOTE_DIR = _LIGACAO.get("SWARM_REMOTE_DIR", "")
+
+# Máquinas conhecidas: rótulo -> (endereço, host key ed25519). Vazio quando não
+# há configuração local — e a vista trata esse caso, em vez de rebentar.
+SERVERS = {}
+if _LIGACAO.get("SWARM_HOST") and _LIGACAO.get("SWARM_HOSTKEY"):
+    _rotulo = _LIGACAO.get("SWARM_HOST_ROTULO") or _LIGACAO["SWARM_HOST"]
+    SERVERS["%s (%s)" % (_LIGACAO["SWARM_HOST"], _rotulo)] = (
+        _LIGACAO["SWARM_HOST"], _LIGACAO["SWARM_HOSTKEY"])
 
 _NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
