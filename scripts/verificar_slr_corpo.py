@@ -40,6 +40,7 @@ Uso:
     .venv/Scripts/python.exe scripts/verificar_slr_corpo.py --listar
 """
 import argparse
+import glob
 import os
 import re
 import sys
@@ -162,6 +163,60 @@ def _conferir_registo(incl):
     return problemas
 
 
+def _cadeia_prisma(scr, incl):
+    """Os três números do fluxograma somam, e vêm dos ficheiros que os produzem?
+
+    O PRISMA do Capítulo 3 é uma cadeia: $883$ registos identificados nas duas
+    bases, $680$ depois de desduplicar, $622$ excluídos e $58$ incluídos. Cada
+    elo tem uma fonte no repositório — os exports em `docs/slr/raw/`, o registo
+    de triagem —, e nenhum verificador os ligava. É o capítulo em que este
+    projeto já teve um PRISMA **fabricado** (13 jul), e é por isso que os
+    números dele são os que menos se podem afirmar sem prova.
+
+    Confere-se a soma dos exports contra o total identificado, e a aritmética
+    da triagem contra o registo. A desduplicação (883 → 680) não se recalcula:
+    o critério vive no `slr_pipeline.py` e repeti-lo aqui seria criar uma
+    segunda resposta para a mesma pergunta; o que se exige é que o número que
+    a tese escreve seja o que o registo tem.
+    """
+    tex = "\n".join(l for l in open(TEX, encoding="utf-8").read().split("\n")
+                    if not l.lstrip().startswith("%"))
+    problemas = []
+    print("\n  ── a cadeia do PRISMA ──")
+
+    brutos = {}
+    for f in sorted(glob.glob(os.path.join(RAIZ, "docs", "slr", "raw", "*.csv"))):
+        brutos[os.path.basename(f)[:-4]] = len(pd.read_csv(f, on_bad_lines="skip"))
+    total_bruto = sum(brutos.values())
+
+    m = re.search(r"\b(\d{3})\b registos", tex) or re.search(r"n = (\d{3})", tex)
+    identificados = int(m.group(1)) if m else None
+    detalhe = " + ".join("%s %d" % (k, v) for k, v in sorted(brutos.items()))
+    ok = identificados == total_bruto
+    print("  %s identificados: exports %s = %d | tese %s"
+          % ("[v]" if ok else "[X]", detalhe, total_bruto, identificados))
+    if not ok:
+        problemas.append("identificados: os exports somam %d e a tese diz %s"
+                         % (total_bruto, identificados))
+
+    excluidos = int((scr["decisao"] == "excluir").sum())
+    ok = len(scr) == excluidos + len(incl)
+    print("  %s triagem: %d no registo = %d excluídos + %d incluídos"
+          % ("[v]" if ok else "[X]", len(scr), excluidos, len(incl)))
+    if not ok:
+        problemas.append("a triagem não fecha: %d != %d + %d"
+                         % (len(scr), excluidos, len(incl)))
+
+    for valor, rotulo in ((len(scr), "registos após desduplicação"),
+                          (excluidos, "excluídos"), (len(incl), "incluídos")):
+        na_tese = re.search(r"\b%d\b" % valor, tex) is not None
+        print("  %s %-28s %d %s" % ("[v]" if na_tese else "[X]", rotulo, valor,
+                                    "" if na_tese else "— não aparece no main.tex"))
+        if not na_tese:
+            problemas.append("o número %d (%s) não aparece na tese" % (valor, rotulo))
+    return problemas
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--listar", action="store_true",
@@ -209,6 +264,8 @@ def main():
     print(f"\n  ambos os paradigmas: {int((incl['marl'] & incl['bio']).sum())}   "
           f"nenhum: {int((~incl['marl'] & ~incl['bio']).sum())}")
     print("  (a tese soma 44 de 58 nos dois paradigmas ⇒ 14 sem paradigma dominante)")
+
+    falhas += _cadeia_prisma(scr, incl)
 
     if args.listar:
         print("\n" + "=" * 74)
