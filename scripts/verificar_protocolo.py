@@ -198,8 +198,8 @@ def verificar(texto=None):
             # campanha, o que é falso por construção.
             depois = texto[m.end():m.end() + 40].lower()
             if grupo in ("execuções", "n") and re.match(
-                    r"\s*(convergentes|que resolvem|a 100|degeneradas|falhadas|"
-                    r"com recolha|sem recolha)", depois):
+                    r"\s*(convergentes|que resolvem|que param|a 100|degeneradas|"
+                    r"falhadas|com recolha|sem recolha)", depois):
                 isentos += 1
                 continue
             ok = valor in medido[grupo]

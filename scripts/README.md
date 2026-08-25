@@ -28,6 +28,7 @@ mudam, e recusam o commit se um número deixar de bater
 |---|---|
 | `verificar_numeros_tese.py` **⟨hook⟩** | o grosso: tabelas, prosa, Resumo/Abstract, coerência interna e o artigo — ~965 valores |
 | `verificar_mapa_grande.py` **⟨hook⟩** | os 72 valores da secção do mapa composto (QI7) |
+| `verificar_afirmacoes.py` **⟨hook⟩** | as frases onde o número está na palavra: «o único», «em todas as execuções», «nenhuma passa de» |
 | `verificar_estrutura_tese.py` **⟨hook⟩** | acrónimos, figuras/tabelas órfãs, páginas com uma linha só, rótulos das tabelas |
 | `verificar_ptpt.py` **⟨hook⟩** | português de Portugal: léxico, `babel`, e a concordância de «execução» |
 | `verificar_remissoes.py` **⟨hook⟩** | cada «Figura~\ref{...}» aponta mesmo para uma figura |
@@ -38,6 +39,7 @@ mudam, e recusam o commit se um número deixar de bater
 | `verificar_parte1.py` | os números dos capítulos 1 a 4 |
 | `verificar_slr_corpo.py` | o que a tese afirma sobre o corpo da revisão sistemática |
 | `verificar_bibliografia.py` | as referências existem e são o que a bibliografia diz |
+| `verificar_bibliografia_sem_doi.py` **⟨hook⟩** | as 26 entradas SEM DOI, contra o arXiv e o OpenAlex — as que o verificador do CrossRef deixava «para ler à mão» |
 | `verificar_preregistos.py` | os compromissos dos três pré-registos foram cumpridos e reportados |
 | `verificar_figuras_tese.py` | cada figura do PDF é a que os dados produzem hoje |
 | `verificar_figuras_artigo.py` **⟨hook⟩** | as figuras do artigo acompanham as da tese (cópias idênticas, versões da coluna não mais velhas) |

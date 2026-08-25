@@ -40,7 +40,32 @@ if hasattr(sys.stdout, "reconfigure"):
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MAIN = os.path.join(RAIZ, "Tese", "main.tex")
+
+
 SAIDA = os.path.join(RAIZ, "docs", "COBERTURA_VERIFICADOR.md")
+
+
+def corpo_completo():
+    """O `.tex` como é impresso: com os `\\input` incluídos.
+
+    Esta medição contava 1882 tokens e dizia «51% cobertos». Só que a secção do
+    mapa composto — a QI7 inteira, com a última campanha da dissertação — não
+    vive no `main.tex`: entra por `\\input{seccao_mapa_grande}`, e com ela o
+    PRISMA gerado e o apêndice da revisão sistemática. São **402 números** que
+    a régua da cobertura nunca viu, e sobre os quais dizia, por omissão, que
+    estava tudo medido. Uma medição de cobertura que não cobre um capítulo é
+    exatamente o defeito que ela existe para apanhar.
+    """
+    base = os.path.dirname(MAIN)
+    partes = []
+    for linha in open(MAIN, encoding="utf-8").read().split("\n"):
+        m = re.search(r"\\input\{([^}]+)\}", linha)
+        alvo = os.path.join(base, (m.group(1) if m else "") + ".tex")
+        if m and os.path.exists(alvo):
+            partes.append(open(alvo, encoding="utf-8").read())
+        else:
+            partes.append(linha)
+    return "\n".join(partes)
 
 # Os verificadores que leem o `.tex`. O `verificar_slr_corpo` também o lê, mas só
 # para tirar três números do capítulo da revisão; entra na mesma.
@@ -53,7 +78,13 @@ VERIFICADORES = ["verificar_numeros_tese", "verificar_contagens_prosa",
                  "verificar_protocolo",
                  # e os compromissos pré-registados, que leem o `.tex` para
                  # confirmar que cada um está reportado.
-                 "verificar_preregistos"]
+                 "verificar_preregistos",
+                 # As frases onde o número está na palavra — «o único», «em
+                 # todas as execuções», «nenhuma passa de». Lê os valores
+                 # citados à volta dessas afirmações, que é onde esta medição
+                 # via zeros: as tabelas de escalabilidade e de robustez e o
+                 # diagnóstico da QI7 não tinham um único token lido.
+                 "verificar_afirmacoes"]
 
 
 # ── instrumentação do `re` ───────────────────────────────────────────────────
@@ -72,7 +103,7 @@ def _instrumentar(marcas):
     # verificador que recorta uma secção (14 636 caracteres) e faz as buscas só
     # nela — que é exatamente o que a verificação do Novelty passou a fazer. Uma
     # medição que não vê o instrumento novo dá a ilusão de que nada mudou.
-    corpo_tex = open(MAIN, encoding="utf-8").read()
+    corpo_tex = corpo_completo()
     # …e a mesma coisa SEM comentários, porque é assim que os verificadores a
     # têm em memória: tiram os comentários primeiro e só depois recortam a
     # secção. Um recorte de uma secção que tenha um `%` lá dentro deixa de ser
@@ -237,7 +268,7 @@ def classificar(contexto):
 
 
 def analisar():
-    bruto = open(MAIN, encoding="utf-8").read()
+    bruto = corpo_completo()
     corpo = re.sub(r"(?<!\\)%[^\n]*", "", bruto)
 
     marcas, falharam = correr_verificadores()

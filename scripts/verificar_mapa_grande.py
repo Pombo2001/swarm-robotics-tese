@@ -484,37 +484,30 @@ def trabalho_futuro():
                 compara("k a 2000 passos vs o k da avaliação oficial",
                         float(m_ofic["max_convergentes"]),
                         float((por[2000] > 0).sum()), tol=0.0)
-            # «quatro execuções param a 5--13 m do ninho e não entram nele».
-            # O numeral está escrito por palavras, por isso a contagem não se
-            # extrai com o `le()`: lê-se o INTERVALO do texto e confirma-se que
-            # são mesmo quatro as execuções que nele caem sem recolher.
-            # «há execuções que param a 5--13 m do ninho e não entram nele
-            # mesmo com o dobro do tempo». O item deixou de as contar (eram
-            # quatro com um episódio por célula, são duas com três) — mas o
-            # intervalo continua a ser uma afirmação, e tem de conter alguma.
-            m_int = re.search(r"param a \$(\d+)\$--\$(\d+)\$\\,m do ninho e "
-                              r"não entram", item)
+            # «há 5 execuções que param a menos de 13 m do ninho --- 3 delas a
+            # menos de 5 m --- e não entram nele mesmo com o dobro do tempo».
+            #
+            # A frase dizia «param a 5--13 m», e o intervalo era um recorte: as
+            # execuções que param a 2,3, 4,1 e 4,9 m ficavam de fora, e são
+            # precisamente as que mais sustentam o argumento (o que falta é a
+            # aproximação final, não o orçamento). Corrigida a 25 ago, passa a
+            # afirmar DUAS contagens — e são as duas que aqui se conferem, que
+            # é mais forte do que confirmar que um intervalo contém alguém.
+            m_int = re.search(r"há \$(\d+)\$ execuções que param a menos de "
+                              r"\$(\d+)\$\\,m do ninho --- \$(\d+)\$ delas a menos "
+                              r"de \$(\d+)\$\\,m --- e não entram", item)
             if m_int is None:
                 falhas.append("Trabalhos Futuros: não encontrei a frase das "
                               "execuções presas perto do ninho")
             else:
-                lo, hi = float(m_int.group(1)), float(m_int.group(2))
+                n_perto, lim, n_muito, lim2 = (float(m_int.group(i)) for i in (1, 2, 3, 4))
                 d4 = h[h.horizonte == 4000].groupby("Run").agg(
                     dmin=("d_min", "min"), rec=("recolhas", "max"))
-                presas = d4[(d4.rec == 0) & (d4.dmin >= lo) & (d4.dmin <= hi)]
-                global conferidos
-                conferidos += 1
-                if len(presas):
-                    print("  [v] %-46s %d execução(ões): %s"
-                          % ("execuções presas a %g--%g m" % (lo, hi),
-                             len(presas),
-                             ", ".join("run %d a %.1f m" % (r, v)
-                                       for r, v in presas.dmin.items())))
-                else:
-                    print("  [X] execuções presas a %g--%g m: nenhuma"
-                          % (lo, hi))
-                    falhas.append("Trabalhos Futuros: o intervalo %g--%g m não "
-                                  "contém execução nenhuma" % (lo, hi))
+                paradas = d4[d4.rec == 0].dmin
+                compara("execuções que param a menos de %g m sem entrar" % lim,
+                        float((paradas < lim).sum()), n_perto, tol=0.0)
+                compara("dessas, as que param a menos de %g m" % lim2,
+                        float((paradas < lim2).sum()), n_muito, tol=0.0)
 
 
 def _f2_contra_texto(texto):

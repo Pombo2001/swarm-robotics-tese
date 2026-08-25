@@ -1,0 +1,267 @@
+{
+ "kennedy1995pso": {
+  "titulo": "Particle swarm optimization",
+  "autores": [
+   "James Kennedy",
+   "R.C. Eberhart"
+  ],
+  "ano": "2002",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "sutton2018reinforcement": {
+  "titulo": "Reinforcement Learning: An Introduction",
+  "autores": [
+   "Richard S. Sutton",
+   "Andy Barto"
+  ],
+  "ano": "1998",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "chen2024graph": {
+  "titulo": "Transferable Graphical MARL for Real-Time Estimation in Dynamic Wireless Networks",
+  "autores": [
+   "Xingran Chen",
+   "Navid NaderiAlizadeh",
+   "Alejandro Ribeiro",
+   "Shirin Saeedi Bidokhti"
+  ],
+  "ano": "2024",
+  "fonte": "arXiv"
+ },
+ "ekechi2025survey": {
+  "titulo": "A Survey on UAV Control with Multi-Agent Reinforcement Learning",
+  "autores": [
+   "Chijioke C. Ekechi",
+   "Tarek Elfouly",
+   "A.T. Alouani",
+   "Tamer Khattab"
+  ],
+  "ano": "2025",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "bettini2024benchmarl": {
+  "titulo": "BenchMARL: Benchmarking Multi-Agent Reinforcement Learning",
+  "autores": [
+   "Matteo Bettini",
+   "Amanda Prorok",
+   "Vincent Moens"
+  ],
+  "ano": "2023",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "wang2025lns2": {
+  "titulo": "LNS2+RL: Combining Multi-Agent Reinforcement Learning with Large Neighborhood Search in Multi-Agent Path Finding",
+  "autores": [
+   "Yutong Wang",
+   "Tanishq Duhan",
+   "Jiaoyang Li",
+   "Guillaume Sartoretti"
+  ],
+  "ano": "2024",
+  "fonte": "arXiv"
+ },
+ "huttenrauch2019deep": {
+  "titulo": "Deep Reinforcement Learning for Swarm Systems",
+  "autores": [
+   "Maximilian Hüttenrauch",
+   "Adrian Šošić",
+   "Gerhard Neumann"
+  ],
+  "ano": "2018",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "huh2023marl": {
+  "titulo": "Multi-agent Reinforcement Learning: A Comprehensive Survey",
+  "autores": [
+   "Dom Huh",
+   "Prasant Mohapatra"
+  ],
+  "ano": "2023",
+  "fonte": "arXiv"
+ },
+ "iskandar2023navigation": {
+  "titulo": "Using Deep Reinforcement Learning to Solve a Navigation Problem for a Swarm Robotics System",
+  "autores": [
+   "Alaa Iskandar",
+   "Hussam M. Rostum",
+   "Béla Kovács"
+  ],
+  "ano": "2023",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "hassen2025hybrid": {},
+ "li2023race": {},
+ "somvanshi2025influx": {
+  "titulo": "A Review on Influx of Bio-Inspired Algorithms: Critique and Improvement Needs",
+  "autores": [
+   "Shriyank Somvanshi",
+   "Md Monzurul Islam",
+   "Syed Aaqib Javed",
+   "Gaurab Chhetri",
+   "Kazi Sifatul Islam",
+   "Tausif Islam Chowdhury",
+   "Sazzad Bin Bashar Polock",
+   "Anandi Dutta",
+   "Subasish Das"
+  ],
+  "ano": "2025",
+  "fonte": "arXiv"
+ },
+ "xiao2026csper": {
+  "titulo": "CSPER: Curiosity-Driven Safety-Prioritized Experience Replay for Mapless Navigation Using Deep Reinforcement Learning",
+  "autores": [
+   "Wendong Xiao",
+   "Liang Yuan",
+   "Teng Ran",
+   "Li He",
+   "Jianbo Zhang",
+   "Jianping Cui"
+  ],
+  "ano": "2026",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "ng1999policy": {
+  "titulo": "Policy Invariance Under Reward Transformations: Theory and Application to Reward Shaping",
+  "autores": [
+   "Andrew Y. Ng",
+   "Daishi Harada",
+   "Stuart Russell"
+  ],
+  "ano": "1999",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "schulman2017ppo": {
+  "titulo": "Proximal Policy Optimization Algorithms",
+  "autores": [
+   "John Schulman",
+   "Filip Wolski",
+   "Prafulla Dhariwal",
+   "Alec Radford",
+   "Oleg Klimov"
+  ],
+  "ano": "2017",
+  "fonte": "arXiv"
+ },
+ "haarnoja2018sac": {
+  "titulo": "Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor",
+  "autores": [
+   "Tuomas Haarnoja",
+   "Aurick Zhou",
+   "Pieter Abbeel",
+   "Sergey Levine"
+  ],
+  "ano": "2018",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "schulman2016gae": {
+  "titulo": "High-Dimensional Continuous Control Using Generalized Advantage Estimation",
+  "autores": [
+   "John Schulman",
+   "Philipp Moritz",
+   "Sergey Levine",
+   "Michael I. Jordan",
+   "Pieter Abbeel"
+  ],
+  "ano": "2015",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "vaswani2017attention": {
+  "titulo": "Attention Is All You Need",
+  "autores": [
+   "Ashish Vaswani",
+   "Noam Shazeer",
+   "Niki Parmar",
+   "Jakob Uszkoreit",
+   "Llion Jones",
+   "Aidan N. Gomez",
+   "Łukasz Kaiser",
+   "Illia Polosukhin"
+  ],
+  "ano": "2025",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "salimans2017es": {
+  "titulo": "Evolution Strategies as a Scalable Alternative to Reinforcement Learning",
+  "autores": [
+   "Tim Salimans",
+   "Jonathan Ho",
+   "Xi Chen",
+   "Szymon Sidor",
+   "Ilya Sutskever"
+  ],
+  "ano": "2017",
+  "fonte": "arXiv"
+ },
+ "velickovic2018gat": {
+  "titulo": "Graph Attention Networks",
+  "autores": [
+   "Veli\\v{c}kovi\\'c, Petar",
+   "Guillem Cucurull",
+   "Arantxa Casanova",
+   "Adriana Romero",
+   "Li\\`o, Pietro",
+   "Yoshua Bengio"
+  ],
+  "ano": "2017",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "lowe2017maddpg": {
+  "titulo": "Multi-Agent Actor-Critic for Mixed Cooperative-Competitive Environments",
+  "autores": [
+   "Ryan Lowe",
+   "Yi Wu",
+   "Aviv Tamar",
+   "Jean Harb",
+   "Pieter Abbeel",
+   "Igor Mordatch"
+  ],
+  "ano": "2017",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "oliehoek2016concise": {
+  "titulo": "A Concise Introduction to Decentralized POMDPs",
+  "autores": [
+   "Frans A. Oliehoek",
+   "Christopher Amato"
+  ],
+  "ano": "2016",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "tobin2017domain": {
+  "titulo": "Domain randomization for transferring deep neural networks from simulation to the real world",
+  "autores": [
+   "Josh Tobin",
+   "Rachel Fong",
+   "Alex Ray",
+   "Jonas Schneider",
+   "Wojciech Zaremba",
+   "Pieter Abbeel"
+  ],
+  "ano": "2017",
+  "fonte": "OpenAlex",
+  "ambiguo": false
+ },
+ "bonabeau1999swarm": {
+  "titulo": "Swarm Intelligence: From Natural to Artificial Systems",
+  "autores": [
+   "Barbara Webb"
+  ],
+  "ano": "2002",
+  "fonte": "OpenAlex",
+  "ambiguo": true
+ }
+}
