@@ -40,18 +40,31 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p site/img
+          # Resultados e capturas (Tese/images/resultados/)
           for fig in viz_u_wall megatreino_u_wall_4bracos \
-                     escalabilidade_zeroshot_none mapa_grande_planta; do
+                     escalabilidade_zeroshot_none mapa_grande_planta \
+                     mapa_grande_rastos robustez_falhas recolhas_por_cenario \
+                     heatmap_geodesico_u_wall \
+                     heatmap_ocupacao_gnn_u_wall heatmap_ocupacao_ppo_u_wall \
+                     heatmap_ocupacao_sac_u_wall; do
             cp "Tese/images/resultados/${fig}.png" "site/img/${fig}.png"
           done
-          ls -lh site/img
+          # Os sete cenários vistos de cima (Tese/images/)
+          for cen in none u_wall bottleneck four_rooms cooperative_door \
+                     cooperative_perception cooperative_door_bypass; do
+            cp "Tese/images/mapa_topo_${cen}.png" "site/img/mapa_topo_${cen}.png"
+          done
+          # O episódio animado no mapa composto — o único ficheiro que não vem
+          # de Tese/images: é o GIF que o dashboard mostra, versionado à parte.
+          cp results/mapa_grande/f2_gnn/videos/gnn_mapa_grande.gif site/img/gnn_mapa_grande.gif
+          du -sh site/img && ls site/img | wc -l
 
       - name: Confirmar que a página não ficou com imagens partidas
         run: |
           set -euo pipefail
           # Uma página publicada com um <img> a apontar para nada é pior do que
           # não a publicar: parece um erro do leitor, não do autor.
-          grep -o 'img/[a-z0-9_]*\.png' site/index.html | sort -u | while read -r ref; do
+          grep -oE 'img/[a-z0-9_]+\.(png|gif)' site/index.html | sort -u | while read -r ref; do
             test -f "site/${ref}" || { echo "FALTA: site/${ref}"; exit 1; }
           done
           echo "todas as imagens referenciadas existem"

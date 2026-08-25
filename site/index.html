@@ -4,195 +4,510 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Aprendizagem por Reforço para Controlo de Enxames</title>
-<meta name="description" content="Comparação entre neuroevolução com rede de grafos, PPO e SAC no controlo descentralizado de enxames robóticos. Dissertação de Mestrado, ISCTE-IUL 2026.">
+<meta name="description" content="Neuroevolução com rede de grafos, PPO e SAC comparados em oito cenários de forrageamento cooperativo. Dissertação de Mestrado, ISCTE-IUL 2026.">
+<meta property="og:title" content="Aprendizagem por Reforço para Controlo de Enxames">
+<meta property="og:description" content="Três controladores descentralizados, oito cenários, 2940 episódios de avaliação. Dissertação de Mestrado, ISCTE-IUL 2026.">
+<meta property="og:type" content="website">
 <style>
   :root{
-    --fundo:#0d1013; --carta:#141a1f; --linha:#232c34;
-    --texto:#e6edf3; --suave:#9fb0bd; --ténue:#6b7c8a;
+    --fundo:#0d1013; --carta:#141a1f; --carta2:#171e24; --linha:#232c34;
+    --texto:#e6edf3; --suave:#9fb0bd; --tenue:#6b7c8a;
     --gnn:#2e9e63; --ppo:#e2662a; --sac:#3b82c4; --aviso:#ffb020;
   }
   *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
   body{
     margin:0; background:var(--fundo); color:var(--texto);
     font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
   }
-  .env{max-width:1080px; margin:0 auto; padding:0 24px}
-  header{padding:64px 0 40px; border-bottom:1px solid var(--linha)}
-  h1{font-size:clamp(28px,4.4vw,44px); line-height:1.15; margin:0 0 14px; letter-spacing:-.02em}
-  .sub{color:var(--suave); font-size:17px; margin:0 0 6px}
-  .meta{color:var(--ténue); font-size:14px}
+  .env{max-width:1120px; margin:0 auto; padding:0 24px}
+
+  /* navegação fixa */
+  nav{
+    position:sticky; top:0; z-index:20; background:rgba(13,16,19,.92);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--linha);
+  }
+  nav .env{display:flex; gap:22px; align-items:center; height:52px; overflow-x:auto}
+  nav a{color:var(--suave); font-size:14px; white-space:nowrap; text-decoration:none}
+  nav a:hover{color:var(--texto)}
+  nav .marca{color:var(--texto); font-weight:600; margin-right:6px}
+
+  header{padding:60px 0 42px; border-bottom:1px solid var(--linha)}
+  h1{font-size:clamp(28px,4.4vw,44px); line-height:1.14; margin:0 0 14px; letter-spacing:-.02em}
+  .sub{color:var(--suave); font-size:17px; margin:0 0 6px; max-width:70ch}
+  .meta{color:var(--tenue); font-size:14px}
   .tags{margin-top:22px; display:flex; gap:8px; flex-wrap:wrap}
-  .tag{
-    font-size:12.5px; padding:5px 11px; border-radius:999px;
-    border:1px solid var(--linha); color:var(--suave); background:#11171c;
-  }
-  .tag b{font-weight:600}
+  .tag{font-size:12.5px; padding:5px 11px; border-radius:999px;
+       border:1px solid var(--linha); color:var(--suave); background:#11171c}
   .dot{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:7px; vertical-align:1px}
-  h2{font-size:23px; margin:56px 0 8px; letter-spacing:-.01em}
-  h2 + .lead{color:var(--suave); margin:0 0 26px; font-size:15.5px}
-  .destaque{
-    margin:34px 0 0; padding:22px 24px; border-left:3px solid var(--gnn);
-    background:var(--carta); border-radius:0 10px 10px 0; font-size:17px;
-  }
+
+  section{padding:14px 0 0}
+  h2{font-size:24px; margin:64px 0 8px; letter-spacing:-.01em; scroll-margin-top:70px}
+  h3{font-size:17px; margin:34px 0 6px}
+  .lead{color:var(--suave); margin:0 0 24px; font-size:15.5px; max-width:76ch}
+  p{max-width:76ch}
+
+  .destaque{margin:32px 0 0; padding:22px 24px; border-left:3px solid var(--gnn);
+            background:var(--carta); border-radius:0 10px 10px 0; font-size:16.5px}
+  .destaque.aviso{border-left-color:var(--aviso)}
+
   .grelha{display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-top:24px}
-  @media (max-width:720px){ .grelha{grid-template-columns:1fr} }
+  .grelha.tres{grid-template-columns:repeat(3,1fr)}
+  .grelha.quatro{grid-template-columns:repeat(4,1fr)}
+  @media (max-width:860px){ .grelha,.grelha.tres,.grelha.quatro{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:560px){ .grelha,.grelha.tres,.grelha.quatro{grid-template-columns:1fr} }
+
   .carta{background:var(--carta); border:1px solid var(--linha); border-radius:12px; padding:20px 22px}
-  .carta h3{margin:0 0 10px; font-size:15px; letter-spacing:.04em; text-transform:uppercase; color:var(--ténue)}
-  .num{font-size:30px; font-weight:650; letter-spacing:-.02em; margin:0 0 4px}
+  .carta h4{margin:0 0 10px; font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--tenue)}
+  .num{font-size:29px; font-weight:650; letter-spacing:-.02em; margin:0 0 4px}
   .num small{font-size:14px; font-weight:400; color:var(--suave); letter-spacing:0}
   .carta p{margin:8px 0 0; font-size:14.5px; color:var(--suave)}
-  figure{margin:30px 0 0; background:var(--carta); border:1px solid var(--linha); border-radius:12px; padding:18px; overflow:hidden}
+
+  figure{margin:26px 0 0; background:var(--carta); border:1px solid var(--linha);
+         border-radius:12px; padding:16px; overflow:hidden}
   figure img{width:100%; height:auto; display:block; border-radius:6px; background:#fff}
-  figcaption{margin-top:14px; font-size:14px; color:var(--suave)}
+  figcaption{margin-top:12px; font-size:14px; color:var(--suave)}
   figcaption b{color:var(--texto); font-weight:600}
-  .duas{display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:18px}
+  .duas{display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:18px}
   .duas figure{margin-top:0}
+
+  /* galeria de cenários */
+  .cenarios{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:24px}
+  @media (max-width:900px){ .cenarios{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:520px){ .cenarios{grid-template-columns:1fr} }
+  .cen{background:var(--carta); border:1px solid var(--linha); border-radius:10px; overflow:hidden}
+  .cen img{width:100%; height:auto; display:block; background:#fff}
+  .cen .txt{padding:12px 14px}
+  .cen b{display:block; font-size:14.5px; margin-bottom:3px}
+  .cen span{font-size:13px; color:var(--suave); line-height:1.5}
+
+  table{width:100%; border-collapse:collapse; margin-top:22px; font-size:14.5px}
+  th,td{padding:10px 12px; text-align:right; border-bottom:1px solid var(--linha)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--tenue); font-weight:600; font-size:12.5px; letter-spacing:.04em; text-transform:uppercase}
+  tbody tr:hover{background:var(--carta2)}
+  td.g{color:var(--gnn)} td.p{color:var(--ppo)} td.s{color:var(--sac)}
+  .tnota{margin-top:10px; font-size:13.5px; color:var(--tenue)}
+
   ul.limpa{list-style:none; padding:0; margin:18px 0 0}
   ul.limpa li{padding:11px 0; border-top:1px solid var(--linha); font-size:15px; color:var(--suave)}
   ul.limpa li b{color:var(--texto)}
+
+  .qi{border-left:2px solid var(--linha); padding-left:20px; margin-top:26px}
+  .qi h4{margin:0 0 4px; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--tenue)}
+  .qi .perg{font-size:16px; margin:0 0 8px}
+  .qi .resp{color:var(--suave); font-size:15px; margin:0}
+  .qi .resp b{color:var(--texto)}
+
+  .tempo{margin-top:24px; border-left:2px solid var(--linha); padding-left:22px}
+  .tempo .item{position:relative; padding:0 0 20px}
+  .tempo .item::before{content:""; position:absolute; left:-27px; top:8px; width:8px; height:8px;
+                       border-radius:50%; background:var(--linha)}
+  .tempo .item.forte::before{background:var(--gnn)}
+  .tempo .quando{font-size:12.5px; color:var(--tenue); letter-spacing:.03em}
+  .tempo .que{font-size:15px; margin:2px 0 2px}
+  .tempo .desc{font-size:14px; color:var(--suave); margin:0}
+
   a{color:#7fb7e8; text-decoration:none}
   a:hover{text-decoration:underline}
-  .botoes{display:flex; gap:12px; flex-wrap:wrap; margin-top:28px}
-  .botao{
-    display:inline-block; padding:11px 18px; border-radius:8px; font-size:14.5px; font-weight:550;
-    border:1px solid var(--linha); background:var(--carta); color:var(--texto);
-  }
+  .botoes{display:flex; gap:12px; flex-wrap:wrap; margin-top:26px}
+  .botao{display:inline-block; padding:11px 18px; border-radius:8px; font-size:14.5px; font-weight:550;
+         border:1px solid var(--linha); background:var(--carta); color:var(--texto)}
   .botao:hover{border-color:#3a4854; text-decoration:none}
   .botao.forte{background:var(--gnn); border-color:var(--gnn); color:#06120b}
-  footer{margin:72px 0 56px; padding-top:26px; border-top:1px solid var(--linha); color:var(--ténue); font-size:13.5px}
-  @media (max-width:640px){ header{padding:40px 0 28px} .env{padding:0 18px} }
+  footer{margin:76px 0 60px; padding-top:26px; border-top:1px solid var(--linha); color:var(--tenue); font-size:13.5px}
+  @media (max-width:640px){ header{padding:38px 0 26px} .env{padding:0 18px} }
 </style>
 </head>
 <body>
+
+<nav><div class="env">
+  <span class="marca">Enxames</span>
+  <a href="#cenarios">Cenários</a>
+  <a href="#como">Como funciona</a>
+  <a href="#resultados">Resultados</a>
+  <a href="#comportamento">Comportamento</a>
+  <a href="#mapa">Mapa composto</a>
+  <a href="#questoes">As 7 questões</a>
+  <a href="#painel">Painel ao vivo</a>
+  <a href="#rigor">Rigor</a>
+  <a href="#percurso">Percurso</a>
+</div></nav>
+
 <div class="env">
 
 <header>
   <h1>Aprendizagem por Reforço<br>para Controlo de Enxames</h1>
-  <p class="sub">Neuroevolução com rede de grafos, PPO e SAC comparados em oito cenários
-  de forrageamento cooperativo — num simulador 3D construído para os medir lado a lado.</p>
+  <p class="sub">Neuroevolução com rede de grafos, PPO e SAC comparados em oito cenários de
+  forrageamento cooperativo — num simulador 3D construído para os medir lado a lado.</p>
   <p class="meta">Dissertação de Mestrado em Inteligência Artificial · ISCTE-IUL, 2026 ·
   Gonçalo Pombo · Orientação: Prof. Luís Nunes</p>
   <div class="tags">
     <span class="tag"><span class="dot" style="background:var(--gnn)"></span><b>GNN</b> neuroevolutivo</span>
     <span class="tag"><span class="dot" style="background:var(--ppo)"></span><b>PPO</b> on-policy</span>
     <span class="tag"><span class="dot" style="background:var(--sac)"></span><b>SAC</b> off-policy</span>
+    <span class="tag">8 cenários</span>
     <span class="tag">2940 episódios de avaliação</span>
     <span class="tag">7 questões de investigação</span>
   </div>
   <div class="botoes">
-    <a class="botao forte" href="https://github.com/Pombo2001/swarm-robotics-tese/raw/main/Tese/main.pdf">Ler a dissertação (PDF)</a>
-    <a class="botao" href="https://github.com/Pombo2001/swarm-robotics-tese">Repositório</a>
+    <a class="botao forte" href="https://github.com/Pombo2001/swarm-robotics-tese/raw/main/Tese/main.pdf">Ler a dissertação (PDF, 137 págs)</a>
+    <a class="botao" href="https://github.com/Pombo2001/swarm-robotics-tese">Código e dados</a>
   </div>
 </header>
 
 <div class="destaque">
   <b>A pergunta.</b> A inteligência adaptativa (MARL) supera a robustez estática
-  (bio-inspirada) em cenários de <i>stress</i> dinâmico? A resposta é <b>só em parte</b> —
-  e a parte que se confirma não está onde a hipótese a punha: a vantagem de escala vive
-  na <b>representação</b> (grafo com atenção), não no algoritmo de otimização.
+  (bio-inspirada) em cenários de <i>stress</i> dinâmico? A resposta é <b>só em parte</b> — e a
+  parte que se confirma não está onde a hipótese a punha: a vantagem de escala vive na
+  <b>representação</b> (grafo com atenção), não no algoritmo de otimização; e nos cenários de
+  gradiente enganador o que decide é o <b>desenho do sinal de treino</b>.
 </div>
 
+<section>
 <h2>O enxame, a resolver</h2>
-<p class="lead">Vinte agentes contornam um muro em U para chegar ao ninho. Nenhum vê o mapa;
-cada um vê 8 raios de LiDAR e os vizinhos.</p>
+<p class="lead">Vinte agentes contornam um muro em U para chegar ao ninho. Nenhum vê o mapa:
+cada um tem 8 raios de LiDAR, a direção do ninho e o estado dos vizinhos.</p>
 <figure>
-  <img src="img/viz_u_wall.png" alt="Rasto dos 20 agentes a contornar o Muro em U">
+  <img src="img/viz_u_wall.png" loading="lazy" alt="Rasto dos 20 agentes a contornar o Muro em U">
   <figcaption><b>Um episódio completo, 78 recolhas.</b> A cor indica o instante do episódio.
   Os saltos de reaparecimento após entrega no ninho não são desenhados — desenhá-los daria
   segmentos retos a atravessar as paredes, que é exatamente a leitura que a figura desmente.</figcaption>
 </figure>
+</section>
 
-<h2>O que ficou medido</h2>
-<p class="lead">Sete campanhas fechadas. Todos os números saem de CSV versionados e são
-conferidos por 24 verificadores automáticos.</p>
+<section id="cenarios">
+<h2>Os oito cenários</h2>
+<p class="lead">Sete isolam uma dificuldade cada; o oitavo compõe quatro delas num só labirinto,
+quatro vezes maior. Vistos de cima, com as paredes a cinzento-escuro e o ninho a verde.</p>
 
-<div class="grelha">
-  <div class="carta">
-    <h3>Escalabilidade</h3>
-    <p class="num">100 %<small> nas 28 combinações</small></p>
-    <p>Só a arquitetura de grafo transfere de N=10 para N=100 <b>sem retreino</b>.
-    O PPO e o SAC são incompatíveis com N≠20 por construção — a MLP tem entrada fixa.</p>
-  </div>
-  <div class="carta">
-    <h3>Deceção espacial</h3>
-    <p class="num">28/28<small> vs 15/28</small></p>
-    <p>A novidade <b>doseada adaptativamente</b> é a única condição de toda a dissertação
-    sem uma execução falhada no Muro em U (Fisher exato, <i>p</i> &lt; 0,0001).</p>
-  </div>
-  <div class="carta">
-    <h3>Robustez a falhas</h3>
-    <p class="num">92–106 %<small> de retenção</small></p>
-    <p>Com 10 % dos agentes a falhar a meio do episódio, nas 21 combinações
-    algoritmo–cenário. A redundância vem do <i>parameter sharing</i>.</p>
-  </div>
-  <div class="carta">
-    <h3>Composição de dificuldades</h3>
-    <p class="num">4 de 21<small> · limiar 15</small></p>
-    <p>No mapa composto, só o evolutivo resolve — e abaixo do limiar fixado <i>antes</i>
-    dos dados. <b>Reportado como negativo</b>, com o número à vista.</p>
-  </div>
+<div class="cenarios">
+  <div class="cen"><img src="img/mapa_topo_none.png" loading="lazy" alt="Sandbox">
+    <div class="txt"><b>Sandbox</b><span>Arena aberta com obstáculos móveis. A linha de base:
+    sem paredes, sem deceção.</span></div></div>
+  <div class="cen"><img src="img/mapa_topo_u_wall.png" loading="lazy" alt="Muro em U">
+    <div class="txt"><b>Muro em U</b><span>Deceção espacial: seguir em frente para o ninho é
+    uma armadilha. O cenário que resistiu aos três algoritmos.</span></div></div>
+  <div class="cen"><img src="img/mapa_topo_bottleneck.png" loading="lazy" alt="Gargalo">
+    <div class="txt"><b>Gargalo</b><span>Passagem única de 2,5 m. Testa congestionamento com
+    20 agentes a competir pelo mesmo vão.</span></div></div>
+  <div class="cen"><img src="img/mapa_topo_four_rooms.png" loading="lazy" alt="Quatro Salas">
+    <div class="txt"><b>Quatro Salas</b><span>Labirinto com quatro passagens. Navegação longa
+    sem deceção.</span></div></div>
+  <div class="cen"><img src="img/mapa_topo_cooperative_door.png" loading="lazy" alt="Porta Cooperativa">
+    <div class="txt"><b>Porta Cooperativa</b><span>A porta só abre com <b>3 robôs</b> a empurrar
+    ao mesmo tempo. Exige coordenação, não só navegação.</span></div></div>
+  <div class="cen"><img src="img/mapa_topo_cooperative_perception.png" loading="lazy" alt="Perceção Cooperativa">
+    <div class="txt"><b>Perceção Cooperativa</b><span>Alvo <b>móvel</b>, capturado quando
+    rodeado por 3+ robôs a 360°.</span></div></div>
+  <div class="cen"><img src="img/mapa_topo_cooperative_door_bypass.png" loading="lazy" alt="Porta com Alternativa">
+    <div class="txt"><b>Porta com Alternativa</b><span>Como a anterior, mas há um desvio
+    lateral. Cenário <i>deceptive</i>: cooperar ou contornar?</span></div></div>
+  <div class="cen"><img src="img/mapa_grande_planta.png" loading="lazy" alt="Mapa Composto">
+    <div class="txt"><b>Mapa Composto</b><span>103 × 62 m, cinco zonas, 106 obstáculos. Compõe
+    quatro dificuldades num percurso de ~155 m.</span></div></div>
 </div>
+</section>
 
-<h2>Os gráficos que sustentam isto</h2>
+<section id="como">
+<h2>Como funciona</h2>
+<p class="lead">Um simulador 3D próprio, escrito para que os três paradigmas possam ser medidos
+com a mesma régua — mesma física, mesmo orçamento de tempo, mesmas sementes de avaliação.</p>
 
-<div class="duas">
-  <figure>
-    <img src="img/megatreino_u_wall_4bracos.png" alt="Muro em U: os quatro braços do mega-treino, n=28">
-    <figcaption><b>28 execuções por braço.</b> Cada ponto é uma execução independente.
-    O que decide não é a média — é a <i>forma</i>: os três braços sem anilamento repartem-se
-    entre execuções que resolvem o cenário e execuções que ficam a zero, quase sem nada pelo
-    meio. A média sozinha não descreve execução nenhuma.</figcaption>
-  </figure>
-  <figure>
-    <img src="img/escalabilidade_zeroshot_none.png" alt="Eficiência por agente com o aumento do enxame">
-    <figcaption><b>Escalabilidade sem retreino.</b> Só a linha do controlador de grafo
-    atravessa toda a gama. O PPO e o SAC têm um único ponto, em N=20 — a incompatibilidade
-    da política de entrada fixa <i>é</i> o resultado, não uma falha de medição.</figcaption>
-  </figure>
+<div class="grelha tres">
+  <div class="carta">
+    <h4>O que o agente vê</h4>
+    <p class="num">111<small> valores</small></p>
+    <p>Para N=20: direção e distância ao ninho, <b>8 raios de LiDAR</b> (alcance 8 m) e, por
+    cada vizinho, direção, distância e estado de sinalização. Observação puramente local —
+    nenhum agente vê o mapa.</p>
+  </div>
+  <div class="carta">
+    <h4>O que o agente ganha</h4>
+    <p class="num">+300<small> por entrega</small></p>
+    <p>Recompensa de tarefa por recolha, mais <i>shaping</i> de progresso geodésico e um bónus
+    pequeno por explorar células novas; menos um custo de energia por passo. Sem curiosidade
+    intrínseca.</p>
+  </div>
+  <div class="carta">
+    <h4>Como partilham a política</h4>
+    <p class="num">1<small> política, 20 agentes</small></p>
+    <p><i>Parameter sharing</i>: uma só rede controla todo o enxame. É daqui que vem a
+    resiliência a falhas — perder agentes não destrói conhecimento nenhum.</p>
+  </div>
 </div>
 
 <figure>
-  <img src="img/mapa_grande_planta.png" alt="Planta do mapa composto, 103 × 62 m">
-  <figcaption><b>O oitavo cenário, lido da geometria do simulador.</b> Cinco zonas de oeste
-  para este — sala de partida, gargalo com beco em U, quatro salas, porta cooperativa com
-  alternativa, câmara do ninho —, 106 obstáculos e um percurso mínimo de ~155 m. Nenhum
-  controlador treinado nos sete cenários isolados recolhe aqui um único item sem retreino:
-  84 de 84 células a zero.</figcaption>
+  <img src="img/heatmap_geodesico_u_wall.png" loading="lazy" alt="Campo geodésico do Muro em U">
+  <figcaption><b>O campo que guia a recompensa.</b> Distância real ao ninho <i>contornando as
+  paredes</i>, não em linha reta. É o que transforma o Muro em U de armadilha em problema
+  resolúvel: aproximar-se do ninho em linha reta deixa de pagar quando a parede está pelo meio.</figcaption>
 </figure>
+</section>
 
-<h2>O contributo que não estava previsto</h2>
-<div class="destaque">
-  O «colapso do evolutivo» que a literatura reporta era, neste sistema, um <b>artefacto do
-  sinal de treino</b>. Com uma <i>fitness</i> baseada no retorno acumulado, a população satura
-  num planalto onde a pressão seletiva se anula. Substituí-la pelo <i>homing</i> terminal — que
-  só é maximizável terminando junto ao ninho — levou o controlador de <b>0 % a 100 %</b> de
-  sucesso nos quatro cenários de gargalo.
+<section id="resultados">
+<h2>O que ficou medido</h2>
+<p class="lead">Sete campanhas fechadas, todas com avaliação determinística de 20 episódios por
+execução e sementes emparelhadas entre algoritmos. Os números saem de CSV versionados.</p>
+
+<div class="grelha">
+  <div class="carta">
+    <h4>Escalabilidade</h4>
+    <p class="num">100 %<small> nas 28 combinações</small></p>
+    <p>Só a arquitetura de grafo transfere de N=10 para N=100 <b>sem retreino</b>. O PPO e o SAC
+    são incompatíveis com N≠20 por construção — a MLP tem entrada fixa.</p>
+  </div>
+  <div class="carta">
+    <h4>Deceção espacial</h4>
+    <p class="num">28/28<small> vs 15/28</small></p>
+    <p>A novidade <b>doseada adaptativamente</b> é a única condição de toda a dissertação sem uma
+    execução falhada no Muro em U (Fisher exato, <i>p</i> &lt; 0,0001).</p>
+  </div>
+  <div class="carta">
+    <h4>Robustez a falhas</h4>
+    <p class="num">92–106 %<small> de retenção</small></p>
+    <p>Com 10 % dos agentes a falhar a meio do episódio, nas 21 combinações algoritmo–cenário.
+    Nenhum paradigma colapsa.</p>
+  </div>
+  <div class="carta">
+    <h4>Composição de dificuldades</h4>
+    <p class="num">4 de 21<small> · limiar 15</small></p>
+    <p>No mapa composto, só o evolutivo resolve — e abaixo do limiar fixado <i>antes</i> dos
+    dados. <b>Reportado como negativo</b>, com o número à vista.</p>
+  </div>
 </div>
 
+<h3>Desempenho por cenário</h3>
+<p class="lead">Taxa de sucesso e recolhas por episódio, na avaliação determinística
+(7 execuções × 20 episódios por célula).</p>
+<table>
+  <thead><tr><th>Cenário</th>
+    <th>GNN</th><th>rec/ep</th><th>PPO</th><th>rec/ep</th><th>SAC</th><th>rec/ep</th></tr></thead>
+  <tbody>
+    <tr><td>Sandbox</td><td class="g">86 %</td><td class="g">38,3</td><td class="p">100 %</td><td class="p">71,5</td><td class="s">100 %</td><td class="s">69,2</td></tr>
+    <tr><td>Muro em U</td><td class="g">43 %</td><td class="g">24,5</td><td class="p">71 %</td><td class="p">39,6</td><td class="s">34 %</td><td class="s">9,0</td></tr>
+    <tr><td>Gargalo</td><td class="g">100 %</td><td class="g">121,4</td><td class="p">100 %</td><td class="p">123,2</td><td class="s">72 %</td><td class="s">41,4</td></tr>
+    <tr><td>Quatro Salas</td><td class="g">100 %</td><td class="g">59,8</td><td class="p">100 %</td><td class="p">33,6</td><td class="s">100 %</td><td class="s">31,8</td></tr>
+    <tr><td>Porta Cooperativa</td><td class="g">100 %</td><td class="g">69,8</td><td class="p">100 %</td><td class="p">67,1</td><td class="s">100 %</td><td class="s">62,1</td></tr>
+    <tr><td>Perceção Cooperativa</td><td class="g">91 %</td><td class="g">19,0</td><td class="p">100 %</td><td class="p">15,3</td><td class="s">100 %</td><td class="s">16,1</td></tr>
+    <tr><td>Porta com Alternativa</td><td class="g">100 %</td><td class="g">86,7</td><td class="p">100 %</td><td class="p">85,3</td><td class="s">100 %</td><td class="s">68,6</td></tr>
+  </tbody>
+</table>
+<p class="tnota">Cada cenário é uma corrida à parte: recolhas de mapas diferentes não são a mesma
+régua. A unidade estatística é a média por execução, nunca o episódio — juntar episódios de
+execuções diferentes inflaciona o <i>n</i>.</p>
+
+<div class="duas" style="margin-top:26px">
+  <figure>
+    <img src="img/megatreino_u_wall_4bracos.png" loading="lazy" alt="Muro em U: os quatro braços do mega-treino, n=28">
+    <figcaption><b>28 execuções por braço.</b> Cada ponto é uma execução independente. O que
+    decide não é a média — é a <i>forma</i>: os três braços sem anilamento repartem-se entre
+    execuções que resolvem o cenário e execuções que ficam a zero, quase sem nada pelo meio.</figcaption>
+  </figure>
+  <figure>
+    <img src="img/escalabilidade_zeroshot_none.png" loading="lazy" alt="Eficiência por agente com o aumento do enxame">
+    <figcaption><b>Escalabilidade sem retreino.</b> Só a linha do controlador de grafo atravessa
+    toda a gama. O PPO e o SAC têm um único ponto, em N=20 — a incompatibilidade da política de
+    entrada fixa <i>é</i> o resultado, não uma falha de medição.</figcaption>
+  </figure>
+  <figure>
+    <img src="img/robustez_falhas.png" loading="lazy" alt="Desempenho antes e depois da falha de 10% dos agentes">
+    <figcaption><b>Perder 10 % do enxame a meio do episódio.</b> A retenção fica entre 92 % e
+    106 % nas 21 combinações — incluindo a Porta Cooperativa, que exige três agentes
+    simultâneos para abrir a passagem.</figcaption>
+  </figure>
+  <figure>
+    <img src="img/recolhas_por_cenario.png" loading="lazy" alt="Recolhas por cenário e algoritmo">
+    <figcaption><b>Os sete cenários de uma vez.</b> A barra de erro é o desvio entre execuções:
+    onde ela é grande, a média não descreve execução nenhuma — é o caso do Muro em U nos três
+    algoritmos.</figcaption>
+  </figure>
+</div>
+</section>
+
+<section id="comportamento">
+<h2>O que cada controlador faz, visto de cima</h2>
+<p class="lead">Onde é que os agentes passam o episódio? Os mapas de ocupação do Muro em U
+mostram três estratégias diferentes para o mesmo problema — e explicam as taxas de sucesso
+acima melhor do que qualquer média.</p>
+<div class="grelha tres">
+  <figure style="margin-top:0"><img src="img/heatmap_ocupacao_gnn_u_wall.png" loading="lazy" alt="Ocupação do GNN no Muro em U">
+    <figcaption><b>GNN</b> — contorna o muro pelo exterior e mantém um corredor de tráfego
+    estável entre a zona de recolha e o ninho.</figcaption></figure>
+  <figure style="margin-top:0"><img src="img/heatmap_ocupacao_ppo_u_wall.png" loading="lazy" alt="Ocupação do PPO no Muro em U">
+    <figcaption><b>PPO</b> — o mais consistente dos três neste cenário, com o mesmo desvio
+    aprendido na maioria das execuções.</figcaption></figure>
+  <figure style="margin-top:0"><img src="img/heatmap_ocupacao_sac_u_wall.png" loading="lazy" alt="Ocupação do SAC no Muro em U">
+    <figcaption><b>SAC</b> — concentra-se dentro do beco, o lado errado do muro: é a assinatura
+    de quem seguiu o gradiente enganador até ao fim.</figcaption></figure>
+</div>
+</section>
+
+<section id="mapa">
+<h2>O oitavo cenário: compor dificuldades</h2>
+<p class="lead">Se um controlador resolve o gargalo, o beco, as quatro salas e a porta
+cooperativa <i>separadamente</i>, resolve-os todos seguidos, num mapa quatro vezes maior?</p>
+
+<div class="duas">
+  <figure style="margin-top:0">
+    <img src="img/mapa_grande_rastos.png" loading="lazy" alt="Percursos dos agentes no mapa composto">
+    <figcaption><b>Os percursos de um episódio, por controlador.</b> O controlador de grafo
+    atravessa as cinco zonas e regressa ao ninho; o PPO fica pela zona das quatro salas; o SAC
+    não sai da partida.</figcaption>
+  </figure>
+  <figure style="margin-top:0">
+    <img src="img/gnn_mapa_grande.gif" loading="lazy" alt="Episódio animado do controlador evolutivo no mapa composto">
+    <figcaption><b>Um episódio, animado.</b> Treino nativo no mapa composto — o único
+    controlador que alguma vez recolhe aqui.</figcaption>
+  </figure>
+</div>
+
+<div class="destaque aviso">
+  <b>O resultado é negativo, e está reportado como tal.</b> Transferência sem retreino:
+  <b>zero em 84 de 84 células</b>. Com treino nativo, o evolutivo resolve o mapa em
+  <b>4 de 21 execuções</b> — abaixo do limiar de 15 que o pré-registo fixou antes de existirem
+  dados. A regra de decisão foi cumprida: a questão não sobe a resposta afirmativa, e o número
+  de execuções convergentes fica à vista para quem prefira outro critério.
+  <br><br>
+  O que a composição degrada é a <b>fiabilidade</b>, não a magnitude: as execuções que resolvem
+  o mapa fazem-no com 8,9 recolhas por episódio em média, e as restantes ficam exatamente a
+  zero. É a mesma bimodalidade do Muro em U — e ela <i>sobrevive à escala</i>.
+</div>
+</section>
+
+<section id="questoes">
+<h2>As sete questões, respondidas</h2>
+<p class="lead">Cada uma com a resposta que os dados sustentam — incluindo as que não deram o
+que a hipótese esperava.</p>
+
+<div class="qi"><h4>Questão 1 · desempenho de tarefa</h4>
+  <p class="perg">Qual dos paradigmas atinge maior eficácia na tarefa, em cenários de dificuldade crescente?</p>
+  <p class="resp"><b>Não há domínio de paradigma.</b> Com <i>fitness</i> de <i>homing</i>, o
+  evolutivo é estatisticamente superior aos métodos de gradiente em três dos sete cenários e
+  indistinguível do PPO nos restantes de gargalo. O PPO é o mais consistente entre execuções.</p></div>
+
+<div class="qi"><h4>Questão 2 · escalabilidade</h4>
+  <p class="perg">Uma política treinada com N=20 transfere-se para enxames de outra dimensão?</p>
+  <p class="resp"><b>Sim, mas só a arquitetura de grafo.</b> 100 % de sucesso nas 28 combinações
+  cenário × dimensão, de N=10 a N=100, sem retreino. As políticas MLP não são sequer avaliáveis
+  fora de N=20 — a adaptabilidade está na <b>representação</b>, não no otimizador.</p></div>
+
+<div class="qi"><h4>Questão 3 · robustez a falhas</h4>
+  <p class="perg">Como se degrada o desempenho perante a falha súbita de parte dos agentes?</p>
+  <p class="resp"><b>Pouco, e nos três paradigmas.</b> Retenção de 92 % a 106 % com 10 % de
+  falhas. A redundância vem do <i>parameter sharing</i> e da observação local.</p></div>
+
+<div class="qi"><h4>Questão 4 · critério de escolha</h4>
+  <p class="perg">Em que condições se justifica preferir um paradigma ao outro?</p>
+  <p class="resp">Enxame de dimensão fixa e prioridade à eficiência de cómputo: <b>gradiente</b>.
+  Dimensão variável ou desconhecida à partida: <b>grafo com atenção</b>, que é a única opção
+  viável. A robustez a falhas é transversal e não discrimina.</p></div>
+
+<div class="qi"><h4>Questão 5 · o colapso do evolutivo</h4>
+  <p class="perg">Porque é que a neuroevolução falha nos cenários de navegação complexa?</p>
+  <p class="resp"><b>Não falha — falhava o sinal de treino.</b> Com <i>fitness</i> de retorno
+  acumulado, a população satura num planalto sem pressão seletiva. Substituí-la pelo
+  <i>homing</i> terminal levou o controlador de 0 % a 100 % de sucesso nos quatro cenários de
+  gargalo. É o principal contributo metodológico do trabalho.</p></div>
+
+<div class="qi"><h4>Questão 6 · deceção e procura por novidade</h4>
+  <p class="perg">A pressão por novidade resolve os cenários de gradiente enganador?</p>
+  <p class="resp"><b>Sim, quando é doseada adaptativamente.</b> Com peso fixo, melhora onde a
+  deceção morde e <i>degrada</i> onde não morde — a exploração tem preço. Decaindo o peso após a
+  descoberta, o custo desaparece: 28/28 execuções no Muro em U contra 15/28 do objetivo puro,
+  sem perda significativa em nenhum dos outros seis cenários.</p></div>
+
+<div class="qi"><h4>Questão 7 · composição de dificuldades</h4>
+  <p class="perg">As conclusões dos cenários isolados transferem-se para um mapa que os combina?</p>
+  <p class="resp"><b>Parcialmente, e ao preço da fiabilidade.</b> 4 de 21 execuções, abaixo do
+  limiar pré-registado. A invariância ao <i>número</i> de agentes não se estende à
+  <i>estrutura</i> do ambiente: são duas invariâncias diferentes, e a dissertação passa a
+  medi-las em separado.</p></div>
+</section>
+
+<section id="painel">
+<h2>O painel, ao vivo</h2>
+<p class="lead">Tudo isto — e mais: as 30 campanhas do arquivo, os episódios em 3D reproduzidos
+no browser, a proveniência de cada número célula a célula — corre num painel publicado.</p>
+
+<div class="destaque">
+  <b><a href="http://swarmroboticsgs.duckdns.org">swarmroboticsgs.duckdns.org</a></b><br><br>
+  Quinze vistas, das quais onze publicadas: Ciência, Escala e robustez, Mapa composto, Defesa
+  (um ecrã por questão de investigação), Vitrine, Proveniência, Galeria, Vídeos, Episódio 3D e
+  Arquivo. As vistas de <i>operação</i> — treinar, ligar ao servidor, abrir o visualizador —
+  não existem nesta cópia: publicar resultados não é publicar um controlo remoto da máquina de
+  treino.
+  <br><br>
+  <span style="color:var(--tenue)">Corre num Raspberry Pi ligado em casa, por isso pode estar
+  temporariamente indisponível. Se não abrir, tudo o que ele mostra está nesta página e no
+  <a href="https://github.com/Pombo2001/swarm-robotics-tese">repositório</a>.</span>
+</div>
+</section>
+
+<section id="rigor">
 <h2>Como é que se sabe que os números estão certos</h2>
 <p class="lead">Um número escrito à mão não tem como se defender de uma campanha repetida.
-Por isso a proveniência é automática.</p>
+Por isso a proveniência é automática, e falha em voz alta quando alguém a contradiz.</p>
 <ul class="limpa">
-  <li><b>24 verificadores</b> leem o LaTeX e os CSV e falham se discordarem — 849 valores só
-  no principal, mais as tabelas de configuração contra o ficheiro do simulador, as figuras do
-  PDF contra os dados que as produzem (pixel a pixel) e as referências contra o CrossRef.</li>
-  <li><b>183 testes</b>, incluindo equivalência bit-a-bit do LiDAR vetorizado.</li>
+  <li><b>24 verificadores</b> leem o LaTeX e os CSV e falham se discordarem — 849 valores só no
+  principal, mais as tabelas de configuração contra o ficheiro do simulador, as figuras do PDF
+  contra os dados que as produzem (pixel a pixel), as referências contra o CrossRef e o arXiv, e
+  as frases onde o número está na palavra («o único», «nenhuma passa de»).</li>
+  <li><b>183 testes</b>, incluindo equivalência bit-a-bit do LiDAR vetorizado e a física da porta
+  cooperativa.</li>
   <li>Um <b>pre-commit</b> que os corre sempre que um commit toca na tese, nos dados ou no painel.</li>
   <li><b>Três pré-registos</b> com hipótese, métricas e regra de decisão fixadas antes de haver
-  dados — incluindo as emendas datadas e um braço que acabou por não correr.</li>
-  <li>A <b>revisão sistemática</b> foi conduzida de facto: 883 registos, 680 após desduplicação,
-  58 estudos incluídos, com o registo de triagem completo e cada exclusão justificada.</li>
+  dados — incluindo as emendas datadas e um braço pré-registado que acabou por não correr.</li>
+  <li>A <b>revisão sistemática</b> foi conduzida de facto: 883 registos identificados, 680 após
+  desduplicação, <b>58 estudos incluídos</b>, com o registo de triagem completo e cada exclusão
+  justificada. Dos 58, apenas dois comparam os dois paradigmas entre si — que é a lacuna que
+  esta dissertação ocupa.</li>
 </ul>
+</section>
 
-<div class="botoes">
+<section id="percurso">
+<h2>O percurso, sem o polimento</h2>
+<p class="lead">Três meses de campanhas, com os erros à vista — porque foram eles que
+determinaram o que a dissertação pode afirmar.</p>
+<div class="tempo">
+  <div class="item"><div class="quando">08 jun</div><div class="que">Acesso aos servidores de cálculo</div>
+    <p class="desc">Os treinos longos passam para máquinas de 64 núcleos.</p></div>
+  <div class="item forte"><div class="quando">28 jun</div><div class="que"><i>Fitness</i> de <i>homing</i></div>
+    <p class="desc">O controlador evolutivo come em labirintos pela primeira vez. O «colapso»
+    era do sinal de treino, não do paradigma.</p></div>
+  <div class="item"><div class="quando">02–09 jul</div><div class="que">Campanha final de 7 dias</div>
+    <p class="desc">3 algoritmos × 7 cenários × 7 execuções — a base de tudo o que se reporta.</p></div>
+  <div class="item"><div class="quando">13 jul</div><div class="que">Revisão sistemática, a sério</div>
+    <p class="desc">883 registos triados até 58 estudos. O fluxograma passa a ser gerado do
+    registo, não desenhado à mão.</p></div>
+  <div class="item forte"><div class="quando">29–30 jul</div><div class="que">Os robôs voavam por cima das paredes</div>
+    <p class="desc">Arena esférica de raio 60 com paredes de 30 m: 45 m de céu aberto. Quem
+    recolhia, recolhia a voar. A campanha foi anulada e repetida de raiz.</p></div>
+  <div class="item"><div class="quando">03 ago</div><div class="que">Mega-treino de um mês fecha</div>
+    <p class="desc">28 execuções por braço no Muro em U: a dosagem adaptativa resolve-o em
+    todas, o objetivo puro em 15.</p></div>
+  <div class="item"><div class="quando">04 ago</div><div class="que">O braço errado</div>
+    <p class="desc">27 horas de treino perdidas: o guião da campanha não escrevia as chaves de
+    novidade e o lançador certificava o erro. Os dois <i>runs</i> ficaram guardados como controlo.</p></div>
+  <div class="item forte"><div class="quando">16–17 ago</div><div class="que">A sétima questão fecha — com número, e negativa</div>
+    <p class="desc">4 de 21 execuções, abaixo do limiar de 15. Reportada como negativa, com o
+    número declarado, tal como o pré-registo obriga.</p></div>
+  <div class="item"><div class="quando">20–25 ago</div><div class="que">Revisão a ferro</div>
+    <p class="desc">23 das 46 figuras chegavam ao papel ilegíveis; três frases afirmavam mais do
+    que os dados sustentam; a figura que sustenta o resultado principal era de uma versão antiga
+    do gerador. Corrigidas — e cada uma ganhou uma régua para não voltar.</p></div>
+</div>
+</section>
+
+<div class="botoes" style="margin-top:48px">
   <a class="botao forte" href="https://github.com/Pombo2001/swarm-robotics-tese/raw/main/Tese/main.pdf">Ler a dissertação (137 páginas)</a>
   <a class="botao" href="https://github.com/Pombo2001/swarm-robotics-tese">Código, dados e verificadores</a>
+  <a class="botao" href="https://github.com/Pombo2001/swarm-robotics-tese/tree/main/docs">Protocolo e pré-registos</a>
 </div>
 
 <footer>
-  Gonçalo Pombo · Mestrado em Inteligência Artificial, ISCTE — Instituto Universitário de
-  Lisboa · 2026<br>
+  Gonçalo Pombo · Mestrado em Inteligência Artificial, ISCTE — Instituto Universitário de Lisboa · 2026<br>
   Código sob licença MIT. O texto da dissertação é obra académica sujeita às normas do ISCTE.
 </footer>
 
