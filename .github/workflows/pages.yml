@@ -56,7 +56,13 @@ jobs:
           done
           echo "todas as imagens referenciadas existem"
 
+      # `enablement: true` liga o Pages (origem: GitHub Actions) pela API, em vez
+      # de depender de alguém o ter clicado em Settings. A primeira corrida
+      # falhou exatamente por isso: «Get Pages site failed — verify that the
+      # repository has Pages enabled».
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
