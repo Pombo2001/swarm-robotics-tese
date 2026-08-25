@@ -152,7 +152,9 @@ venv.bak/
 .ropeproject
 
 # mkdocs documentation
-/site
+# (a regra `/site` do modelo do Python fica DESLIGADA: este projeto nao usa
+# mkdocs e `site/` e a pagina publica de resultados. A regra apanhou-a em
+# silencio — o `git add` nao se queixa do que esta ignorado.)
 
 # mypy
 .mypy_cache/
