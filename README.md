@@ -19,7 +19,14 @@ a parte que se confirma não está onde a hipótese a punha.
   episódio; os saltos de reaparecimento após entrega no ninho não são desenhados.</sub>
 </p>
 
-📄 **[Ler a dissertação (PDF, 137 páginas)](Tese/main.pdf)**
+📄 **[Ler a dissertação (PDF, 137 páginas)](Tese/main.pdf)** ·
+🌍 **[Página de resultados](https://pombo2001.github.io/swarm-robotics-tese/)** ·
+📊 **[Painel ao vivo](http://swarmroboticsgs.duckdns.org)**
+
+> Os três mostram o mesmo trabalho com profundidades diferentes: a **página** resume,
+> este **repositório** prova (código, dados e verificadores), e o **painel** deixa navegar
+> tudo — as 30 campanhas do arquivo, os episódios em 3D e a proveniência de cada número.
+> O painel corre num Raspberry Pi ligado em casa e pode estar temporariamente em baixo.
 
 ---
 

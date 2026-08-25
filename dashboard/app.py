@@ -147,6 +147,26 @@ def index():
                     t_pronto = ui.tab("Prontidão", icon="checklist")
             ui.space()
             ui.separator()
+            # Os outros dois sítios onde este trabalho vive. Quem chega por aqui
+            # — o painel é o que se manda por link — não tem como adivinhar que
+            # existe uma página de resultados e um repositório aberto; e quem
+            # chega lá tem o caminho de volta. Os três apontam uns para os
+            # outros de propósito: cada um serve uma pergunta diferente (o
+            # painel mostra TUDO, a página resume, o repositório prova).
+            _sec("TAMBÉM EM")
+            with ui.column().classes("w-full gap-1 px-2"):
+                for _rot, _icone, _url in (
+                        ("Página de resultados", "language",
+                         "https://pombo2001.github.io/swarm-robotics-tese/"),
+                        ("Código no GitHub", "code",
+                         "https://github.com/Pombo2001/swarm-robotics-tese")):
+                    with ui.link(target=_url, new_tab=True).classes(
+                            "no-underline flex items-center gap-2 py-1"):
+                        ui.icon(_icone).classes("text-[15px]") \
+                            .style(f"color:{theme.INK_MUTED}")
+                        ui.label(_rot).classes("text-[12px]") \
+                            .style(f"color:{theme.INK_MUTED}")
+
             # Rodapé operacional: útil a trabalhar, ruído numa defesa (e no Modo
             # Defesa a letra maior partia-o em duas linhas). Ver theme.py.
             with ui.row().classes("items-center gap-2 px-2 pt-2 no-wrap op-footer"):
