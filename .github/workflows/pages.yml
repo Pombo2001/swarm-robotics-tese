@@ -1,0 +1,64 @@
+# Publica a página de resultados (site/) no GitHub Pages.
+#
+# As figuras NÃO estão duplicadas no repositório: são as mesmas que a dissertação
+# usa, em Tese/images/resultados/, e é este passo que as copia para o artefacto
+# publicado. Duplicá-las no `site/` daria duas cópias a derivar em silêncio, que é
+# o defeito que este projeto já cometeu duas vezes com as figuras do artigo.
+#
+# Para ativar: Settings → Pages → Source: GitHub Actions. Exige repositório
+# público (ou GitHub Pro).
+name: pagina
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "Tese/images/resultados/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Levar as figuras da dissertação para o site
+        run: |
+          set -euo pipefail
+          mkdir -p site/img
+          for fig in viz_u_wall megatreino_u_wall_4bracos \
+                     escalabilidade_zeroshot_none mapa_grande_planta; do
+            cp "Tese/images/resultados/${fig}.png" "site/img/${fig}.png"
+          done
+          ls -lh site/img
+
+      - name: Confirmar que a página não ficou com imagens partidas
+        run: |
+          set -euo pipefail
+          # Uma página publicada com um <img> a apontar para nada é pior do que
+          # não a publicar: parece um erro do leitor, não do autor.
+          grep -o 'img/[a-z0-9_]*\.png' site/index.html | sort -u | while read -r ref; do
+            test -f "site/${ref}" || { echo "FALTA: site/${ref}"; exit 1; }
+          done
+          echo "todas as imagens referenciadas existem"
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

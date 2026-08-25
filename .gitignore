@@ -287,3 +287,7 @@ configs/servidor.local.env
 docs/EMAIL_ORIENTADOR_*.md
 docs/REUNIAO_ORIENTADOR_*.md
 docs/resposta_prof_nunes.md
+
+# As imagens da pagina sao COPIADAS de Tese/images/resultados pelo workflow do
+# Pages. Versiona-las aqui daria duas copias a derivar em silencio.
+site/img/
