@@ -32,26 +32,36 @@ MAZE_SCENARIOS = [
 ]
 
 # Rótulos descritivos — para títulos de figuras e tabelas.
+#
+# O nome vem PRIMEIRO e é o da dissertação; o parêntese só descreve. Estes
+# rótulos estiveram anos com formas que a tese abandonou — «Beco Sem Saída
+# (Muro U)» onde o texto diz «Muro em U», «Porta Cooperativa c/ Alternativa»
+# onde diz «Porta com Alternativa» —, e como daqui saem os TÍTULOS DAS FIGURAS,
+# o painel e as figuras chamavam ao mesmo cenário um nome que o júri não
+# encontra na dissertação. Quem lê o dashboard tem a tese ao lado: o nome tem
+# de ser o mesmo dos dois lados (uniformizado a 25 ago 2026).
 SCENARIO_LABELS = {
     "none": "Sandbox (Arena Aberta)",
-    "u_wall": "Beco Sem Saída (Muro U)",
+    "u_wall": "Muro em U (Beco Sem Saída)",
     "bottleneck": "Gargalo (Porta Estreita)",
     "four_rooms": "Quatro Salas (Labirinto)",
     "cooperative_door": "Porta Cooperativa (3 Robôs)",
     "cooperative_perception": "Perceção Cooperativa (Alvo Móvel)",
-    "cooperative_door_bypass": "Porta Cooperativa c/ Alternativa",
+    "cooperative_door_bypass": "Porta com Alternativa (3 Robôs ou desvio)",
     "mapa_grande": "Mapa Composto",
 }
 
-# Rótulos curtos — para eixos/legendas apertadas.
+# Rótulos curtos — para eixos/legendas apertadas. São os nomes da dissertação,
+# sem abreviar: «Porta Coop. c/ Alternativa» não aparece em lado nenhum do
+# texto, e uma abreviatura que só existe no ecrã é mais um vocabulário.
 SCENARIO_LABELS_SHORT = {
     "none": "Sandbox",
-    "u_wall": "Beco Sem Saída (U)",
+    "u_wall": "Muro em U",
     "bottleneck": "Gargalo",
     "four_rooms": "Quatro Salas",
     "cooperative_door": "Porta Cooperativa",
     "cooperative_perception": "Perceção Cooperativa",
-    "cooperative_door_bypass": "Porta Coop. c/ Alternativa",
+    "cooperative_door_bypass": "Porta com Alternativa",
     "mapa_grande": "Mapa Composto",
 }
 
