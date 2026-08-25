@@ -699,11 +699,14 @@ que o geodésico existe para eliminar. Passou a derivar de `MAZE_SCENARIOS`.
 
 # 7. SERVIDOR ISCTE (resumo operacional)
 
-- **VPN do ISCTE ligada** primeiro, senão timeout. Máquina: `SERVIDOR_DE_TREINO` (`dellicious`),
-  user `goncalo`, password pessoal (não está no repo). Host key ed25519:
-  `SHA256:HOSTKEY_REMOVIDA`. 64 vCPU, 125 GiB RAM, sem GPU.
-- Para automatizar sem prompt interativo (a password bloqueia scripts): `plink` (comandos) e
-  `pscp` (ficheiros) com `-batch -hostkey SHA256:... -pw '<PASS>'`.
+- **VPN do ISCTE ligada** primeiro, senão timeout. A máquina de treino é a que o
+  `dashboard/remote.py` lista (64 vCPU, 125 GiB RAM, sem GPU); o endereço, o
+  utilizador e a *host key* não se escrevem aqui — este ficheiro é para publicar
+  e eles descrevem infraestrutura do ISCTE, não este trabalho. A password é
+  pessoal e nunca esteve no repositório.
+- Para automatizar sem prompt interativo (a password bloqueia scripts): `plink`
+  (comandos) e `pscp` (ficheiros) com `-batch -hostkey <SHA256 da máquina>
+  -pw '<PASS>'`.
 - Código vive em `~/swarm-robotics-tese/` (+ dirs isolados por campanha, ex.
   `~/week_{A,B}*`). Ver treinos: `tmux ls`; `tmux capture-pane -pt <sessão> -S -60`.
   **Nunca Ctrl+C num tmux de treino.**
