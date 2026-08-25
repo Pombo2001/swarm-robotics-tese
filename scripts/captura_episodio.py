@@ -48,6 +48,8 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if RAIZ not in sys.path:
     sys.path.append(RAIZ)
 
+from src.scenarios import SCENARIO_LABELS  # noqa: E402  (precisa do sys.path acima)
+
 ORIGEM = os.path.join(RAIZ, "results", "episodios_3d")
 # FORA de results/graficos_tese/: tudo o que é pasta ali dentro entra na galeria
 # do dashboard como se fosse uma campanha de treino, e estas capturas não são
@@ -133,7 +135,14 @@ def desenhar(ep: dict, destino: str, *, titulo_extra: str = "") -> str:
     ax.set_xlabel("x (m)", fontsize=10)
     ax.set_ylabel("y (m)", fontsize=10)
     ax.grid(True, linestyle=":", alpha=0.35)
-    ax.set_title(f"{meta['rotulo']} — {meta['algo']}\n"
+    # O nome do cenário lê-se da CHAVE (`meta['cenario']`) e não do `rotulo`
+    # gravado dentro do JSON: esse é o nome que vigorava no dia em que o
+    # episódio foi exportado, e ficou congelado lá. É o mesmo defeito que o
+    # seletor da vista «Episódio 3D» teve — oferecia três nomes que a
+    # dissertação abandonou. Um ficheiro gravado em junho não se reescreve para
+    # mudar um nome; lê-se-lhe a chave e dá-se-lhe o nome de hoje.
+    rotulo = SCENARIO_LABELS.get(meta.get("cenario"), meta.get("rotulo", "?"))
+    ax.set_title(f"{rotulo} — {meta['algo']}\n"
                  f"{n_agentes} agentes, {meta['passos']} passos, "
                  f"{meta['recolhas']} recolhas{titulo_extra}",
                  fontsize=12, fontweight="bold", pad=12)

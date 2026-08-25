@@ -11,6 +11,16 @@ Orientação: Prof. Luís Nunes.
 (bio-inspirada) em cenários de *stress* dinâmico? A resposta curta é *só em parte* — e
 a parte que se confirma não está onde a hipótese a punha.
 
+<p align="center">
+  <img src="Tese/images/resultados/viz_u_wall.png" width="560"
+       alt="Rasto dos 20 agentes a contornar o Muro em U ao longo de um episódio">
+  <br>
+  <sub>Vinte agentes a contornar o Muro em U num episódio. A cor é o instante do
+  episódio; os saltos de reaparecimento após entrega no ninho não são desenhados.</sub>
+</p>
+
+📄 **[Ler a dissertação (PDF, 137 páginas)](Tese/main.pdf)**
+
 ---
 
 ## O que este trabalho mede
@@ -27,6 +37,38 @@ versionados e são conferidos automaticamente (ver [Rigor](#rigor-o-que-impede-e
 | **Deceção espacial** | O Muro em U é o único cenário que **nenhum** algoritmo base resolve de forma fiável — é bimodal nos três. Só a hibridização com procura por novidade o resolve, e uma replicação com **28 execuções por braço** mostra que a novidade **doseada adaptativamente** é a única condição de toda a dissertação sem uma execução falhada: **28/28**, contra 15/28 do objetivo puro e 14/28 de cada método de gradiente (Fisher exato, *p* < 0,0001). |
 | **Composição de dificuldades** | Um oitavo cenário compõe num só labirinto de **103 × 62 m** quatro das dificuldades que os outros isolam. Transferência sem retreino: **zero** em 84 de 84 células. Com treino nativo, só o evolutivo o resolve — em **4 de 21 execuções**, abaixo do limiar de 15 fixado *antes* dos dados. **Reportado como negativo**, com o número à vista. |
 | **Custo** | O evolutivo paga ≈ **8×** mais núcleos-hora por execução do que os métodos de gradiente. |
+
+### Os três gráficos que contam a história
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="Tese/images/resultados/megatreino_u_wall_4bracos.png" alt="Muro em U: os quatro braços do mega-treino a n=28">
+<sub><b>Deceção espacial, 28 execuções por braço.</b> Cada ponto é uma execução
+independente. O que decide não é a média — é a <i>forma</i>: os três braços sem
+anilamento repartem-se entre execuções que resolvem o cenário e execuções que ficam a
+zero, praticamente sem nada pelo meio. A dosagem adaptativa da novidade não deixa uma
+única por resolver.</sub>
+</td>
+<td width="50%" valign="top">
+<img src="Tese/images/resultados/escalabilidade_zeroshot_none.png" alt="Eficiência por agente com o aumento do enxame, sem retreino">
+<sub><b>Escalabilidade sem retreino.</b> Só a linha do controlador de grafo atravessa
+toda a gama de dimensões. O PPO e o SAC têm um único ponto, em N=20, porque a política
+MLP de entrada fixa não admite outra dimensão — a incompatibilidade <i>é</i> o
+resultado.</sub>
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
+<img src="Tese/images/resultados/mapa_grande_planta.png" alt="Planta do mapa composto: 103 × 62 m, cinco zonas">
+<sub><b>O oitavo cenário, lido da geometria do próprio simulador.</b> Cinco zonas de
+oeste para este — sala de partida, gargalo com beco em U, quatro salas, porta
+cooperativa com alternativa, câmara do ninho —, 106 obstáculos e um percurso mínimo de
+~155 m. Nenhum controlador treinado nos sete cenários isolados recolhe aqui um único
+item sem retreino.</sub>
+</td>
+</tr>
+</table>
 
 O contributo metodológico principal é outro, e é uma correção: o «colapso do
 evolutivo» que a literatura reporta era, neste sistema, um **artefacto do sinal de
@@ -114,6 +156,10 @@ Quinze vistas: da operação (treinar, servidor, visualizador 3D ao vivo) à lei
 resultados (Ciência, Escala e robustez, Mapa composto, Defesa, Proveniência, Galeria,
 Vídeos, Episódio 3D, Arquivo). A vista **Proveniência** responde, célula a célula, à
 pergunta «de onde vem este número?».
+
+O mesmo painel corre publicado num Raspberry Pi, em modo de leitura — as vistas de
+operação (treinar, servidor, visualizador) não existem nessa cópia: publicar
+resultados não é publicar um controlo remoto da máquina de treino.
 
 ### Linha de comandos
 
