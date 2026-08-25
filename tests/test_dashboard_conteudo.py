@@ -365,6 +365,119 @@ def test_a_defesa_diz_do_f2_o_que_o_instantaneo_diz(tmp_path):
     print("OK  os três estados do F2 dão três frases, em português: %r" % concluido)
 
 
+def test_o_mapa_composto_nao_legenda_o_veredicto_como_projecao(tmp_path):
+    """A frase e o rodapé têm de nomear a MESMA fonte — e falhar tem de doer.
+
+    A vista do mapa composto tem duas contas por cima uma da outra: a projeção
+    do limiar, que conta execuções de TREINO a partir do instantâneo, e o
+    veredicto, que as conta na AVALIAÇÃO determinística. Quando o veredicto
+    existe, é ele que se mostra — mas o rodapé continuava a dizer «Projeção
+    sobre o instantâneo de …», nomeando por baixo a fonte que não produziu o
+    número de cima.
+
+    E, atrás disso, o defeito que o deixou passar: `_veredicto_final()` tinha um
+    `except` mudo. A 25 de agosto o `scipy` faltava no venv do Raspberry Pi, a
+    leitura rebentava, a função devolvia `None` sem uma palavra, e a vista caía
+    na prosa da projeção — anunciava «a avaliação do GNN, que ainda não existe»
+    a um palmo da tabela que já a mostrava, no painel que o orientador tinha
+    para abrir. Uma avaliação que não existe e uma avaliação que não se
+    conseguiu ler não são o mesmo estado, e agora não dão a mesma frase.
+    """
+    import json
+    import sys
+    raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if raiz not in sys.path:
+        sys.path.insert(0, raiz)
+    from dashboard.views import mapa
+
+    class _Label:
+        """Duplo do `ui.label` — encadeável, e guarda o que lhe passaram."""
+
+        def __init__(self, texto, caixa):
+            caixa.append(str(texto))
+
+        def classes(self, *_a, **_k):
+            return self
+
+        def style(self, *_a, **_k):
+            return self
+
+    def ecra(veredicto):
+        """As linhas que a vista escreveria, com o F2 fechado e a zero."""
+        caixa = []
+        # Instantâneo sintético: 21 execuções fechadas, 4 com recolha. O limiar
+        # é ⌈5/7 × 21⌉ = 15, logo o estado é «inalcançável» — o ramo em que a
+        # prosa da projeção vivia.
+        est = tmp_path / "estado.json"
+        est.write_text(json.dumps({
+            "medido_utc": "2026-08-17T08:37Z",
+            "gnn": {"runs_previstos": 21,
+                    "runs_fechados": [{"recolhas": 6.0}] * 4 + [{"recolhas": 0.0}] * 17},
+        }), encoding="utf-8")
+        orig_estado, orig_ver, orig_ui = mapa.ESTADO_F2, mapa._veredicto_final, mapa.ui
+        try:
+            mapa.ESTADO_F2 = str(est)
+            mapa._veredicto_final = lambda: veredicto
+            mapa.ui = type("_UI", (), {"label": staticmethod(
+                lambda t: _Label(t, caixa))})
+            mapa._limiar_projetado()
+        finally:
+            mapa.ESTADO_F2, mapa._veredicto_final, mapa.ui = (
+                orig_estado, orig_ver, orig_ui)
+        return caixa
+
+    medida = {"max_convergentes": 4, "n_runs": 21, "limiar": 15, "leitura": "C"}
+    fechado = ecra((medida, None))
+    assert any("QI7 FECHADA" in l for l in fechado), (
+        "com veredicto no disco, a vista tem de o dizer: %r" % fechado)
+    assert not any("ainda não existe" in l for l in fechado), (
+        "a vista manda esperar por uma avaliação que já leu: %r" % fechado)
+    assert not any(l.startswith("Projeção sobre o instantâneo") for l in fechado), (
+        "o rodapé legenda como PROJEÇÃO um número que veio da avaliação "
+        "determinística — as duas contas não contam a mesma coisa: %r" % fechado)
+    assert any("medir_f2" in l for l in fechado), (
+        "o rodapé tem de nomear a fonte real do número: %r" % fechado)
+
+    # A avaliação AINDA não existe: a prosa da projeção é a certa.
+    aberto = ecra((None, None))
+    assert any("ainda não existe" in l for l in aberto), (
+        "sem avaliação, a vista tem de dizer que a decisão está por tomar: %r"
+        % aberto)
+
+    # A avaliação existe e não se conseguiu ler: nem uma coisa nem outra.
+    partido = ecra((None, "ModuleNotFoundError: No module named 'scipy'"))
+    assert any("scipy" in l for l in partido), (
+        "o erro que impede a leitura desapareceu do ecrã — foi assim que o Pi "
+        "passou oito dias a negar uma avaliação que tinha no disco: %r" % partido)
+    assert partido != aberto, (
+        "«não existe» e «não consegui ler» dão a MESMA frase: %r" % partido)
+    # E o `except` propriamente dito, não um duplo dele: com a leitura a
+    # rebentar — que foi o que o `scipy` em falta fez —, a função tem de
+    # devolver a razão, e não o `None` mudo que mandou a vista mentir.
+    import types
+    falso = types.ModuleType("analise_mapa_grande")
+
+    def _rebenta():
+        raise ModuleNotFoundError("No module named 'scipy'")
+
+    falso.medir_f2 = _rebenta
+    anterior = sys.modules.get("analise_mapa_grande")
+    sys.modules["analise_mapa_grande"] = falso
+    try:
+        medida_nula, razao = mapa._veredicto_final()
+    finally:
+        if anterior is None:
+            sys.modules.pop("analise_mapa_grande", None)
+        else:
+            sys.modules["analise_mapa_grande"] = anterior
+    assert medida_nula is None, (
+        "com a leitura rebentada não há medida: %r" % (medida_nula,))
+    assert razao and "scipy" in razao, (
+        "o `except` voltou a ser mudo: engoliu %r e devolveu %r"
+        % ("ModuleNotFoundError: No module named 'scipy'", razao))
+
+    print("OK  o rodapé segue a fonte do número, e o erro chega ao ecrã")
+
 if __name__ == "__main__":
     # Os testes descobrem-se por introspeção, e não de uma lista escrita à mão.
     # A lista existiu, ficou a meio do ficheiro — antes de metade dos testes

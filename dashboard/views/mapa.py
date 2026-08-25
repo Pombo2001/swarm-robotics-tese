@@ -75,16 +75,26 @@ def _veredicto_final():
     `analise_mapa_grande.py`, o mesmo que o `fechar_qi7.py` usa para escrever
     na dissertação. Duas cópias da regra seriam duas respostas possíveis para a
     mesma pergunta.
+
+    Devolve `(medida, erro)`: a medida, ou `None` acompanhado da razão por
+    escrito. Um `None` sem razão é «a avaliação ainda não existe»; um `None`
+    com razão é «não a consegui ler», e as duas coisas não se dizem no ecrã da
+    mesma maneira.
     """
     try:
         sys.path.insert(0, os.path.join(_RAIZ, "scripts"))
         from analise_mapa_grande import medir_f2
         m = medir_f2()
-    except Exception:                                        # noqa: BLE001
-        return None
+    except Exception as erro:                                # noqa: BLE001
+        # Este `except` era MUDO. A 25 de agosto o venv do Pi não tinha `scipy`,
+        # a função devolvia None sem uma palavra, e a vista caía na prosa da
+        # projeção: dizia «a avaliação do GNN ainda não existe» por cima da
+        # tabela que já a mostrava. Falhar em silêncio aqui é mandar mentir a
+        # linha de baixo, e por isso a razão passa a subir até ao ecrã.
+        return None, "%s: %s" % (type(erro).__name__, erro)
     if not m or "GNN" not in m.get("por_algo", {}):
-        return None
-    return m
+        return None, None
+    return m, None
 
 
 def _estado_na_dissertacao():
@@ -130,8 +140,16 @@ def _limiar_projetado():
         sys.path.insert(0, os.path.join(_RAIZ, "scripts"))
         from projetar_limiar_f2 import projetar
         p = projetar(e)
-    except Exception:                                        # noqa: BLE001
+    except Exception as erro:                                # noqa: BLE001
+        # Também este calava-se. Sem projeção não há frase nenhuma sobre o
+        # limiar — o que não se pode é desaparecer sem dizer porquê.
+        ui.label("Sem projeção do limiar (%s: %s) — esta vista não afirma nada "
+                 "sobre o F2 enquanto não a conseguir calcular."
+                 % (type(erro).__name__, erro)).classes("text-xs mb-2") \
+            .style("color:#ffb020")
         return
+    rodape = ("Projeção sobre o instantâneo de %s · scripts/projetar_limiar_f2.py"
+              % p["medido_utc"])
     if p["estado"] == "em_aberto":
         texto, cor = ("Limiar ainda em aberto: faltam %d convergências e restam "
                       "%d execuções (GNN, contagem de treino)."
@@ -154,7 +172,7 @@ def _limiar_projetado():
         # continuava a mandar esperar por um ficheiro que já está no disco —
         # exatamente o género de frase escrita à mão que este painel existe
         # para não ter. O k final sai do `medir_f2()`, que é onde a regra vive.
-        final = _veredicto_final()
+        final, erro_veredicto = _veredicto_final()
         if final:
             # O «falta escrever» era uma frase FIXA: continuou a pedir o
             # `fechar_qi7.py --escrever` durante os três dias em que a QI7 já
@@ -166,9 +184,21 @@ def _limiar_projetado():
                 "único que alguma vez resolve o mapa; PPO e SAC ficam a 0. %s"
                 % (final["max_convergentes"], final["n_runs"], final["limiar"],
                    final["leitura"], _estado_na_dissertacao()), "#4ade80")
+            # A frase deixou de ser uma projeção, e o rodapé tem de deixar de o
+            # dizer: o número acima sai da avaliação determinística, não da
+            # aritmética sobre o instantâneo do treino. Um rodapé que nomeia a
+            # fonte errada é tão falso como a frase que ele legenda.
+            rodape = ("Avaliação determinística das %d execuções · "
+                      "scripts/analise_mapa_grande.py (medir_f2)"
+                      % final["n_runs"])
+        elif erro_veredicto:
+            rodape = ("Projeção sobre o instantâneo de %s · a avaliação "
+                      "determinística NÃO foi lida (%s) — a frase acima conta "
+                      "execuções de treino, não de avaliação."
+                      % (p["medido_utc"], erro_veredicto))
+            cor = "#ffb020"
     ui.label(texto).classes("text-xs mb-2").style(f"color:{cor}")
-    ui.label("Projeção sobre o instantâneo de %s · scripts/projetar_limiar_f2.py"
-             % p["medido_utc"]).classes("text-[10px] mb-2") \
+    ui.label(rodape).classes("text-[10px] mb-2") \
         .style(f"color:{theme.INK_MUTED}")
 
 
