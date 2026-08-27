@@ -204,14 +204,11 @@ def build():
                              if quando else ""))
                          if fp_modelo else
                          "não está no disco (ver results/mapa_grande/LEIA-ME.md)"),
-                        # Os nomes das opções são os do `eval_by_run.py`, no
-                        # plural. Estiveram no singular e corriam à mesma —
-                        # o argparse aceita prefixos não ambíguos —, o que é
-                        # uma dependência que se parte sozinha no dia em que
-                        # o script ganhar outra opção começada por «algo».
-                        # `scripts/verificar_comandos_dashboard.py` confirma
-                        # que cada comando destes é aceite pelo script que
-                        # invoca.
+                        # Opções no plural, como no `eval_by_run.py`. No singular
+                        # corriam à mesma (o argparse aceita prefixos), mas isso
+                        # parte-se sozinho quando o script ganhar outra opção
+                        # começada por «algo». O
+                        # `verificar_comandos_dashboard.py` confere-os.
                         ("reproduzir",
                          "python scripts/eval_by_run.py --algos %s --scenarios %s "
                          "--episodes 20" % (algo.lower(), cen)),

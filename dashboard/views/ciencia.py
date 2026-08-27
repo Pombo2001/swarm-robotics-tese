@@ -380,11 +380,9 @@ def build():
                         el.on_value_change(lambda: tabela_cmp.refresh())
                     tabela_cmp()
 
-            # A escalabilidade VIVIA aqui e também na vista Escalabilidade, com os
-            # mesmos CSV — duas respostas para a mesma pergunta, que é como se
-            # começa a ter duas respostas DIFERENTES. Fica só na vista dedicada,
-            # que a mostra melhor (por tamanho de enxame e com a retenção per
-            # capita). Aqui deixa-se o ponteiro.
+            # A escalabilidade vivia aqui E na vista dedicada, com os mesmos CSV
+            # — duas respostas para a mesma pergunta é como se começa a ter duas
+            # respostas diferentes. Fica lá; aqui só o ponteiro.
             with ui.card().classes(CARD):
                 _section_title("open_in_full", "Escalabilidade e robustez",
                                "estão na sua própria vista")

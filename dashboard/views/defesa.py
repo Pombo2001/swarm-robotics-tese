@@ -170,18 +170,10 @@ def _questoes():
                          bloco, re.S):
         linha = bloco.rfind("\n", 0, m.start()) + 1
         declarada = not bloco[linha:m.start()].lstrip().startswith("%")
-        # O `%` quer dizer coisas opostas conforme o item esteja comentado ou
-        # não, e tratá-lo de uma só maneira custou o ecrã da QI6.
-        #
-        # · Numa pergunta COMENTADA, o `%` que abre cada linha é decoração do
-        #   ficheiro, não texto da pergunta: tira-se e o texto fica.
-        # · Numa pergunta DECLARADA, uma linha comentada dentro do corpo é uma
-        #   nota do autor sobre o ficheiro. Tirar-lhe o `%` promove-a a texto.
-        #   Foi o que aconteceu quando a QI7 foi descomentada a 17 de agosto e
-        #   a nota que explicava a mudança ficou entre a QI6 e a QI7: a QI6
-        #   passou a ler-se, no ecrã projetado, «...face à otimização puramente
-        #   objetiva? ── QI7: a PERGUNTA, não a resposta. (...) Reposta na
-        #   ordem a 18 de agosto.» Aqui a linha inteira sai.
+        # O `%` significa o oposto conforme o item esteja comentado ou não:
+        # numa pergunta comentada é decoração e tira-se; numa pergunta declarada
+        # é uma nota do autor, e tirar-lhe o `%` promovia-a a texto projetado.
+        # Aqui a linha inteira sai.
         linhas = m.group(2).split("\n")
         if declarada:
             linhas = [l for l in linhas if not l.lstrip().startswith("%")]

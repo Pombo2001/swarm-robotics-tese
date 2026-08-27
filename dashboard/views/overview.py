@@ -112,15 +112,9 @@ def _status_card(icon: str, title: str, goto=None, view: str = ""):
 
 
 # Campanhas de treino (nome, horas de parede) — curado à mão, como a _TIMELINE:
-# as sessões arquivadas não guardam a duração do treino. Inclui o servidor ISCTE
-# e os treinos locais deste PC (rotina noturna + testes, mai–jun; estimativa).
-#
-# Esta lista tinha ficado em junho: dizia 433 h quando só o mega-treino são
-# mais de 600. O cartaz é a primeira coisa que se vê, e subestimava o trabalho
-# por um fator de quatro. As horas de julho em diante vêm das datas de arranque e
-# fecho registadas nos logs das campanhas (`mega_{A,B}_master.log`) e no
-# PLANO_MESTRE — são horas de PAREDE, e as que correram em paralelo somam-se na
-# mesma, porque o que se conta é tempo de máquina, não tempo de calendário.
+# as sessões arquivadas não guardam a duração do treino. As horas de julho em
+# diante vêm dos logs das campanhas (`mega_{A,B}_master.log`) e do PLANO_MESTRE.
+# São horas de MÁQUINA: as que correram em paralelo somam-se na mesma.
 _CAMPANHAS = [
     ("Treinos locais no PC (rotina noturna, mai–jun)", 65),
     ("Treino 24h", 24), ("Treino 48h", 48), ("Treino 24h v2", 24),
@@ -136,11 +130,10 @@ _CAMPANHAS = [
     ("Mega-treino de 1 mês (stream A)", 317),
     ("Mega-treino de 1 mês (stream B)", 341),
     ("Mapa composto (F0 e F1)", 70),
-    # F2 do mapa composto, fechado: 21 execuções × 780 min no evolutivo e
-    # 42 × 192 min nos dois gradientes. São os orçamentos PRÉ-REGISTADOS (emenda
-    # 19), não o tempo de parede — que é maior, porque inclui filas e a avaliação
-    # no fim. As 27 h que o braço errado consumiu antes de ser descartado
-    # (emenda 23) ficam de fora de propósito: não produziram campanha.
+    # F2 do mapa composto: 21 execuções × 780 min no evolutivo, 42 × 192 nos
+    # gradientes. São os orçamentos PRÉ-REGISTADOS (emenda 19), não tempo de
+    # parede. As 27 h do braço descartado (emenda 23) ficam de fora: não
+    # produziram campanha.
     ("Mapa composto F2 · evolutivo (21 execuções)", 273),
     ("Mapa composto F2 · gradientes (42 execuções)", 134),
 ]
@@ -298,21 +291,18 @@ def build(queue: JobQueue, goto=None):
             topo = max(covered.values()) if table else 0
             best = "/".join(a for a in config.ALGOS
                             if covered.get(a) == topo) if table else "—"
-            # O denominador é o nº de cenários NA TABELA de avaliação, não o
-            # `SCENARIO_KEYS` — que inclui o mapa composto (8.º cenário), ainda sem
-            # campanha avaliada. Com /8, o KPI dizia "6/8" quando o universo
-            # possível era 7: um cenário que nunca poderia contar aparecia no
-            # denominador e fazia a cobertura parecer pior do que é.
+            # Denominador = cenários NA TABELA de avaliação, não `SCENARIO_KEYS`,
+            # que inclui o mapa composto, ainda sem campanha avaliada. Com /8 o
+            # KPI dizia «6/8» quando o universo possível era 7.
             _kpi(f"Cenários ≥80% · melhor algo ({best})", topo,
                  suffix=f"/{len(table) if table else len(config.MAIN_SCENARIO_KEYS)}")
             _kpi("Horas de treino acumuladas (PC + servidor)", total_h, suffix="h")
             _kpi(f"Treino mais longo · {longest_name.lower()}", longest_h, suffix="h")
 
         # ── Estado ────────────────────────────────────────────────────────────
-        # Em modo leitura ficam dois: os cartões «Treino local» e «Servidor
-        # ISCTE» apontam para vistas que a cópia publicada não tem — eram dois
-        # retângulos clicáveis que não iam a lado nenhum, um deles a anunciar
-        # "VPN necessária" a quem está a ver isto pela internet.
+        # Em modo leitura ficam dois: «Treino local» e «Servidor ISCTE» apontam
+        # para vistas que a cópia publicada não tem — retângulos clicáveis que
+        # não iam a lado nenhum, um deles a pedir VPN a quem vem da internet.
         with ui.grid(columns=2 if config.READONLY else 4) \
                 .classes("w-full gap-4 fade-up-2"):
             if not config.READONLY:
@@ -358,13 +348,9 @@ def build(queue: JobQueue, goto=None):
                         .style(f"color:{theme.INK_MUTED}")
 
         # ── Os melhores treinos, logo à entrada ───────────────────────────────
-        #
-        # O painel existia na Galeria e nos Vídeos, a três cliques de distância.
-        # Quem abre o dashboard — e quem o vir projetado numa defesa — encontrava
-        # primeiro seis KPIs e uma linha do tempo, e em nenhum sítio a resposta à
-        # pergunta mais simples que se pode fazer a este trabalho: *qual foi o
-        # melhor treino, e de quem?*. Cada linha abre para o ranking completo do
-        # cenário, e clicar leva à Galeria com essa campanha escolhida.
+        # Estava a três cliques, na Galeria e nos Vídeos: a pergunta mais simples
+        # que se faz a este trabalho — qual foi o melhor treino, e de quem — não
+        # tinha resposta à entrada. Clicar leva à Galeria nessa campanha.
         from . import ranking as _ranking
         _ranking.painel(
             titulo="Os melhores treinos, por cenário",

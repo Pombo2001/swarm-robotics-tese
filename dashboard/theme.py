@@ -15,13 +15,10 @@ SURFACE   = "#0e0e0e"   # cartões
 BORDER    = "#1f1f1f"   # linhas finas
 INK       = "#f5f5f5"   # títulos / destaque
 INK_SOFT  = "#a3a3a3"   # texto corrente          — 8,0:1 sobre o fundo (AAA)
-# Legendas/secundário. Estava #636363, que dá 3,5:1 sobre #050505 e reprova o
-# mínimo de 4,5:1 do WCAG AA para texto pequeno — e é precisamente aqui que vivem
-# os rótulos dos indicadores ("SESSÕES DE TREINO"), as datas da linha do tempo e
-# as legendas dos cartões, todos a 11-12 px em maiúsculas. #7d7d7d dá 4,9:1 e
-# mantém a distância para o texto corrente (4,9 vs 8,0), que é o que sustenta a
-# hierarquia visual. O modo defesa continua a subi-lo mais (projetores achatam
-# os pretos) — ver a secção body.defesa.
+# Legendas/secundário. Estava #636363 (3,5:1), que reprova o mínimo AA de 4,5:1
+# para texto pequeno — e é aqui que vivem os rótulos e as datas, a 11-12 px.
+# #7d7d7d dá 4,9:1 e mantém a distância para o texto corrente (8,0), que é o que
+# sustenta a hierarquia. O modo defesa sobe-o mais — ver body.defesa.
 INK_MUTED = "#7d7d7d"   # legendas / secundário   — 4,9:1 sobre o fundo (AA)
 
 # Classe padrão dos cartões (usar em todas as vistas)
@@ -459,14 +456,11 @@ ECHART_BASE = {
 }
 
 # ── Cromo dos gráficos (eixos, grelha, legenda, tooltip) ─────────────────────
-# Os ECharts das vistas tinham as cores do tema ANTIGO cravadas à mão (o azul
-# "slate" #94a3b8/#cbd5e1, de antes da passagem monocromática): o dashboard era
-# preto e branco e os gráficos continuavam azulados, e mudar o tema não lhes
-# tocava. Passa tudo por aqui.
-#
-# Os tamanhos de letra são deliberadamente generosos (12-13px, não os 10-11px
-# por omissão do ECharts): o mesmo gráfico tem de servir o portátil e a parede,
-# e o Modo Defesa não consegue reescalar texto desenhado dentro de um <canvas>.
+# As cores dos ECharts passam todas por aqui: estiveram cravadas à mão nas
+# vistas, com o azul do tema antigo, e mudar o tema não lhes tocava.
+# A letra é generosa de propósito (12-13px, não os 10-11 do ECharts): o mesmo
+# gráfico serve o portátil e a parede, e o Modo Defesa não reescala texto
+# desenhado dentro de um <canvas>.
 GRID_LINE = "rgba(255,255,255,.08)"
 AXIS_LINE = "rgba(255,255,255,.18)"
 

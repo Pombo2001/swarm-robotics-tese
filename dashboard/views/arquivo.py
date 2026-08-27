@@ -48,15 +48,11 @@ def _zoom(session: str, filename: str):
 
 # ── Campanhas CANÓNICAS ──────────────────────────────────────────────────────
 # As que sustentam números da dissertação vivem FORA de results/graficos_tese/,
-# cada uma na sua pasta, porque nenhuma podia sobrescrever os modelos campeões
-# 7d (que continuam a ser os ativos, de propósito — ver a armadilha nº9). O
-# resultado colateral era esta vista mostrar 31 campanhas exploratórias e
-# nenhuma das quatro que a tese cita. Aqui estão, com o que cada uma produziu.
+# para não sobrescreverem os modelos campeões 7d (armadilha nº9). Sem esta lista,
+# a vista mostrava 31 campanhas exploratórias e nenhuma das quatro que a tese cita.
 # (nome, pasta de DADOS, desenho, o que produziu, padrão das pastas de FIGURAS)
-# A quinta coluna existe porque os dados e as figuras vivem separados: os CSV
-# ficam na pasta da campanha e as figuras em results/graficos_tese/<slug>/
-# (geradas por scripts/figuras_campanha.py). Sem ela, esta vista dizia
-# "0 gráficos" para o adaptativo e para o mega-treino — que têm 22 e 12 cada.
+# A 5.ª coluna existe porque dados e figuras vivem separados; sem ela a vista
+# dizia «0 gráficos» para o adaptativo e o mega-treino, que têm 22 e 12.
 CANONICAS = [
     ("Campanha final — 7 dias", "graficos_tese/final_7d",
      "3 algoritmos × 7 cenários × 7 execuções × 20 episódios = 2940 episódios",
@@ -77,11 +73,10 @@ CANONICAS = [
      "QI7 — 84 de 84 células a 0,00 recolhas/ep; os 3 confundentes EXCLUÍDOS. "
      "Repetido de raiz a 31 jul (o 1.º correu com paredes atravessáveis e está "
      "anulado em f1_zeroshot/; o que vale é f1_zeroshot_v2/)", None),
-    # As figuras desta campanha são as de `graficos_tese/mapa_grande_f2/`,
-    # geradas do `eval_by_run.csv` (as 21 execuções). As que vieram do servidor
-    # na sessão datada de 16 ago saíram do `eval_summary.csv`, que só tem o
-    # modelo campeão, e mostram 7,6 recolhas/ep onde a campanha dá 1,69 — não
-    # servem para projetar.
+    # As figuras vêm de `graficos_tese/mapa_grande_f2/`, geradas do
+    # `eval_by_run.csv` (21 execuções). As da sessão de 16 ago saíram do
+    # `eval_summary.csv`, que só tem o campeão: mostram 7,6 recolhas/ep onde a
+    # campanha dá 1,69, e não servem para projetar.
     ("Mapa composto — F2 (fechado)", "mapa_grande",
      "treino nativo: 3 algoritmos × 21 execuções × 20 ep = 1260 episódios "
      "(evolutivo @780 min, gradientes @192 min)",

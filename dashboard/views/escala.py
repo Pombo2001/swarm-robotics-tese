@@ -97,17 +97,10 @@ def _robustez_option(table: dict) -> dict:
     base["xAxis"]["data"] = labels
 
     # Eixo limitado, com os fora-de-escala rotulados no topo da barra.
-    #
-    # A retenção é um RÁCIO, por isso um cenário cuja base é quase zero produz
-    # valores absurdos (um caso mediu ~570%: com falhas recolheu mais do que sem
-    # elas, porque o denominador era ~0). Com escala automática, esses um ou dois
-    # outliers levavam o eixo a 600% e esmagavam as outras ~19 barras — que estão
-    # todas à volta de 100%, que é exatamente onde a leitura interessa: quem
-    # resiste e quem não resiste à perda de 10% dos agentes.
-    #
-    # O corte não esconde nada: as barras que passam do teto levam o valor real
-    # escrito por cima, que é a recomendação para outliers (rótulo direto em vez
-    # de deixar a escala mentir).
+    # A retenção é um rácio: uma base quase nula dá valores absurdos (um caso
+    # mediu ~570%) e a escala automática esmagava as outras ~19 barras, todas à
+    # volta de 100%. O corte não esconde nada — quem passa o teto leva o valor
+    # real escrito por cima.
     TETO = 150
     valores = [v for s in series for v in s["data"] if v is not None]
     if valores and max(valores) > TETO:
@@ -274,11 +267,10 @@ def build():
         escolher(N_TREINO)
 
         # ── Robustez a falhas (Rrobust) ─────────────────────────────────────
-        # Veio da vista Ciência. Escalabilidade e robustez sao a mesma pergunta
-        # feita de duas maneiras — o que acontece ao modelo JA TREINADO quando o
-        # mundo muda: mais agentes (N) ou menos agentes (falhas). Separadas, cada
-        # uma parecia um detalhe; juntas, sao o argumento da tese sobre
-        # generalizacao.
+        # Escalabilidade e robustez são a mesma pergunta de duas maneiras: o que
+        # acontece ao modelo JÁ TREINADO quando o mundo muda — mais agentes ou
+        # menos. Separadas pareciam detalhes; juntas são o argumento sobre
+        # generalização.
         rob = data.robustness_table()
         with ui.card().classes(CARD):
             _section_title("health_and_safety",
@@ -287,13 +279,10 @@ def build():
             ui.label("Recolhas retidas quando 10% dos agentes falham a meio do "
                      "episódio (avaliação emparelhada, mesmas seeds). 100% = imune.") \
                 .classes("text-xs text-gray-400")
-            # O seletor de N governa só a secção da escalabilidade. Esta bateria
-            # correu toda a N=20, e as barras do PPO e do SAC aparecem aqui de
-            # pleno direito — mas com "N = 50" escolhido lá em cima, e sem esta
-            # frase, leem-se como PPO e SAC a N=50, que é precisamente o que a
-            # página acabou de dizer ser impossível. Dizer o N aqui custa uma
-            # linha; deixar a ambiguidade custava a credibilidade das duas
-            # secções ao mesmo tempo.
+            # O seletor de N governa só a escalabilidade; esta bateria correu
+            # toda a N=20. Com «N = 50» escolhido lá em cima e sem esta frase,
+            # as barras do PPO e do SAC liam-se a N=50 — que a página acabou de
+            # dizer ser impossível.
             ui.label("Todos os valores desta secção são com N=20, o tamanho de "
                      "treino — é a única dimensão em que os três algoritmos "
                      "correm, e por isso a única em que a comparação é possível.") \

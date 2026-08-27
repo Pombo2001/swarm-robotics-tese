@@ -44,15 +44,10 @@ _PREFIXES = ["comparacao_mapa", "curva_aprendizagem", "comparacao_barras",
              "desempenho_global", "taxa_sucesso", "recolhas", "dotplot_eval",
              "boxplot_eval", "boxplot"]
 
-# Figuras cujo título não se deriva do nome do ficheiro. São as quatro do
-# mega-treino, e são as que sustentam a QI6 — a questão com o resultado mais
-# forte da dissertação. O derivador dava-lhes «Megatreino U Wall 4Bracos»,
-# «Megatreino Ablacao Anneal Bypass»: chaves do código (família nº9) e
-# português sem acentos, porque um nome de ficheiro é ASCII e um `.title()`
-# sobre ASCII nunca produz «ablação» nem «braços».
-#
-# O nome do cenário NÃO se escreve aqui — vem do `SCEN_LABEL`, que é o
-# vocabulário único. Só o resto da frase é que é escrito à mão.
+# Figuras cujo título não se deriva do nome do ficheiro: as quatro do mega-treino,
+# que sustentam a QI6. O derivador dava-lhes «Megatreino U Wall 4Bracos» — um
+# `.title()` sobre ASCII nunca produz «ablação» nem «braços».
+# O nome do cenário NÃO se escreve aqui: vem do `SCEN_LABEL`, o vocabulário único.
 _TITULOS_A_MAO = {
     "megatreino_u_wall_4bracos.png":
         "Mega-treino · {u_wall} · os quatro braços (n=28)",
@@ -84,12 +79,10 @@ def _pretty_title(f: str) -> str:
     if rest in SCEN_LABEL:
         bits.append(SCEN_LABEL[rest])
     elif rest:
-        # O cenário pode estar colado a um prefixo que esta função não conhece:
-        # `painel_videos_none` dava «Painel Videos None» em dez figuras da
-        # galeria — e `none` é o Sandbox, o cenário de referência da tese. Um
-        # título que diz «None» parece um erro do gráfico quando é só do nome do
-        # ficheiro. Procura-se o cenário no FIM (chaves longas primeiro, senão
-        # `cooperative_door` engolia `cooperative_door_bypass`).
+        # O cenário pode vir colado a um prefixo desconhecido: `painel_videos_none`
+        # dava «Painel Videos None», e `none` é o Sandbox. Procura-se no FIM, com
+        # as chaves longas primeiro (senão `cooperative_door` engole
+        # `cooperative_door_bypass`).
         cen = next((c for c in sorted(SCEN_LABEL, key=len, reverse=True)
                     if rest.endswith("_" + c)), None)
         if cen:
@@ -196,12 +189,9 @@ def build():
             if na_tese:
                 ui.label(f"Está na dissertação como images/{na_tese}") \
                     .classes("text-xs text-emerald-300")
-                # E com que nome. O título do cartão é derivado do nome do
-                # ficheiro e diz o mínimo («Muro em U»); a dissertação deu-lhe
-                # um nome na Lista de Figuras, e é esse que se cita a falar
-                # dela. Aqui não há o risco que havia no cartão: quem abriu o
-                # zoom está a ver a figura inteira, e uma legenda que fala de
-                # dois painéis descreve o que ele tem à frente.
+                # O nome que a dissertação lhe deu na Lista de Figuras, que é o
+                # que se cita a falar dela. No zoom não há o risco do cartão:
+                # quem está aqui vê a figura inteira que a legenda descreve.
                 titulo = data.titulo_na_tese(session, filename)
                 if titulo:
                     ui.label(f"«{titulo}»").classes("text-xs italic") \
@@ -277,10 +267,8 @@ def build():
             so_pares.bind_visibility_from(sess_b, "value",
                                           backward=lambda v: v != NONE)
             # Os dois lados são PNG independentes, cada um com o eixo que o
-            # matplotlib lhe deu: no par A1/A2 o eixo da esquerda vai a 80 e o da
-            # direita a 60, e as duas barras parecem mais próximas do que são.
-            # Quem compara alturas lê o gráfico errado; os números certos estão
-            # na tabela do melhor treino, aqui em cima.
+            # matplotlib lhe deu (80 à esquerda, 60 à direita no par A1/A2):
+            # quem compara alturas lê o gráfico errado.
             aviso_escala = ui.label(
                 "As duas imagens são independentes — as escalas dos eixos podem "
                 "não ser as mesmas. Comparar os valores, não a altura das barras."
@@ -309,11 +297,9 @@ def build():
                           "nesta galeria." % campanha, type="warning")
                 return
 
-            # Os filtros ficavam os do treino ANTERIOR e podiam esconder tudo o
-            # que este tem: o clique dava uma galeria vazia, que se lê como
-            # «esta campanha não tem gráficos». Tem — o filtro é que não a
-            # deixava passar. Quem carrega na tabela quer VER o treino, por isso
-            # o filtro que o esconderia por inteiro é desligado, e diz-se qual.
+            # Os filtros ficavam os do treino ANTERIOR e podiam esconder tudo:
+            # o clique dava uma galeria vazia, que se lê como «esta campanha não
+            # tem gráficos». Desliga-se o filtro que a esconderia, e diz-se qual.
             pngs = data.list_pngs(campanha)
             largados = []
             if tipo.value != "Todos" and not any(data.graph_type(f) == tipo.value
@@ -326,10 +312,8 @@ def build():
                 largados.append("só na dissertação")
 
             # A notificação vem ANTES de trocar a sessão: trocá-la redesenha o
-            # ranking, o que apaga a própria linha em que se carregou — e
-            # notificar a partir de um elemento já apagado rebenta com
-            # RuntimeError («parent slot has been deleted»), que matava o
-            # servidor a meio do clique.
+            # ranking e apaga a linha em que se carregou; notificar a partir de
+            # um elemento apagado rebenta com RuntimeError.
             msg = "Galeria: %s" % data.rotulo_campanha(campanha)[0]
             if largados:
                 msg += " · filtro «%s» desligado (escondia tudo)" % \

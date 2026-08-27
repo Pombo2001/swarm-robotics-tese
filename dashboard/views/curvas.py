@@ -12,11 +12,9 @@ from .. import config, data, theme
 
 CARD = theme.CARD + " p-4"
 _section_title = theme.section_title
-# Ordem = predefinição: a métrica de TAREFA primeiro. O "score" mistura duas
-# grandezas — fitness evolutiva (~10^5, porque é comida×10000 + shaping) e
-# recompensa episódica (~10^2) — e ao ficar por omissão dava a impressão de que
-# o GNN é "gigante" ao lado do PPO/SAC quando o que difere é a unidade. Os
-# painéis já são separados; a predefinição faltava.
+# Ordem = predefinição: a métrica de TAREFA primeiro. O «score» mistura fitness
+# evolutiva (~10^5) com recompensa episódica (~10^2), e por omissão dava a
+# impressão de que o GNN é «gigante» quando o que difere é a unidade.
 _METRICS = {"Tarefa (recolhas) — comparável": "task",
             "Score (fitness / recompensa) — escalas diferentes": "score"}
 
@@ -31,12 +29,10 @@ def _build_fig(curves: dict, metric: str) -> go.Figure:
         return fig
     titles = [f"{a} — {'fitness' if a == 'GNN' and metric == 'score' else ('recompensa' if metric == 'score' else 'recolhas')}"
               for a in algos]
-    # Com a métrica de TAREFA os três medem a mesma coisa na mesma unidade, por
-    # isso partilham o eixo Y: é a comparação que se quer ver, e com eixos
-    # próprios um algoritmo que recolhe 5 desenha-se tão alto como um que recolhe
-    # 120. Com o "score" NUNCA se partilha — a fitness (~10^5) esmagaria as
-    # curvas do PPO/SAC (~10^2) contra o eixo, que é o efeito de "o GNN é
-    # gigante" que não é resultado nenhum, é a unidade.
+    # Na métrica de TAREFA os três medem o mesmo na mesma unidade e partilham o
+    # eixo Y — com eixos próprios, quem recolhe 5 desenha-se tão alto como quem
+    # recolhe 120. No «score» nunca se partilha: a fitness (~10^5) esmagava o
+    # PPO/SAC (~10^2), e isso é a unidade, não um resultado.
     partilhar = (metric == "task")
     fig = make_subplots(rows=len(algos), cols=1, subplot_titles=titles,
                         vertical_spacing=0.14, shared_yaxes=partilhar)

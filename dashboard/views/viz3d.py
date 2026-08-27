@@ -41,17 +41,10 @@ def _episodios():
                 m = json.load(fh).get("meta", {})
         except Exception:
             continue
-        # O nome do cenário vem do vocabulário do dashboard, pela CHAVE — e
-        # não do `rotulo` gravado dentro do JSON. O exportador escreveu esse
-        # rótulo com o `SCENARIO_LABELS` do `src/`, que é anterior à
-        # uniformização dos nomes, e o seletor oferecia «Beco Sem Saída (Muro
-        # U)», «Mapa Grande (Labirinto Composto)» e «Porta Cooperativa c/
-        # Alternativa»: três formas abandonadas, num seletor que se usa a
-        # projetar. Um ficheiro gravado em junho não se reescreve para mudar
-        # um nome; lê-se-lhe a chave e dá-se-lhe o nome de hoje.
-        #
-        # O `rotulo` só serve de recurso, para um cenário que o dashboard não
-        # conheça — aí é melhor um nome velho do que o nome do ficheiro.
+        # O nome vem da CHAVE, pelo vocabulário do dashboard, e não do `rotulo`
+        # gravado no JSON: esse é anterior à uniformização dos nomes e o seletor
+        # oferecia três formas já abandonadas. O `rotulo` fica só de recurso,
+        # para um cenário que o dashboard não conheça.
         cen = m.get("cenario")
         nome = (config.SCENARIO_LABEL_SHORT.get(cen)
                 or m.get("rotulo") or cen or f)
@@ -104,14 +97,10 @@ def build():
                 "assim tapavam a cena inteira."
             ).classes("text-xs").style(f"color:{theme.INK_MUTED}")
 
-        # O JS vive num ficheiro servido (dashboard/estatico/viz3d.js), não numa
-        # string aqui dentro: assim é cacheável, tem sintaxe destacada no editor,
-        # e não há duas cópias do desenho a divergir.
-        #
-        # `?v=<mtime>`: sem isto, o browser servia a versão em cache e uma
-        # correção ao desenho só aparecia depois de um Ctrl+F5 — que ninguém se
-        # lembra de fazer, e leva-se meia hora a depurar código já corrigido
-        # (aconteceu ao pôr isto de pé).
+        # O JS vive num ficheiro servido, não numa string: cacheável, com sintaxe
+        # destacada, e sem duas cópias a divergir. O `?v=<mtime>` existe porque
+        # sem ele uma correção só aparecia depois de um Ctrl+F5 — meia hora a
+        # depurar código já corrigido.
         _js = os.path.join(os.path.dirname(os.path.dirname(__file__)), "estatico", "viz3d.js")
         _v = int(os.path.getmtime(_js)) if os.path.exists(_js) else 0
         ui.add_head_html(f'<script src="/estatico/viz3d.js?v={_v}"></script>')

@@ -85,11 +85,8 @@ def index(v: str = ""):
         ui.label(titulo).classes("text-[10px] font-bold tracking-[.2em] px-2 pt-3 pb-1") \
             .style(f"color:{theme.INK_MUTED}")
 
-    # `show-if-above`: aberta em ecrã grande, FECHADA no telemóvel. Com o
-    # `value=True` sozinho, o Quasar punha-a em modo overlay por cima do
-    # conteúdo — 236 px dos 390 de um telemóvel, 60% do ecrã — e quem abrisse o
-    # link público aterrava num menu a tapar aquilo que veio ver. O botão do
-    # header continua a abri-la e a fechá-la em qualquer largura.
+    # `show-if-above`: aberta em ecrã grande, fechada no telemóvel. Só com
+    # `value=True`, o Quasar punha-a em overlay a tapar 60% de um ecrã de 390 px.
     with ui.left_drawer(value=True, bordered=False) \
             .props("width=236 show-if-above").classes("p-3") as drawer:
         with ui.column().classes("w-full gap-1 h-full"):
@@ -104,17 +101,9 @@ def index(v: str = ""):
                 if not config.READONLY:
                     _sec("OPERAÇÃO")
                     t_treinar = ui.tab("Treinar", icon="rocket_launch")
-                # "monitoring" só existe nos Material Symbols (conjunto novo); o
-                # NiceGUI carrega os Material Icons clássicos, onde esse nome não
-                # resolve — o separador ficava como o ÚNICO sem ícone. "insights"
-                # existe nos dois conjuntos.
-                # Em modo leitura este separador também não existe. Não é só
-                # o painel do servidor que desaparece (esse já desaparecia, por
-                # causa da password SSH): o que sobrava eram as curvas do último
-                # treino LOCAL, na torre, sob o nome «Servidor», com
-                # um aviso a mandar ver o treino a decorrer «na vista Servidor»,
-                # que era aquela mesma. Um separador que não mostra o que promete
-                # e remete para si próprio.
+                # Fora em modo leitura: sem o painel do servidor (password SSH),
+                # sobravam curvas de um treino local sob o nome «Servidor», a
+                # remeter para si próprio.
                 t_monitor = None
                 if not config.READONLY:
                     t_monitor = ui.tab("Servidor", icon="dns")
@@ -122,14 +111,8 @@ def index(v: str = ""):
                     # que está a correr agora, e só existe onde há treino.
                     t_aovivo = ui.tab("Ao vivo (3D)", icon="view_in_ar")
 
-                # As doze entradas viviam todas sob um único rótulo «ANÁLISE»,
-                # numa lista plana: os resultados repartidos por quatro vistas
-                # sem ordem de leitura, quatro vistas de imagens, e o arquivo
-                # das campanhas exploratórias ao mesmo nível dos números da
-                # tese. Quem abre o link não tem por onde começar. Passam a
-                # quatro secções que respondem a quatro perguntas diferentes —
-                # o que a tese responde, como se defende, o que o prova, e o
-                # percurso — sem que nenhuma vista mude ou desapareça.
+                # Quatro secções em vez de uma lista plana sob «ANÁLISE»: o que a
+                # tese responde, como se defende, o que o prova, e o percurso.
                 _sec("A TESE")
                 t_ciencia = ui.tab("Ciência", icon="science")
                 t_escala  = ui.tab("Escala e robustez", icon="groups")
@@ -152,22 +135,15 @@ def index(v: str = ""):
 
                 _sec("BASTIDORES")
                 t_arquivo = ui.tab("Arquivo", icon="history_edu")
-                # A Prontidão é a checklist de trabalho de quem escreve a tese:
-                # anuncia commits por enviar, testes por correr e se o PDF está
-                # atrás do .tex. Publicada no Pi, é estado interno exposto a
-                # quem abre o link — e lê-se como «isto tem problemas» quando
-                # está apenas a fazer o seu trabalho. Fica na torre.
+                # Checklist interna (commits por enviar, PDF atrás do .tex).
+                # No Pi lê-se como «isto tem problemas»; fica na torre.
                 t_pronto = None
                 if not config.READONLY:
                     t_pronto = ui.tab("Prontidão", icon="checklist")
             ui.space()
             ui.separator()
-            # Os outros dois sítios onde este trabalho vive. Quem chega por aqui
-            # — o painel é o que se manda por link — não tem como adivinhar que
-            # existe uma página de resultados e um repositório aberto; e quem
-            # chega lá tem o caminho de volta. Os três apontam uns para os
-            # outros de propósito: cada um serve uma pergunta diferente (o
-            # painel mostra TUDO, a página resume, o repositório prova).
+            # Os três sítios apontam uns para os outros de propósito: o painel
+            # mostra tudo, a página resume, o repositório prova.
             _sec("TAMBÉM EM")
             with ui.column().classes("w-full gap-1 px-2"):
                 for _rot, _icone, _url in (
@@ -186,12 +162,9 @@ def index(v: str = ""):
             # Defesa a letra maior partia-o em duas linhas). Ver theme.py.
             with ui.row().classes("items-center gap-2 px-2 pt-2 no-wrap op-footer"):
                 ui.element("div").classes("live-dot live-dot--ok").style("width:6px;height:6px")
-                # A porta vem do ambiente (o Pi corre na 8090 porque a 8080 está
-                # ocupada pelo Pi-hole), e o rodapé tinha «:8080» em duro: no Pi
-                # anunciava uma porta que não era a dele, ao lado de «servidor
-                # local», que ali também não é verdade. Um rodapé que se engana
-                # sobre onde está é o género de detalhe que quem vê o ecrã nota
-                # e não diz.
+                # A porta vem do ambiente (o Pi corre na 8090, com a 8080 ocupada
+                # pelo Pi-hole). Estava «:8080» em duro, e o Pi anunciava uma
+                # porta que não era a dele.
                 _porta = os.environ.get("PORT", "8080")
                 _onde = "Raspberry Pi" if config.READONLY else "servidor local"
                 ui.label(f"{_onde} · :{_porta}").classes("text-[11px] mono-num") \
@@ -214,13 +187,9 @@ def index(v: str = ""):
 
 
     # ── Rodapé de navegação ────────────────────────────────────────────────────
-    # A mesma ordem da barra lateral, para que as setas no fim de cada vista
-    # levem ao que está mesmo por cima e por baixo dela. Em modo leitura há
-    # entradas que não chegam a existir (OPERAÇÃO e Prontidão): entram a None e
-    # caem fora aqui, senão a cópia do Pi teria setas a apontar para painéis
-    # que lá não existem.
-    # O terceiro campo é o nome curto que vai para o URL (`/?v=ciencia`). Sem
-    # acentos nem espaços, para o link sobreviver a ser colado num e-mail.
+    # A ordem da barra lateral. As entradas que não existem em modo leitura
+    # entram a None e caem fora, senão o Pi teria setas para painéis inexistentes.
+    # O 3.º campo vai para o URL (`/?v=ciencia`): sem acentos nem espaços.
     _percurso = [(t, r, s) for t, r, s in (
         (t_overview, "Overview",           "overview"),
         (t_treinar,  "Treinar",            "treinar"),
@@ -323,13 +292,9 @@ def index(v: str = ""):
                 _rodape_nav(t_treinar)
         if t_monitor is not None:
             with ui.tab_panel(t_monitor):
-                # O servidor PRIMEIRO: é onde os treinos correm de facto (a regra
-                # do projeto é essa). As curvas locais vinham em cima e estavam
-                # sempre obsoletas — o CSV mais recente tinha 4 dias —, o que
-                # fazia a vista parecer avariada quando só estava a dizer a
-                # verdade sobre uma máquina onde não se treina.
-                # O painel do servidor pede a password SSH do ISCTE. Numa cópia
-                # publicada isso é uma caixa de credenciais num site aberto.
+                # O servidor PRIMEIRO: é onde os treinos correm. As curvas locais
+                # em cima estavam sempre obsoletas e a vista parecia avariada.
+                # (Pede a password SSH do ISCTE — daí não existir no Pi.)
                 servidor.build()
                 with ui.column().classes("w-full gap-4 p-4"):
                     curvas.build()

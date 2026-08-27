@@ -44,11 +44,9 @@ def _existe(campanha: str, figura: str) -> bool:
 
 
 def _cartao_figura(campanha: str, figura: str, nota: str, abrir):
-    # `min-width:0` não é cosmético: sem ele, uma célula de grelha assume a
-    # largura NATURAL do conteúdo (a imagem a 2400 px) em vez de encolher. A
-    # página cresce para a direita e — como todas as vistas partilham o mesmo
-    # `ui.tab_panels` — os outros separadores ficam espremidos num canto. Foi o
-    # que aconteceu ao Monitorizar assim que esta vista entrou.
+    # `min-width:0` não é cosmético: sem ele a célula assume a largura NATURAL
+    # da imagem (2400 px) e a página cresce para a direita — e como as vistas
+    # partilham o `ui.tab_panels`, espreme os outros separadores.
     with ui.column().classes("gap-1 w-full").style("min-width:0"):
         if _existe(campanha, figura):
             # `loading=lazy`: só se descarrega o que está no ecrã. São 15 PNG a

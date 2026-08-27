@@ -46,11 +46,10 @@ _MODELO = {
 _ATIVOS = "★ Modelos ativos (results/models)"
 
 # --- Vista 3D do MAPA GRANDE ------------------------------------------------
-# A geometria está no simulador desde 24 jul 2026 (`_spawn_obstacles_mapa_grande`
-# em src/environment/swarm_env_3d.py) e o visualizador lê-a de LÁ — o que se vê é
-# o que os robôs treinam. O rascunho scripts/preview_mapa_grande.py foi retirado
-# precisamente por ter ficado a ser uma segunda cópia da geometria, divergente.
-# O visualizador é o MESMO Ursina dos outros mapas.
+# O visualizador lê a geometria do simulador (`_spawn_obstacles_mapa_grande`),
+# para o que se vê ser o que os robôs treinam. O rascunho
+# scripts/preview_mapa_grande.py foi retirado por ter ficado a ser uma segunda
+# cópia da geometria, divergente.
 _VIZ_MAPA = os.path.join(config.BASE_DIR, "visualization", "visualize_mapa_grande.py")
 
 
@@ -67,15 +66,10 @@ def _treinos():
         raiz = os.path.join(data.ADAPT_DIR, sub)
         if os.path.isdir(os.path.join(raiz, "models")):
             ops[lbl] = raiz
-    # Mega-treino: os modelos vivem em results/mega_1mes/<fase>/models, fora do
-    # graficos_tese — a mesma situação das fases adaptativas, e por isso a mesma
-    # solução. Sem isto, a campanha mais recente da tese (e a que responde à QI6)
-    # era a única que não se podia ver a mexer.
-    #
-    # Só entram as fases com modelos PRÓPRIOS: as do PPO e do SAC arquivaram por
-    # engano uma cópia dos modelos GNN da fase anterior (mesmo sha256), e foram
-    # removidas — ver o LEIA-ME_modelos.md de cada uma. Abrir uma dessas era ver
-    # um GNN a fingir de PPO.
+    # Mega-treino: os modelos vivem fora do graficos_tese, como as fases
+    # adaptativas. Só entram as fases com modelos PRÓPRIOS — as do PPO e do SAC
+    # arquivaram por engano uma cópia dos GNN da fase anterior (mesmo sha256), e
+    # abrir uma dessas era ver um GNN a fingir de PPO.
     for lbl, sub in data.MEGA_FASES:
         raiz = os.path.join(data.MEGA_DIR, sub)
         if os.path.isdir(os.path.join(raiz, "models")):

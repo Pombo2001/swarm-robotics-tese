@@ -142,11 +142,9 @@ def build(queue: JobQueue):
         with ui.column().classes("w-1/2 gap-4"):
             with ui.card().classes(CARD + " gap-3"):
                 _section_title("add_task", "Novo trabalho de treino")
-                # A regra do projeto (docs/PLANO_MESTRE.md §7) é explícita: nada
-                # de treinos nem avaliações longas no PC — só no servidor. Esta
-                # vista continua a existir para *smoke tests* de minutos, que é
-                # para o que serve; sem o aviso, um botão convidativo contradiz
-                # em silêncio a regra que o próprio projeto escreveu.
+                # A regra do projeto (PLANO_MESTRE §7): nada de treinos longos no
+                # PC, só no servidor. Esta vista serve para smoke tests de
+                # minutos — sem o aviso, o botão contradizia a regra em silêncio.
                 ui.label("⚠ A regra do projeto é treinar NO SERVIDOR (PLANO_MESTRE §7). "
                          "Isto aqui é para testes curtos — um treino a sério ocupa "
                          "a máquina durante dias e não se compara com os do servidor.") \

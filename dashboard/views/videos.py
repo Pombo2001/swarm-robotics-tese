@@ -45,11 +45,9 @@ def _metric_chip(session: str, algo: str, scenario: str):
         ui.label(f"{p:.0f}% · {theme.num(info['recolhas'])} rec/ep").classes("text-xs") \
             .style(f"color:{color};font-weight:600")
         if info.get("convergentes") is not None:
-            # «a 100%» não é enfeite: esta contagem são as execuções em que
-            # TODOS os episódios têm sucesso, e a dissertação, no mapa composto,
-            # conta outra coisa — as execuções com pelo menos uma recolha (4 de
-            # 21). Sem a qualificação, o cartão dizia «2/21 execuções» ao lado
-            # de um texto que diz 4, e as duas contagens estão ambas certas.
+            # «a 100%» não é enfeite: aqui contam-se as execuções em que TODOS os
+            # episódios têm sucesso; a dissertação conta as que têm pelo menos
+            # uma recolha (4 de 21). Ambas certas — daí qualificar qual é qual.
             ui.label("(%d/%d execuções a 100%%)"
                      % (info["convergentes"], info["runs"])) \
                 .classes("text-[10px]").style(f"color:{theme.INK_MUTED}")
@@ -91,11 +89,9 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
         if outras:
             fonte = outras[0]
             fn = data.video_for(fonte, algo, scenario)
-    # `w-full`: dentro de uma `ui.column()` os filhos alinham ao início e não
-    # esticam, e o cartão encolhia à largura do rótulo «GNN (Evolutivo)» —
-    # levando o vídeo atrás dele. Nos modos que põem o cartão direito na grelha
-    # isto não se notava, porque a célula da grelha já o esticava; no «Comparar
-    # treinos», que o embrulha numa coluna, saíam duas tiras espremidas.
+    # `w-full`: numa `ui.column()` os filhos não esticam, e o cartão encolhia à
+    # largura do rótulo «GNN (Evolutivo)», levando o vídeo atrás. Só se via no
+    # «Comparar treinos», que é o modo que o embrulha numa coluna.
     with ui.element("div").classes(
             "vid-card glass rounded-2xl p-3 flex flex-col gap-2 w-full").style(
             f"border-top:3px solid {meta['color']}"):
@@ -141,12 +137,9 @@ def build():
     st = {"session": sessions[0], "mode": "Comparar algoritmos",
           "scenario": (data.scenarios_with_video(sessions[0]) or [config.SCENARIO_KEYS[0]])[0]}
 
-    # Quantas campanhas ficam DE FORA deste seletor, e porquê. Sem esta linha, a
-    # lista curta lia-se como "faltam vídeos" — quando o que falta são os
-    # MODELOS: sem modelo arquivado não há episódio para gravar, e as fases de
-    # gradiente do mega-treino ficaram sem os seus (LEIA-ME_modelos.md). As
-    # exploratórias incompletas já não entram aqui: a galeria mostra as
-    # campanhas canónicas e as completas (ver `data.campanhas_visiveis`).
+    # Quantas campanhas ficam de fora, e porquê. Sem isto a lista curta lia-se
+    # como «faltam vídeos», quando o que faltam são MODELOS: sem modelo
+    # arquivado não há episódio para gravar (LEIA-ME_modelos.md).
     todas = data.campanhas_visiveis()
     sessions = [s for s in sessions if s in todas]
     sem_video = [s for s in todas if s not in sessions]

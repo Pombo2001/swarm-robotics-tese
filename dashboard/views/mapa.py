@@ -86,11 +86,9 @@ def _veredicto_final():
         from analise_mapa_grande import medir_f2
         m = medir_f2()
     except Exception as erro:                                # noqa: BLE001
-        # Este `except` era MUDO. A 25 de agosto o venv do Pi não tinha `scipy`,
-        # a função devolvia None sem uma palavra, e a vista caía na prosa da
-        # projeção: dizia «a avaliação do GNN ainda não existe» por cima da
-        # tabela que já a mostrava. Falhar em silêncio aqui é mandar mentir a
-        # linha de baixo, e por isso a razão passa a subir até ao ecrã.
+        # Este `except` era MUDO: sem `scipy` no venv, a função devolvia None sem
+        # uma palavra e a vista dizia «a avaliação do GNN ainda não existe» por
+        # cima da tabela que já a mostrava. A razão sobe até ao ecrã.
         return None, "%s: %s" % (type(erro).__name__, erro)
     if not m or "GNN" not in m.get("por_algo", {}):
         return None, None
@@ -167,11 +165,9 @@ def _limiar_projetado():
             "decide-se com a avaliação do GNN, que ainda não existe."
             % (p["faltam"], p["restantes"], p["n_convergentes"],
                p["n_fechados"], p["total"]), "#ffb020")
-        # …e quando ela passa a existir, esta frase deixa de ser verdade. A
-        # avaliação do GNN chegou entretanto; sem esta condição, o dashboard
-        # continuava a mandar esperar por um ficheiro que já está no disco —
-        # exatamente o género de frase escrita à mão que este painel existe
-        # para não ter. O k final sai do `medir_f2()`, que é onde a regra vive.
+        # Sem esta condição, o painel continuava a mandar esperar por um ficheiro
+        # que já está no disco — o género de frase fixa que ele existe para não
+        # ter. O k final sai do `medir_f2()`, onde a regra vive.
         final, erro_veredicto = _veredicto_final()
         if final:
             # O «falta escrever» era uma frase FIXA: continuou a pedir o
@@ -422,11 +418,9 @@ def build():
                 caminho = os.path.join(_RAIZ, "Tese", "images", "resultados",
                                        "mapa_grande_planta.png")
                 if os.path.exists(caminho):
-                    # A planta é uma figura de tese (quadrada e de alta
-                    # resolução): a tamanho natural ocupa dois ecrãs e empurra as
-                    # fases e a grelha do F1 para fora de vista. Limitada em
-                    # altura, com `contain` para não deformar a geometria — que é
-                    # o ponto da figura.
+                    # A tamanho natural a planta ocupa dois ecrãs e empurra as
+                    # fases para fora de vista. Limitada em altura, com `contain`
+                    # para não deformar a geometria — que é o ponto da figura.
                     ui.image(PLANTA).classes("w-full rounded").style(
                         "max-height:52vh; object-fit:contain") \
                         .props("loading=lazy decoding=async")
