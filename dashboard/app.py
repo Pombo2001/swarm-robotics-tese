@@ -85,7 +85,13 @@ def index(v: str = ""):
         ui.label(titulo).classes("text-[10px] font-bold tracking-[.2em] px-2 pt-3 pb-1") \
             .style(f"color:{theme.INK_MUTED}")
 
-    with ui.left_drawer(value=True, bordered=False).props("width=236").classes("p-3") as drawer:
+    # `show-if-above`: aberta em ecrã grande, FECHADA no telemóvel. Com o
+    # `value=True` sozinho, o Quasar punha-a em modo overlay por cima do
+    # conteúdo — 236 px dos 390 de um telemóvel, 60% do ecrã — e quem abrisse o
+    # link público aterrava num menu a tapar aquilo que veio ver. O botão do
+    # header continua a abri-la e a fechá-la em qualquer largura.
+    with ui.left_drawer(value=True, bordered=False) \
+            .props("width=236 show-if-above").classes("p-3") as drawer:
         with ui.column().classes("w-full gap-1 h-full"):
             with ui.tabs().props("vertical active-color=white indicator-color=white") \
                     .classes("w-full") as tabs:

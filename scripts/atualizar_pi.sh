@@ -26,6 +26,15 @@ cd "$RAIZ"
 #     DESDE='-10 days' scripts/atualizar_pi.sh
 DESDE="${DESDE:--1 day}"
 
+# Miniaturas da Galeria, ANTES de montar o pacote — senão as que forem geradas
+# hoje ficam de fora da janela do `find` e o Pi continua a servir os PNG de
+# impressão. É idempotente: salta as que já estão em dia, e numa corrida sem
+# figuras novas não faz nada. Se falhar, o envio continua: a Galeria recua para
+# o original quando não encontra a miniatura, o que é lento mas correto.
+echo "[pi] miniaturas da Galeria:"
+python scripts/gerar_miniaturas.py 2>&1 | sed 's/^/     /' \
+    || echo "     AVISO: falharam — o Pi vai servir os PNG grandes"
+
 if [ $# -gt 0 ]; then
     CAMINHOS=("$@")
 else

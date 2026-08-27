@@ -13,7 +13,7 @@ import os
 from nicegui import ui
 
 from .. import config, data, theme
-from .resultados import _pretty_title, _url, TYPE_ORDER, TYPE_ICON
+from .resultados import _pretty_title, _url, _url_mini, TYPE_ORDER, TYPE_ICON
 
 CARD = theme.CARD + " p-4"
 _section_title = theme.section_title
@@ -256,7 +256,7 @@ def build():
                                     .classes("text-sm font-semibold text-sky-200")
                                 ui.label(f).classes("text-[10px] font-mono text-gray-500 truncate")
                                 theme.clicavel(
-                                    ui.image(_url(session, f))
+                                    ui.image(_url_mini(session, f))
                                       .classes("w-full cursor-pointer")
                                       .props("loading=lazy decoding=async"),
                                     lambda _, s=session, f=f: _zoom(s, f),

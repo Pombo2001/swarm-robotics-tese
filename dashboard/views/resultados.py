@@ -3,6 +3,8 @@ exportação direta para a tese.
 
 As imagens são servidas pela rota estática '/graficos' (registada em app.py).
 """
+import os
+
 from nicegui import ui
 
 from .. import config, data, theme
@@ -107,6 +109,31 @@ _section_title = theme.section_title
 
 def _url(session: str, filename: str) -> str:
     return f"/graficos/{session}/{filename}"
+
+
+# O nome desta pasta vive aqui e no scripts/gerar_miniaturas.py. São os dois
+# únicos sítios; se mudar, mudam-se os dois.
+THUMBS = ".thumbs"
+
+
+def _url_mini(session: str, filename: str) -> str:
+    """URL da MINIATURA para a grelha — ou o original, se ainda não existir.
+
+    As figuras são exportadas em resolução de impressão (2400×1800 a 4200×2100)
+    e a grelha desenha-as a poucas dezenas de píxeis. Medido no Pi em modo
+    leitura, num telemóvel: o primeiro ecrã da Galeria pesava 7,4 MB. As
+    miniaturas de 600 px fazem o mesmo por cerca de 9 KB cada.
+
+    O recuo para o original é deliberado. Uma campanha acabada de gerar, ou um
+    clone onde o `scripts/gerar_miniaturas.py` ainda não correu, mostra as
+    figuras grandes: lento, mas certo. Sem ele ficava uma grelha de imagens
+    partidas — e uma imagem que falta não dá erro nenhum, desaparece calada.
+    """
+    sub, nome = os.path.split(filename)
+    rel = os.path.join(sub, THUMBS, os.path.splitext(nome)[0] + ".webp")
+    if os.path.exists(os.path.join(data.GRAFICOS_DIR, session, rel)):
+        return "/graficos/%s/%s" % (session, rel.replace(os.sep, "/"))
+    return _url(session, filename)
 
 
 def _opcoes_de_sessao(sessions):
@@ -355,14 +382,14 @@ def build():
                                         .classes("text-xs text-gray-600 italic py-4")
                                 else:
                                     theme.clicavel(
-                                        ui.image(_url(s, f))
+                                        ui.image(_url_mini(s, f))
                                           .classes("w-full cursor-pointer")
                                           .props("loading=lazy decoding=async"),
                                         lambda _, s=s, f=f: open_zoom(s, f),
                                         "Ampliar %s" % _pretty_title(f))
                 else:
                     theme.clicavel(
-                        ui.image(_url(sess_a.value, f))
+                        ui.image(_url_mini(sess_a.value, f))
                           .classes("w-full cursor-pointer")
                           .props("loading=lazy decoding=async"),
                         lambda _, f=f: open_zoom(sess_a.value, f),
