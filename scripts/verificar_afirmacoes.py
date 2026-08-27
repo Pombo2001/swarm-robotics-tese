@@ -49,6 +49,27 @@ ESCALA = os.path.join(RAIZ, "results", "estatisticas", "escalabilidade_%s.csv")
 EVAL = os.path.join(RAIZ, "results", "evaluation")
 
 falhas = []
+saltadas = []
+
+
+def ha_dados(padrao, secao):
+    """A secção tem os dados de que precisa? Se não, salta-a e diz porquê.
+
+    Sem isto, a primeira secção morria com um traceback do `read_csv` no PC do
+    trabalho — onde a campanha final não existe, porque vive na torre — e
+    levava atrás as outras sete, incluindo as três que só leem o `.tex` e
+    correriam na mesma. Um traceback também não distingue «não há dados» de
+    «a verificação falhou», que são coisas opostas.
+
+    Aceita glob: `MEGA` e `ESCALA` são padrões, não caminhos.
+    """
+    if glob.glob(padrao) or os.path.exists(padrao):
+        return True
+    saltadas.append((secao, os.path.relpath(padrao, RAIZ)))
+    print("\n[--] %s: SALTADA, falta %s"
+          % (secao, os.path.relpath(padrao, RAIZ)))
+    print("     Este ficheiro vive na torre — ver docs/REPRODUZIR.md.")
+    return False
 
 
 def corpo():
@@ -107,6 +128,8 @@ def cabecalho(t):
 
 # ---------------------------------------------------------------- campanha final
 def campanha_final():
+    if not ha_dados(FINAL_7D, "Campanha final"):
+        return
     cabecalho("Campanha final (7 cenários × 3 algoritmos × 7 execuções)")
     d = pd.read_csv(FINAL_7D)
 
@@ -162,6 +185,8 @@ def campanha_final():
 
 # ------------------------------------------------------------------ mega-treino
 def mega_treino():
+    if not ha_dados(MEGA, "Mega-treino"):
+        return
     cabecalho("Mega-treino no Muro em U (n = 28 por braço)")
     fs = glob.glob(MEGA)
     d = pd.concat([pd.read_csv(f).assign(fonte=f) for f in fs], ignore_index=True)
@@ -186,6 +211,8 @@ def mega_treino():
 
 # --------------------------------------------------------------- escalabilidade
 def escalabilidade():
+    if not ha_dados(ESCALA % "*", "Escalabilidade"):
+        return
     cabecalho("Escalabilidade Zero-Shot (N = 10 a 100, sem retreino)")
     chaves = {"none": "Sandbox", "cooperative_perception": "Perceção Cooperativa",
               "bottleneck": "Gargalo", "four_rooms": "Quatro Salas",
@@ -224,6 +251,11 @@ def escalabilidade():
 
 # --------------------------------------------------------------------- robustez
 def robustez():
+    # `*_fail10.csv` e não `*.csv`: a pasta tem CSV de avaliação normal mesmo
+    # quando os da robustez não vieram, e um guarda sobre a pasta deixava passar
+    # até ao `min()` de uma lista vazia — o traceback voltava, noutra linha.
+    if not ha_dados(os.path.join(EVAL, "*_fail10.csv"), "Robustez"):
+        return
     cabecalho("Robustez à perda súbita de 10% dos agentes")
     v = do_tex(r"retenção de recolhas situa-se entre \\textbf\{(\d+)\\% e (\d+)\\%\} "
                r"em todas as (\d+) combinações", "faixa de retenção", 3)
@@ -244,6 +276,8 @@ def robustez():
 
 # ------------------------------------------------------- diagnóstico da QI7
 def diagnostico_qi7():
+    if not ha_dados(LOGS_F2, "Diagnóstico da QI7"):
+        return
     cabecalho("Diagnóstico da QI7 (orçamento, horizonte e aproximação)")
     logs = sorted(glob.glob(LOGS_F2))
     v = do_tex(r"Em \$(\d+)\$ das \$(\d+)\$ execuções o melhor \\textit\{fitness\} surge "
@@ -340,12 +374,19 @@ def readme():
     # O total de episódios da campanha não está escrito na tese com esta grafia
     # — lá aparece decomposto (3 × 7 cenários × 7 execuções × 20 episódios). O
     # README dá-o feito, e por isso confere-se contra o CSV, que é a fonte.
+    # Só esta comparação precisa do CSV da torre; o resto do README confere-se
+    # contra o `.tex` e corre em qualquer máquina. Saltar a secção inteira por
+    # causa de uma linha deixaria por conferir o que estava ao alcance.
+    # As duas condições dizem coisas OPOSTAS e não se juntam num `and`: o
+    # README ter perdido a frase é uma falha; o CSV não estar cá é uma
+    # verificação por fazer. Juntas, o PC do trabalho acusava o README de ter
+    # perdido um número que ele tem escrito.
     m = re.search(r"\*\*(\d+) episódios de avaliação", texto)
-    if m:
+    if not m:
+        falhas.append("README: perdeu o total de episódios da campanha final")
+    elif ha_dados(FINAL_7D, "README · episódios da campanha final"):
         confere("episódios da campanha final (README vs CSV)", m.group(1),
                 len(pd.read_csv(FINAL_7D)), 0)
-    else:
-        falhas.append("README: perdeu o total de episódios da campanha final")
 
     factos = [
         # O protocolo é o primeiro a apodrecer: a versão anterior deste README
@@ -504,6 +545,19 @@ def main():
             print("  - %s" % f)
         print("=" * 78)
         sys.exit(1)
+    # Sem falhas MAS com secções saltadas não é um visto: é meia verificação, e
+    # anunciá-la como limpa seria pior do que o traceback que isto substituiu —
+    # o traceback pelo menos não se confundia com sucesso. Código 2 para não
+    # ser tomado por 0 por quem só olha para o código de saída.
+    if saltadas:
+        print("NADA a apontar no que foi verificado — mas %d verificação(ões) "
+              "NÃO correram:" % len(saltadas))
+        for secao, ficheiro in saltadas:
+            print("  - %s (falta %s)" % (secao, ficheiro))
+        print("\nCorre isto na torre, onde estes ficheiros existem, antes de "
+              "dares as afirmações por conferidas.")
+        print("=" * 78)
+        sys.exit(2)
     print("As afirmações absolutas da dissertação batem com os dados ✓")
     print("=" * 78)
 
