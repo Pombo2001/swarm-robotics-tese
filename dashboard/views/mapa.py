@@ -428,7 +428,8 @@ def build():
                     # altura, com `contain` para não deformar a geometria — que é
                     # o ponto da figura.
                     ui.image(PLANTA).classes("w-full rounded").style(
-                        "max-height:52vh; object-fit:contain")
+                        "max-height:52vh; object-fit:contain") \
+                        .props("loading=lazy decoding=async")
                 else:
                     ui.label("planta não encontrada em Tese/images/resultados/") \
                         .classes("text-xs").style(f"color:{theme.INK_MUTED}")

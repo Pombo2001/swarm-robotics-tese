@@ -55,11 +55,13 @@ def _cartao_figura(campanha: str, figura: str, nota: str, abrir):
             # 300 dpi e, todos de uma vez, a vista levava ~25 s a aparecer — numa
             # sala, isso é tempo a olhar para um ecrã vazio. Com lazy, o primeiro
             # bloco aparece de imediato e o resto chega ao rolar.
-            ui.image(f"/graficos/{campanha}/{figura}") \
-                .classes("w-full max-w-full rounded cursor-pointer") \
-                .style("height:auto") \
-                .props('loading=lazy') \
-                .on("click", lambda c=campanha, f=figura: abrir(c, f))
+            theme.clicavel(
+                ui.image(f"/graficos/{campanha}/{figura}")
+                  .classes("w-full max-w-full rounded cursor-pointer")
+                  .style("height:auto")
+                  .props('loading=lazy'),
+                lambda c=campanha, f=figura: abrir(c, f),
+                "Ampliar a figura %s" % figura)
         else:
             with ui.column().classes("w-full items-center justify-center py-8 rounded") \
                     .style("border:1px dashed rgba(255,255,255,.18)"):

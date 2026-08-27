@@ -259,6 +259,10 @@ results/estatisticas/*
 # Configuracao local de ferramentas de edicao (especifica da maquina)
 .claude/
 
+# Sessoes do playwright-cli (snapshots e screenshots de inspecao do dashboard)
+.playwright-cli/
+node_modules/
+
 # Auxiliares de compilacao LaTeX (regeneraveis)
 *.bcf
 *.run.xml

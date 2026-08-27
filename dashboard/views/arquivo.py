@@ -255,9 +255,12 @@ def build():
                                 ui.label(_pretty_title(f)) \
                                     .classes("text-sm font-semibold text-sky-200")
                                 ui.label(f).classes("text-[10px] font-mono text-gray-500 truncate")
-                                ui.image(_url(session, f)) \
-                                    .classes("w-full cursor-pointer") \
-                                    .on("click", lambda _, s=session, f=f: _zoom(s, f))
+                                theme.clicavel(
+                                    ui.image(_url(session, f))
+                                      .classes("w-full cursor-pointer")
+                                      .props("loading=lazy decoding=async"),
+                                    lambda _, s=session, f=f: _zoom(s, f),
+                                    "Ampliar %s" % _pretty_title(f))
 
         sel.on_value_change(lambda: mostrar.refresh())
         with painel:

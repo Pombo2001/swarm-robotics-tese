@@ -354,11 +354,19 @@ def build():
                                     ui.label("(não existe nesta sessão)") \
                                         .classes("text-xs text-gray-600 italic py-4")
                                 else:
-                                    ui.image(_url(s, f)).classes("w-full cursor-pointer") \
-                                        .on("click", lambda _, s=s, f=f: open_zoom(s, f))
+                                    theme.clicavel(
+                                        ui.image(_url(s, f))
+                                          .classes("w-full cursor-pointer")
+                                          .props("loading=lazy decoding=async"),
+                                        lambda _, s=s, f=f: open_zoom(s, f),
+                                        "Ampliar %s" % _pretty_title(f))
                 else:
-                    ui.image(_url(sess_a.value, f)).classes("w-full cursor-pointer") \
-                        .on("click", lambda _, f=f: open_zoom(sess_a.value, f))
+                    theme.clicavel(
+                        ui.image(_url(sess_a.value, f))
+                          .classes("w-full cursor-pointer")
+                          .props("loading=lazy decoding=async"),
+                        lambda _, f=f: open_zoom(sess_a.value, f),
+                        "Ampliar %s" % _pretty_title(f))
 
         @ui.refreshable
         def galeria():

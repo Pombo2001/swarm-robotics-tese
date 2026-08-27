@@ -254,7 +254,8 @@ def _megatreino_card():
                         .style(f"color:{theme.INK}")
 
         ui.image("/figuras_tese/megatreino_u_wall_4bracos.png") \
-            .classes("w-full rounded mt-3").style("background:#fff")
+            .classes("w-full rounded mt-3").style("background:#fff") \
+            .props("loading=lazy decoding=async")
 
         if m3:
             # O δ leva vírgula como tudo o resto desta vista: escrevia-se

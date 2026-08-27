@@ -107,7 +107,7 @@ def _status_card(icon: str, title: str, goto=None, view: str = ""):
                 ui.icon("north_east").classes("text-xs").style(f"color:{theme.INK_MUTED}")
         body = ui.column().classes("gap-1 w-full")
     if goto:
-        card.on("click", lambda: goto(view))
+        theme.clicavel(card, lambda: goto(view), f"Abrir {title}")
     return body
 
 

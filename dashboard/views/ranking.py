@@ -41,8 +41,9 @@ def _linha(d, melhor, destacar, ao_escolher=None):
         .style(f"border-radius:6px; {fundo}")
     if ao_escolher is not None:
         linha.classes("cursor-pointer hover:bg-white/5") \
-            .on("click", lambda _, c=d["campanha"]: ao_escolher(c)) \
             .tooltip("Mostrar as imagens deste treino")
+        theme.clicavel(linha, lambda _, c=d["campanha"]: ao_escolher(c),
+                       "Mostrar as imagens do treino %s" % d["campanha"])
     with linha:
         ui.label("★" if e_o_melhor else "").classes("text-xs w-3") \
             .style("color:#facc15")

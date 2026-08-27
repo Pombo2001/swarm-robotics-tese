@@ -31,6 +31,10 @@ CSS = r"""
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
+  /* Diz ao browser que o tema é escuro: sem isto, o que ele desenha por nós —
+     barras de scroll, menus de <select>, o calendário de um <input date> —
+     sai claro por omissão e abre buracos brancos num painel preto. */
+  color-scheme:dark;
   --bg:#050505; --surface:#0e0e0e; --surface2:#141414; --border:#1f1f1f;
   --border-hi:#333; --ink:#f5f5f5; --ink-soft:#a3a3a3; --ink-muted:#7d7d7d;
 }
@@ -49,6 +53,10 @@ body {
 h1,h2,h3,.font-extrabold,.font-bold,.q-tab__label,.mono-title {
   font-family:'Space Grotesk','Inter',sans-serif !important;
 }
+/* Reparte um título por linhas de comprimento parecido, em vez de deixar uma
+   palavra órfã na última — nota-se sobretudo no título do hero, que é o que
+   sai nos screenshots. Só em cabeçalhos: o `balance` é para textos curtos. */
+h1,h2,h3,.mono-title { text-wrap:balance; }
 .mono-num, .q-badge, code, pre, .mono-console {
   font-family:'JetBrains Mono',monospace !important;
   font-variant-numeric:tabular-nums;
@@ -83,9 +91,22 @@ h1,h2,h3,.font-extrabold,.font-bold,.q-tab__label,.mono-title {
   border-right:1px solid var(--border) !important;
 }
 .q-tab { text-transform:none !important; font-weight:600; letter-spacing:.2px;
-  justify-content:flex-start; border-radius:10px; min-height:44px;
+  justify-content:flex-start; border-radius:10px; min-height:36px;
   color:var(--ink-muted); transition:color .2s ease, background .2s ease; }
-.q-tab__content { align-items:flex-start; }
+/* Ícone À ESQUERDA do rótulo, não empilhado por cima.
+   O Quasar empilha-os, o que dava separadores de 56 px: as quinze entradas mais
+   os cabeçalhos de secção passavam dos 995 px e não cabiam numa janela de 900.
+   Quando não cabem, o Quasar mete duas setinhas de scroll — e chegar ao Arquivo
+   passava a ser clicar numa seta oito vezes. Em linha, cada entrada ocupa 36 px
+   e a barra INTEIRA cabe, que é a forma de não precisar de setas nenhumas. */
+.q-tab__content { flex-direction:row !important; align-items:center !important;
+  justify-content:flex-start !important; gap:10px; }
+/* As setas do Quasar não se usam aqui — ver acima. */
+.q-tabs__arrow { display:none !important; }
+/* Rede de segurança: numa janela baixa, ou em Modo Defesa (letra maior), pode
+   voltar a não caber. Aí rola-se com a roda do rato, que é o que se espera de
+   uma lista — e não com setas que só andam um passo de cada vez. */
+.q-tabs--vertical .q-tabs__content { overflow-y:auto !important; }
 .q-tab--active { color:var(--ink) !important; background:rgba(255,255,255,.06); }
 .q-tab:hover { background:rgba(255,255,255,.04); color:var(--ink-soft); }
 .q-tab__indicator { background:var(--ink) !important; width:2px !important; }
@@ -382,6 +403,14 @@ def apply():
     """Aplica o tema global (chamar uma vez por página)."""
     ui.dark_mode().enable()
     ui.colors(primary="#fafafa", secondary="#a3a3a3", accent="#f5f5f5", dark="#050505")
+    # theme-color: pinta a barra do browser no telemóvel com o fundo do painel,
+    # em vez da faixa branca por omissão por cima de um ecrã preto.
+    # preconnect: as três famílias vêm do Google Fonts, e o handshake só começa
+    # quando o CSS é analisado — abrir a ligação mais cedo poupa uma ida e volta.
+    ui.add_head_html(
+        '<meta name="theme-color" content="#050505">'
+        '<link rel="preconnect" href="https://fonts.googleapis.com">'
+        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>')
     ui.add_head_html(f"<style>{CSS}</style>")
     ui.add_head_html(f"<script>{COUNTUP_JS}</script>")
     # No <body>, não no <head>: o script repõe o Modo Defesa gravado e precisa
@@ -544,7 +573,30 @@ def defesa_button():
     """Botão do Modo Defesa (usar no header). Devolve o ui.button."""
     b = ui.button(icon="present_to_all",
                   on_click=lambda: ui.run_javascript("window.monoDefesa()")) \
-        .props("flat round dense color=white").classes("defesa-btn")
+        .props('flat round dense color=white '
+               'aria-label="Alternar o Modo Defesa"').classes("defesa-btn")
     b.tooltip("Modo Defesa — texto maior, mais contraste e sem animações, "
               "para projetar numa sala")
     return b
+
+
+def clicavel(elemento, acao, rotulo: str = ""):
+    """Torna um elemento que não é `<button>` utilizável sem rato.
+
+    Os cartões de estado, as linhas do ranking e as miniaturas da galeria
+    reagiam só ao `click`: um `div` não entra na ordem de tabulação nem responde
+    ao Enter, portanto quem navega por teclado — ou quem faz a demo da defesa
+    sem rato à mão — não lhes chegava. Dá-lhes semântica de botão, um ponto de
+    paragem no Tab e as duas teclas que se esperam de um botão.
+
+    O `.prevent` no Espaço é o que impede a página de saltar um ecrã para baixo
+    ao mesmo tempo que ativa o cartão. O anel de foco já vem do `:focus-visible`
+    global no CSS, por isso não é preciso desenhar nada aqui.
+    """
+    elemento.on("click", acao)
+    elemento.on("keydown.enter", acao)
+    elemento.on("keydown.space.prevent", acao)
+    elemento.props("role=button tabindex=0")
+    if rotulo:
+        elemento.props(f'aria-label="{rotulo}"')
+    return elemento

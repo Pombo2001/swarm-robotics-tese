@@ -85,7 +85,7 @@ def build(queue: JobQueue):
                 chip = ui.row().classes(
                     "items-center gap-2 no-wrap px-3 py-2 cursor-pointer flex-1 "
                     "justify-center").style(
-                    f"border-radius:10px; transition:all .18s ease; "
+                    f"border-radius:10px; transition:border-color .18s ease, background-color .18s ease, opacity .18s ease; "
                     + (f"border:1px solid {color}; background:rgba(255,255,255,.07);"
                        if on else
                        f"border:1px solid {theme.BORDER}; background:transparent; opacity:.65;"))
@@ -95,7 +95,7 @@ def build(queue: JobQueue):
                         + ("" if on else "opacity:.5;"))
                     ui.label(label).classes("text-xs font-bold mono-title").style(
                         f"color:{theme.INK if on else theme.INK_MUTED}")
-                chip.on("click", _pick)
+                theme.clicavel(chip, _pick, "Escolher %s" % label)
 
     # ── chips de cenário (grelha clicável) ────────────────────────────────────
     @ui.refreshable
@@ -110,7 +110,7 @@ def build(queue: JobQueue):
             lbl = ("limpar" if state["cens"] == set(config.SCENARIO_KEYS) else "todos")
             b = ui.label(lbl).classes("text-[11px] cursor-pointer") \
                 .style(f"color:{theme.INK_SOFT}; text-decoration:underline dotted")
-            b.on("click", _all)
+            theme.clicavel(b, _all, "%s os cenários" % lbl.capitalize())
         with ui.grid(columns=2).classes("w-full gap-1 mt-1"):
             for k in config.SCENARIO_KEYS:
                 on = k in state["cens"]
@@ -123,7 +123,7 @@ def build(queue: JobQueue):
 
                 chip = ui.row().classes(
                     "items-center gap-2 no-wrap px-2 py-1 cursor-pointer").style(
-                    f"border-radius:8px; transition:all .15s ease; "
+                    f"border-radius:8px; transition:border-color .15s ease, background-color .15s ease, opacity .15s ease; "
                     + ("border:1px solid #3a3a3a; background:rgba(255,255,255,.06);"
                        if on else
                        f"border:1px solid {theme.BORDER}; opacity:.55;"))
@@ -133,7 +133,9 @@ def build(queue: JobQueue):
                         f"color:{theme.INK if on else theme.INK_MUTED}")
                     ui.label(config.SCENARIO_LABEL_BY_KEY[k]).classes("text-xs") \
                         .style(f"color:{theme.INK_SOFT if on else theme.INK_MUTED}")
-                chip.on("click", _tog)
+                theme.clicavel(chip, _tog,
+                               "Ligar ou desligar o cenário %s"
+                               % config.SCENARIO_LABEL_BY_KEY[k])
 
     with ui.row().classes("w-full gap-4 no-wrap p-4"):
         # ── Coluna esquerda: formulário + fila ───────────────────────────────
@@ -156,7 +158,7 @@ def build(queue: JobQueue):
                         with ui.column().classes(
                                 "flex-1 gap-0 px-3 py-2 cursor-pointer mono-card-hover").style(
                                 f"border:1px solid {theme.BORDER}; border-radius:10px; "
-                                "background:rgba(255,255,255,.02); transition:all .18s ease;") \
+                                "background:rgba(255,255,255,.02); transition:border-color .18s ease, background-color .18s ease, opacity .18s ease;") \
                                 as card:
                             with ui.row().classes("items-center gap-1 no-wrap"):
                                 ui.icon(icon).classes("text-sm").style(f"color:{theme.INK}")
@@ -164,7 +166,8 @@ def build(queue: JobQueue):
                                     .style(f"color:{theme.INK}")
                             ui.label(desc).classes("text-[10px] leading-tight mt-1") \
                                 .style(f"color:{theme.INK_MUTED}")
-                        card.on("click", lambda _, n=name: apply_preset(n))
+                        theme.clicavel(card, lambda _, n=name: apply_preset(n),
+                                       "Aplicar a predefinição %s" % name)
 
                 ui.label("ALGORITMO").classes("text-[10px] tracking-[.2em] font-bold") \
                     .style(f"color:{theme.INK_MUTED}")
@@ -213,12 +216,16 @@ def build(queue: JobQueue):
                     _section_title("playlist_play", "Fila de trabalhos")
                     with ui.row().classes("gap-1"):
                         ui.button(icon="play_arrow", on_click=lambda: (queue.start(), fila.refresh())) \
-                            .props("color=positive size=sm round").tooltip("Iniciar fila")
+                            .props('color=positive size=sm round '
+                                   'aria-label="Iniciar a fila"').tooltip("Iniciar fila")
                         ui.button(icon="stop", on_click=lambda: (queue.stop(), fila.refresh())) \
-                            .props("color=negative size=sm round outline").tooltip("Parar")
+                            .props('color=negative size=sm round outline '
+                                   'aria-label="Parar a fila"').tooltip("Parar")
                         ui.button(icon="cleaning_services",
                                   on_click=lambda: (queue.clear_finished(), fila.refresh())) \
-                            .props("size=sm round outline").tooltip("Limpar concluídos")
+                            .props('size=sm round outline '
+                                   'aria-label="Limpar trabalhos concluídos"') \
+                            .tooltip("Limpar concluídos")
 
                 @ui.refreshable
                 def fila():
@@ -246,7 +253,8 @@ def build(queue: JobQueue):
                                 if job.status == "em fila":
                                     ui.button(icon="delete",
                                               on_click=lambda _, j=job.id: (queue.remove(j), fila.refresh())) \
-                                        .props("flat round size=sm color=negative")
+                                        .props('flat round size=sm color=negative '
+                                               'aria-label="Remover este trabalho da fila"')
                 fila()
 
         # ── Coluna direita: consola integrada (estilo terminal) ──────────────

@@ -390,9 +390,9 @@ def build():
 
         with ui.row().classes("items-center gap-2"):
             ui.button(icon="chevron_left", on_click=lambda: andar(-1)) \
-                .props("flat dense round")
+                .props('flat dense round aria-label="Questão anterior"')
             ui.button(icon="chevron_right", on_click=lambda: andar(1)) \
-                .props("flat dense round")
+                .props('flat dense round aria-label="Questão seguinte"')
             ui.label("ou use as setas do teclado").classes("text-xs") \
                 .style(f"color:{theme.INK_MUTED}")
 

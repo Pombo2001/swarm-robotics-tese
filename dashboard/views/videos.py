@@ -62,7 +62,8 @@ def _zoom(session: str, filename: str):
             ui.label(f"{config.ALGO_META.get(algo.upper(), {}).get('label', algo.upper())}"
                      f"  ·  {config.SCENARIO_LABEL_BY_KEY.get(scen, scen)}") \
                 .classes("text-base font-semibold")
-            ui.button(icon="close", on_click=dlg.close).props("flat round dense")
+            ui.button(icon="close", on_click=dlg.close) \
+                .props('flat round dense aria-label="Fechar"')
         ui.image(_url(session, filename)).classes("max-h-[78vh] rounded-lg object-contain")
         ui.label(filename).classes("text-xs font-mono text-gray-500 self-center")
     dlg.open()
@@ -102,9 +103,13 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
             ui.label(meta["icon"]).classes("text-lg")
             ui.label(meta["label"]).classes("text-sm font-bold").style(f"color:{meta['color']}")
         if fn:
-            ui.image(_url(fonte, fn)).classes("w-full rounded-lg cursor-pointer bg-black/30") \
-                .style(f"height:{height};object-fit:contain") \
-                .on("click", lambda _, f=fn, s=fonte: _zoom(s, f))
+            theme.clicavel(
+                ui.image(_url(fonte, fn))
+                  .classes("w-full rounded-lg cursor-pointer bg-black/30")
+                  .style(f"height:{height};object-fit:contain")
+                  .props("loading=lazy decoding=async"),
+                lambda _, f=fn, s=fonte: _zoom(s, f),
+                "Ampliar o vídeo %s" % meta["label"])
             if fonte != session:
                 ui.label("de outra campanha: %s" % fonte).classes("text-[10px]") \
                     .style(f"color:{theme.INK_MUTED}")
@@ -292,9 +297,14 @@ def _render_gallery(st):
                             .style(f"color:{meta['color']}")
                         ui.label(config.SCENARIO_LABEL_BY_KEY.get(s, s)) \
                             .classes("text-xs text-gray-400 truncate")
-                    ui.image(_url(session, f)).classes("w-full rounded-lg cursor-pointer bg-black/30") \
-                        .style("height:clamp(160px,22vh,300px);object-fit:contain") \
-                        .on("click", lambda _, fn=f: _zoom(session, fn))
+                    theme.clicavel(
+                        ui.image(_url(session, f))
+                          .classes("w-full rounded-lg cursor-pointer bg-black/30")
+                          .style("height:clamp(160px,22vh,300px);"
+                                 "object-fit:contain")
+                          .props("loading=lazy decoding=async"),
+                        lambda _, fn=f: _zoom(session, fn),
+                        "Ampliar %s" % config.SCENARIO_LABEL_BY_KEY.get(s, s))
 
     algo_f.on_value_change(grid.refresh)
     scen_f.on_value_change(grid.refresh)
