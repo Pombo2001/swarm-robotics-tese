@@ -159,14 +159,28 @@ def _questoes():
     i = tex.find(r"\label{sec:questoes_investigacao}")
     if i < 0:
         return {}
-    # Só a lista das questões: fora dela há três respostas comentadas à QI7,
+    # Só a secção das questões: fora dela há três respostas comentadas à QI7,
     # nos três desfechos possíveis, e nenhuma delas é uma pergunta.
-    bloco = tex[i:tex.find(r"\end{enumerate}", i)]
+    #
+    # 30 ago: o corte era no PRIMEIRO `\end{enumerate}`, e a 30 de agosto as
+    # questões passaram a estar em DOIS níveis (QI1-QI4 gerais, QI5-QI7
+    # específicas) — duas listas, e o primeiro `\end{enumerate}` passou a ser o
+    # do nível 1. A vista da Defesa ficou a mostrar 4 perguntas de 7, com as
+    # respostas às 7 logo por baixo: as três que faltavam eram precisamente as
+    # que sustentam o resultado mais forte da dissertação. O corte é agora no
+    # capítulo seguinte, que é o fim real da secção.
+    fim = tex.find(r"\chapter{", i)
+    bloco = tex[i:fim if fim > 0 else len(tex)]
     saida = {}
-    # Cada \item vai até ao \item seguinte (ou ao fim do bloco) — é assim que
-    # se apanha uma pergunta escrita em cinco linhas. O `%?` no lookahead
-    # existe porque a QI7 está comentada e o item seguinte também começa por %.
-    for m in re.finditer(r"\\item\[\\textbf\{QI(\d)\.\}\](.*?)(?=\s*%?\s*\\item\[|\Z)",
+    # Cada \item vai até ao \item seguinte, ao fecho da lista, ou ao fim do
+    # bloco — é assim que se apanha uma pergunta escrita em cinco linhas. O `%?`
+    # no lookahead existe porque a QI7 esteve comentada e o item seguinte
+    # também começava por %; o `\end{enumerate}` entrou a 30 de agosto, com os
+    # dois níveis: sem ele, a última pergunta de cada nível engolia o cabeçalho
+    # do nível seguinte e a QI4 projetava-se como «…ao outro? Nível 2 — Questões
+    # específicas: os mecanismos por detrás do desempenho. As três questões…».
+    for m in re.finditer(r"\\item\[\\textbf\{QI(\d)\.\}\](.*?)"
+                         r"(?=\s*%?\s*\\item\[|\s*\\end\{enumerate\}|\Z)",
                          bloco, re.S):
         linha = bloco.rfind("\n", 0, m.start()) + 1
         declarada = not bloco[linha:m.start()].lstrip().startswith("%")
