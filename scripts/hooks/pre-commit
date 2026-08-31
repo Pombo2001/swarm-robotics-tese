@@ -94,6 +94,32 @@ if [ "$MEXEU_TESE" -eq 1 ]; then
     # vezes, nao estava la - e que nenhuma figura ou tabela fica orfa, com as
     # citacoes por intervalo resolvidas. Le o .tex e o .aux, custa milissegundos.
     "$PY" "$RAIZ/scripts/verificar_estrutura_tese.py" || OK=0
+    # 25 ago: AFIRMACOES. Confere as frases onde o numero esta na palavra - "o
+    # unico cenario que nenhum algoritmo resolve", "converge em todas as
+    # execucoes de seis cenarios", "nenhuma das 28 passa de 45,4". Sao 40 no
+    # corpo, eram as mais caras de errar e nao tinham regua nenhuma: o
+    # verificar_numeros_tese le o 45,4 e nao le o "nenhuma".
+    "$PY" "$RAIZ/scripts/verificar_afirmacoes.py" || OK=0
+    # 25 ago: CONFIGURACAO. As duas tabelas do Apendice sao copias do
+    # foraging.yaml feitas a mao, e o YAML mudou muitas vezes (LiDAR 5->8 m, a
+    # recompensa simplificada, o max_steps do mapa). Uma configuracao errada e
+    # pior do que um resultado errado: faz o leitor pensar que reproduziu o
+    # trabalho quando correu outra coisa.
+    "$PY" "$RAIZ/scripts/verificar_configuracao.py" || OK=0
+    # 30 ago: TEMPOS. A tabela de custo computacional por algoritmo entrou a
+    # pedido do orientador e le uma fonte que mais nenhuma regua toca: os
+    # REGISTOS DE TREINO do mega-treino (o .log do SB3 para PPO/SAC, o CSV do
+    # treinador para o evolutivo). Sem dados na maquina, diz o que falta e passa.
+    "$PY" "$RAIZ/scripts/verificar_tempos.py" || OK=0
+    # 30 ago: os TESTES DA DEFESA. A vista da Defesa LE o main.tex (as sete
+    # perguntas e as sete respostas), e por isso uma alteracao SO na tese pode
+    # parti-la sem tocar em dashboard/ - foi o que aconteceu ao por as questoes
+    # em dois niveis: o parser cortava no primeiro \\end{enumerate} e o ecra
+    # passou a projetar 4 perguntas com 7 respostas por baixo. O
+    # verificar_dashboard NAO apanha isto (olha para numeros); estes dois
+    # testes apanham, e custam menos de um segundo.
+    "$PY" -m pytest "$RAIZ/tests/test_dashboard_conteudo.py" -k defesa_mostra \
+        -q --no-header -p no:cacheprovider || OK=0
 fi
 if [ "$MEXEU_MAPA" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_mapa_grande.py" || OK=0
@@ -101,6 +127,14 @@ fi
 # As figuras do artigo sao copias das da tese e ja ficaram para tras duas vezes
 # (oito numa revisao, tres noutra). Compara-as: as copias tem de ser identicas e
 # as versoes proprias da coluna nao podem ser mais velhas do que a fonte.
+# A bibliografia ja teve NOMES DE AUTORES FABRICADOS em entradas cujo DOI
+# resolvia (auditoria de 16 jul). As 19 com DOI vao ao CrossRef e as 26 sem DOI
+# ao arXiv/OpenAlex; aqui corre-se so a parte offline, que le a cache e nao
+# toca na rede - quem mexer no .bib renova-a com --renovar.
+if git diff --cached --name-only | grep -qE '\.bib$'; then
+    "$PY" "$RAIZ/scripts/verificar_bibliografia.py" --offline || OK=0
+    "$PY" "$RAIZ/scripts/verificar_bibliografia_sem_doi.py" --offline || OK=0
+fi
 if git diff --cached --name-only | grep -qE '^(Artigo/|Tese/images/)'; then
     "$PY" "$RAIZ/scripts/verificar_figuras_artigo.py" || OK=0
 fi

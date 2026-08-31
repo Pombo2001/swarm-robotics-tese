@@ -37,6 +37,7 @@ mudam, e recusam o commit se um número deixar de bater
 | `verificar_protocolo.py` **⟨hook⟩** | os valores de protocolo (execuções, episódios, minutos) existem nas campanhas |
 | `verificar_vertical.py` **⟨hook⟩** | os números da limitação «dimensão vertical» |
 | `verificar_spawn_gargalo.py` **⟨hook⟩** | os números da limitação «spawn dentro da barreira» |
+| `verificar_tempos.py` **⟨hook⟩** | a tabela de custo computacional por algoritmo, contra os registos de treino do mega-treino |
 | `verificar_parte1.py` | os números dos capítulos 1 a 4 |
 | `verificar_slr_corpo.py` | o que a tese afirma sobre o corpo da revisão sistemática |
 | `verificar_bibliografia.py` | as referências existem e são o que a bibliografia diz |
@@ -144,6 +145,7 @@ Os `.sh` correm no servidor do ISCTE (ver `servidor.sh` para o acesso).
 |---|---|
 | `atualizar_pi.sh` | envia para o Raspberry Pi só o que mudou |
 | `empacotar_para_pi.py` | empacota o dashboard em modo leitura |
+| `gerar_miniaturas.py` | as miniaturas da Galeria (as figuras de impressão pesavam 7,4 MB no primeiro ecrã do telemóvel) |
 | `progress.py` | progresso partilhado entre os geradores e o dashboard |
 
 ## Servidor e ambiente
