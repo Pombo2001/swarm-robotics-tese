@@ -82,8 +82,8 @@ class FlattenMultiAgentVecEnv(VecEnvWrapper):
 
         Quando os dois números discordam, o reshape não estoira: com (2, 20, 10)
         lido como 25 agentes por arena, 400 elementos dividem-se por 50 linhas e
-        saem 8 colunas — **observações de agentes diferentes coladas na mesma
-        linha**, sem uma palavra. Um treino nessas condições corre até ao fim e
+        saem 8 colunas — observações de agentes diferentes coladas na mesma
+        linha, sem uma palavra. Um treino nessas condições corre até ao fim e
         converge para outra coisa.
 
         Medido a 13 ago em tests/test_treino_gradientes.py, que antes desta
@@ -241,12 +241,10 @@ def train_sac_3d(time_limit_minutes, seed=None, config_path=None):
     # train_freq / gradient_steps: DEFAULTS DO SB3 (1 e 1), mantidos para que as
     # campanhas fechadas continuem reproduzíveis. Ficam expostos no config porque
     # o parameter sharing os torna enganadores: cada step() do VecEnv devolve
-    # num_cpu × num_agents transições (com 5 e 20, são 100) e o SB3 faz UM
+    # num_cpu x num_agents transições (com 5 e 20, são 100) e o SB3 faz UM
     # gradient step por step() — rácio de replay 0,01, quando o SAC é desenhado
-    # para ~1. Medido no smoke test: n_updates=26 000 para 2,6M timesteps.
-    # Subir isto troca amostras por aprendizagem (menos timesteps/s, mais
-    # gradiente por transição); qual dos dois compensa é questão empírica — ver
-    # docs/AB_SAC_MAPA_GRANDE.md.
+    # para ~1. Subir isto troca amostras por aprendizagem; qual dos dois compensa
+    # é questão empírica — ver docs/AB_SAC_MAPA_GRANDE.md.
     model = SAC(
         "MlpPolicy", env,
         learning_rate=sac_config.get("learning_rate", 1e-4),

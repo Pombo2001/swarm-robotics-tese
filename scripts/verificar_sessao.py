@@ -32,7 +32,7 @@ from src.scenarios import SCENARIOS, MAZE_SCENARIOS  # noqa: E402
 
 SESSOES = os.path.join(BASE, 'results', 'graficos_tese')
 
-# ── CONTRATO: o que uma sessão completa TEM de conter ────────────────────────
+# CONTRATO: o que uma sessão completa TEM de conter
 # (padrão, é_essencial, descrição). O padrão pode ser um TUPLO de nomes
 # equivalentes — basta um existir. Não é laxismo: o mesmo conteúdo tem nomes
 # diferentes conforme o gerador (`dados_historicos.csv` no pipeline de treino,
@@ -159,7 +159,7 @@ def chave_de_recencia(caminho):
 def ultima_sessao():
     """A sessão mais recente — pela data no NOME, não pelo mtime da pasta.
 
-    ⚠️ Era `max(cands, key=os.path.getmtime)`, e isso é uma armadilha que se
+    Era `max(cands, key=os.path.getmtime)`, e isso é uma armadilha que se
     arma sozinha: o passo 2 do `pos_campanha.py` COPIA a avaliação para dentro da
     sessão, o que lhe atualiza o mtime — e a partir daí essa pasta passa a ser
     «a última» para sempre. Encontrado a 5 ago: `ultima_sessao()` devolvia
@@ -184,8 +184,8 @@ def ultima_sessao():
 def escopo_da_sessao(pasta):
     """(algos, cenários) que esta sessão de facto treinou — dos seus dados.
 
-    ⚠️ Sem isto, correr o verificador à mão numa campanha de **um** cenário e
-    **um** algoritmo — como a do mapa grande — aplica-lhe o contrato dos sete
+    Sem isto, correr o verificador à mão numa campanha de um cenário e
+    um algoritmo — como a do mapa grande — aplica-lhe o contrato dos sete
     cenários × três algoritmos e escreve-lhe no MANIFESTO «30 artefactos
     essenciais em falta». O manifesto passa a acusar uma campanha completa de
     estar partida, e é o manifesto que fica no disco a dizê-lo. Aconteceu a 17

@@ -2,9 +2,8 @@
 """O mapa grande é RESOLÚVEL? — teste de sanidade com um controlador de referência.
 
 Porque existe
--------------
-O F1 (zero-shot dos 21 campeões no `mapa_grande`) deu **0,00 recolhas/ep nas
-quatro condições**, depois de tapar o céu que deixava os agentes voarem por cima
+O F1 (zero-shot dos 21 campeões no `mapa_grande`) deu 0,00 recolhas/ep nas
+quatro condições, depois de tapar o céu que deixava os agentes voarem por cima
 das paredes. Um zero em todas as condições tem duas leituras muito diferentes:
 
   (a) as políticas treinadas em arenas de raio 15 não transferem para o mapa —
@@ -14,13 +13,12 @@ das paredes. Um zero em todas as condições tem duas leituras muito diferentes:
       transferência, diz que o cenário está mal parametrizado.
 
 Os controlos do pré-registo não separam (a) de (b): todos eles avaliam *políticas
-aprendidas*. Este script separa, usando um controlador que **não aprendeu nada**:
+aprendidas*. Este script separa, usando um controlador que não aprendeu nada:
 segue a descida do campo geodésico ao ninho (Dijkstra 8-conexo, já calculado pelo
 ambiente para o shaping). É o melhor navegador possível dado o mapa — se ele não
 recolhe, ninguém recolhe.
 
 O que mede
-----------
 Por episódio: recolhas, passo da primeira recolha, distância geodésica inicial ao
 ninho (mín/média/máx sobre os agentes), quantos agentes chegaram alguma vez, e
 quantos ficaram presos (potencial que não desce durante 200 passos).

@@ -2,10 +2,9 @@
 r"""O `docs/REPRODUZIR.md` posto à prova: cada promessa dele contra o disco.
 
 Porque existe
--------------
 O `REPRODUZIR.md` é a resposta à pergunta que um júri faz sempre — *«de onde vem
-este número?»*. Ele promete, para cada resultado da dissertação, **um ficheiro de
-dados e um script**. Uma promessa dessas envelhece sozinha: os dados mudam de
+este número?»*. Ele promete, para cada resultado da dissertação, um ficheiro de
+dados e um script. Uma promessa dessas envelhece sozinha: os dados mudam de
 pasta, os scripts são renomeados, uma campanha fecha e a linha continua a dizer
 «a correr». Quando isso acontece, o documento deixa de ser um mapa e passa a ser
 uma lista de coisas que já não estão onde diz.
@@ -13,11 +12,11 @@ uma lista de coisas que já não estão onde diz.
 Este ensaio percorre o documento e verifica, comando a comando e caminho a
 caminho:
 
-* cada **ficheiro ou pasta** citado entre crases existe (globs e `{a,b}`
+* cada ficheiro ou pasta citado entre crases existe (globs e `{a,b}`
   expandidos), ou está declarado como fora deste disco;
-* cada **script** citado existe em `scripts/` **e compila** — um `.py` com erro
+* cada script citado existe em `scripts/` e compila — um `.py` com erro
   de sintaxe é uma promessa que rebenta na defesa, não antes;
-* cada passo do **pipeline de reprodução** aponta para um script que existe.
+* cada passo do pipeline de reprodução aponta para um script que existe.
 
 O que não faz: correr os treinos. Reproduzir uma campanha de 21 execuções × 780
 minutos não é um ensaio, é a campanha outra vez.
@@ -73,7 +72,7 @@ def normalizar(token):
     r"""Marcadores de posição do documento → padrões de `glob`.
 
     O mapa escreve `eval_{algo}_{cenario}.csv` e `eval_{algo}_{cen}[_fail10].csv`:
-    as chavetas **sem vírgula** são marcadores («o algoritmo», «o cenário»), não
+    as chavetas sem vírgula são marcadores («o algoritmo», «o cenário»), não
     alternativas de shell, e os parênteses retos marcam a parte opcional do nome.
     Tratá-los à letra dava três ficheiros «em falta» que estão no disco 50 e 21
     vezes.
@@ -114,8 +113,8 @@ def caminhos_citados(texto):
 def existe(caminho):
     """Existe algures no repositório?
 
-    ⚠️ O documento cita tanto caminhos completos (`results/estatisticas/x.csv`)
-    como **nomes soltos** (`screening.csv`, `eval_by_run_7d.csv`), porque a
+    O documento cita tanto caminhos completos (`results/estatisticas/x.csv`)
+    como nomes soltos (`screening.csv`, `eval_by_run_7d.csv`), porque a
     coluna ao lado já diz onde vivem. Procurar só a partir da raiz dava 36
     «ficheiros em falta» que estão todos no disco — o ensaio acusaria o
     documento de um defeito que era do ensaio.
@@ -132,7 +131,7 @@ def existe(caminho):
     return False
 
 
-# ── 1. Os caminhos que o mapa promete ───────────────────────────────────────
+# 1. Os caminhos que o mapa promete
 def caminhos(texto):
     print()
     print("=" * 78)
@@ -161,7 +160,7 @@ def caminhos(texto):
           % (ok, fora, len(falhas)))
 
 
-# ── 2. Os scripts que o mapa manda correr ───────────────────────────────────
+# 2. Os scripts que o mapa manda correr
 def scripts(texto):
     print()
     print("=" * 78)
@@ -194,7 +193,7 @@ def scripts(texto):
     print("  %d de %d scripts citados existem e compilam" % (ok, len(nomes)))
 
 
-# ── 3. O pipeline numerado, passo a passo ───────────────────────────────────
+# 3. O pipeline numerado, passo a passo
 def pipeline(texto):
     print()
     print("=" * 78)
@@ -217,7 +216,7 @@ def pipeline(texto):
                      % len(passos))
 
 
-# ── 4. O estado que o documento afirma ──────────────────────────────────────
+# 4. O estado que o documento afirma
 def estado(texto):
     """Afirmações datadas que o disco pode desmentir.
 

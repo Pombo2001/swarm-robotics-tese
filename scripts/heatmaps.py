@@ -1,6 +1,5 @@
 """
 heatmaps.py — Mapas de calor para diagnóstico e tese
-=====================================================
 Dois modos:
 
 1. OCUPAÇÃO (--mode occupancy): corre um modelo treinado e acumula as posições

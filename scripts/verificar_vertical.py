@@ -2,7 +2,6 @@
 """Reproduz os números da limitação «dimensão vertical» (tese, §Limitações).
 
 Porque existe
--------------
 A tese passou a afirmar quatro coisas sobre a dimensão vertical: que os
 controladores a usam (altitudes médias de 0,13 a 5,67 m, máximos de 14,6 m); que
 a altitude se associa negativamente às recolhas (ρ = −0,74); que acima de 1,6 m

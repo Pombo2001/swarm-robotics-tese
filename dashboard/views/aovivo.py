@@ -45,7 +45,7 @@ _MODELO = {
 
 _ATIVOS = "★ Modelos ativos (results/models)"
 
-# --- Vista 3D do MAPA GRANDE ------------------------------------------------
+# Vista 3D do MAPA GRANDE
 # O visualizador lê a geometria do simulador (`_spawn_obstacles_mapa_grande`),
 # para o que se vê ser o que os robôs treinam. O rascunho
 # scripts/preview_mapa_grande.py foi retirado por ter ficado a ser uma segunda
@@ -238,7 +238,7 @@ def build():
                      "com o mesmo mapa e o mesmo treino. Fecha a janela para terminar.") \
                 .classes("text-xs text-gray-500")
 
-        # ---------------- MAPA GRANDE (rascunho) — 3D no browser -------------
+        # MAPA GRANDE (rascunho) — 3D no browser
         with ui.card().classes(CARD):
             # O texto dizia "ainda NÃO está no simulador" — verdade quando foi
             # escrito, falso desde 24 jul: o mapa_grande é o 8.º cenário

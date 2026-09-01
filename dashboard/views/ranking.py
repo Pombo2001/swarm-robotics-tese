@@ -1,19 +1,17 @@
 """Painel «qual foi o melhor treino» — partilhado pela Galeria e pelos Vídeos.
 
 Porque existe
--------------
 A Galeria tem 48 campanhas num seletor e não dizia nada sobre qual delas valia
 alguma coisa. Para mostrar a alguém o melhor resultado num cenário era preciso
 saber de cor em que pasta ele estava — e as pastas chamam-se `mega_A1` ou
 `09-07-2026_12h52m`. Quem abre o dashboard tem de adivinhar.
 
 As duas regras que este painel não quebra
------------------------------------------
-1. **Compara-se dentro de um cenário, nunca entre cenários.** As 123 recolhas/ep
+1. Compara-se dentro de um cenário, nunca entre cenários. As 123 recolhas/ep
    do Gargalo e as 88 da Porta com Alternativa não são a mesma régua: muda o
    mapa, mudam os itens, muda a dificuldade. Um «melhor treino de todos» somando
    os sete seria um número sem significado, e por isso não existe aqui.
-2. **Só entram treinos com avaliação determinística** (20 episódios de sementes
+2. Só entram treinos com avaliação determinística (20 episódios de sementes
    fixas). As campanhas exploratórias de maio a junho guardaram curvas de
    TREINO, que é outra régua; pô-las na mesma tabela daria a um número de treino
    o estatuto de resultado — que é precisamente o erro que a tese documenta no

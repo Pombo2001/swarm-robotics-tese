@@ -12,7 +12,7 @@ from nicegui import ui
 from .. import config, data, theme
 from ..jobs import JobQueue
 
-# ── Boids (canvas) ────────────────────────────────────────────────────────────
+# Boids (canvas)
 # Enxame minimalista: pontos brancos com ligações ténues entre vizinhos —
 # separação/alinhamento/coesão simplificados, suave e barato (1 canvas, rAF).
 _BOIDS_JS = r"""
@@ -246,7 +246,7 @@ def build(queue: JobQueue, goto=None):
 
     with ui.column().classes("w-full gap-4 p-4"):
 
-        # ── Hero: boids + título da tese ──────────────────────────────────────
+        # Hero: boids + título da tese
         with ui.element("div").classes("w-full fade-up").style(
                 "position:relative; min-height:300px; border-radius:16px; overflow:hidden;"
                 f"border:1px solid {theme.BORDER}; background:#000;"):
@@ -274,7 +274,7 @@ def build(queue: JobQueue, goto=None):
                                 .classes("text-xs").style(f"color:{theme.INK_SOFT}")
         theme.js_diferido(_BOIDS_JS, 0.4)
 
-        # ── KPIs (count-up) ───────────────────────────────────────────────────
+        # KPIs (count-up)
         total_h = sum(h for _, h in _CAMPANHAS)
         longest_name, longest_h = max(_CAMPANHAS, key=lambda c: c[1])
         with ui.grid(columns=3).classes("w-full gap-4 fade-up-1"):
@@ -299,7 +299,7 @@ def build(queue: JobQueue, goto=None):
             _kpi("Horas de treino acumuladas (PC + servidor)", total_h, suffix="h")
             _kpi(f"Treino mais longo · {longest_name.lower()}", longest_h, suffix="h")
 
-        # ── Estado ────────────────────────────────────────────────────────────
+        # Estado
         # Em modo leitura ficam dois: «Treino local» e «Servidor ISCTE» apontam
         # para vistas que a cópia publicada não tem — retângulos clicáveis que
         # não iam a lado nenhum, um deles a pedir VPN a quem vem da internet.
@@ -347,7 +347,7 @@ def build(queue: JobQueue, goto=None):
                     ui.label("VPN necessária").classes("text-xs") \
                         .style(f"color:{theme.INK_MUTED}")
 
-        # ── Os melhores treinos, logo à entrada ───────────────────────────────
+        # Os melhores treinos, logo à entrada
         # Estava a três cliques, na Galeria e nos Vídeos: a pergunta mais simples
         # que se faz a este trabalho — qual foi o melhor treino, e de quem — não
         # tinha resposta à entrada. Clicar leva à Galeria nessa campanha.
@@ -356,7 +356,7 @@ def build(queue: JobQueue, goto=None):
             titulo="Os melhores treinos, por cenário",
             ao_escolher=(None if config.READONLY else (lambda _c: goto("resultados"))))
 
-        # ── Linha do tempo ────────────────────────────────────────────────────
+        # Linha do tempo
         with ui.card().classes(theme.CARD + " p-5 fade-up-3"):
             theme.section_title("timeline", "Linha do tempo do projeto")
             with ui.column().classes("w-full gap-0 mt-2"):

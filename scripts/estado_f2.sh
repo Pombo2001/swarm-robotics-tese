@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 # Instantâneo do F2 (mapa grande) TAL COMO ESTÁ NO SERVIDOR, gravado em ficheiro.
 #
-# Existe porque o dashboard afirmava o estado das campanhas em texto escrito à mão
-# — «arranca 3 ago», «4,75 recolhas à geração 140» — e essas frases envelhecem
-# sozinhas: a 6 ago o F2 já corria há três dias, o run que dava 4,75 tinha fechado
-# com 6,0 e o run seguinte estava a 0,0. Quem lê o dashboard no Pi não tem VPN nem
-# forma de saber que a frase é de anteontem.
+# Existe porque o estado das campanhas escrito à mão no dashboard envelhece
+# sozinho — «arranca 3 ago», «4,75 recolhas à geração 140» — e quem lê o painel no
+# Pi não tem VPN nem forma de saber que a frase é de anteontem.
 #
 # A saída (results/estado_f2.json) leva SEMPRE a hora da medição, e é isso que o
 # dashboard mostra ao lado dos números: não afirma o presente, afirma o que foi
@@ -29,12 +27,12 @@ REMOTO='
   for s in mapaF2r mapaF2g mapaF2l f2lwatch; do
     tmux has-session -t "$s" 2>/dev/null && echo -e "tmux\t$s"
   done
-  # --- braço dos gradientes: um .zip por run de PPO concluído -----------------
+  # braço dos gradientes: um .zip por run de PPO concluído
   echo -e "grad_ppo_runs\t$(ls ~/swarm-mapa-f2r/results/models_ppo/*run*.zip 2>/dev/null | wc -l)"
   echo -e "grad_sac_runs\t$(ls ~/swarm-mapa-f2r/results/models_sac/*run*.zip 2>/dev/null | wc -l)"
   echo -e "grad_fase\t$(grep -o "FASE [0-9]*/[0-9]*: [A-Z]*" ~/mapa_F2grad_master.log 2>/dev/null | tail -1)"
   echo -e "grad_runs_previstos\t$(grep -o "@192x[0-9]*" ~/mapa_F2grad_master.log 2>/dev/null | tail -1 | tr -d "@" | cut -dx -f2)"
-  # --- braço do GNN: um CSV por run, e o melhor best_task_food de cada --------
+  # braço do GNN: um CSV por run, e o melhor best_task_food de cada
   echo -e "gnn_runs_previstos\t$(grep -o "@780x[0-9]*" ~/mapa_F2gnn_master.log 2>/dev/null | tail -1 | tr -d "@" | cut -dx -f2)"
   # A sentinela de conclusão, no diretório vivo E no arquivo (a campanha move
   # os logs para ~/mapa_F2_gnn ao fechar). Sem isto, o último run aparecia
@@ -88,12 +86,11 @@ for linha in bruto.splitlines():
         factos[chave] = valor
 
 runs_gnn.sort(key=lambda r: r["run"])
-# O run com o índice mais alto é o que está a correr (os anteriores fecharam)
-# — **enquanto a campanha estiver viva**. Depois de ela escrever a sentinela
-# `_campanha_concluida.txt`, TODOS estão fechados. Sem esta condição, o último
-# run ficava para sempre marcado como a correr e não entrava nem em
-# `runs_fechados` nem na contagem dos que recolheram: a 17 ago o instantâneo
-# dizia «20 runs fechados» de uma campanha de 21 terminada na véspera.
+# O run com o índice mais alto é o que está a correr (os anteriores fecharam) —
+# ENQUANTO a campanha estiver viva. Depois de ela escrever a sentinela
+# `_campanha_concluida.txt`, todos estão fechados. Sem esta condição, o último run
+# ficava para sempre marcado como a correr e não entrava nem em `runs_fechados`
+# nem na contagem dos que recolheram.
 concluida = factos.get("gnn_concluida", "").strip()
 for r in runs_gnn:
     r["a_correr"] = (not concluida) and bool(runs_gnn) and \

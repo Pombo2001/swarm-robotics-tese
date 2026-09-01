@@ -1,19 +1,19 @@
 """Vista «Escalabilidade» — a QI2 demonstrada, em vez de explicada.
 
 O contributo distintivo da tese é este: a política de grafo com atenção transfere
-de N=20 para N∈{10,50,100} **sem retreino**, e as MLP de entrada fixa do PPO/SAC
+de N=20 para N∈{10,50,100} sem retreino, e as MLP de entrada fixa do PPO/SAC
 nem sequer carregam. Na dissertação isso são dois parágrafos e uma tabela; aqui
 mexe-se no N e vê-se acontecer — incluindo o que é o ponto principal, que é o
-PPO e o SAC ficarem **indisponíveis** fora do N de treino.
+PPO e o SAC ficarem indisponíveis fora do N de treino.
 
 A incompatibilidade não é uma opinião desta vista: vem da coluna `compatible` dos
 `results/estatisticas/escalabilidade_*.csv`, escrita pelo `eval_scalability.py`
 quando tenta carregar o modelo e a dimensão da observação não bate certo.
 
 Duas leituras que a tese faz e que o gráfico tem de deixar ver:
-  · a **taxa de sucesso** mantém-se a 100% em todas as células do GNN — escalar
+  · a taxa de sucesso mantém-se a 100% em todas as células do GNN — escalar
     não parte a tarefa;
-  · a **eficiência per capita** cai, e cai mais nos cenários abertos (Sandbox,
+  · a eficiência per capita cai, e cai mais nos cenários abertos (Sandbox,
     Perceção) do que nos estruturados (Portas Cooperativas) — o que a tese
     atribui à partilha de um recurso finito, não a falha de coordenação.
 """
@@ -134,7 +134,7 @@ def build():
             "groups", "Escalabilidade (Zero-Shot)",
             "QI2 — a mesma política, enxames de dimensão diferente, sem retreino")
 
-        # ── o seletor de N ────────────────────────────────────────────────────
+        # o seletor de N
         with ui.card().classes(CARD + " w-full"):
             ui.label("Dimensão do enxame").classes("text-sm font-bold")
             ui.label("Todos os controladores foram treinados com N=20. "
@@ -148,9 +148,9 @@ def build():
                         .props("flat no-caps").classes("mono-num")
                     botoes[n] = b
 
-        # ── um cartão por algoritmo ───────────────────────────────────────────
+        # um cartão por algoritmo
         cartoes = ui.row().classes("w-full gap-3 flex-wrap")
-        # ── e o gráfico ───────────────────────────────────────────────────────
+        # e o gráfico
         grafico = ui.column().classes("w-full")
 
         def escolher(n):
@@ -266,7 +266,7 @@ def build():
 
         escolher(N_TREINO)
 
-        # ── Robustez a falhas (Rrobust) ─────────────────────────────────────
+        # Robustez a falhas (Rrobust)
         # Escalabilidade e robustez são a mesma pergunta de duas maneiras: o que
         # acontece ao modelo JÁ TREINADO quando o mundo muda — mais agentes ou
         # menos. Separadas pareciam detalhes; juntas são o argumento sobre

@@ -2,15 +2,15 @@
 
 A pergunta que um júri faz e que não se pode responder com "está no CSV algures":
 clica-se numa célula da tabela principal da dissertação e vê-se, no mesmo ecrã,
-**o valor impresso na tese, as sete médias por execução que o compõem, o ficheiro
+o valor impresso na tese, as sete médias por execução que o compõem, o ficheiro
 que as contém, o modelo que as produziu (com a data) e o comando que as
-reproduz** — mais a confirmação de que os três concordam.
+reproduz — mais a confirmação de que os três concordam.
 
 O `docs/REPRODUZIR.md` já mapeia resultado → dados → script, mas é um documento:
 numa sala, com o júri à espera, ninguém abre um Markdown e procura a linha. Isto
 é o mesmo mapa, navegável em dois cliques.
 
-⚠️ **Não recalcula a tese.** Lê o `main.tex` (o valor tal como está impresso) e o
+Não recalcula a tese. Lê o `main.tex` (o valor tal como está impresso) e o
 CSV canónico (o valor tal como os dados dizem) e mostra os dois lado a lado. Se
 divergirem, é isso que aparece — em vez de se esconder atrás de um número
 recalculado que daria sempre razão a si próprio. A verificação em lote dos 308
@@ -139,7 +139,7 @@ def build():
                         ui.label(cen).classes("text-xs mono-num") \
                             .style(f"color:{theme.INK_MUTED}")
 
-                    # ── o que a tese diz vs o que os dados dizem ──────────────
+                    # o que a tese diz vs o que os dados dizem
                     with ui.row().classes("w-full gap-6 mt-2 flex-wrap"):
                         for titulo, suc, med, dp in (
                                 ("impresso na tese", t_suc, t_med, t_dp),
@@ -168,7 +168,7 @@ def build():
 
                     ui.separator().classes("my-3")
 
-                    # ── as 7 execuções ───────────────────────────────────────
+                    # as 7 execuções
                     ui.label("As %d execuções independentes (a unidade "
                              "estatística da tese é esta, não o episódio)"
                              % len(m["por_run"])).classes("text-xs font-bold")
@@ -188,7 +188,7 @@ def build():
 
                     ui.separator().classes("my-3")
 
-                    # ── proveniência ─────────────────────────────────────────
+                    # proveniência
                     fp_modelo = _caminho_modelo(algo, cen)
                     quando = _data_modelo(fp_modelo)
                     linhas = [
@@ -230,7 +230,7 @@ def build():
                             "de 25 jul"
                         ).classes("text-xs font-bold mt-2").style("color:#ffb020")
 
-        # ── a tabela clicável ────────────────────────────────────────────────
+        # a tabela clicável
         with ui.card().classes(CARD + " w-full"):
             with ui.grid(columns=4).classes("w-full gap-px"):
                 ui.label("cenário").classes(

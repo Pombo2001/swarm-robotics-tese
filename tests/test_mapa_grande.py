@@ -1,6 +1,5 @@
 """
 test_mapa_grande.py — Testes do 8.º cenário (mapa_grande)
-=========================================================
 Escrito ANTES de o mapa ir a treinar, a pedido do utilizador ("procura erros e
 falhas possíveis no mapa"). Cada teste corresponde a um modo de falha concreto
 que invalidaria a campanha — não a cobertura por cobertura.
@@ -492,7 +491,7 @@ def test_fisica_dos_7_inalterada():
     fixas. Se alguma mudar, uma alteração à física entrou nos cenários cujos
     números já estão na tese, e as campanhas fechadas deixam de ser reproduzíveis.
 
-    **Porque é uma tolerância e não um hash:** a primeira versão deste teste
+    Porque é uma tolerância e não um hash: a primeira versão deste teste
     comparava um SHA-256 dos floats. Passava aqui e FALHAVA no servidor — não por
     regressão, mas porque a ordem das somas em vírgula flutuante difere entre
     plataformas (Python 3.13/numpy 2.4.2 vs 3.12/2.4.6): as duas máquinas dão
@@ -560,7 +559,7 @@ def test_paredes_tao_altas_como_a_arena():
 
     Estava `30.0` em duro em todas as paredes — certo por coincidência, porque
     2×15 é o diâmetro da arena dos 7 cenários. O `mapa_grande` corre a r=60 e
-    ficava com **45 m de espaço livre por cima de todas as paredes**: medido a
+    ficava com 45 m de espaço livre por cima de todas as paredes: medido a
     29 jul, um agente atravessava a divisória mais longa a z≥16 m, e chegava lá
     em 75 passos dos 2000 do episódio. Os campeões do F1 andaram a 59 m de
     altura durante o episódio inteiro — o F1 de 28 jul foi anulado por isto.

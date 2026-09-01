@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# =============================================================================
 # analise_pos_treino.sh — Pipeline de análise final (pós-train3d)
-# =============================================================================
 # Corre toda a análise que NÃO é gerada automaticamente pelo run_experiments.py
 # no fim do treino. O train3d já produz eval_suite (20 ep) + plot_results +
 # vídeos; este script ACRESCENTA:
@@ -18,15 +16,14 @@
 #
 # Pré-requisito: results/models/ com os 3 algoritmos treinados (GNN novo do
 # train3d; PPO/SAC do treino_fds). Ver docs/AVANCO_GNN_HOMING.md §4.
-# =============================================================================
 set -uo pipefail
 
-# --- localizar a raiz do projeto (este script está em scripts/) ---
+# localizar a raiz do projeto (este script está em scripts/)
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 cd "$ROOT"
 
-# --- localizar o interpretador da venv (Linux ou Windows) ---
+# localizar o interpretador da venv (Linux ou Windows)
 if   [ -x ".venv/bin/python" ];          then PY=".venv/bin/python"
 elif [ -x ".venv/Scripts/python.exe" ];  then PY=".venv/Scripts/python.exe"
 elif command -v python >/dev/null 2>&1;  then PY="python"

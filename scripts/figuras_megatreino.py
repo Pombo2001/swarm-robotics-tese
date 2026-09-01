@@ -2,10 +2,9 @@
 """Figuras do mega-treino (M1/M2/M3 do pré-registo v2) para a tese.
 
 Porquê um script à parte do `figuras_campanha.py`
--------------------------------------------------
 O `figuras_campanha.py` faz as figuras DE UMA campanha — uma pasta, os seus
 cenários, os seus algoritmos. As figuras que a tese precisa aqui são de outra
-natureza: comparam **braços** que vivem em pastas diferentes (`mega_A_fase1..4`
+natureza: comparam braços que vivem em pastas diferentes (`mega_A_fase1..4`
 são quatro condições do MESMO cenário) e, em M3, atravessam campanhas. Nenhuma
 delas cabe no contrato "uma pasta = um conjunto de figuras".
 

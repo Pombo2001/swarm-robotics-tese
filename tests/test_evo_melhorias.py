@@ -39,7 +39,7 @@ FALHAS = []
 
 
 def check(cond, msg):
-    """Regista e imprime. ⚠️ NÃO falha sozinho — ver a nota no fim do ficheiro.
+    """Regista e imprime. NÃO falha sozinho — ver a nota no fim do ficheiro.
 
     Cada função de teste tem de terminar com `_exigir()`, senão as verificações
     correm e o pytest dá o teste por passado aconteça o que acontecer.
@@ -54,7 +54,7 @@ def _exigir():
     """Converte o que o `check` acumulou numa falha de teste, e limpa.
 
     Sem isto — e foi assim até 5 ago — o `test_anneal_unit` corria as suas oito
-    verificações do anneal adaptativo e **passava sempre** no pytest, porque não
+    verificações do anneal adaptativo e passava sempre no pytest, porque não
     tinha uma única asserção: o `check` só imprime. Oito verificações do
     mecanismo central da QI6 (a dosagem adaptativa da novidade) a dar verde
     incondicional, e a suite a contá-las como cobertura.
@@ -64,7 +64,7 @@ def _exigir():
     assert not pendentes, "verificações falhadas:\n  - " + "\n  - ".join(pendentes)
 
 
-# ---------------------------------------------------------------- 1. unit: anneal
+# 1. unit: anneal
 def _dummy(w=0.5, adaptive=True, decay=0.5, sustain=3):
     return SimpleNamespace(novelty_weight=w, novelty_adaptive=adaptive,
                            novelty_decay=decay, novelty_sustain_gens=sustain,
@@ -104,7 +104,7 @@ def test_anneal_unit():
     _exigir()
 
 
-# ------------------------------------------------- 2/3. treinos miniatura (Pool)
+# 2/3. treinos miniatura (Pool)
 def _mini_config(tmpdir, novelty_weight, novelty_adaptive, elite_cache):
     with open(CONFIG, "r") as f:
         cfg = yaml.safe_load(f)

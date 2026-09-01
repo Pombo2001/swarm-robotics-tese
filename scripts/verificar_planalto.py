@@ -8,13 +8,13 @@ orçamento concedido. Enquanto foi afirmada sem teste, foi o ponto mais frágil 
 capítulo — e o mais fácil de atacar, porque os dados para a verificar estão
 publicados no repositório.
 
-O teste: para cada célula (cenário × algoritmo), compara-se, **por execução**, a
+O teste: para cada célula (cenário × algoritmo), compara-se, por execução, a
 média do último quinto do orçamento (80--100%) com a do quinto anterior
 (60--80%), e testa-se com um Wilcoxon emparelhado entre as 7 execuções. Uma
 célula que ainda suba significativamente no fim não atingiu o planalto, e o seu
 valor deve ler-se como limite inferior.
 
-Nota de interpretação: a curva mede a **recompensa episódica**, que inclui o
+Nota de interpretação: a curva mede a recompensa episódica, que inclui o
 shaping. Os históricos da campanha final não guardaram a métrica de tarefa
 (`ep_task_mean`) — existe no código do treino, mas não nos CSV consolidados —,
 pelo que um crescimento aqui não distingue "recolhe mais" de "farma mais

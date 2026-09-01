@@ -2,21 +2,20 @@
 r"""Os números do dashboard contra os da dissertação.
 
 Porque existe
--------------
-O dashboard não é entregável, mas é o que se projeta na defesa — e **um número
-que apareça nos dois sítios tem de ser o mesmo número**. A 4 de agosto dois KPIs
+O dashboard não é entregável, mas é o que se projeta na defesa — e um número
+que apareça nos dois sítios tem de ser o mesmo número. A 4 de agosto dois KPIs
 mentiam; a 31 de julho um rótulo anunciava uma proveniência que o ficheiro não
 tinha. Nos dois casos o defeito não era o cálculo: era não haver nada que
 comparasse as duas superfícies.
 
 Este verificador compara, célula a célula:
 
-* a **tabela científica** do dashboard (`data.science_table()`, que alimenta as
+* a tabela científica do dashboard (`data.science_table()`, que alimenta as
   vistas Ciência, Resultados e Defesa) com a `tab:res_eval` da dissertação, lida
   do `.tex` — sucesso e recolhas, nos 7 cenários × 3 algoritmos;
-* os **KPIs do Overview** que têm fonte verificável: episódios avaliados,
+* os KPIs do Overview que têm fonte verificável: episódios avaliados,
   cenários, cobertura ≥80%, e o inventário de horas de treino;
-* o inventário `_CAMPANHAS` contra as campanhas que **existem em `results/`** —
+* o inventário `_CAMPANHAS` contra as campanhas que existem em `results/` —
   é o que apanha uma campanha fechada que ninguém somou às horas.
 
 Uso:
@@ -100,7 +99,7 @@ def tabela_da_tese():
     return out
 
 
-# ── 1. a tabela que as vistas mostram vs a que a tese imprime ────────────────
+# 1. a tabela que as vistas mostram vs a que a tese imprime
 def tabela_cientifica():
     print()
     print("=" * 78)
@@ -132,7 +131,7 @@ def tabela_cientifica():
                     dash[chave][algo]["recolhas"], rec_t, tol=0.06)
 
 
-# ── 2. KPIs do Overview ─────────────────────────────────────────────────────
+# 2. KPIs do Overview
 def kpis():
     print()
     print("=" * 78)
@@ -162,7 +161,7 @@ def kpis():
         print("  [i] %s: %d de %d cenários com sucesso ≥80%%"
               % (algo, n, len(dash)))
 
-    # ── inventário de horas: as campanhas que existem estão todas somadas? ──
+    # inventário de horas: as campanhas que existem estão todas somadas?
     horas = dict(overview._CAMPANHAS)
     print("  [i] %d campanhas no inventário, %d h no total"
           % (len(horas), sum(horas.values())))
@@ -187,7 +186,7 @@ def kpis():
                           "horas do Overview" % nome)
 
 
-# ── 3. imagens que vêm do campeão e não da campanha ─────────────────────────
+# 3. imagens que vêm do campeão e não da campanha
 def galeria():
     print()
     print("=" * 78)
@@ -218,7 +217,7 @@ def galeria():
           "verificadas por scripts/verificar_figuras_tese.py")
 
 
-# ── 4. o vocabulário do ecrã é o da dissertação ─────────────────────────────
+# 4. o vocabulário do ecrã é o da dissertação
 # As formas que a dissertação abandonou, e que o dashboard continuou a mostrar.
 # Os padrões são exatos de propósito: «Perceção Coop\.» não pode apanhar
 # «Perceção Cooperativa», que é a forma boa.

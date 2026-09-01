@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # CONTROLOS DO F1 (zero-shot de topologia) — corre NO SERVIDOR.
 #
-# A condição natural ("base") já está feita: 420 episódios, 21 células, corrida na
-# torre a 27 jul e versionada em results/mapa_grande/f1_zeroshot/. Faltam as três
-# condições de CONTROLO do pré-registo, e sem elas um zero do F1 não distingue a
-# pergunta da tese das outras três causas possíveis (ver o cabeçalho do
-# eval_zeroshot_mapa.py, causas 2/3/4):
+# A condição natural («base») já está feita e versionada em
+# results/mapa_grande/f1_zeroshot/. Faltam as três condições de CONTROLO do
+# pré-registo, sem as quais um zero do F1 não distingue a pergunta da tese das
+# outras causas possíveis (ver o cabeçalho do eval_zeroshot_mapa.py, causas 2/3/4):
 #
 #   1. --norm-obs treino         : desliga a mudança de ESCALA da observação (÷30
 #                                  como no treino, em vez do ÷120 imposto por r=60)
@@ -14,12 +13,11 @@
 #   3. --controlo sem_porta_obs  : desliga as 4 features da porta, mortas no treino
 #                                  de quem não tem porta e vivas no mapa
 #
-# UMA CONDIÇÃO POR CHAMADA, e cada uma no SEU diretório de trabalho. Medido no
-# servidor a 28 jul: 1 episódio = 1m34s num core ⇒ 21 células x 20 ep = ~11 h por
-# condição. Em sequência seriam 33 h. As três não podem partilhar diretório —
-# convivem no mesmo CSV e o script tem lock por ficheiro destino (_CorridaUnica),
-# por isso a segunda abortaria. Com um diretório cada, correm ao mesmo tempo e os
-# três CSV juntam-se no fim (as colunas NormObs/Controlo dizem qual é qual).
+# UMA CONDIÇÃO POR CHAMADA, e cada uma no SEU diretório de trabalho: ~11 h por
+# condição, e as três não podem partilhar diretório porque convivem no mesmo CSV e
+# o script tem lock por ficheiro destino (_CorridaUnica) — a segunda abortaria.
+# Com um diretório cada, correm ao mesmo tempo e os três CSV juntam-se no fim (as
+# colunas NormObs/Controlo dizem qual é qual).
 #
 # nice 10 + 1 thread: isto corre AO LADO do megaA/megaB. A avaliação é
 # single-process, mas o torch abre uma thread por core se o deixarem, e o custo
@@ -49,7 +47,7 @@ CONDICOES=(
     "sem features da porta|--controlo sem_porta_obs"
 )
 
-# --- preparar: um diretório de trabalho por condição -------------------------
+# preparar: um diretório de trabalho por condição
 # Cópia inteira (cp -rp) e não symlinks: são 49 MB, e -p é OBRIGATÓRIO porque a
 # guarda de campanha do eval lê a DATA de cada campeão — sem preservar mtime,
 # todos os modelos passariam a ser de hoje e a guarda deixaria passar qualquer

@@ -130,7 +130,7 @@ def main():
     p("Sem regra de decisão binária: descreve-se, com o δ de Cliff como âncora.")
     p("")
 
-    # ── E1. Ablação do anneal ───────────────────────────────────────────────
+    # E1. Ablação do anneal
     p("E1. ABLAÇÃO DO ANNEAL — a dosagem adaptativa é sensível ao seu ajuste?")
     p("-" * 76)
     saida["ablacao"] = {}
@@ -152,7 +152,7 @@ def main():
                 }
         p("")
 
-    # ── E2. Sandbox adaptativo (A5) ─────────────────────────────────────────
+    # E2. Sandbox adaptativo (A5)
     p("E2. SANDBOX ADAPTATIVO (A5) — a novidade reduz os runs degenerados em aberto?")
     p("-" * 76)
     a5 = _fase("mega_A_fase5", "none", "GNN")
@@ -168,7 +168,7 @@ def main():
                                "vs_objetivo_7d": c}
     p("")
 
-    # ── E3. Perceção Cooperativa (B7) ───────────────────────────────────────
+    # E3. Perceção Cooperativa (B7)
     p("E3. PERCEÇÃO COOPERATIVA (B7) — o 5/7 de 19 jul era acaso ou custo real?")
     p("-" * 76)
     b7 = _fase("mega_B_fase7", "cooperative_perception", "GNN")
@@ -186,7 +186,7 @@ def main():
                                 "vs_objetivo_7d": c}
     p("")
 
-    # ── E4. SAC no Gargalo (B6) ─────────────────────────────────────────────
+    # E4. SAC no Gargalo (B6)
     p("E4. SAC NO GARGALO (B6) — a célula 5/7 da campanha final, com n=21")
     p("-" * 76)
     b6 = _fase("mega_B_fase6", "bottleneck", "SAC")

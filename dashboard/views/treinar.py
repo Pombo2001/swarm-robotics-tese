@@ -43,7 +43,7 @@ def build(queue: JobQueue):
              "min": 15, "runs": 1, "eval": 20}
     w = {}  # widgets numéricos
 
-    # ── helpers de estado ─────────────────────────────────────────────────────
+    # helpers de estado
     def _n_algos() -> int:
         return len(config.ALGOS) if state["algo"] == "Todos" else 1
 
@@ -68,7 +68,7 @@ def build(queue: JobQueue):
         _update_est()
         ui.notify(f"Preset '{name}' aplicado", type="info")
 
-    # ── chips de algoritmo (cores científicas) ────────────────────────────────
+    # chips de algoritmo (cores científicas)
     @ui.refreshable
     def algo_chips():
         with ui.row().classes("w-full gap-2 no-wrap"):
@@ -97,7 +97,7 @@ def build(queue: JobQueue):
                         f"color:{theme.INK if on else theme.INK_MUTED}")
                 theme.clicavel(chip, _pick, "Escolher %s" % label)
 
-    # ── chips de cenário (grelha clicável) ────────────────────────────────────
+    # chips de cenário (grelha clicável)
     @ui.refreshable
     def cen_chips():
         with ui.row().classes("w-full items-center justify-between no-wrap"):
@@ -138,7 +138,7 @@ def build(queue: JobQueue):
                                % config.SCENARIO_LABEL_BY_KEY[k])
 
     with ui.row().classes("w-full gap-4 no-wrap p-4"):
-        # ── Coluna esquerda: formulário + fila ───────────────────────────────
+        # Coluna esquerda: formulário + fila
         with ui.column().classes("w-1/2 gap-4"):
             with ui.card().classes(CARD + " gap-3"):
                 _section_title("add_task", "Novo trabalho de treino")
@@ -255,7 +255,7 @@ def build(queue: JobQueue):
                                                'aria-label="Remover este trabalho da fila"')
                 fila()
 
-        # ── Coluna direita: consola integrada (estilo terminal) ──────────────
+        # Coluna direita: consola integrada (estilo terminal)
         with ui.column().classes("w-1/2 gap-4"):
             with ui.card().classes(CARD + " p-0 overflow-hidden"):
                 with ui.row().classes(

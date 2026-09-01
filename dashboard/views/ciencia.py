@@ -30,16 +30,16 @@ def _ptask_fundo(p: float, algo: str) -> str:
     Antes eram três degraus fixos do Tailwind — `bg-emerald-700` (≥80%),
     `bg-amber-700` (40-80%) e `bg-red-800` (<40%). Três problemas:
 
-    1. **Verde/vermelho é o pior par possível** para daltonismo (protanopia e
+    1. Verde/vermelho é o pior par possível para daltonismo (protanopia e
        deuteranopia atingem ~8% dos homens): as duas pontas da escala, que são
        precisamente o que se quer distinguir, colapsam na mesma cor.
-    2. **Três degraus numa métrica contínua** achatam 86% e 100% no mesmo verde,
+    2. Três degraus numa métrica contínua achatam 86% e 100% no mesmo verde,
        e é entre esses dois que está a diferença que interessa ler.
     3. Nenhuma das três cores pertence à paleta validada do projeto, ao
        contrário das cores das séries (ver `config.ALGO_META`).
 
-    Agora a célula usa a cor do **próprio algoritmo** (identidade, coluna a
-    coluna) e a **opacidade** codifica a magnitude — o eixo que sobrevive a
+    Agora a célula usa a cor do próprio algoritmo (identidade, coluna a
+    coluna) e a opacidade codifica a magnitude — o eixo que sobrevive a
     qualquer daltonismo e à impressão a preto e branco. As células fracas
     recuam para o fundo; as fortes destacam-se. O caso crítico (<40%) leva
     ainda um ícone, porque estado nunca deve depender só de cor.
@@ -273,7 +273,7 @@ def build():
     def render():
         body.clear()
         with body:
-            # ── Frescura da avaliação ────────────────────────────────────────
+            # Frescura da avaliação
             eval_t, model_t, stale = data.eval_freshness()
             with ui.card().classes(CARD):
                 if eval_t == 0:
@@ -296,10 +296,10 @@ def build():
                         ui.label(f"Avaliação coerente com os modelos (eval: {fmt(eval_t)})") \
                             .classes("text-sm text-emerald-300")
 
-            # ── Mega-treino (n=28) ───────────────────────────────────────────
+            # Mega-treino (n=28)
             _megatreino_card()
 
-            # ── Matriz Ptask × cenário ───────────────────────────────────────
+            # Matriz Ptask × cenário
             table = data.science_table()
             with ui.card().classes(CARD):
                 _section_title("grid_on", "Desempenho por cenário (Ptask · recolhas/ep)")
@@ -331,7 +331,7 @@ def build():
                             ui.label("0 → 100%").classes("ml-1")
                         ui.label("▲ crítico = abaixo de 40%")
 
-            # ── Significância estatística ────────────────────────────────────
+            # Significância estatística
             sig = data.significance()
             if sig is not None and len(sig):
                 with ui.card().classes(CARD):
@@ -347,7 +347,7 @@ def build():
                             {"name": k, "label": k, "field": k, "align": "left"}
                             for k in rows[0]]).classes("w-full").props("dense")
 
-            # ── Comparar treinos ─────────────────────────────────────────────
+            # Comparar treinos
             # Veio da Galeria. A matriz cenário×algoritmo aparecia em TRÊS vistas
             # (aqui, na Galeria e na Proveniência); a comparação entre campanhas
             # pertence ao pé da matriz oficial, não ao pé das imagens.

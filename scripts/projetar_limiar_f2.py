@@ -2,7 +2,6 @@
 """Projeção: o limiar de 15/21 execuções convergentes ainda é alcançável?
 
 O que isto é, e sobretudo o que NÃO é
--------------------------------------
 Não altera nada do pré-registo. A regra de decisão da QI7 continua a ser a
 fixada antes dos dados (⌈5/7 × n⌉ = 15 de 21 execuções convergentes em pelo
 menos um algoritmo, emendas 19 e 21). Isto responde a outra pergunta, de gestão:
@@ -10,19 +9,19 @@ menos um algoritmo, emendas 19 e 21). Isto responde a outra pergunta, de gestão
 Saber isso a 6 de agosto vale mais do que descobri-lo a 16, com seis dias até ao
 limite de integração.
 
-⚠️ Três ressalvas que a saída repete, para não serem esquecidas por quem lê:
+Três ressalvas que a saída repete, para não serem esquecidas por quem lê:
 
-1. **A contagem vem das curvas de TREINO, não da avaliação.** A M2 do
+1. A contagem vem das curvas de TREINO, não da avaliação. A M2 do
    pré-registo é a fração de execuções que atingem ≥1 recolha na avaliação
    determinística (20 episódios, sementes emparelhadas), que só corre no fim da
    campanha. Aqui usa-se o `best_task_food` da curva de treino, que é o melhor
    genoma da população contra as suas sementes de treino. São grandezas
    diferentes; a do treino é um majorante otimista.
-2. **O limiar é sobre "pelo menos um algoritmo".** O PPO e o SAC podem cruzá-lo
+2. O limiar é sobre "pelo menos um algoritmo". O PPO e o SAC podem cruzá-lo
    sem o GNN. Os seus logs não registam recolhas (só `ep_rew_mean`), pelo que
    não entram nesta projeção — o que a torna, também por aqui, otimista quanto
    ao veredicto final e pessimista quanto a esta linha específica.
-3. **O modelo assume execuções independentes e equiprováveis.** É a hipótese
+3. O modelo assume execuções independentes e equiprováveis. É a hipótese
    mais simples e a mais transparente; se houver deriva (por exemplo, sementes
    mais difíceis nas últimas execuções), não se aplica.
 

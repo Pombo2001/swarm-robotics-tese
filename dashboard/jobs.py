@@ -63,7 +63,7 @@ class JobQueue:
         # callback opcional avisado quando o estado de um job muda (para refrescar a UI)
         self.on_change: Optional[Callable] = None
 
-    # ── API pública ──────────────────────────────────────────────────────────
+    # API pública
     def add(self, job: Job):
         self.jobs.append(job)
         self._notify()
@@ -111,7 +111,7 @@ class JobQueue:
             self._log.clear()
         return lines
 
-    # ── Interno ──────────────────────────────────────────────────────────────
+    # Interno
     def _run_loop(self):
         # Procura sempre o próximo 'em fila' na lista ATUAL (não num snapshot): assim
         # add/remove/clear durante a corrida são respeitados (a lista é reatribuída).

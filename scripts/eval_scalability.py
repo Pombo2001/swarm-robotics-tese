@@ -1,6 +1,5 @@
 """
 eval_scalability.py — Sscale: transferência Zero-Shot para N variável
-======================================================================
 Treina-se com N=20 agentes e avalia-se, SEM retreino, com N in {10,20,50,100}.
 Mede a capacidade de generalização do controlador a enxames de outra dimensão.
 

@@ -1,6 +1,5 @@
 """
 gerar_pdf_reuniao.py — Compila os gráficos-chave num PDF para a reunião
-=======================================================================
 Junta, por ordem narrativa, os gráficos mais importantes da pasta de relatório
 mais recente (results/graficos_tese/<sessao>/) com títulos e legendas em
 português, prontos para apresentar ao orientador.
@@ -104,7 +103,7 @@ def main():
 
     out = os.path.join(PROJECT_ROOT, "results", "Reuniao_orientador.pdf")
     with PdfPages(out) as pdf:
-        # ── Capa ────────────────────────────────────────────────────────────
+        # Capa
         _page_text(pdf, "Controlo de Enxames por RL\nResumo para reunião", [
             "**Progresso desde 21 de maio",
             "",
@@ -127,7 +126,7 @@ def main():
             "escolher menos cenários -> mais tempo por treino (agora no menu).",
         ])
 
-        # ── Cenários ────────────────────────────────────────────────────────
+        # Cenários
         _page_grid(pdf, [P(f"mapa_3d_{s}.png") for s in
                          ["none", "u_wall", "bottleneck", "four_rooms",
                           "cooperative_door", "cooperative_perception"]],
@@ -135,7 +134,7 @@ def main():
                    "Sandbox, Muro em U, Gargalo, Quatro Salas, Porta Cooperativa e "
                    "Perceção (alvo móvel). A esfera verde é o ninho/alvo.", cols=2)
 
-        # ── Métrica principal ───────────────────────────────────────────────
+        # Métrica principal
         _page_image(pdf, P("taxa_sucesso_por_cenario.png"),
                     "Resultado-chave: taxa de sucesso por cenário",
                     "Avaliação determinística (métrica de tarefa). PPO 100% em 5/6 cenários; "
@@ -146,21 +145,21 @@ def main():
                     "Recolhas por episódio (magnitude do desempenho)",
                     "Complementa a taxa de sucesso: mede quantas recolhas, não só sucesso/falha.")
 
-        # ── Reward enganador ────────────────────────────────────────────────
+        # Reward enganador
         _page_image(pdf, P("comparacao_barras_geral.png"),
                     "Porque avaliamos pela tarefa, não pelo reward",
                     "O reward de treino é ENGANADOR: o GNN atinge ~98.000 de fitness no Muro U "
                     "com ZERO recolhas reais (acumula shaping sem cumprir a tarefa). Daí medir o "
                     "desempenho pela métrica de tarefa (recolhas), como pedido pelo orientador.")
 
-        # ── A correção (geodésico) ──────────────────────────────────────────
+        # A correção (geodésico)
         _page_image(pdf, P("heatmap_geodesico_u_wall.png"),
                     "A correção: potencial euclidiano vs geodésico (Muro U)",
                     "Esquerda (euclidiano): as linhas de nível atravessam a parede e puxam o robô "
                     "para dentro do beco. Direita (geodésico): contornam a parede, recompensando o "
                     "desvio correto. Elimina o mínimo local que prendia os robôs.")
 
-        # ── Comportamento (heatmaps de ocupação) ────────────────────────────
+        # Comportamento (heatmaps de ocupação)
         _page_grid(pdf, [P("heatmap_ocupacao_ppo_four_rooms.png"),
                          P("heatmap_ocupacao_sac_bottleneck.png"),
                          P("heatmap_ocupacao_gnn_u_wall.png")],
@@ -169,7 +168,7 @@ def main():
                    "gargalo até ao ninho; o GNN (subtreinado) fica preso contra a parede do Muro U. "
                    "Zonas brilhantes coladas a uma parede = robôs presos.", cols=3)
 
-        # ── Curvas de aprendizagem (exemplo) ────────────────────────────────
+        # Curvas de aprendizagem (exemplo)
         _page_image(pdf, P("comparacao_mapa_four_rooms.png"),
                     "Curvas de aprendizagem — Quatro Salas (exemplo)",
                     "Eixo X normalizado (0-100% do treino de cada algoritmo) para comparação justa "

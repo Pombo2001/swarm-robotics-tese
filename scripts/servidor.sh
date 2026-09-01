@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Ligação ao servidor de treino do ISCTE — o host e o utilizador CERTOS, num sítio só.
 #
-# Existe porque já se perdeu tempo a tentar IPs de memória (e o errado dá "connection
-# timed out", que se confunde com a VPN em baixo ou com o servidor ocupado).
+# Existe porque tentar IPs de memória custa tempo: o errado dá «connection timed
+# out», que se confunde com a VPN em baixo ou com o servidor ocupado.
 #
 # A password NÃO está aqui, nem deve alguma vez ser escrita na linha de comandos (ficaria
 # no histórico da shell e nos logs). Vem de ~/.swarm_ssh_pass — um ficheiro FORA do

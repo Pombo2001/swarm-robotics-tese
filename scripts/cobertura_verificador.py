@@ -2,23 +2,21 @@
 """Que afirmações numéricas da tese NÃO têm verificador?
 
 O problema
-----------
 O `verificar_numeros_tese.py` confere 352 valores e diz «tudo bate ✓». O que
 essa linha não diz é *de quantos*: o corpo do `main.tex` tem 2170 tokens
 numéricos. A fração por cobrir nunca foi medida, e um número que ninguém
 verifica é indistinguível de um número verificado — até alguém o ler na defesa.
 
 Como se mede, sem adivinhar
----------------------------
 Não se extraem os padrões do código dos verificadores: seriam dezenas, alguns
 construídos em tempo de execução, e uma lista escrita à mão envelheceria no
-sítio. Em vez disso **instrumenta-se o `re`**: corre-se cada verificador com
+sítio. Em vez disso instrumenta-se o `re`: corre-se cada verificador com
 `re.search`/`findall`/`finditer`/`match` embrulhados, guardando o texto de cada
 match feito sobre o conteúdo de um `.tex`. Um número que caia dentro de um
 desses trechos foi lido por alguém; um que não caia, não foi.
 
-Isto mede o que os verificadores **leem**, que é um majorante do que eles
-**verificam** — um padrão pode apanhar uma frase e usar só metade dos números
+Isto mede o que os verificadores leem, que é um majorante do que eles
+verificam — um padrão pode apanhar uma frase e usar só metade dos números
 dela. O relatório declara-o, e é por isso que a coluna certa se chama
 «lido por um verificador» e não «verificado».
 
@@ -51,7 +49,7 @@ def corpo_completo():
     Esta medição contava 1882 tokens e dizia «51% cobertos». Só que a secção do
     mapa composto — a QI7 inteira, com a última campanha da dissertação — não
     vive no `main.tex`: entra por `\\input{seccao_mapa_grande}`, e com ela o
-    PRISMA gerado e o apêndice da revisão sistemática. São **402 números** que
+    PRISMA gerado e o apêndice da revisão sistemática. São 402 números que
     a régua da cobertura nunca viu, e sobre os quais dizia, por omissão, que
     estava tudo medido. Uma medição de cobertura que não cobre um capítulo é
     exatamente o defeito que ela existe para apanhar.
@@ -95,7 +93,7 @@ VERIFICADORES = ["verificar_numeros_tese", "verificar_contagens_prosa",
                  "verificar_configuracao"]
 
 
-# ── instrumentação do `re` ───────────────────────────────────────────────────
+# instrumentação do `re`
 
 def _instrumentar(marcas):
     """Embrulha o `re` para guardar o texto de cada match feito sobre um `.tex`.
@@ -254,7 +252,7 @@ def correr_verificadores():
     return marcas, falharam
 
 
-# ── classificação do que sobra ───────────────────────────────────────────────
+# classificação do que sobra
 
 # (iii) não é resultado: não há nada nos dados com que confrontar estes números.
 NAO_E_RESULTADO = [

@@ -1,6 +1,5 @@
 """
 statistical_tests.py — Testes de significância entre algoritmos
-================================================================
 Compara os 3 algoritmos (GNN, PPO, SAC) par-a-par, por cenário, usando os
 resultados de AVALIAÇÃO determinística (results/evaluation/eval_{algo}_{cenario}.csv).
 
@@ -9,17 +8,16 @@ incompatíveis — o GNN reporta fitness evolutiva e o PPO/SAC recompensa episó
 A avaliação, pelo contrário, mede a MESMA métrica de tarefa para todos
 (food_collected / taxa de sucesso), tornando a comparação cientificamente válida.
 
-⚠️ A UNIDADE AQUI É O EPISÓDIO — E A DA TESE NÃO É
----------------------------------------------------
-Este script compara **episódios** (20 por célula). A tese compara **execuções de
-treino**: «a unidade estatística é a execução de treino --- e não o episódio ---,
+A UNIDADE AQUI É O EPISÓDIO — E A DA TESE NÃO É
+Este script compara episódios (20 por célula). A tese compara execuções de
+treino: «a unidade estatística é a execução de treino --- e não o episódio ---,
 o que evita a inflação de n que é comum na literatura comparada» (Contributos).
 Vinte episódios do mesmo modelo não são vinte observações independentes: são vinte
 amostras do mesmo treino, e tratá-las como tal multiplica o n por 20 e faz
 significâncias aparecer do nada.
 
 A tabela da tese (`tab:res_signif`) vem do `gerar_figuras_7d.py`, que agrega por
-run antes de testar. **Este ficheiro não alimenta a tese** — serve para inspeção
+run antes de testar. Este ficheiro não alimenta a tese — serve para inspeção
 rápida de uma avaliação isolada.
 
 Por isso escreve em `testes_significancia_por_episodio_*.csv`, e não no nome
@@ -31,7 +29,7 @@ com `wilcoxon` — prova de que a sobrescrita chegou a acontecer.
 
 Testes: Wilcoxon signed-rank quando as amostras têm o mesmo tamanho (tratadas
 como emparelhadas), Mann-Whitney U caso contrário; t de Welch como complementar;
-efeito por δ de Cliff. ⚠️ O emparelhamento por igualdade de tamanho é uma
+efeito por δ de Cliff. O emparelhamento por igualdade de tamanho é uma
 heurística frágil — dois algoritmos com 20 episódios cada não têm pares naturais
 a não ser que as seeds de avaliação coincidam. Ver `docs/PLANO_QUALIDADE.md`.
 

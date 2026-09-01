@@ -1,19 +1,18 @@
 """Vista 'Vitrine' — o que se mostra na defesa, e só isso.
 
 Porque existe
--------------
 A galeria (Resultados) e o Arquivo mostram TUDO: 31 campanhas, centenas de
 figuras. É o que se quer quando se procura uma prova. Não é o que se quer numa
 sala com o relógio a andar — ali a pergunta é «mostra-me o essencial», e passar
 30 campanhas à procura da boa é a pior forma de responder.
 
-Esta vista mostra uma seleção **declarada** em `configs/vitrine.yaml`, com a
+Esta vista mostra uma seleção declarada em `configs/vitrine.yaml`, com a
 regra escrita ao lado de cada figura. A regra está em `docs/VITRINE_DEFESA.md`
 e resume-se a: a unidade é a campanha e não a execução (nada de «a melhor execução»);
 quando os três algoritmos correram, aparecem os três; e a métrica é sempre
 recolhas/episódio, nunca a fitness ao lado da recompensa.
 
-Uma figura em falta aparece como **falta**, com o caminho — nunca em silêncio. A
+Uma figura em falta aparece como falta, com o caminho — nunca em silêncio. A
 alternativa (esconder o que não existe) faria a vitrine parecer completa numa
 altura em que não está, que é exatamente quando isso custa caro.
 """

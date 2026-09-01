@@ -2,7 +2,6 @@
 """Escreve a classificação dos 58 incluídos no `screening.csv`, com proveniência.
 
 O problema
-----------
 A tese caracteriza os 58 estudos incluídos por paradigma («21 assentam em MARL
 e 23 em otimização bio-inspirada») e por tema («30 dos 58 abordam a
 escalabilidade»), e afirma, no mesmo capítulo, que o processo de revisão é
@@ -12,9 +11,8 @@ traz autores, ano, título e publicação. Quem quisesse conferir aqueles númer
 não tinha por onde: a classificação vivia só na leitura do autor.
 
 O que este script faz, e o que NÃO faz
---------------------------------------
-Preenche quatro colunas novas para as linhas incluídas. **Não inventa a leitura
-do autor**: classifica pelos resumos dos exports, com as mesmas expressões
+Preenche quatro colunas novas para as linhas incluídas. Não inventa a leitura
+do autor: classifica pelos resumos dos exports, com as mesmas expressões
 regulares do `verificar_slr_corpo.py` (importadas de lá, para não haver duas
 versões da regra), e diz na própria linha que foi assim que o fez:
 
@@ -24,7 +22,7 @@ versões da regra), e diz na própria linha que foi assim que o fez:
     classificacao_evidencia   os termos que dispararam, para se poder conferir
 
 A diferença face ao que existia não é ter mais certeza — é ter a classificação
-**escrita, reproduzível e corrigível**. Uma linha lida à mão passa a
+escrita, reproduzível e corrigível. Uma linha lida à mão passa a
 `classificacao_fonte = manual` e este script deixa de lhe tocar; é assim que a
 leitura do autor entra no registo, uma linha de cada vez, sem que ninguém
 confunda uma coisa com a outra. Foi a fabricação do PRISMA (13 jul) que ensinou

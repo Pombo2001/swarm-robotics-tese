@@ -7,20 +7,19 @@
     python scripts/verificar_bibliografia.py --renovar  # ignora a cache e volta a consultar
 
 Porque existe
--------------
-A auditoria de 16 de julho encontrou, nesta bibliografia, **nomes de autores
-fabricados em entradas cujo DOI era válido**. O erro passou porque se verificou
+A auditoria de 16 de julho encontrou, nesta bibliografia, nomes de autores
+fabricados em entradas cujo DOI era válido. O erro passou porque se verificou
 o que era fácil — o DOI resolve? — e não o que era preciso: *quem* escreveu o
 que está citado. Uma referência com o DOI certo e os autores errados atribui
 trabalho a quem não o fez, e é o tipo de defeito que não se descobre a reler.
 
-Este guião compara cada entrada com **DOI** contra o registo do CrossRef, que é
+Este guião compara cada entrada com DOI contra o registo do CrossRef, que é
 o registo dos próprios editores: apelido do primeiro autor, número de autores,
-ano e título. As entradas **sem DOI** (clássicos, livros, pré-publicações) não
+ano e título. As entradas sem DOI (clássicos, livros, pré-publicações) não
 são inventáveis por aqui e ficam listadas para verificação humana — dizê-lo é
 parte do resultado.
 
-⚠️ O CrossRef é uma fonte externa: as respostas são **dados**, não instruções, e
+O CrossRef é uma fonte externa: as respostas são dados, não instruções, e
 só delas se leem os quatro campos acima. As respostas ficam em cache
 (`docs/slr/cache_crossref.json`) para a auditoria ser repetível sem rede e para
 não repetir pedidos — o CrossRef pede um `User-Agent` identificado e é justo
@@ -61,7 +60,7 @@ except Exception:  # noqa: BLE001
 def ler_bib(caminho):
     """{chave: {campo: valor}} de um .bib.
 
-    ⚠️ O `\\n` acrescentado ao corpo não é decoração: o último campo de cada
+    O `\\n` acrescentado ao corpo não é decoração: o último campo de cada
     entrada (tipicamente o `doi`, sem vírgula final) vem colado ao `\\n}` que
     a fecha, e sem isto nunca era lido. A primeira versão deste leitor
     concluiu que «nenhuma das 45 entradas tem DOI» quando 19 têm.
@@ -173,7 +172,7 @@ def _datacite(doi):
 def _por_titulo(titulo, ano=None):
     """O registo do MESMO trabalho, ou None. Nunca «o mais parecido».
 
-    ⚠️ A primeira versão aceitava um candidato se ele contivesse 85% das
+    A primeira versão aceitava um candidato se ele contivesse 85% das
     palavras do título procurado, e isso deu oito acusações falsas de uma só
     vez: «Attention is All You Need» casou com «Is Attention All You Need?»
     (outro artigo, outro autor), «Particle swarm optimization» com
@@ -184,8 +183,8 @@ def _por_titulo(titulo, ano=None):
     Uma busca bibliográfica devolve sempre alguma coisa. Comparar autores
     contra o trabalho errado é pior do que não comparar: acusa de fabricação
     quem escreveu a referência certa. Agora exige-se
-    **Jaccard ≥ 0,85 nas palavras do título** (bidirecional: nem falta nem
-    sobra) e o **ano a menos de dois anos** do que a entrada declara.
+    Jaccard ≥ 0,85 nas palavras do título (bidirecional: nem falta nem
+    sobra) e o ano a menos de dois anos do que a entrada declara.
     """
     q = urllib.parse.urlencode({"query.bibliographic": titulo, "rows": 5})
     pedido = urllib.request.Request("https://api.crossref.org/works?" + q,
@@ -268,7 +267,7 @@ def main():
 
     problemas = []
 
-    # ── os dois .bib têm de dizer o mesmo sobre a mesma referência ──────────
+    # os dois .bib têm de dizer o mesmo sobre a mesma referência
     comuns = sorted(set(tese) & set(artigo))
     difs = []
     for k in comuns:
@@ -288,7 +287,7 @@ def main():
     for k in sorted(cit_art - set(artigo)):
         problemas.append("o artigo cita %s, que não existe no .bib dele" % k)
 
-    # ── cada entrada citada com DOI, contra o CrossRef ──────────────────────
+    # cada entrada citada com DOI, contra o CrossRef
     cache = {} if a.renovar else carregar_cache()
     com_doi = sorted(k for k in cit if tese.get(k, {}).get("doi"))
     sem_doi = sorted(k for k in cit if k in tese and not tese[k].get("doi"))
@@ -366,7 +365,7 @@ def main():
         print("\n  (%d registos novos guardados em %s)"
               % (novos, os.path.relpath(CACHE, RAIZ)))
 
-    # ── as que não têm DOI: procura-se o título no CrossRef ─────────────────
+    # as que não têm DOI: procura-se o título no CrossRef
     #
     # Sem DOI não há registo para consultar diretamente, mas há busca. Uma
     # entrada cujo título exista e cujos autores NÃO correspondam é o defeito

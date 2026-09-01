@@ -4,7 +4,7 @@ Extraído do antigo launcher_dashboard.py. Os scripts em scripts/ continuam a se
 o backend real — este módulo só descreve cenários, algoritmos e caminhos para o
 dashboard os orquestrar.
 
-⚠️ A lista de cenários NÃO se declara aqui: vem de `src/scenarios.py`, que é a
+A lista de cenários NÃO se declara aqui: vem de `src/scenarios.py`, que é a
 fonte única do projeto. Havia aqui uma cópia própria, e já divergia nos rótulos
 ("Beco Sem Saída (Muro U)" aqui vs "Beco Sem Saída (U)" em src). O docstring do
 `src/scenarios.py` conta o preço dessa duplicação: a lista esteve espalhada por
@@ -15,16 +15,15 @@ import os
 import sys
 
 # Raiz do projeto (dois níveis acima deste ficheiro: dashboard/ -> projeto/)
-# ── MODO LEITURA ─────────────────────────────────────────────────────────────
+# MODO LEITURA
 # Ligado com SWARM_DASH_READONLY=1. Serve a cópia que corre no Raspberry Pi, à
 # qual o orientador acede pela internet: ali o dashboard é para VER, e as vistas
 # de OPERAÇÃO não podem sequer existir —
 #   · Treinar    lança processos na máquina;
 #   · Servidor   pede a password SSH do servidor do ISCTE (não a expor num site);
-#   · Ao vivo    abre o visualizador Ursina no ecrã de quem CORRE o servidor, o
-#                que num Pi remoto não faz sentido nenhum.
-# Não é uma questão de arrumação: é a diferença entre publicar resultados e
-# publicar um controlo remoto da máquina de treino.
+#   · Ao vivo    abre o visualizador Ursina no ecrã de quem CORRE o servidor.
+# É a diferença entre publicar resultados e publicar um controlo remoto da
+# máquina de treino.
 READONLY = os.environ.get("SWARM_DASH_READONLY", "") == "1"
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -47,11 +46,8 @@ SCENARIO_LABEL_BY_KEY = {k: lbl for lbl, k in SCENARIOS}
 
 # Labels curtos. Partem dos de src/scenarios.py, mas quem lê o dashboard tem a
 # dissertação ao lado: os nomes aqui são os NOMES DA DISSERTAÇÃO, não formas
-# encurtadas à parte. Chegou a haver quatro vocabulários em circulação — estes,
-# os de src/, e cópias locais em duas vistas — e o ecrã dizia «Perceção Coop.»
-# onde o texto diz «Perceção Cooperativa». `verificar_dashboard.py` passou a
-# recusar as formas abandonadas, e as vistas não voltam a ter dicionário
-# próprio: consomem este.
+# encurtadas à parte. O `verificar_dashboard.py` recusa as formas abandonadas, e
+# as vistas não têm dicionário próprio: consomem este.
 SCENARIO_LABEL_SHORT = dict(_SRC_LABELS_SHORT)
 SCENARIO_LABEL_SHORT.update({
     "none": "Sandbox",
@@ -68,10 +64,8 @@ SCENARIO_LABEL_SHORT.update({
 # fechadas. Deliberadamente NÃO é `SCENARIO_KEYS`: um cenário novo (ex.: o mapa
 # grande) aparece nas vistas de operação, mas não deve entrar nas tabelas de
 # resultados enquanto não tiver campanha avaliada — apareceria como linha vazia
-# ou, pior, calada.
-# Vem de `THESIS_SCENARIOS` (src/scenarios.py) e NÃO se escreve aqui: era uma
-# cópia à mão da mesma lista, exatamente o que o docstring deste ficheiro diz
-# para não fazer. Quando o mapa composto tiver campanha, promove-se num sítio só.
+# ou, pior, calada. Vem de `THESIS_SCENARIOS` (src/scenarios.py) e não se
+# reescreve aqui.
 MAIN_SCENARIO_KEYS = list(_SRC_THESIS)
 
 ALGOS = ["GNN", "PPO", "SAC"]
@@ -79,9 +73,8 @@ ALGOS = ["GNN", "PPO", "SAC"]
 # Cores das séries, medidas e não escolhidas a olho. Mantêm as famílias das
 # figuras da tese (GNN verde, PPO laranja, SAC azul) — a mesma cor tem de
 # significar o mesmo algoritmo nos slides e no ecrã — e passam o validador de
-# paletas em fundo escuro: separação 9,4 em deuteranopia (alvo ≥8), contraste
-# ≥3:1. Mexer nestes hex obriga a correr o validador outra vez: o verde
-# "verdadeiro" (#22a34a) parece melhor e falha contra o laranja.
+# paletas em fundo escuro: separação 9,4 em deuteranopia (alvo >=8), contraste
+# >=3:1. Mexer nestes hex obriga a correr o validador outra vez.
 ALGO_META = {
     "GNN": {"color": "#199e70", "icon": "🧬", "label": "GNN (Evolutivo)"},
     "PPO": {"color": "#d95926", "icon": "🤖", "label": "PPO (Actor-Critic)"},

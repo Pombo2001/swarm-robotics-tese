@@ -15,7 +15,7 @@
 #      confirma nos dados que chegam);
 #   5. instalar sem gerar figuras, e a campanha ficar invisível no dashboard.
 #
-# NÃO toca nos modelos ativos (`results/models*`) — precedente de 19 jul.
+# NÃO toca nos modelos ativos (`results/models*`).
 #
 # Uso (torre, VPN do ISCTE ligada):
 #     bash scripts/receber_megaB.sh --verificar    # só diz se está pronta
@@ -90,7 +90,7 @@ fi
 echo "pronta a receber."
 [ "$SO_VERIFICAR" = "1" ] && { echo "(--verificar: não trouxe nada)"; exit 0; }
 
-# ── trazer ───────────────────────────────────────────────────────────────────
+# trazer
 echo
 for f in "${FASES[@]}"; do
     echo "== fase $f =="
@@ -105,7 +105,7 @@ for f in "${FASES[@]}"; do
         && echo "   log trazido" || true
 done
 
-# ── armadilha nº8: os runs têm modelos DISTINTOS? ────────────────────────────
+# armadilha nº8: os runs têm modelos DISTINTOS?
 echo
 echo "== verificação dos modelos por run (armadilha nº8) =="
 python - "$DESTINO" "${FASES[@]}" <<'PY'
@@ -142,7 +142,7 @@ for f in fases:
                   % (rs, d[:12]))
 PY
 
-# ── figuras, para a campanha aparecer no dashboard ───────────────────────────
+# figuras, para a campanha aparecer no dashboard
 echo
 echo "== figuras =="
 for f in "${FASES[@]}"; do

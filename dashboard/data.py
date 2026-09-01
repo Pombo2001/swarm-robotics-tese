@@ -23,12 +23,12 @@ STATS_DIR = os.path.join(config.BASE_DIR, "results", "estatisticas")
 SIGNIF = os.path.join(STATS_DIR, "testes_significancia_food_collected.csv")
 MODEL_DIRS = ("models", "models_ppo", "models_sac")
 
-# Campanha Novelty adaptativa: 5 fases GUARDADAS FORA de graficos_tese, em
+# Campanha Novelty adaptativa: 5 fases guardadas FORA de graficos_tese, em
 # results/novelty_adaptativo/, para não sobrescrever os modelos campeões 7d (que
-# continuam a ser os ativos, de propósito). Cada fase é auto-contida (evaluation/ +
-# models/), por isso não passa pelo list_sessions() normal — é enxertada à parte na
-# comparação de métricas e na vista Ao vivo. Os rótulos dizem o que cada fase avaliou
-# (ordem e semântica vêm do pré-registo docs/PRE_REGISTO_NOVELTY_ADAPTATIVO.md).
+# continuam a ser os ativos, de propósito). Cada fase é auto-contida
+# (evaluation/ + models/), por isso não passa pelo list_sessions() normal — é
+# enxertada à parte. A ordem e a semântica dos rótulos vêm do pré-registo
+# docs/PRE_REGISTO_NOVELTY_ADAPTATIVO.md.
 ADAPT_DIR = os.path.join(config.BASE_DIR, "results", "novelty_adaptativo")
 ADAPT_FASES = [
     ("◆ Adaptativo · 7 cenários @195 (A1)",                       "week_A_fase1"),
@@ -40,22 +40,19 @@ ADAPT_FASES = [
 ADAPT_LABEL_TO_DIR = {lbl: sub for lbl, sub in ADAPT_FASES}
 
 
-# Mega-treino de 1 mês (fechado: ): a vista lê o RESUMO, não os CSV. Os
-# testes são do `scripts/analise_megatreino.py` — recalculá-los aqui era uma
-# segunda implementação da mesma estatística, com o risco de dar outra resposta;
-# e no Pi, que serve isto, seria lento sem necessidade.
+# Mega-treino de 1 mês: a vista lê o RESUMO, não os CSV. Os testes são do
+# `scripts/analise_megatreino.py` — recalculá-los aqui era uma segunda
+# implementação da mesma estatística, a poder dar outra resposta.
 MEGA_DIR = os.path.join(config.BASE_DIR, "results", "mega_1mes")
 MEGA_RESUMO = os.path.join(MEGA_DIR, "resumo_megatreino.json")
 
-# Fases do mega-treino com modelos próprios, para o visualizador. Os rótulos
+# Fases do mega-treino com modelos próprios, para o visualizador; os rótulos
 # dizem a condição e não o número da fase.
 #
 # As três fases de gradiente (A3, A4, B6) não estão aqui: o arquivamento entre
-# fases copia `results/models`, que é a pasta do GNN, pelo que ficaram com
-# cópias de GNN de outras fases e sem `.zip` próprio (ver LEIA-ME_modelos.md).
-# Os resultados delas continuam válidos — vêm das avaliações, feitas no servidor
-# com o modelo certo em memória. Todas as fases GNN têm os modelos do seu
-# cenário, com um hash distinto por execução.
+# fases copia `results/models`, que é a pasta do GNN, pelo que ficaram com cópias
+# de GNN e sem `.zip` próprio (ver LEIA-ME_modelos.md). Os resultados delas
+# continuam válidos — vêm das avaliações, feitas no servidor com o modelo certo.
 MEGA_FASES = [
     ("▣ Mega-treino · GNN adaptativo · Muro em U (28/28)", "mega_A_fase1"),
     ("▣ Mega-treino · GNN objetivo · Muro em U (15/28)",   "mega_A_fase2"),
@@ -130,16 +127,11 @@ def science_table():
     return _aggregate_eval(EVAL_SUMMARY)
 
 
-# ── Comparação de métricas entre treinos (vista Resultados) ───────────────────
-# A entrada "oficial" identifica-se por este PREFIXO (sentinela estável); o resto
-# do rótulo é DERIVADO do ficheiro que está de facto no disco.
-#
-# Estava escrito à mão — "★ Oficial (9 jul · campanha 7 dias, 7 runs × 20 ep)" —
-# e o `eval_summary.csv` desta máquina é de 23 jun, com 6 cenários (falta o
-# `cooperative_door_bypass`) e 20 ep/célula, não 140. O rótulo afirmava uma
-# proveniência que o ficheiro não tem, e num ecrã de defesa isso é uma afirmação
-# errada diante do júri. Descrever o ficheiro em vez de o anunciar torna a
-# discrepância impossível de esconder.
+# Comparação de métricas entre treinos (vista Resultados)
+# A entrada «oficial» identifica-se por este PREFIXO (sentinela estável); o resto
+# do rótulo é DERIVADO do ficheiro que está de facto no disco. Um rótulo escrito
+# à mão afirma uma proveniência que o ficheiro pode não ter — e num ecrã de
+# defesa isso é uma afirmação errada diante do júri.
 OFICIAL_PREFIXO = "★ Oficial"
 
 
@@ -165,10 +157,8 @@ def _adapt_eval_path(label: str):
         return None
     # eval_by_run PRIMEIRO. O eval_summary destas fases é o resíduo da pasta
     # global do servidor: traz só a ÚLTIMA execução (20 episódios) e, nas fases
-    # A1/A2, traz PPO e SAC que esta campanha nunca treinou (não há models_ppo/
-    # models_sac na fase — são modelos de outra campanha que ficaram na pasta).
-    # Media pelo eval_summary, o Muro em U do adaptativo aparecia a 80,8 (uma
-    # execução feliz) em vez de 68,5 (as sete), com um PPO ao lado que não é dele.
+    # A1/A2, traz PPO e SAC que esta campanha nunca treinou — modelos de outra
+    # campanha que ficaram na pasta.
     dir_eval = os.path.join(ADAPT_DIR, sub, "evaluation")
     for nome in ("eval_by_run.csv", "eval_summary.csv"):
         p = os.path.join(dir_eval, nome)
@@ -222,12 +212,12 @@ def session_metrics(session: str):
     return _aggregate_eval(_session_eval_path(session))
 
 
-# ── PROVENIÊNCIA DOS DADOS ───────────────────────────────────────────────────
-# Todas as vistas passam a declarar O QUE estão a ler e DE QUANDO é. Sem isto, o
-# dashboard não distingue "não existe" de "não está aqui": é assim que uma sessão
-# antiga apareceu como se fosse a mais recente (ordenação por mtime), que curvas de há
-# 35 dias foram desenhadas como "ao vivo", e que a ausência de vídeos do PPO/SAC passou
-# por bug quando era apenas uma campanha que só treinou o GNN.
+# PROVENIÊNCIA DOS DADOS
+# Todas as vistas declaram O QUE estão a ler e DE QUANDO é. Sem isso o dashboard
+# não distingue «não existe» de «não está aqui»: foi assim que uma sessão antiga
+# apareceu como a mais recente (ordenação por mtime), que curvas de há 35 dias
+# foram desenhadas como «ao vivo» e que a ausência de vídeos do PPO/SAC passou
+# por defeito quando era uma campanha que só treinou o GNN.
 
 def idade_legivel(ts):
     """0.0 -> 'nunca'; senão 'há 3 min' / 'há 5 h' / 'há 12 dias'."""
@@ -263,13 +253,11 @@ def eval_freshness():
     files = []
     for d in MODEL_DIRS:
         files += glob.glob(os.path.join(config.BASE_DIR, "results", d, "*"))
-    # Os CHECKPOINTS intermédios (`*_ckpt_0091min.zip`) não são modelos a avaliar:
-    # são fotografias do treino a meio, e o treinador escreve-os em qualquer
-    # campanha que passe por aqui. Seis deles,  eram da campanha do mapa
-    # grande e faziam a vista Ciência gritar "avaliação DESATUALIZADA" contra uma
-    # avaliação que está em dia — o alarme comparava a matriz dos 7 cenários com
-    # ficheiros que nunca lhe pertenceram. Um alarme que toca sem motivo é pior do
-    # que nenhum: ensina a ignorá-lo, e este existe para a armadilha nº3.
+    # Os CHECKPOINTS intermédios (`*_ckpt_0091min.zip`) não são modelos a
+    # avaliar: são fotografias do treino a meio, e o treinador escreve-os em
+    # qualquer campanha que passe por aqui. Contados, faziam a vista Ciência
+    # gritar «avaliação DESATUALIZADA» contra uma avaliação em dia, comparando a
+    # matriz dos 7 cenários com ficheiros que nunca lhe pertenceram.
     files = [f for f in files if "ckpt" not in os.path.basename(f).lower()]
     model_t = max((_mtime(f) for f in files), default=0.0)
     # model_t == 0 significa que NÃO HÁ modelos nesta cópia (é o caso do pacote
@@ -285,7 +273,7 @@ def significance():
     return pd.read_csv(SIGNIF)
 
 
-# ── Robustez a falhas (Rrobust) ───────────────────────────────────────────────
+# Robustez a falhas (Rrobust)
 def robustness_table():
     """Por (cenário, algo): recolhas base vs com 10% de falhas + retenção %.
 
@@ -293,7 +281,7 @@ def robustness_table():
     corrida e dos mesmos modelos.
     Falhas = `eval_{algo}_{cenário}_fail10.csv` (run_eval.py --fail-frac 0.1).
 
-    ⚠️ A base era o `eval_summary.csv`, e isso comparava corridas diferentes: o
+    A base era o `eval_summary.csv`, e isso comparava corridas diferentes: o
     summary é da campanha de 7 dias (10 jul, 140 ep/célula) e os `_fail10` são de
     2 jul (20 ep, outros modelos). No Muro em U dava
     `74,25 / 24,54 = 303%` de retenção — e no SAC 563%, um número que só podia
@@ -329,7 +317,7 @@ def robustness_table():
     return out
 
 
-# ── Escalabilidade Zero-Shot (Sscale) ─────────────────────────────────────────
+# Escalabilidade Zero-Shot (Sscale)
 def scalability_scenarios():
     """Cenários com CSV de escalabilidade (escalabilidade_{cenário}.csv)."""
     if not os.path.isdir(STATS_DIR):
@@ -364,7 +352,7 @@ def scalability_table(scenario: str):
     return out
 
 
-# ── Galeria de resultados (vista Resultados) ──────────────────────────────────
+# Galeria de resultados (vista Resultados)
 def _data_da_sessao(nome):
     """Data da CAMPANHA, lida do nome da pasta ('09-07-2026_12h52m').
 
@@ -417,18 +405,15 @@ def list_sessions():
     return campanhas + sorted(curadas)
 
 
-# ── Que campanhas se MOSTRAM, e quais só contam ─────────────────────────────
+# Que campanhas se MOSTRAM, e quais só contam
 #
-# São 52 pastas de campanha no disco e as vistas mostravam-nas todas. A maioria
-# é de maio e junho: treinos exploratórios sem heatmaps nem vídeo, cujos números
-# a dissertação não usa. Numa galeria, cada uma delas é uma linha que o leitor
-# tem de descartar sozinho.
+# São 52 pastas de campanha no disco, a maioria de maio e junho: treinos
+# exploratórios sem heatmaps nem vídeo, cujos números a dissertação não usa.
 #
-# A regra, decidida pelo autor: mostra-se uma campanha se ela for CANÓNICA (a
-# tese cita-a) ou se estiver COMPLETA — dados, figuras, curvas, heatmaps e
-# vídeo. Uma campanha fraca mas completa fica: serve de comparação. Uma
-# incompleta sai da exibição e continua a contar nas estatísticas, no inventário
-# de horas e no Arquivo, que é o sítio onde o percurso é suposto aparecer.
+# A regra: mostra-se uma campanha se for CANÓNICA (a tese cita-a) ou se estiver
+# COMPLETA — dados, figuras, curvas, heatmaps e vídeo. Uma campanha fraca mas
+# completa fica, porque serve de comparação; uma incompleta sai da exibição e
+# continua a contar nas estatísticas, no inventário de horas e no Arquivo.
 CAMPANHAS_CANONICAS = ("final_7d", "mapa_grande_f2")
 PREFIXOS_CANONICOS = ("adaptativo_", "mega_")
 
@@ -543,11 +528,10 @@ def list_pngs(session: str):
     return sorted(f for f in os.listdir(p) if f.lower().endswith(".png"))
 
 
-# ── Arquivo histórico de campanhas (vista Arquivo) ────────────────────────────
-# O registo cronológico de TODAS as campanhas datadas — das primeiras exploratórias
-# (maio/junho) às finais. Vive à parte da galeria de Resultados porque a maioria é
-# exploratória: só tem gráficos de treino, muitas com conclusões já refutadas (ver
-# armadilhas nº1/nº3). Guardá-las é transparência, não são fonte para a tese.
+# Arquivo histórico de campanhas (vista Arquivo)
+# O registo cronológico de TODAS as campanhas datadas. Vive à parte da galeria de
+# Resultados porque a maioria é exploratória, muitas com conclusões já refutadas:
+# guardá-las é transparência, não são fonte para a tese.
 def historical_sessions():
     """Campanhas datadas por ordem CRONOLÓGICA (a mais antiga primeiro)."""
     if not os.path.isdir(GRAFICOS_DIR):
@@ -577,14 +561,13 @@ def session_is_evaluated(session: str) -> bool:
 
 _RANKING_CACHE = {"chave": None, "valor": None}
 
-# As pastas de campanha seguem quatro convenções diferentes, todas na mesma
-# gaveta: datadas (`09-07-2026_12h52m`), canónicas (`final_7d`), fases de uma
-# campanha (`mega_A1`, `adaptativo_B3`) e pastas que nem campanhas são
-# (`estatisticas`, `eval_7d`). Quem escolhe no seletor não tem como saber o que
-# está a escolher — e o nome, sozinho, nunca lho vai dizer.
+# As pastas de campanha seguem quatro convenções na mesma gaveta: datadas
+# (`09-07-2026_12h52m`), canónicas (`final_7d`), fases de uma campanha
+# (`mega_A1`, `adaptativo_B3`) e pastas que nem campanhas são (`estatisticas`,
+# `eval_7d`) — o nome, sozinho, não diz a quem escolhe o que está a escolher.
 #
 # `canonica` marca as campanhas que a TESE cita: é a diferença entre um número
-# que está escrito na dissertação e um que ficou por transparência de percurso.
+# escrito na dissertação e um que ficou por transparência de percurso.
 _CAMPANHAS = {
     "final_7d":   ("Campanha final · 7 dias", True),
     # Mesma campanha que a `final_7d`, noutra pasta: os dados brutos da
@@ -622,11 +605,10 @@ def condicao_da_campanha(nome: str) -> str:
     for rotulo, sub in MEGA_FASES:
         if sub == alvo:
             return rotulo.replace("▣ Mega-treino · ", "").strip()
-    # As três fases de GRADIENTE não estão no MEGA_FASES — não têm modelos
-    # próprios arquivados (ver a nota lá em cima) e por isso não aparecem no
-    # visualizador. Os GRÁFICOS delas existem, e o seletor da galeria oferecia-as
-    # como «Mega-treino A3» e «Mega-treino A4», sem dizer qual é o PPO e qual é
-    # o SAC. Sem contagens: estas são só a identificação da condição.
+    # As três fases de GRADIENTE não estão no MEGA_FASES (não têm modelos
+    # próprios arquivados) e por isso não aparecem no visualizador. Os GRÁFICOS
+    # delas existem, e sem estes rótulos o seletor oferecia «Mega-treino A3» e
+    # «A4» sem dizer qual é o PPO e qual é o SAC.
     return {"mega_A_fase3": "PPO · Muro em U",
             "mega_A_fase4": "SAC · Muro em U",
             "mega_B_fase6": "SAC · Gargalo"}.get(alvo, "")
@@ -682,19 +664,18 @@ def ranking_por_cenario():
     """Que treino ganhou em cada cenário — `{cenário: [linhas, melhor primeiro]}`.
 
     Porque existe
-    -------------
     A Galeria tinha 48 campanhas num seletor e nenhuma pista sobre qual delas
     valia alguma coisa: para mostrar a alguém o melhor resultado num cenário era
     preciso saber de cor qual pasta o continha. As pastas chamam-se `mega_A1` ou
     `09-07-2026_12h52m`, que não ajudam.
 
-    ⚠️ O ranking é SEMPRE dentro de um cenário, nunca entre cenários. As 121
+    O ranking é SEMPRE dentro de um cenário, nunca entre cenários. As 121
     recolhas/ep do Gargalo e as 67 do Muro em U não são a mesma régua — o mapa,
     o número de itens e a dificuldade mudam —, e um «melhor treino overall»
     somando os dois seria um número sem significado. Por isso não existe aqui:
     a pergunta a que isto responde é «neste cenário, qual foi o melhor treino».
 
-    ⚠️ Só entram campanhas com **avaliação determinística** (`eval_by_run*.csv`,
+    Só entram campanhas com avaliação determinística (`eval_by_run*.csv`,
     20 episódios de sementes fixas). As campanhas exploratórias de maio–junho
     guardaram curvas de treino, que são outra régua: pô-las na mesma tabela
     daria a um número de treino o estatuto de resultado.
@@ -708,9 +689,7 @@ def ranking_por_cenario():
         return _RANKING_CACHE["valor"]
 
     # Uma campanha pode ter o mesmo resultado em vários CSV — o `eval_7d` tem-no
-    # em `evaluation_gnn/`, em `evaluation_mlp/` e na raiz, e sem desduplicar o
-    # mesmo treino aparecia três vezes seguidas no topo do cenário, como se
-    # fossem três treinos diferentes empatados. Fica um registo por
+    # em `evaluation_gnn/`, em `evaluation_mlp/` e na raiz. Fica um registo por
     # (campanha, cenário, algoritmo): o que mediu MAIS execuções.
     melhor = {}
     for f in ficheiros:
@@ -722,11 +701,9 @@ def ranking_por_cenario():
         for linha in _pontuacao_de(f):
             linha["campanha"] = campanha
             linha["ficheiro"] = rel
-            # `_ALIAS` funde pastas que são a MESMA campanha. A `eval_7d` e a
-            # `final_7d` são as duas a campanha final de 7 dias, e apareciam
-            # como duas entradas com valores idênticos, uma a seguir à outra —
-            # a ler-se como dois treinos empatados quando é um só, contado duas
-            # vezes.
+            # `_ALIAS` funde pastas que são a MESMA campanha: a `eval_7d` e a
+            # `final_7d` são ambas a campanha final de 7 dias, e apareciam como
+            # duas entradas idênticas, a ler-se como dois treinos empatados.
             k = (_ALIAS.get(campanha, campanha), linha["cenario"], linha["algo"])
             anterior = melhor.get(k)
             if anterior is None:
@@ -747,11 +724,9 @@ def ranking_por_cenario():
 
     for cen in por_cenario:
         # Empate desfaz-se por esta ordem: mais execuções primeiro (entre duas
-        # médias iguais, vale a que foi medida mais vezes) e, ainda empatado, a
-        # campanha CANÓNICA. Sem a segunda regra, o topo de quatro cenários
-        # anunciava a «Campanha final · avaliação bruta» em vez da `final_7d`
-        # que a tese cita — o mesmo resultado, com o nome que não está escrito
-        # em lado nenhum da dissertação.
+        # médias iguais vale a que foi medida mais vezes) e, ainda empatado, a
+        # campanha CANÓNICA — senão o topo anuncia a «avaliação bruta» em vez da
+        # `final_7d`, que é a que a tese cita.
         por_cenario[cen].sort(key=lambda d: (-d["recolhas"], -(d["runs"] or 0),
                                              0 if rotulo_campanha(d["campanha"])[1] else 1))
 
@@ -1010,7 +985,7 @@ def graph_type(filename: str) -> str:
     return "Outros"
 
 
-# ── Curvas de treino ao vivo (vista Monitorizar) ─────────────────────────────
+# Curvas de treino ao vivo (vista Monitorizar)
 # algo -> (caminho, coluna_x, coluna_score, coluna_tarefa)
 TRAIN_LOGS = {
     "GNN": (os.path.join(config.BASE_DIR, "results", "logs", "gnn_3d_training.csv"),
@@ -1075,7 +1050,7 @@ def estado_curvas_locais():
     return True, "Treino local a decorrer."
 
 
-# ── Vídeos dos episódios (vista Vídeos) ───────────────────────────────────────
+# Vídeos dos episódios (vista Vídeos)
 VIDEO_ALGOS = ("gnn", "ppo", "sac")
 
 
@@ -1123,7 +1098,7 @@ def scenarios_with_video(session: str):
     return [k for k in config.SCENARIO_KEYS if k in present]
 
 
-# ── F2 do mapa composto: os resultados MEDIDOS ─────────────────────────────────
+# F2 do mapa composto: os resultados MEDIDOS
 F2_GLOB = os.path.join(config.BASE_DIR, "results", "mapa_grande", "f2*", "**",
                        "eval_by_run.csv")
 
@@ -1133,7 +1108,7 @@ def f2_resultados():
 
     A vista do Mapa mostrava o F1 inteiro e, do F2, só uma linha de estado com o
     que o servidor está a correr. Entretanto o braço dos gradientes fechou (7 e
-    10 ago) e os 840 episódios ficaram no disco **sem aparecer em lado nenhum** —
+    10 ago) e os 840 episódios ficaram no disco sem aparecer em lado nenhum —
     o resultado mais recente da tese, invisível no sítio que existe para o
     mostrar. Um dashboard que não mostra o que já está medido é uma surpresa à
     espera de acontecer em frente ao júri.
@@ -1142,7 +1117,7 @@ def f2_resultados():
     `analise_mapa_grande.py`: um braço que apareça no disco entra aqui sozinho,
     incluindo o do GNN quando fechar.
 
-    ⚠️ «Convergente» é ≥1 recolha na MÉDIA POR EXECUÇÃO, que é a unidade
+    «Convergente» é ≥1 recolha na MÉDIA POR EXECUÇÃO, que é a unidade
     estatística da tese (M2 do pré-registo) — não por episódio. E o limiar
     ⌈5/7 × n⌉ sai do n do próprio CSV, nunca de um 15 escrito à mão: se uma
     execução faltar, a fasquia desce e tem de descer à vista de todos.

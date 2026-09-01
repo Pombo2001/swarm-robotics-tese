@@ -1,7 +1,7 @@
 """Análise pré-registada do MEGA-TREINO de 1 mês (docs/PRE_REGISTO_MEGATREINO.md).
 
-Escrito a 27 jul 2026, com as campanhas ainda a correr no servidor e **zero dados
-no disco**. A razão de existir é essa: quando megaA e megaB fecharem (~1-3 ago),
+Escrito a 27 jul 2026, com as campanhas ainda a correr no servidor e zero dados
+no disco. A razão de existir é essa: quando megaA e megaB fecharem (~1-3 ago),
 a análise corre em minutos e não há espaço para decidir o teste depois de ver o
 número. Segue o mesmo padrão do `analise_adaptativo.py`, que cumpriu o pré-registo
 anterior sem desvios a 19 jul.

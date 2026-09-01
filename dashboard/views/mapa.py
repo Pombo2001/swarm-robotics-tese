@@ -6,11 +6,11 @@ abrisse isto via sete cenários e uma tese fechada, quando o que está a acontec
 agora é a oitava.
 
 Mostra a planta, o estado das fases (F0/F1/F2) e — quando os CSV existirem — a
-grelha do F1 **por condição**, que é o que decide se a QI7 tem resposta.
+grelha do F1 por condição, que é o que decide se a QI7 tem resposta.
 
-⚠️ A leitura do F1 é a do `docs/PRE_REGISTO_MAPA_GRANDE.md` §3, fixada antes de
+A leitura do F1 é a do `docs/PRE_REGISTO_MAPA_GRANDE.md` §3, fixada antes de
 haver dados: um zero admite quatro causas e só uma é a pergunta da tese. Por isso
-esta vista **não interpreta** — mostra as condições lado a lado e diz quantas
+esta vista não interpreta — mostra as condições lado a lado e diz quantas
 faltam. O veredicto formal é o `scripts/analise_f1_controlos.py`, e está dito no
 ecrã para que ninguém tire conclusões daqui com metade das condições medidas.
 """
@@ -50,7 +50,7 @@ ESTADO_F2 = os.path.join(_RAIZ, "results", "estado_f2.json")
 def _estado_f2():
     """O instantâneo do servidor gravado por `scripts/estado_f2.sh`, ou None.
 
-    ⚠️ Aqui estava escrito à mão «F2 — arranca 3 ago, quando o megaB largar a
+    Aqui estava escrito à mão «F2 — arranca 3 ago, quando o megaB largar a
     máquina». A 6 de agosto o F2 corria havia três dias, com 19 de 21 runs de PPO
     fechados — e a frase continuava no ecrã. Uma vista que descreve uma campanha
     viva não pode fazê-lo em prosa fixa: ou lê um instantâneo datado, ou mente
@@ -66,8 +66,8 @@ def _estado_f2():
 def _veredicto_final():
     """A leitura da QI7 pela avaliação, ou None enquanto o GNN não tiver eval.
 
-    A projeção do limiar conta execuções pelo **treino**; esta conta-as pela
-    **avaliação determinística**, que é a régua do pré-registo. Enquanto só
+    A projeção do limiar conta execuções pelo treino; esta conta-as pela
+    avaliação determinística, que é a régua do pré-registo. Enquanto só
     existir a primeira, o painel diz que a decisão está por tomar; assim que o
     `eval_by_run.csv` do GNN aparece, passa a dizer o resultado.
 
@@ -411,7 +411,7 @@ def build():
             "que os compõe?")
 
         with ui.row().classes("w-full gap-4 items-start no-wrap flex-wrap"):
-            # ── a planta ──────────────────────────────────────────────────────
+            # a planta
             with ui.card().classes(CARD + " grow"):
                 ui.label("A planta, lida da geometria do simulador") \
                     .classes("text-sm font-bold mb-2")
@@ -434,7 +434,7 @@ def build():
                     "· câmara do ninho. 106 obstáculos, 20 agentes."
                 ).classes("text-xs mt-2").style(f"color:{theme.INK_MUTED}")
 
-            # ── números congelados antes de treinar ───────────────────────────
+            # números congelados antes de treinar
             with ui.card().classes(CARD).style("min-width:280px"):
                 ui.label("Congelado antes de qualquer treino") \
                     .classes("text-sm font-bold mb-2")
@@ -455,7 +455,7 @@ def build():
                     "emendas #14/#15 corrigiram a descrição de dois deles."
                 ).classes("text-[11px] mt-3").style(f"color:{theme.INK_MUTED}")
 
-        # ── as fases ─────────────────────────────────────────────────────────
+        # as fases
         d = _carregar()
         presentes = [n for c, n in CONDICOES if d is not None and _grelha(d, c)]
         faltam = [n for c, n in CONDICOES if n not in presentes]
@@ -509,7 +509,7 @@ def build():
 
         _painel_f2()
 
-        # ── a grelha do F1, por condição ─────────────────────────────────────
+        # a grelha do F1, por condição
         if d is None:
             with ui.card().classes(CARD + " w-full"):
                 ui.label("Ainda não há dados do F1 no disco.") \

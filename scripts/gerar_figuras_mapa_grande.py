@@ -1,6 +1,5 @@
 """
 gerar_figuras_mapa_grande.py — Figuras do MAPA GRANDE (8.º cenário)
-====================================================================
 Produz, para o mapa grande, o mesmo conjunto de figuras que os 7 cenários já
 têm — mais as que só fazem sentido num mapa composto.
 
@@ -8,7 +7,7 @@ Segue o estilo do `gerar_figuras_7d.py` (mesmas cores por algoritmo, mesmas
 legendas de rodapé a explicar a métrica, 300 dpi) para as figuras da tese terem
 todas o mesmo aspeto.
 
-**Cada figura só é gerada se os dados que ela precisa existirem.** Um mapa por
+Cada figura só é gerada se os dados que ela precisa existirem. Um mapa por
 treinar produz apenas as figuras geométricas (planta, campo geodésico) — e é
 isso que se espera antes da campanha. Nada é inventado nem preenchido a zeros.
 
@@ -63,7 +62,7 @@ def _rodape(fig, texto=RODAPE):
              color="#555555", style="italic")
 
 
-# ────────────────────────────── A. GEOMETRIA ──────────────────────────────
+# A. GEOMETRIA
 def fig_planta(mapa, raio=60.0):
     """Planta do mapa com as 5 zonas, lendo a geometria do AMBIENTE real."""
     import copy
@@ -138,7 +137,7 @@ def fig_planta(mapa, raio=60.0):
     print(f"[OK] {mapa}_planta.png")
 
 
-# ─────────────────────── B. ZERO-SHOT DE TOPOLOGIA ───────────────────────
+# B. ZERO-SHOT DE TOPOLOGIA
 def figs_zeroshot(mapa):
     fp = os.path.join(EVAL_DIR, f"zeroshot_{mapa}.csv")
     if not os.path.exists(fp):
@@ -147,7 +146,7 @@ def figs_zeroshot(mapa):
         return
     df = pd.read_csv(fp)
 
-    # ── PRIMEIRO filtrar a condição, SÓ DEPOIS validar a geometria ───────────
+    # PRIMEIRO filtrar a condição, SÓ DEPOIS validar a geometria
     # O CSV tem várias condições a conviver (--norm-obs e --controlo). Misturá-las
     # num gráfico faria a média de experiências diferentes sem dar sinal disso; e
     # validar o env_hash do ficheiro INTEIRO rejeitava tudo por causa do controlo
@@ -229,7 +228,7 @@ def figs_zeroshot(mapa):
     print(f"[OK] {mapa}_zeroshot_barras.png")
 
 
-# ───────────────────────── C. CAMPANHA NATIVA (F2) ─────────────────────────
+# C. CAMPANHA NATIVA (F2)
 def figs_campanha(mapa):
     fp = os.path.join(EVAL_DIR, "eval_by_run.csv")
     if not os.path.exists(fp):

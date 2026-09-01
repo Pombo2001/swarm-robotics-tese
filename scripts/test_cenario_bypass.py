@@ -8,9 +8,9 @@ Verifica:
 
 Corre-se à mão:  python scripts/test_cenario_bypass.py
 
-⚠️ O nome começa por `test_`, por isso o `pytest` sem argumentos apanha-o. O
+O nome começa por `test_`, por isso o `pytest` sem argumentos apanha-o. O
 corpo está dentro de `main()` de propósito: enquanto esteve ao nível do módulo,
-importá-lo **executava-o** — e um `pytest` na raiz do repositório morria na
+importá-lo executava-o — e um `pytest` na raiz do repositório morria na
 recolha, sem chegar a correr um único teste da suite (dois erros: este ficheiro
 e a cópia dele em `out/pi/`). É também a razão de o `sys.exit` só acontecer
 quando este ficheiro é o programa.
@@ -37,7 +37,7 @@ def main():
     env = SwarmForagingEnv3D(config=cfg)
     obs, _ = env.reset(seed=42)
 
-    # 1) Geometria ---------------------------------------------------------
+    # 1) Geometria
     print("=== 1. Geometria ===")
     print(f"  nº paredes: {len(env.walls)} (esperado 4: esq + dir + defletor + porta)")
     if len(env.walls) != 4:
@@ -47,7 +47,7 @@ def main():
     print(f"  door_active={env.door_active}, door_wall_index={env.door_wall_index}, door_pos={env.door_pos}")
     print(f"  obs shape={obs['robot_0'].shape}")
 
-    # 2) A PORTA FUNCIONA --------------------------------------------------
+    # 2) A PORTA FUNCIONA
     print("\n=== 2. Mecânica da porta (push zone: x in (-1.5,1.5), y in (-2,0)) ===")
     # Teste 2a: 2 agentes na push zone -> porta NAO abre
     env.reset(seed=42)
@@ -87,7 +87,7 @@ def main():
         print(f"  {FAIL} porta NÃO abriu com 3 agentes (door_active={env.door_active}, "
               f"door_wall_index={env.door_wall_index}, paredes={len(env.walls)})")
 
-    # 3) Bypass navegável e mais longo que a porta -------------------------
+    # 3) Bypass navegável e mais longo que a porta
     print("\n=== 3. Geodésico: porta (curto) vs bypass (longo) ===")
     spawn = np.array([0.0, -8.0, 0.0])   # sul, alinhado com a porta
 
@@ -118,7 +118,7 @@ def main():
     else:
         print(f"  {OK} bypass navegável e {d_bypass/d_porta:.1f}x mais longo que a porta")
 
-    # Resumo ---------------------------------------------------------------
+    # Resumo
     print("\n" + ("=" * 40))
     if falhas == 0:
         print(">>> TODOS OS TESTES PASSARAM")

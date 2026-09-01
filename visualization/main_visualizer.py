@@ -33,11 +33,8 @@ def main(args):
 
     # --scenario: sem isto, ver outro cenário obrigava a EDITAR o
     # configs/foraging.yaml partilhado — o mesmo ficheiro que os trainers leem e
-    # que as campanhas do servidor reescrevem por sed. Os trainers já aceitavam
-    # --config por esta razão; o visualizador não, e o cabeçalho do
-    # visualize_mapa_grande.py chegava a prometer uma flag --scenario que não
-    # existia. O ambiente é construído a partir do dicionário já alterado, para
-    # que nada seja escrito no disco.
+    # que as campanhas do servidor reescrevem por sed. O ambiente é construído a
+    # partir do dicionário já alterado, para que nada seja escrito no disco.
     if args.scenario:
         config['environment']['classic_scenario'] = args.scenario
     scenario = config['environment'].get('classic_scenario', 'none')
@@ -48,29 +45,23 @@ def main(args):
     env = SwarmForagingEnv3D(config=config)
     obs_dict, _ = env.reset()
 
-    # ─── EIXOS E ALTURA ──────────────────────────────────────────────────────
-    # Convenção da cena (a mesma do visualize_mapa_grande.py): o mapa é o plano
-    # XY e a vertical é −Z (o chão está em z=+0.1 e o que sobe tem z menor).
+    # EIXOS E ALTURA
+    # Convenção da cena (a mesma do visualize_mapa_grande.py): o mapa é o plano XY
+    # e a vertical é -Z (o chão está em z=+0.1 e o que sobe tem z menor).
     #
-    # O visualizador desenhava TODOS os robôs em z=−0.15 fixo, ignorando
-    # `agent_positions[:, 2]`. Num simulador onde a ação tem componente vertical
-    # e a arena é uma ESFERA, isso é apagar do ecrã a dimensão onde vive o
-    # defeito que anulou o F1 a 29 jul: campeões a 59 m de altura, a atravessar
-    # o mapa por cima de paredes de 30 m, durante 3800 de 4000 passos. No ecrã
-    # apareciam colados ao chão. Agora a altura real é desenhada.
+    # A altura REAL dos agentes é desenhada. Fixá-los num z constante apaga do
+    # ecrã a dimensão onde vivem os defeitos de física — foi assim que campeões a
+    # 59 m de altura, a atravessar o mapa por cima de paredes de 30 m, apareciam
+    # colados ao chão.
     def cena_z(mundo_z, pousado=-0.15):
         return pousado - float(mundo_z)
 
-    # As paredes são caixas de 2×arena_radius (120 m no mapa grande): desenhadas
+    # As paredes são caixas de 2x arena_radius (120 m no mapa grande): desenhadas
     # à altura real tapam a cena inteira. Desenham-se mais baixas, mas nunca
     # abaixo do que os agentes conseguem subir — senão o ecrã mostra um robô
     # legítimo a passar «por cima» de uma parede que na verdade o veda. O HUD diz
-    # sempre a altura real, para o que se vê não poder ser lido como a verdade.
-    # No mapa grande o alcance é o teto (±2 m) e a parede desenhada fica em 4 m:
-    # exata e legível. Nos outros a arena é uma esfera de raio 15, e desenhar os
-    # 30 m reais dá um bosque que tapa a cena — corta-se em 8 m e o HUD avisa
-    # quando algum robô passa acima do que está desenhado (que é o sintoma que
-    # se quer apanhar, não a altura do desenho).
+    # sempre a altura real, e avisa quando algum robô passa acima do que está
+    # desenhado, que é o sintoma a apanhar.
     alcance_z = (env.MAPA_GRANDE_TETO if scenario == 'mapa_grande'
                  else float(env.arena_radius))
     altura_real = float(env.walls[0]['size'][2]) if len(env.walls) else 0.0
@@ -115,7 +106,7 @@ def main(args):
             print(f"SAC Model not found: {model_path}")
             model = None
 
-    # --- Estética Premium (Modern Sci-Fi 3D) ---
+    # Estética Premium (Modern Sci-Fi 3D)
     window.color = color.rgb(15, 18, 22)
 
     DirectionalLight(y=2, z=-3, shadows=True, rotation=(45, -45, 45))
@@ -153,10 +144,9 @@ def main(args):
 
     # Robôs
     # `model='cylinder'` NÃO existe no Ursina 8.3.0 (só sphere/cube/quad/circle/
-    # diamond/plane): dava "missing model" e a entidade ficava INVISÍVEL — ou
-    # seja, o visualizador principal corria episódios inteiros sem mostrar um
-    # único robô. O visualize_mapa_grande.py já documentava isto e usava
-    # 'sphere'; aqui tinha ficado por corrigir. Escala = diâmetro real (0,30 m).
+    # diamond/plane): dá «missing model» e a entidade fica INVISÍVEL, ou seja, o
+    # visualizador corre episódios inteiros sem mostrar um robô. Escala =
+    # diâmetro real (0,30 m).
     robot_views = {}
     for agent_id, pos in zip(env.agents, env.agent_positions):
         r = Entity(model='sphere', color=color.hsv(210, 0.9, 0.9),

@@ -2,8 +2,7 @@
 """Empacota o dashboard para correr noutra máquina (o Raspberry Pi 5), em modo leitura.
 
 Porquê um empacotador e não um `git clone`
-------------------------------------------
-O repositório com os resultados tem **1,4 GB**, e a maior parte é peso morto para
+O repositório com os resultados tem 1,4 GB, e a maior parte é peso morto para
 quem só quer VER: 586 MB de modelos `.zip` (stable-baselines), 265 MB de GIFs e
 os `.pth` do evolutivo. O orientador não vai treinar nada — precisa das figuras,
 dos CSV que as sustentam e do texto da tese que a vista Defesa lê.
@@ -18,7 +17,7 @@ O que VAI (medido a 31 jul):
 
 O que NÃO vai: modelos (.pth/.zip), logs de treino em cru, PDFs, .git.
 
-Sem modelos, o dashboard **não precisa de torch nem de stable-baselines** —
+Sem modelos, o dashboard não precisa de torch nem de stable-baselines —
 verificado: nenhuma vista os importa. No Pi bastam nicegui, pandas, plotly,
 numpy e pyyaml.
 

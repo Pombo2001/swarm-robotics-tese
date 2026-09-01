@@ -217,7 +217,7 @@ def main():
         _pause()
         return
 
-    # ── Tabela de comparação ─────────────────────────────────────────────────
+    # Tabela de comparação
     print(f"\n{'='*62}")
     print(f"  RESUMO COMPARATIVO — {label}  ({args.episodes} episodios)")
     print(f"{'='*62}")

@@ -13,16 +13,16 @@ seis vezes.
 
 O que se garante:
 
-1. **Todas as vistas constroem**, nos dois modos (completo e o de leitura, que é
+1. Todas as vistas constroem, nos dois modos (completo e o de leitura, que é
    o que o orientador abre no Pi).
-2. **Nenhuma vista mostra um estado vazio inesperado.** As mensagens de «não há
+2. Nenhuma vista mostra um estado vazio inesperado. As mensagens de «não há
    nada» são extraídas do próprio código por AST e procuradas no que a vista
    renderiza; as que são legítimas nesta máquina estão declaradas com a razão em
    `VAZIO_ESPERADO`.
-3. **Nenhuma referência de imagem aponta para um ficheiro que não existe** — um
+3. Nenhuma referência de imagem aponta para um ficheiro que não existe — um
    `src` errado não rebenta nada, dá um ícone partido que numa galeria de mil
    imagens ninguém vê a tempo.
-4. **Nenhuma função de `dashboard/data.py` devolve vazio ou rebenta** — são elas
+4. Nenhuma função de `dashboard/data.py` devolve vazio ou rebenta — são elas
    que alimentam tudo o que se desenha.
 
 Uso: .venv/Scripts/python.exe tests/test_dashboard_conteudo.py

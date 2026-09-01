@@ -2,28 +2,27 @@
 r"""Cada compromisso pré-registado contra o que a dissertação reporta.
 
 Porque existe
--------------
 Três pré-registos, com emendas até à 21ª, fixam antes dos dados o que vai ser
-medido, com que n, e o que tem de ser reportado aconteça o que acontecer. **Um
+medido, com que n, e o que tem de ser reportado aconteça o que acontecer. Um
 compromisso pré-registado que não seja reportado é o defeito mais caro que esta
-tese pode ter** — mais do que um número errado, porque é o que separa uma regra
+tese pode ter — mais do que um número errado, porque é o que separa uma regra
 fixada à partida de uma escolhida depois de ver os resultados.
 
 Este verificador constrói a tabela *compromisso → onde é reportado → bate*, e
 verifica executavelmente tudo o que é verificável:
 
-* o **desenho executado** (algoritmos, execuções, episódios, parâmetros do
+* o desenho executado (algoritmos, execuções, episódios, parâmetros do
   ambiente) contra o desenho pré-registado — lido dos CSV e do simulador;
-* a **presença** de cada compromisso de reporte no `.tex`, ignorando linhas
+* a presença de cada compromisso de reporte no `.tex`, ignorando linhas
   comentadas (a QI7 viveu meses em comentário: um parser ingénuo dá-a por
   escrita);
-* os **desvios**: um braço pré-registado que não produziu dados tem de estar
+* os desvios: um braço pré-registado que não produziu dados tem de estar
   declarado por escrito e datado, senão o compromisso 5 («qualquer desvio é
   datado abaixo, nunca silencioso») está por cumprir.
 
-O que este verificador **não** faz é conferir os números de M1--M3 do mapa
+O que este verificador não faz é conferir os números de M1--M3 do mapa
 grande: isso é o `verificar_mapa_grande.py`, que os lê do `.tex` e recalcula-os
-dos CSV. Aqui verifica-se que as métricas **estão lá**, não que valem o que
+dos CSV. Aqui verifica-se que as métricas estão lá, não que valem o que
 dizem valer — duas perguntas diferentes, dois instrumentos.
 
 Estados:
@@ -69,7 +68,7 @@ linhas = []   # (bloco, id, compromisso, onde, estado, evidência)
 falhas = []
 
 
-# ── utilitários ──────────────────────────────────────────────────────────────
+# utilitários
 def _ler(caminho):
     with open(caminho, encoding="utf-8") as fh:
         return fh.read()
@@ -78,7 +77,7 @@ def _ler(caminho):
 def sem_comentarios_de_texto(texto):
     r"""O `.tex` como o LaTeX o vê: sem `%` que não esteja escapado.
 
-    ⚠️ Não é cosmético. A secção da QI7, o parágrafo das Conclusões e as frases
+    Não é cosmético. A secção da QI7, o parágrafo das Conclusões e as frases
     do Resumo estiveram semanas dentro de comentários, prontas a entrar; quem
     procurar por regex sem os retirar dá por reportado o que ainda não está.
     """
@@ -114,7 +113,7 @@ def bloco_da_tabela(texto, label):
     return None
 
 
-# ── medições dos dados (o desenho executado) ────────────────────────────────
+# medições dos dados (o desenho executado)
 def medir_f2():
     """Algoritmos, execuções, episódios e métricas do F2, lidos dos CSV."""
     out = {}
@@ -154,9 +153,7 @@ def medir_novelty():
     return cenarios, runs
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # 1. PRE_REGISTO_MAPA_GRANDE.md  (QI7)
-# ══════════════════════════════════════════════════════════════════════════════
 def mapa_grande(tex_sec, tex_main, pre):
     print()
     print("=" * 78)
@@ -166,7 +163,7 @@ def mapa_grande(tex_sec, tex_main, pre):
     m = medir_f2()
     onde_sec = "Tese/seccao_mapa_grande.tex"
 
-    # ── desenho: 3 algoritmos × 21 execuções × 20 episódios ─────────────────
+    # desenho: 3 algoritmos × 21 execuções × 20 episódios
     faltam = [a for a, v in m.items() if v is None]
     if faltam:
         regista(B, "MG-desenho-n", "3 algoritmos × 21 execuções (emenda 19)",
@@ -188,7 +185,7 @@ def mapa_grande(tex_sec, tex_main, pre):
                 "20 episódios em todas as execuções" if ok
                 else "episódios por execução: %s" % eps)
 
-    # ── desenho: os parâmetros congelados na secção 2 do pré-registo ────────
+    # desenho: os parâmetros congelados na secção 2 do pré-registo
     try:
         import yaml
 
@@ -220,7 +217,7 @@ def mapa_grande(tex_sec, tex_main, pre):
                 "configs/foraging.yaml + src/environment", "LEITURA",
                 "não consegui construir o ambiente: %s" % erro)
 
-    # ── compromisso 1: todos os algoritmos, todas as execuções ──────────────
+    # compromisso 1: todos os algoritmos, todas as execuções
     tabela = bloco_da_tabela(tex_sec, "tab:f2_mapa_grande")
     ok = tabela is not None and all(a in tabela for a in ("GNN", "PPO", "SAC"))
     regista(B, "MG-rep-1", "todos os 3 algoritmos e todas as execuções, sem "
@@ -229,7 +226,7 @@ def mapa_grande(tex_sec, tex_main, pre):
             "a tabela do F2 tem as três linhas" if ok
             else "a tabela do F2 não lista os três algoritmos")
 
-    # ── compromisso 2: convergência descritiva, magnitude testada ───────────
+    # compromisso 2: convergência descritiva, magnitude testada
     desc = presente(tex_sec, r"M2 \(convergência, descritivo\)")
     decl = presente(tex_sec, r"M2 permanece descritiva|mantém-se\s+\\textbf\{descritiva\}")
     regista(B, "MG-rep-2", "convergência = descritivo; magnitude = teste "
@@ -238,7 +235,7 @@ def mapa_grande(tex_sec, tex_main, pre):
             "M2 rotulada descritiva e a limitação declara porquê" if (desc and decl)
             else "falta o rótulo descritivo (M2=%s) ou a declaração (%s)" % (desc, decl))
 
-    # ── compromisso 3: o mapa fora das tabelas dos sete cenários ────────────
+    # compromisso 3: o mapa fora das tabelas dos sete cenários
     intrusos = []
     for label in ("tab:res_eval", "tab:res_signif"):
         bloco = bloco_da_tabela(tex_main, label)
@@ -252,7 +249,7 @@ def mapa_grande(tex_sec, tex_main, pre):
             "as duas tabelas dos sete cenários não o mencionam" if not intrusos
             else "; ".join(intrusos))
 
-    # ── compromisso 4: hard stop de 22 ago ─────────────────────────────────
+    # compromisso 4: hard stop de 22 ago
     fechos = {a: v.get("fecho") for a, v in m.items() if v}
     if all(fechos.values()):
         ultimo = max(fechos.values())
@@ -267,7 +264,7 @@ def mapa_grande(tex_sec, tex_main, pre):
                 "falta a sentinela de conclusão em: %s"
                 % [a for a, f in fechos.items() if not f])
 
-    # ── compromisso 5: desvios datados ─────────────────────────────────────
+    # compromisso 5: desvios datados
     # Só a secção 7 conta: os «1.» e «3.» da secção 4 são compromissos de
     # reporte, não emendas, e inflavam a contagem.
     seccao7 = pre.split("## 7. Emendas")[-1]
@@ -279,7 +276,7 @@ def mapa_grande(tex_sec, tex_main, pre):
             "%d emendas numeradas, 1..%d, sem buracos" % (len(emendas), max(emendas))
             if seguidas else "numeração com buracos ou repetida: %s" % emendas)
 
-    # ── emenda 20: o braço exploratório correu? foi declarado se não? ───────
+    # emenda 20: o braço exploratório correu? foi declarado se não?
     dados_expl = [p for p in os.listdir(os.path.join(RAIZ, "results", "mapa_grande"))
                   if "expl" in p or "2340" in p]
     declarado = presente(pre, r"(?is)braço explorat[óo]rio.{0,400}?"
@@ -317,7 +314,7 @@ def mapa_grande(tex_sec, tex_main, pre):
                 % (len(sem_ressalva),
                    " ".join(sem_ressalva[0].split())[:90]))
 
-    # ── as três métricas pré-registadas estão reportadas ───────────────────
+    # as três métricas pré-registadas estão reportadas
     for chave, rotulo in (("M1", r"\\textbf\{M1 \(magnitude\)"),
                           ("M2", r"\\textbf\{M2 \(convergência"),
                           ("M3", r"\\textbf\{M3 \(porta cooperativa")):
@@ -338,14 +335,14 @@ def mapa_grande(tex_sec, tex_main, pre):
                     onde_sec, "OK" if ok else "FALHA",
                     "secção %.0f%%, medido %.1f%%" % (na_tese, medido))
 
-    # ── F1 reporta-se em qualquer caso ─────────────────────────────────────
+    # F1 reporta-se em qualquer caso
     ok = presente(tex_sec, r"\$84\$ células|\$?84\$? células") and presente(tex_sec, r"1680")
     regista(B, "MG-F1", "F1 (zero-shot) reporta-se mesmo dando zero em tudo",
             onde_sec, "OK" if ok else "FALHA",
             "as 84 células e os 1680 episódios estão reportados" if ok
             else "não encontrei as 84 células / 1680 episódios")
 
-    # ── regra de decisão: limiar proporcional e k declarado ────────────────
+    # regra de decisão: limiar proporcional e k declarado
     limiar = presente(tex_sec, r"limiar de \$15\$|⌈5/7|\$15\$ fixado")
     limiar_main = presente(tex_main, r"limiar de \$15\$")
     k = presente(tex_sec, r"4/\$?21") or presente(tex_sec, r"4/21")
@@ -356,7 +353,7 @@ def mapa_grande(tex_sec, tex_main, pre):
             else "limiar=%s (secção) / %s (Conclusões), k=%s"
                  % (limiar, limiar_main, k))
 
-    # ── emenda 23: os dois runs do braço errado, guardados como controlo ───
+    # emenda 23: os dois runs do braço errado, guardados como controlo
     regista(B, "MG-objpuro", "os 2 runs do braço errado (objetivo puro) declarados "
             "e fora de M1--M3 (emenda 23)", "docs/PRE_REGISTO_MAPA_GRANDE.md",
             "OK" if presente(pre, r"mapa_F2_gnn_objetivopuro") else "FALHA",
@@ -365,9 +362,7 @@ def mapa_grande(tex_sec, tex_main, pre):
             else "não encontrei a declaração dos runs descartados")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # 2. PRE_REGISTO_MEGATREINO.md
-# ══════════════════════════════════════════════════════════════════════════════
 def megatreino(tex_main):
     print()
     print("=" * 78)
@@ -435,9 +430,7 @@ def megatreino(tex_main):
             "a exaustividade da prosa é leitura humana")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # 3. PRE_REGISTO_NOVELTY_ADAPTATIVO.md  (QI6)
-# ══════════════════════════════════════════════════════════════════════════════
 def novelty(tex_main):
     print()
     print("=" * 78)
@@ -475,7 +468,6 @@ def novelty(tex_main):
             else "os braços @390 não estão rotulados como exploratórios")
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 def escrever_tabela():
     destino = os.path.join(RAIZ, "docs", "PREREGISTO_VS_REPORTADO.md")
     marca = {"OK": "✅", "FALHA": "❌", "LEITURA": "👤"}

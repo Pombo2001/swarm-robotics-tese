@@ -1,6 +1,5 @@
 """
 run_eval.py — Avaliação sistemática de modelos treinados
-=========================================================
 Corre N episódios de teste sem exploração (modo determinístico),
 reporta estatísticas e guarda CSV em results/evaluation/.
 
@@ -45,7 +44,7 @@ def load_model(algo, scenario, config_path, models_root=None):
     `models_root` é a pasta que CONTÉM models/, models_ppo/ e models_sac/. Por
     omissão é `results/` — os modelos ATIVOS, que são os campeões da campanha de
     7 dias e a base de tudo o que a tese reporta. Apontá-la para a pasta de outra
-    campanha permite avaliá-la (heatmaps, vídeos) **sem lhe tocar**: a alternativa
+    campanha permite avaliá-la (heatmaps, vídeos) sem lhe tocar: a alternativa
     óbvia — copiar os modelos da campanha para results/models e repor no fim — é
     a armadilha n.º 9, que já deu uma semana de números errados quando o restauro
     não aconteceu.

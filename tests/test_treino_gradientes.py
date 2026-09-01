@@ -1,39 +1,39 @@
 # -*- coding: utf-8 -*-
 """Testes de `src/training/train_ppo_3d.py` e `train_sac_3d.py`.
 
-543 linhas que treinaram **todos** os modelos de gradiente da tese e não tinham
+543 linhas que treinaram todos os modelos de gradiente da tese e não tinham
 um único teste. O inventário de 5 ago classificou-as como risco baixo — são
 invólucros da Stable-Baselines3 —, mas «invólucro» descreve mal o que aqui está:
 entre o ambiente multiagente e o SB3 há um achatamento de (arena, agente) para
-um índice só, e **é nesse reshape que uma troca de observações passaria sem dar
-sinal nenhum**. Um treino com os agentes trocados não estoira: converge para
+um índice só, e é nesse reshape que uma troca de observações passaria sem dar
+sinal nenhum. Um treino com os agentes trocados não estoira: converge para
 outra coisa e ninguém dá por isso.
 
 O que se testa, por ordem do que custaria descobrir tarde:
 
-1. **Alinhamento do achatamento** — o agente `a` da arena `A` tem de ficar no
+1. Alinhamento do achatamento — o agente `a` da arena `A` tem de ficar no
    índice `A*num_agents + a`, nas observações, nas recompensas e nos infos.
-2. **`terminal_observation` por agente** — no fim de um episódio cada agente tem
+2. `terminal_observation` por agente — no fim de um episódio cada agente tem
    de receber a SUA observação terminal, não a matriz da arena inteira.
-3. **Infos independentes** — mutar o info de um agente não pode contaminar os
+3. Infos independentes — mutar o info de um agente não pode contaminar os
    outros 19.
-4. **O contrato do `task_reward`** — só no último passo, e igual a
+4. O contrato do `task_reward` — só no último passo, e igual a
    `total_food_collected × food_collected_reward`. É o número que o orientador
    pediu para separar tarefa de shaping, e alimenta a coluna `ep_task_mean`.
-5. **O callback** — corta no tempo, escreve as quatro colunas, **limpa o buffer
-   de task reward** depois de cada escrita (senão as janelas contaminam-se) e
+5. O callback — corta no tempo, escreve as quatro colunas, limpa o buffer
+   de task reward depois de cada escrita (senão as janelas contaminam-se) e
    grava os checkpoints com o prefixo do seu algoritmo.
-6. **Os dois ficheiros não divergiram** — as três classes partilhadas têm de ser
+6. Os dois ficheiros não divergiram — as três classes partilhadas têm de ser
    estruturalmente idênticas nos dois módulos. Comparam-se por AST (comentários
    e espaços não contam), com uma exceção declarada: o prefixo do checkpoint.
    Neste repositório os gémeos já divergiram de facto — os três visualizadores
    3D acabaram com convenções de eixos diferentes e um `cylinder` inexistente
    só num deles.
 
-⚠️ **Nenhum teste aqui corre um treino a sério, de propósito.** `train_ppo_3d()`
+Nenhum teste aqui corre um treino a sério, de propósito. `train_ppo_3d()`
 escreve em `results/models_ppo/` e `results/logs_ppo/` — caminhos derivados do
-`__file__`, não parametrizáveis — e um teste que a chamasse escreveria **por cima
-dos modelos ativos**, que é a armadilha nº9 tal como está documentada. O SAC
+`__file__`, não parametrizáveis — e um teste que a chamasse escreveria por cima
+dos modelos ativos, que é a armadilha nº9 tal como está documentada. O SAC
 tem `tag` no config para isolar artefactos; o PPO não tem equivalente. Enquanto
 não tiver, a função de topo fica coberta só pelas peças que a compõem.
 
@@ -502,8 +502,8 @@ def test_num_agents_errado_nao_passa_em_silencio():
     (`config['environment'].get('num_agents', 25)`), não do ambiente — e o
     default do código (25) não é o do `foraging.yaml` (20).
 
-    Antes da guarda de 13 ago, os dois desalinhamentos abaixo passavam **em
-    silêncio**: 20 agentes lidos como 25 dividem 400 elementos por 50 linhas e
+    Antes da guarda de 13 ago, os dois desalinhamentos abaixo passavam em
+    silêncio: 20 agentes lidos como 25 dividem 400 elementos por 50 linhas e
     dão 8 colunas; lidos como 10, colam duas observações na mesma linha. Nenhum
     dos casos levantava exceção — o treino corria até ao fim sobre observações
     que já não eram de um agente só.

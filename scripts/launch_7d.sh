@@ -1,6 +1,5 @@
 #!/bin/bash
 # launch_7d.sh — watchdog do treino longo (7 dias) no servidor ISCTE
-# ===================================================================
 # Corre o run_experiments com auto-RESUME: se o processo morrer (OOM, exceção,
 # etc.), relança automaticamente com --resume — os treinos já concluídos são
 # saltados via _sessao_treino.txt, e as curvas/scores já estão no disco

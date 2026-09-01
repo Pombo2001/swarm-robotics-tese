@@ -2,7 +2,6 @@
 """As figuras do artigo acompanham as da dissertação?
 
 Porque existe
--------------
 As figuras do artigo são cópias das da tese. Quando uma figura da tese é
 regenerada, a cópia do artigo não muda — e nada acusa: o artigo compila, as
 legendas continuam a fazer sentido e o número lá dentro está certo, só que é o
@@ -12,13 +11,13 @@ a GNN, o potencial geodésico ilegível e o mega-treino a dizer «runs»).
 
 Três verificações:
 
-1. **Cópias sincronizadas.** Uma figura do artigo com homónima na tese tem de
+1. Cópias sincronizadas. Uma figura do artigo com homónima na tese tem de
    ser byte a byte a mesma imagem.
-2. **Versões próprias.** As `*_col.png` são redesenhadas para a coluna de
+2. Versões próprias. As `*_col.png` são redesenhadas para a coluna de
    8,9 cm do artigo (`scripts/figuras_artigo.py`) e por isso NÃO são iguais às
    da tese — mas não podem ser mais VELHAS do que a figura de que derivam: se
    a da tese foi regenerada depois, a do artigo ficou para trás.
-3. **Órfãs.** Ficheiros em `Artigo/images/` que o artigo não usa.
+3. Órfãs. Ficheiros em `Artigo/images/` que o artigo não usa.
 
 Uso:
     python scripts/verificar_figuras_artigo.py

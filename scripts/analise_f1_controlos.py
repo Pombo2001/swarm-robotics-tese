@@ -1,20 +1,19 @@
 """
 analise_f1_controlos.py — F1 do mapa grande: as 4 condições, lidas em conjunto
-==============================================================================
-Junta a condição **natural** (corrida na torre a 27 jul) com as três condições de
-**controlo** (corridas no servidor a 28 jul, uma por diretório) e aplica a leitura
-que o `docs/PRE_REGISTO_MAPA_GRANDE.md` §3 fixou **antes** de haver dados:
+Junta a condição natural (corrida na torre a 27 jul) com as três condições de
+controlo (corridas no servidor a 28 jul, uma por diretório) e aplica a leitura
+que o `docs/PRE_REGISTO_MAPA_GRANDE.md` §3 fixou antes de haver dados:
 
-  · se um controlo der **o mesmo** que a natural, essa causa está excluída e
+  · se um controlo der o mesmo que a natural, essa causa está excluída e
     reporta-se só a natural (o controlo vai para apêndice);
-  · se **divergir**, o zero-shot de topologia está confundido com essa causa e é
+  · se divergir, o zero-shot de topologia está confundido com essa causa e é
     isso que se reporta.
 
 E, textualmente: *"um controlo que ressuscite os campeões NÃO salva a leitura 'a
 topologia é dura': desmente-a."* Por isso o veredicto que este script imprime
 nunca escolhe a condição com o número melhor — reporta o que diverge.
 
-O teste é **emparelhado por célula** (as 21 combinações origem × algoritmo), com
+O teste é emparelhado por célula (as 21 combinações origem × algoritmo), com
 Wilcoxon dos postos com sinal e δ de Cliff, sobre as médias de recolhas/ep. É o
 emparelhamento que os dados permitem: as seeds são as mesmas em todas as
 condições (`--seed-base 1000`), logo cada célula tem o seu par em cada condição.

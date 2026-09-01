@@ -1,6 +1,5 @@
 """
 restaurar_modelos.py — Restaura os modelos arquivados de uma sessão de treino
-=============================================================================
 Fluxo servidor → local:
   1. Treinas no servidor; ao fim, a pasta results/graficos_tese/<sessão>/ fica
      auto-contida (gráficos + heatmaps + mapas + subpasta 'modelos/').
@@ -36,8 +35,8 @@ SUBS = ("models", "models_ppo", "models_sac")
 def _sessions_with_models():
     """Sessões com modelos arquivados, a mais recente primeiro.
 
-    ⚠️ Ordenava por `os.path.getmtime`, e isso decide **que modelos ficam
-    ativos** — é a armadilha nº9 na sua forma mais direta. O mtime de uma pasta
+    Ordenava por `os.path.getmtime`, e isso decide que modelos ficam
+    ativos — é a armadilha nº9 na sua forma mais direta. O mtime de uma pasta
     muda quando lhe regeneram as figuras ou lhe copiam um CSV (é o que o
     `pos_campanha.py` faz no passo 2), e a partir daí uma campanha de meses atrás
     passa a ser «a mais recente». A 5 ago o mesmo defeito foi encontrado em

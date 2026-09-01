@@ -1,6 +1,5 @@
 """
 render_maps.py — Renders 3D de qualidade dos mapas/cenários (PyVista)
-=====================================================================
 Substitui as caixas básicas do Ursina por figuras 3D limpas e de alta resolução
 dos seis cenários, prontas para a tese. Lê a geometria real do ambiente
 (env.walls, env.nest_pos), pelo que os mapas estão sempre sincronizados com o código.
@@ -47,7 +46,7 @@ C_DOMIN = "#94A3B8"
 # verdade, e a figura da tese herdava a afirmação. Os agentes têm componente
 # vertical (`move_local[2]`) e o domínio é uma ESFERA de raio `arena_radius`:
 # medido em 400 passos de PPO, |z| médio 2,35 m no Sandbox e máximo 11,8 m. Foi
-# exatamente por o z ser livre que,  se descobriu que os agentes
+# exatamente por o z ser livre que se descobriu que os agentes
 # passavam POR CIMA de paredes de 30 m (ver `_altura_paredes`). Por isso a
 # parede sólida fica baixa (para a planta se ler) mas leva por cima o volume
 # real, translúcido, e a esfera do domínio aparece em arame.

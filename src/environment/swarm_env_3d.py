@@ -178,11 +178,11 @@ class SwarmForagingEnv3D(gym.Env):
         max_attempts = 50
         for _ in range(max_attempts):
             if self.classic_scenario == "u_wall":
-                # Spawn SOUTH of the U legs (legs start at y=-5).
-                # Agents approach from below, enter the bowl, hit the top bar, must find bypass.
+                # Nascem a SUL das pernas do U (que arrancam em y=-5): entram
+                # na taça, batem na barra superior e têm de achar o desvio.
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -6), 0.0])
             elif self.classic_scenario == "bottleneck":
-                # South of the horizontal barrier (barrier covers y -1 to 1)
+                # A sul da barreira horizontal (que cobre y de -1 a 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
             elif self.classic_scenario == "four_rooms":
                 # Espalhados pelas três salas opostas ao ninho (quadrante NE):
@@ -204,7 +204,7 @@ class SwarmForagingEnv3D(gym.Env):
                 pos = np.array([np.random.uniform(c[0] - hx, c[0] + hx),
                                 np.random.uniform(c[1] - hy, c[1] + hy), 0.0])
             elif self.classic_scenario in DOOR_SCENARIOS:
-                # South of the horizontal barrier (barrier covers y -1 to 1)
+                # A sul da barreira horizontal (que cobre y de -1 a 1)
                 pos = np.array([np.random.uniform(-10, 10), np.random.uniform(-12, -2), 0.0])
             else:
                 pos = self._random_spawn()
@@ -303,7 +303,7 @@ class SwarmForagingEnv3D(gym.Env):
             self._spawn_obstacles_maze()
 
         elif self.classic_scenario == "cooperative_door":
-            # Nest is north of the horizontal barrier (barrier at y=0, nest at y=12)
+            # Ninho a norte da barreira horizontal (barreira em y=0, ninho em y=12)
             self.nest_pos = np.array([0.0, 12.0, 0.0])
             self.nest_velocity = np.zeros(3)
             self.agent_positions = np.array([self._get_scenario_spawn_pos() for _ in range(self.num_agents)])
@@ -369,7 +369,7 @@ class SwarmForagingEnv3D(gym.Env):
         return self._get_observations(), {}
 
     def _spawn_nest(self):
-        # Nest within 30% of arena_radius (~4.5m) for easier discoverability
+        # Ninho dentro de 30% do arena_radius (~4,5 m), para ser descoberto
         self.nest_pos = self._random_spawn(max_radius=0.3)
         if self.dynamic_nest:
             vel = np.random.uniform(-1, 1, 3)
@@ -381,7 +381,7 @@ class SwarmForagingEnv3D(gym.Env):
         for _ in range(self.num_obstacles):
             valid = False
             while not valid:
-                # Uniform spread across arena (was 50-80% ring — too restrictive)
+                # Distribuição uniforme pela arena
                 pos = self._random_spawn(min_radius=0.05, max_radius=0.90)
                 if np.linalg.norm(pos - self.nest_pos) > (self.nest_radius + self.obstacle_radius + 0.5):
                     self.obstacles.append(pos)
@@ -403,7 +403,7 @@ class SwarmForagingEnv3D(gym.Env):
         exatamente 2×15 = o diâmetro, por isso vedavam (e continuam bit-a-bit
         iguais: esta property devolve 30.0 para eles). No `mapa_grande`, porém,
         `arena_radius_mapa_grande: 60` fez a esfera crescer 4× sem as paredes
-        crescerem: sobravam **45 m de espaço livre por cima de todas elas**, e um
+        crescerem: sobravam 45 m de espaço livre por cima de todas elas, e um
         agente a subir a 0,2 m/passo chegava lá em 75 passos de 2000 (medido) e
         atravessava o mapa inteiro em linha reta, sem porta nem labirinto.
 
@@ -511,14 +511,14 @@ class SwarmForagingEnv3D(gym.Env):
             parede(x0, 0, t, H), parede(x1, 0, t, H),      # fronteira O/E
         ]
 
-        # --- ZONA S: sala de partida (aberta) → saída ampla, 2x abertura -----
+        # ZONA S: sala de partida (aberta) → saída ampla, 2x abertura
         xs = x0 + 0.20 * W
         s_baixo = -ab - y0
         s_cima = y1 - ab
         self.walls += [parede(xs, y0 + s_baixo / 2, t, s_baixo),
                        parede(xs, y1 - s_cima / 2, t, s_cima)]
 
-        # --- ZONA A: gargalo (abertura a sul) + beco em U --------------------
+        # ZONA A: gargalo (abertura a sul) + beco em U
         xa = x0 + 0.42 * W
         y_g = -H / 4
         b_baixo = (y_g - ab / 2) - y0
@@ -536,7 +536,7 @@ class SwarmForagingEnv3D(gym.Env):
                        parede(ux, uy + uh / 2, uw, t),
                        parede(ux, uy - uh / 2, uw, t)]
 
-        # --- ZONA B: quatro salas (cruz; abertura vertical a norte) ----------
+        # ZONA B: quatro salas (cruz; abertura vertical a norte)
         # Parede que separa B de C, com a passagem a NORTE (y=+H/4).
         xb = x0 + 0.63 * W
         y_pb = H / 4
@@ -565,7 +565,7 @@ class SwarmForagingEnv3D(gym.Env):
                      (t / 2, ay - ab / 2), (ay + ab / 2, y1)):
             self.walls.append(parede(xm, (a + b) / 2, t, b - a))
 
-        # --- ZONA C: porta cooperativa + alternativa longa a norte -----------
+        # ZONA C: porta cooperativa + alternativa longa a norte
         xc = x0 + 0.82 * W
         porta_h, alt_h = 3.0, 4.0
         b1 = (-porta_h / 2) - y0
@@ -582,7 +582,7 @@ class SwarmForagingEnv3D(gym.Env):
         self.door_push_bounds = (xc - 2.0, xc - 0.1, -porta_h / 2, porta_h / 2)
         self.door_push_center = np.array([xc - 1.0, 0.0, 0.0])
 
-        # --- Obstáculos dispersos (esferas com colisão, como nos outros) -----
+        # Obstáculos dispersos (esferas com colisão, como nos outros)
         self.obstacles = []
         self.obstacle_velocities = []
         # Densidade fixa: o nº escala com a área da arena. Pode ser fixado no
@@ -653,11 +653,9 @@ class SwarmForagingEnv3D(gym.Env):
         self.obstacles = []
         self.obstacle_velocities = []
         H_PAREDE = self._altura_paredes
-        # Redesigned as HORIZONTAL (east-west) barrier at y=0.
-        # Previous design was a vertical wall (N-S) that could be bypassed at y≈±14
-        # (arena boundary left a gap). A horizontal wall spanning x=-15 to x=15
-        # truly blocks all south-to-north passage — the ends are at the arena boundary.
-        # Door: 3m gap at x=0 center. Push zone: directly south of the door (y -2 to 0).
+        # Barreira HORIZONTAL (este-oeste) em y=0, de x=-15 a x=15: as pontas
+        # encostam à fronteira da arena, pelo que não sobra passagem sul-norte por
+        # fora. Porta de 3 m ao centro (x=0) e push zone logo a sul dela (y -2 a 0).
         self.walls = [
             {'pos': np.array([-8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, H_PAREDE])},  # x -15 to -1.5
             {'pos': np.array([ 8.25, 0.0, 0.0]), 'size': np.array([13.5, 2.0, H_PAREDE])},  # x  1.5 to  15
@@ -822,7 +820,7 @@ class SwarmForagingEnv3D(gym.Env):
 
         closest = np.full(num_rays, max_d, dtype=np.float64)
 
-        # ---- Paredes (AABB, slab method em X e Y) ----
+        # Paredes (AABB, slab method em X e Y)
         if w_min_arr.shape[0] > 0:
             d = ray_dirs[:, :2] * max_d                       # (R,2)
             parallel = np.abs(d) < 1e-6
@@ -846,7 +844,7 @@ class SwarmForagingEnv3D(gym.Env):
             hit_dist = np.where(hit, t_enter * max_d, np.inf)
             closest = np.minimum(closest, np.min(hit_dist, axis=1))
 
-        # ---- Obstáculos (esferas projetadas no raio) ----
+        # Obstáculos (esferas projetadas no raio)
         if obs_arr.shape[0] > 0:
             vec = np.broadcast_to(obs_arr[None, :, :] - pos[None, None, :],
                                   (num_rays, obs_arr.shape[0], 3))
@@ -885,7 +883,7 @@ class SwarmForagingEnv3D(gym.Env):
 
         closest = np.full((A, num_rays), max_d, dtype=np.float64)
 
-        # ---- Paredes (AABB, slab em X e Y) ----
+        # Paredes (AABB, slab em X e Y)
         if w_min_arr.shape[0] > 0:
             d = ray_dirs[:, :, :2] * max_d                        # (A,R,2)
             parallel = np.abs(d) < 1e-6
@@ -911,7 +909,7 @@ class SwarmForagingEnv3D(gym.Env):
             hit_dist = np.where(hit, t_enter * max_d, np.inf)
             closest = np.minimum(closest, np.min(hit_dist, axis=2))  # (A,R)
 
-        # ---- Obstáculos (esferas projetadas) ----
+        # Obstáculos (esferas projetadas)
         if obs_arr.shape[0] > 0:
             vec = obs_arr[None, None, :, :] - positions[:, None, None, :]   # (A,1,O,3)
             vec = np.broadcast_to(vec, (A, num_rays, obs_arr.shape[0], 3))
@@ -943,7 +941,7 @@ class SwarmForagingEnv3D(gym.Env):
         arena2 = self.obs_norm_radius * 2
         lidar_all = self._lidar_scan_batch(P, H, w_min_arr, w_max_arr, obs_arr)
 
-        # ── Bases egocêntricas F/R/U de TODOS os agentes numa só passagem ──
+        # Bases egocêntricas F/R/U de TODOS os agentes numa só passagem
         # Vetorização do antigo loop por-agente (norm/cross/dot em Python puro era
         # ~78% do step()). PROVADO bit-exacto vs. o loop original (erro 0.00e+00 em
         # 42000 cenas-agente); teste de regressão: tests/test_obs_equivalence.py.
@@ -988,7 +986,7 @@ class SwarmForagingEnv3D(gym.Env):
             dir_door = np.zeros((A, 3))
             norm_dist_door = np.zeros(A)
 
-        # ── Vizinhos (A×A): vec[i,j] = P[j] − P[i], projeção egocêntrica de i ──
+        # Vizinhos (A×A): vec[i,j] = P[j] − P[i], projeção egocêntrica de i
         vec = P[None, :, :] - P[:, None, :]                 # (A,A,3)
         dist = np.linalg.norm(vec, axis=2)                  # (A,A)
         safe = dist >= 1e-6
@@ -1040,8 +1038,6 @@ class SwarmForagingEnv3D(gym.Env):
         truncs = {a: False for a in self.agents}
         infos = {a: {} for a in self.agents}
 
-        # O Sandbox já não tem ninho dinâmico. Foi movido apenas para Perceção Cooperativa.
-
         if self.dynamic_obstacles and self.classic_scenario == "none":
             for i in range(len(self.obstacles)):
                 self.obstacles[i] += self.obstacle_velocities[i]
@@ -1053,7 +1049,7 @@ class SwarmForagingEnv3D(gym.Env):
                     self.obstacle_velocities[i] = (new_vel / (
                                 np.linalg.norm(new_vel) + 1e-6)) * self.obstacle_velocity_magnitude
 
-        # --- LÓGICA DE PERCEÇÃO COOPERATIVA ---
+        # Perceção cooperativa: alvo móvel, recolhido quando é rodeado
         if self.classic_scenario == "cooperative_perception":
             # Move o Alvo Móvel (identificado pelo código como o nest)
             self.nest_pos += self.nest_velocity
@@ -1085,14 +1081,14 @@ class SwarmForagingEnv3D(gym.Env):
                     if diff > max_diff:
                         max_diff = diff
                 
-                # Se a maior diferença de ângulo for <= 180º, o alvo está completamente rodeado/filmado!
+                # Diferença angular máxima <= 180º: o alvo está rodeado
                 if max_diff <= np.pi:
                     self.total_food_collected += 1
                     for idx in observing_robots:
                         rewards[self.agents[idx]] += 300.0
                         self.hunger_timers[idx] = 0
                     
-                    # O alvo móvel "foge" ou respawna numa nova localização para identificarem outro
+                    # O alvo respawna noutro sítio, para haver outro a identificar
                     self.nest_pos = self._random_spawn(max_radius=0.7)
                     vel = np.random.uniform(-1, 1, 3)
                     self.nest_velocity = (vel / (np.linalg.norm(vel) + 1e-6)) * self.nest_velocity_magnitude * 2.0
@@ -1163,7 +1159,7 @@ class SwarmForagingEnv3D(gym.Env):
                     if sign == 0: sign = 1.0
                     self.agent_positions[idx][min_axis] += penetration[min_axis] * sign
 
-        # --- Separação física inter-agente + penalidade de spreading ---
+        # Separação física inter-agente + penalidade de spreading
         # A separação física (anti-sobreposição) aplica-se SEMPRE.
         # A penalidade de spreading (reward) só durante a navegação — é ISENTA
         # em zonas de cooperação onde a tarefa exige proximidade (junto ao ninho,

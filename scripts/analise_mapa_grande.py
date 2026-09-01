@@ -92,7 +92,7 @@ def _col(df, *nomes):
     return None
 
 
-# ── F1 ───────────────────────────────────────────────────────────────────────
+# F1
 
 def analisar_f1():
     print("=" * 78)
@@ -141,7 +141,7 @@ def analisar_f1():
     print("  'a topologia é dura': desmente-a.")
 
 
-# ── F2 ───────────────────────────────────────────────────────────────────────
+# F2
 
 def _avisar_falhas(csvs):
     """Se o `eval_by_run.py` deixou um sidecar de falhas, dizê-lo AQUI.

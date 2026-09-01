@@ -1,6 +1,5 @@
 """
 visualize_mapa_grande.py — MAPA GRANDE no visualizador Ursina
-=============================================================
 MESMO visualizador dos outros mapas: Ursina, `EditorCamera()` (câmara livre),
 as mesmas cores e a mesma convenção de eixos do `main_visualizer.py`. Um só
 visualizador = um só sítio onde pode haver bugs.
@@ -39,13 +38,10 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-# Raios e nº de agentes: lidos do AMBIENTE em `main`, não escritos aqui.
-#
-# Estavam aqui quatro constantes com o comentário «iguais às do ambiente» — que é
-# uma promessa, não um mecanismo. O mesmo padrão custou hoje (5 ago) um número
-# errado na tese: medi um percurso com uma régua minha em vez da do simulador, e
-# publiquei 13,4% onde o ambiente diz 17,0%. Uma segunda fonte para a mesma
-# grandeza não fica desatualizada com estrondo; fica em silêncio.
+# Raios e nº de agentes: lidos do AMBIENTE em `main`, não escritos aqui. Uma
+# constante local com o comentário «igual à do ambiente» é uma promessa, não um
+# mecanismo — e uma segunda fonte para a mesma grandeza não fica desatualizada
+# com estrondo, fica em silêncio.
 
 
 def _raio_do_config():
@@ -109,9 +105,8 @@ def main(args):
     # Câmara livre — IGUAL à dos outros mapas. O EditorCamera é uma entidade-pivô:
     # orbita à volta da SUA posição e o zoom aproxima/afasta ao longo de camera.z.
     # Enquadra-se movendo o PIVÔ e definindo a distância; mexer em camera.position
-    # ou camera.rotation à mão descoordena-o do seu estado interno e os controlos
-    # ficam trocados (o zoom deixa de ampliar para onde se olha). Foi o que
-    # aconteceu na 1ª versão — daí só se passarem parâmetros ao construtor.
+    # ou camera.rotation à mão descoordena-o do estado interno e os controlos ficam
+    # trocados (o zoom deixa de ampliar para onde se olha).
     editor_cam = EditorCamera(rotation=(45, 0, 0))
     editor_cam.position = (0, 0, 0)               # orbita à volta do centro do mapa
     camera.z = -raio * 2.2                        # distância inicial: mapa todo à vista
@@ -120,7 +115,7 @@ def main(args):
     AmbientLight(color=color.rgba(120, 120, 120, 0.3))
 
     # Chão + fronteira da arena.
-    # ⚠️ A fronteira estava assim: `Entity(model='circle', mode='line')`. Essa
+    # A fronteira estava assim: `Entity(model='circle', mode='line')`. Essa
     # combinação NÃO faz contorno nenhum — o `mode` só é lido ao construir um
     # `Mesh`, e o modelo pedido pelo nome vem CHEIO. O que estava no ecrã era um
     # disco ciano opaco de 120 m a tapar o mapa todo. Agora é um anel de facto.
@@ -165,17 +160,15 @@ def main(args):
                scale=OBSTACLE_RADIUS * 2, texture='noise',
                position=(float(p[0]), float(p[1]), -0.15))
 
-    # Robôs parados no spawn, BEM SEPARADOS (o utilizador pediu-os espalhados;
-    # e nascer empilhado faz a separação física do ambiente empurrá-los logo no
-    # primeiro passo). Este Ursina (8.3.0) NÃO traz o modelo 'cylinder' — dá
-    # "warning: missing model" e a entidade fica invisível; usa-se 'sphere', que
-    # existe. O main_visualizer usava 'cylinder' e corria sem mostrar um único
-    # robô; corrigido a 5 ago para 'sphere' também.
-    # Posições REAIS do spawn do ambiente (env.agent_positions após reset), não
-    # uma amostragem à parte: é onde os robôs vão mesmo nascer.
-    # ⚠️ Estavam desenhados ao tamanho REAL (raio 0,15 m) num mapa de 103 m: meio
-    # pixel no ecrã, e a cena parecia não ter robôs nenhuns. O tamanho no desenho
-    # passa a ter um mínimo ligado ao raio da arena — a POSIÇÃO é a do simulador.
+    # Robôs parados no spawn, bem separados: nascer empilhado faz a separação
+    # física do ambiente empurrá-los logo no primeiro passo. As posições são as
+    # REAIS do ambiente (env.agent_positions após reset), não uma amostragem à
+    # parte.
+    #
+    # Este Ursina (8.3.0) NÃO traz o modelo 'cylinder' — dá «missing model» e a
+    # entidade fica invisível; usa-se 'sphere'. E ao tamanho real (raio 0,15 m)
+    # num mapa de 103 m um robô é meio pixel, pelo que o desenho tem um mínimo
+    # ligado ao raio da arena; a POSIÇÃO é a do simulador.
     raio_visual = max(ROBOT_RADIUS * 3.0, raio / 40.0)
     if not args.sem_robos:
         for p in posicoes:

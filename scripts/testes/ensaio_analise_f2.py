@@ -2,7 +2,6 @@
 """Ensaia a análise do F2 com dados SINTÉTICOS, antes de os reais existirem.
 
 Porque existe
--------------
 O F2 do GNN fecha ~16 ago e o hard stop da tese é 22. São seis dias. Se a
 `analise_mapa_grande.py` rebentar — ou pior, se produzir um número errado — com
 os dados na mão, não há janela para uma segunda campanha. A análise tem de correr
@@ -152,7 +151,7 @@ def main():
                 if "15" not in saida:
                     falhas.append("todos: o limiar ⌈5/7×21⌉ = 15 não aparece na saída")
 
-        # ── A fronteira da regra de decisão ──────────────────────────────────
+        # A fronteira da regra de decisão
         # 15 convergentes tem de SUBIR a resultado; 14 tem de dar NEGATIVO.
         # É a conta que decide a conclusão da QI7, e um erro de um não se vê.
         print("\n  fronteira do limiar (⌈5/7×21⌉ = 15):")

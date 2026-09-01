@@ -57,7 +57,7 @@ def main():
         cfg = yaml.safe_load(f)
     env = cfg["environment"]
 
-    # ── Ambiente: o que o cap. 4 afirma vs configs/foraging.yaml ─────────────
+    # Ambiente: o que o cap. 4 afirma vs configs/foraging.yaml
     confere("nº de agentes (N)",
             _num(tex, r"\$N\s*=\s*(\d+)\$ agentes"), env["num_agents"], "foraging.yaml")
     confere("raio da arena",
@@ -77,7 +77,7 @@ def main():
             len(m.group(1).split(",")) if m else None,
             int(e.action_space_val.shape[0]), "swarm_env_3d")
 
-    # ── Tabela de hiperparâmetros do apêndice, linha a linha ────────────────
+    # Tabela de hiperparâmetros do apêndice, linha a linha
     # É a tabela mais frágil da dissertação: cada linha é um valor do YAML
     # copiado à mão, e o YAML muda entre campanhas. Lê-se do .tex por regex
     # (\texttt{chave} & $valor$) e compara-se com a chave correspondente.
@@ -114,7 +114,7 @@ def main():
         confere(f"{chave}", no_texto, float(valor), f"foraging.yaml:{seccao}")
     print(f"[i] tabela de hiperparâmetros: {vistos} linhas com par no YAML")
 
-    # ── Revisão sistemática: os números do PRISMA vêm do screening.csv ───────
+    # Revisão sistemática: os números do PRISMA vêm do screening.csv
     if os.path.exists(SCREENING):
         with open(SCREENING, encoding="utf-8") as f:
             linhas = list(csv.DictReader(f))
@@ -123,7 +123,7 @@ def main():
                 _num(tex, r"corpo da revis[ãa]o \(\$n=(\d+)\$\)"),
                 incluidos, "screening.csv")
 
-    # ── Relatório ───────────────────────────────────────────────────────────
+    # Relatório
     print("=" * 72)
     print("PARTE 1 (caps. 1-4) — texto vs configuração e código")
     print("=" * 72)

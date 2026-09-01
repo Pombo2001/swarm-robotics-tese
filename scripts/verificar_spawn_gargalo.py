@@ -2,22 +2,21 @@
 """Reproduz os números da limitação «sobreposição entre spawn e barreira» (Gargalo).
 
 Porque existe
--------------
 A tese passou a afirmar sete coisas sobre o nascimento dos agentes no Gargalo:
 que a faixa de sorteio é $y \\in [-12,-2]$ e a barreira ocupa $y \\in [-4,4]$;
 que $17{,}9\\%$ das posições iniciais caem dentro do volume da barreira ($179$ de
 $1000$); que a separação as resolve ao primeiro passo; que a resolução empurra
-$159$ para sul, $20$ para a abertura e **nenhuma** para o lado oposto; e que a
+$159$ para sul, $20$ para a abertura e nenhuma para o lado oposto; e que a
 distância geodésica ao ninho depois do primeiro passo é $45{,}3$\\,m para esses
 agentes contra $21{,}2$\\,m para os restantes.
 
 Cada um desses números é uma medição — e o que o plano de qualidade repete é que
 os números têm rede e as afirmações sobre eles não. Esta é a rede: mede tudo no
 simulador e compara com o que está escrito no `main.tex`, lendo os valores
-esperados **do próprio ficheiro**. Um número mudado à mão na tese, ou uma
+esperados do próprio ficheiro. Um número mudado à mão na tese, ou uma
 alteração à geometria do Gargalo, param aqui.
 
-⚠️ A régua da distância é `env._potential` — a mesma que paga o `progress` da
+A régua da distância é `env._potential` — a mesma que paga o `progress` da
 recompensa, e portanto a que decide o que é «estar mais perto». Medir com a
 euclidiana daria outro número (atravessa a barreira) e a afirmação da tese
 deixaria de ser sobre o mundo em que os agentes treinaram.

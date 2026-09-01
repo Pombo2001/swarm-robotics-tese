@@ -1,6 +1,5 @@
 """
 eval_by_run.py — Avaliação determinística de TODOS os runs de uma campanha
-===========================================================================
 Os boxplots por run existentes usam o score de TREINO (fitness/reward, escalas
 diferentes entre algoritmos). Para estatística honesta a tese precisa de
 boxplots de AVALIAÇÃO: cada modelo `_run{n}` (preservado desde o fix da
@@ -128,8 +127,8 @@ def _gravar_falhas(csv_path, falhas, n_models, out):
     errado é o que acontecia a seguir: a falha ficava numa linha de log no meio
     de centenas, e o CSV saía com menos execuções sem o dizer em lado nenhum.
 
-    Isso não é um detalhe de contabilidade. **O n deste CSV é o que decide a
-    QI7**: o limiar do pré-registo é ⌈5/7 × n⌉ lido do próprio ficheiro, de modo
+    Isso não é um detalhe de contabilidade. O n deste CSV é o que decide a
+    QI7: o limiar do pré-registo é ⌈5/7 × n⌉ lido do próprio ficheiro, de modo
     que 21 execuções pedem 15 convergentes e 19 pedem apenas 14. Um run perdido
     em silêncio move a fasquia que a tese diz ter fixado de antemão.
 

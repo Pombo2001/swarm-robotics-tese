@@ -85,8 +85,8 @@ class FlattenMultiAgentVecEnv(VecEnvWrapper):
 
         Quando os dois números discordam, o reshape não estoira: com (2, 20, 10)
         lido como 25 agentes por arena, 400 elementos dividem-se por 50 linhas e
-        saem 8 colunas — **observações de agentes diferentes coladas na mesma
-        linha**, sem uma palavra. Um treino nessas condições corre até ao fim e
+        saem 8 colunas — observações de agentes diferentes coladas na mesma
+        linha, sem uma palavra. Um treino nessas condições corre até ao fim e
         converge para outra coisa.
 
         Medido a 13 ago em tests/test_treino_gradientes.py, que antes desta

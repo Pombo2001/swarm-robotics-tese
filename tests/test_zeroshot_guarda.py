@@ -1,6 +1,5 @@
 """
 test_zeroshot_guarda.py — a guarda de campanha do F1 (eval_zeroshot_mapa)
-=========================================================================
 Escrito na noite de 25 jul 2026, depois de o F1 desse dia (18 células, ~6 h) ter
 de ser deitado fora: correu com os `results/models*` deste PC, de 24 jun — campeões
 de ANTES da fitness de homing, que dão 0,0 até no cenário deles — quando a
@@ -94,7 +93,7 @@ def _capturar(fn, *a, **kw):
     return buf.getvalue()
 
 
-# ── A data de um modelo ──────────────────────────────────────────────────────
+# A data de um modelo
 
 def test_data_vem_do_sidecar():
     """O sidecar ganha ao mtime: diz quando o TREINO gravou o campeão, e viaja
@@ -133,7 +132,7 @@ def test_sidecar_ilegivel_nao_rebenta():
     print("OK  data: sidecar corrompido cai para o mtime em vez de rebentar")
 
 
-# ── A guarda de campanha ─────────────────────────────────────────────────────
+# A guarda de campanha
 
 def test_guarda_rejeita_campeoes_anteriores():
     """O caso de 25 jul, exatamente: modelos de 24 jun, campanha de 2-9 jul."""
@@ -199,7 +198,7 @@ def test_models_dir_isolado():
     print("OK  models-dir: os campeões são lidos da pasta isolada, e só de lá")
 
 
-# ── O CSV: o que já lá está não é dado como bom nem apagado por cima ─────────
+# O CSV: o que já lá está não é dado como bom nem apagado por cima
 
 def _csv(dest, quando=None, caminho="results/models/gnn_3d_best_u_wall.pth",
          n=20, com_colunas_de_modelo=True):

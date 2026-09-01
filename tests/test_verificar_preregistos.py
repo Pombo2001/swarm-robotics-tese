@@ -6,7 +6,7 @@ figuras deu por boa uma figura com um quadrado de 40x40 pixels pintado por cima,
 e só um ensaio o revelou. Aqui muta-se o texto que ele lê e exige-se que acuse:
 se uma mutação passar, é ela que descreve o que ele deixa passar em produção.
 
-As mutações são todas de **texto** (os três documentos entram nas funções como
+As mutações são todas de texto (os três documentos entram nas funções como
 argumentos); os CSV das campanhas continuam a ser lidos do disco, que é o que
 mantém o ensaio honesto — o desenho executado não é simulável.
 """

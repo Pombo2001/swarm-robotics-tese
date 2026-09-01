@@ -1,30 +1,22 @@
 #!/bin/bash
-# Lança o braço EXPLORATÓRIO do F2 (emenda 20) assim que o stream dos gradientes
-# largar a máquina. Corre NO SERVIDOR, dentro do seu próprio tmux.
+# Lança o braço EXPLORATÓRIO do F2 assim que o stream dos gradientes largar a
+# máquina. Corre NO SERVIDOR, dentro do seu próprio tmux.
 #
-# Porquê um watcher e não lançar já
-# ---------------------------------
-# O `longo` são 3 runs × 2340 min de GNN, e o GNN leva 30 dos 64 vCPU. Com o
-# `mapaF2g` (outros 30) e o `mapaF2r` ainda vivos, três streams pesados fazem
-# cada run render MENOS gerações — e são as gerações por run que o pré-registo
-# fixa para M1-M3 poderem comparar-se com as campanhas fechadas. O braço GNN
-# principal já leva 11 dias investidos; atrasá-lo para adiantar um exploratório
-# que nem entra em M1-M3 seria trocar o que conta pelo que não conta.
+# Espera em vez de lançar já: o `longo` são 3 runs x 2340 min de GNN, e o GNN leva
+# 30 dos 64 vCPU. Com o `mapaF2g` e o `mapaF2r` vivos, cada run renderia MENOS
+# gerações — e são as gerações por run que o pré-registo fixa para M1-M3 se
+# poderem comparar com as campanhas fechadas.
 #
-# Porquê no servidor e não na torre
-# ---------------------------------
-# O `esperar_f1.sh` espera a partir do PC: precisa do PC ligado, da VPN de pé e
-# de ~2 000 ligações SSH ao longo de dias. Aqui a espera é local à máquina que
-# vai lançar — nada disto pode falhar por a torre ter adormecido.
+# Espera no servidor e não na torre: a partir do PC seriam dias de VPN de pé e
+# ~2 000 ligações SSH; aqui a espera é local à máquina que vai lançar.
 #
 # Uso (no servidor):
 #     tmux new-session -d -s f2lwatch '~/f2_longo_ao_fechar.sh'
 #     tail -f ~/f2_longo_watch.log
 #
 # Não lança se: já houver um `mapaF2l`; o diretório não existir; faltar disco; ou
-# o stream dos gradientes ter DESAPARECIDO SEM CONCLUIR — nesse caso o que falta
-# é relançar o grad (que conta para M1-M3), e a decisão é do utilizador. Isso é
-# registado em letras gordas no log em vez de ser resolvido por adivinhação.
+# o stream dos gradientes tiver DESAPARECIDO SEM CONCLUIR — nesse caso o que falta
+# é relançar o grad (que conta para M1-M3), e a decisão é do utilizador.
 set -u
 
 LOG=~/f2_longo_watch.log
@@ -37,7 +29,7 @@ registar() { echo "[watch $(date -u '+%d %b %H:%M')] $*" | tee -a "$LOG"; }
 
 registar "ARRANQUE — à espera que o mapaF2r feche para lançar o exploratório"
 
-# --- Guardas que não dependem de esperar ------------------------------------
+# Guardas que não dependem de esperar
 if tmux ls 2>/dev/null | grep -qE '^mapaF2l:'; then
     registar "⛔ já existe uma sessão mapaF2l. Nada a fazer."
     exit 0
@@ -47,7 +39,7 @@ if [ ! -x "$DIR/scripts/mapa_streamF2.sh" ]; then
     exit 2
 fi
 
-# --- Espera ------------------------------------------------------------------
+# Espera
 # A ausência da sessão só vale se o tmux RESPONDEU. `tmux ls` devolve !=0 e
 # escreve "no server running" quando não há servidor tmux nenhum — que é
 # indistinguível de "acabou" se se olhar só para o grep. Distingue-se aqui: sem
@@ -62,7 +54,7 @@ while true; do
     break
 done
 
-# --- O grad chegou ao fim, ou morreu a meio? --------------------------------
+# O grad chegou ao fim, ou morreu a meio?
 # 'CONCLU' sem acento de propósito: o script escreve "CONCLUÍDO" e um grep com
 # acento depende do locale de quem corre isto.
 if [ ! -f "$MASTER_GRAD" ] || ! grep -q 'CONCLU' "$MASTER_GRAD"; then
@@ -81,7 +73,7 @@ if [ -n "$livre_gb" ] && [ "$livre_gb" -lt "$DISCO_MIN_GB" ]; then
 fi
 registar "disco: ${livre_gb:-?}G livres"
 
-# --- Lançar ------------------------------------------------------------------
+# Lançar
 # O próprio mapa_streamF2.sh volta a verificar que o mapaF2r não está vivo e
 # escreve+relê o braço (0.5/true) antes de treinar, abortando se não bater. Esta
 # dupla verificação é de propósito: foi a falta dela que deixou correr 26 h do

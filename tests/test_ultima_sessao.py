@@ -69,7 +69,7 @@ def test_sem_sessoes_devolve_none(tmp_path, monkeypatch):
     assert vs.ultima_sessao() is None
 
 
-# ── O contrato aplica-se ao que a campanha treinou, não a sete cenários ──────
+# O contrato aplica-se ao que a campanha treinou, não a sete cenários
 def _sessao_com_eval(tmp_path, linhas):
     pasta = tmp_path / "16-08-2026_16h14m"
     pasta.mkdir()
@@ -101,7 +101,7 @@ def test_sem_dados_para_inferir_devolve_none(tmp_path):
     assert vs.escopo_da_sessao(str(pasta)) == (None, None)
 
 
-# ── E a mesma regra onde ela decide que modelos ficam ATIVOS ────────────────
+# E a mesma regra onde ela decide que modelos ficam ATIVOS
 import scripts.restaurar_modelos as rm  # noqa: E402
 
 

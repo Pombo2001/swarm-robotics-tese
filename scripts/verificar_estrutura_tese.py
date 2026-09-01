@@ -2,26 +2,25 @@
 """A tese está bem montada? (acrónimos, flutuantes órfãos, páginas órfãs)
 
 Porque existe
--------------
 Os outros dezassete verificadores respondem à pergunta «os números estão
 certos?». Este responde a duas que ninguém fazia, e cujas respostas erradas se
 veem a olho num PDF impresso:
 
-1. **A Lista de Acrónimos serve para alguma coisa?** Um acrónimo declarado e
+1. A Lista de Acrónimos serve para alguma coisa? Um acrónimo declarado e
    nunca usado é ruído; uma sigla usada trinta vezes e nunca declarada é o
    leitor a procurar na lista e a não encontrar. Foi este segundo caso o que
    se mediu a 20 de agosto: o `QI` — a espinha da dissertação, QI1 a QI7 —
    não estava na lista, e o `AI` e o `ML`, que estavam, não aparecem uma
    única vez no corpo.
 
-2. **Alguma figura ou tabela ficou órfã?** Um flutuante que nunca é citado
+2. Alguma figura ou tabela ficou órfã? Um flutuante que nunca é citado
    aparece no meio do texto sem que nada o anuncie, e a Lista de Figuras
    promete-o na mesma. O caso que interessa é o da figura acrescentada à
    pressa; o que NÃO é caso são as citações por intervalo
    (`Figuras~\\ref{a}--\\ref{d}`), que esta verificação resolve — sem isso
    acusaria três figuras certas e ninguém voltaria a olhar para ela.
 
-3. **Alguma página ficou com uma linha e o resto em branco?** As folhas em
+3. Alguma página ficou com uma linha e o resto em branco? As folhas em
    branco do `twoside` dizem que o são; a que interessa é a outra — o Índice
    transbordava uma ÚNICA linha («Apêndice D. Recursos Adicionais 115») para
    uma terceira página, e essa linha tinha a folha toda por baixo.

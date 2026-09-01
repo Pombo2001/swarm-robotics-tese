@@ -2,7 +2,6 @@
 """As SEIS implementações do δ de Cliff no repositório dão o mesmo número?
 
 Porque existe
--------------
 O δ de Cliff está escrito seis vezes, em seis ficheiros diferentes — e são esses
 ficheiros que produzem os tamanhos de efeito da tese (`tab:res_signif`, 21
 comparações), os do mega-treino, os do adaptativo e os que a análise do mapa

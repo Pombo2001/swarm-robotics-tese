@@ -46,7 +46,7 @@ def _zoom(session: str, filename: str):
     dlg.open()
 
 
-# ── Campanhas CANÓNICAS ──────────────────────────────────────────────────────
+# Campanhas CANÓNICAS
 # As que sustentam números da dissertação vivem FORA de results/graficos_tese/,
 # para não sobrescreverem os modelos campeões 7d (armadilha nº9). Sem esta lista,
 # a vista mostrava 31 campanhas exploratórias e nenhuma das quatro que a tese cita.
@@ -152,7 +152,7 @@ def build():
     with ui.column().classes("w-full gap-4 p-4"):
         _canonicas()
 
-        # ── Contexto: o que é este arquivo ───────────────────────────────────
+        # Contexto: o que é este arquivo
         with ui.card().classes(CARD):
             _section_title("history_edu", "Arquivo de campanhas — o percurso do projeto")
             if campanhas:
@@ -188,7 +188,7 @@ def build():
                     .classes("text-gray-500")
             return
 
-        # ── Seletor da campanha (cronológico, a primeira por defeito) ─────────
+        # Seletor da campanha (cronológico, a primeira por defeito)
         opcoes = {s: _rotulo(s) for s in campanhas}
         with ui.card().classes(CARD):
             with ui.row().classes("w-full items-center gap-3 no-wrap"):

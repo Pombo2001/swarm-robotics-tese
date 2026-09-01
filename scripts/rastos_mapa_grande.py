@@ -5,15 +5,14 @@
     python scripts/rastos_mapa_grande.py
 
 Porque existe
--------------
 Os três episódios 3D do mapa grande (`results/episodios_3d/*_mapa_grande.json`)
 respondem à pergunta certa — «o que é que o PPO e o SAC fazem, se não recolhem?»
 —, mas só a quem os vir a correr no browser durante um minuto. Numa apresentação,
 numa revisão por e-mail, ou na dissertação, não há animação nenhuma: há uma
 figura.
 
-Esta é essa figura. Desenha o **rasto de cada agente ao longo do episódio
-inteiro** sobre a planta real do mapa, um painel por controlador, com a mesma
+Esta é essa figura. Desenha o rasto de cada agente ao longo do episódio
+inteiro sobre a planta real do mapa, um painel por controlador, com a mesma
 escala e as mesmas paredes. O que se vê de imediato é o que a medição do
 `onde_param_mapa_grande.py` diz em números: os rastos do PPO e do SAC ficam a
 oeste, e só os do GNN atravessam para a câmara do ninho.

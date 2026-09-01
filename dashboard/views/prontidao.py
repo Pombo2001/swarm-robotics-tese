@@ -4,17 +4,17 @@ Responde num ecrã a uma pergunta que hoje exige quatro comandos e algum cuidado
 os números da tese batem com os dados? os testes passam? o PDF que está no disco
 foi compilado depois da última alteração ao `.tex`? há trabalho por enviar?
 
-Não é um painel de estatísticas — é uma **lista de verificação antes de entregar**,
+Não é um painel de estatísticas — é uma lista de verificação antes de entregar,
 e cada linha corresponde a uma alínea da regra 6 do `PLANO_MESTRE.md`. As datas
-que interessam são as de **15 set** (versão composta) e **30 set** (entrega).
+que interessam são as de 15 set (versão composta) e 30 set (entrega).
 
 Três decisões de desenho, para não ser um botão que mente:
 
-  · o **verificador dos números da tese** corre de verdade (leva ~2 s) e o resultado é
+  · o verificador dos números da tese corre de verdade (leva ~2 s) e o resultado é
     o do momento — nunca um valor guardado de uma corrida anterior;
-  · os **testes** levam ~3 min, por isso não correm sozinhos: mostram o último
+  · os testes levam ~3 min, por isso não correm sozinhos: mostram o último
     resultado com a hora a que foi obtido, e só correm quando se pede;
-  · a **compilação** não é refeita — lê-se o `main.log`. Mas compara-se a data do
+  · a compilação não é refeita — lê-se o `main.log`. Mas compara-se a data do
     `.tex` com a do `.pdf`, que é o que apanha o caso perigoso: o PDF no disco ser
     anterior à última edição, e alguém enviá-lo a pensar que é o de agora.
 """

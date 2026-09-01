@@ -2,7 +2,6 @@
 """Os números que a tese afirma sobre o CORPO da revisão têm de onde sair?
 
 O problema
-----------
 A tese caracteriza os 58 estudos incluídos com três números:
 
   · «21 dos 58 estudos incluídos assentam em MARL e 23 em otimização
@@ -11,14 +10,13 @@ A tese caracteriza os 58 estudos incluídos com três números:
     enxame não vistas»
 
 Nenhum deles é reproduzível a partir do repositório. O `docs/slr/screening.csv`
-regista `decisao` e `motivo` — mas os 58 **incluídos** têm `motivo` e `notas`
+regista `decisao` e `motivo` — mas os 58 incluídos têm `motivo` e `notas`
 VAZIOS (o motivo serve para justificar exclusões), e o apêndice gerado só tem
 autores, ano, título e publicação. A classificação por paradigma vive apenas na
 leitura que o autor fez, e a tese afirma, no mesmo capítulo, que o processo é
 auditável a partir do registo.
 
 O que isto faz
---------------
 Corrobora os três números por uma via independente e com as regras à vista:
 recupera os RESUMOS dos exports do Scopus/IEEE (`docs/slr/raw/`) e classifica
 por expressões regulares. Não é a classificação do autor nem a substitui — é uma
@@ -31,8 +29,8 @@ Resultado a 5 ago 2026 (58/58 resumos recuperados):
     escalabilidade   31   tese: 30   (+1)
 
 Diferenças de uma unidade são o que se espera entre palavras-chave e leitura;
-os três números da tese ficam corroborados. **O que continua em falta é a fonte
-primária:** a classificação do autor devia estar no `screening.csv`, em colunas
+os três números da tese ficam corroborados. O que continua em falta é a fonte
+primária: a classificação do autor devia estar no `screening.csv`, em colunas
 próprias, para quem audite não depender desta aproximação.
 
 Uso:
@@ -170,7 +168,7 @@ def _cadeia_prisma(scr, incl):
     bases, $680$ depois de desduplicar, $622$ excluídos e $58$ incluídos. Cada
     elo tem uma fonte no repositório — os exports em `docs/slr/raw/`, o registo
     de triagem —, e nenhum verificador os ligava. É o capítulo em que este
-    projeto já teve um PRISMA **fabricado** (13 jul), e é por isso que os
+    projeto já teve um PRISMA fabricado (13 jul), e é por isso que os
     números dele são os que menos se podem afirmar sem prova.
 
     Confere-se a soma dos exports contra o total identificado, e a aritmética

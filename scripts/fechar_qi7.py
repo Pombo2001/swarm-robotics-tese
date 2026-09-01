@@ -2,9 +2,8 @@
 """Fecha a QI7 na dissertação: lê o F2, aplica a regra pré-registada, escreve.
 
 Porque existe
--------------
 A secção do mapa grande está escrita e ensaiada, mas entra na tese com cinco
-`\\PORPREENCHER` por preencher e **três leituras alternativas** (A/B/C) à espera
+`\\PORPREENCHER` por preencher e três leituras alternativas (A/B/C) à espera
 de escolha, em seis sítios diferentes do `.tex` — secção, pergunta, parágrafo
 das Conclusões, resposta às QI, Resumo e Abstract. Feito à mão no dia em que o
 GNN fechar, isso é meia hora de edição com o relógio a correr até 22 ago, e
@@ -12,11 +11,10 @@ cada número copiado à mão é um número que o verificador dos 352 valores pod
 vir a apanhar. Aqui é um comando.
 
 O que este script NÃO faz
--------------------------
 Não escolhe a leitura por gosto nem por conveniência: aplica a regra de decisão
-fixada **antes** dos dados (⌈5/7 × n⌉ = 15 de 21 execuções convergentes em pelo
-menos um algoritmo; emendas 19 e 21), e a contagem vem da **avaliação
-determinística** — o `eval_by_run.csv` —, nunca das curvas de treino. É a
+fixada antes dos dados (⌈5/7 × n⌉ = 15 de 21 execuções convergentes em pelo
+menos um algoritmo; emendas 19 e 21), e a contagem vem da avaliação
+determinística — o `eval_by_run.csv` —, nunca das curvas de treino. É a
 distinção que o `projetar_limiar_f2.py` teve de aprender à força a 13 ago: as
 execuções que aparecem com recolha no treino são o `best_task_food` do melhor
 genoma contra as suas sementes, um majorante otimista, e decidir entre (B) e
@@ -56,7 +54,7 @@ SECCAO = os.path.join(TESE, "seccao_mapa_grande.tex")
 ESTADO = os.path.join(RAIZ, "results", "estado_f2.json")
 
 
-# ── números → português ──────────────────────────────────────────────────────
+# números → português
 
 def num(v, casas=1):
     """`67.4` → `$67{,}4$`. A tese usa vírgula decimal em modo matemático."""
@@ -81,7 +79,7 @@ def p_legivel(p):
     return "$p = %s$" % ("%.4f" % p).replace(".", "{,}")
 
 
-# ── as cinco entradas da secção ──────────────────────────────────────────────
+# as cinco entradas da secção
 
 def texto_geracoes(estado):
     """As gerações que cada execução perfez, medidas (não as orçamentadas)."""
@@ -175,7 +173,7 @@ def texto_m3(m):
             "porta é aberta: %s.%s" % (", ".join(partes), extra))
 
 
-# ── edição do LaTeX ──────────────────────────────────────────────────────────
+# edição do LaTeX
 
 def _substituir_porpreencher(texto, inicio_do_conteudo, novo):
     """Troca o `\\PORPREENCHER{...}` cujo conteúdo começa por `inicio_do_conteudo`.
@@ -227,7 +225,7 @@ def preencher_restantes(texto, m):
     vermelhas «[POR PREENCHER]» no PDF entregue — o defeito que este script
     existe para evitar, cometido pelo próprio script.
 
-    Os que **não** são números ficam como estão, de propósito: escolhas de
+    Os que não são números ficam como estão, de propósito: escolhas de
     redação como «não impede / degrada mas não impede» ou «ler contra a Secção
     \\ref{sec:res_scale}» são leitura do autor, e um script que as adivinhasse
     estaria a escrever a tese. Devolve-os para serem declarados em voz alta.
@@ -331,7 +329,7 @@ def _bloco_variante(texto, cabecalho, letra):
     return i, fim, _descomentar("\n".join(corpo)).strip()
 
 
-# ── o trabalho ───────────────────────────────────────────────────────────────
+# o trabalho
 
 CABECALHOS = {
     "resumo": "% ── Frase da QI7 no Resumo",
@@ -345,7 +343,7 @@ def aplicar(m, estado, leitura, escrever):
     """Escreve (ou simula) as seis alterações. Devolve a lista do que fez."""
     feito, falhou = [], []
 
-    # ── 1. a secção: os cinco \PORPREENCHER ──────────────────────────────────
+    # 1. a secção: os cinco \PORPREENCHER
     sec = open(SECCAO, encoding="utf-8").read()
     entradas = [
         ("gerações efetivamente alcançadas", texto_geracoes(estado)),
@@ -358,7 +356,7 @@ def aplicar(m, estado, leitura, escrever):
         sec, ok = _substituir_porpreencher(sec, chave, novo)
         (feito if ok else falhou).append("secção: %s" % chave)
 
-    # ── 2. a secção: a leitura escolhida na Discussão ────────────────────────
+    # 2. a secção: a leitura escolhida na Discussão
     # As três leituras da secção não usam o formato "% (A)" dos blocos do
     # main.tex: são três blocos seguidos, cada um com o seu cabeçalho.
     cab_leitura = "%s ── LEITURA %s:" % ("%", leitura)
@@ -383,7 +381,7 @@ def aplicar(m, estado, leitura, escrever):
         shutil.copy2(SECCAO, SECCAO + ".bak")
         open(SECCAO, "w", encoding="utf-8").write(sec)
 
-    # ── 3. o main.tex: os cinco blocos + o \input ───────────────────────────
+    # 3. o main.tex: os cinco blocos + o \input
     txt = open(MAIN, encoding="utf-8").read()
 
     for nome, cab in CABECALHOS.items():

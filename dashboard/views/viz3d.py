@@ -1,8 +1,7 @@
 """Vista «Episódio 3D» — o enxame a mexer, dentro do browser.
 
 Porque existe ao lado do «Ao vivo (3D)»
----------------------------------------
-O visualizador Ursina abre uma janela no ecrã de **quem corre o servidor**. Na
+O visualizador Ursina abre uma janela no ecrã de quem corre o servidor. Na
 torre é o que se quer. No Raspberry Pi — sem monitor, a servir o orientador pela
 internet — não serve de nada: a janela abriria numa máquina onde ninguém está.
 
@@ -12,7 +11,7 @@ o desenho acontece no browser de quem está a ver — funciona na torre, no Pi e
 telemóvel, com a mesma página.
 
 Não substitui o Ursina: ali há câmara livre em tempo real sobre uma simulação a
-correr; aqui há um episódio **gravado**, que é o que se quer mostrar a alguém.
+correr; aqui há um episódio gravado, que é o que se quer mostrar a alguém.
 """
 import glob
 import json

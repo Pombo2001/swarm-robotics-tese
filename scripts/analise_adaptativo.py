@@ -63,7 +63,7 @@ def compara(nome, a, b, alternative='two-sided'):
 
 
 def main():
-    # --- carregar os braços ---
+    # carregar os braços
     adapt = pd.concat([
         pd.read_csv(os.path.join(ADAPT, 'week_A_fase1', 'evaluation', 'eval_by_run.csv')),
         pd.read_csv(os.path.join(ADAPT, 'week_B_fase1', 'evaluation', 'eval_by_run.csv')),
@@ -84,7 +84,7 @@ def main():
         print(f"  {cen:24s} {r.food.mean():6.1f} ± {r.food.std():5.1f}  [{cem}/7 runs a 100%]  "
               f"runs: {[round(x,1) for x in r.food]}")
 
-    # --- T1: não-degradação nos 5 fáceis (bilateral) ---
+    # T1: não-degradação nos 5 fáceis (bilateral)
     print('\n--- T1 — Não-degradação (adaptativo vs objetivo 7d; bilateral) ---')
     t1_falhas = []
     for cen in T1_CENARIOS:
@@ -95,7 +95,7 @@ def main():
             t1_falhas.append(cen)
     print(f"  => T1: {'FALHA em ' + ', '.join(t1_falhas) if t1_falhas else 'PASSA (sem degradação significativa)'}")
 
-    # --- T2: ganho no Muro em U (unilateral adaptativo > objetivo) ---
+    # T2: ganho no Muro em U (unilateral adaptativo > objetivo)
     print('\n--- T2 — Ganho no Muro em U (unilateral: adaptativo > objetivo 7d) ---')
     a = resumo['u_wall'][0]
     b = por_run(obj7d[obj7d.Scenario == 'u_wall']).food
@@ -105,7 +105,7 @@ def main():
     t2_passa = (p2 < 0.05) or (conv_a >= 7)
     print(f"  => T2: {'PASSA' if t2_passa else 'FALHA'} (magnitude p={p2:.4f}; convergência {conv_a}/7)")
 
-    # --- T3: sem custo no bypass (bilateral; esperar delta ~ 0) ---
+    # T3: sem custo no bypass (bilateral; esperar delta ~ 0)
     print('\n--- T3 — Sem custo no bypass (adaptativo vs objetivo 7d; bilateral) ---')
     a = resumo['cooperative_door_bypass'][0]
     b = por_run(obj7d[obj7d.Scenario == 'cooperative_door_bypass']).food
@@ -113,13 +113,13 @@ def main():
     t3_passa = not (p3 < 0.05 and d3 < 0)
     print(f"  => T3: {'PASSA (sem custo significativo)' if t3_passa else 'FALHA (o adaptativo paga custo no bypass)'}")
 
-    # --- T4: adaptativo vs fixo w=0.5 (u_wall e bypass) ---
+    # T4: adaptativo vs fixo w=0.5 (u_wall e bypass)
     print('\n--- T4 — Adaptativo vs Novelty FIXO w=0.5 (bilateral) ---')
     for cen in ['u_wall', 'cooperative_door_bypass']:
         fixo = por_run(pd.read_csv(FIXO[cen])).food
         compara(f"[{cen}] adaptativo (A) vs fixo w=0.5 (B)", resumo[cen][0], fixo)
 
-    # --- Regra de decisão pré-comprometida ---
+    # Regra de decisão pré-comprometida
     print('\n' + '=' * 74)
     print('REGRA DE DECISÃO (pré-comprometida a 15 jul):')
     if t1_falhas:
@@ -133,7 +133,7 @@ def main():
               'acrescentar uma linha em sec:res_novelty.')
     print('=' * 74)
 
-    # --- Exploratório @390 (não entra na decisão) ---
+    # Exploratório @390 (não entra na decisão)
     print('\n--- EXPLORATÓRIO (rotulado como tal; fora da regra de decisão) ---')
     braços = [
         ('u_wall OBJETIVO @390 (A_fase2)', 'week_A_fase2', 'u_wall'),

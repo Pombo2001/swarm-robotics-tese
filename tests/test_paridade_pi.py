@@ -4,7 +4,7 @@
 O verificador falha de uma maneira perigosa: se a instrumentação deixar de ver
 as leituras, ele anuncia «tudo coberto» sobre um conjunto vazio. E falha de
 outra, mais subtil: o array de caminhos do `atualizar_pi.sh` está enterrado em
-trinta linhas de comentário que **citam caminhos**, e a primeira versão contava
+trinta linhas de comentário que citam caminhos, e a primeira versão contava
 esses como enviados.
 """
 import importlib.util

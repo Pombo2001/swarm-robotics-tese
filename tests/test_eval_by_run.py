@@ -1,30 +1,30 @@
 # -*- coding: utf-8 -*-
 """Testes do `scripts/eval_by_run.py` — o script que produz o CSV do veredicto.
 
-Porque este e não outro: o inventário de 5 ago classifica-o como **risco médio**
+Porque este e não outro: o inventário de 5 ago classifica-o como risco médio
 com a nota «são eles que produzem os CSV de toda a tese», e é ele que vai
 processar o braço do GNN do mapa grande quando fechar. Um defeito aqui aparece
 no pior momento possível — com a campanha fechada e dias para o hard stop.
 
 O que se testa, e porquê:
 
-1. **`_run_models`** — encontra os modelos `_run{n}`, ordena-os por número (não
-   por texto, senão `run10` vem antes de `run2`) e **não mistura cenários**: o
+1. `_run_models` — encontra os modelos `_run{n}`, ordena-os por número (não
+   por texto, senão `run10` vem antes de `run2`) e não mistura cenários: o
    sufixo do cenário faz parte do nome, e o do Sandbox é vazio, que é o caso em
    que um glob distraído apanharia tudo.
-2. **A forma do CSV** — uma linha por episódio, com `Run`, `Algorithm`,
+2. A forma do CSV — uma linha por episódio, com `Run`, `Algorithm`,
    `Scenario` e `door_opened` preservados. A `door_opened` é a M3 do pré-registo
    do mapa grande, que a 5 ago se descobriu não ser calculável.
-3. **Um run que falha não desaparece em silêncio** — o núcleo. O laço apanha a
+3. Um run que falha não desaparece em silêncio — o núcleo. O laço apanha a
    exceção de cada run e continua, o que está certo; o que não podia continuar é
-   a falha ficar só numa linha de log. **O n deste CSV é o que decide a QI7**
+   a falha ficar só numa linha de log. O n deste CSV é o que decide a QI7
    (limiar ⌈5/7 × n⌉ lido do ficheiro: 21 execuções pedem 15 convergentes, 19
    pedem 14), portanto um run perdido move a fasquia que a tese diz ter fixado
    de antemão. A falha tem de viajar com os dados — os CSV são copiados entre
    máquinas e um log noutro terminal não é evidência de nada.
-4. **O sidecar não sobrevive à sua correção** — reavaliar sem falhas apaga-o.
+4. O sidecar não sobrevive à sua correção — reavaliar sem falhas apaga-o.
    Um aviso obsoleto lido como atual é pior do que nenhum.
-5. **A análise olha para o sidecar** — escrever o aviso ao lado dos dados não
+5. A análise olha para o sidecar — escrever o aviso ao lado dos dados não
    serve se o sítio onde o limiar é calculado não o ler.
 
 Nenhum teste corre uma avaliação a sério: `eval_algo` é substituído por um duplo.

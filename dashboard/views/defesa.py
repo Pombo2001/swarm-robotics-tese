@@ -1,13 +1,13 @@
 """Vista «Defesa» — a tese contada por questão de investigação, um ecrã de cada vez.
 
 O F4 que faltava no plano. A ideia não é substituir os *slides*: é ter, na sala,
-um ecrã por **pergunta** com a resposta ao lado do número que a sustenta — e que
-esse número venha dos **dados**, não de um `.pptx` escrito há três semanas.
+um ecrã por pergunta com a resposta ao lado do número que a sustenta — e que
+esse número venha dos dados, não de um `.pptx` escrito há três semanas.
 
 O texto (pergunta e resposta) é lido do `Tese/main.tex`: as perguntas da secção
 `sec:questoes_investigacao`, as respostas da `sec:resposta_qi`. Não há aqui uma
 segunda versão da narrativa — se a tese mudar, isto muda com ela. O que este
-módulo acrescenta é o **número em destaque** de cada questão, calculado dos CSV
+módulo acrescenta é o número em destaque de cada questão, calculado dos CSV
 canónicos no momento em que se abre a vista.
 
 Navegação: setas ← → do teclado (numa sala não se procura o rato), ou os botões.
@@ -205,7 +205,7 @@ def _respostas():
     até ao fim da linha. As respostas às QI1-QI6 estão escritas numa linha só e
     o `(.+)` de antes servia-as por acaso; a da QI7, escrita pelo
     `fechar_qi7.py` com o parágrafo mudado de linha, aparecia na vista da Defesa
-    como **«Parcialmente, e ao preço»** — meia frase, no último ecrã, que é o
+    como «Parcialmente, e ao preço» — meia frase, no último ecrã, que é o
     que o júri lê no fim. Ver `test_dashboard_conteudo.py`, que passou a exigir
     que cada resposta acabe em ponto final.
     """

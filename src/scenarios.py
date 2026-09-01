@@ -1,6 +1,5 @@
 """
 src/scenarios.py — Fonte única dos cenários e rótulos do projeto
-================================================================
 Centraliza a lista canónica de cenários, os rótulos (longo/curto), os metadados
 dos algoritmos e a convenção de sufixo dos modelos.
 

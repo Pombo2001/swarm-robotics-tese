@@ -352,7 +352,7 @@ def create_thesis_plots_3d():
             (sac_csv, 'SAC', '#0277BD', 'ep_rew_mean',   'ep_task_mean'),
         ]
 
-        # ── Gráfico 1: por TIMESTEPS (eixo X = amostras) ─────────────────────
+        # Gráfico 1: por TIMESTEPS (eixo X = amostras)
         fig, ax = plt.subplots(figsize=(11, 6))
         plotted = 0
         for path_log, label, col, y_col, _ in ALGO_LOGS:
@@ -391,7 +391,7 @@ def create_thesis_plots_3d():
         plt.close()
         print(f"[i] Grafico por timesteps guardado ({plotted} algo(s))")
 
-        # ── Gráfico 2: por TEMPO REAL (eixo X = minutos) ─────────────────────
+        # Gráfico 2: por TEMPO REAL (eixo X = minutos)
         # Comparacao justa: todos correm no mesmo hardware e o eixo e tempo de parede.
         fig, ax = plt.subplots(figsize=(11, 6))
         plotted_time = 0
@@ -427,7 +427,7 @@ def create_thesis_plots_3d():
             print(f"[i] Grafico por tempo real guardado ({plotted_time} algo(s))")
         plt.close()
 
-        # ── Gráfico 3: TASK REWARD (recolhas puras, sem shaping) ─────────────
+        # Gráfico 3: TASK REWARD (recolhas puras, sem shaping)
         fig, ax = plt.subplots(figsize=(11, 6))
         plotted_task = 0
         for path_log, label, col, _, task_col in ALGO_LOGS:

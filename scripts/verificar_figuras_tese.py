@@ -6,31 +6,30 @@
     python scripts/verificar_figuras_tese.py --listar   # a tabela figura → fonte
 
 Porque existe
--------------
-As figuras da dissertação são **cópias**: nascem em `results/`, são copiadas
+As figuras da dissertação são cópias: nascem em `results/`, são copiadas
 para `Tese/images/` e a partir daí vivem sozinhas. Nada liga as duas cópias, e
 por isso elas derivam sem ninguém dar por nada. Este projeto já o fez duas
 vezes:
 
-* **21 jul** — oito figuras do artigo estavam desatualizadas face à tese, com
+* 21 jul — oito figuras do artigo estavam desatualizadas face à tese, com
   barras de erro negativas que já tinham sido corrigidas;
-* **4 ago** — as capturas 3D no PDF eram de 6 de junho, anteriores à correção
+* 4 ago — as capturas 3D no PDF eram de 6 de junho, anteriores à correção
   das paredes: mostravam robôs a atravessar o labirinto por cima.
 
 Uma figura errada não é apanhada por nenhum verificador de números: os números
 do texto continuam a bater, e é a imagem que mente. Daí este.
 
 O que faz: para cada figura referenciada no `.tex` (ignorando linhas
-comentadas), procura o ficheiro com o **mesmo nome** debaixo de `results/` e
-compara-o **pixel a pixel** com o que está em `Tese/images/`. O md5 não serve —
+comentadas), procura o ficheiro com o mesmo nome debaixo de `results/` e
+compara-o pixel a pixel com o que está em `Tese/images/`. O md5 não serve —
 o matplotlib grava metadados que mudam a cada corrida, e duas imagens idênticas
 dariam md5 diferentes.
 
-⚠️ Uma figura da tese sem ficheiro homónimo em `results/` é, por si, um
+Uma figura da tese sem ficheiro homónimo em `results/` é, por si, um
 achado: quer dizer que ninguém consegue saber o que a produziu. Gerar com um
 nome e copiar com outro quebra a única ligação automática que existe.
 
-As divergências **declaradas** abaixo são as que têm explicação e ficam
+As divergências declaradas abaixo são as que têm explicação e ficam
 registadas com ela. Uma divergência nova aparece como falha.
 """
 import argparse

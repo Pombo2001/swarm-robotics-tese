@@ -13,7 +13,7 @@ Até 27 jul 2026 corria só como script: o trabalho estava no corpo do módulo e
 acabava em `sys.exit(0)`, o que durante a *coleção* do pytest subia como
 INTERNALERROR e abortava a corrida inteira. A solução da altura foi excluí-lo
 (`collect_ignore` no conftest) — o que devolveu o `pytest tests/` a funcionar mas
-deixou o mecanismo do dashboard **fora da rede de segurança**: uma regressão no
+deixou o mecanismo do dashboard fora da rede de segurança: uma regressão no
 JobQueue não aparecia em nenhuma corrida da suite. Agora o trabalho está em
 funções `test_*` e o `sys.exit` vive só no bloco `__main__`, onde é inofensivo.
 """

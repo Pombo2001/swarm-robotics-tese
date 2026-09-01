@@ -1,9 +1,8 @@
 """
 test_analise_f1_controlos.py — o veredicto do F1 não pode mudar por acidente
-============================================================================
 O `analise_f1_controlos.py` produz a leitura oficial da QI7: pega nas quatro
-condições do F1 e decide, por cada controlo, se a causa está **excluída** ou se o
-zero-shot de topologia está **confundido** com ela. Essa decisão não é um juízo
+condições do F1 e decide, por cada controlo, se a causa está excluída ou se o
+zero-shot de topologia está confundido com ela. Essa decisão não é um juízo
 do script — é a regra que o `PRE_REGISTO_MAPA_GRANDE.md` §3 fixou antes de haver
 dados:
 
@@ -18,7 +17,7 @@ onde a resposta certa é conhecida por construção, para que uma alteração fu
 que os troque falhe em vez de passar despercebida.
 
 Testa também a guarda de `--saida`, que nasceu de um erro real: a 28 jul 2026, ao
-validar o próprio script com um CSV sintético, o veredicto **falso** foi escrito
+validar o próprio script com um CSV sintético, o veredicto falso foi escrito
 na pasta que a tese cita. Apagado a seguir — mas a lição é que um script de
 análise com destino fixo não distingue um ensaio de uma corrida boa.
 
@@ -98,7 +97,7 @@ def _mudo(f, *a, **k):
     return r, buf.getvalue()
 
 
-# ── os três veredictos ──────────────────────────────────────────────────────
+# os três veredictos
 
 def test_controlo_que_ressuscita_diverge():
     """Uma célula a zero que passa a recolher DESMENTE 'a topologia é dura'."""
@@ -164,7 +163,7 @@ def test_celula_que_morre_conta_como_divergencia():
     print("OK  célula que morre no controlo é contada (mortas=1)")
 
 
-# ── integridade: o que tem de ser visto ANTES dos números ───────────────────
+# integridade: o que tem de ser visto ANTES dos números
 
 def test_avisa_se_a_condicao_tem_duas_digitais():
     """Dois mapas no mesmo ficheiro deixam de ser comparação emparelhada."""
@@ -228,7 +227,7 @@ def test_grelha_reproduz_medias_e_sucesso():
     print("OK  a grelha reproduz médias e taxas de sucesso por célula")
 
 
-# ── a guarda que nasceu de um erro real ─────────────────────────────────────
+# a guarda que nasceu de um erro real
 
 def test_csv_de_fora_exige_saida():
     """Correr com um CSV de teste NÃO pode escrever na pasta que a tese cita."""

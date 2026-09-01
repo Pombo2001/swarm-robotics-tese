@@ -6,14 +6,13 @@
     python scripts/verificar_configuracao.py --listar   # o que cada tabela diz
 
 Porque existe
--------------
 O Apêndice tem duas tabelas — `tab:apx_env` (a física e a recompensa) e
 `tab:apx_train` (os hiperparâmetros dos três algoritmos) — que dizem, parâmetro
 a parâmetro, com que sistema foram produzidos os resultados da dissertação. São
 cerca de 45 valores, e nenhum verificador olhava para eles.
 
 É a mesma classe de defeito que este projeto já teve com as figuras: a tabela é
-uma **cópia** do `configs/foraging.yaml` feita à mão num certo dia. O YAML muda
+uma cópia do `configs/foraging.yaml` feita à mão num certo dia. O YAML muda
 — e mudou muitas vezes: o LiDAR de 5 para 8 m, a recompensa simplificada em
 junho, o `max_steps` do mapa composto, o `required_to_eat` por cenário — e a
 tabela fica a descrever um simulador que já não existe. Ninguém dá por isso a
@@ -23,7 +22,7 @@ Um valor errado aqui é pior do que um resultado errado: um resultado errado
 contradiz um CSV, mas uma configuração errada faz o leitor pensar que reproduziu
 o trabalho quando correu outra coisa.
 
-⚠️ O que esta régua NÃO faz: não julga o que o valor devia ser. Compara o que a
+O que esta régua NÃO faz: não julga o que o valor devia ser. Compara o que a
 tese escreve com o que o ficheiro declara, e diz onde diferem.
 """
 import argparse

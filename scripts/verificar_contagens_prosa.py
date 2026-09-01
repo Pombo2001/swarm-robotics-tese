@@ -2,7 +2,6 @@
 """As contagens em PROSA da tese (X/Y execuções) batem com os dados?
 
 Porque existe
--------------
 O `verificar_numeros_tese.py` compara as TABELAS com os CSV — 346 valores. As
 afirmações em prosa não tinham verificador nenhum, e é aí que os erros têm
 aparecido: a 4 ago o «planalto» que sete células não atingiam, a 5 ago a linha do
@@ -72,7 +71,7 @@ def main():
     print("CONTAGENS EM PROSA  vs  eval_by_run_7d.csv")
     print("=" * 78)
 
-    # ── «15 das 21 combinações a 100% em todos os runs e episódios» ─────────
+    # «15 das 21 combinações a 100% em todos os runs e episódios»
     m = re.search(r"\\textbf\{(\d+) das (\d+) combinações algoritmo--cenário "
                   r"atingem 100\\% de sucesso", corpo)
     if not m:
@@ -85,7 +84,7 @@ def main():
         compara("combinações com 100% em todos os runs", perfeitas, na_tese)
         compara("total de combinações", len(celulas), total_tese)
 
-    # ── As frações por célula que a prosa cita ──────────────────────────────
+    # As frações por célula que a prosa cita
     # (rótulo na tese, cenário, algoritmo) — o padrão procura a fração junto ao
     # rótulo, para não apanhar um «5/7» de outro sítio.
     CASOS = [

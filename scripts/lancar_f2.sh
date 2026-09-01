@@ -1,43 +1,30 @@
 #!/usr/bin/env bash
 # Lança o F2 do mapa grande no servidor — com as verificações ANTES de disparar.
 #
-# Porquê um script em vez de dois `tmux new-session`
-# --------------------------------------------------
-# O F2 são 11 dias de máquina. Um erro no arranque só se vê horas depois, e o
-# histórico deste projeto tem três: uma campanha lançada com o config da
-# anterior, um F1 anulado por o simulador ser o velho, e dois streams a
-# partilhar diretório. Nenhum deles daria erro no primeiro minuto.
-#
-# Este script verifica, uma a uma, as condições que já falharam alguma vez:
+# O F2 são 11 dias de máquina e um erro no arranque só se vê horas depois. Este
+# script verifica, uma a uma, as condições que já falharam alguma vez:
 #
 #   1. o mega-treino já largou a máquina (senão são três streams pesados);
 #   2. as três cópias existem e têm o simulador de agora (mesmo sha256);
 #   3. cada stream vai treinar o BRAÇO que o pré-registo fixa — GNN adaptativo
-#      (0.5/true) nos dois streams de GNN, sem novidade nos gradientes. Esta
-#      verificação já existiu ao contrário e certificou 26 h do braço errado;
-#      ver a nota longa junto à verificação;
+#      (0.5/true) nos dois streams de GNN, sem novidade nos gradientes;
 #   4. o cenário do config é o que o run_experiments vai sobrepor, e a arena do
 #      mapa grande está nos 60 m com 2000 passos;
 #   5. há disco;
-#   6. os `_fail10`, `models_7d` e CSV do F1 NÃO estão nas cópias (o F2 treina
-#      de raiz — se estiverem, o `arquivar` leva-os como se fossem desta campanha).
+#   6. os `_fail10`, `models_7d` e CSV do F1 NÃO estão nas cópias (o F2 treina de
+#      raiz — se estiverem, o `arquivar` leva-os como se fossem desta campanha).
 #
 # Só depois lança, e confirma que os dois streams escreveram a primeira geração.
 #
-# UMA ligação, não vinte  (3 ago)
-# -------------------------------
-# A primeira versão fazia uma ligação SSH por verificação. Em série, o servidor
-# aborta algumas ("Software caused connection abort") — e como o stderr ia para
-# /dev/null, uma ligação abortada devolvia string vazia. As verificações 1 e 6
-# são CONTAGENS: vazio lê-se como "0 sessões do mega-treino" e "0 ficheiros
-# alheios", exatamente os dois verdes que autorizam o lançamento. Era o verde
-# falso mais perigoso do script, e vi os dois sentidos do erro no mesmo dia (a
-# 3 ago disse que as três cópias não existiam quando existiam).
+# UMA ligação SSH, não vinte: uma ligação por verificação leva o servidor a
+# abortar algumas («Software caused connection abort») e, com o stderr para
+# /dev/null, uma ligação abortada devolve string vazia. As verificações 1 e 6 são
+# CONTAGENS, e vazio lê-se como «0 sessões do mega-treino» e «0 ficheiros
+# alheios» — os dois verdes que autorizam o lançamento.
 #
-# Agora tudo o que é preciso saber vem num só bloco `chave=valor`, lido numa
-# ligação, e as verificações fazem-se em cima do que chegou. O `__FIM__` corre
-# sempre (`;`, não `&&`), por isso a sua ausência distingue "não liguei" de
-# "liguei e não havia nada" — e sem marcador o script recusa-se a lançar.
+# Tudo o que é preciso saber vem num só bloco `chave=valor`, lido numa ligação. O
+# `__FIM__` corre sempre (`;`, não `&&`), por isso a sua ausência distingue «não
+# liguei» de «liguei e não havia nada» — e sem marcador o script recusa lançar.
 #
 # Uso (na torre, com a VPN do ISCTE ligada):
 #     bash scripts/lancar_f2.sh --verificar     # só as verificações, não lança
@@ -75,10 +62,8 @@ echo "==========================================================================
 echo "F2 DO MAPA GRANDE — verificações antes de lançar   ($(date '+%d %b %Y %H:%M'))"
 echo "=============================================================================="
 
-# ----------------------------------------------------------------------------
 # Tudo o que é preciso saber do servidor, numa ligação só.
 # Heredoc entre aspas: nada aqui dentro é expandido pela shell LOCAL.
-# ----------------------------------------------------------------------------
 read -r -d '' RECOLHA <<'REMOTO' || true
 echo "MEGA=$(tmux ls 2>/dev/null | grep -cE '^mega[AB]:')"
 echo "SIM_base=$(sha256sum ~/swarm-mapa/src/environment/swarm_env_3d.py 2>/dev/null | awk '{print $1}')"
@@ -154,18 +139,13 @@ done
 
 # 3. o BRAÇO de cada stream é o que o pré-registo fixa
 #
-# ⚠️ Esta verificação já existiu ao contrário, e custou 26 h de máquina (4 ago).
-# Chamava-se «sem novidade — por config OU por omissão», dava verde quando as
-# chaves `novelty_*` estavam ausentes e vermelho se a novidade estivesse LIGADA.
-# Isto é o inverso do que a secção 2 do pré-registo manda: «GNN com Novelty
-# **adaptativo** (w₀=0,5, sustain=10, decay=0,98) — **não o objetivo puro**: a
-# QI6 mostrou que o adaptativo domina o objetivo». Os dois primeiros runs do F2
-# treinaram, portanto, o braço errado, com o lançador a certificá-lo.
+# A secção 2 do pré-registo manda «GNN com Novelty adaptativo (w0=0,5,
+# sustain=10, decay=0,98) — não o objetivo puro». Uma verificação escrita ao
+# contrário (verde com as chaves `novelty_*` ausentes) certifica o braço errado.
 #
 # Verifica-se o SCRIPT que vai correr, não o estado do config: é o
-# `mapa_streamF2.sh` que escreve as chaves em cada arranque (config_novelty), e
-# o config antes do arranque não diz nada sobre o que vai ser treinado. O que o
-# script declara é a única fonte da verdade disponível antes de lançar.
+# `mapa_streamF2.sh` que escreve as chaves em cada arranque (config_novelty), e o
+# config antes do arranque não diz nada sobre o que vai ser treinado.
 for d in f2g f2r f2l; do
     esperado_w="0.5"; esperado_a="true"; rotulo="GNN adaptativo"
     if [ "$d" = "f2r" ]; then

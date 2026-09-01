@@ -1,6 +1,5 @@
 """
 eval_suite.py — Avaliação determinística de TODOS os cenários + gráficos de tarefa
-==================================================================================
 Resolve o desfasamento dos eval_*.csv: a rotina noturna treina mas não avaliava,
 deixando as métricas de tarefa (taxa de sucesso, recolhas/ep) sempre desatualizadas
 face aos modelos. Este módulo avalia os 3 algoritmos em todos os cenários de forma
@@ -147,7 +146,7 @@ def plot_evaluation(summary=None, out_dir=None):
     palette = {a: ALGO_COLORS[a] for a in algo_order}
     created = []
 
-    # ── 1. Taxa de sucesso (Ptask) por cenário ───────────────────────────────
+    # 1. Taxa de sucesso (Ptask) por cenário
     succ = (summary.groupby(["ScenarioLabel", "Algorithm"])["success"]
             .mean().mul(100).reset_index(name="SuccessRate"))
     # 8,5x5 polegadas (era 13x7): a figura entra na tese a 0,98 da largura do
@@ -178,7 +177,7 @@ def plot_evaluation(summary=None, out_dir=None):
     created.append(p1)
     print(f"[OK] Gráfico de taxa de sucesso: {p1}")
 
-    # ── 2. Recolhas/ep por cenário (média ± desvio) ──────────────────────────
+    # 2. Recolhas/ep por cenário (média ± desvio)
     fig, ax = plt.subplots(figsize=(8.5, 5))
     sns.barplot(data=summary, x="ScenarioLabel", y="food_collected", hue="Algorithm",
                 order=scen_order, hue_order=algo_order, palette=palette,

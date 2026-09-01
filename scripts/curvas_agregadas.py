@@ -1,13 +1,12 @@
 """Média entre runs de curvas de treino — sem a serra.
 
 O problema que isto resolve
----------------------------
 Cada run escreve o seu histórico nos SEUS passos: o GNN loga 238-1113 pontos por
-run, o PPO 15-23, o SAC **7-11**. Depois de normalizar o eixo X para 0-100% do
+run, o PPO 15-23, o SAC 7-11. Depois de normalizar o eixo X para 0-100% do
 orçamento, dois runs quase nunca partilham o mesmo x.
 
 O `sns.lineplot(x=..., y=..., errorbar='sd')` agrupa pelos valores EXATOS de x.
-Com grelhas desalinhadas, a esmagadora maioria dos x tem **um único run** — a
+Com grelhas desalinhadas, a esmagadora maioria dos x tem um único run — a
 linha desenhada não é média nenhuma, é um run de cada vez, e a legenda que diz
 "média entre runs, banda = ±1 desvio padrão" está a afirmar o que a figura não
 faz. Em cenários com runs bimodais (uns resolvem, outros ficam a zero) o traço
@@ -23,7 +22,6 @@ que "a banda ±sd por run está nos painéis por cenário" — e esses painéis 
 precisamente os que tinham o defeito.
 
 Porquê interpolar em vez de fazer bins
---------------------------------------
 Com bins, um bin onde só 2 dos 7 runs calharam ter pontos produz uma média de 2
 runs a seguir a uma de 7 — degraus outra vez, mais pequenos. A interpolação dá
 n=7 em todos os pontos da grelha, que é o que torna a banda comparável ao longo
@@ -86,7 +84,7 @@ def desenhar_curva_media(ax, d: pd.DataFrame, *, cor: str, col_y: str = "Score",
                          **kwargs):
     """Desenha no `ax` a linha média entre runs e a banda ±1 desvio.
 
-    A banda é truncada em zero quando **nenhum** run observou valor negativo: com
+    A banda é truncada em zero quando nenhum run observou valor negativo: com
     runs bimodais (uns resolvem, outros ficam a zero) o desvio é maior do que a
     média e a banda descia a fitness negativa — uma região que a métrica não pode
     ocupar. Se a métrica admite valores negativos (a recompensa episódica admite,

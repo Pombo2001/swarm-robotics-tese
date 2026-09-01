@@ -5,8 +5,7 @@
     python scripts/verificar_afirmacoes.py
 
 Porque existe
--------------
-Os outros verificadores conferem **números**: onde o `.tex` escreve $67{,}4$, o
+Os outros verificadores conferem números: onde o `.tex` escreve $67{,}4$, o
 CSV tem de dizer 67,4. Esta régua confere as frases onde o número está na
 palavra: «o único cenário que nenhum algoritmo resolve», «converge em todas as
 execuções de seis cenários», «nenhuma das $28$ execuções passa de $45{,}4$».
@@ -17,11 +16,11 @@ afirmação sobre tudo o que não foi medido. Nenhum verificador olhava para ela
 — o `verificar_numeros_tese.py` lê o `45{,}4` e não lê o «nenhuma».
 
 Método: cada afirmação é reduzida à contagem que a torna verdadeira ou falsa,
-essa contagem é feita sobre os CSV, e os valores citados são **lidos do
-`.tex`** — nunca escritos aqui. Um número que mude no texto e não nos dados
+essa contagem é feita sobre os CSV, e os valores citados são lidos do
+`.tex` — nunca escritos aqui. Um número que mude no texto e não nos dados
 falha; um número que mude nos dados e não no texto também.
 
-⚠️ A régua não julga a redação: se a frase disser «o único» e a contagem der 1,
+A régua não julga a redação: se a frase disser «o único» e a contagem der 1,
 passa. O que ela não deixa passar é a frase sobreviver a uma mudança nos dados.
 """
 import glob
@@ -78,8 +77,8 @@ def corpo():
 
     As duas metades desta função são achados. O `%` do LaTeX esconde parágrafos
     inteiros — a QI7 viveu meses em comentário. E a secção do mapa composto (a
-    QI7 inteira, com todos os números da última campanha) **não está no
-    `main.tex`**: entra por `\\input{seccao_mapa_grande}`. Uma régua que abra só
+    QI7 inteira, com todos os números da última campanha) não está no
+    `main.tex`: entra por `\\input{seccao_mapa_grande}`. Uma régua que abra só
     o `main.tex` não vê o oitavo cenário e diz que está tudo bem.
     """
     def ler(caminho):
@@ -126,7 +125,7 @@ def cabecalho(t):
     print("\n" + "=" * 78 + "\n%s\n" % t + "=" * 78)
 
 
-# ---------------------------------------------------------------- campanha final
+# campanha final
 def campanha_final():
     if not ha_dados(FINAL_7D, "Campanha final"):
         return
@@ -183,7 +182,7 @@ def campanha_final():
             falhas.append("«o SAC é o único que falha no Gargalo» — falham: %s" % falham)
 
 
-# ------------------------------------------------------------------ mega-treino
+# mega-treino
 def mega_treino():
     if not ha_dados(MEGA, "Mega-treino"):
         return
@@ -209,7 +208,7 @@ def mega_treino():
             falhas.append("«nenhuma passa de %s» — há uma com %.1f" % (v[1], s.max()))
 
 
-# --------------------------------------------------------------- escalabilidade
+# escalabilidade
 def escalabilidade():
     if not ha_dados(ESCALA % "*", "Escalabilidade"):
         return
@@ -249,7 +248,7 @@ def escalabilidade():
         confere("Sandbox: distância PPO–SAC por agente em N=20", v[0], dist, 0.006)
 
 
-# --------------------------------------------------------------------- robustez
+# robustez
 def robustez():
     # `*_fail10.csv` e não `*.csv`: a pasta tem CSV de avaliação normal mesmo
     # quando os da robustez não vieram, e um guarda sobre a pasta deixava passar
@@ -274,7 +273,7 @@ def robustez():
     confere("retenção máxima", v[1], max(rets), 0.5)
 
 
-# ------------------------------------------------------- diagnóstico da QI7
+# diagnóstico da QI7
 def diagnostico_qi7():
     if not ha_dados(LOGS_F2, "Diagnóstico da QI7"):
         return
@@ -347,7 +346,7 @@ def diagnostico_qi7():
               % ", ".join("%.1f" % x for x in paradas[paradas < num(v[1])]))
 
 
-# ------------------------------------------------------- o README do projeto
+# o README do projeto
 def readme():
     """Os números do README são os mesmos da dissertação?
 
@@ -431,7 +430,7 @@ def readme():
         falhas.append("README: não encontrei o alcance do LiDAR")
 
 
-# -------------------------------------------------- resumo contra o abstract
+# resumo contra o abstract
 def resumo_e_abstract():
     """O Resumo e o Abstract contam a mesma história com os mesmos números?
 
@@ -485,7 +484,7 @@ def resumo_e_abstract():
                       "Abstract %s" % (so_pt or "—", so_en or "—"))
 
 
-# ------------------------------------------------------ aritmética declarada
+# aritmética declarada
 def aritmetica():
     """Os números que a tese deriva uns dos outros continuam a bater entre si.
 

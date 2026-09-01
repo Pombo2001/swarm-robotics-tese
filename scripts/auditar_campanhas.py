@@ -2,12 +2,11 @@
 """Cada campanha tem tudo? — dados, gráficos, vídeo, heatmaps, modelos.
 
 O buraco que isto tapa
-----------------------
 As campanhas chegam do servidor por caminhos diferentes (fases arquivadas,
 `pos_campanha.py`, cópias à mão) e cada uma perde uma coisa diferente pelo
 caminho. Já aconteceu, tudo em julho e agosto de 2026:
 
-  · a campanha da QI6 — a que está NA TESE — tinha 268 CSV e **zero** imagens;
+  · a campanha da QI6 — a que está NA TESE — tinha 268 CSV e zero imagens;
   · o mega-treino veio sem uma única figura, e os modelos das 12 fases ficaram
     no servidor até 3 ago;
   · três fases arquivaram os modelos do algoritmo ERRADO (uma cópia do GNN em

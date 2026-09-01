@@ -5,19 +5,19 @@
     python scripts/testar_horizonte_mapa_grande.py --episodes 2
 
 A instrumentação do `onde_param_mapa_grande.py` mostrou que o controlador
-evolutivo atinge a sua menor distância ao ninho ao passo **1986 de 2000**, e
+evolutivo atinge a sua menor distância ao ninho ao passo 1986 de 2000, e
 recua 0,2 m depois disso: o episódio acaba-lhe em cima. Os métodos de gradiente
 fazem o contrário — atingem o melhor por volta do passo 1200 e afastam-se.
 
-Isso levanta uma hipótese testável e barata: **se o limite for o horizonte,
-alargar o episódio faz aparecer recolhas onde havia zero.** Se for a política a
+Isso levanta uma hipótese testável e barata: se o limite for o horizonte,
+alargar o episódio faz aparecer recolhas onde havia zero. Se for a política a
 estar presa, mais passos não mudam nada.
 
 Este guião faz exatamente esse teste: pega nos campeões, corre-os com o
 horizonte de sempre e com um horizonte alargado, e conta recolhas. Não retreina
 nada — a política é a mesma; muda só quanto tempo ela tem.
 
-⚠️ Isto **não** é o F2 nem entra na regra de decisão da QI7, que está fechada
+Isto não é o F2 nem entra na regra de decisão da QI7, que está fechada
 com o horizonte pré-registado de 2000 passos. É uma experiência de diagnóstico
 para a secção de trabalho futuro: diz o que valeria a pena tentar, não muda o
 que foi medido.

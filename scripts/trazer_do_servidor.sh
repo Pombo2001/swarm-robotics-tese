@@ -9,25 +9,16 @@
 #     scripts/trazer_do_servidor.sh <caminho_remoto> <destino_local>
 #
 # Exemplo (campeões da campanha 7d, para o F1 do mapa grande):
-#     scripts/trazer_do_servidor.sh \
-#         '~/swarm-robotics-tese/results/graficos_tese/09-07-2026_12h52m/modelos' \
-#         results/models_7d
+#     scripts/trazer_do_servidor.sh #         '~/swarm-robotics-tese/results/graficos_tese/09-07-2026_12h52m/modelos' #         results/models_7d
 #
-# ⚠️ Preserva as DATAS dos ficheiros (`-p`). Não é cosmético: a guarda de campanha
+# Preserva as DATAS dos ficheiros (`-p`), e não é cosmético: a guarda de campanha
 # do scripts/eval_zeroshot_mapa.py verifica a data de cada campeão contra a janela
-# da campanha (2026-07-02..2026-07-10) e ABORTA se for anterior. Sem `-p`, todos
-# os modelos chegavam com a data de hoje e a guarda deixava de distinguir a
-# campanha 7d de qualquer outra coisa — que é exatamente o que ela existe para
-# apanhar (ver a emenda de 25 jul no PRE_REGISTO_MAPA_GRANDE.md).
+# da campanha e aborta se for anterior. Sem `-p`, todos os modelos chegam com a
+# data de hoje e a guarda deixa de distinguir a campanha 7d de qualquer outra.
 #
-# ⚠️ AVISA ANTES DE SOBRESCREVER. A 28 jul trouxe-se o CSV de um controlo do F1
-# e, como o ficheiro remoto se chama `zeroshot_mapa_grande.csv` — o mesmo nome
-# que a condição natural já tinha no destino —, o pscp escreveu-lhe por cima sem
-# uma palavra. A condição natural (420 episódios, 6 h de servidor) só se salvou
-# por estar versionada no git. Cada corrida guarda o resultado com o MESMO nome
-# no SEU diretório, por isso este caso repete-se sempre que se traz mais do que
-# uma; o remédio é trazer para nomes distintos, e este aviso é o que obriga a
-# pensar nisso.
+# AVISA ANTES DE SOBRESCREVER: cada corrida guarda o resultado com o MESMO nome no
+# seu diretório remoto, pelo que trazer duas para o mesmo destino apaga a primeira
+# em silêncio. O remédio é trazer para nomes distintos.
 #
 # Requisitos: VPN do ISCTE ligada + PuTTY instalado (pscp).
 set -euo pipefail
@@ -64,9 +55,8 @@ fi
 # O destino pode ser uma PASTA (o caso comum) ou um FICHEIRO com nome próprio —
 # que é como se cumpre a regra da armadilha nº7: ao trazer várias corridas da
 # mesma campanha, nomes distintos, porque o ficheiro remoto chama-se igual em
-# todas. Sem esta distinção o `mkdir -p` criava uma PASTA chamada
-# `zeroshot_c1_escala.csv` com o CSV lá dentro (aconteceu a 31 jul).
-# Heurística: se o destino não existe e o seu nome tem extensão, é ficheiro.
+# todas. Heurística: se o destino não existe e o seu nome tem extensão, é
+# ficheiro; senão o `mkdir -p` criava uma pasta com o nome do CSV.
 if [[ ! -d "$LOCAL" && "$(basename "$LOCAL")" == *.* ]]; then
     DESTINO_E_FICHEIRO=1
     mkdir -p "$(dirname "$LOCAL")"

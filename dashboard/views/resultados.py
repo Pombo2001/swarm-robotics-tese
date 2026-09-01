@@ -130,7 +130,7 @@ def _url_mini(session: str, filename: str) -> str:
 
 
 def _opcoes_de_sessao(sessions):
-    """As campanhas do seletor, **as da tese primeiro**.
+    """As campanhas do seletor, as da tese primeiro.
 
     A galeria abria na campanha mais RECENTE por data — que a 18 de agosto é o
     mapa composto, um cenário à parte cujos gráficos são de $0$ a $10$ recolhas.
@@ -138,7 +138,7 @@ def _opcoes_de_sessao(sessions):
     principal, e as sete campanhas que a dissertação cita ficavam a meio de uma
     lista de 48 nomes de pasta.
 
-    A ordem passa a ser: as **canónicas** (as que a tese cita), depois as
+    A ordem passa a ser: as canónicas (as que a tese cita), depois as
     exploratórias por data. O rótulo diz o que a pasta é — `mega_A1` não o diz.
     """
     canonicas, resto = [], []

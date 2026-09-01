@@ -2,7 +2,6 @@
 """Reproduz a Tabela de custo computacional por algoritmo (tese, §6.14.1).
 
 Porque existe
--------------
 A tabela entrou a 30 de agosto de 2026, a pedido do orientador («seria
 interessante uma tabela de comparação de tempos de execução»). Os seus números
 não vêm de nenhum CSV de avaliação — vêm dos REGISTOS DE TREINO da campanha de
@@ -13,12 +12,12 @@ replicação (mega_1mes, Muro em U, n=28 por braço), que nenhuma outra régua l
   · o PPO e o SAC não escrevem CSV nenhum — o que existe é o `.log` da fase,
     com as tabelas do Stable-Baselines3 (`total_timesteps`, `time_elapsed`).
 
-⚠️ ARMADILHA: as pastas `logs/` das fases 3 e 4 (PPO e SAC) contêm cópias
+ARMADILHA: as pastas `logs/` das fases 3 e 4 (PPO e SAC) contêm cópias
    IDÊNTICAS dos CSV do GNN da fase 2 — herdadas do diretório de trabalho no
    servidor. Ler os `.csv` dessas fases dá os números do evolutivo com o rótulo
    errado; por isso o PPO e o SAC leem-se SÓ do `.log`.
 
-⚠️ Unidades: o SB3 conta TRANSIÇÕES DE AGENTE (16 arenas × 20 agentes × 64
+Unidades: o SB3 conta TRANSIÇÕES DE AGENTE (16 arenas × 20 agentes × 64
    passos = 20 480 por iteração) e o treinador evolutivo conta PASSOS DE
    AMBIENTE. Para comparar, divide-se o do SB3 por N=20.
 
@@ -148,7 +147,7 @@ def main():
               "%5.1f passos/s/núcleo" % (len(dados), rot, dur, nucleos_hora,
                                          passos / 1e6, debito))
 
-    # --- as duas razões que o texto afirma ---
+    # as duas razões que o texto afirma
     if "PPO" in medidos and "GNN adaptativo" in medidos:
         g, p = medidos["GNN adaptativo"], medidos["PPO"]
         razao_custo = g[2] / p[2]

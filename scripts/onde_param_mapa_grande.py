@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
 onde_param_mapa_grande.py — o zero do F2 tem um mecanismo, e ele mede-se
-=========================================================================
 Os 42 campeões do braço dos gradientes (PPO 21 + SAC 21, treinados de raiz no
-mapa grande) recolhem **0,00** em 840 episódios de avaliação. Um zero é um
+mapa grande) recolhem 0,00 em 840 episódios de avaliação. Um zero é um
 número pobre: não distingue "os agentes não se mexem" de "os agentes fazem o
 percurso quase todo e ficam-se a dez metros do fim". A secção da tese não pode
 afirmar nem uma coisa nem a outra sem medir, e o `total_reward` já diz que a
@@ -11,12 +10,12 @@ segunda é a mais provável — os episódios acumulam recompensa POSITIVA
 (6 900 a 11 500 no PPO) num ambiente onde só a aproximação ao ninho paga.
 
 Este script transforma essa suspeita em números. Para cada campeão corre
-episódios instrumentados e regista, a cada passo, o **potencial do ambiente** de
+episódios instrumentados e regista, a cada passo, o potencial do ambiente de
 cada agente — que no `mapa_grande` é exatamente a distância geodésica ao ninho,
 o alvo da tarefa (`required_to_eat=1`: basta um agente entrar no ninho para
 contar uma recolha).
 
-⚠️ A RÉGUA É A DO AMBIENTE, de propósito. `env._potential(pos)` é a mesma
+A RÉGUA É A DO AMBIENTE, de propósito. `env._potential(pos)` é a mesma
 função que produz o `progress` da recompensa que treinou estes modelos. A 5 de
 agosto publicou-se aqui um 13,4% que devia ser 17,0% precisamente por se ter
 medido uma grandeza do ambiente com uma régua escrita à parte; medir a distância
@@ -69,7 +68,7 @@ def _carregar(algo, caminho):
 
     O GNN entrou aqui a 17 ago, quando o seu braço fechou. Sem ele, este script
     respondia «o PPO fica-se a 76 m» e mais nada — e a pergunta que interessa
-    não é onde o PPO para, é **porque é que o GNN passa e ele não**. Medir os
+    não é onde o PPO para, é porque é que o GNN passa e ele não. Medir os
     dois com a mesma régua, no mesmo mapa e com as mesmas sementes é o que
     transforma dois números soltos numa comparação.
     """

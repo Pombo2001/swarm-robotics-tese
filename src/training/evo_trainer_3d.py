@@ -202,7 +202,7 @@ class GeneticTrainer3D:
         self.sigma_min = evo_config.get('sigma_min', 0.03)
         self.sigma_decay = evo_config.get('sigma_decay', 0.999)
 
-        # ── Novelty Search (Lehman & Stanley 2011) — desligado por defeito ──
+        # Novelty Search (Lehman & Stanley 2011) — desligado por defeito
         # novelty_weight=0 → seleção 100% pelo objetivo (comportamento idêntico ao
         # histórico). >0 → score de seleção = blend normalizado objetivo/novelty,
         # para escapar a ótimos DECEPTIVE (ex. cooperative_door_bypass, onde o

@@ -56,7 +56,7 @@ def build():
                   else "Falha a trazer resultados", type="positive" if ok else "negative")
 
     with ui.column().classes("w-full gap-4 p-4"):
-        # ── Ligação ──────────────────────────────────────────────────────────
+        # Ligação
         with ui.card().classes(CARD):
             _section_title("dns", "Servidor de treino ISCTE")
             ui.label("Requer a VPN do ISCTE ligada. A password não é guardada.") \
@@ -79,7 +79,7 @@ def build():
                     .props("outlined dense").classes("flex-1")
                 ui.button("Atualizar", icon="sync", on_click=atualizar).props("color=primary unelevated")
 
-        # ── Estado ───────────────────────────────────────────────────────────
+        # Estado
         @ui.refreshable
         def painel():
             if st["busy"]:
@@ -130,7 +130,7 @@ def build():
                     ui.label(res.get("log", "—")).classes("text-xs font-mono whitespace-pre-wrap text-green-400")
         painel()
 
-        # ── Ações ────────────────────────────────────────────────────────────
+        # Ações
         with ui.card().classes(CARD):
             with ui.row().classes("w-full items-center justify-between"):
                 _section_title("download", "Trazer resultados")

@@ -112,7 +112,7 @@ def verificar_item(campanha: str, figura: str, nota: str) -> None:
               % (a, cenario, "/".join(sorted(stats))))
     citados = [a for a in citados if a in stats]
 
-    # ── «NN,N rec/ep» ────────────────────────────────────────────────────────
+    # «NN,N rec/ep»
     for m in re.finditer(r"(\d+,\d)\s*(?:rec/ep|±)", nota):
         esperado = _num(m.group(1))
         alvo = citados[0] if citados else None
@@ -126,7 +126,7 @@ def verificar_item(campanha: str, figura: str, nota: str) -> None:
             X(rot, "%s: a nota diz %s rec/ep, o CSV dá %.1f"
               % (alvo, m.group(1), real))
 
-    # ── «N/N a 100%» ─────────────────────────────────────────────────────────
+    # «N/N a 100%»
     for m in re.finditer(r"(\d+)/(\d+)", nota):
         cheias, total = int(m.group(1)), int(m.group(2))
         alvo = citados[0] if citados else None
@@ -138,7 +138,7 @@ def verificar_item(campanha: str, figura: str, nota: str) -> None:
             X(rot, "%s: a nota diz %d/%d, o CSV dá %d/%d"
               % (alvo, cheias, total, real_cheias, real_total))
 
-    # ── «A contra B (PPO) e C (SAC)» / «A vs B» ──────────────────────────────
+    # «A contra B (PPO) e C (SAC)» / «A vs B»
     pares = re.findall(r"(\d+,\d)\s*(?:contra|vs)\s*(\d+,\d)", nota)
     for a, b in pares:
         if len(citados) < 2:

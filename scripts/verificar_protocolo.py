@@ -2,9 +2,8 @@
 r"""O vocabulário numérico do protocolo, em toda a dissertação.
 
 Porque existe
--------------
 Os números que a tese repete mais vezes não são os resultados: são os do
-**protocolo** — «7 execuções», «195 minutos por execução», «20 episódios»,
+protocolo — «7 execuções», «195 minutos por execução», «20 episódios»,
 «$n=28$». Aparecem em prosa espalhada por dez secções, longe das tabelas que os
 verificadores conferem, e é por isso que a medição de cobertura os encontra às
 centenas por verificar: `contagem de execuções` é o maior grupo do
@@ -15,13 +14,13 @@ Um erro nestes números não se parece com um erro. Dizer «195 minutos» onde f
 campanha que não aconteceu — é a frase que um arguente confronta com o
 pré-registo.
 
-Este verificador não fixa os valores certos: **mede-os**. As execuções e os
+Este verificador não fixa os valores certos: mede-os. As execuções e os
 episódios saem dos `eval_by_run.csv` de todas as campanhas; os orçamentos, dos
 scripts que lançaram os treinos; os cenários, de `src/scenarios.py`. Depois
 percorre o `.tex` (sem comentários) e exige que cada afirmação de protocolo use
 um valor que exista de facto.
 
-O que ele **não** faz é dizer que a frase certa está no sítio certo: que uma
+O que ele não faz é dizer que a frase certa está no sítio certo: que uma
 campanha de 780 minutos não seja descrita com os 195 de outra é leitura humana.
 Ele garante o passo anterior — que o número existe em alguma campanha real — e
 lista o que encontrou, para que a leitura seja sobre um conjunto pequeno.
@@ -59,7 +58,7 @@ def sem_comentarios(caminho):
     return "\n".join(re.sub(r"(?<!\\)%.*$", "", l) for l in linhas)
 
 
-# ── O que existe de facto ────────────────────────────────────────────────────
+# O que existe de facto
 def medir():
     """Os valores de protocolo que as campanhas realmente usaram."""
     runs, episodios = set(), set()
@@ -116,7 +115,7 @@ def medir():
     }
 
 
-# ── O que a dissertação afirma ───────────────────────────────────────────────
+# O que a dissertação afirma
 # (grupo, padrão). O `(?:\\textit\{|\\emph\{|\\textbf\{)?` cobre as três
 # maneiras como a tese escreve «runs» — é assim que a contagem de cobertura os
 # viu espalhados por dez secções.

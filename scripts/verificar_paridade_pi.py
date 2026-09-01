@@ -2,21 +2,20 @@
 r"""O que as vistas leem  vs  o que o `atualizar_pi.sh` envia.
 
 Porque existe
--------------
-A cópia publicada no Raspberry Pi é atualizada por um **delta**: uma lista de
+A cópia publicada no Raspberry Pi é atualizada por um delta: uma lista de
 caminhos escrita à mão no `scripts/atualizar_pi.sh`, mais as figuras tocadas
 numa janela de tempo. Sempre que uma vista passa a ler um ficheiro novo e
 ninguém acrescenta esse caminho ao script, o Pi fica sem ele — e o modo como
-falha é o pior possível: a vista **não rebenta**, devolve `None` e cala-se. Foi
+falha é o pior possível: a vista não rebenta, devolve `None` e cala-se. Foi
 assim que o cartão do mega-treino desapareceu do Pi sem um erro, e que a Galeria
 lá ficou sem um único selo.
 
 Este verificador corre as 16 vistas com as leituras de ficheiro instrumentadas,
-recolhe **todos os caminhos do repositório que elas de facto abrem**, e confronta
+recolhe todos os caminhos do repositório que elas de facto abrem, e confronta
 cada um com a cobertura do `atualizar_pi.sh`. Falha quando aparece uma leitura
 que o delta não leva.
 
-O que **não** faz: falar com o Pi. Não precisa — a pergunta é sobre o script de
+O que não faz: falar com o Pi. Não precisa — a pergunta é sobre o script de
 publicação, não sobre o estado da máquina, e a publicação é em lote e a pedido.
 
 Uso:
@@ -70,15 +69,15 @@ ISENTOS = {
 def caminhos_do_script():
     r"""Os caminhos que o `atualizar_pi.sh` envia, lidos do próprio script.
 
-    ⚠️ Duas armadilhas, ambas apanhadas a construir isto:
+    Duas armadilhas, ambas apanhadas a construir isto:
 
-    1. **Os comentários não são caminhos.** A primeira versão apanhava o bloco
+    1. Os comentários não são caminhos. A primeira versão apanhava o bloco
        inteiro entre `CAMINHOS=(` e `)` com um regex e partia-o por espaços — e
        o bloco tem trinta linhas de comentário, onde se citam caminhos a
        explicar porque é que lá estão. Resultado: 766 «caminhos», e qualquer
        leitura mencionada num comentário passava a contar como enviada. Um
        verificador que se deixa convencer por um comentário não verifica nada.
-    2. **Os globs têm de ser expandidos.** O bash expande `results/*/evaluation`
+    2. Os globs têm de ser expandidos. O bash expande `results/*/evaluation`
        ao construir o array; quem lê o ficheiro em Python tem de o fazer também,
        senão dá por não enviado o que é enviado.
     """

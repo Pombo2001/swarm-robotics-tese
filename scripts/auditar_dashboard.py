@@ -2,10 +2,9 @@
 """Auditoria do dashboard — corre isto ANTES de publicar no Pi.
 
 Porquê
-------
 Olhar para o ecrã apanha o que salta à vista. Não apanha um PNG de 0 bytes, uma
 vista que só rebenta em modo de leitura, ou — o caso que motivou este ficheiro —
-uma retenção de **563%** na vista da robustez, porque o numerador vinha de uma
+uma retenção de 563% na vista da robustez, porque o numerador vinha de uma
 campanha e o denominador de outra.
 
 Corre nos DOIS modos: o completo (torre) e o de leitura (`SWARM_DASH_READONLY=1`,
@@ -85,7 +84,7 @@ def audita_vistas() -> None:
     I("vistas", "%d de %d construíram" % (ok, len(VISTAS)))
 
 
-# ── Estados vazios ───────────────────────────────────────────────────────────
+# Estados vazios
 # Uma vista que constrói perfeitamente e escreve «Ainda não há dados» está tão
 # partida, aos olhos de quem a abre, como uma que rebenta — e a auditoria
 # original, que só verificava que as vistas CONSTROEM, deixava-a passar sem uma

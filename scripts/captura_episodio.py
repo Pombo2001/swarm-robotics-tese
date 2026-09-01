@@ -2,9 +2,8 @@
 """Capturas qualitativas de um episódio, a partir dos JSON de results/episodios_3d/.
 
 Porque é que estas figuras existem
-----------------------------------
 As capturas qualitativas que estavam na tese (`viz_*.png`) eram fotografias do
-visualizador tiradas a **6 de junho de 2026** — anteriores à correção das
+visualizador tiradas a 6 de junho de 2026 — anteriores à correção das
 paredes de 29 jul (numa arena esférica de raio 60, paredes de 30 m deixavam 45 m
 de céu aberto e os agentes passavam por cima) e anteriores a todas as campanhas
 que a dissertação reporta. O texto usava-as para afirmar comportamentos das
@@ -15,7 +14,6 @@ Estes JSON são as trajetórias que o painel "Ao vivo (3D)" reproduz, gravadas a
 números das tabelas.
 
 Porquê rasto e não uma pose
----------------------------
 O que o texto afirma é *comportamento*: contornar o obstáculo, sincronizar na
 porta, cercar o alvo móvel. Uma pose instantânea não mostra nada disso — mostra
 onde 20 agentes calharam estar num quadro. O rasto ao longo do episódio mostra

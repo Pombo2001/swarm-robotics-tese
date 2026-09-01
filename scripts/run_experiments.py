@@ -220,7 +220,7 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
 
     generate_plots(scenarios, list(algorithms.keys()))
 
-    # ── AVALIAÇÃO DETERMINÍSTICA no fim do treino ────────────────────────────
+    # AVALIAÇÃO DETERMINÍSTICA no fim do treino
     # A rotina noturna treinava mas não avaliava, deixando os eval_*.csv (taxa de
     # sucesso, recolhas/ep — as métricas de TAREFA, comparáveis entre algoritmos)
     # desfasados dos modelos. Agora avalia automaticamente os 6 cenários sobre os
@@ -257,7 +257,7 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
         FALHAS.append(("relatório: gráficos + heatmaps + mapas", e))
         print(f"[!] Relatório (gráficos/heatmaps) FALHOU: {e}")
 
-    # ── A SESSÃO TEM DE SER AUTO-CONTIDA ─────────────────────────────────────
+    # A SESSÃO TEM DE SER AUTO-CONTIDA
     # A avaliação é escrita em results/evaluation/ (global), mas a pasta da sessão só
     # levava gráficos e modelos. Consequência: o dashboard, que procura o eval DENTRO da
     # pasta para poder comparar treinos, não encontrava nada — e as campanhas recentes
@@ -279,7 +279,7 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
         FALHAS.append(("cópia da avaliação para a sessão", e))
         print(f"[!] Cópia do eval para a sessão FALHOU: {e}")
 
-    # ── VÍDEOS dos episódios (GIF 2D top-down) ───────────────────────────────
+    # VÍDEOS dos episódios (GIF 2D top-down)
     # Grava 1 GIF por (algoritmo × cenário) treinado, na pasta da sessão acabada
     # de gerar (results/graficos_tese/<sessao>/videos/). Robusto: falhas
     # individuais não abortam o conjunto. Desligar com SWARM_VIDEOS=0 (gera ~1
@@ -298,7 +298,7 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
             FALHAS.append(("vídeos", e))
             print(f"[!] Vídeos FALHARAM: {e}")
 
-    # ── VERIFICAÇÃO DE COMPLETUDE ────────────────────────────────────────────
+    # VERIFICAÇÃO DE COMPLETUDE
     # A campanha só se considera bem sucedida se produziu TODOS os artefactos do
     # contrato (scripts/verificar_sessao.py). Sem isto, uma falha a meio deixava a
     # pasta incompleta e o problema só aparecia semanas depois, ao procurar um
@@ -319,7 +319,7 @@ def run_experiments(num_runs, time_limit, algorithms=None, scenarios=None,
         FALHAS.append(("verificação de artefactos", e))
         print(f"[!] Verificação de artefactos FALHOU: {e}")
 
-    # ── RESUMO FINAL ─────────────────────────────────────────────────────────
+    # RESUMO FINAL
     print("\n" + "=" * 70)
     if FALHAS:
         print(f"[!!] CAMPANHA CONCLUÍDA COM {len(FALHAS)} PROBLEMA(S):")

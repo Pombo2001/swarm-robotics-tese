@@ -9,7 +9,7 @@ Tipografia: Space Grotesk (títulos) · Inter (texto) · JetBrains Mono (número
 """
 from nicegui import core, ui
 
-# ── Paleta monocromática ──────────────────────────────────────────────────────
+# Paleta monocromática
 BG        = "#050505"   # fundo (quase preto)
 SURFACE   = "#0e0e0e"   # cartões
 BORDER    = "#1f1f1f"   # linhas finas
@@ -455,7 +455,7 @@ ECHART_BASE = {
     },
 }
 
-# ── Cromo dos gráficos (eixos, grelha, legenda, tooltip) ─────────────────────
+# Cromo dos gráficos (eixos, grelha, legenda, tooltip)
 # As cores dos ECharts passam todas por aqui: estiveram cravadas à mão nas
 # vistas, com o azul do tema antigo, e mudar o tema não lhes tocava.
 # A letra é generosa de propósito (12-13px, não os 10-11 do ECharts): o mesmo
@@ -525,7 +525,7 @@ window.monoDefesa = function (ligar) {
 
 
 def num(valor, casas: int = 1, sinal: bool = False) -> str:
-    """Um número como o resto do projeto o escreve: com **vírgula**.
+    """Um número como o resto do projeto o escreve: com vírgula.
 
     A dissertação é PT-PT e escreve `38,3`; o dashboard escrevia `38.3` em
     quinze sítios e `38,3` noutros tantos — às vezes na mesma linha («δ = +0.77»

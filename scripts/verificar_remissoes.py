@@ -2,7 +2,6 @@
 """Cada «Figura~\\ref{...}» aponta mesmo para uma figura?
 
 Porque existe
--------------
 O LaTeX não se queixa quando se escreve `Tabela~\\ref{fig:...}`: a referência
 resolve, imprime um número, e o PDF fica com uma frase que manda o leitor à
 tabela 6.2 quando queria a figura 6.2. É dos poucos erros que sobrevivem a
@@ -94,7 +93,7 @@ def main():
                             "devia ser `%s:`" % (nome, linha, lab, amb,
                                                  prefixos[0]))
 
-    # ── figuras e tabelas que o texto nunca chama ──────────────────────────
+    # figuras e tabelas que o texto nunca chama
     #
     # Uma tabela de resultados que nenhuma frase refere é uma tabela a que o
     # leitor nunca é levado — e aconteceu com a `tab:f2_mapa_grande`, que é a

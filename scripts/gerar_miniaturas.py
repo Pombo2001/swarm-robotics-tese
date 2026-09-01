@@ -4,15 +4,15 @@
 PORQUÊ. As figuras são exportadas em resolução de impressão — 2400×1800 a
 4200×2100, 347 KB de média — e a Galeria mostra-as numa grelha, a poucas dezenas
 de píxeis de largura. Medido no dashboard em modo leitura, num telemóvel: o
-primeiro ecrã da Galeria descarregava **7,4 MB**, e isso já com `loading=lazy`
+primeiro ecrã da Galeria descarregava 7,4 MB, e isso já com `loading=lazy`
 a impedir que as outras 21 imagens fossem pedidas. Uma figura de 4200 px a ser
 desenhada a 72 px é um fator de 58×.
 
 Isto não custa quase nada na torre, onde o browser e os ficheiros estão na mesma
-máquina. Custa no **Raspberry Pi**, que serve pela internet a partir do upload de
+máquina. Custa no Raspberry Pi, que serve pela internet a partir do upload de
 uma casa — é lá que a Galeria demora, e é o orientador que espera.
 
-Uma miniatura WebP de 600 px da mesma figura ocupa **9 KB**: 42 vezes menos.
+Uma miniatura WebP de 600 px da mesma figura ocupa 9 KB: 42 vezes menos.
 
 O QUE FAZ. Para cada `.png` de cada campanha, escreve `.thumbs/<nome>.webp`
 com a largura pedida. Não toca nos originais: a Galeria passa a mostrar a

@@ -1,6 +1,5 @@
 """
 progress.py — Progresso partilhado entre os scripts de geração e o dashboard
-============================================================================
 Os scripts (plot_results, heatmaps) escrevem o progresso num ficheiro simples;
 o dashboard lê-o no seu tick e atualiza a barra de progresso + label de estado.
 Formato do ficheiro: uma linha "FRACAO|MENSAGEM" (ex: "0.4200|A gerar heatmap SAC/u_wall").

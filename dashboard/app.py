@@ -58,7 +58,7 @@ def index(v: str = ""):
     """
     theme.apply()
 
-    # ── Header ────────────────────────────────────────────────────────────────
+    # Header
     with ui.header(elevated=False).classes("items-center gap-3 px-4 py-2"):
         ui.button(icon="menu", on_click=lambda: drawer.toggle()) \
             .props('flat round dense color=white '
@@ -79,7 +79,7 @@ def index(v: str = ""):
             lbl = ui.label("inativo").classes("text-xs mono-num") \
                 .style(f"color:{theme.INK_MUTED}")
 
-    # ── Navegação (barra lateral, por fluxo de trabalho) ───────────────────────
+    # Navegação (barra lateral, por fluxo de trabalho)
     def _sec(titulo):
         """Cabeçalho de secção na barra lateral."""
         ui.label(titulo).classes("text-[10px] font-bold tracking-[.2em] px-2 pt-3 pb-1") \
@@ -186,7 +186,7 @@ def index(v: str = ""):
             tabs.set_value(tab)
 
 
-    # ── Rodapé de navegação ────────────────────────────────────────────────────
+    # Rodapé de navegação
     # A ordem da barra lateral. As entradas que não existem em modo leitura
     # entram a None e caem fora, senão o Pi teria setas para painéis inexistentes.
     # O 3.º campo vai para o URL (`/?v=ciencia`): sem acentos nem espaços.
@@ -281,7 +281,7 @@ def index(v: str = ""):
             else:
                 ui.element("div")
 
-    # ── Conteúdo ───────────────────────────────────────────────────────────────
+    # Conteúdo
     with ui.tab_panels(tabs, value=_inicial).classes("w-full bg-transparent"):
         with ui.tab_panel(t_overview).classes("p-0"):
             overview.build(queue, goto)

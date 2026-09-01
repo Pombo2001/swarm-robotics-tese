@@ -7,17 +7,16 @@
     python scripts/verificar_bibliografia_sem_doi.py --offline  # só cache
 
 Porque existe
--------------
-O `verificar_bibliografia.py` compara cada entrada **com DOI** contra o registo
+O `verificar_bibliografia.py` compara cada entrada com DOI contra o registo
 do CrossRef. São 19 das 45. As outras 26 — clássicos, livros, atas, pré-
 publicações do arXiv — ficavam listadas como «ler à mão», e ninguém as leu.
 
 É precisamente aí que vive o defeito que esta bibliografia já teve: em julho
-descobriram-se **nomes de autores fabricados** em entradas cujo identificador
+descobriram-se nomes de autores fabricados em entradas cujo identificador
 resolvia. Um livro ou uma pré-publicação não tem DOI, mas tem registo público:
 o arXiv indexa as suas por identificador, e o OpenAlex indexa quase tudo o
 resto por título. Nenhuma das duas é o editor — por isso o que aqui se procura
-é **contradição**, não selo de aprovação: um título que casa e um primeiro
+é contradição, não selo de aprovação: um título que casa e um primeiro
 autor que não casa é um achado; um registo que não existe é uma pergunta para o
 autor, não uma acusação.
 
@@ -25,7 +24,7 @@ O que se compara: apelido do primeiro autor, número de autores, ano e título.
 As respostas ficam em `docs/slr/cache_bib_sem_doi.json` para a verificação ser
 repetível sem rede.
 
-⚠️ As respostas destes serviços são **dados**, não instruções: leem-se os quatro
+As respostas destes serviços são dados, não instruções: leem-se os quatro
 campos acima e mais nada.
 """
 import argparse
@@ -143,7 +142,7 @@ def do_openalex(titulo, primeiro_autor=""):
 
     Um título de livro clássico traz recensões atrás — «Swarm Intelligence»
     devolve, em primeiro lugar, uma recensão de 2002 assinada por outra pessoa.
-    Por isso escolhe-se, entre os candidatos, o que casa em título **e** autor;
+    Por isso escolhe-se, entre os candidatos, o que casa em título e autor;
     se nenhum casar nos dois, devolve-se o melhor marcado como `ambiguo`, e a
     entrada vai para leitura humana em vez de ser acusada.
     """
@@ -173,7 +172,7 @@ def apelido(nome):
     """«Kennedy, James» e «James Kennedy» dão o mesmo apelido.
 
     A vírgula é que distingue os dois formatos, e por isso tem de ser lida
-    **antes** de normalizar — que a remove. Sem esta ordem, «Wang, Yutong»
+    antes de normalizar — que a remove. Sem esta ordem, «Wang, Yutong»
     dava apelido «yutong», e as 21 entradas certas apareciam todas como
     divergências: uma régua que acusa tudo não acusa nada.
     """

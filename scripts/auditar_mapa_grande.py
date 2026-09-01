@@ -2,7 +2,6 @@
 """Auditoria do 8.º cenário (mapa grande) contra os sete cenários fechados.
 
 Porque existe
--------------
 O mapa grande é o único cenário que nunca produziu uma recolha: o F1 (zero-shot)
 deu 84/84 células a 0,00, e o primeiro run nativo do F2 fechou 143 gerações e
 24,4 milhões de passos com `best_task_food = 0`. Um zero pode ser o resultado
@@ -65,7 +64,7 @@ def _env(cenario, seed=0):
     return e
 
 
-# ── 1. Propriedades básicas, lado a lado ────────────────────────────────────
+# 1. Propriedades básicas, lado a lado
 def tabela_comparativa(envs):
     print("=" * 78)
     print("1. O MAPA GRANDE AO LADO DOS SETE — propriedades do ambiente")
@@ -87,7 +86,7 @@ def tabela_comparativa(envs):
         erro(f"dimensões de observação diferentes entre cenários: {dims}")
 
 
-# ── 2. Paredes: altura e estanqueidade ──────────────────────────────────────
+# 2. Paredes: altura e estanqueidade
 def verificar_paredes(envs):
     print()
     print("=" * 78)
@@ -109,7 +108,7 @@ def verificar_paredes(envs):
     ok("altura das paredes verificada nos cenários com paredes")
 
 
-# ── 3. Alcançabilidade: do spawn ao ninho, e a comida ───────────────────────
+# 3. Alcançabilidade: do spawn ao ninho, e a comida
 def _grelha_livre(e, passo=0.5):
     """Grelha booleana de células navegáveis (True = livre), no plano z=0.
 
@@ -222,7 +221,7 @@ def verificar_alcancabilidade(envs, verboso=False):
     return mapas
 
 
-# ── 4. Orçamento temporal: dá para ir e voltar? ─────────────────────────────
+# 4. Orçamento temporal: dá para ir e voltar?
 def verificar_orcamento(envs):
     print()
     print("=" * 78)
@@ -254,7 +253,7 @@ def verificar_orcamento(envs):
               f"{percurso:10.0f} {folga:6.1f}×{marca}")
 
 
-# ── 5. Campo geodésico ──────────────────────────────────────────────────────
+# 5. Campo geodésico
 def _cobertura_util(e, eixo, alc):
     """% das células ONDE OS ROBÔS PODEM ANDAR (livres e ligadas ao spawn) que
     têm potencial finito.
@@ -320,7 +319,7 @@ def verificar_geodesico(envs, mapas=None):
               f"navega sem sinal de progresso")
 
 
-# ── 6. Um episódio a sério, com política aleatória ──────────────────────────
+# 6. Um episódio a sério, com política aleatória
 def episodio_de_fumo(envs, passos=300):
     print()
     print("=" * 78)
@@ -345,28 +344,28 @@ def episodio_de_fumo(envs, passos=300):
                  f"agente saiu para uma zona sem campo")
 
 
-# ── 6b. O andar onde a tarefa é impossível ──────────────────────────────────
+# 6b. O andar onde a tarefa é impossível
 def verificar_teto_vs_ninho(envs):
     """O teto vertical deixa uma faixa de altitude onde não se pode entregar?
 
-    A entrega é uma distância **3D**: `norm(pos − nest_pos) < nest_radius + 0.1`,
+    A entrega é uma distância 3D: `norm(pos − nest_pos) < nest_radius + 0.1`,
     com o ninho em z=0. Um agente a |z| ≥ 1,6 m não entrega, esteja onde estiver
     em x,y — nem por cima do ninho. O mapa grande tem teto de ±2 m, ou seja
-    **maior** que esse limiar: entre 1,6 e 2,0 m há um andar onde um agente pode
+    maior que esse limiar: entre 1,6 e 2,0 m há um andar onde um agente pode
     navegar o mapa inteiro sem nunca poder recolher.
 
-    ⚠️ O andar improdutivo NÃO é uma singularidade do mapa grande: nos sete
+    O andar improdutivo NÃO é uma singularidade do mapa grande: nos sete
     cenários vai até ao raio da arena (13,4 m), e é o teto de ±2 m que o reduz a
     0,4 m aqui. A tabela imprime-se toda por isso mesmo — a primeira versão
     desta verificação avisava só sobre o mapa grande e deixava a leitura de que
     o teto criava o problema, quando é ele que quase o elimina.
 
-    ⚠️ E o andar improdutivo também NÃO explica o zero do F1, por muito que a
+    E o andar improdutivo também NÃO explica o zero do F1, por muito que a
     coincidência convide (5 ago, medido em 4 campeões × 3 seeds):
 
       · com teto e sem teto, as recolhas são 0,00 — o teto não muda nada;
       · a distância MÍNIMA ao ninho, em todo o episódio e sobre 20 agentes, é de
-        **37 a 79 m** num percurso de 154 m: os campeões nem chegam perto do
+        37 a 79 m num percurso de 154 m: os campeões nem chegam perto do
         ninho, quanto mais a precisar de descer para entregar;
       · nos cenários nativos os mesmos campeões chegam a 1,4 m do ninho e
         recolhem 67-137 vezes, com 0-57% do tempo acima do limiar de entrega.
@@ -399,7 +398,7 @@ def verificar_teto_vs_ninho(envs):
                   f"com o teto em 1,5 m nenhuma altitude seria improdutiva")
 
 
-# ── 7. A porta compensa? (M3 do pré-registo) ────────────────────────────────
+# 7. A porta compensa? (M3 do pré-registo)
 def verificar_porta(envs):
     """Compara o percurso PELA PORTA com o da alternativa longa.
 

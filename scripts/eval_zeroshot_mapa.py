@@ -1,6 +1,5 @@
 """
 eval_zeroshot_mapa.py — F1 do pré-registo: Zero-Shot de TOPOLOGIA
-=================================================================
 Avalia os modelos campeões (treinados nos 7 cenários) num mapa em que NUNCA
 treinaram — por omissão o `mapa_grande`. Responde à pergunta da QI7: o que os
 algoritmos aprenderam em cenários de dificuldade ISOLADA transfere para um
@@ -11,12 +10,12 @@ que já existe em `eval_scalability.py`). Só é possível porque a observação
 mesma dimensão em todos os cenários (16+(N-1)*5 = 111 com N=20): os `.pth`/`.zip`
 existentes carregam sem alteração nenhuma.
 
-⚠️ Isto NÃO substitui a fase F2 (treino nativo). É a fase F1 do
+Isto NÃO substitui a fase F2 (treino nativo). É a fase F1 do
 `docs/PRE_REGISTO_MAPA_GRANDE.md`: barata (horas, não dias), corre localmente e a
 sua leitura não depende do treino nativo. O contraste F1 vs F2 é, em si, um
 resultado — e é reportado mesmo que dê 0 em todas as células.
 
-⚠️ UM ZERO TEM QUATRO CAUSAS POSSÍVEIS, e três delas não são a que o F1 mede.
+UM ZERO TEM QUATRO CAUSAS POSSÍVEIS, e três delas não são a que o F1 mede.
 Por isso a corrida tem condições de CONTROLO — cada uma desliga uma causa,
 mantendo tudo o resto igual:
 
@@ -35,7 +34,7 @@ mantendo tudo o resto igual:
 treinou com obstáculos — e é o único campeão que recolhe alguma coisa no mapa.
 A leitura de cada condição está pré-comprometida no pré-registo (secção 3).
 
-⚠️ QUAL CAMPANHA ESTÁS A AVALIAR? A corrida de 25 jul 2026 (18 células, 6 h)
+QUAL CAMPANHA ESTÁS A AVALIAR? A corrida de 25 jul 2026 (18 células, 6 h)
 teve de ser DEITADA FORA por causa disto: o script carregava o que estivesse no
 caminho esperado e não tinha opinião nenhuma sobre a data. Os `results/models*`
 daquele PC eram de 24 jun — campeões de ANTES da fitness de homing, que dão 0,0
@@ -507,7 +506,7 @@ def avaliar(mapa="mapa_grande", origens=None, algos=None, episodes=20,
     if controlo not in CONTROLOS:
         raise SystemExit("[X] --controlo tem de ser um de %s" % (CONTROLOS,))
 
-    # ── Que modelos, de que campanha ─────────────────────────────────────────
+    # Que modelos, de que campanha
     # Antes de tudo o resto: o inventário completo dos campeões, com data, e a
     # guarda de campanha. Uma corrida destas leva horas e falha em SILÊNCIO
     # quando os modelos estão errados (dá zeros, que é um resultado possível) —
@@ -532,7 +531,7 @@ def avaliar(mapa="mapa_grande", origens=None, algos=None, episodes=20,
     cfg = copy.deepcopy(cfg)
     cfg["environment"]["classic_scenario"] = mapa
 
-    # ── Normalizador das distâncias na observação ────────────────────────────
+    # Normalizador das distâncias na observação
     # 'mapa'  : o do próprio mapa (r=60 -> ÷120). É a condição natural.
     # 'treino': o dos 7 cenários (r=15 -> ÷30). CONTROLO — ver o pré-registo.
     # Sem o par, um zero decorre de duas causas que não se distinguem:

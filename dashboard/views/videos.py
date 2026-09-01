@@ -24,7 +24,7 @@ def _url(session: str, filename: str) -> str:
 def _metric_chip(session: str, algo: str, scenario: str):
     """Chip com Ptask·recolhas DESTE treino, por baixo do vídeo.
 
-    ⚠️ Recebia a `session` e não a usava: lia a `science_table()`, que é a
+    Recebia a `session` e não a usava: lia a `science_table()`, que é a
     avaliação oficial (a campanha final), e mostrava-a por baixo de qualquer
     vídeo. No «Comparar treinos» punha o mesmo «86% · 38,3 rec/ep» debaixo dos
     dois — dois treinos diferentes com a mesma pontuação, a ler-se como um
@@ -71,7 +71,7 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
     """Cartão de um vídeo (algo×cenário) com badge colorido, GIF e métrica.
 
     Quando o vídeo não existe NESTA campanha mas existe noutra, mostra-se o de
-    lá **com a campanha escrita por cima**. O mapa composto obrigou a isto: os
+    lá com a campanha escrita por cima. O mapa composto obrigou a isto: os
     três braços correram em campanhas separadas (GNN a 16 ago, PPO a 7, SAC a
     10), por serem streams independentes no servidor. Sem esta procura, a vista
     que existe para comparar algoritmos mostrava um vídeo e dois «sem vídeo» —
@@ -145,7 +145,7 @@ def build():
     sem_video = [s for s in todas if s not in sessions]
 
     with ui.column().classes("w-full gap-4 p-4 max-w-[1400px] mx-auto"):
-        # ── Barra de controlo ────────────────────────────────────────────────
+        # Barra de controlo
         with ui.card().classes(CARD):
             with ui.row().classes("w-full items-center justify-between no-wrap gap-4"):
                 _section_title("smart_display", "Vídeos dos episódios",
@@ -191,7 +191,7 @@ def build():
 
         body = ui.column().classes("w-full gap-4")
 
-        # ── Render por modo ──────────────────────────────────────────────────
+        # Render por modo
         def render():
             body.clear()
             st["session"] = sess_sel.value

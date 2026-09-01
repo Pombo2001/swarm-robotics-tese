@@ -1,52 +1,41 @@
 #!/bin/bash
-# F2 do MAPA GRANDE — treino NATIVO no 8.º cenário. Corre no servidor, em ~/swarm-mapa.
-# Pré-registo: docs/PRE_REGISTO_MAPA_GRANDE.md (secções 2 e 3). Padrão mega_stream*:
-# retry com --resume, arquivo por fase, config reposto no fim.
+# F2 do MAPA GRANDE — treino NATIVO no 8.º cenário. Corre no servidor, em
+# ~/swarm-mapa, com o padrão dos mega_stream*: retry com --resume, arquivo por
+# fase, config reposto no fim. Pré-registo: docs/PRE_REGISTO_MAPA_GRANDE.md
+# (secções 2 e 3).
 #
-# ⚠️ SÓ DEPOIS DO MEGA-TREINO FECHAR (~3 ago). Enquanto megaA/megaB estiverem vivos
-#    isto seria uma 3.ª stream pesada e atrasava duas campanhas de um mês.
-#    Verificar antes:  scripts/servidor.sh   (sem sessões megaA/megaB = via livre)
-#
-# ⚠️ UM DIRETÓRIO POR STREAM — não é detalhe de arrumação. Dois streams no mesmo
-#    diretório escrevem os MESMOS CSV (`results/logs/gnn_3d_training_*.csv`) e as
-#    mesmas sentinelas (`_campanha_concluida.txt`, que a função `correr` apaga à
-#    entrada): o segundo a arrancar corrompe o primeiro, ou o retry dispara em
-#    falso e o `arquivar` leva ficheiros do vizinho. É a mesma razão pela qual os
-#    três controlos do F1 correram em ~/swarm-mapa-c{1,2,3} (30 jul).
+# UM DIRETÓRIO POR STREAM, e não por arrumação: dois streams no mesmo diretório
+# escrevem os MESMOS CSV (`results/logs/gnn_3d_training_*.csv`) e as mesmas
+# sentinelas (`_campanha_concluida.txt`, que a função `correr` apaga à entrada).
+# O segundo a arrancar corrompe o primeiro, ou o retry dispara em falso e o
+# `arquivar` leva ficheiros do vizinho.
 #
 #     ~/swarm-mapa/scripts/mapa_streamF2.sh preparar    # cria ~/swarm-mapa-f2{g,r,l}
 #     tmux new-session -d -s mapaF2g '~/swarm-mapa-f2g/scripts/mapa_streamF2.sh gnn'
 #     tmux new-session -d -s mapaF2r '~/swarm-mapa-f2r/scripts/mapa_streamF2.sh grad'
-#
-# e um TERCEIRO só quando o `grad` fechar (~8 ago) — nunca em paralelo com os dois:
 #     tmux new-session -d -s mapaF2l '~/swarm-mapa-f2l/scripts/mapa_streamF2.sh longo'
 #
 #   gnn   : GNN  21 runs x 780 min  = 273 h  (~11,4 dias)  <- o gargalo
 #   grad  : PPO  21 runs x 192 min + SAC 21 runs x 192 min = 134 h  (~5,6 dias)
 #   longo : GNN   3 runs x 2340 min = 117 h  (~4,9 dias)   EXPLORATÓRIO
 #
-# Orçamento PRÉ-REGISTADO, não negociável a meio: 780 min/run para o GNN e 192 para
-# PPO/SAC (a proporção 4:1 de todas as campanhas anteriores). O que o justifica está
-# na secção 2 do pré-registo: a 195 min o GNN faria 3,4 gerações no mapa grande, e
-# "o evolutivo falha no mapa composto" seria artefacto do orçamento — o mesmo erro
-# que a tese já apanhou uma vez com a fitness.
+# O `longo` só arranca quando o `grad` largar a máquina: três streams pesados
+# saturam os 64 vCPU e atrasam os que contam.
 #
-# 21 runs (era 7): emenda 19, de 2 ago, escrita com ZERO dados de F2. O acréscimo
-# de máquina — 15 dias livres entre o fim do megaB e o hard stop de 22 ago — vai
-# todo para RUNS e nenhum para minutos por run, porque são os minutos que igualam
-# as gerações às campanhas fechadas. M1-M3 e a regra de decisão ficam como estavam;
-# M2 continua DESCRITIVO (subir o n e converter um descritivo em teste seria
-# escolher o teste com o n na mão).
+# Orçamento PRÉ-REGISTADO, não negociável a meio: 780 min/run para o GNN e 192
+# para PPO/SAC (a proporção 4:1 de todas as campanhas anteriores). A 195 min o
+# GNN faria 3,4 gerações no mapa grande, e «o evolutivo falha no mapa composto»
+# seria artefacto do orçamento. O acréscimo de máquina foi todo para RUNS e
+# nenhum para minutos por run, porque são os minutos que igualam as gerações às
+# campanhas fechadas.
 #
-# O modo `longo` é a emenda 20: 3× as gerações, n=3, para responder de antemão a
-# "faltou treino" se o F2 der zero. É EXPLORATÓRIO — não entra em M1-M3 e não se
-# compara com os braços principais (orçamentos diferentes não são comparáveis).
+# O modo `longo` dá 3x as gerações com n=3, para responder de antemão a «faltou
+# treino» se o F2 der zero. É EXPLORATÓRIO: não entra em M1-M3 e não se compara
+# com os braços principais, porque orçamentos diferentes não são comparáveis.
 #
-# Seeds 1..N: o run_experiments passa --seed <nº do run>, por isso 21 runs = seeds 1-21.
-# O cenário é posto no config pelo próprio run_experiments (set_scenario), não por sed.
-#
-# Se falhar até 22 ago, a resposta já está pré-decidida (secção 5 do pré-registo):
-# cortar para 2 algoritmos e DECLARÁ-LO. Nunca menos de 7 runs.
+# Seeds 1..N: o run_experiments passa --seed <nº do run>, por isso 21 runs =
+# seeds 1-21. O cenário é posto no config pelo próprio run_experiments
+# (set_scenario), não por sed.
 set -u
 
 BASE=~/swarm-mapa
@@ -57,11 +46,10 @@ LOGDIR=results/logs
 
 MODO="${1:-}"
 
-# --- preparar: um diretório de trabalho por stream ---------------------------
+# preparar: um diretório de trabalho por stream
 # Mesma mecânica dos controlos do F1, incluindo a guarda do simulador: um
-# diretório que já exista com OUTRO `swarm_env_3d.py` não se reutiliza. Foi essa
-# a armadilha de 29 jul — as cópias tinham o simulador em que os agentes voavam
-# por cima das paredes, e reutilizá-las teria repetido o F1 anulado.
+# diretório que já exista com OUTRO `swarm_env_3d.py` não se reutiliza —
+# reutilizá-lo repetiria a campanha com a física antiga.
 if [ "$MODO" = "preparar" ]; then
     for m in g r l; do
         d="$HOME/swarm-mapa-f2$m"
@@ -104,8 +92,8 @@ if [ -n "$BASE_ABS" ] && [ "$RAIZ" = "$BASE_ABS" ]; then
     exit 2
 fi
 
-# Emenda 19 (2 ago): 21 runs nos braços principais. RUNS_LONGO=3 é o exploratório
-# da emenda 20 — n pequeno de propósito, não é uma célula da comparação.
+# 21 runs nos braços principais; RUNS_LONGO=3 é o exploratório — n pequeno de
+# propósito, não é uma célula da comparação.
 RUNS=${F2_RUNS:-21}
 RUNS_LONGO=${F2_RUNS_LONGO:-3}
 MIN_GNN=${F2_MIN_GNN:-780}
@@ -121,19 +109,14 @@ MASTER=~/mapa_F2${MODO}_master.log
 
 registar() { echo "[$TAG] $*" | tee -a "$MASTER"; }
 
-# ─── A CONFIGURAÇÃO DO BRAÇO, ESCRITA E VERIFICADA ────────────────────────────
-# Porque é que isto existe (4 ago): os streams do GNN correram 26 h com o
-# `novelty_weight` em 0 — o OBJETIVO PURO — quando o pré-registo fixa, na secção
-# 2, «GNN com Novelty adaptativo (w₀=0,5, sustain=10, decay=0,98) — não o
-# objetivo puro». O `mega_streamA.sh` tinha uma função `config()` que escrevia
-# estas chaves em cada fase; este script não a tinha, e HERDAVA o que estivesse
-# no ficheiro da cópia. Como a cópia veio sem a secção `novelty`, o trainer usou
-# os defaults (weight=0, adaptive=false) e treinou o braço errado — em silêncio,
-# porque nada no arranque imprimia a configuração científica.
+# A CONFIGURAÇÃO DO BRAÇO, ESCRITA E VERIFICADA
+# O trainer herda o que estiver no config da cópia. Sem esta função, uma cópia
+# sem a secção `novelty` cai nos defaults (weight=0, adaptive=false) e treina o
+# objetivo puro em vez do braço pré-registado, em silêncio.
 #
-# Agora escreve-se e RELÊ-SE: se o que ficou no ficheiro não for o que se pediu,
-# aborta. Um sed que não encontra a chave não falha — limita-se a não fazer nada,
-# e era assim que se lançava com os parâmetros errados.
+# Escreve-se e RELÊ-SE: se o que ficou no ficheiro não for o que se pediu,
+# aborta. Um `sed` que não encontra a chave não falha — limita-se a não fazer
+# nada, e é assim que se lança com os parâmetros errados.
 config_novelty() {   # config_novelty <weight> <adaptive>
     local w="$1" adap="$2"
     # As chaves da ablação saem sempre: os defaults do trainer (sustain=10,
@@ -145,8 +128,8 @@ config_novelty() {   # config_novelty <weight> <adaptive>
         if grep -qE "^  $chave:" "$CFG"; then
             sed -i "s/^  $chave: .*/  $chave: $valor/" "$CFG"
         else
-            # A secção pode não ter a chave (foi o que aconteceu): acrescenta-se
-            # debaixo de `evolution:`, que é onde o evo_trainer a procura.
+            # A secção pode não ter a chave: acrescenta-se debaixo de
+            # `evolution:`, que é onde o evo_trainer a procura.
             sed -i "/^evolution:/a\\  $chave: $valor" "$CFG"
         fi
     done
@@ -213,10 +196,9 @@ elif [ "$MODO" = "grad" ]; then
            --scenarios mapa_grande --eval-episodes 20
     arquivar mapa_F2_sac ~/mapa_F2_sac.log
 else
-    # EXPLORATÓRIO (emenda 20). Não entra em M1-M3 e não se compara com os braços
-    # principais: 2340 min são 3× as gerações do braço GNN, e orçamentos
-    # diferentes não são comparáveis. Só arranca depois do `grad` largar a
-    # máquina — três streams pesados saturam os 64 vCPU e atrasam os que contam.
+    # EXPLORATÓRIO: não entra em M1-M3 nem se compara com os braços principais
+    # (2340 min são 3x as gerações do braço GNN, e orçamentos diferentes não são
+    # comparáveis). Só arranca depois de o `grad` largar a máquina.
     if tmux ls 2>/dev/null | grep -qE '^mapaF2r:'; then
         registar "⛔ o stream dos gradientes (mapaF2r) ainda corre — o longo espera."
         registar "   Relança quando ele fechar (~8 ago). A sair sem tocar em nada."

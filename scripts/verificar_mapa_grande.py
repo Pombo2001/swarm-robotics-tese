@@ -2,7 +2,6 @@
 """Verifica os números da secção do mapa grande (`Tese/seccao_mapa_grande.tex`).
 
 Porque existe, e porque existe AGORA
-------------------------------------
 A secção entra na dissertação a ~16 de agosto, com seis dias até ao limite de
 integração. Nesse dia haverá cinco buracos para preencher, uma leitura para
 escolher e um `\\input` para descomentar — e nenhuma vontade de escrever um
@@ -10,7 +9,7 @@ verificador. Escrito antes de existirem os números, este verificador faz duas
 coisas: valida hoje tudo o que a secção já afirma (a geometria e o F1 inteiro), e
 está pronto para validar o F2 no dia em que o `eval_by_run.csv` aparecer.
 
-⚠️ Os valores esperados são LIDOS DO `.tex`, nunca fixados aqui. Um verificador
+Os valores esperados são LIDOS DO `.tex`, nunca fixados aqui. Um verificador
 com os números copiados para dentro de si concorda com a tese por construção e
 deixa de ser verificação — passa a ser uma segunda cópia, que é o defeito que
 este projeto já apanhou três vezes (a régua do percurso, as figuras do artigo, a
@@ -70,7 +69,7 @@ def le(padrao, texto, nome):
 def _n(s):
     r"""'1{,}7', '+0{,}19' ou '17\%' -> float. None se não for número.
 
-    ⚠️ A ordem importa: o separador decimal PT-PT é `{,}` e tem de ser
+    A ordem importa: o separador decimal PT-PT é `{,}` e tem de ser
     resolvido ANTES de se limparem as chavetas, senão `1{,}7` fica `1{,7` e não
     converte. É a mesma armadilha que o `numero()` do verificar_numeros_tese
     documenta — e que aqui se voltou a cair, por o helper ter sido escrito à
@@ -98,7 +97,7 @@ def compara(nome, medido, na_tese, tol=0.05):
         falhas.append("%s: medido %.2f, a secção diz %.2f" % (nome, medido, na_tese))
 
 
-# ── 1. Geometria: a secção descreve o mapa, o simulador constrói-o ───────────
+# 1. Geometria: a secção descreve o mapa, o simulador constrói-o
 def geometria(texto):
     print()
     print("=" * 74)
@@ -176,7 +175,7 @@ def geometria(texto):
     return env
 
 
-# ── 2. F1: 84 células a zero, e as três causas excluídas ────────────────────
+# 2. F1: 84 células a zero, e as três causas excluídas
 def f1(texto):
     print()
     print("=" * 74)
@@ -229,7 +228,7 @@ def f1(texto):
         print("  [v] todas as condições a 0,00 recolhas, como a secção afirma")
 
 
-# ── 3. Orçamento do F2 ──────────────────────────────────────────────────────
+# 3. Orçamento do F2
 def orcamento(texto):
     print()
     print("=" * 74)
@@ -258,7 +257,7 @@ def orcamento(texto):
               "para confrontar com o servidor")
 
 
-# ── 4. F2: ativa-se sozinho quando os dados existirem ───────────────────────
+# 4. F2: ativa-se sozinho quando os dados existirem
 def f2(texto):
     print()
     print("=" * 74)
@@ -283,17 +282,12 @@ def f2(texto):
                  conv, len(por_run)))
     # Só compara com o texto se os buracos já tiverem sido preenchidos.
     #
-    # Lia o ficheiro CRU. Depois de a secção ser preenchida, as
-    # leituras alternativas que não foram escolhidas ficam em comentário — com
-    # os seus `\PORPREENCHER` lá dentro, mais a `\providecommand` que define o
-    # próprio comando. O verificador dizia «ainda tem \PORPREENCHER» sobre uma
-    # secção inteiramente preenchida, e a linha que a compara com os dados
-    # nunca chegava a correr. É a mesma armadilha da vista Defesa:
-    # quem lê o `.tex` por regex tem de ignorar os comentários.
-    # E procura-se a UTILIZAÇÃO (`\PORPREENCHER{...}`), não a palavra: a secção
-    # define o próprio comando com `\providecommand{\PORPREENCHER}[1]{...}`, e
-    # essa linha fica lá para sempre. Um teste que a conta nunca dá a secção
-    # por preenchida.
+    # Ignoram-se os comentários do `.tex`: depois de a secção ser preenchida, as
+    # leituras alternativas que não foram escolhidas ficam comentadas, com os seus
+    # `\PORPREENCHER` lá dentro, e o verificador dava por preencher uma secção
+    # inteira. E procura-se a UTILIZAÇÃO (`\PORPREENCHER{...}`), não a palavra: a
+    # secção define o próprio comando com `\providecommand`, e essa linha fica lá
+    # para sempre.
     if re.search(r"\\PORPREENCHER\{", texto):
         print("  [!] a secção ainda tem \\PORPREENCHER — preencher antes de "
               "comparar.")
@@ -338,7 +332,7 @@ def artigo():
     print("ARTIGO (secção do mapa composto)  vs  os mesmos CSV da tese")
     print("=" * 74)
 
-    # ── F1: as células e os episódios das quatro condições ─────────────────
+    # F1: as células e os episódios das quatro condições
     csvs = sorted(glob.glob(os.path.join(F1_DIR, "zeroshot_*.csv")))
     if csvs:
         dfs = {os.path.basename(c): pd.read_csv(c) for c in csvs}
@@ -362,7 +356,7 @@ def artigo():
                     le(r"nenhum dos \$(\d+)\$ campeões", sec,
                        "campeões (artigo)"), tol=0.01)
 
-    # ── F2: quem resolve o mapa, e o limiar ────────────────────────────────
+    # F2: quem resolve o mapa, e o limiar
     m = medir_f2_seguro()
     if m and m.get("por_algo"):
         conv = {a: int(v["convergentes"]) for a, v in m["por_algo"].items()}
@@ -394,7 +388,7 @@ def artigo():
 def trabalho_futuro():
     """O item do mapa composto nos Trabalhos Futuros (está no `main.tex`).
 
-    Este item afirma coisas que **nenhum outro verificador vê**, por viverem
+    Este item afirma coisas que nenhum outro verificador vê, por viverem
     fora da `seccao_mapa_grande.tex`: quantas execuções tinham o pico do
     `fitness` nos últimos 20% do treino, e o que muda quando se duplica o
     horizonte. São números de diagnóstico, das curvas de treino e do
@@ -419,7 +413,7 @@ def trabalho_futuro():
     print("TRABALHOS FUTUROS (item do mapa composto)  vs  as medições")
     print("=" * 74)
 
-    # ── as curvas de treino: quantas ainda subiam, e onde caiu o pico ────────
+    # as curvas de treino: quantas ainda subiam, e onde caiu o pico
     curvas = sorted(glob.glob(os.path.join(
         RAIZ, "results", "mapa_grande", "f2_gnn", "logs",
         "gnn_3d_training_mapa_grande_run*.csv")))
@@ -440,7 +434,7 @@ def trabalho_futuro():
                 le(r"em mediana, a \$(\d+)\\%\$ do orçamento", item,
                    "mediana do pico"), tol=1.0)
 
-    # ── o teste do horizonte ────────────────────────────────────────────────
+    # o teste do horizonte
     fp = os.path.join(RAIZ, "results", "mapa_grande", "horizonte_gnn.csv")
     if os.path.exists(fp):
         h = pd.read_csv(fp)
@@ -487,12 +481,10 @@ def trabalho_futuro():
             # «há 5 execuções que param a menos de 13 m do ninho --- 3 delas a
             # menos de 5 m --- e não entram nele mesmo com o dobro do tempo».
             #
-            # A frase dizia «param a 5--13 m», e o intervalo era um recorte: as
-            # execuções que param a 2,3, 4,1 e 4,9 m ficavam de fora, e são
-            # precisamente as que mais sustentam o argumento (o que falta é a
-            # aproximação final, não o orçamento). Corrigida a 25 ago, passa a
-            # afirmar DUAS contagens — e são as duas que aqui se conferem, que
-            # é mais forte do que confirmar que um intervalo contém alguém.
+            # São DUAS contagens, e é isso que se confere: escrita como intervalo
+            # («param a 5--13 m»), a frase deixava de fora as execuções que param
+            # a 2,3, 4,1 e 4,9 m, que são as que mais sustentam o argumento — o
+            # que falta é a aproximação final, não o orçamento.
             m_int = re.search(r"há \$(\d+)\$ execuções que param a menos de "
                               r"\$(\d+)\$\\,m do ninho --- \$(\d+)\$ delas a menos "
                               r"de \$(\d+)\$\\,m --- e não entram", item)
@@ -514,13 +506,13 @@ def _f2_contra_texto(texto):
     """A tabela, o M1--M3 e a Discussão do F2 contra o `medir_f2()`.
 
     Enquanto a secção teve `\\PORPREENCHER`, esta comparação não existia — só o
-    aviso acima. No dia em que ela foi preenchida (17 ago) isso deixou **os
-    números acabados de escrever sem ninguém a conferi-los**, e o primeiro
+    aviso acima. No dia em que ela foi preenchida (17 ago) isso deixou os
+    números acabados de escrever sem ninguém a conferi-los, e o primeiro
     defeito apareceu de imediato: a Discussão dizia «4 chegam aos 100% de
     sucesso» onde a M2, duas linhas acima, dizia 2. Não foi erro de dados — foi
     o `fechar_qi7.py` a resolver a chave `k100` pelo prefixo `k`.
 
-    ⚠️ Isto compara com a MESMA função que escreve (`medir_f2`), e por isso não
+    Isto compara com a MESMA função que escreve (`medir_f2`), e por isso não
     prova que a regra esteja certa. Prova outra coisa, que é o que falha na
     prática: que o texto continua a dizer o que os CSV dizem hoje — depois de
     uma edição à mão, de um CSV regenerado, ou de um bug de preenchimento como
@@ -541,7 +533,7 @@ def _f2_contra_texto(texto):
             return
         compara(rot, medido, na_tese, tol)
 
-    # ── a tabela: uma linha por algoritmo ───────────────────────────────────
+    # a tabela: uma linha por algoritmo
     # As linhas da tabela leem-se por LINHA de ficheiro, não por regex sobre o
     # texto todo: as células trazem `\%` e a linha acaba em `\\`, e um padrão
     # que exclua barras invertidas (para não saltar linhas) não apanha nenhuma
@@ -566,7 +558,7 @@ def _f2_contra_texto(texto):
         confere("%s: convergentes" % algo,
                 float(conv.group(1)) if conv else None, v["convergentes"], 0.0)
 
-    # ── M1: os três pares ───────────────────────────────────────────────────
+    # M1: os três pares
     for t in m["m1"]:
         pad = (r"%s \\emph\{vs\.\}\\ %s: \$p = ([\d{},]+)\$, "
                r"\$\\delta = ([+-][\d{},]+)\$" % (t["a"], t["b"]))
@@ -579,7 +571,7 @@ def _f2_contra_texto(texto):
         confere("M1 %s vs %s: δ" % (t["a"], t["b"]), _n(mm.group(2)),
                 t["delta"], 0.005)
 
-    # ── M2 e M3 ─────────────────────────────────────────────────────────────
+    # M2 e M3
     for algo, v in m["por_algo"].items():
         mm = re.search(r"%s em (\d+)/(\d+), das quais (\d+) a \$100" % algo,
                        texto)
@@ -600,14 +592,12 @@ def _f2_contra_texto(texto):
     else:
         print("  [X] M3: não encontrei a frase da porta")
 
-    # ── a legenda da figura dos rastos cita a instrumentação geodésica ──────
+    # a legenda da figura dos rastos cita a instrumentação geodésica
     #
     # Estes três números não vêm do `eval_by_run`: vêm dos
     # `onde_param_{gnn,ppo,sac}.csv`, e a fronteira de 39,1 m é a distância
-    # geodésica da passagem B→C ao ninho. Sem esta verificação, a legenda de uma
-    # figura ficaria a ser o único sítio da dissertação com números que ninguém
-    # confere — e legendas já mentiram neste projeto (o heatmap com 0 recolhas
-    # sob «navegação resolvida», 4 ago).
+    # geodésica da passagem B->C ao ninho. Sem esta verificação, a legenda de uma
+    # figura seria o único sítio da dissertação com números que ninguém confere.
     mm = re.search(r"zona da porta é de \$(\d+)\\%\$ \(GNN\), \$(\d+)\\%\$ "
                    r"\(PPO\)\s*\n?\s*e \$(\d+)\\%\$ \(SAC\)", texto)
     if mm:
@@ -625,7 +615,7 @@ def _f2_contra_texto(texto):
         print("  [X] legenda dos rastos: não encontrei os 3 valores")
         falhas.append("legenda da figura dos rastos: não encontrei os valores")
 
-    # ── a Discussão repete o k e o k100: têm de bater com a M2 ──────────────
+    # a Discussão repete o k e o k100: têm de bater com a M2
     campeao = m["algo_campeao"]
     v = m["por_algo"][campeao]
     mm = re.search(r"fiável: (\d+) das \$21\$ execuções atingem pelo menos uma "

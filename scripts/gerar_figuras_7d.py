@@ -1,6 +1,5 @@
 """
 gerar_figuras_7d.py — Figuras definitivas da campanha de 7 dias (tese, Cap. 6)
-==============================================================================
 A campanha de 7 dias correu em DUAS instalações separadas do servidor:
   - GNN  (7 runs × 7 cenários): ~/swarm-robotics-tese  → estatisticas_7d_gnn/ + eval_7d/evaluation_gnn/
   - PPO+SAC (7 runs × 7 cenários): ~/run7d_mlp          → estatisticas_7d_mlp/ + eval_7d/evaluation_mlp/
@@ -115,13 +114,11 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
     cores = cores if cores is not None else ALGO_COLORS
     algos_presentes = [a for a in ordem if a in set(d[col_algo])]
     # `largura` em polegadas. Quem entra na tese a meia largura de página (os
-    # dotplots por cenário, dois por linha) pede uma figura ESTREITA: desenhada
-    # a 9 polegadas e reduzida para 7,8 cm, o eixo chegava ao papel com 3,4 pt.
-    # As fontes acompanham a largura (`esc`), para que a figura estreita não
-    # fique com letra proporcionalmente minúscula.
-    # Numa figura muito estreita (a coluna do artigo, 4,6 pol) as fontes
-    # ampliadas deixam de caber: os nomes das séries encostam aos pontos e o
-    # rótulo da média escreve por cima deles. Aí encolhem-se em vez de crescer.
+    # dotplots por cenário, dois por linha) pede uma figura ESTREITA: desenhada a
+    # 9 polegadas e reduzida para 7,8 cm, o eixo chega ao papel com 3,4 pt. As
+    # fontes acompanham a largura (`esc`), para a figura estreita não ficar com
+    # letra proporcionalmente minúscula — mas numa figura muito estreita (a coluna
+    # do artigo, 4,6 pol) as fontes ampliadas deixam de caber e encolhem-se.
     esc = 0.85 if largura < 5.5 else min(1.15, 9.0 / largura)
     altura = ((1.35 * len(algos_presentes) + 2.4) * (largura / 9.0)
               * 1.15 * altura_rel)
@@ -196,7 +193,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     sns.set_theme(style="whitegrid")
 
-    # ── Dados fundidos ──────────────────────────────────────────────────────
+    # Dados fundidos
     curves = _merge(os.path.join(SRC_GNN_STATS, 'all_curves_data.csv'),
                     os.path.join(SRC_MLP_STATS, 'all_curves_data.csv'),
                     ['GNN'], ['PPO', 'SAC'])
@@ -210,12 +207,10 @@ def main():
     curves.to_csv(os.path.join(OUT, 'all_curves_data_7d.csv'), index=False)
 
     # THESIS_SCENARIOS e não SCENARIOS: é este script que produz `tab:res_eval` e
-    # `tab:res_signif`, e o compromisso 3 do pré-registo do mapa grande diz que
-    # «o mapa NÃO entra nas tabelas dos 7 cenários — os 7 têm campanhas com
-    # orçamento e protocolo próprios, e misturá-los seria comparar coisas
-    # diferentes na mesma linha». Até hoje a proteção era não haver dados do
-    # 8.º cenário; a partir de ~16 ago passa a haver, e um CSV que os contenha
-    # punha o mapa grande dentro das tabelas dos sete sem ninguém decidir isso.
+    # `tab:res_signif`, e o compromisso 3 do pré-registo do mapa grande diz que «o
+    # mapa NÃO entra nas tabelas dos 7 cenários — os 7 têm campanhas com orçamento
+    # e protocolo próprios». Sem este filtro, um CSV que traga o 8.º cenário
+    # punha-o dentro das tabelas dos sete sem ninguém decidir isso.
     fora = sorted(set(ev['Scenario']) - set(THESIS_SCENARIOS))
     scen_present = [s for s in THESIS_SCENARIOS if s in set(ev['Scenario'])]
     n_runs = ev.groupby('Algorithm')['Run'].nunique().to_dict()
@@ -224,7 +219,7 @@ def main():
         print(f"[i] Fora das tabelas da tese (compromisso 3 do pré-registo): "
               f"{', '.join(fora)}")
 
-    # ── Normalização do eixo X (progresso de treino 0–100%) ────────────────
+    # Normalização do eixo X (progresso de treino 0–100%)
     curves = curves.copy()
     ss = curves.groupby(['Scenario', 'Algorithm', 'Run'])['Step'].agg(['min', 'max'])
     ss.columns = ['step_min', 'step_max']
@@ -233,12 +228,11 @@ def main():
     curves['TrainingProgress'] = (curves['Step'] - curves['step_min']) / rng * 100
     curves = curves.drop(columns=['step_min', 'step_max'])
 
-    # ── 1. Curvas "1 mapa, 3 modelos" (painéis separados, banda ±sd) ────────
+    # 1. Curvas «1 mapa, 3 modelos» (painéis separados, banda ±sd)
     # A média entre runs passa por uma grelha comum (curvas_agregadas): os runs
     # logam em passos diferentes — o SAC escreve 7-11 pontos por run — e o
-    # sns.lineplot, que agrupa pelos x EXATOS, desenhava um run de cada vez
-    # sempre que os x não coincidiam. Daí os dentes de serra das figuras de
-    # e daí a legenda prometer uma média que a linha não era.
+    # sns.lineplot, que agrupa pelos x EXATOS, desenha um run de cada vez sempre
+    # que os x não coincidem.
     for scen in scen_present:
         d = curves[curves['Scenario'] == scen]
         algos_here = [a for a in ALGOS if a in set(d['Algorithm'])]
@@ -281,13 +275,11 @@ def main():
         plt.close(fig)
         print(f"[OK] comparacao_mapa_{scen}.png")
 
-    # ── 2. "1 modelo, todos os mapas" ───────────────────────────────────────
-    # Os bins de 2% resolveram a mancha ilegível, mas não o
-    # problema de fundo: com 51 bins e um SAC que loga 9 pontos por execução,
-    # cada bin continuava a receber um punhado de execuções — e a linha do SAC
-    # saía serrilhada, a saltar entre execuções. Aqui usa-se a mesma agregação
-    # das curvas por cenário: interpolar cada execução numa grelha comum e só
-    # depois tirar a média (scripts/curvas_agregadas.py).
+    # 2. «1 modelo, todos os mapas»
+    # Mesma agregação das curvas por cenário: interpolar cada execução numa grelha
+    # comum e só depois tirar a média (scripts/curvas_agregadas.py). Com bins de
+    # 2% e um SAC que loga 9 pontos por execução, cada bin recebe um punhado de
+    # execuções e a linha sai serrilhada, a saltar entre execuções.
     pal_scen = sns.color_palette("husl", len(scen_present))
     for algo in ALGOS:
         da = curves[curves['Algorithm'] == algo].copy()
@@ -327,7 +319,7 @@ def main():
         plt.close(fig)
         print(f"[OK] desempenho_global_{algo.lower()}.png")
 
-    # ── 3. Boxplots de FIABILIDADE em métrica de TAREFA (recolhas/ep por run) ──
+    # 3. Boxplots de FIABILIDADE em métrica de TAREFA (recolhas/ep por run)
     # Cada ponto = média de recolhas/ep de um run (20 episódios) → 7 pontos/algoritmo.
     run_means = (ev.groupby(['Scenario', 'ScenarioLabel', 'Algorithm', 'Run'])
                  .agg(recolhas=('food_collected', 'mean'), sucesso=('success', 'mean'))
@@ -372,7 +364,7 @@ def main():
             largura=5.0)   # entra na tese a 0,49 da largura do texto
         print(f"[OK] dotplot_eval_{scen}.png")
 
-    # ── 4. Barras agregadoras (recolhas/ep, avaliação) ──────────────────────
+    # 4. Barras agregadoras (recolhas/ep, avaliação)
     dd = ev.copy()
     dd['Cenário'] = dd['Scenario'].map(lambda s: SCENARIO_LABELS.get(s, s))
     scen_lab_order = [SCENARIO_LABELS.get(s, s) for s in scen_present]
@@ -397,11 +389,11 @@ def main():
     plt.close(fig)
     print("[OK] comparacao_barras_geral.png")
 
-    # ── 5. Taxa de sucesso + recolhas (estilo eval_suite) ───────────────────
+    # 5. Taxa de sucesso + recolhas (estilo eval_suite)
     from scripts.eval_suite import plot_evaluation
     plot_evaluation(summary=ev, out_dir=OUT)
 
-    # ── 6. Resumo por cenário (para as tabelas da tese) ─────────────────────
+    # 6. Resumo por cenário (para as tabelas da tese)
     rows = []
     for scen in scen_present:
         for algo in ALGOS:
@@ -426,7 +418,7 @@ def main():
               f"{r['sucesso_medio_%']:5.1f}% | {r['runs_sucesso_total']}/{r['runs']} "
               f"[{r['pior_run']:.2f}, {r['melhor_run']:.2f}]")
 
-    # ── 7. Testes de significância sobre as médias por run (n=7 por grupo) ──
+    # 7. Testes de significância sobre as médias por run (n=7 por grupo)
     # Import LOCAL de propósito: o scipy só é preciso aqui, e tê-lo no topo do
     # módulo impedia importar as FUNÇÕES DE FIGURA a partir de uma máquina sem
     # scipy instalado (o PC de trabalho é uma delas).
@@ -469,7 +461,7 @@ def main():
         print(f"{r['Scenario']:<24} {r['Par']:<11} {r['media_A']:7.2f} vs {r['media_B']:7.2f}  "
               f"p={r['p']:.4f}  δ={r['cliffs_delta']:+.2f}  {r['significativo_0.05']}")
 
-    # ── 8. Instalação como "eval oficial" do dashboard (--install-oficial) ──
+    # 8. Instalação como "eval oficial" do dashboard (--install-oficial)
     # eval_summary.csv (por episódio) + testes de significância no formato que a
     # vista Ciência consome (Label/A/B/p_value/cliffs_delta/significant/winner).
     if '--install-oficial' in sys.argv:

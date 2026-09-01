@@ -2,7 +2,6 @@
 """A dissertação está em português de Portugal?
 
 Porque existe
--------------
 A tese e o artigo são escritos em PT-PT por decisão declarada (22 jun 2026), e
 uma parte do texto passou por ferramentas que produzem PT-BR por omissão. A
 diferença não é de estilo: um júri português lê «usuário» ou «treinamento» como
@@ -75,11 +74,10 @@ BRASILEIRISMOS = [
 ]
 
 
-# «run» era masculino; «execução» é feminino — e a migração de terminologia
-# trocou a palavra sem acertar o que a rodeava. Ficaram frases como «GNN com
-# dois execuções degeneradas», «em todos as execuções» e «execuções resolvidas
-# e falhados»: oito, todas no Capítulo 6, nenhuma visível a um verificador de
-# números, porque nenhum número mudou.
+# «run» era masculino e «execução» é feminino: a migração de terminologia trocou
+# a palavra sem acertar o que a rodeava, e ficaram frases como «GNN com dois
+# execuções degeneradas» ou «em todos as execuções». Nenhum verificador de
+# números as via, porque nenhum número mudou.
 #
 # Duas famílias de regra, ambas conservadoras — só apanham o que é
 # inequivocamente masculino junto de «execução/execuções»:
@@ -101,12 +99,10 @@ PARTICIPIOS_MASC = (r"agrupados|falhados|resolvidos|degenerados|fechados|"
 # a sabe ler. Vazio hoje — e é assim que se vê quando deixa de estar.
 CONCORDANCIA_ACEITE = ()
 
-# O que ESTE verificador não apanha, medido e não suposto: das oito frases
-# corrigidas, sete voltam a ser acusadas se alguém as desfizer;
-# a oitava não. Era «quatro das sete execuções convergem …, dois degeneram por
-# completo» — o sujeito de «dois» está elidido, e apanhá-lo exigiria decidir a
-# que substantivo se refere. Uma regra que o tentasse acusaria «os dois métodos
-# de gradiente» na frase anterior, que está certa.
+# O que este verificador NÃO apanha: o determinante com sujeito elidido —
+# «quatro das sete execuções convergem …, dois degeneram por completo». Apanhá-lo
+# exigiria decidir a que substantivo «dois» se refere, e uma regra que o tentasse
+# acusaria «os dois métodos de gradiente» na frase anterior, que está certa.
 
 
 def concordancia_execucao(tex, nome):
@@ -147,12 +143,11 @@ def sem_comentarios(t):
     return re.sub(r"(?<!\\)%[^\n]*", "", t)
 
 
-# ── o texto que o dashboard escreve no ecrã ──────────────────────────────────
-# A dissertação e o artigo passavam por aqui; o dashboard nunca passou. E é
-# prosa portuguesa como a outra: a cronologia do Overview dizia «duas execuções
-# completos do objetivo puro» — a mesma concordância que a dissertação já não
-# tinha. Como o dashboard é Python, não se pode ler o ficheiro inteiro (o código
-# à volta produziria ruído sem fim); lê-se só o que vai para o ecrã.
+# o texto que o dashboard escreve no ecrã
+# É prosa portuguesa como a da dissertação, e tinha a mesma concordância trocada
+# («duas execuções completos do objetivo puro»). Como o dashboard é Python, não se
+# lê o ficheiro inteiro — o código à volta produziria ruído sem fim —, lê-se só o
+# que vai para o ecrã.
 DASH = os.path.join(RAIZ, "dashboard")
 
 # Frases do ecrã em que um marcador aparece com o sentido bom. «Rodar» é
@@ -238,7 +233,7 @@ def main():
             else:
                 print("   [v] %-34s babel: %s" % (nome, opcoes))
 
-    # ── e o texto que o dashboard mostra ─────────────────────────────────────
+    # e o texto que o dashboard mostra
     ficheiros = ficheiros_do_dashboard()
     for f in ficheiros:
         ecra = texto_de_ecra(f)

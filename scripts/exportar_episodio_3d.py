@@ -2,14 +2,13 @@
 """Exporta um episódio para o browser o desenhar em 3D.
 
 Porquê
-------
-O visualizador que existe (Ursina/Panda3D) abre uma janela no ecrã de **quem
-corre o servidor**. Na torre isso é o que se quer; no Raspberry Pi — sem monitor,
+O visualizador que existe (Ursina/Panda3D) abre uma janela no ecrã de quem
+corre o servidor. Na torre isso é o que se quer; no Raspberry Pi — sem monitor,
 e a servir o orientador pela internet — não serve de nada: a janela abriria numa
 máquina onde ninguém está.
 
 A alternativa é o 3D acontecer no browser de quem está a ver. Para isso o
-servidor não precisa de renderizar nada: basta gravar **o que aconteceu** — a
+servidor não precisa de renderizar nada: basta gravar o que aconteceu — a
 geometria do cenário e a posição de cada agente ao longo do episódio — e deixar o
 desenho para o lado do cliente.
 

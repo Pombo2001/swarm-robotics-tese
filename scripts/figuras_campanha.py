@@ -2,7 +2,6 @@
 """Figuras de QUALQUER campanha, com os nomes que a tese usa.
 
 O buraco que isto tapa
-----------------------
 As campanhas longas correm no servidor por FASES, e o arquivo entre fases
 (`week_stream*.sh`, `mega_stream*.sh`) copia isto:
 
@@ -11,7 +10,7 @@ As campanhas longas correm no servidor por FASES, e o arquivo entre fases
 `results/graficos_tese/` não está na lista. As figuras foram geradas no servidor
 — e continuam lá, em pastas datadas órfãs — mas nunca vieram. Resultado medido a
 31 jul: a campanha adaptativa (a da QI6, que está NA TESE) tinha 268 CSV e
-**zero** imagens; o mapa grande tinha uma; o mega-treino nenhuma.
+zero imagens; o mapa grande tinha uma; o mega-treino nenhuma.
 
 Regenerar aqui é melhor do que ir buscá-las: os gráficos do servidor misturam
 runs de campanhas anteriores, porque o `all_best_scores.csv` de lá acumula — foi
@@ -19,15 +18,13 @@ exatamente por isso que o `gerar_figuras_7d.py` teve de existir para a campanha
 da tese. Os CSV trazidos, esses, são limpos.
 
 Nomes
------
-Os nomes canónicos são **os que a tese e o artigo já citam** (`\\includegraphics`),
+Os nomes canónicos são os que a tese e o artigo já citam (`\\includegraphics`),
 não os do script que por acaso os gerou. Havia duas convenções para a mesma
 figura — `boxplot_eval_X` vs `boxplot_X`, `comparacao_mapa_X` vs
 `curva_aprendizagem_X` — e o contrato do verificador exigia a que a campanha da
 tese não usa. Aqui há uma só, em NOMES, e é dela que o resto passa a depender.
 
 Estilo
-------
 Nada de desenho novo: o dot plot e as figuras de avaliação vêm por importação de
 `gerar_figuras_7d.py` e `eval_suite.py`. Uma segunda cópia do estilo divergiria,
 e depois não se saberia qual das duas está certa.
@@ -72,7 +69,7 @@ from scripts.eval_suite import plot_evaluation  # noqa: E402
 
 GRAFICOS = os.path.join(RAIZ, "results", "graficos_tese")
 
-# ── NOMES CANÓNICOS ──────────────────────────────────────────────────────────
+# NOMES CANÓNICOS
 # Fonte única. Quem quiser mudar um nome muda-o aqui E nas referências do
 # main.tex/artigo.tex — nunca só num dos lados (é assim que a pasta de imagens
 # da tese ficou com `boxplot_u_wall.png` de junho ao lado de
@@ -89,7 +86,7 @@ NOMES = {
     "heat_geodesico":  "heatmap_geodesico_{cenario}.png",
 }
 
-# ── CAMPANHAS CANÓNICAS ──────────────────────────────────────────────────────
+# CAMPANHAS CANÓNICAS
 # As fases da adaptativa vêm do dashboard (mesma ordem e mesmos rótulos do
 # pré-registo) em vez de serem reescritas aqui.
 def _campanhas():
@@ -118,7 +115,7 @@ def _campanhas():
     return camp
 
 
-# ── LEITURA ──────────────────────────────────────────────────────────────────
+# LEITURA
 def carregar_eval(origem: str) -> pd.DataFrame | None:
     """eval_by_run.csv da campanha (uma linha por episódio avaliado)."""
     hits = glob.glob(os.path.join(origem, "**", "eval_by_run*.csv"), recursive=True)
@@ -233,7 +230,7 @@ def _progresso(curves: pd.DataFrame) -> pd.DataFrame:
     return c.drop(columns=["lo", "hi"])
 
 
-# ── FIGURAS ──────────────────────────────────────────────────────────────────
+# FIGURAS
 def figura_curvas(curves, scen, destino):
     d = curves[curves["Scenario"] == scen]
     algos = [a for a in ALGOS if a in set(d["Algorithm"])]
@@ -347,7 +344,7 @@ def figura_barras(ev, destino):
     return saida
 
 
-# ── UMA CAMPANHA ─────────────────────────────────────────────────────────────
+# UMA CAMPANHA
 def gerar(origem: str, nome: str, rotulo: str = "", heatmaps: bool = False,
           videos: bool = False) -> int:
     destino = os.path.join(GRAFICOS, nome)
