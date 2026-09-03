@@ -301,3 +301,6 @@ docs/resposta_prof_nunes.md
 # As imagens da pagina sao COPIADAS de Tese/images/resultados pelo workflow do
 # Pages. Versiona-las aqui daria duas copias a derivar em silencio.
 site/img/
+
+# Gerado por Defesa/gerar_slides.py (o logotipo recolorido para o fundo escuro).
+Defesa/.assets/

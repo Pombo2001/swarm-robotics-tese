@@ -18,8 +18,12 @@ from __future__ import annotations
 
 import os
 
+from PIL import Image
 from pptx import Presentation
 from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.oxml import parse_xml
+from pptx.oxml.ns import qn
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.util import Inches, Pt
 
@@ -28,13 +32,40 @@ FIG = os.path.join(RAIZ, "Tese", "images", "resultados")
 IMG = os.path.join(RAIZ, "Tese", "images")
 SAIDA = os.path.join(RAIZ, "Defesa", "slides_defesa.pptx")
 
-INK = RGBColor(0x1A, 0x1A, 0x1A)
-MUTED = RGBColor(0x6B, 0x6B, 0x6B)
-LINHA = RGBColor(0xD0, 0xD0, 0xD0)
-GNN = RGBColor(0x2F, 0x9E, 0x44)
-PPO = RGBColor(0xE8, 0x59, 0x0C)
-SAC = RGBColor(0x1C, 0x7E, 0xD6)
-ACENTO = RGBColor(0x0B, 0x3D, 0x91)
+# ── Paleta ────────────────────────────────────────────────────────────────────
+# É a do painel (dashboard/theme.py): monocromática noturna, com a COR reservada
+# para o que tem significado científico — as séries GNN/PPO/SAC. O que se copia
+# aqui são os valores do **Modo Defesa** do painel, não os do ecrã: um
+# videoprojetor achata os pretos, e o #7d7d7d que se lê no portátil desaparece na
+# parede. Daí o fundo chapado (sem o gradiente do painel, que a lâmpada suja), as
+# bordas a #2e2e2e em vez de #1f1f1f e os cinzentos subidos.
+FUNDO = RGBColor(0x05, 0x05, 0x05)      # fundo dos slides
+SUPERFICIE = RGBColor(0x0E, 0x0E, 0x0E)  # cartões e tabelas
+SUPERFICIE2 = RGBColor(0x16, 0x16, 0x16)  # linhas alternadas
+BORDA = RGBColor(0x2E, 0x2E, 0x2E)
+INK = RGBColor(0xE2, 0xE2, 0xE2)        # texto corrente
+INK_FORTE = RGBColor(0xF5, 0xF5, 0xF5)  # títulos e destaques
+MUTED = RGBColor(0x9A, 0x9A, 0x9A)      # legendas e rótulos
+LINHA = BORDA
+BRANCO_CHAPA = RGBColor(0xFF, 0xFF, 0xFF)  # placa por baixo das figuras
+
+# Séries: as mesmas famílias das figuras da tese, subidas para lerem sobre preto.
+GNN = RGBColor(0x2F, 0xB5, 0x83)
+PPO = RGBColor(0xEF, 0x78, 0x50)
+SAC = RGBColor(0x5F, 0x9F, 0xE4)
+# O painel não tem cor de acento — o destaque é o branco. Mantém-se o nome para
+# o conteúdo dos slides não ter de mudar.
+ACENTO = INK_FORTE
+
+# Tipos de letra. O painel usa Space Grotesk / Inter / JetBrains Mono, que vêm do
+# Google Fonts e NÃO estão instaladas nem nesta máquina nem, presumivelmente, na
+# da sala: pedi-las ao PowerPoint faz cair num tipo arbitrário, e um slide com
+# tipo de letra trocado nota-se mais do que um slide sem identidade. Usam-se os
+# equivalentes mais próximos que qualquer Windows tem de origem, na mesma
+# divisão de papéis: títulos / texto / números.
+TITULO_FT = "Segoe UI Semibold"
+CORPO_FT = "Segoe UI"
+MONO_FT = "Consolas"
 
 W, H = Inches(13.333), Inches(7.5)
 MARGEM = Inches(0.6)
@@ -45,10 +76,29 @@ BRANCO = prs.slide_layouts[6]
 _n = 0
 
 
+def _novo_slide():
+    """Um slide com o fundo pintado. O layout em branco do PowerPoint é BRANCO —
+    literalmente —, por isso o fundo escuro tem de ser um retângulo a cobrir a
+    página, e tem de ser a PRIMEIRA forma (a ordem de inserção é a ordem z)."""
+    s = prs.slides.add_slide(BRANCO)
+    r = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, W, H)
+    r.fill.solid()
+    r.fill.fore_color.rgb = FUNDO
+    r.line.fill.background()
+    r.shadow.inherit = False
+    return s
+
+
 def _texto(slide, x, y, w, h, linhas, tamanho=18, cor=INK, negrito=False,
-           alinhar=PP_ALIGN.LEFT, ancora=MSO_ANCHOR.TOP, espaco=6):
+           alinhar=PP_ALIGN.LEFT, ancora=MSO_ANCHOR.TOP, espaco=6, fonte=None):
     """Caixa de texto. `linhas` = str ou lista de str/(str, dict) — dict com
-    tamanho/cor/negrito/nivel. Uma linha que comece por «• » é um marcador."""
+    tamanho/cor/negrito/nivel/fonte. Uma linha que comece por «• » é um marcador.
+
+    O marcador sai em DUAS runs: um «▸» a cinzento e o texto na cor pedida. Com
+    uma run só, o bullet herdava o peso e a cor da frase, e numa lista de sete
+    pontos a negrito eram sete manchas a competir com o título. A cinzento, a
+    lista lê-se pela primeira palavra de cada linha, que é o que se quer.
+    """
     tb = slide.shapes.add_textbox(x, y, w, h)
     tf = tb.text_frame
     tf.word_wrap = True
@@ -65,52 +115,147 @@ def _texto(slide, x, y, w, h, linhas, tamanho=18, cor=INK, negrito=False,
         nivel = opc.get("nivel", 0)
         if nivel:
             p.level = nivel
+        tam = opc.get("tamanho", tamanho)
+        ft = opc.get("fonte", fonte) or CORPO_FT
+        if txt.startswith("• "):
+            marca = p.add_run()
+            marca.text = "▸  "
+            marca.font.size = Pt(tam)
+            marca.font.color.rgb = MUTED
+            marca.font.name = ft
+            txt = txt[2:]
         r = p.add_run()
         r.text = txt
-        r.font.size = Pt(opc.get("tamanho", tamanho))
+        r.font.size = Pt(tam)
         r.font.bold = opc.get("negrito", negrito)
         r.font.color.rgb = opc.get("cor", cor)
-        r.font.name = "Calibri"
+        r.font.name = ft
     return tb
+
+
+def _linha(slide, x1, y, x2, cor=BORDA, espessura=0.75):
+    ln = slide.shapes.add_connector(1, x1, y, x2, y)
+    ln.line.color.rgb = cor
+    ln.line.width = Pt(espessura)
+    return ln
+
+
+def _e_numero(txt):
+    """A célula é um valor numérico? Aceita o que estas tabelas usam à volta dos
+    dígitos: vírgula decimal, %, ±, ≈, ×, /, parênteses e sinais."""
+    t = txt.strip()
+    return bool(t) and any(c.isdigit() for c in t) and all(
+        c.isdigit() or c in " ,.%±≈×/()+-—…" for c in t)
+
+
+def _borda_celula(cel, cor=BORDA, espessura=0.75):
+    """Pinta as quatro arestas de uma célula.
+
+    O python-pptx não expõe bordas de tabela: sem isto, o PowerPoint desenha as
+    do estilo por omissão — claras e grossas, pensadas para tabelas sobre branco.
+    Num slide preto ficam uma gaiola luminosa por cima do conteúdo. Escrevem-se
+    à mão no XML da célula, e a ORDEM importa: o esquema exige
+    lnL, lnR, lnT, lnB, e um elemento fora de ordem faz o PowerPoint declarar o
+    ficheiro danificado.
+    """
+    tc = cel._tc
+    pr = tc.get_or_add_tcPr()
+    larg = str(int(espessura * 12700))
+    hexa = "%02X%02X%02X" % (cor[0], cor[1], cor[2])
+    for tag in ("a:lnL", "a:lnR", "a:lnT", "a:lnB"):
+        for velho in pr.findall(qn(tag)):
+            pr.remove(velho)
+    for tag in ("a:lnL", "a:lnR", "a:lnT", "a:lnB"):
+        ln = parse_xml(
+            '<%s xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" '
+            'w="%s" cap="flat" cmpd="sng" algn="ctr">'
+            '<a:solidFill><a:srgbClr val="%s"/></a:solidFill>'
+            '<a:prstDash val="solid"/></%s>' % (tag, larg, hexa, tag))
+        pr.append(ln)
 
 
 def _rodape(slide):
     global _n
     _n += 1
-    ln = slide.shapes.add_connector(1, MARGEM, H - Inches(0.55), W - MARGEM, H - Inches(0.55))
-    ln.line.color.rgb = LINHA
-    ln.line.width = Pt(0.75)
+    _linha(slide, MARGEM, H - Inches(0.55), W - MARGEM)
     _texto(slide, MARGEM, H - Inches(0.5), Inches(9), Inches(0.4),
            "Aprendizagem por Reforço para Controlo de Enxames · ISCTE-IUL 2026",
            tamanho=10, cor=MUTED)
+    # O número em Consolas, com zero à esquerda: alinha à direita sem dançar
+    # entre o 9 e o 10, que numa numeração proporcional se nota ao folhear.
     _texto(slide, W - MARGEM - Inches(1), H - Inches(0.5), Inches(1), Inches(0.4),
-           str(_n), tamanho=10, cor=MUTED, alinhar=PP_ALIGN.RIGHT)
+           "%02d" % _n, tamanho=10, cor=MUTED, alinhar=PP_ALIGN.RIGHT, fonte=MONO_FT)
 
 
 def _titulo(slide, titulo, sub=""):
-    _texto(slide, MARGEM, Inches(0.35), W - 2 * MARGEM, Inches(0.8), titulo,
-           tamanho=30, negrito=True)
+    _texto(slide, MARGEM, Inches(0.32), W - 2 * MARGEM, Inches(0.85), titulo,
+           tamanho=30, negrito=True, cor=INK_FORTE, fonte=TITULO_FT)
     if sub:
-        _texto(slide, MARGEM, Inches(1.05), W - 2 * MARGEM, Inches(0.5), sub,
+        _texto(slide, MARGEM, Inches(1.02), W - 2 * MARGEM, Inches(0.5), sub,
                tamanho=15, cor=MUTED)
-    ln = slide.shapes.add_connector(1, MARGEM, Inches(1.5), MARGEM + Inches(1.2), Inches(1.5))
-    ln.line.color.rgb = ACENTO
-    ln.line.width = Pt(3)
+    # A régua do painel: um fio que atravessa a página e um segmento aceso à
+    # esquerda. O painel faz isto com um gradiente no topo de cada cartão; aqui,
+    # em que só há linhas retas, o mesmo efeito consegue-se com duas.
+    _linha(slide, MARGEM, Inches(1.5), W - MARGEM)
+    _linha(slide, MARGEM, Inches(1.5), MARGEM + Inches(1.1), cor=INK_FORTE, espessura=2.5)
 
 
-def _fig(slide, nome, x, y, w=None, h=None, pasta=FIG):
+_CACHE_FUNDO = {}
+
+
+def _fundo_claro(caminho):
+    """A figura tem fundo claro? Lê-se o canto superior esquerdo, que em todas as
+    figuras aqui usadas é margem — o matplotlib deixa-a, e uma captura de ecrã
+    começa pelo cromo da aplicação. Um pixel só chegava; usa-se um quadrado de
+    8×8 para não decidir num pixel de anti-aliasing."""
+    if caminho not in _CACHE_FUNDO:
+        im = Image.open(caminho).convert("L").crop((0, 0, 8, 8))
+        # `.resize((1, 1))` faz a média dos 64 pixels dentro do Pillow, e evita o
+        # `getdata()`, que está a caminho de sair na versão 14.
+        _CACHE_FUNDO[caminho] = im.resize((1, 1), Image.BOX).getpixel((0, 0)) > 128
+    return _CACHE_FUNDO[caminho]
+
+
+def _fig(slide, nome, x, y, w=None, h=None, pasta=FIG, chapa=True, folga=0.09):
+    """Coloca a figura, por omissão sobre uma PLACA BRANCA.
+
+    As figuras da tese têm fundo branco. Assentes diretamente no slide preto,
+    ficam retângulos brancos a flutuar, com a margem interna do matplotlib a
+    fazer de moldura irregular. A placa resolve-o ao contrário: o branco da
+    figura funde-se com o branco da placa, e o que se vê é um cartão claro com
+    aresta definida — o mesmo padrão que a cábula usa.
+    """
     p = os.path.join(pasta, nome)
     if not os.path.exists(p):
         _texto(slide, x, y, w or Inches(4), Inches(0.6), "figura em falta: %s" % nome,
                tamanho=12, cor=PPO)
         return None
-    if w is not None and h is not None:
-        # Cabe na caixa, sem deformar.
-        from PIL import Image
-        iw, ih = Image.open(p).size
-        esc = min(w / iw, h / ih)
-        return slide.shapes.add_picture(p, x, y, width=int(iw * esc), height=int(ih * esc))
-    return slide.shapes.add_picture(p, x, y, width=w, height=h)
+    if w is None or h is None:
+        return slide.shapes.add_picture(p, x, y, width=w, height=h)
+
+    # Cabe na caixa, sem deformar. A placa rouba a folga aos dois lados.
+    pad = Inches(folga) if chapa else 0
+    iw, ih = Image.open(p).size
+    esc = min((w - 2 * pad) / iw, (h - 2 * pad) / ih)
+    pw, ph = int(iw * esc), int(ih * esc)
+    # Centrada na caixa pedida, para que uma figura estreita não fique encostada.
+    px = x + (w - pw) // 2
+    py = y + (h - ph) // 2
+    if chapa:
+        c = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE,
+                                   px - pad, py - pad, pw + 2 * pad, ph + 2 * pad)
+        c.fill.solid()
+        # A placa segue o FUNDO da figura, não uma regra fixa: as figuras da tese
+        # são brancas, mas a captura do painel é preta, e uma placa branca por
+        # baixo dela punha uma auréola em volta de um screenshot escuro.
+        c.fill.fore_color.rgb = BRANCO_CHAPA if _fundo_claro(p) else SUPERFICIE
+        c.line.color.rgb = BORDA
+        c.line.width = Pt(0.75)
+        c.shadow.inherit = False
+        # O raio do PowerPoint é relativo ao lado MENOR: sem isto, uma placa
+        # baixa e larga sai com cantos de cápsula.
+        c.adjustments[0] = min(0.06, 90000.0 / max(pw + 2 * pad, 1))
+    return slide.shapes.add_picture(p, px, py, width=pw, height=ph)
 
 
 def _notas(slide, texto):
@@ -120,7 +265,7 @@ def _notas(slide, texto):
 def slide_texto_figura(titulo, sub, bullets, figura=None, notas="", fig_w=6.2, fig_h=4.9,
                        largura_texto=None, figuras=None, tamanho=17):
     """Texto à esquerda, uma figura (ou várias empilhadas) à direita."""
-    s = prs.slides.add_slide(BRANCO)
+    s = _novo_slide()
     _titulo(s, titulo, sub)
     lt = Inches(largura_texto) if largura_texto else (W - 2 * MARGEM - Inches(fig_w) - Inches(0.4)
                                                        if (figura or figuras) else W - 2 * MARGEM)
@@ -140,7 +285,7 @@ def slide_texto_figura(titulo, sub, bullets, figura=None, notas="", fig_w=6.2, f
 
 
 def slide_figura(titulo, sub, figura, legenda="", notas="", pasta=FIG):
-    s = prs.slides.add_slide(BRANCO)
+    s = _novo_slide()
     _titulo(s, titulo, sub)
     _fig(s, figura, MARGEM, Inches(1.7), W - 2 * MARGEM, H - Inches(2.9), pasta=pasta)
     if legenda:
@@ -153,53 +298,119 @@ def slide_figura(titulo, sub, figura, legenda="", notas="", pasta=FIG):
 
 def slide_tabela(titulo, sub, cabecalho, linhas, notas="", larguras=None, bullets=None,
                  tamanho=13):
-    s = prs.slides.add_slide(BRANCO)
+    s = _novo_slide()
     _titulo(s, titulo, sub)
     y = Inches(1.75)
     if bullets:
-        _texto(s, MARGEM, y, W - 2 * MARGEM, Inches(1.2), bullets, tamanho=16, espaco=6)
-        y += Inches(1.3)
+        # A altura reservada aos marcadores era fixa (1,2"), e três frases longas
+        # a 16 pt ocupam quatro linhas: na QI2 o terceiro marcador entrava por
+        # cima do cabeçalho da tabela. Estima-se o número de linhas pelo
+        # comprimento — a 16 pt, numa caixa de 12,1", cabem ~105 caracteres — e a
+        # tabela desce o que for preciso. É uma estimativa, não uma medição: o
+        # PowerPoint só sabe as quebras reais quando renderiza. Fica generosa de
+        # propósito, porque o custo de sobrar espaço é nenhum e o de faltar é um
+        # slide ilegível.
+        linhas_est = sum(max(1, -(-len(t if isinstance(t, str) else t[0]) // 105))
+                         for t in bullets)
+        _texto(s, MARGEM, y, W - 2 * MARGEM, Inches(0.3) * linhas_est, bullets,
+               tamanho=16, espaco=6)
+        y += Inches(0.32) * linhas_est + Inches(0.25)
     n_l, n_c = len(linhas) + 1, len(cabecalho)
     altura = min(Inches(0.42) * n_l, H - y - Inches(0.8))
     tb = s.shapes.add_table(n_l, n_c, MARGEM, y, W - 2 * MARGEM, altura).table
     if larguras:
         for i, lw in enumerate(larguras):
             tb.columns[i].width = Inches(lw)
+    # O PowerPoint aplica um estilo de tabela às riscas azuis por omissão, com
+    # cabeçalho a cheio: sobre um slide preto é a única coisa que se vê. Desligam-se
+    # as bandas e pinta-se célula a célula, como no painel — cabeçalho em
+    # maiúsculas pequenas e cinzentas, corpo em duas superfícies alternadas.
+    tb.first_row = False
+    tb.horz_banding = False
     for j, c in enumerate(cabecalho):
         cel = tb.cell(0, j)
-        cel.text = c
-        r = cel.text_frame.paragraphs[0].font       # `.font` do parágrafo: uma célula vazia não tem runs
-        r.size, r.bold, r.color.rgb = Pt(tamanho), True, RGBColor(0xFF, 0xFF, 0xFF)
+        cel.text = c.upper()
+        r = cel.text_frame.paragraphs[0].font
+        r.size, r.bold, r.color.rgb = Pt(tamanho - 2), True, MUTED
+        r.name = MONO_FT
         cel.fill.solid()
-        cel.fill.fore_color.rgb = ACENTO
+        cel.fill.fore_color.rgb = FUNDO
+        _borda_celula(cel)
     for i, linha in enumerate(linhas, start=1):
         for j, v in enumerate(linha):
             cel = tb.cell(i, j)
             cel.text = str(v)
             r = cel.text_frame.paragraphs[0].font
             r.size = Pt(tamanho)
-            r.color.rgb = INK
+            # A primeira coluna é o rótulo da linha: é ela que se lê a saltar, e
+            # por isso vai mais clara do que os valores.
+            r.color.rgb = INK_FORTE if j == 0 else INK
+            r.bold = (j == 0)
+            # Números em Consolas, como no painel: uma coluna de «3,74 / 3,29 /
+            # 1,95» em tipo proporcional não alinha nas vírgulas, e é a coluna
+            # que se lê de relance. Só quando a célula É um número — «12,8» sim,
+            # «MARL por gradiente» não.
+            r.name = MONO_FT if _e_numero(str(v)) else CORPO_FT
             cel.fill.solid()
-            cel.fill.fore_color.rgb = RGBColor(0xF7, 0xF7, 0xF7) if i % 2 else RGBColor(0xFF, 0xFF, 0xFF)
+            cel.fill.fore_color.rgb = SUPERFICIE2 if i % 2 else SUPERFICIE
+            _borda_celula(cel)
     _rodape(s)
     _notas(s, notas)
     return s
 
 
+def _logo_branco(nome):
+    """Devolve uma cópia do logótipo com o traço a branco, para o fundo escuro.
+
+    O `iscte.png` é arte preta sobre transparente: assente num slide preto,
+    desaparece. Recolorem-se os pixels opacos para branco e preserva-se o canal
+    alfa — a versão monocromática que as normas de identidade preveem para
+    fundos escuros. Fica em `Defesa/.assets/`, gerado, não versionado à mão.
+    """
+    orig = os.path.join(IMG, nome)
+    if not os.path.exists(orig):
+        return None
+    pasta = os.path.join(RAIZ, "Defesa", ".assets")
+    os.makedirs(pasta, exist_ok=True)
+    dest = os.path.join(pasta, nome.replace(".png", "_branco.png"))
+    im = Image.open(orig).convert("RGBA")
+    alfa = im.getchannel("A")
+    branco = Image.new("RGBA", im.size, (255, 255, 255, 255))
+    branco.putalpha(alfa)
+    branco.save(dest)
+    return dest
+
+
 # 1. Capa
-s = prs.slides.add_slide(BRANCO)
-_texto(s, MARGEM, Inches(2.0), W - 2 * MARGEM, Inches(1.6),
-       "Aprendizagem por Reforço para Controlo de Enxames", tamanho=40, negrito=True)
-_texto(s, MARGEM, Inches(3.5), W - 2 * MARGEM, Inches(1.0),
+s = _novo_slide()
+# Uma barra de acento à esquerda do título, do painel: o destaque é a luz, não
+# uma cor institucional.
+_barra = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGEM, Inches(2.15), Pt(3), Inches(2.05))
+_barra.fill.solid()
+_barra.fill.fore_color.rgb = INK_FORTE
+_barra.line.fill.background()
+_barra.shadow.inherit = False
+_CAPA_X = MARGEM + Inches(0.32)
+_texto(s, _CAPA_X, Inches(1.55), W - _CAPA_X - MARGEM, Inches(0.4),
+       "DISSERTAÇÃO DE MESTRADO · DEFESA", tamanho=12, cor=MUTED, fonte=MONO_FT)
+_texto(s, _CAPA_X, Inches(2.05), W - _CAPA_X - MARGEM - Inches(1.0), Inches(1.6),
+       "Aprendizagem por Reforço para Controlo de Enxames",
+       tamanho=40, negrito=True, cor=INK_FORTE, fonte=TITULO_FT)
+_texto(s, _CAPA_X, Inches(3.45), Inches(9.4), Inches(1.0),
        "Aprendizagem por reforço multiagente por gradiente vs. neuroevolução com atenção "
-       "sobre grafo, em oito cenários de dificuldade crescente", tamanho=20, cor=MUTED)
+       "sobre grafo, em oito cenários de dificuldade crescente", tamanho=19, cor=MUTED)
+_linha(s, MARGEM, Inches(4.75), W - MARGEM)
 _texto(s, MARGEM, Inches(5.0), W - 2 * MARGEM, Inches(1.2), [
-    ("Gonçalo Pombo", {"tamanho": 20, "negrito": True}),
+    ("Gonçalo Pombo", {"tamanho": 20, "negrito": True, "cor": INK_FORTE}),
     ("Orientador: Prof. Doutor Luís Nunes", {"tamanho": 16, "cor": MUTED}),
     ("Mestrado em Inteligência Artificial · ISCTE-IUL · 2026", {"tamanho": 16, "cor": MUTED}),
 ])
-if os.path.exists(os.path.join(IMG, "iscte.png")):
-    _fig(s, "iscte.png", W - MARGEM - Inches(2.4), Inches(0.5), Inches(2.4), Inches(1.0), pasta=IMG)
+_logo = _logo_branco("iscte.png")
+if _logo:
+    _iw, _ih = Image.open(_logo).size
+    _lw = Inches(1.9)
+    s.shapes.add_picture(_logo, W - MARGEM - _lw, Inches(0.55),
+                         width=_lw, height=int(_lw * _ih / _iw))
 _notas(s, """
 Bom dia. Vou apresentar a dissertação «Aprendizagem por Reforço para Controlo de
 Enxames»: uma comparação, no mesmo simulador e com o mesmo protocolo, entre dois
@@ -257,7 +468,7 @@ todas, pela ordem em que os resultados as desbloqueiam.
 """)
 
 # 4. Simulador e cenários
-s = prs.slides.add_slide(BRANCO)
+s = _novo_slide()
 _titulo(s, "O simulador e os oito cenários",
         "forrageamento cooperativo em 3D, 20 agentes, observação local (LiDAR 8 m)")
 _texto(s, MARGEM, Inches(1.75), Inches(5.2), Inches(4.8), [
@@ -585,7 +796,7 @@ avaliação.
 """)
 
 # 17. Conclusão
-s = prs.slides.add_slide(BRANCO)
+s = _novo_slide()
 _titulo(s, "Conclusão", "a hipótese confirma-se só em parte — e não onde a punha")
 _texto(s, MARGEM, Inches(1.9), W - 2 * MARGEM, Inches(4.5), [
     ("A vantagem de escala reside na representação — o grafo com atenção —, não no algoritmo de otimização.",
@@ -608,7 +819,7 @@ fiabilidade antes da magnitude — um resultado negativo, reportado como tal.
 """)
 
 # 18. Demo ao vivo — o painel, no Muro em U
-s = prs.slides.add_slide(BRANCO)
+s = _novo_slide()
 _titulo(s, "Demo ao vivo — o Muro em U no painel",
         "os três modelos a correr lado a lado, o vencedor em destaque, e a proveniência de cada número")
 _fig(s, "demo_muro_em_u.jpg", MARGEM, Inches(1.7), Inches(8.3), Inches(4.7),
@@ -639,8 +850,14 @@ ao CSV. Plano B se a rede ou o portátil falharem: o GIF do slide nove.
 """)
 
 # 19. Fim
-s = prs.slides.add_slide(BRANCO)
-_texto(s, MARGEM, Inches(2.4), W - 2 * MARGEM, Inches(1.2), "Obrigado.", tamanho=40, negrito=True)
+s = _novo_slide()
+_barra = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, MARGEM, Inches(2.5), Pt(3), Inches(0.85))
+_barra.fill.solid()
+_barra.fill.fore_color.rgb = INK_FORTE
+_barra.line.fill.background()
+_barra.shadow.inherit = False
+_texto(s, MARGEM + Inches(0.32), Inches(2.4), W - 2 * MARGEM, Inches(1.2), "Obrigado.",
+       tamanho=40, negrito=True, cor=INK_FORTE, fonte=TITULO_FT)
 _texto(s, MARGEM, Inches(3.6), W - 2 * MARGEM, Inches(2.5), [
     ("Painel interativo (campanhas, vídeos, episódios 3D, proveniência de cada número):", {"cor": MUTED, "tamanho": 16}),
     ("http://swarmroboticsgs.duckdns.org", {"tamanho": 18, "cor": ACENTO}),
