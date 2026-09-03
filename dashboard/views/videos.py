@@ -9,7 +9,7 @@ servidos pela rota estática '/graficos' (registada em app.py). Três modos:
 from nicegui import ui
 
 from .. import config, data, theme
-from . import ranking
+from . import ranking, resultados
 
 CARD = theme.CARD + " p-4"
 NONE = "— (nenhum)"
@@ -134,9 +134,6 @@ def build():
                      "(ou correm no fim de cada treino).").classes("text-xs text-gray-600 font-mono")
         return
 
-    st = {"session": sessions[0], "mode": "Comparar algoritmos",
-          "scenario": (data.scenarios_with_video(sessions[0]) or [config.SCENARIO_KEYS[0]])[0]}
-
     # Quantas campanhas ficam de fora, e porquê. Sem isto a lista curta lia-se
     # como «faltam vídeos», quando o que faltam são MODELOS: sem modelo
     # arquivado não há episódio para gravar (LEIA-ME_modelos.md).
@@ -144,13 +141,22 @@ def build():
     sessions = [s for s in sessions if s in todas]
     sem_video = [s for s in todas if s not in sessions]
 
+    # O seletor «Treino» tem as etiquetas e a ordem da Galeria: a campanha final
+    # primeiro, as da tese a seguir, as exploratórias por data. Abria na mais
+    # recente por data — um treino do mapa composto com UM vídeo e um aviso a
+    # amarelo — e a lista era de nomes de pasta.
+    opcoes, primeira = resultados.opcoes_de_sessao(sessions)
+    inicial = primeira or sessions[0]
+    st = {"session": inicial, "mode": "Comparar algoritmos",
+          "scenario": (data.scenarios_with_video(inicial) or [config.SCENARIO_KEYS[0]])[0]}
+
     with ui.column().classes("w-full gap-4 p-4 max-w-[1400px] mx-auto"):
         # Barra de controlo
         with ui.card().classes(CARD):
             with ui.row().classes("w-full items-center justify-between no-wrap gap-4"):
                 _section_title("smart_display", "Vídeos dos episódios",
                                "Vê o enxame a agir e compara algoritmos lado a lado.")
-                sess_sel = ui.select(sessions, value=st["session"], label="Treino") \
+                sess_sel = ui.select(opcoes, value=st["session"], label="Treino") \
                     .props("outlined dense").classes("min-w-[230px]")
             mode = ui.toggle(["Comparar algoritmos", "Galeria", "Comparar treinos"],
                              value=st["mode"]).props("no-caps").classes("mt-1")
@@ -199,9 +205,8 @@ def build():
             algos = sorted({data.parse_video(v)[0] for v in vids} - {None})
             faltam = [a for a in data.VIDEO_ALGOS if a not in algos]
             # `theme.plural` e não `{len(vids)} vídeos`: 14 das 30 campanhas
-            # exibidas gravaram UM episódio — a que abre por omissão é uma
-            # delas —, e a linha lia-se «· 1 vídeos ·».
-            txt = f"sessão {st['session']} · {theme.plural(len(vids), 'vídeo')}" \
+            # exibidas gravaram UM episódio, e a linha lia-se «· 1 vídeos ·».
+            txt = f"{data.rotulo_campanha(st['session'])[0]} · {theme.plural(len(vids), 'vídeo')}" \
                   f" · algoritmos: " \
                   f"{', '.join(a.upper() for a in algos) or '—'}"
             if faltam:

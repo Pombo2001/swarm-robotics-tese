@@ -341,7 +341,7 @@ def build():
     with ui.column().classes("w-full gap-4 p-4"):
         with ui.row().classes("items-center gap-3 w-full no-wrap"):
             theme.section_title("record_voice_over", "Defesa",
-                                "uma questão por ecrã · setas ← → para navegar")
+                                "uma questão por ecrã · setas do teclado para navegar")
             ui.space()
             passos = ui.label("").classes("text-xs mono-num") \
                 .style(f"color:{theme.INK_MUTED}")

@@ -129,7 +129,7 @@ def _url_mini(session: str, filename: str) -> str:
     return _url(session, filename)
 
 
-def _opcoes_de_sessao(sessions):
+def opcoes_de_sessao(sessions):
     """As campanhas do seletor, as da tese primeiro.
 
     A galeria abria na campanha mais RECENTE por data — que a 18 de agosto é o
@@ -229,7 +229,7 @@ def build():
                     "conjunto completo de figuras (falta-lhes vídeo ou "
                     "heatmaps). Continuam no Arquivo e contam nas estatísticas."
                     % len(escondidas)).classes("text-xs mt-1")                     .style("color:%s" % theme.INK_MUTED)
-            opcoes, primeira = _opcoes_de_sessao(sessions)
+            opcoes, primeira = opcoes_de_sessao(sessions)
             with ui.row().classes("w-full gap-2 no-wrap items-center mt-1"):
                 sess_a = ui.select(opcoes, value=primeira, label="Sessão A") \
                     .props("outlined dense").classes("flex-1")
