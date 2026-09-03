@@ -221,6 +221,7 @@ def audita_imagens_referenciadas() -> None:
     ROTAS = {"/graficos": "results/graficos_tese",
              "/estatico": "dashboard/estatico",
              "/episodios": "results/episodios_3d",
+             "/figuras_apresentacao": "results/figuras_apresentacao",
              "/figuras_tese": "Tese/images/resultados"}
 
     fila = JobQueue()
@@ -419,6 +420,7 @@ def audita_estaticos() -> None:
     for rota, caminho in (("/graficos", "results/graficos_tese"),
                           ("/estatico", "dashboard/estatico"),
                           ("/episodios", "results/episodios_3d"),
+                          ("/figuras_apresentacao", "results/figuras_apresentacao"),
                           ("/figuras_tese", "Tese/images/resultados")):
         if not os.path.isdir(caminho):
             X("estáticos", "%s serve %s, que não existe" % (rota, caminho))

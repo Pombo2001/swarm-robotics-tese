@@ -35,10 +35,14 @@ import yaml
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dashboard import config, data  # noqa: E402
+# O vencedor e as colunas vêm da própria vista: é a regra que o ecrã aplica
+# (ranking + exclusões do YAML) que se confere, não uma cópia dela.
+from dashboard.views import apresentacao as ap  # noqa: E402
 
 RAIZ = os.path.join("results", "graficos_tese")
 YAML = os.path.join("configs", "apresentacao.yaml")
 DIR_EP = os.path.join("results", "episodios_3d", "apresentacao")
+DIR_FIG = os.path.join("results", "figuras_apresentacao")
 TOL_MEDIA = 0.15
 ALGOS = ("GNN", "PPO", "SAC")
 
@@ -106,11 +110,10 @@ def _atribuicoes(frase: str):
 
 def verificar_frase(cenario: str, frase: str) -> None:
     global vistos
-    linhas = data.ranking_por_cenario().get(cenario, [])
-    if not linhas:
+    venc = ap.vencedor(cenario)
+    if not venc:
         X(cenario, "sem treino vencedor no ranking")
         return
-    venc = linhas[0]
     campanha = venc["campanha"]
     stats_venc = {}
     df = _eval_csv(campanha)
@@ -150,9 +153,24 @@ def verificar_frase(cenario: str, frase: str) -> None:
             meta = json.load(fh).get("meta", {})
         origem = data._ALIAS.get(meta.get("campanha", ""), meta.get("campanha", ""))
         vistos += 1
-        if origem != campanha:
+        if origem != data._ALIAS.get(campanha, campanha):
             X(cenario, "o episódio 3D é da campanha «%s», o vencedor é «%s»"
               % (meta.get("campanha", "?"), campanha))
+
+    # As figuras de formato único existem e não são mais velhas do que os CSV
+    # de que saem — senão o ecrã mostra um treino e a figura outro.
+    fontes = [os.path.join(RAIZ, c["campanha"], n)
+              for c in ap.colunas(cenario)
+              for n in ("eval_by_run.csv", "eval_by_run_7d.csv")]
+    mais_recente = max((os.path.getmtime(f) for f in fontes if os.path.exists(f)), default=0)
+    for nome in ("dotplot_%s.png" % cenario, "curvas_%s.png" % cenario):
+        f = os.path.join(DIR_FIG, nome)
+        vistos += 1
+        if not os.path.exists(f):
+            X(cenario, "falta %s — correr scripts/figuras_apresentacao.py" % f)
+        elif os.path.getmtime(f) < mais_recente:
+            X(cenario, "%s é mais velha do que o CSV — correr scripts/figuras_apresentacao.py"
+              % nome)
 
 
 def main() -> int:

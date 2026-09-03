@@ -40,6 +40,11 @@ _episodios = os.path.join(config.BASE_DIR, "results", "episodios_3d")
 if os.path.isdir(_episodios):
     app.add_static_files("/episodios", _episodios)
 
+# Figuras da Apresentação, num formato único (scripts/figuras_apresentacao.py).
+_fig_apres = os.path.join(config.BASE_DIR, "results", "figuras_apresentacao")
+if os.path.isdir(_fig_apres):
+    app.add_static_files("/figuras_apresentacao", _fig_apres)
+
 # Figuras instaladas na tese (a vista Mapa usa a planta do mapa composto).
 _fig_tese = os.path.join(config.BASE_DIR, "Tese", "images", "resultados")
 if os.path.isdir(_fig_tese):

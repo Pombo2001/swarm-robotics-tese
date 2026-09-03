@@ -12,6 +12,17 @@
 # execuções a 100 %. Uma frase que fale de outra campanha diz-lo («na campanha
 # final»), e esses números conferem-se contra a `final_7d`.
 
+# Treinos que o ranking escolheria e que NÃO se mostram, com o motivo. A vista
+# passa ao seguinte; o motivo aparece na linha de fonte do ecrã.
+excluir:
+  - cenario: four_rooms
+    campanha: adaptativo_A1
+    motivo: >-
+      o campeão A1 das Quatro Salas atravessa as paredes pelo topo — a 14,7 m
+      encosta ao teto da esfera e a colisão empurra-o para cima em vez de para
+      o lado (swarm_env_3d.py, argmin da penetração); 86 posições dentro de
+      paredes no episódio exportado a 3 set 2026
+
 cenarios:
   - cenario: none
     frase: >-
@@ -31,8 +42,8 @@ cenarios:
 
   - cenario: four_rooms
     frase: >-
-      A vitória grande do evolutivo: GNN 62,7 rec/ep, 7/7 execuções — quase o
-      dobro dos métodos de gradiente na campanha final.
+      A vitória grande do evolutivo: GNN 59,8 rec/ep, 7/7 execuções, contra
+      33,6 do PPO e 31,8 do SAC.
 
   - cenario: cooperative_door
     frase: >-

@@ -1,22 +1,28 @@
-"""Vista «Apresentação» — o melhor treino de cada mapa, um ecrã de cada vez.
+"""Vista «Apresentação» — cada mapa com os três modelos a correr, e o melhor em destaque.
 
 Porque existe
 A Galeria e os Vídeos mostram tudo, e é isso que se quer quando se procura uma
-prova. Numa sala, com o relógio a andar, a pergunta é outra: «neste mapa, qual
-foi o melhor, e como se vê?». Esta vista responde-a oito vezes — um ecrã por
-cenário — com o vídeo do treino vencedor de um lado, as três figuras que o
-sustentam do outro, e a frase que se diz com o mapa no ecrã.
+prova. Numa sala, com o relógio a andar, a pergunta é outra: «neste mapa, como
+se comportam os três, e qual foi o melhor?». Esta vista responde-a oito vezes
+— um ecrã por cenário — com os três algoritmos da campanha base lado a lado
+(vídeo, episódio 3D ou heatmap, à escolha), o treino vencedor assinalado, o
+dot plot e as curvas por baixo, e a frase que se diz com o mapa no ecrã.
 
 Quem decide o vencedor é o ranking do dashboard (`data.ranking_por_cenario`),
 com a regra da tese: compara-se dentro do cenário, só campanhas com avaliação
-determinística, e a unidade é a campanha e não a execução. Esta vista não tem
-lista própria de treinos; se o ranking mudar, muda com ele. O que vem do
-`configs/apresentacao.yaml` é só a frase.
+determinística, e a unidade é a campanha e não a execução. Quando o vencedor é
+de outra campanha (a novidade adaptativa no Muro em U), entra como quarta
+coluna ao lado dos três. O `configs/apresentacao.yaml` traz a frase de cada
+mapa e as exclusões — um treino que o ranking escolheria mas que não se pode
+mostrar, com o motivo escrito (o GNN adaptativo A1 nas Quatro Salas explora a
+costura entre o topo das paredes e o teto da esfera: atravessa-as a 14,7 m).
 
-O vídeo e o episódio 3D são do MESMO treino: os episódios de
-`results/episodios_3d/apresentacao/` trazem a campanha no meta, e um episódio
-de outra campanha aparece como tal, nunca em silêncio — mostrar o modelo da
-campanha final com o rótulo do adaptativo seria mentir com um vídeo.
+As figuras de baixo vêm de `results/figuras_apresentacao/` (script
+`figuras_apresentacao.py`), desenhadas de novo num formato único: as das
+pastas de cada campanha têm formatos diferentes, e lado a lado liam-se como
+descuido. O vídeo e o 3D de cada coluna são do mesmo treino, e um episódio
+que não seja dessa campanha não aparece — mostrar o modelo da final com o
+rótulo do adaptativo seria mentir com um vídeo.
 
 Navegação: setas do teclado (só com este separador aberto) ou os botões.
 """
@@ -30,72 +36,121 @@ from .. import config, data, theme
 
 CARD = theme.CARD + " p-5"
 _YAML = os.path.join(config.BASE_DIR, "configs", "apresentacao.yaml")
-DIR_EPISODIOS = os.path.join(config.BASE_DIR, "results", "episodios_3d", "apresentacao")
-_ALTURA_MEDIA = "clamp(280px,54vh,680px)"
+DIR_EPISODIOS = os.path.join(config.BASE_DIR, "results", "episodios_3d")
+DIR_EP_APRES = os.path.join(DIR_EPISODIOS, "apresentacao")
+FIG_DIR = os.path.join(config.BASE_DIR, "results", "figuras_apresentacao")
+_ALTURA_MEDIA = "clamp(200px,36vh,440px)"
+COR_ADAPTATIVO = "#00897b"
+MODOS = ["Vídeo", "Episódio 3D", "Heatmap"]
 
 # O app.py liga isto quando o separador está aberto: o `ui.keyboard` é da
 # página inteira, e sem o guarda as setas mudavam de mapa aqui enquanto se
 # navegava na Defesa.
 ATIVA = {"v": False}
 
-# (ficheiro na pasta da campanha, título curto). O algoritmo entra no nome do
-# heatmap; o dot plot e a curva são do cenário e mostram os três.
-FIGURAS = (
-    ("dotplot_eval_{cen}.png", "Fiabilidade entre execuções"),
-    ("heatmap_ocupacao_{algo}_{cen}.png", "Ocupação do espaço"),
-    ("comparacao_mapa_{cen}.png", "Curvas de treino"),
-)
+
+def _yaml():
+    if not os.path.exists(_YAML):
+        return {}
+    with open(_YAML, encoding="utf-8") as fh:
+        return yaml.safe_load(fh) or {}
 
 
 def frases():
     """{cenário: frase} do apresentacao.yaml; {} se faltar."""
-    if not os.path.exists(_YAML):
-        return {}
-    with open(_YAML, encoding="utf-8") as fh:
-        itens = (yaml.safe_load(fh) or {}).get("cenarios", []) or []
     return {it["cenario"]: (it.get("frase") or "").strip()
-            for it in itens if it.get("cenario")}
+            for it in (_yaml().get("cenarios") or []) if it.get("cenario")}
+
+
+def exclusoes():
+    """{(cenário, campanha): motivo} — treinos que o ranking escolheria e não se mostram."""
+    return {(e["cenario"], e["campanha"]): (e.get("motivo") or "").strip()
+            for e in (_yaml().get("excluir") or [])
+            if e.get("cenario") and e.get("campanha")}
+
+
+def campanha_base(cenario: str) -> str:
+    """A campanha cujos três algoritmos se mostram lado a lado."""
+    return "mapa_grande_f2" if cenario == "mapa_grande" else "final_7d"
 
 
 def vencedor(cenario: str):
-    """A linha do ranking que ganhou este cenário, ou None."""
-    linhas = data.ranking_por_cenario().get(cenario, [])
-    return linhas[0] if linhas else None
+    """A linha do ranking que ganhou este cenário, saltando as excluídas; ou None."""
+    exc = exclusoes()
+    for linha in data.ranking_por_cenario().get(cenario, []):
+        if (cenario, linha["campanha"]) not in exc:
+            return linha
+    return None
 
 
 def cenarios_com_vencedor():
     return [c for c in config.SCENARIO_KEYS if vencedor(c)]
 
 
-def _url_fig(campanha: str, ficheiro: str):
+def colunas(cenario: str):
+    """As colunas do ecrã: os três da campanha base e, se for de outra, o vencedor.
+
+    Cada uma: algo, campanha, serie (o nome na figura e no cartão), rotulo da
+    campanha, cor, extra (é a quarta coluna), linha (a pontuação do ranking).
+    """
+    base = campanha_base(cenario)
+    venc = vencedor(cenario)
+    out = []
+    for algo in config.ALGOS:
+        out.append({"algo": algo, "campanha": base, "serie": algo,
+                    "rotulo": data.rotulo_campanha(base)[0],
+                    "cor": config.ALGO_META[algo]["color"], "extra": False,
+                    "linha": data.pontuacao_campanha(base, cenario, algo)})
+    if venc and data._ALIAS.get(venc["campanha"], venc["campanha"]) != base:
+        out.append({"algo": venc["algo"].upper(), "campanha": venc["campanha"],
+                    "serie": "%s adaptativo" % venc["algo"].upper(),
+                    "rotulo": data.rotulo_campanha(venc["campanha"])[0],
+                    "cor": COR_ADAPTATIVO, "extra": True, "linha": venc})
+    return out
+
+
+def e_vencedor(col, cenario: str) -> bool:
+    v = vencedor(cenario)
+    return bool(v) and col["algo"] == v["algo"].upper() and \
+        data._ALIAS.get(col["campanha"], col["campanha"]) == \
+        data._ALIAS.get(v["campanha"], v["campanha"])
+
+
+def _url_fig_campanha(campanha: str, ficheiro: str):
     p = os.path.join(data.GRAFICOS_DIR, campanha, ficheiro)
     return "/graficos/%s/%s" % (campanha, ficheiro) if os.path.exists(p) else None
+
+
+def _url_fig_apres(ficheiro: str):
+    return ("/figuras_apresentacao/" + ficheiro
+            if os.path.exists(os.path.join(FIG_DIR, ficheiro)) else None)
 
 
 def video(campanha: str, algo: str, cenario: str):
     """(url, campanha de onde vem) do GIF, ou (None, None).
 
-    O ranking pode escolher a pasta agregada de uma campanha (o F2 do mapa
-    composto junta três streams) e o GIF estar numa das pastas de origem —
-    `sessoes_com_video` cobre isso, e a origem fica escrita.
+    A pasta agregada do F2 do mapa composto tem os GIF copiados; se um dia não
+    tiver, procura-se nos streams que são a mesma campanha (`_ALIAS`).
     """
-    fn = data.video_for(campanha, algo, cenario)
+    a = algo.lower()
+    fn = data.video_for(campanha, a, cenario)
     if fn:
         return "/graficos/%s/videos/%s" % (campanha, fn), campanha
-    for s in data.sessoes_com_video(algo, cenario):
+    for s in data.sessoes_com_video(a, cenario):
         if data._ALIAS.get(s, s) == campanha:
-            return "/graficos/%s/videos/%s" % (s, data.video_for(s, algo, cenario)), s
+            return "/graficos/%s/videos/%s" % (s, data.video_for(s, a, cenario)), s
     return None, None
 
 
 def episodio(campanha: str, algo: str, cenario: str):
-    """(url, é do treino vencedor) do episódio 3D, ou (None, False).
+    """URL do episódio 3D DESTA campanha, ou None.
 
-    Primeiro o exportado para a Apresentação com a campanha certa no meta;
-    senão o genérico do «Episódio 3D» (modelos ativos), marcado como tal.
+    Primeiro o exportado para a Apresentação com a campanha no meta; depois o
+    genérico do «Episódio 3D», que é dos modelos ativos — a campanha final — e
+    por isso só serve às colunas dela. Um episódio de outra campanha não entra.
     """
-    nome = "%s_%s.json" % (algo, cenario)
-    p = os.path.join(DIR_EPISODIOS, nome)
+    nome = "%s_%s.json" % (algo.lower(), cenario)
+    p = os.path.join(DIR_EP_APRES, nome)
     if os.path.exists(p):
         try:
             with open(p, encoding="utf-8") as fh:
@@ -104,17 +159,26 @@ def episodio(campanha: str, algo: str, cenario: str):
             meta = {}
         origem = data._ALIAS.get(meta.get("campanha", ""), meta.get("campanha", ""))
         if origem == campanha:
-            return "/episodios/apresentacao/" + nome, True
-    generico = os.path.join(config.BASE_DIR, "results", "episodios_3d", nome)
-    if os.path.exists(generico):
-        return "/episodios/" + nome, campanha == "final_7d"
-    return None, False
+            return "/episodios/apresentacao/" + nome
+    if campanha == "final_7d" and os.path.exists(os.path.join(DIR_EPISODIOS, nome)):
+        return "/episodios/" + nome
+    return None
 
 
 def _js_viz3d():
     js = os.path.join(os.path.dirname(os.path.dirname(__file__)), "estatico", "viz3d.js")
     v = int(os.path.getmtime(js)) if os.path.exists(js) else 0
     ui.add_head_html('<script src="/estatico/viz3d.js?v=%d"></script>' % v)
+
+
+def _vazio(icone: str, texto: str, detalhe: str = ""):
+    with ui.column().classes("w-full items-center justify-center gap-1 rounded-xl") \
+            .style(f"height:{_ALTURA_MEDIA};border:1px dashed rgba(255,255,255,.14)"):
+        ui.icon(icone).classes("text-3xl").style(f"color:{theme.INK_MUTED}")
+        ui.label(texto).classes("text-xs text-center").style(f"color:{theme.INK_MUTED}")
+        if detalhe:
+            ui.label(detalhe).classes("text-[10px] text-center px-3") \
+                .style(f"color:{theme.INK_MUTED}")
 
 
 def build():
@@ -127,12 +191,13 @@ def build():
         return
     _js_viz3d()
 
-    estado = {"i": 0, "media": "Vídeo"}
+    estado = {"i": 0, "modo": MODOS[0]}
 
     with ui.column().classes("w-full gap-4 p-4"):
         with ui.row().classes("items-center gap-3 w-full no-wrap"):
             theme.section_title("co_present", "Apresentação",
-                                "o melhor treino de cada mapa · setas do teclado para navegar")
+                                "os três modelos em cada mapa, o melhor em destaque · "
+                                "setas do teclado para navegar")
             ui.space()
             pontos = ui.row().classes("items-center gap-1 no-wrap")
             passos = ui.label("").classes("text-xs mono-num ml-3") \
@@ -153,59 +218,97 @@ def build():
                     theme.clicavel(p, lambda _, j=j: ir(j),
                                    "Ir para %s" % config.SCENARIO_LABEL_SHORT.get(c, c))
 
-        def _media(cen, v, campanha, algo):
-            """O vídeo ou o 3D do treino vencedor, no mesmo espaço."""
-            if estado["media"] == "Vídeo":
+        def _media(cen, col, k):
+            """O vídeo, o 3D ou o heatmap desta coluna, conforme o modo."""
+            algo, campanha = col["algo"], col["campanha"]
+            if estado["modo"] == "Vídeo":
                 url, origem = video(campanha, algo, cen)
-                if url:
-                    ui.image(url).classes("w-full rounded-xl bg-black/30") \
-                        .style(f"height:{_ALTURA_MEDIA};object-fit:contain") \
-                        .props("decoding=async")
-                    if origem != campanha:
-                        ui.label("vídeo gravado no stream %s desta campanha"
-                                 % data.rotulo_campanha(origem)[0]) \
-                            .classes("text-[11px]").style(f"color:{theme.INK_MUTED}")
-                else:
-                    with ui.column().classes("w-full items-center justify-center") \
-                            .style(f"height:{_ALTURA_MEDIA}"):
-                        ui.icon("videocam_off").classes("text-4xl") \
-                            .style(f"color:{theme.INK_MUTED}")
-                        ui.label("este treino não gravou vídeo").classes("text-xs") \
-                            .style(f"color:{theme.INK_MUTED}")
+                if not url:
+                    _vazio("videocam_off", "este treino não gravou vídeo")
+                    return
+                ui.image(url).classes("w-full rounded-xl bg-white") \
+                    .style(f"height:{_ALTURA_MEDIA};object-fit:contain").props("decoding=async")
+                if origem != campanha:
+                    ui.label("gravado no stream %s" % data.rotulo_campanha(origem)[0]) \
+                        .classes("text-[10px]").style(f"color:{theme.INK_MUTED}")
                 return
-            url, proprio = episodio(campanha, algo, cen)
+            if estado["modo"] == "Heatmap":
+                url = _url_fig_campanha(campanha, "heatmap_ocupacao_%s_%s.png" % (algo.lower(), cen))
+                if not url:
+                    _vazio("grid_off", "sem heatmap de ocupação para este treino")
+                    return
+                theme.clicavel(
+                    ui.image(url).classes("w-full rounded-xl bg-white cursor-pointer")
+                      .style(f"height:{_ALTURA_MEDIA};object-fit:contain")
+                      .props("loading=lazy decoding=async"),
+                    lambda _, u=url, t="Ocupação — %s" % col["serie"]: _ampliar(u, t),
+                    "Ampliar o heatmap %s" % col["serie"])
+                return
+            url = episodio(campanha, algo, cen)
             if not url:
-                with ui.column().classes("w-full items-center justify-center") \
-                        .style(f"height:{_ALTURA_MEDIA}"):
-                    ui.icon("view_in_ar").classes("text-4xl").style(f"color:{theme.INK_MUTED}")
-                    ui.label("sem episódio 3D exportado para este treino") \
-                        .classes("text-xs").style(f"color:{theme.INK_MUTED}")
-                    ui.label("python scripts/exportar_episodio_3d.py --algo %s --cenario %s "
-                             "--subpasta apresentacao --campanha %s" % (algo, cen, campanha)) \
-                        .classes("text-[10px] mono-num").style(f"color:{theme.INK_MUTED}")
+                _vazio("view_in_ar", "sem episódio 3D deste treino",
+                       "os modelos desta campanha não estão arquivados nesta máquina"
+                       if campanha != "final_7d" else
+                       "python scripts/exportar_episodio_3d.py --algo %s --cenario %s"
+                       % (algo.lower(), cen))
                 return
             # O canvas traz o episódio no `data-ep`: o viz3d.js arranca-o sozinho
             # quando o vê aparecer no DOM (ver autoArranque), sem `run_javascript`.
-            ui.html('<canvas id="apres_canvas_%s" data-ep="%s" data-estado="apres_estado_%s" '
+            cid = "apres_canvas_%s_%d" % (cen, k)
+            ui.html('<canvas id="%s" data-ep="%s" data-estado="%s_estado" '
                     'style="width:100%%;height:%s;display:block;border-radius:12px;'
-                    'background:#0b0e11"></canvas>' % (cen, url, cen, _ALTURA_MEDIA))
-            with ui.row().classes("items-center gap-3 no-wrap w-full"):
-                ui.label("").classes("text-xs mono-num").props('id=apres_estado_%s' % cen) \
+                    'background:#0b0e11"></canvas>' % (cid, url, cid, _ALTURA_MEDIA))
+            ui.label("").classes("text-[10px] mono-num").props('id=%s_estado' % cid) \
+                .style(f"color:{theme.INK_MUTED}")
+
+        def _chip(col):
+            """Pontuação DESTE treino: sucesso · recolhas · execuções a 100 %."""
+            d = col["linha"]
+            if not d or d.get("ptask") is None:
+                ui.label("sem avaliação determinística").classes("text-[10px]") \
                     .style(f"color:{theme.INK_MUTED}")
-                ui.space()
-                ui.label("arrasta para rodar · roda do rato para aproximar") \
-                    .classes("text-[11px]").style(f"color:{theme.INK_MUTED}")
-            if not proprio:
-                ui.label("⚠ episódio dos modelos ativos (campanha final), não deste treino") \
-                    .classes("text-[11px]").style("color:#d97706")
+                return
+            p = d["ptask"]
+            cor = "#22c55e" if p >= 80 else ("#f59e0b" if p >= 40 else "#ef4444")
+            with ui.row().classes("items-center gap-1 no-wrap"):
+                ui.icon("check_circle" if p >= 80 else ("error" if p >= 40 else "cancel")) \
+                    .style(f"color:{cor}").classes("text-sm")
+                ui.label("%s%% · %s rec/ep" % (theme.num(p, 0), theme.num(d["recolhas"]))) \
+                    .classes("text-xs mono-num").style(f"color:{cor};font-weight:600")
+                if d.get("convergentes") is not None:
+                    ui.label("(%d/%d a 100%%)" % (d["convergentes"], d["runs"])) \
+                        .classes("text-[10px]").style(f"color:{theme.INK_MUTED}")
+
+        def _coluna(cen, col, k):
+            melhor = e_vencedor(col, cen)
+            borda = ("2px solid %s" % col["cor"]) if melhor else "1px solid rgba(255,255,255,.08)"
+            with ui.element("div").classes("glass rounded-2xl p-3 flex flex-col gap-2") \
+                    .style(f"border:{borda};min-width:0;border-top:3px solid {col['cor']}"):
+                with ui.row().classes("items-center gap-2 no-wrap w-full"):
+                    ui.element("div").style(
+                        f"width:9px;height:9px;border-radius:50%;flex:none;background:{col['cor']}")
+                    ui.label(col["serie"] if col["extra"]
+                             else config.ALGO_META[col["algo"]]["label"]) \
+                        .classes("text-sm font-bold truncate").style(f"color:{col['cor']}")
+                    ui.space()
+                    if melhor:
+                        with ui.row().classes("items-center gap-1 no-wrap rounded-full px-2") \
+                                .style(f"background:{col['cor']}22;border:1px solid {col['cor']}"):
+                            ui.icon("emoji_events").classes("text-xs").style(f"color:{col['cor']}")
+                            ui.label("melhor").classes("text-[10px] font-bold") \
+                                .style(f"color:{col['cor']}")
+                if col["extra"]:
+                    ui.label(col["rotulo"]).classes("text-[10px] -mt-1") \
+                        .style(f"color:{theme.INK_MUTED}")
+                _media(cen, col, k)
+                _chip(col)
 
         def desenhar():
             cen = cens[estado["i"]]
             v = vencedor(cen)
-            campanha, algo = v["campanha"], v["algo"].lower()
-            meta_algo = config.ALGO_META.get(v["algo"], {})
-            cor = meta_algo.get("color", theme.INK)
-            rot_campanha = data.rotulo_campanha(campanha)[0]
+            cols = colunas(cen)
+            venc_col = next((c for c in cols if e_vencedor(c, cen)), None)
+            cor = venc_col["cor"] if venc_col else theme.INK
             passos.text = "%d de %d" % (estado["i"] + 1, len(cens))
             _pontos()
             alvo.clear()
@@ -221,40 +324,42 @@ def build():
                     ui.space()
                     with ui.column().classes("gap-0 items-end"):
                         with ui.row().classes("items-center gap-2 no-wrap"):
-                            ui.element("div").style(
-                                f"width:10px;height:10px;border-radius:50%;background:{cor}")
-                            ui.label("%s · %s" % (meta_algo.get("label", v["algo"]), rot_campanha)) \
+                            ui.icon("emoji_events").classes("text-sm").style(f"color:{cor}")
+                            ui.label("melhor treino: %s · %s"
+                                     % (venc_col["serie"] if venc_col else v["algo"],
+                                        data.rotulo_campanha(v["campanha"])[0])) \
                                 .classes("text-sm font-bold").style(f"color:{cor}")
                         conv = ("%d/%d execuções a 100 %%" % (v["convergentes"], v["runs"])
                                 if v.get("convergentes") is not None else "")
                         ui.label("%s rec/ep · %s" % (theme.num(v["recolhas"]), conv)) \
                             .classes("text-xs mono-num").style(f"color:{theme.INK_MUTED}")
 
-                # Corpo: media à esquerda, as três figuras à direita.
-                with ui.grid().classes("w-full gap-4 mt-3").style(
-                        "grid-template-columns:minmax(0,11fr) minmax(0,9fr)"):
-                    with ui.column().classes("gap-2").style("min-width:0"):
-                        with ui.row().classes("items-center gap-2 no-wrap"):
-                            tog = ui.toggle(["Vídeo", "Episódio 3D"], value=estado["media"]) \
-                                .props("no-caps dense")
-                        media = ui.column().classes("w-full gap-1").style("min-width:0")
-                        with media:
-                            _media(cen, v, campanha, algo)
+                # A linha dos modelos: um cartão por algoritmo, o mesmo modo em todos.
+                with ui.row().classes("items-center gap-3 no-wrap mt-3"):
+                    tog = ui.toggle(MODOS, value=estado["modo"]).props("no-caps dense")
+                    ui.label("arrasta para rodar o 3D · roda do rato para aproximar") \
+                        .classes("text-[11px]").style(f"color:{theme.INK_MUTED}") \
+                        .bind_visibility_from(tog, "value", lambda v: v == "Episódio 3D")
+                linha = ui.grid().classes("w-full gap-3 mt-1").style(
+                    "grid-template-columns:repeat(%d,minmax(0,1fr))" % len(cols))
 
-                        def _muda_media(e):
-                            estado["media"] = e.value
-                            media.clear()
-                            with media:
-                                _media(cen, v, campanha, algo)
-                        tog.on_value_change(_muda_media)
+                def _desenhar_linha():
+                    linha.clear()
+                    with linha:
+                        for k, col in enumerate(cols):
+                            _coluna(cen, col, k)
+                _desenhar_linha()
 
-                    with ui.column().classes("gap-3").style("min-width:0"):
-                        with ui.grid(columns=2).classes("w-full gap-3") \
-                                .style("grid-template-columns:repeat(2,minmax(0,1fr))"):
-                            for padrao, titulo in FIGURAS[:2]:
-                                _figura(campanha, padrao.format(cen=cen, algo=algo), titulo)
-                        padrao, titulo = FIGURAS[2]
-                        _figura(campanha, padrao.format(cen=cen, algo=algo), titulo)
+                def _muda_modo(e):
+                    estado["modo"] = e.value
+                    _desenhar_linha()
+                tog.on_value_change(_muda_modo)
+
+                # As figuras, num formato único para os oito cenários.
+                with ui.grid().classes("w-full gap-4 mt-4").style(
+                        "grid-template-columns:minmax(0,4fr) minmax(0,6fr)"):
+                    _figura("dotplot_%s.png" % cen, "Fiabilidade entre execuções")
+                    _figura("curvas_%s.png" % cen, "Curvas de treino")
 
                 # A frase.
                 frase = textos.get(cen)
@@ -264,11 +369,13 @@ def build():
                 else:
                     ui.label("· sem frase para este cenário em configs/apresentacao.yaml") \
                         .classes("text-xs mt-4").style(f"color:{theme.INK_MUTED}")
-                theme.fonte("%s · ranking por recolhas/ep, avaliação determinística"
-                            % campanha)
+                exc = [m for (c, _camp), m in exclusoes().items() if c == cen]
+                theme.fonte("%s · ranking por recolhas/ep, avaliação determinística%s"
+                            % (", ".join(sorted({c["campanha"] for c in cols})),
+                               (" · excluído: " + "; ".join(exc)) if exc else ""))
 
-        def _figura(campanha, ficheiro, titulo):
-            url = _url_fig(campanha, ficheiro)
+        def _figura(ficheiro, titulo):
+            url = _url_fig_apres(ficheiro)
             with ui.column().classes("gap-1 w-full").style("min-width:0"):
                 ui.label(titulo).classes("text-[11px] font-bold tracking-wide") \
                     .style(f"color:{theme.INK_MUTED}")
@@ -283,8 +390,8 @@ def build():
                             .style("border:1px dashed rgba(255,255,255,.18)"):
                         ui.label("figura em falta").classes("text-xs") \
                             .style(f"color:{theme.INK_MUTED}")
-                        ui.label("%s/%s" % (campanha, ficheiro)).classes("text-[10px] mono-num") \
-                            .style(f"color:{theme.INK_MUTED}")
+                        ui.label("python scripts/figuras_apresentacao.py") \
+                            .classes("text-[10px] mono-num").style(f"color:{theme.INK_MUTED}")
 
         def _ampliar(url, titulo):
             with ui.dialog() as dlg, ui.card().classes("max-w-[92vw]"):
@@ -296,12 +403,6 @@ def build():
 
         def ir(j):
             estado["i"] = j % len(cens)
-            # Pausa o 3D anterior, se houver: o canvas sai do DOM mas o ciclo de
-            # desenho continuava a correr às escuras. Só aqui, e não no primeiro
-            # desenho — na construção da página ainda não há cliente para
-            # receber JavaScript.
-            ui.run_javascript("window._viz3dAtual && window._viz3dAtual.pausa && "
-                              "window._viz3dAtual.pausa()")
             desenhar()
 
         def andar(passo):

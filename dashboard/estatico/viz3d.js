@@ -171,6 +171,9 @@
     }
 
     function tick(t) {
+      // O canvas saiu do DOM (mudou-se de mapa, ou de modo): o ciclo morre com
+      // ele, em vez de continuar a desenhar às escuras.
+      if (!canvas.isConnected) return;
       if (est.aPassar && t - est.ultimo > 55 / est.velocidade) {
         est.quadro = (est.quadro + 1) % dados.quadros.length;
         est.ultimo = t;
@@ -266,7 +269,8 @@
       const r = await fetch(url);
       if (!r.ok) throw new Error("episódio não encontrado: " + url);
       const dados = await r.json();
-      if (window._viz3dAtual && window._viz3dAtual.pausa) window._viz3dAtual.pausa();
+      // Não se pausa o anterior: a Apresentação tem três canvases a correr ao
+      // mesmo tempo. Um canvas que saia do DOM pára sozinho (ver `tick`).
       window._viz3dAtual = criar(canvas, dados, aoMudar);
       return window._viz3dAtual;
     },

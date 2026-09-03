@@ -62,7 +62,7 @@ else
     # CONTEÚDO (md5) e não por nome. O `main.pdf` (12 MB) é o único caminho pesado:
     # quem quiser um delta leve passa os caminhos à mão.
     CAMINHOS=(dashboard scripts src configs
-              results/episodios_3d results/mapa_grande
+              results/episodios_3d results/figuras_apresentacao results/mapa_grande
               results/mega_1mes/resumo_megatreino.json
               results/estado_f2.json results/estatisticas results/evaluation
               results/mega_1mes/*/evaluation
