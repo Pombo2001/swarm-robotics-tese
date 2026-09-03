@@ -255,6 +255,10 @@ results/*
 !results/estatisticas/
 results/estatisticas/*
 !results/estatisticas/escalabilidade_*.csv
+# O CSV do detetor de travessias e o seu resumo: a limitação da tese cita-os e
+# o verificar_travessias.py lê-os no pre-commit.
+!results/estatisticas/travessias_paredes.csv
+!results/estatisticas/travessias_resumo.md
 
 # Configuracao local de ferramentas de edicao (especifica da maquina)
 .claude/
