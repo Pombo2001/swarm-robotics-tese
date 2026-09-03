@@ -64,7 +64,8 @@ cómputo. Sem vencedor universal — um mapa de escolha.
 - 3 algoritmos × 7 cenários × **7 execuções** = **147 treinos**; **20 episódios**
   determinísticos emparelhados por modelo → **2 940 episódios**.
 - Orçamentos: GNN **195 min**/execução (população 30); PPO/SAC **48 min** (16
-  ambientes). Núcleos-hora: **12,8 vs 97,6** (**7,6× ≈ 8×**).
+  ambientes). Núcleos-hora: GNN **97,6** vs PPO/SAC **12,8** (**7,6× ≈ 8×** a
+  favor do gradiente — a ordem importa, e escrita sem rótulos já induziu erro).
 - Unidade estatística = **execução**; Mann-Whitney U, **δ de Cliff** (|δ| ≥
   0,474 grande), α = 0,05. Três **pré-registos**. **18 verificadores**.
 - Simulador: 139 → **420 passos/s** após vetorização (2,58× no passo; LiDAR 19,5×),
