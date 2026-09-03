@@ -1,0 +1,1154 @@
+<title>Cábula da Defesa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --papel:#f2f5f2; --chapa:#ffffff; --chapa-fig:#ffffff;
+  --tinta:#12211c; --tinta-2:#4a5c54; --tinta-3:#7a8b81;
+  --linha:#d6dfd8; --linha-forte:#b5c4ba;
+  --realce:#0d6b4f; --realce-sup:#e2efe8;
+  --gnn:#0f8f63; --ppo:#cd5730; --sac:#2f77c4;
+  --aviso:#9c5e1c; --aviso-sup:#f6ecdc;
+  --veu:#ccd8d0;
+  --seg1:#0d6b4f; --seg2:#3f9276; --seg3:#79b39d; --seg4:#bcd8cb;
+  --sombra:0 1px 2px rgba(18,33,28,.06), 0 8px 20px -14px rgba(18,33,28,.28);
+  --barra:rgba(18,33,28,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --papel:#0c1411; --chapa:#141d19; --chapa-fig:#f3f5f2;
+    --tinta:#e3ebe6; --tinta-2:#9aada3; --tinta-3:#78897f;
+    --linha:#233129; --linha-forte:#334539;
+    --realce:#4cc494; --realce-sup:#11291f;
+    --gnn:#2fb583; --ppo:#ef7850; --sac:#5f9fe4;
+    --aviso:#d3913f; --aviso-sup:#261e12;
+    --veu:#2b3a32;
+    --seg1:#4cc494; --seg2:#37a077; --seg3:#27795a; --seg4:#1a5541;
+    --sombra:0 1px 2px rgba(0,0,0,.4), 0 10px 24px -16px rgba(0,0,0,.8);
+    --barra:rgba(227,235,230,.07);
+  }
+}
+:root[data-theme="dark"]{
+  --papel:#0c1411; --chapa:#141d19; --chapa-fig:#f3f5f2;
+  --tinta:#e3ebe6; --tinta-2:#9aada3; --tinta-3:#78897f;
+  --linha:#233129; --linha-forte:#334539;
+  --realce:#4cc494; --realce-sup:#11291f;
+  --gnn:#2fb583; --ppo:#ef7850; --sac:#5f9fe4;
+  --aviso:#d3913f; --aviso-sup:#261e12;
+  --veu:#2b3a32;
+  --seg1:#4cc494; --seg2:#37a077; --seg3:#27795a; --seg4:#1a5541;
+  --sombra:0 1px 2px rgba(0,0,0,.4), 0 10px 24px -16px rgba(0,0,0,.8);
+  --barra:rgba(227,235,230,.07);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--papel); color:var(--tinta);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px; line-height:1.55; -webkit-text-size-adjust:100%;
+}
+h1,h2,h3{font-family:Fraunces,Georgia,"Times New Roman",serif; text-wrap:balance; margin:0}
+h1{font-weight:700; font-size:clamp(1.85rem,6.4vw,2.5rem); line-height:1.1; letter-spacing:-.015em}
+h2{font-weight:700; font-size:clamp(1.3rem,4.4vw,1.65rem); line-height:1.16; letter-spacing:-.01em}
+h3{font-weight:600; font-size:1.02rem; line-height:1.3}
+h4{font-family:"IBM Plex Mono",monospace; font-size:.72rem; text-transform:uppercase; letter-spacing:.09em;
+   color:var(--tinta-3); font-weight:600; margin:0}
+p{margin:0}
+a{color:var(--realce)}
+img{display:block}
+
+/* ---------- barra fixa ---------- */
+.topo{position:sticky; top:0; z-index:40; background:var(--papel); border-bottom:1px solid var(--linha)}
+.topo-in{max-width:58rem; margin:0 auto; padding:.55rem .9rem .45rem; display:flex; align-items:center; gap:.6rem}
+.marca{font-family:Fraunces,serif; font-weight:700; font-size:.98rem; letter-spacing:-.01em; white-space:nowrap}
+.marca span{color:var(--tinta-3); font-family:"IBM Plex Mono",monospace; font-weight:400; font-size:.7rem; letter-spacing:.03em}
+.interruptor{
+  margin-left:auto; display:inline-flex; align-items:center; gap:.45rem; cursor:pointer;
+  font-size:.72rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+  border:1px solid var(--linha-forte); background:var(--chapa); color:var(--tinta-2);
+  border-radius:999px; padding:.34rem .7rem .34rem .48rem; font-family:"IBM Plex Mono",monospace; white-space:nowrap;
+}
+.interruptor:focus-visible{outline:2px solid var(--realce); outline-offset:2px}
+.pastilha{width:26px; height:15px; border-radius:999px; background:var(--linha-forte); position:relative; flex:none; transition:background .18s}
+.pastilha::after{content:""; position:absolute; top:2px; left:2px; width:11px; height:11px; border-radius:50%; background:var(--chapa); transition:transform .18s}
+body.teste .interruptor{border-color:var(--realce); color:var(--realce); background:var(--realce-sup)}
+body.teste .pastilha{background:var(--realce)}
+body.teste .pastilha::after{transform:translateX(11px)}
+
+.atalhos{max-width:58rem; margin:0 auto; padding:0 .9rem .5rem; display:flex; gap:.35rem; overflow-x:auto; scrollbar-width:none}
+.atalhos::-webkit-scrollbar{display:none}
+.atalhos a{
+  flex:none; font-family:"IBM Plex Mono",monospace; font-size:.71rem; letter-spacing:.02em;
+  text-decoration:none; color:var(--tinta-2); border:1px solid var(--linha);
+  border-radius:999px; padding:.24rem .6rem; background:var(--chapa);
+}
+.atalhos a:hover{color:var(--realce); border-color:var(--realce)}
+
+/* ---------- estrutura ---------- */
+.folha{max-width:58rem; margin:0 auto; padding:1.5rem .9rem 5rem; display:flex; flex-direction:column; gap:2.8rem}
+section{display:flex; flex-direction:column; gap:1rem; scroll-margin-top:6rem}
+.cab{display:flex; align-items:baseline; gap:.6rem; border-bottom:1px solid var(--linha); padding-bottom:.45rem}
+.cab .n{font-family:"IBM Plex Mono",monospace; font-size:.76rem; font-weight:600; color:var(--realce); letter-spacing:.06em}
+.nota{font-size:.87rem; color:var(--tinta-3); line-height:1.55; max-width:68ch}
+.prosa{max-width:66ch; line-height:1.65}
+strong{font-weight:600}
+mark{background:var(--realce-sup); color:inherit; padding:.05em .2em; border-radius:3px; font-weight:600}
+.bloco{display:flex; flex-direction:column; gap:.55rem}
+
+/* ---------- abertura ---------- */
+.abre{display:flex; flex-direction:column; gap:.9rem; padding-top:.3rem}
+.olho{font-family:"IBM Plex Mono",monospace; font-size:.72rem; letter-spacing:.15em; text-transform:uppercase; color:var(--tinta-3)}
+.tese{
+  font-family:Fraunces,Georgia,serif; font-size:clamp(1.04rem,3.3vw,1.24rem); line-height:1.5; font-weight:500;
+  border-left:3px solid var(--realce); padding-left:1rem; max-width:58ch;
+}
+.factos{display:grid; grid-template-columns:repeat(auto-fit,minmax(8.2rem,1fr)); gap:.5rem}
+.facto{background:var(--chapa); border:1px solid var(--linha); border-radius:9px; padding:.6rem .7rem}
+.facto b{display:block; font-family:"IBM Plex Mono",monospace; font-size:1.12rem; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.02em}
+.facto span{display:block; font-size:.73rem; color:var(--tinta-3); line-height:1.4; margin-top:.15rem}
+
+/* ---------- passos ---------- */
+ol.passos{list-style:none; margin:0; padding:0; display:flex; flex-direction:column}
+ol.passos li{display:grid; grid-template-columns:1.6rem 1fr; gap:.7rem; padding:.7rem 0; border-top:1px solid var(--linha)}
+ol.passos li:first-child{border-top:none}
+ol.passos .p{font-family:"IBM Plex Mono",monospace; font-size:.8rem; font-weight:600; color:var(--realce); padding-top:.16rem}
+ol.passos b{display:block; font-weight:600}
+ol.passos p{font-size:.92rem; color:var(--tinta-2); line-height:1.55}
+
+/* ---------- perguntas / respostas ---------- */
+.qa{display:flex; flex-direction:column}
+.qa-item{border-top:1px solid var(--linha); padding:.85rem 0}
+.qa-item:first-child{border-top:none}
+.qa-p{display:flex; gap:.55rem; align-items:baseline; font-weight:600; line-height:1.4}
+.qa-p .cod{font-family:"IBM Plex Mono",monospace; font-size:.68rem; color:var(--realce); flex:none;
+  border:1px solid var(--realce); border-radius:4px; padding:.05rem .3rem; letter-spacing:.02em; font-weight:500}
+.qa-r{margin-top:.45rem; font-size:.95rem; color:var(--tinta-2); line-height:1.62; max-width:68ch}
+
+/* véu do modo teste */
+.resp{border-radius:5px}
+body.teste .resp:not(.aberto){
+  background:var(--veu); color:transparent; cursor:pointer; user-select:none;
+  box-shadow:0 0 0 1px var(--linha-forte) inset; position:relative; min-height:2.6rem;
+}
+body.teste .resp:not(.aberto) *{color:transparent !important; border-color:transparent !important; background:transparent !important}
+body.teste .resp:not(.aberto)::after{
+  content:"tocar para ver"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:"IBM Plex Mono",monospace; font-size:.68rem; letter-spacing:.1em; color:var(--tinta-3);
+}
+body.teste .resp:not(.aberto):focus-visible{outline:2px solid var(--realce); outline-offset:2px}
+
+/* ---------- pares chave/valor (especificações) ---------- */
+.pares{display:grid; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); gap:0 1.2rem}
+.par{display:flex; align-items:baseline; justify-content:space-between; gap:.7rem;
+  padding:.36rem 0; border-bottom:1px solid var(--linha); font-size:.84rem}
+.par span{color:var(--tinta-2)}
+.par b{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-weight:600;
+  font-size:.79rem; white-space:nowrap; color:var(--tinta)}
+
+/* ---------- funil PRISMA ---------- */
+.funil{display:flex; flex-direction:column; gap:.25rem}
+.fase{background:var(--chapa); border:1px solid var(--linha); border-radius:8px; padding:.5rem .7rem;
+  display:flex; flex-direction:column; gap:.35rem}
+.fase-l{display:flex; align-items:baseline; justify-content:space-between; gap:.8rem; font-size:.86rem}
+.fase-l b{font-family:"IBM Plex Mono",monospace; font-weight:600; font-variant-numeric:tabular-nums}
+.fase-b{height:6px; border-radius:99px; background:var(--realce)}
+.fase.fim{border-color:var(--realce); background:var(--realce-sup)}
+.corte{display:grid; grid-template-columns:1rem 1fr auto; gap:.5rem; align-items:baseline;
+  font-size:.78rem; color:var(--tinta-3); padding:.1rem .7rem}
+.corte i{color:var(--aviso); font-style:normal; font-family:"IBM Plex Mono",monospace}
+.corte b{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; color:var(--tinta-2)}
+
+/* ---------- vetor de observação ---------- */
+.vetor{display:flex; height:34px; border-radius:7px; overflow:hidden; border:1px solid var(--linha-forte)}
+.vetor div{display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace;
+  font-size:.7rem; font-weight:600; color:#fff; overflow:hidden}
+.legenda{display:grid; grid-template-columns:repeat(auto-fit,minmax(12rem,1fr)); gap:.3rem .9rem}
+.leg{display:grid; grid-template-columns:.7rem 1fr auto; gap:.5rem; align-items:baseline; font-size:.82rem;
+  color:var(--tinta-2); padding:.25rem 0; border-bottom:1px solid var(--linha)}
+.leg i{width:.7rem; height:.7rem; border-radius:3px; display:block; transform:translateY(.05rem)}
+.leg b{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:.78rem; color:var(--tinta)}
+
+/* ---------- fórmula ---------- */
+.formula{background:var(--chapa); border:1px solid var(--linha-forte); border-radius:9px; padding:.75rem .9rem;
+  font-family:"IBM Plex Mono",monospace; font-size:.86rem; line-height:1.7; overflow-x:auto; white-space:nowrap}
+.formula em{font-style:normal; color:var(--realce); font-weight:600}
+
+/* ---------- cenários ---------- */
+.grelha{display:grid; grid-template-columns:repeat(auto-fill,minmax(16rem,1fr)); gap:.8rem}
+.cen{background:var(--chapa); border:1px solid var(--linha); border-radius:11px; padding:.75rem;
+  display:flex; flex-direction:column; gap:.6rem; box-shadow:var(--sombra)}
+.cen-topo{display:flex; gap:.7rem; align-items:flex-start}
+.cen-topo img{width:78px; height:78px; object-fit:contain; background:var(--chapa-fig); border:1px solid var(--linha);
+  border-radius:8px; flex:none; padding:2px}
+.cen-nome{display:flex; flex-direction:column; gap:.1rem; min-width:0}
+.cen-nome h3{letter-spacing:-.01em}
+.cen-nome code{font-family:"IBM Plex Mono",monospace; font-size:.69rem; color:var(--tinta-3); word-break:break-all}
+.cen-nome em{font-style:normal; font-size:.78rem; color:var(--tinta-2); line-height:1.4; margin-top:.2rem}
+.cen-geo{font-family:"IBM Plex Mono",monospace; font-size:.71rem; color:var(--tinta-3); line-height:1.5;
+  background:var(--barra); border-radius:6px; padding:.3rem .45rem}
+.linhas{display:flex; flex-direction:column; gap:.3rem}
+.lin{display:grid; grid-template-columns:2.4rem 1fr auto; align-items:center; gap:.5rem}
+.lin .alg{font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:.71rem; letter-spacing:.02em}
+.lin .trilho{height:7px; border-radius:99px; background:var(--barra); overflow:hidden}
+.lin .barra{height:100%; border-radius:99px}
+.lin .val{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:.72rem; color:var(--tinta-2); white-space:nowrap}
+.lin.gnn .alg{color:var(--gnn)} .lin.gnn .barra{background:var(--gnn)}
+.lin.ppo .alg{color:var(--ppo)} .lin.ppo .barra{background:var(--ppo)}
+.lin.sac .alg{color:var(--sac)} .lin.sac .barra{background:var(--sac)}
+.lin.ada .alg{color:var(--realce)} .lin.ada .barra{background:var(--realce)}
+.vered{font-size:.82rem; line-height:1.5; border-top:1px dashed var(--linha-forte); padding-top:.5rem; display:block; color:var(--tinta-2)}
+.vered b{color:var(--realce); font-weight:600}
+
+/* ---------- figuras ---------- */
+figure{margin:0; display:flex; flex-direction:column; gap:.4rem}
+.chapa{background:var(--chapa-fig); border:1px solid var(--linha-forte); border-radius:10px; padding:.5rem; overflow-x:auto}
+.chapa img{width:100%; max-width:100%; height:auto; border-radius:4px}
+figcaption{font-size:.8rem; color:var(--tinta-3); line-height:1.5; max-width:62ch}
+.duo{display:grid; grid-template-columns:repeat(auto-fit,minmax(16rem,1fr)); gap:.9rem}
+
+/* ---------- tabelas ---------- */
+.rolo{overflow-x:auto; border:1px solid var(--linha); border-radius:10px; background:var(--chapa)}
+table{border-collapse:collapse; width:100%; font-size:.84rem; min-width:28rem}
+th,td{text-align:left; padding:.5rem .7rem; border-bottom:1px solid var(--linha); vertical-align:top}
+thead th{font-family:"IBM Plex Mono",monospace; font-size:.68rem; text-transform:uppercase; letter-spacing:.07em;
+  color:var(--tinta-3); font-weight:600; background:var(--barra)}
+tbody tr:last-child td{border-bottom:none}
+td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.chip{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:.7rem; font-weight:600;
+  border-radius:4px; padding:.08rem .35rem; border:1px solid currentColor; white-space:nowrap}
+.chip.gnn{color:var(--gnn)} .chip.ppo{color:var(--ppo)} .chip.sac{color:var(--sac)}
+.chip.ns{color:var(--tinta-3)}
+
+/* ---------- frases ---------- */
+.frases{display:flex; flex-direction:column; gap:.45rem; margin:0; padding:0; list-style:none}
+.frases li{font-family:Fraunces,Georgia,serif; font-size:1rem; line-height:1.45; font-weight:500;
+  padding:.55rem .85rem; background:var(--chapa); border:1px solid var(--linha);
+  border-left:3px solid var(--realce); border-radius:0 8px 8px 0}
+.evitar{display:flex; flex-direction:column; gap:.45rem; margin:0; padding:0; list-style:none}
+.evitar li{display:grid; grid-template-columns:1rem 1fr; gap:.55rem; font-size:.92rem; line-height:1.55;
+  background:var(--aviso-sup); border:1px solid var(--aviso); border-radius:8px; padding:.55rem .7rem}
+.evitar .x{color:var(--aviso); font-weight:700; font-family:"IBM Plex Mono",monospace; line-height:1.5}
+.evitar b{color:var(--aviso); font-weight:600}
+
+/* ---------- listas numeradas longas ---------- */
+ol.lim{list-style:none; margin:0; padding:0; counter-reset:l; display:flex; flex-direction:column}
+ol.lim li{counter-increment:l; display:grid; grid-template-columns:1.4rem 1fr; gap:.6rem; padding:.6rem 0;
+  border-top:1px solid var(--linha); font-size:.92rem; line-height:1.6; color:var(--tinta-2)}
+ol.lim li:first-child{border-top:none}
+ol.lim li::before{content:counter(l); font-family:"IBM Plex Mono",monospace; font-size:.74rem; color:var(--tinta-3); padding-top:.24rem}
+ol.lim b{color:var(--tinta); font-weight:600}
+
+/* ---------- glossário ---------- */
+.glos{margin:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(19rem,1fr)); gap:0 1.4rem}
+.glos div{padding:.55rem 0; border-top:1px solid var(--linha)}
+.glos dt{font-weight:600; font-size:.88rem; margin-bottom:.15rem}
+.glos dt em{font-style:normal; font-family:"IBM Plex Mono",monospace; font-size:.72rem; color:var(--tinta-3); margin-left:.35rem}
+.glos dd{margin:0; font-size:.85rem; color:var(--tinta-2); line-height:1.55}
+
+.pe{border-top:1px solid var(--linha); padding-top:1rem; font-size:.8rem; color:var(--tinta-3); line-height:1.7; max-width:68ch}
+.pe code{font-family:"IBM Plex Mono",monospace; font-size:.76rem; background:var(--barra); padding:.1em .35em; border-radius:4px; color:var(--tinta-2)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
+</style>
+
+<header class="topo">
+  <div class="topo-in">
+    <div class="marca">Cábula da Defesa <span>· 141 pp · 3 set 2026</span></div>
+    <button class="interruptor" id="btn-teste" aria-pressed="false">
+      <span class="pastilha" aria-hidden="true"></span> Modo teste
+    </button>
+  </div>
+  <nav class="atalhos" aria-label="Secções">
+    <a href="#pitch">30 segundos</a>
+    <a href="#lacuna">A lacuna</a>
+    <a href="#historia">A história</a>
+    <a href="#qis">As 7 QIs</a>
+    <a href="#bancada">A bancada</a>
+    <a href="#obs">Observação e ação</a>
+    <a href="#recompensa">A recompensa</a>
+    <a href="#algos">Os 3 controladores</a>
+    <a href="#fitness">A fitness</a>
+    <a href="#cenarios">Os 7 cenários</a>
+    <a href="#signif">Significância</a>
+    <a href="#protocolo">Protocolo</a>
+    <a href="#escala">Escala</a>
+    <a href="#novidade">Novidade</a>
+    <a href="#composto">Mapa composto</a>
+    <a href="#duras">Perguntas duras</a>
+    <a href="#dizer">Frases</a>
+    <a href="#limites">Limitações</a>
+    <a href="#contributos">Contributos</a>
+    <a href="#futuro">Futuro</a>
+    <a href="#glossario">Glossário</a>
+    <a href="#onde">Onde está</a>
+  </nav>
+</header>
+
+<main class="folha">
+
+  <div class="abre">
+    <p class="olho">Tese de mestrado · enxames robóticos</p>
+    <h1>MARL por gradiente contra neuroevolução de grafos, medidos lado a lado</h1>
+    <p class="nota">Tudo o que está aqui está na dissertação, com os arredondamentos da dissertação.
+      Liga o <strong>Modo teste</strong> lá em cima para tapar as respostas — depois toca em cada uma para a revelar.</p>
+  </div>
+
+  <!-- ================= 30 SEGUNDOS ================= -->
+  <section id="pitch">
+    <div class="cab"><span class="n">00</span><h2>Em trinta segundos</h2></div>
+    <p class="tese">A hipótese de partida — a inteligência adaptativa do MARL supera a robustez estática
+      bio-inspirada em stress — confirma-se <strong>só em parte, e não onde a punha</strong>. A vantagem de
+      escala existe, mas está na <mark>representação</mark>, não no otimizador. Nos cenários de gradiente
+      enganador o que decide é o <mark>desenho do sinal de treino</mark> e a <mark>exploração doseada</mark>,
+      não o paradigma. Os métodos de gradiente ficam com a fiabilidade em espaço aberto e ≈ 8× menos cómputo.
+      Sem vencedor universal: um mapa de escolha.</p>
+    <div class="factos">
+      <div class="facto"><b>3 × 7 × 7</b><span>algoritmos × cenários × execuções = 147 treinos</span></div>
+      <div class="facto"><b>2 940</b><span>episódios determinísticos de avaliação</span></div>
+      <div class="facto"><b>7,6×</b><span>núcleos-hora do evolutivo sobre o gradiente</span></div>
+      <div class="facto"><b>2 078 h</b><span>de treino, em 28 sessões</span></div>
+      <div class="facto"><b>1 / 58</b><span>estudos da revisão que comparam os dois paradigmas</span></div>
+      <div class="facto"><b>420 p/s</b><span>simulador depois de vetorizado (era 139)</span></div>
+    </div>
+    <p class="nota">O veredicto, tal como está escrito na tese: com o desenho adequado da <em>fitness</em>, o
+      controlador evolutivo deixou de ser o elo fraco — é superior aos métodos de gradiente em três dos sete
+      cenários, indistinguível do melhor deles em mais dois, e é o único que escala. Os gradientes guardam duas
+      vantagens sólidas: fiabilidade em espaço aberto e eficiência computacional.</p>
+  </section>
+
+  <!-- ================= A LACUNA / SLR ================= -->
+  <section id="lacuna">
+    <div class="cab"><span class="n">01</span><h2>A lacuna, medida e não alegada</h2></div>
+    <p class="prosa">A revisão sistemática segue o <strong>PRISMA 2020</strong>, com o protocolo fixado <em>antes</em>
+      de qualquer pesquisa. Duas bases — <strong>Scopus</strong> e <strong>IEEE Xplore</strong>, com acesso
+      institucional —, pesquisadas a <strong>13 de julho de 2026</strong>, recorte 2020–2026, revisão por pares.</p>
+
+    <div class="bloco">
+      <h4>O fluxo PRISMA, de 883 a 58</h4>
+      <div class="funil">
+        <div class="fase"><div class="fase-l"><span>Registos devolvidos <em>(456 Scopus + 427 IEEE)</em></span><b>883</b></div><div class="fase-b" style="width:100%"></div></div>
+        <div class="corte"><i>−</i><span>duplicados, por DOI e título normalizado (≈ 23 %)</span><b>203</b></div>
+        <div class="fase"><div class="fase-l"><span>Registos únicos</span><b>680</b></div><div class="fase-b" style="width:77%"></div></div>
+        <div class="corte"><i>−</i><span>triagem por título e resumo: 75 robô único (E1), 75 método fora do âmbito (E6), 42 revisões (E2), 4 integridade (E4), 4 duplicados por apanhar</span><b>201</b></div>
+        <div class="fase"><div class="fase-l"><span>Passam a elegibilidade</span><b>479</b></div><div class="fase-b" style="width:54%"></div></div>
+        <div class="corte"><i>−</i><span>tarefa fora do âmbito: alocação, SLAM, comunicações, manipulação (E7)</span><b>79</b></div>
+        <div class="corte"><i>−</i><span>fora do núcleo ou fora de venues de referência (E8)</span><b>342</b></div>
+        <div class="fase fim"><div class="fase-l"><span><strong>Corpo da revisão</strong></span><b>58</b></div><div class="fase-b" style="width:7%"></div></div>
+      </div>
+      <p class="nota">A <em>string</em> exige o conceito de enxame no <strong>título</strong> e o paradigma em
+        título/resumo/palavras-chave. Numa primeira versão, com o enxame também no resumo, vinham
+        <strong>7 628 registos</strong> — «multi-agent system» num resumo apanha toda a literatura multiagente
+        sem robôs. A lista de venues cobre deliberadamente os dois campos (T-RO, RA-L, ICRA, IROS, AAMAS,
+        T-Cybernetics, TNNLS, GECCO, CEC, <em>Swarm Intelligence</em>): restringi-la aos venues de robótica e MARL
+        teria excluído sistematicamente o lado bio-inspirado, enviesando a revisão contra um dos objetos que ela
+        existe para comparar.</p>
+    </div>
+
+    <div class="bloco">
+      <h4>O que os 58 estudos são</h4>
+      <div class="factos">
+        <div class="facto"><b>21</b><span>só MARL (MADDPG, MAPPO, PPO, DQN, actor-critic)</span></div>
+        <div class="facto"><b>23</b><span>só bio-inspirada (PSO, ACO, evolutivos, neuroevolução)</span></div>
+        <div class="facto"><b>4</b><span>híbridos explícitos</span></div>
+        <div class="facto"><b>30 / 58</b><span>abordam escalabilidade ou generalização</span></div>
+        <div class="facto"><b>14 / 58</b><span>testam robustez a falhas, ruído ou ataques</span></div>
+        <div class="facto"><b>1</b><span>compara empiricamente os dois paradigmas</span></div>
+      </div>
+      <p class="prosa">Esse único estudo é o <strong>Iskandar et al. (2024)</strong>, e compara RL com PSO numa
+        <em>só</em> tarefa, sem transferência para dimensões não vistas, sem robustez a falhas e sem tratamento
+        estatístico — exatamente as três dimensões que esta tese acrescenta. Dois campos igualmente produtivos,
+        21 contra 23, que quase nunca se medem um contra o outro: é essa a lacuna, e passa a ser uma contagem
+        verificável no registo de triagem publicado.</p>
+    </div>
+
+    <div class="bloco">
+      <h4>As três consequências que a tese corrige</h4>
+      <ol class="lim">
+        <li><div><b>Ausência de <em>benchmarking</em> cruzado sob protocolo idêntico.</b> Sem cenários, métricas, orçamentos e avaliação comuns, os resultados dos dois campos são incomensuráveis.</div></li>
+        <li><div><b>Escalabilidade afirmada, raramente medida.</b> 30 dos 58 invocam-na; a avaliação zero-shot para N não visto continua rara — e quem a assegura fá-lo pela representação (grafos, campo médio), não pelo otimizador.</div></li>
+        <li><div><b>O desenho do sinal de treino como variável esquecida.</b> A literatura reconhece a dificuldade de especificar a função-objetivo, mas não trata o desenho da aptidão como objeto experimental. A QI5 trata.</div></li>
+      </ol>
+      <p class="nota"><strong>Ameaças à validade declaradas:</strong> um único revisor, sem dupla triagem independente
+        (compensado pelo registo público de cada decisão, com motivo); e a restrição a duas bases, ao inglês e ao
+        recorte 2020–2026.</p>
+    </div>
+  </section>
+
+  <!-- ================= HISTÓRIA ================= -->
+  <section id="historia">
+    <div class="cab"><span class="n">02</span><h2>A história em sete passos</h2></div>
+    <p class="nota">A ordem por que os resultados se desbloqueiam uns aos outros — é assim que se conta em voz alta.</p>
+    <ol class="passos">
+      <li><span class="p">1</span><div><b>Lacuna</b><p>Duas escolas — bio-inspirada offline contra MARL online — e um único estudo em 58 a compará-las, sem escala, sem falhas e sem estatística.</p></div></li>
+      <li><span class="p">2</span><div><b>Bancada</b><p>Simulador 3D próprio, foraging cooperativo, LiDAR de 8 m, 20 agentes, 7 cenários que isolam uma dificuldade cada e 1 que as compõe.</p></div></li>
+      <li><span class="p">3</span><div><b>QI1 — não há dominante</b><p>15 das 21 células a 100 %. O GNN ganha em 3, empata com o PPO nos gargalos, o PPO ganha o Sandbox, e o Muro em U não é de ninguém.</p></div></li>
+      <li><span class="p">4</span><div><b>QI5 — a fitness era a causa</b><p>O «colapso do evolutivo» era <em>fitness exploitation</em>: o homing terminal geodésico levou 28 execuções de 0 % a 100 %. Necessário, mas não suficiente — o Muro em U continuou bimodal.</p></div></li>
+      <li><span class="p">5</span><div><b>QI6 — a novidade compra a descoberta</b><p>Peso fixo: 7/7 no Muro em U, mas com custo na Porta com Alternativa. Doseada adaptativamente: 7/7 sem custo; e a n=28, <strong>28/28 contra 15/28 e 14/28</strong>.</p></div></li>
+      <li><span class="p">6</span><div><b>QI2 e QI3 — escala e falhas</b><p>Só o grafo transfere: 100 % em 28 de 28 combinações. Com 10 % de falhas, 92–106 % de retenção nos três — não discrimina.</p></div></li>
+      <li><span class="p">7</span><div><b>QI7 — a composição degrada a fiabilidade</b><p>Zero-shot: 0 em 84 das 84 células. Treino nativo: só o GNN, e 4/21 contra um limiar de 15 fixado antes dos dados. <strong>Negativo, reportado.</strong></p></div></li>
+    </ol>
+  </section>
+
+  <!-- ================= AS 7 QIs ================= -->
+  <section id="qis">
+    <div class="cab"><span class="n">03</span><h2>As sete questões, em dois níveis</h2></div>
+    <p class="nota"><strong>Nível 1 (QI1–QI4)</strong> compara paradigmas: o que cada família consegue e em que
+      condições. <strong>Nível 2 (QI5–QI7)</strong> desce aos mecanismos — cada uma toma um resultado do primeiro
+      nível e pergunta <em>de que</em> é que ele depende. É essa estreiteza que as torna testáveis com uma
+      experiência controlada.</p>
+    <div class="qa">
+      <div class="qa-item"><div class="qa-p"><span class="cod">QI1</span><span>Qual paradigma é mais eficaz nas tarefas coletivas?</span></div>
+        <div class="qa-r resp">Nenhum domina. O GNN com homing é superior a <em>ambos</em> os gradientes em 3 dos 7 (Quatro Salas, Porta Cooperativa, Perceção, δ ≥ +0,71) e superior ao SAC em mais 2 (Gargalo e Porta c/ Alternativa, δ = +1,00), empatando com o PPO nesses. O PPO é o generalista fiável e ganha o Sandbox. O Muro em U fica por resolver por qualquer dos três.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">QI2</span><span>Transfere-se para N diferente de 20, sem retreino?</span></div>
+        <div class="qa-r resp">Só o grafo: 100 % de sucesso em 28 combinações (7 cenários × N ∈ {10, 50, 100} mais o N=20), de N=10 a N=100. A MLP de entrada fixa (ℝ¹¹¹) é incompatível por construção — mudar N muda a dimensão da observação. É uma propriedade da <strong>representação</strong>, não do otimizador.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">QI3</span><span>Como degrada com a falha súbita de 10 % dos agentes?</span></div>
+        <div class="qa-r resp">Retenção de 92–106 % nas 21 células, nos três algoritmos — o <em>parameter sharing</em> confere redundância funcional transversal, e a observação é puramente local. Não serve de critério de escolha.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">QI4</span><span>Em que condições preferir um ao outro?</span></div>
+        <div class="qa-r resp">Três eixos: <strong>estrutura do cenário</strong>, <strong>variabilidade de N</strong> e <strong>orçamento de cómputo</strong>. N fixo e cómputo escasso → PPO. N variável ou escala → o grafo. Navegação estruturada → evolutivo com homing. Deceção espacial → novidade adaptativa.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">QI5</span><span>Quanto é que o evolutivo depende do desenho da fitness?</span></div>
+        <div class="qa-r resp">Decisivamente. Com a fitness baseada no retorno acumulado, a população satura num <em>planalto</em> onde a pressão seletiva se anula. A substituição pelo <strong>homing terminal</strong> restaurou o gradiente de seleção e levou as 28 execuções dos quatro cenários de gargalo de 0 % a 100 %. Resolve a atribuição de crédito, não a descoberta.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">QI6</span><span>Em cenários enganadores, a novelty search melhora?</span></div>
+        <div class="qa-r resp">Sim onde a deceção morde (7/7 contra 3/7, p = 0,026), e com custo onde não morde (δ = −1,00 na Porta c/ Alternativa). Doseada adaptativamente, deixa de haver custo; a n=28, <strong>28/28</strong>. É um instrumento direcionado, não um melhoramento universal.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">QI7</span><span>As conclusões transferem-se para um mapa que compõe as dificuldades?</span></div>
+        <div class="qa-r resp">Não dentro deste orçamento: 4/21 contra um limiar de 15 fixado antes dos dados. Composta a dificuldade, a diferença entre paradigmas (p = 0,3058, δ = +0,19) torna-se <em>menor</em> do que a diferença entre execuções do mesmo paradigma. Degrada a <strong>fiabilidade</strong>, não a magnitude.</div></div>
+    </div>
+  </section>
+
+  <!-- ================= BANCADA ================= -->
+  <section id="bancada">
+    <div class="cab"><span class="n">04</span><h2>A bancada: o simulador</h2></div>
+    <p class="prosa">Escrito de raiz em Python. O domínio <strong>não é um disco — é uma esfera</strong> de raio
+      15 m, e a ação inclui componente vertical. Cada parede corta o domínio de <strong>−15 a +15 m</strong>: é
+      essa altura que a torna estanque. Não é cosmético — quando o mapa alargado passou a ter 60 m de raio sem
+      que a altura acompanhasse, sobravam 45 m livres por cima de cada parede e as políticas atravessavam o
+      labirinto <em>por cima</em>. A altura passou a derivar do raio.</p>
+    <figure><div class="chapa"><img src="__IMG_m3d_uwall__" alt="Renderização 3D do cenário Muro em U mostrando a esfera do domínio e as paredes translúcidas"></div>
+      <figcaption>O Muro em U em 3D. A malha de círculos é a fronteira esférica; o anel escuro marca z=0. Cada parede
+        aparece duas vezes: sólida com altura ilustrativa de 2 m, e translúcida com o volume real. Medido em 400 passos
+        de uma política PPO no Sandbox, o afastamento vertical mediano é de 2,35 m e o máximo de 11,8 m.</figcaption></figure>
+
+    <h4>Ambiente e física</h4>
+    <div class="pares">
+      <div class="par"><span>Raio da arena</span><b>15,0 m</b></div>
+      <div class="par"><span>Agentes (N)</span><b>20</b></div>
+      <div class="par"><span>Obstáculos dinâmicos</span><b>100 · r 0,2 m</b></div>
+      <div class="par"><span>Velocidade dos obstáculos</span><b>0,02 m/s</b></div>
+      <div class="par"><span>Ninho</span><b>r 1,5 m · 0,015 m/s</b></div>
+      <div class="par"><span>Alcance do LiDAR</span><b>8,0 m</b></div>
+      <div class="par"><span>Cooperação mínima (k<sub>min</sub>)</span><b>3 · 1 nos labirintos</b></div>
+      <div class="par"><span>Temporizador de fome</span><b>250 passos</b></div>
+      <div class="par"><span>Horizonte base</span><b>500 passos</b></div>
+      <div class="par"><span>Horizonte Porta Cooperativa</span><b>800 passos</b></div>
+      <div class="par"><span>Horizonte Porta c/ Alternativa</span><b>1000 passos</b></div>
+      <div class="par"><span>Resolução do campo geodésico</span><b>0,4 m</b></div>
+      <div class="par"><span>Fator de progresso (PBRS)</span><b>10,0</b></div>
+      <div class="par"><span>Grelha de exploração</span><b>2,0 m</b></div>
+    </div>
+    <p class="nota">O LiDAR de 8 m foi dimensionado para que o contorno dos grandes obstáculos (as pernas do Muro
+      em U, a ≈8 m da rota direta) seja detetável a tempo de iniciar o desvio, preservando ainda assim a
+      observabilidade parcial: o agente não vê o mapa completo nem a direção geodésica.</p>
+  </section>
+
+  <!-- ================= OBSERVAÇÃO E AÇÃO ================= -->
+  <section id="obs">
+    <div class="cab"><span class="n">05</span><h2>O que o agente vê, e o que faz</h2></div>
+    <p class="prosa">A observação é estritamente <strong>local, parcial e egocêntrica</strong> — relativa à
+      orientação atual do próprio robô. A dimensão é <strong>d = 16 + (N−1)×5 = 111</strong> para N=20; é esta
+      fórmula que torna a MLP incompatível com N≠20.</p>
+
+    <div class="bloco">
+      <h4>O vetor de observação, ℝ¹¹¹</h4>
+      <div class="vetor">
+        <div style="width:3.6%; background:var(--seg1)"></div>
+        <div style="width:7.2%; background:var(--seg2)">8</div>
+        <div style="width:3.6%; background:var(--seg3)"></div>
+        <div style="width:85.6%; background:var(--seg4)">95</div>
+      </div>
+      <div class="legenda">
+        <div class="leg"><i style="background:var(--seg1)"></i><span>Ninho: direção egocêntrica (F, R, U) + distância</span><b>4</b></div>
+        <div class="leg"><i style="background:var(--seg2)"></i><span>LiDAR horizontal: 8 raios a 360°, valor 1 − d/8</span><b>8</b></div>
+        <div class="leg"><i style="background:var(--seg3)"></i><span>Porta: direção + distância (só nos cenários com porta; nulos nos outros)</span><b>4</b></div>
+        <div class="leg"><i style="background:var(--seg4)"></i><span>19 vizinhos × (direção 3 + distância 1 + sinal binário 1)</span><b>95</b></div>
+      </div>
+      <p class="nota">Três coisas que costumam ser perguntadas. <strong>O homing está sempre disponível</strong>,
+        mesmo com muros pelo meio — é o pressuposto padrão em robótica de enxame (a bússola dos pombos, o sol das
+        formigas, o GPS dos drones), mas <em>nunca</em> um mapa prévio dos obstáculos: a parcialidade mantém-se ao
+        nível dos obstáculos. <strong>A porta é um sub-objetivo do cenário</strong>, tal como o ninho — indicá-la
+        não é revelar o trajeto, ao contrário de dar <em>waypoints</em> das passagens. E <strong>não há corte por
+        raio de comunicação</strong>: vão os N−1 vizinhos todos, e a seleção dos relevantes é delegada na atenção,
+        que aprende os pesos α<sub>ij</sub>. O sinal binário do vizinho ativa quando ele chega ao ninho e repousa —
+        recrutamento estigmérgico.</p>
+    </div>
+
+    <div class="bloco">
+      <h4>A ação e a ordem do passo</h4>
+      <p class="prosa">Ação contínua <strong>a = (a<sub>F</sub>, a<sub>R</sub>, a<sub>U</sub>) ∈ [−1,1]³</strong>,
+        lida como deslocamento no referencial egocêntrico, convertida pela base ortonormal {F, R, U} e escalada por
+        um passo máximo <strong>δ<sub>max</sub> = 0,2 m</strong>. A orientação atualiza-se para a direção do
+        movimento sempre que ‖Δp‖ &gt; 0,02.</p>
+      <ol class="passos">
+        <li><span class="p">1</span><div><b>Perturbações dinâmicas</b><p>Movimento dos obstáculos e do alvo móvel; injeção de falhas de agentes quando aplicável.</p></div></li>
+        <li><span class="p">2</span><div><b>Ação com <em>wall-sliding</em></b><p>Cada deslocamento é projetado ortogonalmente à normal do muro intersetado — o agente desliza em vez de parar.</p></div></li>
+        <li><span class="p">3</span><div><b>Resolução de colisões</b><p>Reposicionamento por penetração contra obstáculos (euclidiana), muros (AABB) e fronteira da arena.</p></div></li>
+        <li><span class="p">4</span><div><b>Separação física</b><p>Repulsão geométrica de agentes sobrepostos. A penalização <em>anti-clustering</em> está desativada no sinal de treino; a resolução física mantém-se sempre.</p></div></li>
+        <li><span class="p">5</span><div><b>Lógica de tarefa</b><p>Ocupação do ninho por k<sub>min</sub> agentes, cerco do alvo móvel a 360°, ou abertura da porta cooperativa.</p></div></li>
+        <li><span class="p">6</span><div><b>Recompensa e terminação</b><p>Cálculo dos termos de ℛ e verificação do horizonte t ≥ t<sub>max</sub>.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ================= RECOMPENSA ================= -->
+  <section id="recompensa">
+    <div class="cab"><span class="n">06</span><h2>A recompensa: quatro termos, de propósito</h2></div>
+    <p class="prosa">As primeiras campanhas acumularam termos secundários que diluíam o sinal da tarefa e abriam
+      portas a comportamentos degenerados. A formulação final é <strong>deliberadamente simples</strong>, com dois
+      focos — explorar o mapa e encontrar o ninho — em que a tarefa domina claramente todo o <em>shaping</em>.</p>
+    <div class="formula">ℛ(s, a) = <em>R<sub>tarefa</sub></em> + <em>R<sub>progresso</sub></em> + <em>R<sub>exploração</sub></em> − <em>R<sub>controlo</sub></em></div>
+    <div class="pares">
+      <div class="par"><span>Tarefa, por recolha (repetível)</span><b>+300</b></div>
+      <div class="par"><span>Bónus único de abertura da porta</span><b>+100</b></div>
+      <div class="par"><span>Progresso (PBRS)</span><b>10,0 · (Φ<sub>t−1</sub> − Φ<sub>t</sub>)</b></div>
+      <div class="par"><span>Exploração, por célula nova de 2×2 m</span><b>+0,5</b></div>
+      <div class="par"><span>Controlo energético, por passo</span><b>−0,05</b></div>
+      <div class="par"><span>Fome, aos 250 passos (com respawn)</span><b>−50</b></div>
+    </div>
+    <p class="prosa"><strong>O termo que mais interessa é o progresso.</strong> Nos cenários com paredes, Φ é a
+      <mark>distância geodésica</mark> — caminho mais curto que contorna os obstáculos, por pesquisa de custo
+      uniforme (Dijkstra, 8-conexa) sobre uma grelha de 0,4 m com as paredes dilatadas pelo raio do robô — e não a
+      euclidiana. Isto elimina na raiz um mínimo local clássico: com a euclidiana, contornar uma parede <em>afasta</em>
+      o agente do ninho e é penalizado, prendendo o enxame contra os obstáculos. Sendo PBRS, não altera a política
+      ótima. E é <strong>sinal de treino, não observação</strong>: em execução o agente só tem a bússola euclidiana e
+      o LiDAR local.</p>
+    <figure><div class="chapa"><img src="__IMG_geo_uwall__" alt="Campo de distância geodésica ao ninho no cenário Muro em U"></div>
+      <figcaption>O campo geodésico do Muro em U. É este gradiente que aponta corretamente para o contorno — e é por
+        isso que o obstáculo, no Muro em U, não está no sinal de treino mas na <em>descoberta</em>.</figcaption></figure>
+    <p class="nota">Duas armadilhas que a tese documenta por terem acontecido. O <strong>bónus de exploração é
+      pequeno de propósito</strong>: com um valor maior, a política aprendia a <em>vaguear</em> para colher
+      exploração em vez de convergir — <em>reward hacking</em>. E a <strong>fome está ativa apenas nos cenários sem
+      campo geodésico</strong> (Sandbox e Perceção): nos labirintos, o teletransporte combinado com a
+      re-sincronização do potencial tornava o progresso <em>farmável</em> — aproximar-se, ser reposto longe sem
+      cobrança do recuo, repetir. As penalizações secundárias (anti-clustering, colisão agente–agente, contacto com
+      obstáculos) foram postas a zero <em>no sinal</em>; o motor continua a resolvê-las.</p>
+  </section>
+
+  <!-- ================= ALGORITMOS ================= -->
+  <section id="algos">
+    <div class="cab"><span class="n">07</span><h2>Os três controladores</h2></div>
+    <p class="prosa">O <strong>RS2C</strong> (Robust and Scalable Swarm Control) formula a coordenação como um
+      <strong>Dec-POMDP</strong> cooperativo com execução descentralizada e <em>parameter sharing</em>: os 20
+      agentes partilham uma única política que atua sobre observações locais. Sob o RS2C correm PPO e SAC.</p>
+
+    <div class="duo">
+      <div class="bloco">
+        <h4>PPO — on-policy</h4>
+        <div class="pares" style="grid-template-columns:1fr">
+          <div class="par"><span>Taxa de aprendizagem</span><b>10⁻⁴</b></div>
+          <div class="par"><span>Rede</span><b>MLP [256, 256]</b></div>
+          <div class="par"><span>Ambientes paralelos</span><b>16 (SubprocVecEnv)</b></div>
+          <div class="par"><span>Passos por rollout</span><b>64</b></div>
+          <div class="par"><span>Transições por iteração</span><b>16×20×64 = 20 480</b></div>
+          <div class="par"><span>Mini-batch · épocas</span><b>512 · 4</b></div>
+          <div class="par"><span>GAE</span><b>γ = 0,99 · λ = 0,95</b></div>
+        </div>
+        <p class="nota">Nota honesta que está na tese: n<sub>steps</sub>=64 é um horizonte <em>curto</em> — o valor
+          por omissão da biblioteca é 2048. A paralelização recupera o <em>tamanho</em> do batch, não o alcance
+          temporal de cada estimativa de vantagem.</p>
+      </div>
+      <div class="bloco">
+        <h4>SAC — off-policy</h4>
+        <div class="pares" style="grid-template-columns:1fr">
+          <div class="par"><span>Replay buffer</span><b>500 000 transições</b></div>
+          <div class="par"><span>Coeficiente de entropia α</span><b>0,1 — constante</b></div>
+          <div class="par"><span>Taxa de aprendizagem</span><b>10⁻⁴</b></div>
+          <div class="par"><span>Rede</span><b>MLP [256, 256]</b></div>
+          <div class="par"><span>Mini-batch por passo</span><b>256</b></div>
+          <div class="par"><span>Críticos</span><b>2 (double-Q)</b></div>
+        </div>
+        <p class="nota">O α fixo é <em>a</em> escolha discutível, e está declarada: a formulação de referência
+          ajusta-o por otimização dual contra uma entropia-alvo. Fixá-lo remove ao SAC o mecanismo com que ele
+          próprio regula a exploração.</p>
+      </div>
+    </div>
+
+    <div class="bloco">
+      <h4>Neuroevolução com atenção sobre grafo — <code>GNNAgent3D</code></h4>
+      <div class="pares">
+        <div class="par"><span>População (K)</span><b>30 genomas</b></div>
+        <div class="par"><span>Elites preservadas</span><b>20 % → e = 6</b></div>
+        <div class="par"><span>Taxa de mutação (p<sub>mut</sub>)</span><b>0,1 (element-wise)</b></div>
+        <div class="par"><span>Sigma</span><b>0,1 · ×0,999/ger · mín 0,03</b></div>
+        <div class="par"><span>Episódios por genoma (E)</span><b>4, com seeds fixas</b></div>
+        <div class="par"><span>Dimensão oculta (h)</span><b>32 ≈ 8k pesos</b></div>
+        <div class="par"><span>Guilhotina</span><b>J &lt; −200 aos 150 passos → −1000</b></div>
+        <div class="par"><span>Critério de paragem</span><b>195 min por execução</b></div>
+      </div>
+      <p class="prosa">É <strong>aqui</strong>, e só aqui, que vive o grafo. A atenção é produto interno escalado:
+        projeta-se o ego em <em>Q</em> e o conjunto ego+vizinhos em <em>K</em> e <em>V</em>, calcula-se
+        <span style="font-family:'IBM Plex Mono',monospace">α = softmax(QKᵀ/√d)</span>, agrega-se
+        <span style="font-family:'IBM Plex Mono',monospace">αV</span>, concatena-se com o ego e sai a ação contínua
+        por tanh. Como o softmax se define sobre o <em>número de vizinhos presentes</em>, o número de parâmetros não
+        depende de N — e é essa a razão mecânica do zero-shot. Implementado em PyTorch puro, sem bibliotecas de grafos.</p>
+      <p class="nota"><strong>Mutação element-wise:</strong> uma máscara de Bernoulli(0,1) escolhe 10 % dos pesos e
+        só esses recebem ruído gaussiano — perturbar todos degradaria irrecuperavelmente a diversidade. O patamar
+        σ<sub>mín</sub> = 0,03 é conservador de propósito: deixar σ colapsar fazia o campeão sobre-ajustar-se às
+        seeds de avaliação.</p>
+    </div>
+  </section>
+
+  <!-- ================= FITNESS ================= -->
+  <section id="fitness">
+    <div class="cab"><span class="n">08</span><h2>A fitness — QI5, o contributo metodológico</h2></div>
+    <div class="formula">J(θ<sub>k</sub>) = <em>f̄<sub>k</sub> · λ<sub>task</sub></em> + <em>β · h̄<sub>k</sub></em>&nbsp;&nbsp;&nbsp;λ<sub>task</sub> = 10 000&nbsp;&nbsp;β = 5 000</div>
+    <p class="prosa">O <strong>homing</strong> h̄ ∈ [0,1] é a fração média de aproximação ao ninho <em>no fim do
+      episódio</em>, medida por agente como clip((Φ₀ − Φ<sub>T</sub>)/Φ₀, 0, 1). Os pesos garantem que
+      <strong>uma única recolha vale o dobro do shaping máximo</strong>: assim que um genoma recolhe, a tarefa
+      domina a seleção.</p>
+    <p class="prosa">Porquê o homing terminal e não o retorno acumulado — a decisão central. <strong>O retorno
+      acumulado é farmável</strong>: os termos de progresso e exploração rendem a cada passo, pelo que genomas que
+      vagueiam indefinidamente maximizam-no sem nunca entrar no ninho. Observaram-se
+      <mark>retornos brutos ≈ 88 000 com zero recolhas</mark>. E parar no ninho — a pré-condição da tarefa — corta
+      precisamente o rendimento por passo. O homing elimina a patologia por construção: depende apenas dos estados
+      <em>extremos</em> do episódio, pelo que vaguear não o aumenta; a única forma de o maximizar é
+      <strong>terminar</strong> junto ao ninho.</p>
+    <p class="prosa">A anatomia do colapso, para contar em voz alta: a neuroevolução otimiza a partir de um único
+      escalar por episódio, <em>sem atribuição de crédito temporal</em> — não sabe qual ação, em que instante,
+      contribuiu. Com tarefa esparsa, quase todos os genomas recolhem zero, a fitness reduz-se ao shaping e, saturada
+      por uma tanh, converge para um valor comum a toda a população: um <strong>planalto onde a pressão seletiva se
+      anula</strong> e a evolução deambula. A cura não foi mais orçamento — foi melhor desenho do sinal.</p>
+    <div class="factos">
+      <div class="facto"><b>28 / 28</b><span>execuções dos 4 cenários de gargalo, de 0 % a 100 %</span></div>
+      <div class="facto"><b>≈ 88 000</b><span>retorno bruto farmado com zero recolhas</span></div>
+      <div class="facto"><b>2×</b><span>uma recolha vale o dobro do shaping máximo</span></div>
+    </div>
+    <p class="nota">A ressalva que convém dizer antes de a apontarem: esta <em>sensibilidade ao desenho</em> é, em si
+      mesma, um custo de engenharia do paradigma evolutivo que os métodos de gradiente, com atribuição de crédito
+      passo a passo, não pagam na mesma medida.</p>
+  </section>
+
+  <!-- ================= CENÁRIOS ================= -->
+  <section id="cenarios">
+    <div class="cab"><span class="n">09</span><h2>Os sete cenários</h2></div>
+    <p class="nota">Recolhas por episódio na avaliação determinística (média de 7 execuções × 20 episódios), taxa de
+      sucesso, e quantas execuções chegam a 100 %. <strong>As barras são relativas dentro de cada cenário</strong> —
+      comparam os três algoritmos entre si, nunca os cenários uns com os outros.</p>
+    <div class="grelha">
+
+      <article class="cen">
+        <div class="cen-topo"><img src="__IMG_m_none__" alt="Vista de topo do cenário Sandbox">
+          <div class="cen-nome"><h3>Sandbox</h3><code>none</code><em>Espaço aberto, sem barreiras fixas. A linha de base.</em></div></div>
+        <p class="cen-geo">k<sub>min</sub>=3 · 500 passos · fome ativa · potencial euclidiano</p>
+        <div class="linhas">
+          <div class="lin gnn"><span class="alg">GNN</span><div class="trilho"><div class="barra" style="width:53.6%"></div></div><span class="val">38,3 · 86 % · 5/7</span></div>
+          <div class="lin ppo"><span class="alg">PPO</span><div class="trilho"><div class="barra" style="width:100%"></div></div><span class="val">71,5 · 100 % · 7/7</span></div>
+          <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:96.8%"></div></div><span class="val">69,2 · 100 % · 7/7</span></div>
+        </div>
+        <span class="vered resp"><b>PPO e SAC ganham</b> (δ = ±1,00). Sem paredes que canalizem o homing, a paisagem de fitness oferece ótimos locais de vaguear de que algumas execuções do GNN não escapam.</span>
+      </article>
+
+      <article class="cen">
+        <div class="cen-topo"><img src="__IMG_m_uwall__" alt="Vista de topo do cenário Muro em U">
+          <div class="cen-nome"><h3>Muro em U</h3><code>u_wall</code><em>Beco sem saída: o gradiente para a comida engana.</em></div></div>
+        <p class="cen-geo">topo 14 m · pernas 10 m · aberturas 7 m · k<sub>min</sub>=1 · geodésico</p>
+        <div class="linhas">
+          <div class="lin gnn"><span class="alg">GNN</span><div class="trilho"><div class="barra" style="width:31.5%"></div></div><span class="val">24,5 · 43 % · 3/7</span></div>
+          <div class="lin ppo"><span class="alg">PPO</span><div class="trilho"><div class="barra" style="width:50.9%"></div></div><span class="val">39,6 · 71 % · 4/7</span></div>
+          <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:11.6%"></div></div><span class="val">&nbsp;9,0 · 34 % · 2/7</span></div>
+          <div class="lin ada"><span class="alg">ADA</span><div class="trilho"><div class="barra" style="width:100%"></div></div><span class="val">77,8 · 100 % · 7/7</span></div>
+        </div>
+        <span class="vered resp"><b>Ninguém, no protocolo base</b> — nada é significativo, e os três são bimodais. O potencial geodésico aponta bem; o que falta é a <em>descoberta</em>. Só a <b>novidade adaptativa</b> (ADA, 390 min) o resolve.</span>
+      </article>
+
+      <article class="cen">
+        <div class="cen-topo"><img src="__IMG_m_bottle__" alt="Vista de topo do cenário Gargalo">
+          <div class="cen-nome"><h3>Gargalo</h3><code>bottleneck</code><em>Parede contínua corta a arena; uma só passagem.</em></div></div>
+        <p class="cen-geo">passagem 2,5 m · k<sub>min</sub>=1 · geodésico · spawn sobrepõe a barreira em 17,9 %</p>
+        <div class="linhas">
+          <div class="lin gnn"><span class="alg">GNN</span><div class="trilho"><div class="barra" style="width:98.5%"></div></div><span class="val">121,4 · 100 % · 7/7</span></div>
+          <div class="lin ppo"><span class="alg">PPO</span><div class="trilho"><div class="barra" style="width:100%"></div></div><span class="val">123,2 · 100 % · 7/7</span></div>
+          <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:33.6%"></div></div><span class="val">&nbsp;41,4 · &nbsp;72 % · 5/7</span></div>
+        </div>
+        <span class="vered resp"><b>Empate GNN–PPO</b> (p = 0,21); ambos acima do SAC (δ = +1,00). Maior rendimento absoluto da tese. O SAC é aqui uma lotaria: 41,4 ± 36,8.</span>
+      </article>
+
+      <article class="cen">
+        <div class="cen-topo"><img src="__IMG_m_rooms__" alt="Vista de topo do cenário Quatro Salas">
+          <div class="cen-nome"><h3>Quatro Salas</h3><code>four_rooms</code><em>Duas paredes cruzam a arena: quatro salas isoladas.</em></div></div>
+        <p class="cen-geo">aberturas 2,5 m · spawn no extremo oposto · k<sub>min</sub>=1 · geodésico</p>
+        <div class="linhas">
+          <div class="lin gnn"><span class="alg">GNN</span><div class="trilho"><div class="barra" style="width:100%"></div></div><span class="val">59,8 · 100 % · 7/7</span></div>
+          <div class="lin ppo"><span class="alg">PPO</span><div class="trilho"><div class="barra" style="width:56.2%"></div></div><span class="val">33,6 · 100 % · 7/7</span></div>
+          <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:53.2%"></div></div><span class="val">31,8 · 100 % · 7/7</span></div>
+        </div>
+        <span class="vered resp"><b>O GNN ganha</b> (δ = +1,00 sobre ambos, p = 0,0006). O maior contraste da tese a favor do evolutivo com homing.</span>
+      </article>
+
+      <article class="cen">
+        <div class="cen-topo"><img src="__IMG_m_door__" alt="Vista de topo do cenário Porta Cooperativa">
+          <div class="cen-nome"><h3>Porta Cooperativa</h3><code>cooperative_door</code><em>A porta só desliza com 3 agentes na zona de pressão.</em></div></div>
+        <p class="cen-geo">porta 3 m · 800 passos · bónus +100 por abrir · geodésico</p>
+        <div class="linhas">
+          <div class="lin gnn"><span class="alg">GNN</span><div class="trilho"><div class="barra" style="width:100%"></div></div><span class="val">69,8 · 100 % · 7/7</span></div>
+          <div class="lin ppo"><span class="alg">PPO</span><div class="trilho"><div class="barra" style="width:96.1%"></div></div><span class="val">67,1 · 100 % · 7/7</span></div>
+          <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:89.0%"></div></div><span class="val">62,1 · 100 % · 7/7</span></div>
+        </div>
+        <span class="vered resp"><b>O GNN ganha</b> os dois pares (δ = +0,71 e +1,00). A margem média é pequena, mas consistente entre execuções — e é a consistência que dá o δ. Aqui o evolutivo é quase determinístico: desvios de 1–2 recolhas/ep.</span>
+      </article>
+
+      <article class="cen">
+        <div class="cen-topo"><img src="__IMG_m_perc__" alt="Vista de topo do cenário Perceção Cooperativa">
+          <div class="cen-nome"><h3>Perceção Cooperativa</h3><code>cooperative_perception</code><em>Não há ninho: um alvo móvel que é preciso cercar.</em></div></div>
+        <p class="cen-geo">alvo a 0,03 m/s · 3 agentes a &lt;4 m distribuídos a 360° · fome ativa</p>
+        <div class="linhas">
+          <div class="lin gnn"><span class="alg">GNN</span><div class="trilho"><div class="barra" style="width:100%"></div></div><span class="val">19,0 · &nbsp;91 % · 6/7</span></div>
+          <div class="lin ppo"><span class="alg">PPO</span><div class="trilho"><div class="barra" style="width:80.5%"></div></div><span class="val">15,3 · 100 % · 7/7</span></div>
+          <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:84.7%"></div></div><span class="val">16,1 · 100 % · 7/7</span></div>
+        </div>
+        <span class="vered resp"><b>O GNN ganha</b> em magnitude (δ = +0,71 sobre ambos) mas perde uma execução. Menor rendimento absoluto — a tarefa é dura para todos.</span>
+      </article>
+
+      <article class="cen">
+        <div class="cen-topo"><img src="__IMG_m_bypass__" alt="Vista de topo do cenário Porta com Alternativa">
+          <div class="cen-nome"><h3>Porta com Alternativa</h3><code>cooperative_door_bypass</code><em>Há atalho: cooperar passa a ser opcional.</em></div></div>
+        <p class="cen-geo">porta 3 m · alternativa livre de 4 m a leste · defletora torna-a ≈2× mais longa · 1000 passos</p>
+        <div class="linhas">
+          <div class="lin gnn"><span class="alg">GNN</span><div class="trilho"><div class="barra" style="width:100%"></div></div><span class="val">86,7 · 100 % · 7/7</span></div>
+          <div class="lin ppo"><span class="alg">PPO</span><div class="trilho"><div class="barra" style="width:98.4%"></div></div><span class="val">85,3 · 100 % · 7/7</span></div>
+          <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:79.1%"></div></div><span class="val">68,6 · 100 % · 7/7</span></div>
+        </div>
+        <span class="vered resp"><b>Empate GNN–PPO</b> (p = 0,85), ambos acima do SAC (δ = +1,00). O cenário de referência da QI6: o campo geodésico trata a porta como transponível, pelo que o homing conduz o enxame à porta <em>fechada</em>.</span>
+      </article>
+
+    </div>
+
+    <div class="duo">
+      <figure><div class="chapa"><img src="__IMG_dot_rooms__" alt="Dot plot das Quatro Salas: cada ponto é uma execução independente"></div>
+        <figcaption>Quatro Salas — a vitória mais clara do GNN. Cada ponto é uma execução independente; a barra vertical é a média reportada.</figcaption></figure>
+      <figure><div class="chapa"><img src="__IMG_dot_none__" alt="Dot plot do Sandbox"></div>
+        <figcaption>Sandbox — a leitura inversa: em espaço aberto, o gradiente é o fiável.</figcaption></figure>
+    </div>
+    <div class="duo">
+      <figure><div class="chapa"><img src="__IMG_curv_rooms__" alt="Curvas de aprendizagem nas Quatro Salas"></div>
+        <figcaption>Curvas das Quatro Salas. O eixo x é normalizado a [0 %, 100 %] do orçamento de cada algoritmo — as escalas de y <em>não</em> são comparáveis entre paradigmas (fitness evolutiva contra recompensa episódica).</figcaption></figure>
+      <figure><div class="chapa"><img src="__IMG_curv_uwall__" alt="Curvas de aprendizagem no Muro em U"></div>
+        <figcaption>Muro em U — a banda sombreada larga é a assinatura da bimodalidade: as execuções separam-se em «resolve» e «zero».</figcaption></figure>
+    </div>
+    <figure><div class="chapa"><img src="__IMG_barras__" alt="Comparação em barras dos três algoritmos nos sete cenários"></div>
+      <figcaption>Os sete cenários lado a lado. Aqui, sim, a escala é comum entre cenários — repara na altura do Gargalo.</figcaption></figure>
+    <figure><div class="chapa"><img src="__IMG_glob_gnn__" alt="Desempenho global do controlador GNN"></div>
+      <figcaption>O perfil global do GNN. A distribuição da variância é ela própria informativa: quase determinístico nos labirintos com gradiente geodésico informativo, bimodal nos cenários abertos.</figcaption></figure>
+  </section>
+
+  <!-- ================= SIGNIFICÂNCIA ================= -->
+  <section id="signif">
+    <div class="cab"><span class="n">10</span><h2>As 21 comparações, na íntegra</h2></div>
+    <p class="nota">Mann-Whitney U sobre as médias por execução (n = 7 por grupo), δ de Cliff como tamanho de efeito,
+      α = 0,05. Esta é a tabela que convém saber de cor pelas <em>formas</em>: onde há δ = ±1,00 a separação é
+      total, e onde não há significância é quase sempre por bimodalidade.</p>
+    <div class="rolo"><table>
+      <thead><tr><th>Cenário</th><th>Par</th><th>Médias</th><th>p</th><th>δ</th><th>Vence</th></tr></thead>
+      <tbody>
+        <tr><td>Sandbox</td><td class="num">GNN–PPO</td><td class="num">38,31 · 71,46</td><td class="num">0,0006</td><td class="num">−1,00</td><td><span class="chip ppo">PPO</span></td></tr>
+        <tr><td>Sandbox</td><td class="num">GNN–SAC</td><td class="num">38,31 · 69,24</td><td class="num">0,0021</td><td class="num">−1,00</td><td><span class="chip sac">SAC</span></td></tr>
+        <tr><td>Sandbox</td><td class="num">PPO–SAC</td><td class="num">71,46 · 69,24</td><td class="num">0,0297</td><td class="num">+0,71</td><td><span class="chip ppo">PPO</span></td></tr>
+        <tr><td>Muro em U</td><td class="num">GNN–PPO</td><td class="num">24,54 · 39,62</td><td class="num">0,1552</td><td class="num">−0,47</td><td><span class="chip ns">n.s.</span></td></tr>
+        <tr><td>Muro em U</td><td class="num">GNN–SAC</td><td class="num">24,54 · &nbsp;8,99</td><td class="num">0,5714</td><td class="num">+0,18</td><td><span class="chip ns">n.s.</span></td></tr>
+        <tr><td>Muro em U</td><td class="num">PPO–SAC</td><td class="num">39,62 · &nbsp;8,99</td><td class="num">0,0526</td><td class="num">+0,63</td><td><span class="chip ns">n.s.</span></td></tr>
+        <tr><td>Gargalo</td><td class="num">GNN–PPO</td><td class="num">121,39 · 123,17</td><td class="num">0,2086</td><td class="num">+0,43</td><td><span class="chip ns">n.s.</span></td></tr>
+        <tr><td>Gargalo</td><td class="num">GNN–SAC</td><td class="num">121,39 · &nbsp;41,44</td><td class="num">0,0006</td><td class="num">+1,00</td><td><span class="chip gnn">GNN</span></td></tr>
+        <tr><td>Gargalo</td><td class="num">PPO–SAC</td><td class="num">123,17 · &nbsp;41,44</td><td class="num">0,0006</td><td class="num">+1,00</td><td><span class="chip ppo">PPO</span></td></tr>
+        <tr><td>Quatro Salas</td><td class="num">GNN–PPO</td><td class="num">59,76 · 33,58</td><td class="num">0,0006</td><td class="num">+1,00</td><td><span class="chip gnn">GNN</span></td></tr>
+        <tr><td>Quatro Salas</td><td class="num">GNN–SAC</td><td class="num">59,76 · 31,82</td><td class="num">0,0006</td><td class="num">+1,00</td><td><span class="chip gnn">GNN</span></td></tr>
+        <tr><td>Quatro Salas</td><td class="num">PPO–SAC</td><td class="num">33,58 · 31,82</td><td class="num">0,3374</td><td class="num">+0,33</td><td><span class="chip ns">n.s.</span></td></tr>
+        <tr><td>Porta Cooperativa</td><td class="num">GNN–PPO</td><td class="num">69,81 · 67,06</td><td class="num">0,0262</td><td class="num">+0,71</td><td><span class="chip gnn">GNN</span></td></tr>
+        <tr><td>Porta Cooperativa</td><td class="num">GNN–SAC</td><td class="num">69,81 · 62,09</td><td class="num">0,0006</td><td class="num">+1,00</td><td><span class="chip gnn">GNN</span></td></tr>
+        <tr><td>Porta Cooperativa</td><td class="num">PPO–SAC</td><td class="num">67,06 · 62,09</td><td class="num">0,0175</td><td class="num">+0,76</td><td><span class="chip ppo">PPO</span></td></tr>
+        <tr><td>Perceção Coop.</td><td class="num">GNN–PPO</td><td class="num">18,98 · 15,33</td><td class="num">0,0297</td><td class="num">+0,71</td><td><span class="chip gnn">GNN</span></td></tr>
+        <tr><td>Perceção Coop.</td><td class="num">GNN–SAC</td><td class="num">18,98 · 16,11</td><td class="num">0,0297</td><td class="num">+0,71</td><td><span class="chip gnn">GNN</span></td></tr>
+        <tr><td>Perceção Coop.</td><td class="num">PPO–SAC</td><td class="num">15,33 · 16,11</td><td class="num">0,0547</td><td class="num">−0,63</td><td><span class="chip ns">n.s.</span></td></tr>
+        <tr><td>Porta c/ Altern.</td><td class="num">GNN–PPO</td><td class="num">86,70 · 85,25</td><td class="num">0,8477</td><td class="num">+0,08</td><td><span class="chip ns">n.s.</span></td></tr>
+        <tr><td>Porta c/ Altern.</td><td class="num">GNN–SAC</td><td class="num">86,70 · 68,61</td><td class="num">0,0006</td><td class="num">+1,00</td><td><span class="chip gnn">GNN</span></td></tr>
+        <tr><td>Porta c/ Altern.</td><td class="num">PPO–SAC</td><td class="num">85,25 · 68,61</td><td class="num">0,0021</td><td class="num">+1,00</td><td><span class="chip ppo">PPO</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="nota">Resumo em três linhas, para dizer sem consultar: <strong>GNN &gt; ambos</strong> em Quatro Salas,
+      Porta Cooperativa e Perceção. <strong>GNN &gt; SAC, empate com PPO</strong> no Gargalo e na Porta c/
+      Alternativa. <strong>PPO e SAC &gt; GNN</strong> no Sandbox. <strong>Muro em U: nada.</strong></p>
+  </section>
+
+  <!-- ================= PROTOCOLO ================= -->
+  <section id="protocolo">
+    <div class="cab"><span class="n">11</span><h2>O protocolo, para quando perguntarem «como mediste»</h2></div>
+    <div class="rolo"><table>
+      <thead><tr><th>O quê</th><th>Valor</th></tr></thead>
+      <tbody>
+        <tr><td>Desenho</td><td class="num">3 algoritmos × 7 cenários × 7 execuções = 147 treinos</td></tr>
+        <tr><td>Avaliação</td><td class="num">20 episódios determinísticos emparelhados por modelo → 2 940 episódios</td></tr>
+        <tr><td>Orçamento GNN</td><td class="num">195 min por execução, população de 30, ≈30 núcleos</td></tr>
+        <tr><td>Orçamento PPO e SAC</td><td class="num">48 min por execução, 16 ambientes vetorizados</td></tr>
+        <tr><td>Núcleos-hora</td><td class="num">97,6 (GNN) contra 12,8 (PPO e SAC) = 7,6× ≈ 8× · ≈37× em passos de simulação</td></tr>
+        <tr><td>Unidade estatística</td><td class="num">a execução — nunca o episódio</td></tr>
+        <tr><td>Testes</td><td class="num">Wilcoxon signed-rank quando emparelhado, Mann-Whitney U quando não; δ de Cliff (|δ| ≥ 0,474 = grande); Welch a título complementar; α = 0,05</td></tr>
+        <tr><td>Porquê não-paramétrico</td><td class="num">as distribuições violam sistematicamente a normalidade — massas em zero e bimodalidade</td></tr>
+        <tr><td>Garantias</td><td class="num">3 pré-registos · 18 verificadores · 87 mutações apanhadas</td></tr>
+        <tr><td>Simulador</td><td class="num">139 → 420 passos/s (2,58× no passo, LiDAR 19,5×), com equivalência bit-exata</td></tr>
+        <tr><td>Custo total</td><td class="num">28 sessões · 2 078 h de treino</td></tr>
+      </tbody>
+    </table></div>
+    <div class="bloco">
+      <h4>A verificação de planalto — e o que ela obriga a admitir</h4>
+      <p class="prosa">Uma comparação emparelhada por execução entre a média do último quinto do orçamento e a do
+        quinto anterior mostra que <strong>7 das 21 combinações ainda subiam significativamente no fim</strong>.
+        Quatro de forma marcada:</p>
+      <div class="pares">
+        <div class="par"><span>SAC no Gargalo</span><b>+112 %</b></div>
+        <div class="par"><span>SAC na Porta c/ Alternativa</span><b>+105 %</b></div>
+        <div class="par"><span>GNN no Muro em U</span><b>+33 %</b></div>
+        <div class="par"><span>PPO nas Quatro Salas</span><b>+27 %</b></div>
+      </div>
+      <p class="nota">Consequência declarada: a comparação mede o <strong>desempenho atingível dentro do orçamento
+        concedido</strong>, e não o assintótico nem a eficiência amostral a cómputo igual. Nessas células, os valores
+        são <em>limite inferior</em>. A implicação mais forte é para o SAC nos gargalos: a fragilidade que lhe é
+        atribuída é, com os dados retidos, indistinguível de sub-treino — os históricos guardaram a recompensa
+        episódica mas não a métrica de tarefa por passo.</p>
+    </div>
+  </section>
+
+  <!-- ================= ESCALA ================= -->
+  <section id="escala">
+    <div class="cab"><span class="n">12</span><h2>Escala e robustez — QI2 e QI3</h2></div>
+    <p class="prosa">Treinar com N=20 e avaliar com N=10, 50 e 100 <strong>sem retreino</strong>. O PPO e o SAC nem
+      chegam a correr: a MLP tem entrada de dimensão fixa. O grafo corre em todas — 100 % de sucesso em 28 de 28
+      combinações, nos sete cenários. É a conclusão que a arquitetura assimétrica <em>permite</em> tirar: a escala é
+      da representação.</p>
+    <figure><div class="chapa"><img src="__IMG_escala__" alt="Escalabilidade zero-shot no Sandbox: recolhas por agente de N=10 a N=100"></div>
+      <figcaption>Recolhas <em>por agente</em> caem com N — é congestão, não perda de política. O total sobe: no Sandbox, 37,4 → 65,8 → 97,5 → 127,3.</figcaption></figure>
+    <div class="rolo"><table>
+      <thead><tr><th>Cenário</th><th>Retenção per capita, N=20 → N=100</th></tr></thead>
+      <tbody>
+        <tr><td>Sandbox</td><td class="num">39 % &nbsp;(3,29 → 1,27)</td></tr>
+        <tr><td>Perceção Cooperativa</td><td class="num">45 %</td></tr>
+        <tr><td>Gargalo</td><td class="num">58 % &nbsp;(passagem única de 2,5 m; totais 138,6 → 403,6)</td></tr>
+        <tr><td>Quatro Salas</td><td class="num">66 %</td></tr>
+        <tr><td>Muro em U</td><td class="num">78 %</td></tr>
+        <tr><td>Porta Cooperativa</td><td class="num">88 %</td></tr>
+        <tr><td>Porta com Alternativa</td><td class="num">90 %</td></tr>
+      </tbody>
+    </table></div>
+    <p class="nota">A leitura contra-intuitiva que vale a pena ter pronta: a retenção é <strong>maior nos cenários
+      com paredes</strong> (58–90 %) do que nos abertos (39–45 %), quando um colapso por congestionamento seria a
+      expectativa natural nos estruturados. Quanto mais aberto o cenário, mais a congestão morde.</p>
+    <p class="prosa"><strong>QI3, com 10 % de falhas:</strong> retenção de 92–106 % nas 21 células, nos três
+      algoritmos, sem o colapso que a hipótese poderia antecipar para o controlador estático. Os 106 % do SAC na
+      Perceção são menos congestão, e ficam dentro do desvio. A razão é estrutural: <em>parameter sharing</em> confere
+      redundância funcional transversal, e a observação é local.</p>
+  </section>
+
+  <!-- ================= NOVIDADE ================= -->
+  <section id="novidade">
+    <div class="cab"><span class="n">13</span><h2>Novidade — QI6, o resultado mais forte</h2></div>
+    <p class="prosa">O Muro em U é o cenário onde a descoberta do desvio exige uma trajetória longa que se afasta,
+      durante dezenas de passos, da única direção que o agente vê como o ninho. Recompensar o <em>comportamento
+      inédito</em> compra essa descoberta — mas com peso fixo paga-se onde não é preciso.</p>
+
+    <div class="bloco">
+      <h4>Como está implementada</h4>
+      <div class="pares">
+        <div class="par"><span>Caracterização comportamental (BC)</span><b>centroide final (x, y) ∈ ℝ²</b></div>
+        <div class="par"><span>Novidade ν</span><b>dist. média aos k=10 vizinhos</b></div>
+        <div class="par"><span>Arquivo</span><b>3/geração · máx. 1000 · FIFO</b></div>
+        <div class="par"><span>Score de seleção</span><b>(1−w)·Ĵ + w·ν̂</b></div>
+        <div class="par"><span>Peso fixo</span><b>w = 0,5</b></div>
+        <div class="par"><span>Normalização</span><b>min-max intra-geração</b></div>
+      </div>
+      <p class="nota">Duas salvaguardas que costumam desarmar objeções. <strong>A novidade influencia apenas a
+        seleção dos progenitores</strong> — o campeão gravado e reportado é sempre o melhor genoma segundo o
+        <em>objetivo</em> J, pelo que o modelo final resolve a tarefa e não é apenas «diferente». E
+        <strong>com w = 0 o mecanismo desliga-se exatamente</strong>, reduzindo-se ao ciclo evolutivo base: a
+        implementação é <em>config-driven</em>, e é isso que torna a comparação controlada.</p>
+    </div>
+
+    <div class="duo">
+      <figure><div class="chapa"><img src="__IMG_dot_uwall__" alt="Dot plot do Muro em U com o braço adaptativo"></div>
+        <figcaption>Muro em U: os três algoritmos base são bimodais — execuções a zero ou a resolver. O braço adaptativo põe as sete do lado bom.</figcaption></figure>
+      <figure><div class="chapa"><img src="__IMG_nov_heat__" alt="Mapa de ocupação do GNN adaptativo no Muro em U"></div>
+        <figcaption>Ocupação do GNN adaptativo: os agentes contornam o U em vez de encostarem à parede de dentro.</figcaption></figure>
+    </div>
+
+    <div class="rolo"><table>
+      <thead><tr><th>Condição</th><th>Muro em U</th><th>Porta com Alternativa</th></tr></thead>
+      <tbody>
+        <tr><td>Objetivo puro (base)</td><td class="num">3/7 · 24,5 ± 32,6</td><td class="num">7/7 · 86,7</td></tr>
+        <tr><td>Novidade, peso fixo w=0,5</td><td class="num">7/7 · 69,8 ± 5,9<br>p = 0,026 · δ = +0,71</td><td class="num">63,0<br>p = 0,0006 · <strong>δ = −1,00</strong></td></tr>
+        <tr><td>Novidade adaptativa (T1–T4)</td><td class="num">7/7 · 68,5 ± 13,1<br>p = 0,009 · δ = +0,76</td><td class="num">77,2 (n.s.)</td></tr>
+        <tr><td>Adaptativa, 390 min</td><td class="num">77,8</td><td class="num"><strong>88,7 ± 0,6</strong><br>o melhor valor da tese</td></tr>
+        <tr><td>Objetivo puro, 390 min</td><td class="num">4/7 · 31,5 ± 35,0</td><td class="num">—</td></tr>
+      </tbody>
+    </table></div>
+    <p class="nota">O controlo de orçamento é o que fecha o argumento: <strong>dar mais tempo ao objetivo puro não
+      compra a descoberta</strong> — 4/7 com 390 min, contra 7/7 do adaptativo. E a ablação da temperagem, com 4
+      variantes, dá 7/7 nos dois cenários: o mecanismo é insensível à afinação. A dosagem adaptativa faz w decair
+      geometricamente <em>após a descoberta sustentada</em>, devolvendo a seleção ao objetivo puro.</p>
+
+    <div class="factos">
+      <div class="facto"><b>28/28</b><span>GNN adaptativo, mega-treino a n=28 · 67,4 ± 13,4</span></div>
+      <div class="facto"><b>15/28</b><span>GNN objetivo puro · 32,5</span></div>
+      <div class="facto"><b>14/28</b><span>PPO · 35,6</span></div>
+      <div class="facto"><b>14/28</b><span>SAC · 10,1 — nenhuma execução acima de 45,4</span></div>
+    </div>
+    <p class="nota">Fisher exato <strong>p &lt; 0,0001</strong>. Dois remates que costumam desarmar a pergunta
+      seguinte: GNN objetivo contra PPO dá p = 0,088 — <strong>indistinguíveis</strong>, logo o que separa os braços
+      não é o paradigma, é a dosagem da exploração. E a forma da falha do SAC é diferente da dos outros: é
+      <em>uniformemente fraco</em>, não bimodal, o que sub-treino sozinho não explica.</p>
+    <p class="nota"><strong>Multiplicidade:</strong> os seis pares de M2 têm p <em>brutos</em>, por compromisso
+      pré-registado — declarar a multiplicidade e ancorar a leitura no tamanho de efeito, em vez de corrigir. O
+      efeito principal (M1) não depende disso: δ = +0,61 com p &lt; 0,0001 unilateral.</p>
+  </section>
+
+  <!-- ================= MAPA COMPOSTO ================= -->
+  <section id="composto">
+    <div class="cab"><span class="n">14</span><h2>Mapa composto — QI7, o negativo</h2></div>
+    <div class="factos">
+      <div class="facto"><b>103 × 62 m</b><span>o mapa — raio de 60 m, contra 15 dos outros</span></div>
+      <div class="facto"><b>128,8 m</b><span>do spawn ao ninho</span></div>
+      <div class="facto"><b>106</b><span>obstáculos</span></div>
+      <div class="facto"><b>53,0</b><span>recolhas/ep do navegador geodésico — o mapa É resolúvel</span></div>
+    </div>
+    <p class="nota">O desenho foi auditado <em>antes</em> de existirem dados: existe caminho do nascimento ao ninho
+      para todos os agentes mesmo com a porta fechada, e um navegador geodésico resolve-o (53,0 aqui, contra 82,0 nas
+      Quatro Salas). Compõe num só labirinto quatro das dificuldades que os sete isolam.</p>
+    <div class="duo">
+      <figure><div class="chapa"><img src="__IMG_mg_geo__" alt="Mapa de distância geodésica do mapa composto"></div>
+        <figcaption>Distância geodésica ao ninho — a prova de que o mapa tem solução.</figcaption></figure>
+      <figure><div class="chapa"><img src="__IMG_mg_gnn__" alt="Mapa de ocupação do GNN no mapa composto"></div>
+        <figcaption>Onde o GNN treinado nativamente realmente anda. Compara com o mapa ao lado.</figcaption></figure>
+    </div>
+    <p class="prosa"><strong>F1, zero-shot:</strong> 0,00 em 84 das 84 células, 1 680 episódios, com 4 condições que
+      excluem que a causa seja a escala da observação, os obstáculos dispersos ou as dimensões associadas à porta.
+      <strong>F2, treino nativo:</strong> 21 execuções × 3 algoritmos → o GNN faz <strong>4/21</strong> contra o
+      limiar pré-registado de 15, com 1,7 recolhas/ep; o PPO e o SAC fazem 0/21. Em 19 das 21 execuções o melhor
+      <em>fitness</em> ainda subia no último quinto dos 780 min, com a geração do máximo a cair, em mediana, a 95 %
+      do orçamento.</p>
+    <figure><div class="chapa"><img src="__IMG_mg_curv__" alt="Curvas de treino no mapa composto"></div>
+      <figcaption>As curvas ainda a subir no fim do orçamento — é isto que condiciona a leitura do negativo.</figcaption></figure>
+    <div class="bloco">
+      <h4>O diagnóstico: três causas, não uma</h4>
+      <ol class="lim">
+        <li><div><b>O orçamento não chegou ao planalto.</b> Nas quatro execuções que resolvem, a descoberta é um salto de fitness de mais de uma ordem de grandeza na fase final. Alargar os 780 min é a via com mais indicação empírica.</div></li>
+        <li><div><b>O horizonte do episódio aproxima, mas não converte.</b> Duplicar <code>max_steps</code> de 2000 para 4000 <em>sem retreino</em> faz a distância mínima mediana ao ninho cair de 27,6 para 12,4 m e quase duplica a melhor execução (12 → 22 recolhas/ep) — mas leva as execuções com pelo menos uma recolha apenas de 4 para 6 em 21. Mais tempo traduz-se em mais percurso, não em mais tarefas fechadas.</div></li>
+        <li><div><b>A aproximação final é o verdadeiro alvo.</b> Há 5 execuções que param a menos de 13 m do ninho — 3 delas a menos de 5 m — e não entram nele nem com o dobro do tempo. O próximo refinamento é do sinal de treino ou da observação, não do orçamento.</div></li>
+      </ol>
+      <p class="nota">Essas medições são <strong>diagnóstico</strong>, com 3 episódios determinísticos por execução
+        contra os 20 da avaliação oficial — não substituem o protocolo. Ainda assim, ao horizonte pré-registado
+        reproduzem exatamente as 4 execuções convergentes que ele reporta.</p>
+    </div>
+    <p class="nota">A frase a ter na ponta da língua: <strong>o que a composição degrada é a fiabilidade do treino,
+      não a magnitude de quem aprende.</strong> É a assinatura bimodal do Muro em U, à escala de um mapa com quatro
+      dificuldades encadeadas. E composta a dificuldade, a diferença entre paradigmas (p = 0,3058, δ = +0,19) torna-se
+      menor do que a diferença entre execuções do <em>mesmo</em> paradigma.</p>
+  </section>
+
+  <!-- ================= PERGUNTAS DURAS ================= -->
+  <section id="duras">
+    <div class="cab"><span class="n">15</span><h2>As perguntas que vêm primeiro</h2></div>
+    <p class="nota">A regra que atravessa tudo: <strong>nunca defender um número que a tese não diga.</strong>
+      «Não medi isso» é sempre melhor do que uma estimativa dita em voz alta e registada em ata.</p>
+    <div class="qa">
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 68</span><span>«O SAC está mal configurado — a temperatura é fixa.»</span></div>
+        <div class="qa-r resp">É uma escolha declarada: α = 0,1 constante, sem o ajuste dual da formulação de referência. Remove ao SAC o mecanismo com que regula a exploração, e é consistente com o sub-treino já documentado em três células. Os valores lêem-se como <em>desempenho atingível nesta configuração e neste orçamento</em>. Se insistirem: a forma da falha é diferente — no mega-treino nenhuma das 28 execuções passa de 45,4; é uniformemente fraco, e não bimodal. Sub-treino explica magnitude baixa, não a ausência de qualquer execução boa.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 111</span><span>«Sete execuções por célula são poucas.»</span></div>
+        <div class="qa-r resp">Sim — e é a segunda limitação declarada. Por isso o único cenário cuja leitura depende de contagens, o Muro em U, foi replicado com 28 execuções por braço: 28/28 contra 15/28, Fisher exato p &lt; 0,0001. Onde o alargamento não chegou, o que se reporta são tamanhos de efeito, e a tese di-lo em vez de fingir poder que não tem.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 111</span><span>«A comparação é injusta: o evolutivo tem atenção sobre grafo, o PPO e o SAC têm um MLP.»</span></div>
+        <div class="qa-r resp">É a <em>primeira</em> limitação declarada, e é deliberada na leitura: exatamente por a arquitetura ser a variável que difere, a conclusão sobre escalabilidade é atribuída à representação e não ao otimizador. O trabalho futuro n.º 1 é integrar a mesma atenção numa política treinável por gradiente (extrator de features personalizado na Stable-Baselines3), que separaria os dois efeitos.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 90</span><span>«A QI7 deu negativo. O que é que isso vale?»</span></div>
+        <div class="qa-r resp">Vale como resultado, porque a regra estava fixada antes dos dados: limiar de 15 execuções convergentes em 21, pré-registado, e o resultado ficou em 4. Não se mudou de critério depois de ver a amostra — é isso que separa um pré-registo de uma racionalização. A segunda metade da resposta é a que interessa: degrada a fiabilidade, não a magnitude; e a leitura é condicionada ao orçamento, com 19 das 21 execuções ainda a subir no último quinto.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 105</span><span>«O evolutivo usa 8× mais cómputo. A comparação é justa?»</span></div>
+        <div class="qa-r resp">A assimetria está medida e declarada: 195 min com ≈30 núcleos contra 48 min com 16 — ≈8× em núcleos-hora e ≈37× em passos de simulação. E a conclusão que daí se tira é a <em>inversa</em> da que favoreceria o evolutivo: mesmo com 8× menos núcleos-hora, os métodos de gradiente igualam ou superam-no em quatro dos sete cenários. A vantagem de eficiência é deles, e a tese escreve-o.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 88</span><span>«Seis comparações por par, sem correção de multiplicidade.»</span></div>
+        <div class="qa-r resp">Está assinalado no próprio parágrafo: os p dos seis pares de M2 são brutos, por compromisso pré-registado — declarar a multiplicidade e ancorar a leitura no tamanho de efeito, em vez de corrigir os valores. O efeito principal (M1) não depende disso: δ = +0,61 com p &lt; 0,0001 unilateral, e a convergência separada por Fisher exato.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">método</span><span>«O campo geodésico não é dar o mapa ao agente?»</span></div>
+        <div class="qa-r resp">Não. O campo geodésico é <strong>sinal de treino</strong>, calculado pelo simulador que conhece a geometria — não entra na observação. Em execução o agente tem apenas a bússola de homing euclidiana e o LiDAR de 8 m. Distingue-se, portanto, de fornecer um mapa dos obstáculos ou waypoints de um planeador A*. E sendo PBRS, não altera a política ótima do cenário.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">método</span><span>«Como sabemos que os números da tese são os dos dados?»</span></div>
+        <div class="qa-r resp">Porque não são escritos à mão: um conjunto de verificadores lê o .tex, recalcula cada valor a partir dos CSV canónicos e recusa o commit se algum deixar de bater. E os verificadores são eles próprios postos à prova — o ensaio estraga a tese de propósito, 87 mutações, uma de cada vez, e exige que cada uma seja apanhada.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">final</span><span>«Qual é, então, a contribuição em uma frase?»</span></div>
+        <div class="qa-r resp">Que <strong>o desenho do sinal de treino e a representação decidem mais do que o paradigma de otimização</strong>: o colapso do evolutivo era um artefacto da aptidão e curou-se com homing terminal; a escalabilidade é da atenção sobre grafo, não do otimizador; e a deceção espacial só cede a exploração doseada — um mecanismo, não um paradigma, e em princípio transponível para qualquer um deles.</div></div>
+    </div>
+  </section>
+
+  <!-- ================= FRASES ================= -->
+  <section id="dizer">
+    <div class="cab"><span class="n">16</span><h2>Frases que podes dizer tal e qual</h2></div>
+    <ul class="frases">
+      <li>«Não há vencedor universal; há um mapa de escolha.»</li>
+      <li>«A vantagem de escala está na representação, não no otimizador.»</li>
+      <li>«O colapso do evolutivo era um artefacto do sinal de treino — <em>fitness exploitation</em> — e não uma limitação do paradigma.»</li>
+      <li>«A exploração tem preço; doseada adaptativamente, deixa de ter.»</li>
+      <li>«O que separa os braços no Muro em U não é o paradigma, é a dosagem da exploração: o GNN objetivo e o PPO são indistinguíveis.»</li>
+      <li>«O que a composição degrada é a fiabilidade, não a magnitude.»</li>
+      <li>«A unidade estatística é a execução, não o episódio.»</li>
+      <li>«O campo geodésico é sinal de treino, não observação.»</li>
+      <li>«Cada número da tese é conferido contra os CSV a cada commit.»</li>
+      <li>«Um estudo em cinquenta e oito compara os dois paradigmas — e sem escala, sem falhas e sem estatística.»</li>
+    </ul>
+
+    <h3 style="margin-top:.7rem">E o que não dizer</h3>
+    <ul class="evitar">
+      <li><span class="x">✗</span><div><b>«O PPO também escalaria com atenção.»</b> Não foi medido.</div></li>
+      <li><span class="x">✗</span><div><b>«A novidade melhora sempre.»</b> Com peso fixo custa: δ = −1,00 na Porta com Alternativa.</div></li>
+      <li><span class="x">✗</span><div><b>«O evolutivo é melhor.»</b> É melhor em navegação estruturada, e é ≈ 8× mais caro.</div></li>
+      <li><span class="x">✗</span><div><b>«O SAC é mau.»</b> É fraco <em>nesta configuração e neste orçamento</em>, e três das suas células estão sub-treinadas por medição própria.</div></li>
+      <li><span class="x">✗</span><div><b>«O mapa composto não é resolúvel.»</b> É: um navegador geodésico recolhe 53 itens por episódio. O que falha é aprendê-lo.</div></li>
+      <li><span class="x">✗</span><div><b>«A QI7 quase deu» ou «falhou».</b> A campanha correu e respondeu; a resposta é negativa, com o limiar fixado antes dos dados.</div></li>
+      <li><span class="x">✗</span><div><b>Comparar valores absolutos das curvas de treino entre paradigmas.</b> O GNN usa fitness evolutiva e o PPO/SAC recompensa episódica — as escalas não são comparáveis.</div></li>
+      <li><span class="x">✗</span><div><b>Qualquer número que não esteja no PDF.</b> Se não está lá, não foi medido.</div></li>
+    </ul>
+  </section>
+
+  <!-- ================= LIMITAÇÕES ================= -->
+  <section id="limites">
+    <div class="cab"><span class="n">17</span><h2>As limitações que admito antes de mas perguntarem</h2></div>
+    <ol class="lim">
+      <li><div><b>Arquitetura assimétrica</b> — o grafo só existe no evolutivo. E é precisamente isso que permite atribuir a escala à representação. Trabalho futuro n.º 1.</div></li>
+      <li><div><b>Sete execuções por célula</b> — replicado a 28 onde a leitura é de contagens.</div></li>
+      <li><div><b>Orçamento</b> — 7 das 21 células ainda subiam; o SAC nos gargalos é um limite inferior (α = 0,1 fixo, declarado na p. 68).</div></li>
+      <li><div><b>Só simulação.</b> Nenhum robot físico — o <em>Deployment Gap</em> é antecipado no desenho mas não validado empiricamente.</div></li>
+      <li><div><b>Dimensão vertical</b> usada mas não observada (ρ = −0,74 com as recolhas).</div></li>
+      <li><div><b>Duas costuras na física das paredes</b> — teto e junções em T: 11 de 343 modelos atravessam, todos GNN; na campanha final são 3 de 70 (Quatro Salas, execuções 1, 4 e 6), sem inflacionar o resultado (55,7 contra 60,3). A A1 adaptativa nas Quatro Salas está contaminada.</div></li>
+      <li><div><b>O spawn no Gargalo</b> sobrepõe-se à barreira em 17,9 % dos casos — penaliza, não favorece.</div></li>
+      <li><div><b>A QI7 assenta num só mapa composto.</b></div></li>
+    </ol>
+  </section>
+
+  <!-- ================= CONTRIBUTOS ================= -->
+  <section id="contributos">
+    <div class="cab"><span class="n">18</span><h2>Os sete contributos</h2></div>
+    <ol class="lim">
+      <li><div><b>Benchmarking quantitativo entre paradigmas.</b> Metodologia padronizada entre algoritmos de naturezas distintas, com avaliação determinística emparelhada e inferência não-paramétrica <em>ao nível da execução</em> — evitando a inflação de n que é comum na literatura comparada.</div></li>
+      <li><div><b>O desenho da fitness como causa e cura do colapso evolutivo.</b> O principal contributo metodológico: o colapso reportado como limitação do paradigma era, neste sistema, um artefacto do sinal de treino.</div></li>
+      <li><div><b>Escalabilidade zero-shot como propriedade da representação.</b> 100 % nas 28 combinações, com 58–90 % de eficiência per capita nos cenários estruturados — localizando a adaptabilidade na arquitetura, não no otimizador.</div></li>
+      <li><div><b>Caracterização condicional da procura por novidade.</b> Com orçamento igualado: resolve o cenário que resistia aos três algoritmos base, mas degrada onde o gradiente da tarefa já é informativo. Instrumento direcionado, não melhoramento universal — o contrário do que uma comparação com orçamentos desiguais sugeriria.</div></li>
+      <li><div><b>Mapa de escolha para engenharia de enxames.</b> Em vez de eleger um vencedor, mapeia os três eixos que devem ditar a escolha: estrutura do cenário, variabilidade de N e orçamento de cómputo.</div></li>
+      <li><div><b>Um mapa composto como instrumento, e um negativo reportado por compromisso.</b> Duplo: em substância (a composição degrada primeiro a fiabilidade) e em método — hipótese, métricas, regra de decisão e compromissos de reporte fixados antes dos dados, incluindo as emendas datadas ao protocolo e um braço pré-registado que acabou por não correr.</div></li>
+      <li><div><b>Implementação de referência extensível.</b> Repositório aberto com o simulador, os sete cenários, o RS2C e o controlador neuroevolutivo, com as garantias de não-regressão e a dívida técnica declaradas — para que quem continue saiba, à partida, o que herda.</div></li>
+    </ol>
+  </section>
+
+  <!-- ================= FUTURO ================= -->
+  <section id="futuro">
+    <div class="cab"><span class="n">19</span><h2>Trabalhos futuros</h2></div>
+    <p class="nota">Vale a pena saber a ordem: o júri pergunta quase sempre «e agora?», e a resposta certa é a n.º 2,
+      porque é a que remove a limitação n.º 1.</p>
+    <ol class="lim">
+      <li><div><b>Alargar a bateria estatística onde ainda é n=7.</b> Três frentes: os comparadores exploratórios do Sandbox e da Perceção, que ficaram a 7 contra 21 do braço adaptativo (é essa assimetria, não a direção do efeito, que mantém o δ = +0,39 do Sandbox longe do limiar); o SAC no Gargalo, cujas 21 execuções correram com 48 min e não são comparáveis; e as 21 combinações da campanha final, curtas para contrastar <em>taxas de convergência</em>.</div></li>
+      <li><div><b>Política de gradiente com atenção.</b> Integrar o mecanismo de atenção sobre grafo numa política treinável por gradiente, isolando o efeito do otimizador do efeito da arquitetura. Remove a assimetria que hoje confunde a comparação.</div></li>
+      <li><div><b>Novos cenários e tarefas.</b> Cobertura e vigilância de área, para além do foraging e do cerco de alvos móveis.</div></li>
+      <li><div><b>Validação sim-to-real.</b> e-puck, Khepera IV, ou um simulador de maior fidelidade, quantificando empiricamente o <em>Deployment Gap</em>.</div></li>
+      <li><div><b>Hibridização de paradigmas.</b> Inicialização evolutiva seguida de afinação por RL, combinando a escalabilidade de um com a eficiência do outro.</div></li>
+      <li><div><b>Refinar a dosagem adaptativa.</b> Re-armar w quando a população estagna (a temperagem atual nunca re-arma), BCs mais ricas do que o centroide final, e transpor o princípio de dosagem para os gradientes — por exemplo, coeficiente de entropia do SAC dependente do progresso.</div></li>
+      <li><div><b>O mapa composto, com o orçamento separado em três causas.</b> Alargar os 780 min é a via com mais indicação empírica; mas a aproximação final é o alvo do próximo refinamento do sinal ou da observação.</div></li>
+      <li><div><b>Aprendizagem por currículo como via alternativa de descoberta.</b> Arenas progressivamente mais fechadas, culminando no Muro em U e na Porta com Alternativa — confrontando currículo e pressão por novidade, dois mecanismos distintos para o mesmo problema.</div></li>
+    </ol>
+  </section>
+
+  <!-- ================= GLOSSÁRIO ================= -->
+  <section id="glossario">
+    <div class="cab"><span class="n">20</span><h2>Glossário, para não hesitar num termo</h2></div>
+    <dl class="glos">
+      <div><dt>Dec-POMDP</dt><dd>Processo de decisão de Markov parcialmente observável, descentralizado e cooperativo. É a formulação do RS2C: cada agente decide com a sua observação, todos partilham a recompensa.</dd></div>
+      <div><dt>Parameter sharing</dt><dd>Os N agentes partilham um único conjunto de pesos. Multiplica o batch efetivo por N e confere a redundância que explica a robustez a falhas.</dd></div>
+      <div><dt>PBRS <em>potential-based reward shaping</em></dt><dd>Shaping da forma 10·(Φ<sub>t−1</sub> − Φ<sub>t</sub>). Provado não alterar a política ótima — é o que legitima usar o campo geodésico sem enviesar o resultado.</dd></div>
+      <div><dt>Distância geodésica</dt><dd>Caminho mais curto que contorna os obstáculos (Dijkstra 8-conexa, grelha 0,4 m), por oposição à euclidiana. Elimina o mínimo local de «contornar afasta».</dd></div>
+      <div><dt>Fitness exploitation</dt><dd>O análogo evolutivo do <em>reward hacking</em>: a população maximiza o termo de shaping sem cumprir a tarefa, e a fitness satura num planalto onde a pressão seletiva se anula.</dd></div>
+      <div><dt>Homing terminal</dt><dd>clip((Φ₀ − Φ<sub>T</sub>)/Φ₀, 0, 1) — só depende dos estados extremos do episódio, pelo que vaguear não o aumenta.</dd></div>
+      <div><dt>Novelty search</dt><dd>Substitui parcialmente a pressão pelo objetivo por pressão pela diversidade comportamental. Aqui influencia só a seleção; o campeão reportado é sempre o melhor pelo objetivo.</dd></div>
+      <div><dt>BC <em>behaviour characterization</em></dt><dd>O descritor que resume o comportamento de um genoma. Aqui: o centroide final do enxame, (x, y) ∈ ℝ².</dd></div>
+      <div><dt>Zero-shot transfer</dt><dd>Aplicar a política treinada com N=20 a N ∈ {10, 50, 100} <em>sem qualquer retreino</em>.</dd></div>
+      <div><dt>Deceptive</dt><dd>Paisagem em que seguir o gradiente da recompensa conduz para longe da solução. O Muro em U (por geometria) e a Porta com Alternativa (por desenho).</dd></div>
+      <div><dt>δ de Cliff</dt><dd>Tamanho de efeito não-paramétrico em [−1, 1]: a fração de pares em que A supera B menos a inversa. |δ| ≥ 0,474 convenciona-se grande; ±1,00 é separação total.</dd></div>
+      <div><dt>Mann-Whitney U</dt><dd>Teste não-paramétrico para amostras independentes. Usa-se quando o emparelhamento não é possível; havendo seeds comuns, usa-se Wilcoxon signed-rank.</dd></div>
+      <div><dt>Estigmergia</dt><dd>Coordenação por sinais deixados no ambiente. Aqui, o bit de comunicação que ativa quando um vizinho chega ao ninho e repousa — recrutamento sem comunicação explícita.</dd></div>
+      <div><dt>Wall-sliding</dt><dd>Em vez de imobilizar o agente contra um muro, projeta-se o movimento ortogonalmente à normal da face — o agente desliza.</dd></div>
+      <div><dt>Deployment gap</dt><dd>O fosso entre o desempenho em simulação e no robot físico. Antecipado no desenho do simulador (física, ruído sensorial, perturbações), mas não validado nesta tese.</dd></div>
+      <div><dt>Guilhotina</dt><dd>Corte precoce do episódio de avaliação evolutiva: se J &lt; −200 aos 150 passos, termina e o genoma leva −1000. Poupa CPU em genomas disfuncionais.</dd></div>
+    </dl>
+  </section>
+
+  <!-- ================= ONDE ESTÁ ================= -->
+  <section id="onde">
+    <div class="cab"><span class="n">21</span><h2>Onde está cada coisa, para procurar na hora</h2></div>
+    <div class="rolo"><table>
+      <thead><tr><th>O quê</th><th>Onde</th></tr></thead>
+      <tbody>
+        <tr><td>Questões de investigação</td><td class="num">Cap. 1, §QI — p. 4–5</td></tr>
+        <tr><td>Revisão sistemática e fluxo PRISMA</td><td class="num">Cap. 3 — §3.2–3.3</td></tr>
+        <tr><td>Simulador, cenários, recompensa</td><td class="num">Cap. 4 — p. ~55–66</td></tr>
+        <tr><td>Espaço de observação e de ação</td><td class="num">Cap. 4, §4.2.2–4.2.3</td></tr>
+        <tr><td>RS2C · PPO · SAC · neuroevolução · novidade</td><td class="num">Cap. 5 — p. ~67–72</td></tr>
+        <tr><td>Função de aptidão (Eq. da fitness)</td><td class="num">Cap. 5, §5.2.1</td></tr>
+        <tr><td>Protocolo e notas de leitura</td><td class="num">§6.1 — p. 73–74</td></tr>
+        <tr><td>Tabela de avaliação e significância</td><td class="num">§6.2 e §6.12 — tab. res_eval, res_signif</td></tr>
+        <tr><td>Novidade e mega-treino</td><td class="num">§6.10 — p. ~85–90</td></tr>
+        <tr><td>Mapa composto</td><td class="num">§6.11</td></tr>
+        <tr><td>Escala, robustez e custo</td><td class="num">§6.12–6.14</td></tr>
+        <tr><td>Discussão e validação da hipótese</td><td class="num">§6.15</td></tr>
+        <tr><td>Limitações</td><td class="num">§7.3 — p. ~93–96; declaradas na p. 111</td></tr>
+        <tr><td>Contributos e trabalhos futuros</td><td class="num">§7.4–7.5</td></tr>
+        <tr><td>Atenção QKV, wall-sliding, campo geodésico</td><td class="num">Apêndice de código</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <p class="pe">Escrita contra o PDF de 141 páginas de 3 de setembro de 2026. Companheira dos slides
+    (<code>Defesa/slides_defesa.pptx</code>, 19 slides com notas de orador) e das fontes em
+    <code>docs/RESUMO_PARA_DECORAR.md</code> e <code>docs/DEFESA_PERGUNTAS.md</code>.
+    Gerada por <code>Defesa/gerar_cabula.py</code> a partir de <code>Defesa/cabula.modelo.html</code>;
+    as figuras são as das campanhas canónicas do repositório.</p>
+
+</main>
+
+<script>
+(function(){
+  var btn = document.getElementById('btn-teste');
+  var corpo = document.body;
+
+  function aplicarTab(ligado){
+    var vs = document.querySelectorAll('.resp');
+    for (var i = 0; i < vs.length; i++){
+      if (ligado){ vs[i].setAttribute('tabindex', '0'); vs[i].setAttribute('role', 'button'); }
+      else { vs[i].removeAttribute('tabindex'); vs[i].removeAttribute('role'); }
+    }
+  }
+
+  function ligar(ligado){
+    corpo.classList.toggle('teste', ligado);
+    btn.setAttribute('aria-pressed', ligado ? 'true' : 'false');
+    if (ligado){
+      var abertos = document.querySelectorAll('.resp.aberto');
+      for (var i = 0; i < abertos.length; i++){ abertos[i].classList.remove('aberto'); }
+    }
+    aplicarTab(ligado);
+  }
+
+  btn.addEventListener('click', function(){
+    var novo = !corpo.classList.contains('teste');
+    ligar(novo);
+    try { localStorage.setItem('cabula-teste', novo ? '1' : '0'); } catch (e) {}
+  });
+
+  document.addEventListener('click', function(ev){
+    if (!corpo.classList.contains('teste')) return;
+    var alvo = ev.target;
+    var v = alvo && alvo.closest ? alvo.closest('.resp') : null;
+    if (v) v.classList.add('aberto');
+  });
+
+  document.addEventListener('keydown', function(ev){
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    if (!corpo.classList.contains('teste')) return;
+    var v = ev.target && ev.target.closest ? ev.target.closest('.resp') : null;
+    if (v){ ev.preventDefault(); v.classList.add('aberto'); }
+  });
+
+  try { if (localStorage.getItem('cabula-teste') === '1') ligar(true); } catch (e) {}
+})();
+</script>
