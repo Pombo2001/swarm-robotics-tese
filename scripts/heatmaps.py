@@ -104,11 +104,17 @@ def run_occupancy(algo, scenario, episodes, bins, config_path, out_dir=None, mod
     env = SwarmForagingEnv3D(config_path=config_path)
     env.config["environment"]["classic_scenario"] = scenario
 
-    R = env.arena_radius
+    # O raio lê-se DEPOIS do primeiro reset: o mapa composto só passa a 60 m aí
+    # (`arena_radius_mapa_grande`), e com os 15 m lidos antes o histograma
+    # cobria um quadrado de 30 m no meio de um labirinto de 103 — as paredes
+    # saíam inteiras, a ocupação saía recortada.
+    R = None
     xs, ys = [], []
     food_total = 0
     for ep in range(episodes):
         obs_dict, _ = env.reset(seed=2000 + ep)
+        if R is None:
+            R = env.arena_radius
         done = False
         while not done:
             actions = _policy_actions(env, algo, model, obs_dict)

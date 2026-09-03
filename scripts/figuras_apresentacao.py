@@ -52,11 +52,15 @@ DESTINO = ap.FIG_DIR
 GRAFICOS = os.path.join(RAIZ, "results", "graficos_tese")
 ALGOS = ["GNN", "PPO", "SAC"]
 # Fontes das curvas de treino por campanha base. A final tem-nas fundidas; o
-# F2 do mapa composto só arquivou as do GNN (os streams de gradiente guardaram
-# a avaliação e não os logs de treino).
+# F2 do mapa composto correu em três streams, e as curvas ficaram nas pastas
+# datadas de cada um (o GNN na de 16 ago, o PPO e o SAC na de 10 ago) — a
+# pasta agregada `mapa_grande_f2` só copiou as do GNN.
 CURVAS = {
-    "final_7d": ("csv", os.path.join(GRAFICOS, "final_7d", "all_curves_data_7d.csv")),
-    "mapa_grande_f2": ("pasta", os.path.join(RAIZ, "results", "mapa_grande", "f2_gnn")),
+    "final_7d": ("csv", [os.path.join(GRAFICOS, "final_7d", "all_curves_data_7d.csv")]),
+    "mapa_grande_f2": ("csv", [
+        os.path.join(GRAFICOS, "16-08-2026_16h14m", "dados_historicos.csv"),
+        os.path.join(GRAFICOS, "10-08-2026_16h34m", "dados_historicos.csv"),
+    ]),
 }
 
 
@@ -110,8 +114,9 @@ def figura_dotplot(cenario: str) -> str | None:
 
 def _curvas(campanha: str) -> pd.DataFrame:
     tipo, origem = CURVAS.get(campanha, (None, None))
-    if tipo == "csv" and os.path.exists(origem):
-        c = pd.read_csv(origem)
+    if tipo == "csv":
+        partes = [pd.read_csv(p) for p in origem if os.path.exists(p)]
+        c = pd.concat(partes, ignore_index=True) if partes else pd.DataFrame()
     elif tipo == "pasta" and os.path.isdir(origem):
         c = carregar_curvas(origem, ["mapa_grande"])
     else:

@@ -1,7 +1,7 @@
 # PLANO MESTRE — Tese de Mestrado (19 jul → Outubro 2026)
 
 > **Este é o ÚNICO ponto de re-entrada do projeto.** Escrito a **19 jul 2026**,
-> **atualizado a 25 jul**. Funde o `PLANO_ATAQUE_FINAL.md` (lista acionável de
+> **atualizado a 3 set** (secção 0). Funde o `PLANO_ATAQUE_FINAL.md` (lista acionável de
 > 15 jul) com o `PLANO_DE_ATAQUE.md` (registo histórico) — ambos passaram para
 > `docs/arquivo/` a 25 jul; não os atualizes, atualiza ESTE.
 > O mapa do resto da pasta está em [`docs/README.md`](README.md).
@@ -16,7 +16,94 @@
 
 ---
 
-# 0. ONDE ISTO ESTÁ (2 ago, tarde) — LÊ ISTO PRIMEIRO
+# 0. ONDE ISTO ESTÁ (3 set 2026, fim do dia) — LÊ ISTO PRIMEIRO
+
+> Escrito para retomar noutra sessão (e noutro modelo) sem repetir trabalho.
+> Tudo o que está abaixo está commitado; o último commit é o da lista de
+> «feito». A cópia pública no Pi está a par (`scripts/atualizar_pi.sh`).
+
+## Estado
+
+- **Tese: 141 páginas**, compila limpa (`latexmk -pdf` em `Tese/`), 0 overfull,
+  0 referências indefinidas. Entrega 30 set; defesa em outubro. O orientador
+  releu os Caps. 6 e 7 a 27–29 ago (16 comentários, todos tratados a 1 set) e
+  disse que **relê os Caps. 6 e 7 na versão final**.
+- O utilizador está a **reler o PDF e a anotar comentários** em
+  `C:\Users\gonca\Desktop\Academico\Revisao Tese\main.pdf` (ia na p. 53 a 3 set).
+  Esses comentários **ainda não foram tratados** — ver «Próximos passos».
+- **Dashboard** (NiceGUI, `localhost:8080`; Pi em `swarmroboticsgs.duckdns.org`):
+  17 vistas, auditor a 0 problemas, `verificar_dashboard` 165 valores a bater.
+- **Material de defesa**: `Defesa/slides_defesa.pptx` (19 slides com notas de
+  orador, gerados por `Defesa/gerar_slides.py`), `docs/RESUMO_PARA_DECORAR.md`
+  (folha de estudo), `docs/DEFESA_PERGUNTAS.md` (as 8 perguntas que vêm primeiro).
+
+## Feito a 3 set (por ordem)
+
+1. **Vídeos** abria no treino errado (pasta datada de 16 ago, 1 GIF) → abre na
+   campanha final, seletor com etiquetas da Galeria. «inativo» → «sem treino a
+   decorrer» (e não aparece no Pi).
+2. **Vista «Apresentação»** (secção DEFESA, primeira): um ecrã por cenário com
+   os três algoritmos da campanha base lado a lado (Vídeo / Episódio 3D /
+   Heatmap), o vencedor do ranking em destaque, 4.ª coluna «GNN adaptativo» onde
+   o vencedor é de outra campanha (Muro em U, Porta c/ Alternativa), dot plot e
+   curvas num formato único (`scripts/figuras_apresentacao.py` →
+   `results/figuras_apresentacao/`), frase por mapa em `configs/apresentacao.yaml`
+   conferida por `scripts/verificar_apresentacao.py` (no pre-commit). Episódios
+   3D dos treinos vencedores em `results/episodios_3d/apresentacao/`.
+3. **Duas costuras na física das paredes** (o «salta paredes» que o utilizador
+   viu): topo das paredes = teto da esfera (z=15) e junções em T das Quatro
+   Salas; a colisão empurra pela face de menor penetração
+   (`swarm_env_3d.py` ~l. 1157). Medido com `scripts/detetar_travessias.py`
+   (343 modelos únicos, 3 episódios): 11 atravessam (todos GNN; 8/16 nas Quatro
+   Salas), 12 só ficam presos; campanha final 3/70 (GNN Quatro Salas, execuções
+   1, 4, 6) sem inflacionar (55,7 vs 60,3). **Física NÃO corrigida** — decisão do
+   utilizador (opção b). Parágrafo nas **Limitações** («Duas costuras na física
+   das paredes», a seguir a «Dimensão vertical»), 22 números conferidos por
+   `scripts/verificar_travessias.py` (pre-commit). A A1 nas Quatro Salas está
+   excluída da Apresentação (`excluir:` no YAML).
+4. **Heatmaps do mapa composto** estavam recortados a ±15 m (raio lido antes do
+   reset) → corrigido em `scripts/heatmaps.py`, regenerados os três com
+   `scripts/heatmaps_mapa_grande.py`; **curvas** do mapa composto passaram a ter
+   PPO e SAC (estavam na pasta do stream de 10 ago).
+5. Slides + folha de estudo + slide de demo ao vivo (Muro em U).
+
+## Próximos passos (por prioridade)
+
+1. 👤🤝 **Os comentários do utilizador ao PDF** (`Revisao Tese/main.pdf`): quando
+   gravar o PDF, extrair as anotações (PyMuPDF está no Python do sistema:
+   `py -3 -c "import pymupdf"`; o `.venv` não o tem), localizar cada uma no
+   `main.tex` e aplicar. Mapa página→secção: `grep -nE '^\\(chapter|section)' Tese/main.tex`.
+   Recompilar com `latexmk -pdf` em `Tese/` e commitar (o hook corre as réguas).
+2. 👤 **Rever as 8 frases** de `configs/apresentacao.yaml` e as **notas de orador**
+   dos slides — são as únicas palavras que não vieram da tese. Um número que
+   não bata é recusado no commit.
+3. 🤖 **Ensaiar a demo** com o portátil desligado da rede: `iniciar_dashboard.bat`,
+   Apresentação → Muro em U → Episódio 3D. Abrir antes de começar para os GIFs
+   ficarem em cache.
+4. 🤝 **Enviar ao orientador** a versão de 15 set (compromisso no cabeçalho deste
+   ficheiro) com uma nota sobre a nova limitação das paredes — é o único conteúdo
+   científico novo desde os comentários dele.
+5. (opcional, se sobrar tempo) **Física das paredes, opção (a)**: paredes
+   infinitas em altura na colisão + resolver as junções em conjunto; correr
+   `scripts/detetar_travessias.py` depois e reavaliar as células afetadas. Só com
+   decisão explícita do utilizador — muda um simulador com campanhas fechadas.
+
+## Coisas que custaram tempo hoje (para não repetir)
+
+- Processos longos: o terminal mata tarefas em segundo plano aos 10 min.
+  Lançar destacado (`Start-Process` em PowerShell) e vigiar com `Monitor`.
+  O detetor com 12 processos × 16 threads do PyTorch deixou o PC inutilizável —
+  agora corre com 1 thread por processo e prioridade baixa (`--jobs 8`).
+- As pastas das fases (adaptativo_A1/A2, mega_A1/A2/A5…) **partilham os mesmos
+  ficheiros de modelo** (o arquivamento copiava `results/models` inteiro):
+  contar por pasta multiplica; contar por `sha1`.
+- `?v=<vista>` no URL do dashboard só pega numa carga nova da página; para
+  navegar num separador já aberto, clicar na barra lateral. Setas do teclado só
+  funcionam com a página focada.
+
+---
+
+# 0-B. ONDE ISTO ESTAVA (2 ago, tarde)
 
 1. ✅ **O F1 do mapa grande FECHOU** — e desta vez com dados válidos. A condição
    natural acabou a 1 ago 00:11 mas ficou no servidor (o esperador desistiu

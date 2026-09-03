@@ -129,6 +129,7 @@ Os `.sh` correm no servidor do ISCTE (ver `servidor.sh` para o acesso).
 | `figuras_artigo.py` | as versões estreitas, desenhadas para a coluna de 8,9 cm do artigo |
 | `plot_results.py`, `plot_robustez.py` | curvas de treino e robustez a falhas |
 | `heatmaps.py` | ocupação dos robôs e potencial geodésico |
+| `heatmaps_mapa_grande.py` | regenera os três heatmaps de ocupação do F2 do mapa composto com o raio de 60 m (os arquivados estavam recortados a ±15 m) e copia-os para as pastas dos streams |
 | `render_maps.py` | renders 3D dos cenários (PyVista) |
 | `rastos_mapa_grande.py` | por onde passa cada controlador, em planta |
 | `captura_episodio.py`, `record_episode.py` | capturas e GIF de um episódio |
