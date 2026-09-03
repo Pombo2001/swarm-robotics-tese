@@ -607,7 +607,38 @@ fiabilidade em espaço aberto e o cómputo barato. E a composição degrada a
 fiabilidade antes da magnitude — um resultado negativo, reportado como tal.
 """)
 
-# 18. Fim
+# 18. Demo ao vivo — o painel, no Muro em U
+s = prs.slides.add_slide(BRANCO)
+_titulo(s, "Demo ao vivo — o Muro em U no painel",
+        "os três modelos a correr lado a lado, o vencedor em destaque, e a proveniência de cada número")
+_fig(s, "demo_muro_em_u.jpg", MARGEM, Inches(1.7), Inches(8.3), Inches(4.7),
+     pasta=os.path.join(RAIZ, "Defesa"))
+_texto(s, MARGEM + Inches(8.6), Inches(1.7), W - 2 * MARGEM - Inches(8.6), Inches(4.9), [
+    ("O que mostrar, por esta ordem", {"negrito": True, "cor": ACENTO, "tamanho": 15}),
+    ("1. Os três da campanha final: 3/7, 4/7 e 2/7 — cada execução ou aprende o desvio ou fica a zero",
+     {"tamanho": 13}),
+    ("2. A 4.ª coluna: o GNN com novidade adaptativa — 7/7, 77,8 rec/ep (o «melhor»)", {"tamanho": 13}),
+    ("3. Toggle «Episódio 3D»: os quatro enxames em 3D ao mesmo tempo; arrastar para rodar", {"tamanho": 13}),
+    ("4. Em baixo: o dot plot com a linha do adaptativo, e as curvas de treino", {"tamanho": 13}),
+    ("5. Se perguntarem «de onde vem este número?»: Proveniência — dois cliques até ao CSV",
+     {"tamanho": 13}),
+    ("", {"tamanho": 8}),
+    ("Painel: localhost:8080 (portátil) · swarmroboticsgs.duckdns.org (Pi)", {"tamanho": 12, "cor": MUTED}),
+    ("Setas do teclado mudam de mapa · plano B: o GIF do Muro em U no slide 9", {"tamanho": 12, "cor": MUTED}),
+], tamanho=13, espaco=6)
+_rodape(s)
+_notas(s, """
+Antes das perguntas, um minuto ao vivo. Abro o painel na Apresentação, mapa dois:
+o Muro em U. Três colunas com os modelos da campanha final — repare-se que cada
+execução ou aprende o desvio ou fica a zero: três em sete, quatro em sete, duas
+em sete. A quarta coluna é o GNN com novidade doseada adaptativamente: sete em
+sete, setenta e oito recolhas. Carrego em Episódio 3D e os quatro enxames
+correm ao mesmo tempo. Em baixo, o dot plot com a linha do adaptativo e as
+curvas de treino. Qualquer número do painel tem proveniência: dois cliques até
+ao CSV. Plano B se a rede ou o portátil falharem: o GIF do slide nove.
+""")
+
+# 19. Fim
 s = prs.slides.add_slide(BRANCO)
 _texto(s, MARGEM, Inches(2.4), W - 2 * MARGEM, Inches(1.2), "Obrigado.", tamanho=40, negrito=True)
 _texto(s, MARGEM, Inches(3.6), W - 2 * MARGEM, Inches(2.5), [

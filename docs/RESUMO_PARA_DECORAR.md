@@ -4,7 +4,7 @@
 > que está aqui está na dissertação; nenhum número foi arredondado de forma
 > diferente da tese. Companheira do [`DEFESA_PERGUNTAS.md`](DEFESA_PERGUNTAS.md)
 > (as perguntas que vêm primeiro) e dos slides em `Defesa/slides_defesa.pptx`
-> (gerados por `Defesa/gerar_slides.py`, com as notas de orador).
+> (19 slides gerados por `Defesa/gerar_slides.py`, com as notas de orador; o 18.º é a demo ao vivo do Muro em U no painel).
 
 ---
 
