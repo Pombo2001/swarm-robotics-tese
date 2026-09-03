@@ -1,0 +1,57 @@
+# A APRESENTAÇÃO — o melhor de cada mapa, um ecrã de cada vez.
+#
+# Lida pela vista «Apresentação» do dashboard. Quem decide o treino vencedor de
+# cada cenário NÃO é este ficheiro: é o ranking do dashboard (`data.ranking_por_
+# cenario`), com a regra da tese — compara-se dentro do cenário, só campanhas
+# com avaliação determinística, e a unidade é a campanha, nunca a execução.
+# Aqui fica só o que não se calcula: a frase que se diz com o mapa no ecrã.
+#
+# Cada número da frase é conferido contra o CSV do treino vencedor por
+# `scripts/verificar_apresentacao.py`: «NN,N rec/ep» a seguir a um algoritmo
+# tem de ser a média por execução desse algoritmo nessa campanha, e «N/N» as
+# execuções a 100 %. Uma frase que fale de outra campanha diz-lo («na campanha
+# final»), e esses números conferem-se contra a `final_7d`.
+
+cenarios:
+  - cenario: none
+    frase: >-
+      A arena aberta é do generalista: PPO 71,5 rec/ep, 7/7 execuções.
+      O evolutivo fica-se por 38,3 — não se escolheu o favorito.
+
+  - cenario: u_wall
+    frase: >-
+      Deceção espacial: sem procura por novidade, nenhum dos três resolve o beco
+      de forma fiável. Com a novidade doseada adaptativamente, o GNN faz
+      77,8 rec/ep e 7/7 execuções.
+
+  - cenario: bottleneck
+    frase: >-
+      Empate na porta estreita: GNN 121,4 contra 123,2 do PPO (p = 0,21).
+      O SAC é o único que falha execuções aqui.
+
+  - cenario: four_rooms
+    frase: >-
+      A vitória grande do evolutivo: GNN 62,7 rec/ep, 7/7 execuções — quase o
+      dobro dos métodos de gradiente na campanha final.
+
+  - cenario: cooperative_door
+    frase: >-
+      Três robôs para abrir a porta, e os três algoritmos aprendem-no:
+      GNN 69,8 rec/ep, 7/7, com o desvio mais pequeno de toda a tese.
+
+  - cenario: cooperative_perception
+    frase: >-
+      O cenário mais difícil dos sete — alvos móveis. GNN 19,0 rec/ep,
+      6/7 execuções; PPO 15,3 e SAC 16,1. Ninguém domina.
+
+  - cenario: cooperative_door_bypass
+    frase: >-
+      Porta ou desvio: o enxame escolhe. GNN adaptativo 88,7 rec/ep,
+      7/7 execuções.
+
+  - cenario: mapa_grande
+    frase: >-
+      Quatro dificuldades num só labirinto de 103 × 62 m. Sem retreino, zero em
+      84 de 84 células. Com treino nativo só o evolutivo passa — 4 de 21
+      execuções, abaixo do limiar de 15 fixado antes dos dados. Um resultado
+      negativo, reportado.

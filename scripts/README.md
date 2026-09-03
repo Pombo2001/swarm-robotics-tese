@@ -48,6 +48,7 @@ mudam, e recusam o commit se um número deixar de bater
 | `verificar_planalto.py` | as curvas estabilizaram dentro do orçamento |
 | `verificar_dashboard.py` **⟨hook⟩** | os números do dashboard são os da tese, e o vocabulário do ecrã é o da dissertação |
 | `verificar_vitrine.py` **⟨hook⟩** | as legendas escritas à mão da Vitrine batem com os CSV que a figura ao lado mostra |
+| `verificar_apresentacao.py` **⟨hook⟩** | as frases da Apresentação batem com o CSV do treino vencedor de cada cenário, e o episódio 3D é desse treino |
 | `verificar_comandos_dashboard.py` **⟨hook⟩** | os comandos que o dashboard manda copiar existem e aceitam o que lhes passa |
 | `verificar_paridade_pi.py` | tudo o que as vistas leem é enviado para o Raspberry Pi |
 | `verificar_sessao.py` | uma sessão de treino produziu todos os artefactos |

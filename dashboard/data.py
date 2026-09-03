@@ -576,6 +576,14 @@ _CAMPANHAS = {
     "eval_7d":    ("Campanha final · avaliação bruta", False),
     "mapa_grande": ("Mapa composto · 8.º cenário", True),
     "mega_treino": ("Mega-treino · agregado", True),
+    # O F2 do mapa composto correu em três streams, cada um na sua pasta datada;
+    # `mapa_grande_f2` junta os três. Sem estas linhas as pastas datadas eram
+    # «Exploratória» — e o ranking anunciava uma delas como o melhor treino do
+    # cenário, com o nome da pasta.
+    "mapa_grande_f2":    ("Mapa composto · F2 (21 execuções)", True),
+    "16-08-2026_16h14m": ("Mapa composto · F2 (GNN adaptativo)", False),
+    "07-08-2026_05h27m": ("Mapa composto · F2 (PPO)", False),
+    "10-08-2026_16h34m": ("Mapa composto · F2 (SAC)", False),
 }
 _PREFIXOS = (
     ("adaptativo_", "Novelty adaptativo", True),
@@ -584,7 +592,10 @@ _PREFIXOS = (
 # Pastas diferentes que são a MESMA campanha. A avaliação da campanha final
 # ficou em duas (`eval_7d` com os dados brutos, `final_7d` com os curados) e o
 # ranking mostrava-as como dois treinos empatados.
-_ALIAS = {"eval_7d": "final_7d"}
+_ALIAS = {"eval_7d": "final_7d",
+          "16-08-2026_16h14m": "mapa_grande_f2",
+          "07-08-2026_05h27m": "mapa_grande_f2",
+          "10-08-2026_16h34m": "mapa_grande_f2"}
 
 
 def condicao_da_campanha(nome: str) -> str:

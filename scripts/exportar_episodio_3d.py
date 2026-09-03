@@ -47,7 +47,11 @@ DESTINO = os.path.join(RAIZ, "results", "episodios_3d")
 
 
 def exportar(algo: str, cenario: str, seed: int = 2024, passo: int = 3,
-             models_root: str | None = None, config_path: str | None = None) -> str:
+             models_root: str | None = None, config_path: str | None = None,
+             subpasta: str = "", campanha: str = "") -> str:
+    """`subpasta` grava fora da lista do «Episódio 3D» (a Apresentação tem os
+    seus, um por cenário, do treino vencedor); `campanha` fica no meta para a
+    vista poder recusar um episódio que não seja do treino que anuncia."""
     config_path = config_path or os.path.join(RAIZ, "configs", "foraging.yaml")
     env = SwarmForagingEnv3D(config_path=config_path)
     env.config["environment"]["classic_scenario"] = cenario
@@ -85,6 +89,9 @@ def exportar(algo: str, cenario: str, seed: int = 2024, passo: int = 3,
             "raio_ninho": float(env.nest_radius),
             "raio_robo": float(env.robot_radius),
             "raio_obstaculo": float(env.obstacle_radius),
+            "campanha": campanha,
+            "modelos": os.path.relpath(models_root, RAIZ).replace("\\", "/")
+                       if models_root else "results",
         },
         # `alturaParede` fica separado: as paredes têm todas a mesma altura
         # (2×raio da arena, desde a correção de 29 jul) e repeti-la em cada uma
@@ -94,8 +101,9 @@ def exportar(algo: str, cenario: str, seed: int = 2024, passo: int = 3,
         "quadros": quadros, "ninho": ninhos, "recolhas": recolhas_por_quadro,
     }
 
-    os.makedirs(DESTINO, exist_ok=True)
-    saida = os.path.join(DESTINO, f"{algo.lower()}_{cenario}.json")
+    destino = os.path.join(DESTINO, subpasta) if subpasta else DESTINO
+    os.makedirs(destino, exist_ok=True)
+    saida = os.path.join(destino, f"{algo.lower()}_{cenario}.json")
     with open(saida, "w", encoding="utf-8") as f:
         json.dump(dados, f, separators=(",", ":"))
     kb = os.path.getsize(saida) / 1024
@@ -115,6 +123,10 @@ def main() -> int:
                    help="pasta com models/ (por omissão: os modelos ativos)")
     p.add_argument("--todos", action="store_true",
                    help="os 7 cenários da tese com o GNN")
+    p.add_argument("--subpasta", default="",
+                   help="grava em results/episodios_3d/<subpasta>/ (ex.: apresentacao)")
+    p.add_argument("--campanha", default="",
+                   help="nome da campanha de onde vêm os modelos, para o meta")
     a = p.parse_args()
 
     if a.todos:
@@ -127,7 +139,8 @@ def main() -> int:
                 print(f"[!] {cen}: {type(e).__name__}: {str(e)[:70]}")
         return 1 if falhas else 0
 
-    exportar(a.algo, a.cenario, a.seed, a.passo, a.models_root)
+    exportar(a.algo, a.cenario, a.seed, a.passo, a.models_root,
+             subpasta=a.subpasta, campanha=a.campanha)
     return 0
 
 

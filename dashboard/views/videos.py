@@ -107,7 +107,8 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
                 lambda _, f=fn, s=fonte: _zoom(s, f),
                 "Ampliar o vídeo %s" % meta["label"])
             if fonte != session:
-                ui.label("de outra campanha: %s" % fonte).classes("text-[10px]") \
+                ui.label("de outra campanha: %s" % data.rotulo_campanha(fonte)[0]) \
+                    .classes("text-[10px]") \
                     .style(f"color:{theme.INK_MUTED}")
             if show_metric:
                 # A métrica é a da campanha DE ONDE VEIO o vídeo, não a da

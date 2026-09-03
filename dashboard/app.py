@@ -20,7 +20,7 @@ from . import config, theme
 from .jobs import JobQueue
 from .views import (overview, treinar, servidor, ciencia, resultados, curvas,
                     videos, aovivo, arquivo, proveniencia, prontidao,
-                    defesa, mapa, escala, vitrine, viz3d)
+                    defesa, mapa, escala, vitrine, viz3d, apresentacao)
 
 # Fila partilhada (singleton): o treino continua independente do estado do browser.
 queue = JobQueue()
@@ -73,11 +73,14 @@ def index(v: str = ""):
         # Modo Defesa: o mesmo dashboard, com os parâmetros de uma sala (texto
         # maior, mais contraste, sem animações). Ver theme.py.
         theme.defesa_button()
-        # Estado vivo da fila local (ponto a pulsar quando há treino a correr)
-        with ui.row().classes("items-center gap-2 no-wrap"):
+        # Estado vivo da fila local (ponto a pulsar quando há treino a correr).
+        # Dizia «inativo», que projetado se lê como «o painel está em baixo».
+        # No Pi não há fila nenhuma: o estado não se mostra.
+        with ui.row().classes("items-center gap-2 no-wrap") as estado_fila:
             dot = ui.element("div").classes("live-dot live-dot--idle")
-            lbl = ui.label("inativo").classes("text-xs mono-num") \
+            lbl = ui.label("sem treino a decorrer").classes("text-xs mono-num") \
                 .style(f"color:{theme.INK_MUTED}")
+        estado_fila.set_visibility(not config.READONLY)
 
     # Navegação (barra lateral, por fluxo de trabalho)
     def _sec(titulo):
@@ -120,6 +123,9 @@ def index(v: str = ""):
                 t_mapa    = ui.tab("Mapa composto", icon="map")
 
                 _sec("DEFESA")
+                # Primeira: é o que se projeta com o relógio a andar — o melhor
+                # treino de cada mapa, vídeo e figuras no mesmo ecrã.
+                t_apres   = ui.tab("Apresentação", icon="co_present")
                 t_defesa  = ui.tab("Defesa", icon="record_voice_over")
                 t_vitrine = ui.tab("Vitrine", icon="slideshow")
                 # "De onde vem este número?" respondido em dois cliques, em vez
@@ -176,7 +182,7 @@ def index(v: str = ""):
                 "escala": t_escala,
                 "proveniencia": t_proven,
                 "resultados": t_result, "prontidao": t_pronto,
-                "defesa": t_defesa,
+                "defesa": t_defesa, "apresentacao": t_apres,
                 "videos": t_videos, "viz3d": t_viz3d,
                 "aovivo": t_aovivo, "arquivo": t_arquivo}
 
@@ -198,6 +204,7 @@ def index(v: str = ""):
         (t_ciencia,  "Ciência",            "ciencia"),
         (t_escala,   "Escala e robustez",  "escala"),
         (t_mapa,     "Mapa composto",      "mapa"),
+        (t_apres,    "Apresentação",       "apresentacao"),
         (t_defesa,   "Defesa",             "defesa"),
         (t_vitrine,  "Vitrine",            "vitrine"),
         (t_proven,   "Proveniência",       "proveniencia"),
@@ -236,9 +243,16 @@ def index(v: str = ""):
             if e.value is tab or e.value == rotulo:
                 ui.run_javascript(
                     "history.replaceState(null, '', '?v=%s')" % slug)
+                # As setas do teclado são da página inteira: cada vista que as
+                # usa só reage com o seu separador aberto, senão a Defesa mudava
+                # de questão enquanto a Apresentação mudava de mapa.
+                apresentacao.ATIVA["v"] = (slug == "apresentacao")
+                defesa.ATIVA["v"] = (slug == "defesa")
                 return
 
     tabs.on_value_change(_url_segue_separador)
+    apresentacao.ATIVA["v"] = (_inicial is t_apres)
+    defesa.ATIVA["v"] = (_inicial is t_defesa)
 
     def _rodape_nav(atual):
         """Rodapé «← anterior / continuar para →» no fim de um painel.
@@ -321,6 +335,9 @@ def index(v: str = ""):
             with ui.tab_panel(t_pronto):
                 prontidao.build()
                 _rodape_nav(t_pronto)
+        with ui.tab_panel(t_apres):
+            apresentacao.build()
+            _rodape_nav(t_apres)
         with ui.tab_panel(t_defesa):
             defesa.build()
             _rodape_nav(t_defesa)
@@ -345,7 +362,7 @@ def index(v: str = ""):
         try:
             running = queue.is_running
             dot.classes(remove="live-dot--idle", add="" if running else "live-dot--idle")
-            lbl.text = "treino a correr" if running else "inativo"
+            lbl.text = "treino a correr" if running else "sem treino a decorrer"
             # O "hub" do header roda devagar enquanto há treino a correr.
             if running:
                 hub.classes(add="spin-slow")

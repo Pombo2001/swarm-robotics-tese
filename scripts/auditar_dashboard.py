@@ -48,7 +48,7 @@ def I(vista: str, msg: str) -> None:
 
 VISTAS = ["overview", "treinar", "servidor", "ciencia", "resultados", "curvas",
           "videos", "aovivo", "arquivo", "proveniencia", "prontidao",
-          "defesa", "mapa", "escala", "vitrine", "viz3d"]
+          "defesa", "mapa", "escala", "vitrine", "viz3d", "apresentacao"]
 
 ALGOS = ("gnn", "ppo", "sac")
 CENARIOS_TESE = ("none", "u_wall", "bottleneck", "four_rooms",

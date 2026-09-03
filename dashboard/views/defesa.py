@@ -35,6 +35,10 @@ CSV_7D = os.path.join(_RAIZ, "results", "graficos_tese", "final_7d",
 DIR_EST = os.path.join(_RAIZ, "results", "estatisticas")
 ESTADO_F2 = os.path.join(_RAIZ, "results", "estado_f2.json")
 
+# Verdadeiro enquanto este separador está aberto (o app.py liga-o): as setas
+# do teclado só mudam de questão aqui, não noutra vista.
+ATIVA = {"v": True}
+
 
 def _data_pt(iso):
     """'2026-08-17T08:37Z' -> '17 ago'.
@@ -402,9 +406,12 @@ def build():
             ui.label("ou use as setas do teclado").classes("text-xs") \
                 .style(f"color:{theme.INK_MUTED}")
 
-        # Numa sala, procurar o rato é pior do que decorar duas teclas.
+        # Numa sala, procurar o rato é pior do que decorar duas teclas. Só com
+        # este separador aberto (`ATIVA`, ligado pelo app.py): o teclado é da
+        # página inteira e a Apresentação usa as mesmas duas teclas.
         ui.keyboard(on_key=lambda e: (
-            andar(1) if (e.action.keydown and e.key.arrow_right) else
-            andar(-1) if (e.action.keydown and e.key.arrow_left) else None))
+            None if not (ATIVA["v"] and e.action.keydown) else
+            andar(1) if e.key.arrow_right else
+            andar(-1) if e.key.arrow_left else None))
 
         desenhar()

@@ -12,6 +12,9 @@
  */
 (function () {
   "use strict";
+  // Duas vistas (Episódio 3D e Apresentação) incluem este ficheiro; o segundo
+  // <script> não deve montar um segundo observador nem redefinir `viz3d`.
+  if (window.viz3d) return;
 
   const COR = {
     fundo: "#0b0e11", chao: "#12171c", contorno: "#38434d",
@@ -213,20 +216,27 @@
   // construção da vista dispara antes disso — a primeira carga falhava em
   // silêncio e ficava um canvas preto. Aqui o canvas traz o episódio inicial
   // no `data-ep` e o próprio JS trata de arrancar quando estiver pronto.
+  // Todos os canvases com `data-ep` ainda por carregar, e não só o primeiro:
+  // a Apresentação cria um por cenário, à medida que se avança, e o «Episódio
+  // 3D» tem o seu. O rótulo de estado é o que o `data-estado` indicar.
   function tentarArrancar() {
-    const c = document.querySelector("canvas[data-ep]");
-    if (!c || !window.viz3d) return false;
-    const alvo = c.getAttribute("data-ep");
-    if (c.getAttribute("data-carregado") === alvo) return true;
-    c.setAttribute("data-carregado", alvo);
-    window.viz3d.carregar(c.id, alvo, function (e) {
-      const el = document.getElementById("viz3d_estado");
-      if (el) {
-        el.textContent = "passo " + e.passo + " · quadro " + (e.quadro + 1) +
-                         "/" + e.total + " · " + e.recolhas + " recolhas";
-      }
+    if (!window.viz3d) return false;
+    let algum = false;
+    document.querySelectorAll("canvas[data-ep]").forEach(function (c) {
+      const alvo = c.getAttribute("data-ep");
+      if (c.getAttribute("data-carregado") === alvo) return;
+      c.setAttribute("data-carregado", alvo);
+      algum = true;
+      const idEstado = c.getAttribute("data-estado") || "viz3d_estado";
+      window.viz3d.carregar(c.id, alvo, function (e) {
+        const el = document.getElementById(idEstado);
+        if (el) {
+          el.textContent = "passo " + e.passo + " · quadro " + (e.quadro + 1) +
+                           "/" + e.total + " · " + e.recolhas + " recolhas";
+        }
+      });
     });
-    return true;
+    return algum;
   }
 
   // O NiceGUI só MONTA o conteúdo de um separador quando ele é aberto — o canvas
@@ -241,10 +251,10 @@
       document.addEventListener("DOMContentLoaded", autoArranque, { once: true });
       return;
     }
-    if (tentarArrancar()) return;
-    const obs = new MutationObserver(function () {
-      if (tentarArrancar()) obs.disconnect();
-    });
+    // O observador fica ligado: o próximo canvas pode chegar meia hora depois
+    // (a Apresentação monta um por cenário). Ver o DOM mudar não custa nada.
+    tentarArrancar();
+    const obs = new MutationObserver(function () { tentarArrancar(); });
     obs.observe(document.body, { childList: true, subtree: true });
   }
 
