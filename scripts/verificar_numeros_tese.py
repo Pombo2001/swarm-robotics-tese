@@ -83,7 +83,7 @@ def numero(s):
     """
     s = s.strip().replace("{,}", ".")
     s = s.replace("\\%", "").replace("%", "")
-    s = re.sub(r"\\mathbf|\\textbf|[{}$]", "", s)
+    s = re.sub(r"\\mathbf|\\textbf|\\emph|[{}$]", "", s)
     s = s.replace(",", ".").strip()
     try:
         return float(s)
@@ -270,7 +270,7 @@ def verificar_escalabilidade_prosa(tolerancia):
     # 1. as 28 combinações a 100%
     celulas = [(cen, n) for cen in dados for n in (10, 20, 50, 100)]
     cem = [(cen, n) for cen, n in celulas if gnn(cen, n, "success_rate") == 1.0]
-    m = re.search(r"\\textbf\{100\\% de sucesso nas (\d+) combina", sec)
+    m = re.search(r"(?:\\textbf|\\emph)\{100\\% de sucesso nas (\d+) combina", sec)
     if m:
         conferidos += 1
         tese_n = int(m.group(1))
@@ -330,7 +330,7 @@ def verificar_escalabilidade_prosa(tolerancia):
         ("Perceção Cooperativa", "cooperative_perception",
          r"Perceção Cooperativa \$(\d+)\\%\$"),
         ("Quatro Salas", "four_rooms", r"Quatro Salas retém \$(\d+)\\%\$"),
-        ("Gargalo", "bottleneck", r"\\textbf\{Gargalo\} \$(\d+)\\%\$"),
+        ("Gargalo", "bottleneck", r"(?:\\textbf|\\emph)\{Gargalo\} \$(\d+)\\%\$"),
     ]
     for rot, cen, padrao in prosa_ret:
         m = achar("retenção %s (prosa)" % rot, padrao)
@@ -598,7 +598,7 @@ AFIRMACOES_SIMULADOR = [
      "lidar", 0.01),
     ("raio da arena", r"raio \$r_\{arena\} = ([\d{},]+)\$\\,m", "arena", 0.01),
     ("raio da arena (legenda das renderizações)",
-     r"uma \\textbf\{esfera\} de raio \$([\d{},]+)\$\\,m", "arena", 0.01),
+     r"uma (?:\\textbf|\\emph)\{esfera\} de raio \$([\d{},]+)\$\\,m", "arena", 0.01),
 ]
 
 
@@ -756,7 +756,7 @@ def verificar_hiperparametros():
         if len(campos) != 3:
             continue
         if campos[0]:
-            cat = re.sub(r"\\textbf\{|\}|\(.*?\)", "", campos[0]).strip()
+            cat = re.sub(r"(?:\\textbf|\\emph)\{|\}|\(.*?\)", "", campos[0]).strip()
             if cat and cat != "Categoria":
                 categoria = cat
         if campos[1] in ("\\textbf{Hiperparâmetro}", "Hiperparâmetro"):
@@ -945,7 +945,7 @@ def _cenarios_da_frase(txt):
     Devolve None se algum nome não for reconhecido — é melhor dizer «não
     percebi» do que comparar um conjunto incompleto e dar por bom.
     """
-    nomes = re.split(r",| e ", re.sub(r"\\textit\{|\\textbf\{|\}", "", txt))
+    nomes = re.split(r",| e ", re.sub(r"\\textit\{|(?:\\textbf|\\emph)\{|\}", "", txt))
     chaves = set()
     for nome in nomes:
         nome = nome.strip().rstrip(".")
@@ -1054,7 +1054,7 @@ def verificar_discussao_global(tolerancia):
 
     # o Muro em U: nenhuma comparação significativa
     if achar("Muro U sem significância",
-             r"No \\textbf\{Muro (?:em )?U\}, nenhuma comparação atinge significância"):
+             r"No (?:\\textbf|\\emph)\{Muro (?:em )?U\}, nenhuma comparação atinge significância"):
         conferidos += 1
         sig = csv[(csv["Scenario"] == "u_wall") & (csv["significant"])]
         if len(sig):
@@ -1332,7 +1332,7 @@ def verificar_robustez():
         tex = f.read()
 
     # "entre \textbf{92\% e 106\%} em todas as 21 combinações"
-    m = re.search(r"retenção de recolhas situa-se entre\s*\\textbf\{(\d+)\\%\s*"
+    m = re.search(r"retenção de recolhas situa-se entre\s*(?:\\textbf|\\emph)\{(\d+)\\%\s*"
                   r"e\s*(\d+)\\%\}", tex)
     if not m:
         problemas.append("não encontrei a frase do intervalo global no main.tex "
@@ -1648,7 +1648,7 @@ def verificar_megatreino_artigo(tolerancia):
               (("M1 objetivo média"), med_o, False),
               (("M1 objetivo desvio"), dp_o, False))),
             ("M1 contagens",
-             r"\\textbf\{\$(\d+)/(\d+)\$ execuções\s*a \$100\\%\$ de sucesso "
+             r"(?:\\textbf|\\emph)\{\$(\d+)/(\d+)\$ execuções\s*a \$100\\%\$ de sucesso "
              r"contra \$(\d+)/(\d+)\$\}",
              ((("M1 adaptativo convergentes"), conv_a, True),
               (("M1 adaptativo n"), n_a, True),
@@ -2536,7 +2536,7 @@ FACTOS_REPETIDOS = [
      ]},
     {"rot": "Mega-treino — adaptativo vs objetivo puro no Muro em U",
      "sitios": [
-         {"re": r"\\textbf\{\$?(\d+)/28\$? execu[çc][õo]es a 100\\% de sucesso "
+         {"re": r"(?:\\textbf|\\emph)\{\$?(\d+)/28\$? execu[çc][õo]es a 100\\% de sucesso "
                 r"contra \$?(\d+)/28\$?\}"},
          {"re": r"resolve o Muro em U em \$(\d+)/28\$ execu[çc][õo]es contra "
                 r"\$(\d+)/28\$"},
@@ -2632,7 +2632,7 @@ FACTOS_REPETIDOS = [
          # Só a JANELA (92--106) é o mesmo facto nos dois sítios: o Cap. 5
          # acrescenta as 21 combinações e o Cap. 6 a fração de falha, e juntar
          # tudo acusaria uma contradição onde há duas frases complementares.
-         {"re": r"retenção de recolhas situa-se entre \\textbf\{(\d+)\\% e "
+         {"re": r"retenção de recolhas situa-se entre (?:\\textbf|\\emph)\{(\d+)\\% e "
                 r"(\d+)\\%\}"},
          {"re": r"falhas de 10\\% dos agentes.{0,90}?retenção de "
                 r"(\d+)--(\d+)\\%"},
@@ -2762,7 +2762,7 @@ FACTOS_REPETIDOS = [
      ]},
     {"rot": "Planalto — células ainda a subir no fim do orçamento",
      "sitios": [
-         {"re": r"\\textbf\{(\d+) das (\d+) combina[çc][õo]es ainda subiam de "
+         {"re": r"(?:\\textbf|\\emph)\{(\d+) das (\d+) combina[çc][õo]es ainda subiam de "
                 r"forma significativa no fim\}.{0,140}?Gargalo \(\$\+(\d+)"
                 r"\\%\$\) e na Porta com Alternativa \(\$\+(\d+)\\%\$\)"},
          {"re": r"em \$(\d+)\$ das \$(\d+)\$ combina[çc][õo]es a curva ainda "
@@ -3018,7 +3018,7 @@ def verificar_ptask_prosa(tolerancia):
                 media("cooperative_door_bypass", "GNN"), tol=0.05)
 
     # o SAC: onde mantém 100% e onde é frágil
-    m = re.search(r"O \\textbf\{SAC\} mantém 100\\% nos cenários cooperativos e "
+    m = re.search(r"O (?:\\textbf|\\emph)\{SAC\} mantém 100\\% nos cenários cooperativos e "
                   r"no Quatro Salas", tex)
     if m is None:
         problemas.append("SAC a 100%: não encontrei a frase")
@@ -3081,10 +3081,10 @@ def verificar_computacional():
 
     m = re.search(
         r"\$N=(?P<n>\d+)\$ agentes, (?P<bench>[\d\\,]+) passos com ações "
-        r"aleatórias.{0,200}?\\textbf\{(?P<antes>[\d\\,]+) passos de simulação "
+        r"aleatórias.{0,200}?(?:\\textbf|\\emph)\{(?P<antes>[\d\\,]+) passos de simulação "
         r"por segundo\} \(\$\\approx\$(?P<ag_antes>[\d\\,]+) atualizações de "
         r"agente por segundo; \$\\approx\$(?P<s_antes>[\d,]+)\\,s por episódio "
-        r"de (?P<passos_ep>\d+) passos\).{0,120}?\\textbf\{(?P<depois>[\d\\,]+) "
+        r"de (?P<passos_ep>\d+) passos\).{0,120}?(?:\\textbf|\\emph)\{(?P<depois>[\d\\,]+) "
         r"passos/s\} \(\$\\approx\$(?P<ag_depois>[\d\\,]+) agente-passos/s; "
         r"\$\\approx\$(?P<s_depois>[\d,]+)\\,s por episódio\) --- um ganho de "
         r"\$\\approx (?P<ganho>[\d{},]+)\\times\$", tex, re.DOTALL)
@@ -3167,7 +3167,7 @@ def verificar_questoes_investigacao():
     # diferentes de propósito — «\textbf{QI1.}» e «QI1 --- …» —, e é por isso
     # que se distinguem sem depender da posição no ficheiro.
     listas = (("perguntas (Secção das Questões de Investigação)",
-               r"\\item\[\\textbf\{QI(\d)\.\}\]"),
+               r"\\item\[(?:\\textbf|\\emph)\{QI(\d)\.\}\]"),
               ("respostas (Secção da Resposta às Questões)",
                r"\\item\[QI(\d) ---"))
     conjuntos = {}
@@ -3348,7 +3348,7 @@ def verificar_fiabilidade_prosa(tolerancia):
         problemas.append("protocolo dos dotplots: não encontrei a frase")
 
     # Gargalo: PPO e GNN fiáveis, SAC de 0 a 88
-    v = procura(r"No \\textbf\{Gargalo\}, PPO e GNN são fiáveis \((\d+)/(\d+) "
+    v = procura(r"No (?:\\textbf|\\emph)\{Gargalo\}, PPO e GNN são fiáveis \((\d+)/(\d+) "
                 r"execuções\), mas as execuções do SAC espalham-se de (\d+) a "
                 r"(\d+) recolhas/ep")
     if v:

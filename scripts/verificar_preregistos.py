@@ -228,7 +228,7 @@ def mapa_grande(tex_sec, tex_main, pre):
 
     # compromisso 2: convergência descritiva, magnitude testada
     desc = presente(tex_sec, r"M2 \(convergência, descritivo\)")
-    decl = presente(tex_sec, r"M2 permanece descritiva|mantém-se\s+\\textbf\{descritiva\}")
+    decl = presente(tex_sec, r"M2 permanece descritiva|mantém-se\s+(?:\\textbf|\\emph)\{descritiva\}")
     regista(B, "MG-rep-2", "convergência = descritivo; magnitude = teste "
             "(M2 não vira teste por o n ter subido)", onde_sec,
             "OK" if (desc and decl) else "FALHA",
@@ -315,9 +315,9 @@ def mapa_grande(tex_sec, tex_main, pre):
                    " ".join(sem_ressalva[0].split())[:90]))
 
     # as três métricas pré-registadas estão reportadas
-    for chave, rotulo in (("M1", r"\\textbf\{M1 \(magnitude\)"),
-                          ("M2", r"\\textbf\{M2 \(convergência"),
-                          ("M3", r"\\textbf\{M3 \(porta cooperativa")):
+    for chave, rotulo in (("M1", r"(?:\\textbf|\\emph)\{M1 \(magnitude\)"),
+                          ("M2", r"(?:\\textbf|\\emph)\{M2 \(convergência"),
+                          ("M3", r"(?:\\textbf|\\emph)\{M3 \(porta cooperativa")):
         regista(B, "MG-%s" % chave,
                 "%s reportada (valores conferidos por verificar_mapa_grande.py)" % chave,
                 onde_sec, "OK" if presente(tex_sec, rotulo) else "FALHA",
@@ -401,7 +401,7 @@ def megatreino(tex_main):
 
     # M3: bypass adaptativo vs fixo, declarado como entre campanhas
     m3 = testes["M3"]
-    diz = presente(tex_main, r"\\textbf\{entre campanhas\}")
+    diz = presente(tex_main, r"(?:\\textbf|\\emph)\{entre campanhas\}")
     regista(B, "MT-M3", "M3: bypass adaptativo vs peso fixo, declarado como "
             "comparação entre campanhas", onde, "OK" if diz else "FALHA",
             "n=%d vs n=%d, e o texto declara que são campanhas diferentes"
@@ -440,7 +440,7 @@ def novelty(tex_main):
     onde = "Tese/main.tex (sec:res_novelty)"
 
     for t in ("T1", "T2", "T3", "T4"):
-        pad = r"\\textbf\{\(%s\)" % t
+        pad = r"(?:\\textbf|\\emph)\{\(%s\)" % t
         regista(B, "NA-%s" % t, "%s reportado" % t, onde,
                 "OK" if presente(tex_main, pad) else "FALHA",
                 "presente" if presente(tex_main, pad)

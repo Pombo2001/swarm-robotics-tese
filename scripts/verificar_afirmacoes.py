@@ -132,7 +132,7 @@ def campanha_final():
     cabecalho("Campanha final (7 cenários × 3 algoritmos × 7 execuções)")
     d = pd.read_csv(FINAL_7D)
 
-    v = do_tex(r"\\textbf\{(\d+) das (\d+) combinações algoritmo--cenário atingem "
+    v = do_tex(r"(?:\\textbf|\\emph)\{(\d+) das (\d+) combinações algoritmo--cenário atingem "
                r"100\\% de sucesso em todas as execuções", "células plenas", 2)
     if v:
         cel = d.groupby(["Scenario", "Algorithm"]).success.mean()
@@ -149,7 +149,7 @@ def campanha_final():
             confere("Muro em U, execuções a 100%% (%s)" % algo, v[i], conv[algo], 0)
 
     # «o único cenário que nenhum algoritmo resolve de forma fiável»
-    if re.search(r"\\textbf\{Muro em U\} é o único cenário que nenhum algoritmo "
+    if re.search(r"(?:\\textbf|\\emph)\{Muro em U\} é o único cenário que nenhum algoritmo "
                  r"resolve de forma fiável", corpo()):
         plenos = d.groupby(["Scenario", "Algorithm"]).success.mean()
         por_cen = plenos.groupby("Scenario").apply(lambda s: (s == 1.0).sum())
@@ -256,7 +256,7 @@ def robustez():
     if not ha_dados(os.path.join(EVAL, "*_fail10.csv"), "Robustez"):
         return
     cabecalho("Robustez à perda súbita de 10% dos agentes")
-    v = do_tex(r"retenção de recolhas situa-se entre \\textbf\{(\d+)\\% e (\d+)\\%\} "
+    v = do_tex(r"retenção de recolhas situa-se entre (?:\\textbf|\\emph)\{(\d+)\\% e (\d+)\\%\} "
                r"em todas as (\d+) combinações", "faixa de retenção", 3)
     if not v:
         return
@@ -497,7 +497,7 @@ def aritmetica():
     um número e esquecer os que dependem dele.
     """
     cabecalho("Aritmética declarada (o que a tese deriva de si própria)")
-    v = do_tex(r"cerca de \\textbf\{(\d+) passos de simulação por\s+segundo\} "
+    v = do_tex(r"cerca de (?:\\textbf|\\emph)\{(\d+) passos de simulação por\s+segundo\} "
                r"\(\$\\approx\$(\d[\d\\, ]*) atualizações de agente por segundo; "
                r"\$\\approx\$([\d,]+)\\,s por episódio de (\d+) passos\)",
                "débito antes da vetorização", 4)
@@ -507,7 +507,7 @@ def aritmetica():
         confere("agente-passos/s = passos/s × 20 agentes", agente, passos * 20, 12)
         confere("segundos por episódio = %g passos ÷ débito" % ep, seg, ep / passos, 0.06)
 
-    v = do_tex(r"sustenta \$\\approx\$\\textbf\{(\d+) passos/s\} "
+    v = do_tex(r"sustenta \$\\approx\$(?:\\textbf|\\emph)\{(\d+) passos/s\} "
                r"\(\$\\approx\$(\d[\d\\, ]*) agente-passos/s; "
                r"\$\\approx\$([\d,]+)\\,s por episódio\)[^)]*?ganho de "
                r"\$\\approx ([\d{},]+)\\times\$", "débito depois da vetorização", 4)
@@ -516,7 +516,7 @@ def aritmetica():
                                          num(v[2]), num(v[3]))
         confere("agente-passos/s = passos/s × 20 agentes", agente2, passos2 * 20, 12)
         confere("segundos por episódio = 500 passos ÷ débito", seg2, 500 / passos2, 0.06)
-        antes = do_tex(r"cerca de \\textbf\{(\d+) passos de simulação", "débito antes")
+        antes = do_tex(r"cerca de (?:\\textbf|\\emph)\{(\d+) passos de simulação", "débito antes")
         if antes:
             confere("ganho = débito depois ÷ débito antes", ganho,
                     passos2 / num(antes[0]), 0.06)

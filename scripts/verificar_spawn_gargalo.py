@@ -141,7 +141,7 @@ def main():
     compara("semi-espessura da barreira em y (m)", m["y_barreira"],
             _do_tex(r"barreira ocupa \$y \\in \[-(\d+), \d+\]\$", texto), tol=0.01)
     compara("% de posições dentro da barreira", m["pct"],
-            _do_tex(r"\\textbf\{\$(\d+\{,\}\d+)\\%\$\} das posições iniciais",
+            _do_tex(r"(?:\\textbf|\\emph)\{\$(\d+\{,\}\d+)\\%\$\} das posições iniciais",
                     texto), tol=0.05)
     compara("posições dentro (contagem)", m["dentro"],
             _do_tex(r"\(\$(\d+)\$ de \$1000\$", texto), tol=0.5)

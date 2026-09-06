@@ -1,0 +1,92 @@
+% Comparacao visual: «Tabela» vs. «Quadro» na Tabela 6.2 da tese.
+% Mesma classe, corpo, margens e espacamento do main.tex, para a comparacao ser fiel.
+\documentclass[12pt,reqno,twoside]{amsbook}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[onehalfspacing]{setspace}
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[portuguese]{babel}
+\usepackage{etoolbox}
+\usepackage{float}
+\usepackage{xcolor}
+\numberwithin{table}{chapter}
+\setlength{\parindent}{0.7cm}
+
+\newcommand{\rotulo}[2]{%
+  \par\medskip\noindent
+  \colorbox{#1}{\parbox{\dimexpr\textwidth-2\fboxsep}{\bfseries\sffamily #2}}%
+  \par\medskip}
+
+\begin{document}
+\setcounter{chapter}{6}
+
+\begin{center}
+{\Large\bfseries\sffamily «Tabela» vs. «Quadro»}\\[2pt]
+{\sffamily A Tabela 6.2 da tese (p.\ 63), composta das duas maneiras}
+\end{center}
+
+\rotulo{black!10}{ANTES — como está hoje na tese}
+
+\setcounter{table}{1}
+\renewcommand{\tablename}{Tabela}
+
+A Tabela~6.2 reúne a métrica mais honesta do desempenho real na missão:
+avaliação em modo determinístico (sem ruído de exploração), com 7 execuções
+$\times$ 20 episódios emparelhados por configuração.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Avaliação determinística (7 execuções $\times$ 20 episódios emparelhados): taxa de sucesso ($P_{task}$, sobre os 140 episódios) e recolhas por episódio (média $\pm$ desvio padrão entre execuções). A negrito, a melhor média de recolhas de cada cenário.}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|c|c|c|c|}
+\hline
+\textbf{Cenário} & \multicolumn{2}{c|}{\textbf{GNN}} & \multicolumn{2}{c|}{\textbf{PPO}} & \multicolumn{2}{c|}{\textbf{SAC}} \\ \cline{2-7}
+ & Sucesso & Recolhas & Sucesso & Recolhas & Sucesso & Recolhas \\ \hline
+Sandbox & $85{,}7\%$ & $38{,}3 \pm 31{,}0$ & $100\%$ & $\mathbf{71{,}5 \pm 1{,}0}$ & $100\%$ & $69{,}2 \pm 1{,}9$ \\ \hline
+Muro em U & $42{,}9\%$ & $24{,}5 \pm 32{,}6$ & $70{,}7\%$ & $\mathbf{39{,}6 \pm 36{,}7}$ & $33{,}6\%$ & $9{,}0 \pm 15{,}1$ \\ \hline
+Gargalo & $100\%$ & $121{,}4 \pm 19{,}9$ & $100\%$ & $\mathbf{123{,}2 \pm 1{,}2}$ & $72{,}1\%$ & $41{,}4 \pm 36{,}8$ \\ \hline
+Quatro Salas & $100\%$ & $\mathbf{59{,}8 \pm 13{,}2}$ & $100\%$ & $33{,}6 \pm 3{,}8$ & $100\%$ & $31{,}8 \pm 3{,}3$ \\ \hline
+Porta Cooperativa & $100\%$ & $\mathbf{69{,}8 \pm 0{,}9}$ & $100\%$ & $67{,}1 \pm 3{,}7$ & $100\%$ & $62{,}1 \pm 2{,}5$ \\ \hline
+Perceção Cooperativa & $91{,}4\%$ & $\mathbf{19{,}0 \pm 8{,}7}$ & $100\%$ & $15{,}3 \pm 0{,}4$ & $100\%$ & $16{,}1 \pm 0{,}8$ \\ \hline
+Porta com Alternativa & $100\%$ & $\mathbf{86{,}7 \pm 2{,}0}$ & $100\%$ & $85{,}3 \pm 4{,}0$ & $100\%$ & $68{,}6 \pm 3{,}4$ \\ \hline
+\end{tabular}
+\end{table}
+
+\clearpage
+\rotulo{black!10}{DEPOIS — se se adotar a nomenclatura da norma (§2.2)}
+
+\setcounter{table}{1}
+\renewcommand{\tablename}{Quadro}
+
+O Quadro~6.2 reúne a métrica mais honesta do desempenho real na missão:
+avaliação em modo determinístico (sem ruído de exploração), com 7 execuções
+$\times$ 20 episódios emparelhados por configuração.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Avaliação determinística (7 execuções $\times$ 20 episódios emparelhados): taxa de sucesso ($P_{task}$, sobre os 140 episódios) e recolhas por episódio (média $\pm$ desvio padrão entre execuções). A negrito, a melhor média de recolhas de cada cenário.}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|c|c|c|c|}
+\hline
+\textbf{Cenário} & \multicolumn{2}{c|}{\textbf{GNN}} & \multicolumn{2}{c|}{\textbf{PPO}} & \multicolumn{2}{c|}{\textbf{SAC}} \\ \cline{2-7}
+ & Sucesso & Recolhas & Sucesso & Recolhas & Sucesso & Recolhas \\ \hline
+Sandbox & $85{,}7\%$ & $38{,}3 \pm 31{,}0$ & $100\%$ & $\mathbf{71{,}5 \pm 1{,}0}$ & $100\%$ & $69{,}2 \pm 1{,}9$ \\ \hline
+Muro em U & $42{,}9\%$ & $24{,}5 \pm 32{,}6$ & $70{,}7\%$ & $\mathbf{39{,}6 \pm 36{,}7}$ & $33{,}6\%$ & $9{,}0 \pm 15{,}1$ \\ \hline
+Gargalo & $100\%$ & $121{,}4 \pm 19{,}9$ & $100\%$ & $\mathbf{123{,}2 \pm 1{,}2}$ & $72{,}1\%$ & $41{,}4 \pm 36{,}8$ \\ \hline
+Quatro Salas & $100\%$ & $\mathbf{59{,}8 \pm 13{,}2}$ & $100\%$ & $33{,}6 \pm 3{,}8$ & $100\%$ & $31{,}8 \pm 3{,}3$ \\ \hline
+Porta Cooperativa & $100\%$ & $\mathbf{69{,}8 \pm 0{,}9}$ & $100\%$ & $67{,}1 \pm 3{,}7$ & $100\%$ & $62{,}1 \pm 2{,}5$ \\ \hline
+Perceção Cooperativa & $91{,}4\%$ & $\mathbf{19{,}0 \pm 8{,}7}$ & $100\%$ & $15{,}3 \pm 0{,}4$ & $100\%$ & $16{,}1 \pm 0{,}8$ \\ \hline
+Porta com Alternativa & $100\%$ & $\mathbf{86{,}7 \pm 2{,}0}$ & $100\%$ & $85{,}3 \pm 4{,}0$ & $100\%$ & $68{,}6 \pm 3{,}4$ \\ \hline
+\end{tabular}
+\end{table}
+
+\vfill
+\noindent\rule{\textwidth}{0.4pt}\\[2pt]
+{\footnotesize\sffamily Repara no artigo: «\textbf{A} Tabela 6.2 reúne» passa a
+«\textbf{O} Quadro 6.2 reúne». O género muda, por isso as 20 referências
+cruzadas do texto não se resolvem com um find-and-replace — cada uma tem de ser
+lida. O texto da legenda e os números não mudam nada.}
+
+\end{document}

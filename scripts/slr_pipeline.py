@@ -441,7 +441,7 @@ def prisma():
     \\end{{tikzpicture}}
     \\caption[Fluxograma PRISMA 2020 da revisão conduzida]{{Fluxograma PRISMA 2020 da
     revisão conduzida. Os números são gerados automaticamente a partir do registo de
-    triagem (\\texttt{{docs/slr/screening.csv}} no repositório, Apêndice~\\ref{{apx:resources}}),
+    triagem (\\texttt{{docs/slr/screening.csv}} no repositório, Anexo~\\ref{{apx:resources}}),
     onde cada decisão está associada ao respetivo critério de exclusão.}}
     \\label{{fig:prisma}}
 \\end{{figure}}

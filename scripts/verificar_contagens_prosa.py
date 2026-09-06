@@ -40,7 +40,14 @@ falhas = []
 
 def _corpo():
     t = open(TEX, encoding="utf-8").read()
-    i0, i1 = t.find(r"\begin{document}"), t.find(r"\appendix")
+    # O fim do corpo é o `\appendix` NO INÍCIO DE UMA LINHA, e não a primeira
+    # ocorrência da substring: o preâmbulo tem um `\renewcommand{\appendixname}`
+    # (as normas do Iscte, §2.4, chamam-lhes «Anexos»), e um `find` cru achava-o
+    # primeiro — o corpo saía vazio e todas as réguas diziam "frase não
+    # encontrada", sem nenhuma frase ter mudado.
+    i0 = t.find(r"\begin{document}")
+    m_apx = re.search(r"^\\appendix\b", t, flags=re.M)
+    i1 = m_apx.start() if m_apx else -1
     return re.sub(r"(?<!\\)%.*", "", t[i0:i1 if i1 > 0 else len(t)])
 
 
@@ -72,7 +79,7 @@ def main():
     print("=" * 78)
 
     # «15 das 21 combinações a 100% em todos os runs e episódios»
-    m = re.search(r"\\textbf\{(\d+) das (\d+) combinações algoritmo--cenário "
+    m = re.search(r"(?:\\textbf|\\emph)\{(\d+) das (\d+) combinações algoritmo--cenário "
                   r"atingem 100\\% de sucesso", corpo)
     if not m:
         falhas.append("não encontrei a frase das «N das M combinações» na tese")
