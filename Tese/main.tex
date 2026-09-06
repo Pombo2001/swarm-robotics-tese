@@ -282,6 +282,36 @@
 \AtBeginBibliography{\singlespacing}
 \setlength{\bibitemsep}{0pt}
 
+% --- Legendas dos quadros: justificadas como o texto (normas do Iscte, §2.2) ---
+% "A legenda dos quadros aparece no topo, justificada como o texto, e a das
+% figuras em baixo e centrada." A amsbook recua TODAS as legendas em
+% \captionindent (3pc = 1,26 cm) de cada lado. Nas figuras isso é o que se quer
+% — recuo igual dos dois lados lê-se como centrada —, mas nos quadros afasta a
+% legenda da margem do texto. Zerar só dentro de `table`/`longtable` deixa as
+% figuras como estão.
+% Falta ainda o caso da legenda que cabe numa linha só: a amsbook centra-a
+% (`\hbox to\columnwidth{\hss ... \hss}`), o que num quadro contraria o
+% "justificada como o texto". Guardam-se duas versões da \@makecaption — a
+% original, que continua a servir as figuras, e uma sem o \hss da esquerda —, e
+% troca-se de versão à entrada de cada quadro. Se a classe mudar e o \patchcmd
+% falhar, o aviso sai no log da compilação e as legendas ficam como estavam.
+\makeatletter
+\let\iscteCaptionFigura\@makecaption
+\patchcmd{\@makecaption}
+  {\hss\kern-2\captionindent\box\@ne\hss}
+  {\kern-2\captionindent\box\@ne\hss}
+  {\typeout{[normas] legenda de quadro alinhada a esquerda: OK}}
+  {\typeout{[normas] AVISO: \string\patchcmd\space a \string\@makecaption\space
+            falhou; as legendas de uma linha ficam centradas}}
+\let\iscteCaptionQuadro\@makecaption
+\let\@makecaption\iscteCaptionFigura
+\newcommand{\iscteLegendaDeQuadro}{%
+  \setlength{\captionindent}{0pt}%
+  \let\@makecaption\iscteCaptionQuadro}
+\makeatother
+\AtBeginEnvironment{table}{\iscteLegendaDeQuadro}
+\AtBeginEnvironment{longtable}{\iscteLegendaDeQuadro}
+
 % Última rede contra overfulls em parágrafos justificados (texto e bibliografia):
 % permite um alongamento de emergência dos espaços antes de transbordar a margem.
 \setlength{\emergencystretch}{1.5em}
