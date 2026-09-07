@@ -173,7 +173,7 @@ PPO e SAC 0/21. 19/21 execuções ainda a subir no último quinto (780 min).
 | Simulador, cenários, recompensa | Cap. 4 (p. 29–42) |
 | RS2C / PPO / SAC / neuroevolução / novidade | Cap. 5 (p. 43–48) |
 | Protocolo e notas de leitura | §6.1 (p. 49–50) |
-| Quadro de avaliação e significância | §6.2 e §6.12 (tab. res_eval, res_signif) |
+| Quadro de avaliação e significância | §6.2 (p. 51) e §6.15 (p. 81) |
 | Novidade e mega-treino | §6.10 (p. 61–65) |
 | Mapa composto | §6.11 |
 | Escala / robustez / custo | §6.12–6.14 |

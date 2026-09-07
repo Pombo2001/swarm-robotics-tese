@@ -1382,6 +1382,27 @@ A métrica central de comparação é o desempenho de \emph{tarefa} em avaliaç�
 
 O Quadro~\ref{tab:res_eval} e as Figuras~\ref{fig:res_ptask_sucesso}--\ref{fig:res_ptask_recolhas} mostram um panorama maioritariamente resolvido, mas com fragilidades concentradas --- e diferentes --- por algoritmo: \emph{15 das 21 combinações algoritmo--cenário atingem 100\% de sucesso em todas as execuções e episódios}; as seis restantes correspondem a células em que uma ou mais execuções de treino falham por completo, pelo que a taxa média reportada esconde uma distribuição tudo-ou-nada entre execuções (analisada na Secção~\ref{sec:res_boxplots}). A Porta Cooperativa e o cenário \textit{deceptive} com passagem alternativa estão resolvidos pelos três algoritmos. O \emph{PPO} é o mais consistente: 100\% de sucesso em seis dos sete cenários, com a menor variância entre execuções (desvios padrão de 0,4 a 4,0 recolhas/ep fora do Muro em U). O \emph{controlador evolutivo (GNN)} resolve os quatro cenários de gargalo --- Gargalo, Quatro Salas e as duas Portas Cooperativas --- em \emph{todas} as execuções, igualando o PPO no Gargalo (121,4 recolhas/ep em média, empate estatístico) e destacando-se no Quatro Salas (59,8, cerca de $1{,}8\times$ o melhor método de gradiente) e na Porta Cooperativa com Alternativa (86,7), mas exibe execuções degeneradas precisamente nos cenários \emph{sem} paredes (Sandbox: 5/7 execuções funcionais; Perceção Cooperativa: 6/7). O \emph{SAC} mantém 100\% nos cenários cooperativos e no Quatro Salas, mas é o mais frágil nos gargalos físicos: no Gargalo apenas 5/7 execuções convergem (com magnitude muito dispersa, $41{,}4 \pm 36{,}8$) e no Muro em U apenas 2/7.
 
+\begin{table}[!htbp]
+\centering
+\footnotesize
+\caption[Avaliação determinística nos sete cenários]{Avaliação determinística (7 execuções $\times$ 20 episódios emparelhados): taxa de sucesso ($P_{task}$, sobre os 140 episódios) e recolhas por episódio (média $\pm$ desvio padrão entre execuções). A negrito, a melhor média de recolhas de cada cenário.}
+\label{tab:res_eval}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|l|c|c|c|c|c|c|}
+\hline
+\textbf{Cenário} & \multicolumn{2}{c|}{\textbf{GNN}} & \multicolumn{2}{c|}{\textbf{PPO}} & \multicolumn{2}{c|}{\textbf{SAC}} \\ \cline{2-7}
+ & Sucesso & Recolhas & Sucesso & Recolhas & Sucesso & Recolhas \\ \hline
+Sandbox & $85{,}7\%$ & $38{,}3 \pm 31{,}0$ & $100\%$ & $\mathbf{71{,}5 \pm 1{,}0}$ & $100\%$ & $69{,}2 \pm 1{,}9$ \\ \hline
+Muro em U & $42{,}9\%$ & $24{,}5 \pm 32{,}6$ & $70{,}7\%$ & $\mathbf{39{,}6 \pm 36{,}7}$ & $33{,}6\%$ & $9{,}0 \pm 15{,}1$ \\ \hline
+Gargalo & $100\%$ & $121{,}4 \pm 19{,}9$ & $100\%$ & $\mathbf{123{,}2 \pm 1{,}2}$ & $72{,}1\%$ & $41{,}4 \pm 36{,}8$ \\ \hline
+Quatro Salas & $100\%$ & $\mathbf{59{,}8 \pm 13{,}2}$ & $100\%$ & $33{,}6 \pm 3{,}8$ & $100\%$ & $31{,}8 \pm 3{,}3$ \\ \hline
+Porta Cooperativa & $100\%$ & $\mathbf{69{,}8 \pm 0{,}9}$ & $100\%$ & $67{,}1 \pm 3{,}7$ & $100\%$ & $62{,}1 \pm 2{,}5$ \\ \hline
+Perceção Cooperativa & $91{,}4\%$ & $\mathbf{19{,}0 \pm 8{,}7}$ & $100\%$ & $15{,}3 \pm 0{,}4$ & $100\%$ & $16{,}1 \pm 0{,}8$ \\ \hline
+Porta com Alternativa & $100\%$ & $\mathbf{86{,}7 \pm 2{,}0}$ & $100\%$ & $85{,}3 \pm 4{,}0$ & $100\%$ & $68{,}6 \pm 3{,}4$ \\ \hline
+\end{tabular}
+\end{table}
+
+
 O \emph{Muro em U} é o único cenário que nenhum algoritmo resolve de forma fiável: o desempenho é \emph{bimodal} nos três paradigmas --- cada execução ou aprende o desvio ao beco e atinge 100\% de sucesso, ou não o aprende de todo (GNN 3/7 execuções, PPO 4/7, SAC 2/7) --- e nenhuma diferença entre algoritmos é estatisticamente significativa (Secção~\ref{sec:res_discussao}). A fronteira de dificuldade da campanha final já não separa, portanto, os cenários de gargalo dos de espaço aberto (essa fronteira foi eliminada pela \textit{fitness} de \textit{homing} e pela recompensa simplificada, como analisado adiante): o que resta é a \emph{armadilha do desvio comprido} do Muro em U, transversal aos dois paradigmas.
 
 \begin{figure}[!htbp]
@@ -1569,27 +1590,9 @@ Consolidando o desempenho ao longo dos sete cenários (Figuras~\ref{fig:res_glob
 
 \section{Avaliação Determinística (Tarefa Pura)}
 \label{sec:res_eval}
-O Quadro~\ref{tab:res_eval} reúne a métrica mais honesta do desempenho real na missão: avaliação em modo determinístico (sem ruído de exploração), com 7 execuções $\times$ 20 episódios emparelhados por configuração. Os valores fundamentam a discussão das secções anteriores --- a competitividade do controlador evolutivo nos cenários de navegação, a consistência do PPO e a fragilidade localizada do SAC nos gargalos.
+A métrica mais honesta do desempenho real na missão é a avaliação em modo determinístico --- sem ruído de exploração, com 7 execuções $\times$ 20 episódios emparelhados por configuração ---, e está no Quadro~\ref{tab:res_eval}, apresentado na Secção~\ref{sec:res_ptask} porque é dele que parte a leitura por cenário. Recolhido aqui o que as secções intermédias acrescentaram, os seus valores sustentam três leituras: a competitividade do controlador evolutivo nos cenários de navegação, a consistência do PPO e a fragilidade localizada do SAC nos gargalos.
 
-\begin{table}[!htbp]
-\centering
-\footnotesize
-\caption[Avaliação determinística nos sete cenários]{Avaliação determinística (7 execuções $\times$ 20 episódios emparelhados): taxa de sucesso ($P_{task}$, sobre os 140 episódios) e recolhas por episódio (média $\pm$ desvio padrão entre execuções). A negrito, a melhor média de recolhas de cada cenário.}
-\label{tab:res_eval}
-\renewcommand{\arraystretch}{1.3}
-\begin{tabular}{|l|c|c|c|c|c|c|}
-\hline
-\textbf{Cenário} & \multicolumn{2}{c|}{\textbf{GNN}} & \multicolumn{2}{c|}{\textbf{PPO}} & \multicolumn{2}{c|}{\textbf{SAC}} \\ \cline{2-7}
- & Sucesso & Recolhas & Sucesso & Recolhas & Sucesso & Recolhas \\ \hline
-Sandbox & $85{,}7\%$ & $38{,}3 \pm 31{,}0$ & $100\%$ & $\mathbf{71{,}5 \pm 1{,}0}$ & $100\%$ & $69{,}2 \pm 1{,}9$ \\ \hline
-Muro em U & $42{,}9\%$ & $24{,}5 \pm 32{,}6$ & $70{,}7\%$ & $\mathbf{39{,}6 \pm 36{,}7}$ & $33{,}6\%$ & $9{,}0 \pm 15{,}1$ \\ \hline
-Gargalo & $100\%$ & $121{,}4 \pm 19{,}9$ & $100\%$ & $\mathbf{123{,}2 \pm 1{,}2}$ & $72{,}1\%$ & $41{,}4 \pm 36{,}8$ \\ \hline
-Quatro Salas & $100\%$ & $\mathbf{59{,}8 \pm 13{,}2}$ & $100\%$ & $33{,}6 \pm 3{,}8$ & $100\%$ & $31{,}8 \pm 3{,}3$ \\ \hline
-Porta Cooperativa & $100\%$ & $\mathbf{69{,}8 \pm 0{,}9}$ & $100\%$ & $67{,}1 \pm 3{,}7$ & $100\%$ & $62{,}1 \pm 2{,}5$ \\ \hline
-Perceção Cooperativa & $91{,}4\%$ & $\mathbf{19{,}0 \pm 8{,}7}$ & $100\%$ & $15{,}3 \pm 0{,}4$ & $100\%$ & $16{,}1 \pm 0{,}8$ \\ \hline
-Porta com Alternativa & $100\%$ & $\mathbf{86{,}7 \pm 2{,}0}$ & $100\%$ & $85{,}3 \pm 4{,}0$ & $100\%$ & $68{,}6 \pm 3{,}4$ \\ \hline
-\end{tabular}
-\end{table}
+
 
 \section{Análise de Cenários Complexos e Comportamento Emergente}
 \label{sec:res_complexos}
