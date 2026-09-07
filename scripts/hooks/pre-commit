@@ -32,24 +32,36 @@ ALVOS_MAPA='^(Tese/seccao_mapa_grande\.tex|results/mapa_grande/|Artigo/artigo\.t
 # entrar JA AQUI: com o corte de saida so a olhar para a tese e para o mapa, um
 # commit que so mexesse no dashboard saia antes de chegar as suas verificacoes —
 # que foi o que aconteceu ao commit que as instalou.
-ALVOS_DASH='^(dashboard/|configs/vitrine\.yaml)'
+ALVOS_DASH='^(dashboard/|configs/(vitrine|apresentacao)\.yaml)'
 
 # 20 ago: o INDICE DOS SCRIPTS. A regua existia e nunca travou nada — imprimia
 # os scripts em falta e saia com 0 —, e foi assim que dois verificadores novos
 # ficaram de fora do indice sem ninguem dar por isso.
 ALVOS_SCRIPTS='^scripts/'
 
+# 7 set: os MATERIAIS DA DEFESA. O Resumo da dissertacao esta copiado na cabula
+# e nas notas do orador da capa dos slides, e nada o prendia a fonte: nesse dia
+# encontraram-se as duas copias a citar paginas de um PDF de tres dias antes e
+# um Resumo que entretanto encolhera de 408 para 245 palavras. Decorar uma frase
+# que a tese ja nao diz e o pior modo de falha que estes ficheiros tem.
+# Entra pelos DOIS lados: mexer na tese envelhece as copias, mexer nas copias
+# pode afasta-las da tese.
+ALVOS_DEFESA='^Defesa/'
+
 MEXEU_TESE=0
 MEXEU_MAPA=0
 MEXEU_DASH=0
 MEXEU_SCRIPTS=0
+MEXEU_DEFESA=0
 git diff --cached --name-only | grep -qE "$ALVOS"      && MEXEU_TESE=1
 git diff --cached --name-only | grep -qE "$ALVOS_MAPA" && MEXEU_MAPA=1
 git diff --cached --name-only | grep -qE "$ALVOS_DASH" && MEXEU_DASH=1
 git diff --cached --name-only | grep -qE "$ALVOS_SCRIPTS" && MEXEU_SCRIPTS=1
+git diff --cached --name-only | grep -qE "$ALVOS_DEFESA" && MEXEU_DEFESA=1
 
 if [ "$MEXEU_TESE" -eq 0 ] && [ "$MEXEU_MAPA" -eq 0 ] &&
-   [ "$MEXEU_DASH" -eq 0 ] && [ "$MEXEU_SCRIPTS" -eq 0 ]; then
+   [ "$MEXEU_DASH" -eq 0 ] && [ "$MEXEU_SCRIPTS" -eq 0 ] &&
+   [ "$MEXEU_DEFESA" -eq 0 ]; then
     exit 0
 fi
 
@@ -81,6 +93,9 @@ if [ "$MEXEU_TESE" -eq 1 ]; then
     # ler 24 ficheiros onde a tese fala de 21 celulas (tres controladores x
     # SETE cenarios). E barato (<1 s) e le a geometria do simulador.
     "$PY" "$RAIZ/scripts/verificar_vertical.py" || OK=0
+    # 3 set: a limitacao das TRAVESSIAS DE PAREDES (22 valores) contra o CSV do
+    # detetar_travessias.py. Le o CSV, nao reproduz episodios (<1 s).
+    "$PY" "$RAIZ/scripts/verificar_travessias.py" || OK=0
     # 18 ago: as REMISSOES (245). O LaTeX nao acusa uma remissao com o TIPO trocado - a
     # referencia resolve e manda o leitor ao sitio errado -, nem uma tabela que
     # nenhuma frase chama. Custa milissegundos: le dois .tex.
@@ -124,6 +139,14 @@ fi
 if [ "$MEXEU_MAPA" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_mapa_grande.py" || OK=0
 fi
+# 7 set: o RESUMO COPIADO. A cabula e as notas da capa dos slides trazem o
+# Resumo da dissertacao palavra por palavra; este confere que continuam a
+# traze-lo, e que o Resumo e o Abstract cabem nas 250 palavras da norma do
+# Iscte. Le tres ficheiros, custa milissegundos. As copias refazem-se com o
+# Defesa/gerar_cabula.py e o Defesa/gerar_slides.py.
+if [ "$MEXEU_TESE" -eq 1 ] || [ "$MEXEU_DEFESA" -eq 1 ]; then
+    "$PY" "$RAIZ/scripts/verificar_resumo_copiado.py" || OK=0
+fi
 # As figuras do artigo sao copias das da tese e ja ficaram para tras duas vezes
 # (oito numa revisao, tres noutra). Compara-as: as copias tem de ser identicas e
 # as versoes proprias da coluna nao podem ser mais velhas do que a fonte.
@@ -150,6 +173,7 @@ fi
 if [ "$MEXEU_DASH" -eq 1 ]; then
     "$PY" "$RAIZ/scripts/verificar_dashboard.py" || OK=0
     "$PY" "$RAIZ/scripts/verificar_vitrine.py" || OK=0
+    "$PY" "$RAIZ/scripts/verificar_apresentacao.py" || OK=0
     "$PY" "$RAIZ/scripts/verificar_comandos_dashboard.py" || OK=0
     "$PY" "$RAIZ/scripts/verificar_ptpt.py" || OK=0
 fi

@@ -49,6 +49,7 @@ mudam, e recusam o commit se um número deixar de bater
 | `verificar_dashboard.py` **⟨hook⟩** | os números do dashboard são os da tese, e o vocabulário do ecrã é o da dissertação |
 | `verificar_vitrine.py` **⟨hook⟩** | as legendas escritas à mão da Vitrine batem com os CSV que a figura ao lado mostra |
 | `verificar_travessias.py` **⟨hook⟩** | os números da limitação «duas costuras na física das paredes» contra o CSV do detetor |
+| `verificar_resumo_copiado.py` **⟨hook⟩** | o Resumo copiado para a cábula e para as notas da capa dos slides é, palavra por palavra, o do `main.tex` — e ele e o Abstract cabem nas 250 palavras da norma do Iscte |
 | `detetar_travessias.py` | reproduz os modelos arquivados (campeões e execuções) e conta agentes com o centro dentro de paredes — a costura entre o topo das paredes e o teto da esfera; resumo por célula em `results/estatisticas/travessias_resumo.md` |
 | `figuras_apresentacao.py` | o dot plot e as curvas de cada cenário para a vista Apresentação, num formato único (as das pastas das campanhas diferem entre si) |
 | `verificar_apresentacao.py` **⟨hook⟩** | as frases da Apresentação batem com o CSV do treino vencedor de cada cenário, e o episódio 3D é desse treino |
