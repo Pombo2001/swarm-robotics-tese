@@ -179,7 +179,7 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
     largura_nota = max(28, int(118 * (largura / 9.0) / esc))
     linhas_nota = textwrap.wrap(nota, largura_nota)
     fig.text(0.5, 0.015, "\n".join(linhas_nota), ha="center", va="bottom",
-             fontsize=8.5 * esc, color="#555555", style="italic")
+             fontsize=11 * esc, color="#555555", style="italic")
     # A margem de baixo acompanha o número de linhas da nota: numa figura
     # estreita ela quebra em quatro e, com a margem fixa, escrevia por cima do
     # rótulo do eixo.
@@ -262,14 +262,20 @@ def main():
             ax.grid(True, linestyle='--', alpha=0.5)
         fig.suptitle(f"Curvas de Aprendizagem — {SCENARIO_LABELS.get(scen, scen)}",
                      fontsize=14, fontweight='bold')
-        grelhas = "/".join(str(pontos_grelha[a]) for a in algos_here)
-        fig.text(0.5, 0.005,
-                 "Linha = média entre as 7 execuções; banda = ±1 desvio padrão entre execuções. Cada execução é interpolada "
-                 f"numa grelha comum de progresso ({grelhas} pontos, {'/'.join(algos_here)}), porque as execuções "
-                 "não logam nos mesmos passos. Painéis separados porque as métricas não são comparáveis "
-                 "(GNN = fitness evolutiva; PPO/SAC = recompensa episódica); o eixo X (0–100% do orçamento "
-                 "de treino) é que é comparável.",
-                 ha='center', va='bottom', fontsize=7.5, color='#555555', style='italic', wrap=True)
+        # A grelha de interpolação deixou de caber na nota da figura (era
+        # ilegível); fica no ecrã, que é onde se procura a proveniência.
+        print("    grelha comum de progresso (%s): %s pontos"
+              % ('/'.join(algos_here),
+                 "/".join(str(pontos_grelha[a]) for a in algos_here)))
+        # Uma linha, e legível. As cinco linhas anteriores a 7,5 pt chegavam ao
+        # papel a ~5 pt (a figura entra a 0,98 da largura do texto, uma redução
+        # para 0,67) e ninguém as lia — e o que diziam de essencial já está no
+        # parágrafo de abertura da secção e na legenda da primeira figura da
+        # série, que é onde se lê uma vez em vez de sete.
+        fig.text(0.5, 0.012,
+                 "Linha = média entre as 7 execuções; banda = ±1 desvio padrão. "
+                 "Eixos verticais não comparáveis entre paradigmas.",
+                 ha='center', va='bottom', fontsize=11, color='#555555', style='italic')
         plt.tight_layout(rect=[0, 0.11, 1, 0.94])
         fig.savefig(os.path.join(OUT, f'comparacao_mapa_{scen}.png'), dpi=300)
         plt.close(fig)
@@ -306,8 +312,12 @@ def main():
         ax.tick_params(labelsize=10.5)
         ax.set_xlim(0, 100)
         ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f'{v:.0f}%'))
+        # Legenda FORA dos eixos. Com sete cenários, a caixa no canto superior
+        # esquerdo tapava as curvas entre 0 e 35% do treino — o troço que o
+        # texto analisa (quem sobe primeiro, quem arranca do zero).
         ax.legend(title='Cenário', fontsize=9.5, title_fontsize=10,
-                  loc='upper left', framealpha=0.9)
+                  loc='upper left', bbox_to_anchor=(1.01, 1.0),
+                  borderaxespad=0, framealpha=1.0)
         ax.grid(True, linestyle='--', alpha=0.5)
         fig.text(0.5, 0.005,
                  f"Linha = média entre as 7 execuções, cada uma interpolada numa grelha comum "

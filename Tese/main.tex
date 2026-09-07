@@ -1430,7 +1430,7 @@ O cenário Sandbox --- arena aberta, sem paredes interiores --- isola a capacida
 \begin{figure}[!htbp]
     \centering
     \figresultado{0.98}{images/resultados/comparacao_mapa_none.png}{Curva de aprendizagem no Sandbox (3 algoritmos)}
-    \caption[Curvas de aprendizagem no cenário Sandbox]{Curvas de aprendizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do orçamento de treino); linha = média de 7 execuções, banda = $\pm 1$ desvio padrão.}
+    \caption[Curvas de aprendizagem no cenário Sandbox]{Curvas de aprendizagem dos três algoritmos no cenário Sandbox. O eixo das abcissas está normalizado (0--100\% do orçamento de treino); linha = média de 7 execuções, banda = $\pm 1$ desvio padrão. Cada execução é interpolada numa grelha comum de progresso, porque as execuções não registam nos mesmos passos; os painéis são separados porque as métricas não são comparáveis entre paradigmas (\textit{fitness} evolutiva no GNN, recompensa episódica no PPO e no SAC) --- só o eixo das abcissas o é. Vale igualmente para as curvas dos restantes cenários.}
     \label{fig:res_sandbox_curva}
 \end{figure}
 
@@ -1513,7 +1513,7 @@ A leitura por cenário quantifica o que as secções anteriores anteciparam. Nos
     \figresultado{0.49}{images/resultados/dotplot_eval_none.png}{Fiabilidade entre execuções --- Sandbox}
     \hfill
     \figresultado{0.49}{images/resultados/dotplot_eval_u_wall.png}{Fiabilidade entre execuções --- Muro em U}
-    \caption{Recolhas/ep por execução (7 execuções, 20 ep cada): Sandbox (esq.) e Muro em U (dir.).}
+    \caption{Recolhas/ep por execução (7 execuções, 20 ep cada): Sandbox (esq.) e Muro em U (dir.). Cada ponto é uma execução independente e a barra vertical é a média reportada na tese; note-se que os dois painéis têm escalas horizontais diferentes.}
     \label{fig:res_box_1}
 \end{figure}
 
