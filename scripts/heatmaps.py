@@ -95,7 +95,16 @@ def _policy_actions(env, algo, model, obs_dict):
     return actions
 
 
-def run_occupancy(algo, scenario, episodes, bins, config_path, out_dir=None, models_root=None):
+def run_occupancy(algo, scenario, episodes, bins, config_path, out_dir=None,
+                  models_root=None, escala=1.0):
+    """Mapa de calor de ocupação de um modelo treinado.
+
+    `escala` multiplica os tamanhos de letra. Existe porque estes painéis vão
+    para a tese em trio, a 0,32 da largura do texto: uma redução para ~1/4, que
+    levava o título, os eixos e a barra de cor de 10 pt para ~2,5 pt — ilegíveis
+    no papel. Com `escala=2.8` chegam ao PDF acima dos 6 pt. O valor por omissão
+    (1,0) mantém o aspeto de sempre para quem os vê em tamanho real, no painel.
+    """
     try:
         model = _load_model(algo, scenario, config_path, models_root=models_root)
     except FileNotFoundError:
@@ -128,16 +137,30 @@ def run_occupancy(algo, scenario, episodes, bins, config_path, out_dir=None, mod
     H, _, _ = np.histogram2d(xs, ys, bins=bins, range=[[-R, R], [-R, R]])
     H = np.log1p(H)  # comprime a dinâmica (zonas muito visitadas não saturam tudo)
 
+    e = float(escala)
     fig, ax = plt.subplots(figsize=(8, 7))
     im = ax.imshow(H.T, origin="lower", extent=[-R, R, -R, R],
                    cmap="inferno", interpolation="bilinear", zorder=0)
     _draw_walls_and_nest(ax, env)
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    cbar.set_label("Densidade de ocupação  (log)")
-    ax.set_title(f"Ocupação dos robôs — {ALGO_LABELS.get(algo, algo)}\n"
-                 f"{SCENARIO_LABELS.get(scenario, scenario)}  "
-                 f"({episodes} ep, {food_total} recolhas totais)")
-    ax.legend(loc="upper right", framealpha=0.9)
+    cbar.set_label("Densidade de ocupação  (log)", fontsize=10 * e)
+    cbar.ax.tick_params(labelsize=9 * e)
+    ax.tick_params(labelsize=9 * e)
+    # O `_draw_walls_and_nest` põe os rótulos dos eixos ao tamanho de omissão;
+    # aqui reescalam-se com o resto.
+    ax.xaxis.label.set_fontsize(10 * e)
+    ax.yaxis.label.set_fontsize(10 * e)
+    if e > 1.4:
+        # Em trio, o cenário e o número de episódios já estão na legenda da
+        # figura: o título repetia-os e, ampliado, não cabia em duas linhas.
+        ax.set_title(f"{ALGO_LABELS.get(algo, algo)} — {food_total} recolhas",
+                     fontsize=12 * e)
+    else:
+        ax.set_title(f"Ocupação dos robôs — {ALGO_LABELS.get(algo, algo)}\n"
+                     f"{SCENARIO_LABELS.get(scenario, scenario)}  "
+                     f"({episodes} ep, {food_total} recolhas totais)",
+                     fontsize=10 * e)
+    ax.legend(loc="upper right", framealpha=0.9, fontsize=9 * e)
 
     out_dir = out_dir or OUT_DIR
     os.makedirs(out_dir, exist_ok=True)

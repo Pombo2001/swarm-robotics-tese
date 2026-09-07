@@ -161,6 +161,17 @@ fi
 if git diff --cached --name-only | grep -qE '^(Artigo/|Tese/images/)'; then
     "$PY" "$RAIZ/scripts/verificar_figuras_artigo.py" || OK=0
 fi
+# 7 set: as FIGURAS POR CENARIO. As figuras 6.1 e 6.2 mostraram durante semanas
+# cinco dos sete cenarios — faltavam o Muro em U e a Porta com Alternativa,
+# porque o rotulo gravado no CSV ficara com os nomes anteriores a uniformizacao
+# do vocabulario. Nenhuma regua via: o verificar_numeros_tese le o .tex e os CSV
+# (certos), e o verificar_figuras_tese compara duas copias da mesma figura
+# (igualmente erradas). Este refaz as figuras a partir dos DADOS e compara-as
+# com as da tese, e ensaia as duas redes do plot_evaluation.
+if git diff --cached --name-only | \
+   grep -qE '^(Tese/images/|results/graficos_tese/final_7d/|scripts/eval_suite\.py)'; then
+    "$PY" "$RAIZ/scripts/verificar_figuras_cenarios.py" || OK=0
+fi
 # 20 ago: o DASHBOARD. Nao e entregavel, mas e o que se projeta na defesa - e a
 # revisao das 16 vistas encontrou defeitos que nenhum verificador via, porque
 # todos olhavam para numeros e nenhum para o que o ecra DIZ. Corre quando se

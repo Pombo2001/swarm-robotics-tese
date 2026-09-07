@@ -116,6 +116,25 @@ def _ordered_present(summary, key, ordering, labelmap=None):
     return out
 
 
+def _rotular(summary):
+    """Devolve uma cópia com o rótulo do cenário DERIVADO do slug `Scenario`.
+
+    Porque não se usa a coluna `ScenarioLabel` que vem no CSV: ela é gravada no
+    momento da avaliação e fica congelada com os nomes dessa data. Quando dois
+    cenários foram renomeados — `Beco Sem Saída (U)` -> `Muro em U` e
+    `Porta Coop. c/ Alternativa` -> `Porta com Alternativa` —, os CSV das
+    campanhas fechadas ficaram com os nomes antigos. Agrupar por essa coluna e
+    ordenar o eixo pelo mapa de hoje faz o seaborn desenhar a categoria vazia:
+    os cinco cenários cujo nome não mudou apareciam, e os dois renomeados
+    desapareciam das figuras 6.1 e 6.2 sem um único aviso.
+
+    O slug (`u_wall`, `cooperative_door_bypass`) nunca muda: é a chave estável.
+    """
+    s = summary.copy()
+    s["ScenarioLabel"] = s["Scenario"].map(lambda x: SCENARIO_LABELS.get(x, x))
+    return s
+
+
 def plot_evaluation(summary=None, out_dir=None):
     """Gera os gráficos de TAREFA por cenário (taxa de sucesso + recolhas/ep).
     Lê eval_summary.csv se `summary` não for dado. Devolve a lista de PNGs criados."""
@@ -141,7 +160,22 @@ def plot_evaluation(summary=None, out_dir=None):
     os.makedirs(out_dir, exist_ok=True)
     sns.set_theme(style="whitegrid")
 
+    # O rótulo é reconstruído a partir do slug — ver `_rotular`. Sem isto, um
+    # cenário renomeado depois da campanha sai da figura em silêncio.
+    summary = _rotular(summary)
     scen_order = _ordered_present(summary, "Scenario", ALL_SCENARIOS, SCENARIO_LABELS)
+    # Rede: nenhuma categoria do eixo pode ficar sem dados, e nenhum cenário
+    # presente nos dados pode ficar fora do eixo. As duas metades falham de
+    # maneiras diferentes — uma deixa um buraco no gráfico, a outra esconde um
+    # cenário — e ambas passaram despercebidas durante semanas.
+    _com_dados = set(summary["ScenarioLabel"])
+    _vazias = [c for c in scen_order if c not in _com_dados]
+    _fora = sorted(_com_dados - set(scen_order))
+    if _vazias or _fora:
+        raise ValueError(
+            "plot_evaluation: o eixo e os dados não coincidem — "
+            "categorias sem dados: %s; cenários fora do eixo: %s"
+            % (_vazias or "nenhuma", _fora or "nenhum"))
     algo_order = [a for a in ["GNN", "PPO", "SAC"] if a in summary["Algorithm"].unique()]
     palette = {a: ALGO_COLORS[a] for a in algo_order}
     created = []
@@ -155,14 +189,16 @@ def plot_evaluation(summary=None, out_dir=None):
     fig, ax = plt.subplots(figsize=(8.5, 5))
     sns.barplot(data=succ, x="ScenarioLabel", y="SuccessRate", hue="Algorithm",
                 order=scen_order, hue_order=algo_order, palette=palette, ax=ax)
+    # Rótulos na vertical: com três barras por cenário e quase todas a 100%, as
+    # etiquetas horizontais encavalitavam-se e liam-se «100%00%00%».
     for c in ax.containers:
-        ax.bar_label(c, fmt="%.0f%%", fontsize=8.5, padding=2)
+        ax.bar_label(c, fmt="%.0f%%", fontsize=8, padding=3, rotation=90)
     ax.set_title("Taxa de Sucesso por Cenário (Ptask) — avaliação determinística",
                  fontsize=14, fontweight="bold", pad=12)
     ax.set_ylabel("Episódios com sucesso (%)", fontsize=12)
     ax.set_xlabel("Cenário", fontsize=12)
     ax.tick_params(labelsize=10.5)
-    ax.set_ylim(0, 105)
+    ax.set_ylim(0, 122)   # folga para os rótulos verticais
     # Legenda FORA dos eixos: dentro tapava as barras (todas chegam aos 100%).
     ax.legend(title="Algoritmo", loc="upper left", bbox_to_anchor=(1.01, 1.0),
               borderaxespad=0)

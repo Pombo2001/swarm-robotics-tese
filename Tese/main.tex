@@ -22,7 +22,8 @@
 % e os links da lista ficavam pendurados (35 avisos hyperref "acro:* undefined").
 \usepackage[nohyperlinks]{acronym}
 \usepackage{float} % Para posicionamento de figuras [H]
-\usepackage{longtable} % Tabelas que quebram entre páginas (Apêndice da revisão)
+\usepackage{array}     % `>{\raggedright\arraybackslash}p{...}` no Anexo da revisão
+\usepackage{longtable} % Tabelas que quebram entre páginas (Anexo da revisão)
 \usepackage{tikz} % Para o gráfico PRISMA
 \usepackage{listings} % Excertos de código (apêndices)
 \usepackage{xcolor}
@@ -1410,12 +1411,15 @@ Para fundamentar a opção pelo potencial geodésico no termo de progresso e dia
 
 \begin{figure}[!htbp]
     \centering
-    \figresultado{0.32}{images/resultados/heatmap_ocupacao_gnn_u_wall.png}{Ocupacao GNN no Muro em U}
+    % Dois em cima e um em baixo, a 0,46 da largura, em vez dos três em linha a
+    % 0,32: com a redução para menos de um terço, os eixos e a barra de cor
+    % chegavam ao papel a ~2,5 pt. Os painéis foram além disso redesenhados com
+    % as letras à escala (`scripts/heatmaps.py --escala`).
+    \figresultado{0.46}{images/resultados/heatmap_ocupacao_gnn_u_wall.png}{Ocupacao GNN no Muro em U}
     \hfill
-    \figresultado{0.32}{images/resultados/heatmap_ocupacao_ppo_u_wall.png}{Ocupacao PPO no Muro em U}
-    \hfill
-    \figresultado{0.32}{images/resultados/heatmap_ocupacao_sac_u_wall.png}{Ocupacao SAC no Muro em U}
-    \caption[Densidade de ocupação dos robôs no Muro em U (GNN, PPO e SAC)]{Densidade de ocupação dos robôs no Muro em U (GNN, PPO e SAC, da esquerda para a direita; 6 episódios por painel, escala logarítmica). O GNN contorna a barra do U pela esquerda e o PPO pela direita --- em ambos, um fluxo contínuo até ao ninho, com 473 e 412 recolhas. O SAC não resolve o cenário: a ocupação concentra-se \emph{colada} às faces interiores das paredes verticais, o padrão de agentes presos, e o episódio termina com \emph{0 recolhas}. A escala de cor é normalizada por painel, pelo que as cores comparam a distribuição \emph{dentro} de cada algoritmo, não a magnitude entre eles.}
+    \figresultado{0.46}{images/resultados/heatmap_ocupacao_ppo_u_wall.png}{Ocupacao PPO no Muro em U}\\[0.6em]
+    \figresultado{0.46}{images/resultados/heatmap_ocupacao_sac_u_wall.png}{Ocupacao SAC no Muro em U}
+    \caption[Densidade de ocupação dos robôs no Muro em U (GNN, PPO e SAC)]{Densidade de ocupação dos robôs no Muro em U (GNN e PPO em cima, SAC em baixo; 6 episódios por painel, escala logarítmica). O GNN contorna a barra do U pela esquerda e o PPO pela direita --- em ambos, um fluxo contínuo até ao ninho, com 476 e 419 recolhas. O SAC não resolve o cenário: a ocupação concentra-se \emph{colada} às faces interiores das paredes verticais, o padrão de agentes presos, e o episódio termina com \emph{0 recolhas}. A escala de cor é normalizada por painel, pelo que as cores comparam a distribuição \emph{dentro} de cada algoritmo, não a magnitude entre eles.}
     \label{fig:res_heatmap_ocup}
 \end{figure}
 
@@ -1441,13 +1445,13 @@ O Quadro~\ref{tab:res_sandbox} sintetiza o desempenho de avaliação neste cená
 \begin{tabular}{|l|c|c|c|}
 \hline
 \textbf{Algoritmo} & \textbf{Recolhas/ep} & \textbf{$P_{task}$} & \textbf{Execuções funcionais} \\ \hline
-GNN (Evolutivo) & $38{,}31 \pm 31{,}03$ & $85{,}7\%$ & $5/7$ \\ \hline
-PPO & $71{,}46 \pm 0{,}98$ & $100\%$ & $7/7$ \\ \hline
-SAC & $69{,}24 \pm 1{,}88$ & $100\%$ & $7/7$ \\ \hline
+GNN (Evolutivo) & $38{,}3 \pm 31{,}0$ & $85{,}7\%$ & $5/7$ \\ \hline
+PPO & $71{,}5 \pm 1{,}0$ & $100\%$ & $7/7$ \\ \hline
+SAC & $69{,}2 \pm 1{,}9$ & $100\%$ & $7/7$ \\ \hline
 \end{tabular}
 
 \vspace{0.4em}
-{\footnotesize ``\textit{Runs} funcionais'' = execuções com 100\% de sucesso nos 20 episódios de avaliação.}
+{\footnotesize ``Execuções funcionais'' = execuções com 100\% de sucesso nos 20 episódios de avaliação.}
 \end{table}
 
 \section{Desempenho Comparativo por Cenário (Curvas de Aprendizagem)}
@@ -1646,7 +1650,7 @@ Também (M3) o custo do peso fixo na Porta com Alternativa fica resolvido com si
 
 Por fim, uma ablação exploratória da própria temperagem --- duas durações do critério de descoberta sustentada ($5$ e $20$ gerações) e dois fatores de decaimento ($0{,}95$ e $0{,}995$) --- mostra que o mecanismo \emph{não é sensível à afinação}: as quatro variantes convergem em $7/7$ execuções nos dois cenários, com médias entre $59{,}7$ e $69{,}1$ recolhas/ep no Muro em U e entre $74{,}8$ e $82{,}4$ na Porta com Alternativa. O ganho é, pois, do princípio --- pagar novidade apenas enquanto ela compra descoberta --- e não de um \textit{schedule} particular, o que reforça a sua transponibilidade para outros domínios com deceção espacial.
 
-As restantes três células exploratórias do pré-registo respondem no mesmo sentido, e reportam-se aqui por inteiro --- o pré-registo compromete-se a divulgar \emph{todas} as fases, e não apenas as que confirmam a hipótese. No \emph{Sandbox}, o cenário em que o controlador evolutivo mais degenera, a dosagem adaptativa em $21$ execuções eleva a convergência de $5/7$ ($71\%$) do objetivo puro para $\mathbf{20/21}$ ($95\%$), com $55{,}7 \pm 20{,}1$ contra $38{,}3 \pm 31{,}0$ recolhas/ep ($p = 0{,}14$, $\delta = +0{,}39$): a assimetria das dimensões amostrais e a variância do braço objetivo mantêm o teste longe do limiar convencional, mas a direção do efeito e a queda da dispersão são as previstas --- a novidade compra descoberta também onde não há paredes que canalizem o \textit{homing}. Na \emph{Perceção Cooperativa}, onde a pergunta era se o $5/7$ observado a 19 de julho representava um custo real da pressão por novidade, $21$ execuções mostram que não representava: $17/21$ ($81\%$) e $17{,}5 \pm 9{,}3$ contra $6/7$ ($86\%$) e $18{,}98 \pm 8{,}7$ do objetivo ($p = 1{,}00$, $\delta = +0{,}01$) --- o mecanismo é neutro onde a deceção não morde, que é exatamente o que a temperagem promete. Por fim, a célula do \emph{SAC no Gargalo} repetiu com $21$ execuções a combinação que a campanha final resolvera em apenas $5/7$: com o orçamento reduzido de $48$ minutos por execução fixado no pré-registo para esta célula, converge em $7/21$ ($33\%$), com $21{,}3 \pm 37{,}5$ recolhas/ep. O valor \emph{não} é comparável com os $41{,}4 \pm 36{,}8$ da campanha final, que dispôs de $195$ minutos por execução; serve para confirmar, com o triplo das execuções, o carácter tudo-ou-nada já descrito na Secção~\ref{sec:res_boxplots}.
+As restantes três células exploratórias do pré-registo respondem no mesmo sentido, e reportam-se aqui por inteiro --- o pré-registo compromete-se a divulgar \emph{todas} as fases, e não apenas as que confirmam a hipótese. No \emph{Sandbox}, o cenário em que o controlador evolutivo mais degenera, a dosagem adaptativa em $21$ execuções eleva a convergência de $5/7$ ($71\%$) do objetivo puro para $\mathbf{20/21}$ ($95\%$), com $55{,}7 \pm 20{,}1$ contra $38{,}3 \pm 31{,}0$ recolhas/ep ($p = 0{,}14$, $\delta = +0{,}39$): a assimetria das dimensões amostrais e a variância do braço objetivo mantêm o teste longe do limiar convencional, mas a direção do efeito e a queda da dispersão são as previstas --- a novidade compra descoberta também onde não há paredes que canalizem o \textit{homing}. Na \emph{Perceção Cooperativa}, onde a pergunta era se o $5/7$ observado a 19 de julho representava um custo real da pressão por novidade, $21$ execuções mostram que não representava: $17/21$ ($81\%$) e $17{,}5 \pm 9{,}3$ contra $6/7$ ($86\%$) e $19{,}0 \pm 8{,}7$ do objetivo ($p = 1{,}00$, $\delta = +0{,}01$) --- o mecanismo é neutro onde a deceção não morde, que é exatamente o que a temperagem promete. Por fim, a célula do \emph{SAC no Gargalo} repetiu com $21$ execuções a combinação que a campanha final resolvera em apenas $5/7$: com o orçamento reduzido de $48$ minutos por execução fixado no pré-registo para esta célula, converge em $7/21$ ($33\%$), com $21{,}3 \pm 37{,}5$ recolhas/ep. O valor \emph{não} é comparável com os $41{,}4 \pm 36{,}8$ da campanha final, que dispôs de $195$ minutos por execução; serve para confirmar, com o triplo das execuções, o carácter tudo-ou-nada já descrito na Secção~\ref{sec:res_boxplots}.
 
 % ── A QI7 (mapa composto) vive AQUI, no capítulo dos Resultados ──────────────
 % Esteve, entre 17 e 18 de agosto, dentro do capítulo das Conclusões: era onde o
@@ -1790,30 +1794,50 @@ A hipótese central desta investigação postula que a \emph{inteligência adapt
 \caption{Significância das diferenças em recolhas por episódio (Mann-Whitney U sobre as médias por execução, $n=7$ por algoritmo; $\delta$ de Cliff; $\alpha = 0{,}05$).}
 \label{tab:res_signif}
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{llrrrrl}
+\begin{tabular}{|l|l|r|r|r|r|c|}
 \hline
 Cenário & Par & média A & média B & $p$ & $\delta$ & Signif. \\
 \hline
 Sandbox & GNN vs PPO & 38,31 & 71,46 & 0,0006 & $-1{,}00$ & Sim \\
+\hline
 Sandbox & GNN vs SAC & 38,31 & 69,24 & 0,0021 & $-1{,}00$ & Sim \\
+\hline
 Sandbox & PPO vs SAC & 71,46 & 69,24 & 0,0297 & $+0{,}71$ & Sim \\
-Muro em U & GNN vs PPO & 24,54 & 39,62 & 0,1552 & $-0{,}47$ & não \\
-Muro em U & GNN vs SAC & 24,54 & 8,99 & 0,5714 & $+0{,}18$ & não \\
-Muro em U & PPO vs SAC & 39,62 & 8,99 & 0,0526 & $+0{,}63$ & não \\
-Gargalo & GNN vs PPO & 121,39 & 123,17 & 0,2086 & $+0{,}43$ & não \\
+\hline
+Muro em U & GNN vs PPO & 24,54 & 39,62 & 0,1552 & $-0{,}47$ & Não \\
+\hline
+Muro em U & GNN vs SAC & 24,54 & 8,99 & 0,5714 & $+0{,}18$ & Não \\
+\hline
+Muro em U & PPO vs SAC & 39,62 & 8,99 & 0,0526 & $+0{,}63$ & Não \\
+\hline
+Gargalo & GNN vs PPO & 121,39 & 123,17 & 0,2086 & $+0{,}43$ & Não \\
+\hline
 Gargalo & GNN vs SAC & 121,39 & 41,44 & 0,0006 & $+1{,}00$ & Sim \\
+\hline
 Gargalo & PPO vs SAC & 123,17 & 41,44 & 0,0006 & $+1{,}00$ & Sim \\
+\hline
 Quatro Salas & GNN vs PPO & 59,76 & 33,58 & 0,0006 & $+1{,}00$ & Sim \\
+\hline
 Quatro Salas & GNN vs SAC & 59,76 & 31,82 & 0,0006 & $+1{,}00$ & Sim \\
-Quatro Salas & PPO vs SAC & 33,58 & 31,82 & 0,3374 & $+0{,}33$ & não \\
+\hline
+Quatro Salas & PPO vs SAC & 33,58 & 31,82 & 0,3374 & $+0{,}33$ & Não \\
+\hline
 Porta Cooperativa & GNN vs PPO & 69,81 & 67,06 & 0,0262 & $+0{,}71$ & Sim \\
+\hline
 Porta Cooperativa & GNN vs SAC & 69,81 & 62,09 & 0,0006 & $+1{,}00$ & Sim \\
+\hline
 Porta Cooperativa & PPO vs SAC & 67,06 & 62,09 & 0,0175 & $+0{,}76$ & Sim \\
+\hline
 Perceção Cooperativa & GNN vs PPO & 18,98 & 15,33 & 0,0297 & $+0{,}71$ & Sim \\
+\hline
 Perceção Cooperativa & GNN vs SAC & 18,98 & 16,11 & 0,0297 & $+0{,}71$ & Sim \\
-Perceção Cooperativa & PPO vs SAC & 15,33 & 16,11 & 0,0547 & $-0{,}63$ & não \\
-Porta com Alternativa & GNN vs PPO & 86,70 & 85,25 & 0,8477 & $+0{,}08$ & não \\
+\hline
+Perceção Cooperativa & PPO vs SAC & 15,33 & 16,11 & 0,0547 & $-0{,}63$ & Não \\
+\hline
+Porta com Alternativa & GNN vs PPO & 86,70 & 85,25 & 0,8477 & $+0{,}08$ & Não \\
+\hline
 Porta com Alternativa & GNN vs SAC & 86,70 & 68,61 & 0,0006 & $+1{,}00$ & Sim \\
+\hline
 Porta com Alternativa & PPO vs SAC & 85,25 & 68,61 & 0,0021 & $+1{,}00$ & Sim \\
 \hline
 \end{tabular}

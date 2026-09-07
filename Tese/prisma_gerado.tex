@@ -3,16 +3,21 @@
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[node distance=1.2cm]
-    \tikzstyle{process} = [rectangle, minimum width=5.2cm, minimum height=1.1cm,
-        text centered, draw=black, fill=white, text width=5.2cm, font=\small]
+    % Sem hifenização dentro das caixas: num texto de 5-6 cm ela produzia
+    % «Registos identifica-dos», «tria-dos» e «ve-nue», que num diagrama se leem
+    % como gralhas. As caixas são ragged, por isso proibir a hifenização só faz
+    % as linhas quebrarem mais cedo — nenhuma palavra excede a largura.
+    \hyphenpenalty=10000 \exhyphenpenalty=10000
+    \tikzstyle{process} = [rectangle, minimum width=6cm, minimum height=1.1cm,
+        text centered, draw=black, fill=white, text width=6cm, font=\small]
     \tikzstyle{saida} = [rectangle, minimum height=1.1cm, draw=black, fill=black!3,
-        text width=5.4cm, font=\scriptsize, align=left]
+        text width=5.8cm, font=\scriptsize, align=left]
     \tikzstyle{arrow} = [thick,->,>=stealth]
     \tikzstyle{lado} = [rotate=90, anchor=south, font=\bfseries\footnotesize,
         color=black!60]
 
     \node (id) [process] {Registos identificados nas bases de dados \\
-        \scriptsize (Ieee 427 + Scopus 456) \\ \textbf{(n = 883)}};
+        \scriptsize (IEEE 427 + Scopus 456) \\ \textbf{(n = 883)}};
     \node (dup) [saida, right=1.3cm of id] {Duplicados removidos \\
         (DOI ou título normalizado) \\ \textbf{(n = 203)}};
 
@@ -36,10 +41,17 @@
     \draw [arrow] (full) -- (inc);
     \draw [arrow] (full) -- (exc2);
 
-    \node [lado] at (-3.6, 0) {Identificação};
-    \node [lado] at (-3.6, -2.4) {Triagem};
-    \node [lado] at (-3.6, -5.4) {Elegibilidade};
-    \node [lado] at (-3.6, -7.6) {Inclusão};
+    % As quatro fases ANCORADAS às caixas, e não a alturas fixas. Com as
+    % coordenadas escritas à mão, a «Elegibilidade» e a «Inclusão» ficavam cada
+    % uma um degrau acima da caixa a que pertencem e a caixa final acabava sem
+    % etiqueta nenhuma — o `(col |- nó)` dá o x da coluna e o y do nó, pelo que
+    % a etiqueta segue a caixa mesmo quando o número de motivos de exclusão
+    % muda a altura do diagrama.
+    \coordinate (col) at (-4.2, 0);
+    \node [lado] at (col |- id) {Identificação};
+    \node [lado] at (col |- screen) {Triagem};
+    \node [lado] at (col |- full) {Elegibilidade};
+    \node [lado] at (col |- inc) {Inclusão};
     \end{tikzpicture}
     \caption[Fluxograma PRISMA 2020 da revisão conduzida]{Fluxograma PRISMA 2020 da
     revisão conduzida. Os números são gerados automaticamente a partir do registo de

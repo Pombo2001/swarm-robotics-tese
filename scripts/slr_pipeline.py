@@ -371,7 +371,12 @@ def prisma():
         por_base[base] = n
         brutos += n
     duplicados = brutos - c['unicos']
-    fontes = ' + '.join(f'{b.capitalize()} {n}' for b, n in sorted(por_base.items()))
+    # O nome da base vem do nome do ficheiro em docs/slr/raw/ (`ieee.csv`,
+    # `scopus.csv`). Um `.capitalize()` cego dava «Ieee», que foi parar ao PDF:
+    # os acrónimos ficam como se escrevem, e o resto capitaliza.
+    ACRONIMOS = {'ieee': 'IEEE', 'acm': 'ACM', 'wos': 'WoS', 'doaj': 'DOAJ'}
+    fontes = ' + '.join(f'{ACRONIMOS.get(b.lower(), b.capitalize())} {n}'
+                        for b, n in sorted(por_base.items()))
 
     def _lista(dic):
         return ' \\\\ '.join(f"$\\bullet$ {_esc(CURTO.get(m, m))}: {n}"
@@ -401,10 +406,15 @@ def prisma():
 \\begin{{figure}}[H]
     \\centering
     \\begin{{tikzpicture}}[node distance=1.2cm]
-    \\tikzstyle{{process}} = [rectangle, minimum width=5.2cm, minimum height=1.1cm,
-        text centered, draw=black, fill=white, text width=5.2cm, font=\\small]
+    % Sem hifenização dentro das caixas: num texto de 5-6 cm ela produzia
+    % «Registos identifica-dos», «tria-dos» e «ve-nue», que num diagrama se leem
+    % como gralhas. As caixas são ragged, por isso proibir a hifenização só faz
+    % as linhas quebrarem mais cedo — nenhuma palavra excede a largura.
+    \\hyphenpenalty=10000 \\exhyphenpenalty=10000
+    \\tikzstyle{{process}} = [rectangle, minimum width=6cm, minimum height=1.1cm,
+        text centered, draw=black, fill=white, text width=6cm, font=\\small]
     \\tikzstyle{{saida}} = [rectangle, minimum height=1.1cm, draw=black, fill=black!3,
-        text width=5.4cm, font=\\scriptsize, align=left]
+        text width=5.8cm, font=\\scriptsize, align=left]
     \\tikzstyle{{arrow}} = [thick,->,>=stealth]
     \\tikzstyle{{lado}} = [rotate=90, anchor=south, font=\\bfseries\\footnotesize,
         color=black!60]
@@ -434,10 +444,17 @@ def prisma():
     \\draw [arrow] (full) -- (inc);
     \\draw [arrow] (full) -- (exc2);
 
-    \\node [lado] at (-3.6, 0) {{Identificação}};
-    \\node [lado] at (-3.6, -2.4) {{Triagem}};
-    \\node [lado] at (-3.6, -5.4) {{Elegibilidade}};
-    \\node [lado] at (-3.6, -7.6) {{Inclusão}};
+    % As quatro fases ANCORADAS às caixas, e não a alturas fixas. Com as
+    % coordenadas escritas à mão, a «Elegibilidade» e a «Inclusão» ficavam cada
+    % uma um degrau acima da caixa a que pertencem e a caixa final acabava sem
+    % etiqueta nenhuma — o `(col |- nó)` dá o x da coluna e o y do nó, pelo que
+    % a etiqueta segue a caixa mesmo quando o número de motivos de exclusão
+    % muda a altura do diagrama.
+    \\coordinate (col) at (-4.2, 0);
+    \\node [lado] at (col |- id) {{Identificação}};
+    \\node [lado] at (col |- screen) {{Triagem}};
+    \\node [lado] at (col |- full) {{Elegibilidade}};
+    \\node [lado] at (col |- inc) {{Inclusão}};
     \\end{{tikzpicture}}
     \\caption[Fluxograma PRISMA 2020 da revisão conduzida]{{Fluxograma PRISMA 2020 da
     revisão conduzida. Os números são gerados automaticamente a partir do registo de
@@ -469,7 +486,16 @@ def prisma():
         # numa tabela que já ocupa cinco. Um corpo mais pequeno é o tratamento
         # normal de uma tabela longa de apêndice, e devolve as páginas todas.
         f.write(r'\begingroup\small' + '\n')
-        f.write(r'\begin{longtable}{@{}rp{2.3cm}rp{5.4cm}p{3.0cm}p{1.4cm}@{}}'
+        # `>{\raggedright\arraybackslash}` nas três colunas de texto: em colunas
+        # de 2 a 5 cm o texto justificado abria rios e hifenizava a eito
+        # («Communicati-ons», «Evolutio-nary», «Confe-rence»). Ragged-right
+        # deixa a margem direita irregular, que num anexo de referências se lê
+        # muito melhor do que espaços a triplicar. O `\arraybackslash` devolve
+        # o `\\` de fim de linha, que o `\raggedright` rouba dentro de tabelas.
+        f.write(r'\begin{longtable}{@{}r'
+                r'>{\raggedright\arraybackslash}p{2.3cm}r'
+                r'>{\raggedright\arraybackslash}p{5.4cm}'
+                r'>{\raggedright\arraybackslash}p{3.0cm}p{1.4cm}@{}}'
                 + '\n')
         f.write(r'\caption{Estudos incluídos na revisão sistemática ($n = '
                 + str(c['incluidos']) + r'$), resultantes do fluxo PRISMA '

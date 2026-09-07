@@ -89,7 +89,7 @@ sete cenários. A vantagem de eficiência é dos gradientes, e a tese escreve-o.
 
 ## 6. «Seis comparações por par sem correção de multiplicidade.»
 
-**Resposta.** Está assinalado no próprio parágrafo (**p. 64**): os $p$ dos seis
+**Resposta.** Está assinalado no próprio parágrafo (**p. 65**): os $p$ dos seis
 pares de M2 são **brutos**, por compromisso pré-registado — declarar a
 multiplicidade e ancorar a leitura no tamanho de efeito, em vez de corrigir os
 valores. O efeito principal (M1) não depende disso: $\delta = +0{,}61$ com

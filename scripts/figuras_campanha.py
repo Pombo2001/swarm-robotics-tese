@@ -279,12 +279,17 @@ def figura_global(curves, algo, destino):
         if not a.empty:
             ax.plot(a["bin"], a["Score"], color=cor, linewidth=2.5,
                     label=SCENARIO_LABELS.get(scen, scen))
-    ax.set_title(f"Desempenho Global — {algo} ({da['Run'].nunique()} runs)",
+    ax.set_title(f"Desempenho Global — {algo} ({da['Run'].nunique()} execuções)",
                  fontsize=15, fontweight="bold", pad=14)
     ax.set_xlabel("Progresso do Treino (%)", fontsize=11)
     ax.set_ylabel(YLABEL_TREINO.get(algo, "Score"), fontsize=11)
     ax.set_xlim(0, 100)
-    ax.legend(title="Cenário", fontsize=9, title_fontsize=10, loc="upper left", framealpha=0.9)
+    # Legenda FORA dos eixos. Com sete cenários, a caixa no canto superior
+    # esquerdo tapava as curvas entre 0 e 35% do treino — que é justamente o
+    # troço que o texto analisa (quem sobe primeiro, quem arranca do zero).
+    ax.legend(title="Cenário", fontsize=9, title_fontsize=10,
+              loc="upper left", bbox_to_anchor=(1.01, 1.0), borderaxespad=0,
+              framealpha=1.0)
     ax.grid(True, linestyle="--", alpha=0.5)
     plt.tight_layout()
     saida = os.path.join(destino, NOMES["global"].format(algo=algo.lower()))

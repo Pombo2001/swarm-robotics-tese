@@ -51,15 +51,13 @@ except Exception:  # noqa: BLE001
 
 # Divergências conhecidas, com a razão. Cada entrada é uma dívida declarada:
 # se a razão deixar de valer, tira-se daqui e a figura passa a ter de bater.
-DECLARADAS = {
-    "heatmap_ocupacao_gnn_u_wall.png":
-        "a tese usa a versão de 6 episódios (pipeline canónico, "
-        "plot_results.py) e a legenda diz «6 episódios por painel»; a cópia em "
-        "final_7d foi regenerada a 31 jul pelo figuras_campanha.py, que corre "
-        "4. A da tese é a coerente com o que a tese afirma.",
-    "heatmap_ocupacao_ppo_u_wall.png": "idem — ver o painel do GNN.",
-    "heatmap_ocupacao_sac_u_wall.png": "idem — ver o painel do GNN.",
-}
+# 7 set 2026: ficou vazio. As três entradas que aqui estavam — os painéis de
+# ocupação do Muro em U — declaravam que a cópia da tese (6 episódios) e a de
+# `final_7d` (4) eram versões diferentes da mesma figura. Foram ambas refeitas
+# com 6 episódios e as letras à escala do papel, e agora batem: as declarações
+# saíram, como o próprio verificador exige quando uma divergência declarada
+# deixa de existir.
+DECLARADAS: dict[str, str] = {}
 
 # Quem gera o quê, por prefixo do nome. Serve o `--listar`: sem isto, «de onde
 # vem esta figura?» responde-se a grep, e a resposta envelhece.

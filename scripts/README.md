@@ -44,6 +44,7 @@ mudam, e recusam o commit se um número deixar de bater
 | `verificar_bibliografia_sem_doi.py` **⟨hook⟩** | as 26 entradas SEM DOI, contra o arXiv e o OpenAlex — as que o verificador do CrossRef deixava «para ler à mão» |
 | `verificar_preregistos.py` | os compromissos dos três pré-registos foram cumpridos e reportados |
 | `verificar_figuras_tese.py` | cada figura do PDF é a que os dados produzem hoje |
+| `verificar_figuras_cenarios.py` **⟨hook⟩** | nenhuma figura por cenário esconde um cenário que os dados têm — refaz as figuras 6.1/6.2 a partir do CSV e ensaia as redes do `plot_evaluation` |
 | `verificar_figuras_artigo.py` **⟨hook⟩** | as figuras do artigo acompanham as da tese (cópias idênticas, versões da coluna não mais velhas) |
 | `verificar_planalto.py` | as curvas estabilizaram dentro do orçamento |
 | `verificar_dashboard.py` **⟨hook⟩** | os números do dashboard são os da tese, e o vocabulário do ecrã é o da dissertação |
