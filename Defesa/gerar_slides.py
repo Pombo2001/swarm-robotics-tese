@@ -75,6 +75,25 @@ prs.slide_width, prs.slide_height = W, H
 BRANCO = prs.slide_layouts[6]
 _n = 0
 
+# Os slides de reserva (ver o fim do ficheiro) numeram-se A1, A2, … e não entram
+# na conta dos 19: quem folheia tem de perceber, pelo rodapé, que saiu do fio da
+# apresentação. `_ANEXO` liga-se uma vez, antes de os construir.
+_ANEXO = False
+_na = 0
+
+# O orçamento de tempo, em segundos por slide, na ordem em que são construídos.
+# Quinze minutos é o que a capa promete; isto soma 14:40 e deixa 20 s de folga —
+# um plano que já usa os quinze minutos todos falha no primeiro tropeção. Não é
+# decoração: cada slide leva nas notas a hora a que deve começar e a que deve
+# sair, que é a única forma de ensaiar sem cronómetro na mão e de saber, a meio,
+# se se está adiantado ou atrasado. Se um slide for cortado ou acrescentado, esta
+# lista tem de acompanhar — o `assert` no fim do ficheiro trava se deixar de bater.
+PLANO = [25, 50, 40, 60, 50, 50, 70, 40, 60, 75, 50, 30, 60, 40, 40, 30, 35, 60, 15]
+
+
+def _mmss(seg):
+    return "%d:%02d" % (seg // 60, seg % 60)
+
 
 def _novo_slide():
     """Um slide com o fundo pintado. O layout em branco do PowerPoint é BRANCO —
@@ -142,10 +161,13 @@ def _linha(slide, x1, y, x2, cor=BORDA, espessura=0.75):
 
 def _e_numero(txt):
     """A célula é um valor numérico? Aceita o que estas tabelas usam à volta dos
-    dígitos: vírgula decimal, %, ±, ≈, ×, /, parênteses e sinais."""
+    dígitos: vírgula decimal, %, ±, ≈, ×, /, parênteses, sinais e o «·» que
+    separa as três medidas de uma célula da tabela de avaliação («38,3 · 86 % ·
+    5/7») — que é tão coluna de números como as outras, e desalinhava do mesmo
+    modo em tipo proporcional."""
     t = txt.strip()
     return bool(t) and any(c.isdigit() for c in t) and all(
-        c.isdigit() or c in " ,.%±≈×/()+-—…" for c in t)
+        c.isdigit() or c in " ,.%±≈×/()+-—…·" for c in t)
 
 
 def _borda_celula(cel, cor=BORDA, espessura=0.75):
@@ -175,16 +197,20 @@ def _borda_celula(cel, cor=BORDA, espessura=0.75):
 
 
 def _rodape(slide):
-    global _n
-    _n += 1
+    global _n, _na
+    if _ANEXO:
+        _na += 1
+        etiqueta, legenda = "A%d" % _na, "Slide de reserva · não faz parte da apresentação"
+    else:
+        _n += 1
+        # O número em Consolas, com zero à esquerda: alinha à direita sem dançar
+        # entre o 9 e o 10, que numa numeração proporcional se nota ao folhear.
+        etiqueta, legenda = "%02d" % _n, "Aprendizagem por Reforço para Controlo de Enxames · ISCTE-IUL 2026"
     _linha(slide, MARGEM, H - Inches(0.55), W - MARGEM)
-    _texto(slide, MARGEM, H - Inches(0.5), Inches(9), Inches(0.4),
-           "Aprendizagem por Reforço para Controlo de Enxames · ISCTE-IUL 2026",
+    _texto(slide, MARGEM, H - Inches(0.5), Inches(9), Inches(0.4), legenda,
            tamanho=10, cor=MUTED)
-    # O número em Consolas, com zero à esquerda: alinha à direita sem dançar
-    # entre o 9 e o 10, que numa numeração proporcional se nota ao folhear.
     _texto(slide, W - MARGEM - Inches(1), H - Inches(0.5), Inches(1), Inches(0.4),
-           "%02d" % _n, tamanho=10, cor=MUTED, alinhar=PP_ALIGN.RIGHT, fonte=MONO_FT)
+           etiqueta, tamanho=10, cor=MUTED, alinhar=PP_ALIGN.RIGHT, fonte=MONO_FT)
 
 
 def _titulo(slide, titulo, sub=""):
@@ -259,7 +285,21 @@ def _fig(slide, nome, x, y, w=None, h=None, pasta=FIG, chapa=True, folga=0.09):
 
 
 def _notas(slide, texto):
-    slide.notes_slide.notes_text_frame.text = texto.strip()
+    """O guião do orador, com a marca de tempo à cabeça.
+
+    A marca vem do PLANO, não é escrita à mão: um slide que mude de sítio leva o
+    seu tempo consigo, e dezanove horas copiadas para dentro de dezanove blocos
+    de texto ficavam erradas à primeira troca. O índice é a posição do slide na
+    apresentação, e não o número do rodapé — que salta a capa e o «Obrigado», por
+    não os numerar, e por isso fica sempre uma unidade atrás.
+    """
+    if _ANEXO:
+        marca = "[reserva — fora do tempo da apresentação; só se a pergunta vier]"
+    else:
+        i = len(prs.slides) - 1
+        ini = sum(PLANO[:i])
+        marca = "[%s → %s · %d s]" % (_mmss(ini), _mmss(ini + PLANO[i]), PLANO[i])
+    slide.notes_slide.notes_text_frame.text = marca + chr(10) * 2 + texto.strip()
 
 
 def slide_texto_figura(titulo, sub, bullets, figura=None, notas="", fig_w=6.2, fig_h=4.9,
@@ -533,8 +573,8 @@ slide_texto_figura(
         "por execução (n = 7), δ de Cliff como tamanho de efeito",
         "• Métrica de tarefa pura: recolhas por episódio e taxa de sucesso — comparável entre paradigmas",
         "• Três campanhas pré-registadas (hipótese, testes e regra de decisão fixados antes dos dados)",
-        "• Dezoito verificadores automáticos: cada número da dissertação é conferido contra os CSV "
-        "a cada commit",
+        "• 27 verificadores automáticos, 19 no hook de pre-commit: cada número da tese é recalculado "
+        "a partir dos CSV, e o commit é recusado se algum deixar de bater",
     ],
     figura="comparacao_barras_geral.png", fig_w=5.8, fig_h=4.4,
     notas="""
@@ -757,8 +797,10 @@ slide_texto_figura(
         "• Orçamento: 7 das 21 células ainda subiam no fim — o SAC nos gargalos lê-se como limite inferior "
         "(temperatura fixa, α = 0,1)",
         "• Só simulação: o fosso de implantação fica por validar",
-        "• Dimensão vertical não observada mas usada; duas costuras na física das paredes "
-        "(11 de 343 modelos atravessam-nas; nenhuma conclusão depende deles)",
+        "• Dimensão vertical usada mas não observada; duas costuras na física das paredes — 11 de 343 "
+        "modelos arquivados atravessam-nas, todos do evolutivo; na campanha final são 3 de 70 (Quatro "
+        "Salas), e não as tornam melhores (55,7 vs 60,3 rec/ep). Onde a costura pesa é numa célula da "
+        "campanha adaptativa — Quatro Salas —, declarada como contaminada",
         "• QI7 sobre um único mapa composto",
     ],
     figura="dotplot_eval_bottleneck.png", fig_w=5.2, fig_h=4.6, tamanho=15,
@@ -768,8 +810,12 @@ As limitações vêm antes das perguntas. A arquitetura difere entre paradigmas 
 representação. Sete execuções são poucas onde a leitura é de contagens; por
 isso o Muro em U foi replicado com vinte e oito. Sete células ainda subiam no
 fim do orçamento; o SAC nos gargalos é limite inferior. Tudo é simulação. E a
-física tem duas costuras nas paredes que uma minoria de modelos explora — medi
-todos os modelos arquivados; nenhuma conclusão depende disso.
+física tem duas costuras nas paredes que uma minoria de modelos explora. Medi
+todos os modelos arquivados, um a um: onze atravessam, todos do evolutivo, e na
+campanha final são três, nas Quatro Salas — que não ficam melhores por isso, e
+continuam muito acima do PPO nesse cenário. Onde a costura pesa mesmo é numa
+célula da campanha de dosagem adaptativa, e essa está declarada como
+contaminada, não usada como evidência.
 """)
 
 # 16. Contributos
@@ -783,7 +829,7 @@ slide_texto_figura(
         ("3. Um mapa de escolha para engenharia de enxames", {"negrito": True}),
         "  estrutura do cenário, variabilidade de N e cómputo, em vez de um vencedor universal",
         ("4. Uma implementação de referência aberta e verificável", {"negrito": True}),
-        "  simulador, oito cenários, RS2C e neuroevolução; 18 verificadores ligam cada número aos dados",
+        "  simulador, oito cenários, RS2C e neuroevolução; 27 verificadores ligam cada número aos dados",
     ],
     figura="escalabilidade_zeroshot_none.png", fig_w=5.4, fig_h=4.4,
     notas="""
@@ -835,7 +881,8 @@ _texto(s, MARGEM + Inches(8.6), Inches(1.7), W - 2 * MARGEM - Inches(8.6), Inche
      {"tamanho": 13}),
     ("", {"tamanho": 8}),
     ("Painel: localhost:8080 (portátil) · swarmroboticsgs.duckdns.org (Pi)", {"tamanho": 12, "cor": MUTED}),
-    ("Setas do teclado mudam de mapa · plano B: o GIF do Muro em U no slide 9", {"tamanho": 12, "cor": MUTED}),
+    ("Setas do teclado mudam de mapa · plano B: a captura aqui ao lado, e a figura dos quatro braços "
+     "do rodapé 09", {"tamanho": 12, "cor": MUTED}),
 ], tamanho=13, espaco=6)
 _rodape(s)
 _notas(s, """
@@ -846,7 +893,8 @@ em sete. A quarta coluna é o GNN com novidade doseada adaptativamente: sete em
 sete, setenta e oito recolhas. Carrego em Episódio 3D e os quatro enxames
 correm ao mesmo tempo. Em baixo, o dot plot com a linha do adaptativo e as
 curvas de treino. Qualquer número do painel tem proveniência: dois cliques até
-ao CSV. Plano B se a rede ou o portátil falharem: o GIF do slide nove.
+ao CSV. Plano B, se a rede ou o portátil falharem: a captura que está neste
+slide, e a figura dos quatro braços — o slide com o rótulo 09 no rodapé.
 """)
 
 # 19. Fim
@@ -870,5 +918,186 @@ proveniência de cada número — posso mostrar qualquer célula ao vivo. Estou 
 disposição para perguntas.
 """)
 
+# A apresentação acaba aqui. O que vem a seguir não se mostra.
+assert len(prs.slides) == len(PLANO), "o PLANO tem %d slides e a apresentação tem %d" % (len(PLANO), len(prs.slides))
+
+# ── Slides de reserva ─────────────────────────────────────────────────────────
+# Um a um, respondem às perguntas do docs/DEFESA_PERGUNTAS.md com a TABELA que o
+# guião cita de memória. A diferença entre responder «cerca de oito vezes mais
+# caro» e projetar os 97,6 contra os 12,8 é a diferença entre ter estudado e ter
+# medido — e a pergunta pelo número exato é a que mais custa a improvisar em pé.
+# Numeram-se A1…A6 e dizem-no no rodapé, para se poder pedir «o A2» em voz alta.
+_ANEXO = True
+
+# A1 — a tabela que a QI1 resume em três marcadores
+slide_tabela(
+    "Reserva · A tabela de avaliação, na íntegra",
+    "recolhas/ep · taxa de sucesso · execuções a 100 %  —  7 execuções por célula, 20 episódios determinísticos cada",
+    ["Cenário", "GNN evolutivo", "PPO", "SAC"],
+    [
+        ["Sandbox", "38,3 · 86 % · 5/7", "71,5 · 100 % · 7/7", "69,2 · 100 % · 7/7"],
+        ["Muro em U", "24,5 · 43 % · 3/7", "39,6 · 71 % · 4/7", "9,0 · 34 % · 2/7"],
+        ["Gargalo", "121,4 · 100 % · 7/7", "123,2 · 100 % · 7/7", "41,4 · 72 % · 5/7"],
+        ["Quatro Salas", "59,8 · 100 % · 7/7", "33,6 · 100 % · 7/7", "31,8 · 100 % · 7/7"],
+        ["Porta Cooperativa", "69,8 · 100 % · 7/7", "67,1 · 100 % · 7/7", "62,1 · 100 % · 7/7"],
+        ["Perceção Cooperativa", "19,0 · 91 % · 6/7", "15,3 · 100 % · 7/7", "16,1 · 100 % · 7/7"],
+        ["Porta com Alternativa", "86,7 · 100 % · 7/7", "85,3 · 100 % · 7/7", "68,6 · 100 % · 7/7"],
+    ],
+    larguras=[2.9, 3.1, 3.05, 3.05],
+    bullets=[("Significância (Mann-Whitney sobre as médias por execução, n = 7; δ de Cliff): GNN > PPO e SAC "
+              "nas Quatro Salas, Porta Cooperativa e Perceção (δ ≥ +0,71) · GNN > SAC no Gargalo e na Porta "
+              "com Alternativa (δ = +1,00), empate com o PPO (p = 0,21) · PPO e SAC > GNN no Sandbox "
+              "(δ = ±1,00) · Muro em U: nada significativo, nos três.", {"cor": MUTED, "tamanho": 14})],
+    tamanho=12,
+    notas="""
+A tabela inteira, para quando a pergunta for por uma célula concreta. Quinze das
+vinte e uma estão a cem por cento. As três parcelas de cada célula são recolhas
+por episódio, taxa de sucesso e quantas das sete execuções chegaram aos cem por
+cento — é a terceira que conta a história, porque é nela que a bimodalidade
+aparece.
+""")
+
+# A2 — a QI6 braço a braço, incluindo a replicação a n = 28
+slide_tabela(
+    "Reserva · Novidade e mega-treino, braço a braço",
+    "orçamento igualado a 195 min por execução, salvo indicação em contrário",
+    ["Braço", "Muro em U (n = 7)", "Muro em U (n = 28)", "Porta c/ Alt. (n = 7)"],
+    [
+        ["GNN + novidade adaptativa", "7/7 · 68,5 ± 13,1", "28/28 · 67,4 ± 13,4", "77,2 ± 16,7  (n.s.)"],
+        ["GNN + novidade w = 0,5 fixo", "7/7 · 69,8 ± 5,9", "—", "63,0 ± 21,9  (δ = −1,00)"],
+        ["GNN objetivo puro", "3/7 · 24,5 ± 32,6", "15/28 · 32,5", "86,7 ± 2,0"],
+        ["PPO", "4/7 · 39,6", "14/28 · 35,6", "85,3"],
+        ["SAC", "2/7 · 9,0", "14/28 · 10,1", "68,6"],
+    ],
+    larguras=[3.5, 2.9, 2.95, 2.75],
+    bullets=[
+        "• A n = 28: Fisher exato, adaptativo vs. objetivo, p < 0,0001. GNN objetivo vs. PPO, p = 0,088 — "
+        "indistinguíveis. Nenhuma das 28 execuções do SAC passa de 45,4 rec/ep: é uniformemente fraco, e "
+        "não bimodal.",
+        "• Não se compra com orçamento: o objetivo puro com 390 min continua bimodal (4/7, 31,5 ± 35,0); "
+        "o adaptativo com 390 min faz 88,7 ± 0,6 na Porta com Alternativa — o melhor resultado da tese.",
+        "• Ablação da temperagem, 4 variantes: 7/7 nos dois cenários — o mecanismo não vive da afinação.",
+    ],
+    tamanho=13,
+    notas="""
+Os quatro braços lado a lado. A coluna do meio é a replicação com vinte e oito
+execuções por braço, que é onde uma leitura por contagens ganha poder. A última
+coluna é o preço: com peso fixo, delta menos um; doseada adaptativamente, o
+preço desaparece.
+""")
+
+# A3 — a QI7 em números, para a pergunta «um negativo vale o quê?»
+slide_tabela(
+    "Reserva · QI7, o mapa composto em números",
+    "103 × 62 m · raio 60 m (contra 15 dos cenários isolados) · 128,8 m do spawn ao ninho · 106 obstáculos",
+    ["Fase", "O que se mediu", "Resultado"],
+    [
+        ["Fase 1 — zero-shot", "transferência sem retreino, com 4 condições de controlo",
+         "zero recolhas em 84/84 células · 1 680 episódios"],
+        ["Controlo", "o mapa é sequer resolúvel?",
+         "navegador geodésico, sem aprendizagem: 53,0 rec/ep (82,0 nas Quatro Salas)"],
+        ["Fase 2 — treino nativo", "21 execuções por algoritmo, 780 min cada",
+         "GNN 4/21 · 1,7 rec/ep  ·  PPO 0/21  ·  SAC 0/21"],
+        ["Regra de decisão", "limiar fixado antes de haver dados",
+         "15 execuções convergentes em 21 — o resultado ficou em 4"],
+        ["Orçamento", "o treino tinha acabado de convergir?",
+         "em 19 das 21 execuções o fitness ainda subia no último quinto"],
+    ],
+    larguras=[2.3, 4.5, 5.3],
+    bullets=[("As 4 condições de controlo excluem a escala da observação, os obstáculos e as features da "
+              "porta como causa do zero. O que a composição degrada é a fiabilidade, não a magnitude.",
+              {"cor": MUTED, "tamanho": 14})],
+    tamanho=12,
+    notas="""
+O negativo, com os números que o sustentam. A ordem importa: primeiro o zero em
+oitenta e quatro células, depois a prova de que o mapa é resolúvel — cinquenta e
+três recolhas de um navegador que não aprende nada —, e só então o limiar
+pré-registado que não foi atingido. Sem o controlo do meio, o zero seria ambíguo.
+""")
+
+# A4 — o cómputo, para a pergunta «8× mais caro, é justo?»
+slide_tabela(
+    "Reserva · Custo, orçamento e o que está declarado",
+    "a assimetria de cómputo, medida — e a leitura que dela se tira",
+    ["", "GNN evolutivo", "PPO / SAC"],
+    [
+        ["Tempo por execução", "195 min", "48 min"],
+        ["Paralelismo", "população de 30 genomas", "16 ambientes vetorizados"],
+        ["Núcleos-hora por execução", "97,6", "12,8"],
+        ["Rácio", "≈ 7,6× mais caro  (≈ 8×)", "—"],
+    ],
+    larguras=[3.9, 4.1, 4.1],
+    bullets=[
+        "• A leitura é a inversa da que favoreceria o evolutivo: com ≈ 8× menos núcleos-hora, os métodos "
+        "de gradiente igualam ou superam o GNN em 4 dos 7 cenários.",
+        "• Campanha principal: 147 treinos e 2 940 episódios de avaliação. Projeto inteiro: 28 sessões e "
+        "2 078 h de treino, das quais 341 h do mega-treino de um mês.",
+        "• Sub-treino declarado, não escondido: 7 das 21 células ainda subiam no fim do orçamento, e o SAC "
+        "nos gargalos lê-se como limite inferior (temperatura fixa, α = 0,1, sem o ajuste dual — p. 44).",
+    ],
+    notas="""
+Se a pergunta for pela justiça da comparação, é este o slide. A assimetria está
+medida, e a conclusão que dela se tira é a que desfavorece o evolutivo: mesmo
+custando oito vezes mais, não domina. E a configuração do SAC está declarada —
+temperatura fixa, sem o ajuste dual —, pelo que os seus valores são um limite
+inferior e não um veredicto sobre o algoritmo.
+""")
+
+# A5 — a prova visual da bimodalidade do Muro em U
+s = _novo_slide()
+_titulo(s, "Reserva · O Muro em U por dentro",
+        "ocupação média do enxame ao longo do episódio — modelos campeões, 6 episódios cada")
+_lbl = [("GNN evolutivo", GNN, "heatmap_ocupacao_gnn_u_wall.png"),
+        ("PPO", PPO, "heatmap_ocupacao_ppo_u_wall.png"),
+        ("SAC", SAC, "heatmap_ocupacao_sac_u_wall.png")]
+_cw, _gap = Inches(3.95), Inches(0.14)
+for _k, (_nome, _cor, _fich) in enumerate(_lbl):
+    _x = MARGEM + _k * (_cw + _gap)
+    _texto(s, _x, Inches(1.68), _cw, Inches(0.32), _nome, tamanho=15, negrito=True, cor=_cor,
+           alinhar=PP_ALIGN.CENTER)
+    _fig(s, _fich, _x, Inches(2.05), _cw, Inches(3.75))
+_texto(s, MARGEM, H - Inches(1.2), W - 2 * MARGEM, Inches(0.6),
+       "O corredor que contorna o muro é o que separa quem resolve de quem não resolve: o GNN e o PPO "
+       "desenham-no (473 e 412 recolhas em 6 episódios); o SAC nunca o encontra e faz zero.",
+       tamanho=13, cor=MUTED, alinhar=PP_ALIGN.CENTER)
+_rodape(s)
+_notas(s, """
+Se perguntarem o que é, ao certo, resolver o Muro em U: é isto. O mapa de calor
+mostra onde o enxame passa o episódio, no modelo campeão de cada algoritmo. O GNN
+e o PPO desenham um corredor que sai do beco, contorna o muro e chega ao ninho —
+quatrocentas e setenta e três e quatrocentas e doze recolhas em seis episódios. O
+SAC nunca encontra esse corredor: a ocupação espalha-se pela arena toda e o total
+é zero. Não é uma diferença de magnitude, é outro comportamento — e é esta a
+forma da falha que uma média esconde.
+""")
+
+# A6 — a pergunta «como sabemos que os números são os dos dados?»
+slide_texto_figura(
+    "Reserva · Como sei que os números são os dos dados", "a verificação, medida e ensaiada — não alegada",
+    [
+        "• 27 verificadores automáticos; 19 correm no hook de pre-commit e recusam o commit se um número "
+        "da tese deixar de bater com o CSV que o produziu",
+        "• O principal confere ~965 valores do main.tex; o do mapa composto, 72; o da configuração, 45 — "
+        "física, recompensa e hiperparâmetros dos três algoritmos, lidos do foraging.yaml",
+        "• Ensaio de mutação: a tese é estragada de propósito, 92 mutações, uma de cada vez, e o ensaio "
+        "exige que todas sejam acusadas. Um verificador que nunca falhou não está provado — está por testar",
+        "• Cobertura medida, não alegada: 1 043 dos 2 286 tokens numéricos do corpo do main.tex são lidos "
+        "por algum verificador (46 %), e os 193 automatizáveis que faltam estão listados, um a um, em "
+        "docs/COBERTURA_VERIFICADOR.md",
+        "• Três pré-registos: hipótese, testes e regra de decisão escritos antes de haver dados",
+        "• docs/REPRODUZIR.md refaz o percurso comando a comando — e é ele próprio ensaiado contra o disco",
+    ],
+    tamanho=16,
+    notas="""
+A resposta longa à pergunta da confiança. Não é que eu tenha conferido os
+números: é que eles são recalculados a cada commit, e o commit é recusado se
+algum deixar de bater. E os próprios verificadores são postos à prova — noventa
+e duas mutações injetadas na tese, uma de cada vez, cada uma tem de ser
+apanhada. A cobertura está medida e publicada, com a lista do que ainda falta,
+porque um número de cobertura sem essa lista é uma alegação.
+""")
+
 prs.save(SAIDA)
-print("[v] %s (%d slides)" % (os.path.relpath(SAIDA, RAIZ), len(prs.slides)))
+print("[v] %s (%d slides: %d de apresentação + %d de reserva)"
+      % (os.path.relpath(SAIDA, RAIZ), len(prs.slides), len(PLANO), _na))
+print("    tempo planeado da apresentação: %s" % _mmss(sum(PLANO)))

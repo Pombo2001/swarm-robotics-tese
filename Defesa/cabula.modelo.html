@@ -254,7 +254,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
 
 <header class="topo">
   <div class="topo-in">
-    <div class="marca">Cábula da Defesa <span>· 141 pp · 3 set 2026</span></div>
+    <div class="marca">Cábula da Defesa <span>· 137 pp · 6 set 2026</span></div>
     <button class="interruptor" id="btn-teste" aria-pressed="false">
       <span class="pastilha" aria-hidden="true"></span> Modo teste
     </button>
@@ -282,6 +282,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <a href="#futuro">Futuro</a>
     <a href="#glossario">Glossário</a>
     <a href="#onde">Onde está</a>
+    <a href="#guiao">15 minutos</a>
   </nav>
 </header>
 
@@ -790,7 +791,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
         <tr><td>Unidade estatística</td><td class="num">a execução — nunca o episódio</td></tr>
         <tr><td>Testes</td><td class="num">Wilcoxon signed-rank quando emparelhado, Mann-Whitney U quando não; δ de Cliff (|δ| ≥ 0,474 = grande); Welch a título complementar; α = 0,05</td></tr>
         <tr><td>Porquê não-paramétrico</td><td class="num">as distribuições violam sistematicamente a normalidade — massas em zero e bimodalidade</td></tr>
-        <tr><td>Garantias</td><td class="num">3 pré-registos · 18 verificadores · 87 mutações apanhadas</td></tr>
+        <tr><td>Garantias</td><td class="num">3 pré-registos · 27 verificadores (19 no hook de pre-commit) · 92 mutações injetadas, todas apanhadas</td></tr>
         <tr><td>Simulador</td><td class="num">139 → 420 passos/s (2,58× no passo, LiDAR 19,5×), com equivalência bit-exata</td></tr>
         <tr><td>Custo total</td><td class="num">28 sessões · 2 078 h de treino</td></tr>
       </tbody>
@@ -954,22 +955,22 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <p class="nota">A regra que atravessa tudo: <strong>nunca defender um número que a tese não diga.</strong>
       «Não medi isso» é sempre melhor do que uma estimativa dita em voz alta e registada em ata.</p>
     <div class="qa">
-      <div class="qa-item"><div class="qa-p"><span class="cod">p. 68</span><span>«O SAC está mal configurado — a temperatura é fixa.»</span></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 44</span><span>«O SAC está mal configurado — a temperatura é fixa.»</span></div>
         <div class="qa-r resp">É uma escolha declarada: α = 0,1 constante, sem o ajuste dual da formulação de referência. Remove ao SAC o mecanismo com que regula a exploração, e é consistente com o sub-treino já documentado em três células. Os valores lêem-se como <em>desempenho atingível nesta configuração e neste orçamento</em>. Se insistirem: a forma da falha é diferente — no mega-treino nenhuma das 28 execuções passa de 45,4; é uniformemente fraco, e não bimodal. Sub-treino explica magnitude baixa, não a ausência de qualquer execução boa.</div></div>
-      <div class="qa-item"><div class="qa-p"><span class="cod">p. 111</span><span>«Sete execuções por célula são poucas.»</span></div>
-        <div class="qa-r resp">Sim — e é a segunda limitação declarada. Por isso o único cenário cuja leitura depende de contagens, o Muro em U, foi replicado com 28 execuções por braço: 28/28 contra 15/28, Fisher exato p &lt; 0,0001. Onde o alargamento não chegou, o que se reporta são tamanhos de efeito, e a tese di-lo em vez de fingir poder que não tem.</div></div>
-      <div class="qa-item"><div class="qa-p"><span class="cod">p. 111</span><span>«A comparação é injusta: o evolutivo tem atenção sobre grafo, o PPO e o SAC têm um MLP.»</span></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 50</span><span>«Sete execuções por célula são poucas.»</span></div>
+        <div class="qa-r resp">Sim — e a unidade estatística está fixada nas notas de leitura (§6.1, p. 50): a execução, n = 7 por grupo; alargar essa bateria é o trabalho futuro n.º 1 (§7.5, p. 93). Por isso o único cenário cuja leitura depende de contagens, o Muro em U, foi replicado com 28 execuções por braço: 28/28 contra 15/28, Fisher exato p &lt; 0,0001. Onde o alargamento não chegou, o que se reporta são tamanhos de efeito, e a tese di-lo em vez de fingir poder que não tem.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 89</span><span>«A comparação é injusta: o evolutivo tem atenção sobre grafo, o PPO e o SAC têm um MLP.»</span></div>
         <div class="qa-r resp">É a <em>primeira</em> limitação declarada, e é deliberada na leitura: exatamente por a arquitetura ser a variável que difere, a conclusão sobre escalabilidade é atribuída à representação e não ao otimizador. O trabalho futuro n.º 1 é integrar a mesma atenção numa política treinável por gradiente (extrator de features personalizado na Stable-Baselines3), que separaria os dois efeitos.</div></div>
-      <div class="qa-item"><div class="qa-p"><span class="cod">p. 90</span><span>«A QI7 deu negativo. O que é que isso vale?»</span></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 71</span><span>«A QI7 deu negativo. O que é que isso vale?»</span></div>
         <div class="qa-r resp">Vale como resultado, porque a regra estava fixada antes dos dados: limiar de 15 execuções convergentes em 21, pré-registado, e o resultado ficou em 4. Não se mudou de critério depois de ver a amostra — é isso que separa um pré-registo de uma racionalização. A segunda metade da resposta é a que interessa: degrada a fiabilidade, não a magnitude; e a leitura é condicionada ao orçamento, com 19 das 21 execuções ainda a subir no último quinto.</div></div>
-      <div class="qa-item"><div class="qa-p"><span class="cod">p. 105</span><span>«O evolutivo usa 8× mais cómputo. A comparação é justa?»</span></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 80</span><span>«O evolutivo usa 8× mais cómputo. A comparação é justa?»</span></div>
         <div class="qa-r resp">A assimetria está medida e declarada: 195 min com ≈30 núcleos contra 48 min com 16 — ≈8× em núcleos-hora e ≈37× em passos de simulação. E a conclusão que daí se tira é a <em>inversa</em> da que favoreceria o evolutivo: mesmo com 8× menos núcleos-hora, os métodos de gradiente igualam ou superam-no em quatro dos sete cenários. A vantagem de eficiência é deles, e a tese escreve-o.</div></div>
-      <div class="qa-item"><div class="qa-p"><span class="cod">p. 88</span><span>«Seis comparações por par, sem correção de multiplicidade.»</span></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">p. 64</span><span>«Seis comparações por par, sem correção de multiplicidade.»</span></div>
         <div class="qa-r resp">Está assinalado no próprio parágrafo: os p dos seis pares de M2 são brutos, por compromisso pré-registado — declarar a multiplicidade e ancorar a leitura no tamanho de efeito, em vez de corrigir os valores. O efeito principal (M1) não depende disso: δ = +0,61 com p &lt; 0,0001 unilateral, e a convergência separada por Fisher exato.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">método</span><span>«O campo geodésico não é dar o mapa ao agente?»</span></div>
         <div class="qa-r resp">Não. O campo geodésico é <strong>sinal de treino</strong>, calculado pelo simulador que conhece a geometria — não entra na observação. Em execução o agente tem apenas a bússola de homing euclidiana e o LiDAR de 8 m. Distingue-se, portanto, de fornecer um mapa dos obstáculos ou waypoints de um planeador A*. E sendo PBRS, não altera a política ótima do cenário.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">método</span><span>«Como sabemos que os números da tese são os dos dados?»</span></div>
-        <div class="qa-r resp">Porque não são escritos à mão: um conjunto de verificadores lê o .tex, recalcula cada valor a partir dos CSV canónicos e recusa o commit se algum deixar de bater. E os verificadores são eles próprios postos à prova — o ensaio estraga a tese de propósito, 87 mutações, uma de cada vez, e exige que cada uma seja apanhada.</div></div>
+        <div class="qa-r resp">Porque não são escritos à mão: um conjunto de verificadores lê o .tex, recalcula cada valor a partir dos CSV canónicos e recusa o commit se algum deixar de bater. E os verificadores são eles próprios postos à prova — o ensaio estraga a tese de propósito, 92 mutações, uma de cada vez, e exige que cada uma seja apanhada.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">final</span><span>«Qual é, então, a contribuição em uma frase?»</span></div>
         <div class="qa-r resp">Que <strong>o desenho do sinal de treino e a representação decidem mais do que o paradigma de otimização</strong>: o colapso do evolutivo era um artefacto da aptidão e curou-se com homing terminal; a escalabilidade é da atenção sobre grafo, não do otimizador; e a deceção espacial só cede a exploração doseada — um mecanismo, não um paradigma, e em princípio transponível para qualquer um deles.</div></div>
     </div>
@@ -1006,11 +1007,11 @@ ol.lim b{color:var(--tinta); font-weight:600}
 
   <!-- ================= LIMITAÇÕES ================= -->
   <section id="limites">
-    <div class="cab"><span class="n">17</span><h2>As limitações que admito antes de mas perguntarem</h2></div>
+    <div class="cab"><span class="n">17</span><h2>As limitações que admito antes de me perguntarem</h2></div>
     <ol class="lim">
       <li><div><b>Arquitetura assimétrica</b> — o grafo só existe no evolutivo. E é precisamente isso que permite atribuir a escala à representação. Trabalho futuro n.º 1.</div></li>
       <li><div><b>Sete execuções por célula</b> — replicado a 28 onde a leitura é de contagens.</div></li>
-      <li><div><b>Orçamento</b> — 7 das 21 células ainda subiam; o SAC nos gargalos é um limite inferior (α = 0,1 fixo, declarado na p. 68).</div></li>
+      <li><div><b>Orçamento</b> — 7 das 21 células ainda subiam; o SAC nos gargalos é um limite inferior (α = 0,1 fixo, declarado na p. 44).</div></li>
       <li><div><b>Só simulação.</b> Nenhum robot físico — o <em>Deployment Gap</em> é antecipado no desenho mas não validado empiricamente.</div></li>
       <li><div><b>Dimensão vertical</b> usada mas não observada (ρ = −0,74 com as recolhas).</div></li>
       <li><div><b>Duas costuras na física das paredes</b> — teto e junções em T: 11 de 343 modelos atravessam, todos GNN; na campanha final são 3 de 70 (Quatro Salas, execuções 1, 4 e 6), sem inflacionar o resultado (55,7 contra 60,3). A A1 adaptativa nas Quatro Salas está contaminada.</div></li>
@@ -1081,25 +1082,78 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <tbody>
         <tr><td>Questões de investigação</td><td class="num">Cap. 1, §QI — p. 4–5</td></tr>
         <tr><td>Revisão sistemática e fluxo PRISMA</td><td class="num">Cap. 3 — §3.2–3.3</td></tr>
-        <tr><td>Simulador, cenários, recompensa</td><td class="num">Cap. 4 — p. ~55–66</td></tr>
+        <tr><td>Simulador, cenários, recompensa</td><td class="num">Cap. 4 — p. 29–42</td></tr>
         <tr><td>Espaço de observação e de ação</td><td class="num">Cap. 4, §4.2.2–4.2.3</td></tr>
-        <tr><td>RS2C · PPO · SAC · neuroevolução · novidade</td><td class="num">Cap. 5 — p. ~67–72</td></tr>
+        <tr><td>RS2C · PPO · SAC · neuroevolução · novidade</td><td class="num">Cap. 5 — p. 43–48</td></tr>
         <tr><td>Função de aptidão (Eq. da fitness)</td><td class="num">Cap. 5, §5.2.1</td></tr>
-        <tr><td>Protocolo e notas de leitura</td><td class="num">§6.1 — p. 73–74</td></tr>
-        <tr><td>Tabela de avaliação e significância</td><td class="num">§6.2 e §6.12 — tab. res_eval, res_signif</td></tr>
-        <tr><td>Novidade e mega-treino</td><td class="num">§6.10 — p. ~85–90</td></tr>
+        <tr><td>Protocolo e notas de leitura</td><td class="num">§6.1 — p. 49–50</td></tr>
+        <tr><td>Quadro de avaliação e significância</td><td class="num">§6.2 e §6.12 — tab. res_eval, res_signif</td></tr>
+        <tr><td>Novidade e mega-treino</td><td class="num">§6.10 — p. 61–65</td></tr>
         <tr><td>Mapa composto</td><td class="num">§6.11</td></tr>
         <tr><td>Escala, robustez e custo</td><td class="num">§6.12–6.14</td></tr>
         <tr><td>Discussão e validação da hipótese</td><td class="num">§6.15</td></tr>
-        <tr><td>Limitações</td><td class="num">§7.3 — p. ~93–96; declaradas na p. 111</td></tr>
+        <tr><td>Limitações</td><td class="num">§7.3 — p. 88–92</td></tr>
         <tr><td>Contributos e trabalhos futuros</td><td class="num">§7.4–7.5</td></tr>
-        <tr><td>Atenção QKV, wall-sliding, campo geodésico</td><td class="num">Apêndice de código</td></tr>
+        <tr><td>Atenção QKV, wall-sliding, campo geodésico</td><td class="num">Anexo de código</td></tr>
       </tbody>
     </table></div>
   </section>
 
-  <p class="pe">Escrita contra o PDF de 141 páginas de 3 de setembro de 2026. Companheira dos slides
-    (<code>Defesa/slides_defesa.pptx</code>, 19 slides com notas de orador) e das fontes em
+  <!-- ================= O GUIÃO EM 15 MINUTOS ================= -->
+  <section id="guiao">
+    <div class="cab"><span class="n">22</span><h2>O guião em 15 minutos, e os slides de reserva</h2></div>
+    <p class="prosa">O plano vive na lista <code>PLANO</code> do <code>Defesa/gerar_slides.py</code> e é escrito
+      nas notas de cada slide, que abrem com <code>[começa → sai · duração]</code>. Soma <b>14:40</b> e deixa
+      20 s de folga — um plano que usa os quinze minutos todos falha no primeiro tropeção.
+      <b>Dois relógios para decorar: ao entrar na QI6 devem ser 7:25; ao sair dela, 8:40.</b>
+      Se estiveres atrasado aí, corta a fiabilidade e os contributos — são as duas que a conclusão repete.</p>
+    <div class="rolo"><table>
+      <thead><tr><th>#</th><th>Slide</th><th>Sai a</th><th>A frase que tem de sair</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Capa</td><td class="num">0:25</td><td>«Quinze minutos: o problema, o método, sete perguntas e as respostas.»</td></tr>
+        <tr><td class="num">2</td><td>O problema</td><td class="num">1:15</td><td>«Faltam comparações diretas, com estatística, em cenários difíceis.»</td></tr>
+        <tr><td class="num">3</td><td>Sete questões</td><td class="num">1:55</td><td>«Quatro comparam paradigmas; três descem aos mecanismos.»</td></tr>
+        <tr><td class="num">4</td><td>Simulador e cenários</td><td class="num">2:55</td><td>«Sete cenários isolam uma dificuldade cada; o oitavo compõe quatro.»</td></tr>
+        <tr><td class="num">5</td><td>Os três controladores</td><td class="num">3:45</td><td>«Mesmo simulador e mesma observação; a arquitetura é a variável que difere.»</td></tr>
+        <tr><td class="num">6</td><td>O protocolo</td><td class="num">4:35</td><td>«A unidade estatística é a execução, não o episódio.»</td></tr>
+        <tr><td class="num">7</td><td><b>QI1</b> — desempenho</td><td class="num">5:45</td><td>«Não há vencedor universal: 15 das 21 células a 100 %.»</td></tr>
+        <tr><td class="num">8</td><td>A forma da distribuição</td><td class="num">6:25</td><td>«Com n=7 a caixa mente: o Muro em U é bimodal, não “média 24,5”.»</td></tr>
+        <tr><td class="num">9</td><td><b>QI5</b> — a fitness</td><td class="num">7:25</td><td>«O colapso do evolutivo era o sinal de treino: 28 execuções de 0 % a 100 %.»</td></tr>
+        <tr><td class="num">10</td><td><b>QI6</b> — deceção</td><td class="num">8:40</td><td>«28/28 contra 15/28: decide a dosagem da exploração, não o paradigma.»</td></tr>
+        <tr><td class="num">11</td><td><b>QI2</b> — escala</td><td class="num">9:30</td><td>«Zero-shot é propriedade da representação, não do otimizador.»</td></tr>
+        <tr><td class="num">12</td><td><b>QI3</b> — falhas</td><td class="num">10:00</td><td>«92–106 % nos três: a robustez não discrimina — e isso é uma resposta.»</td></tr>
+        <tr><td class="num">13</td><td><b>QI7</b> — composição</td><td class="num">11:00</td><td>«A resposta é negativa, e o limiar estava fixado antes dos dados.»</td></tr>
+        <tr><td class="num">14</td><td><b>QI4</b> — mapa de escolha</td><td class="num">11:40</td><td>«Em vez de um vencedor, os eixos que devem ditar a escolha.»</td></tr>
+        <tr><td class="num">15</td><td>Limitações</td><td class="num">12:20</td><td>«A assimetria é a primeira limitação — e é o que permite atribuir a escala à representação.»</td></tr>
+        <tr><td class="num">16</td><td>Contributos</td><td class="num">12:50</td><td>«O principal é metodológico: a fitness era a causa e a cura.»</td></tr>
+        <tr><td class="num">17</td><td>Conclusão</td><td class="num">13:25</td><td>«A vantagem de escala está na representação, não no otimizador.»</td></tr>
+        <tr><td class="num">18</td><td>Demo ao vivo</td><td class="num">14:25</td><td>«Qualquer número do painel tem proveniência: dois cliques até ao CSV.»</td></tr>
+        <tr><td class="num">19</td><td>Obrigado</td><td class="num">14:40</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+    <p class="prosa" style="margin-top:.6rem">O rodapé dos slides numera a partir do segundo — a capa e o
+      «Obrigado» não levam número —, pelo que o slide 10 desta tabela mostra <b>09</b> no canto. É por esse
+      rótulo que a demo remete para o plano B.</p>
+
+    <h3 style="margin-top:.9rem">Os seis slides de reserva</h3>
+    <p class="prosa">Vêm depois do «Obrigado», numerados A1–A6, com o rodapé a dizer que não fazem parte da
+      apresentação. Não se mostram: salta-se para eles quando a pergunta vier. Cada um projeta a tabela que,
+      sem ele, terias de citar de memória.</p>
+    <div class="rolo"><table>
+      <thead><tr><th>Anexo</th><th>Responde a</th><th>O que projeta</th></tr></thead>
+      <tbody>
+        <tr><td class="num">A1</td><td>«e no cenário X?» · «essa diferença é significativa?»</td><td>as 21 células — recolhas/ep · sucesso · execuções a 100 % — e a linha de significância</td></tr>
+        <tr><td class="num">A2</td><td>«a novidade é robusta?» · «e com mais execuções?»</td><td>os quatro braços a n=7 e a n=28, os controlos de orçamento e a ablação</td></tr>
+        <tr><td class="num">A3</td><td>«a QI7 deu negativo — vale o quê?»</td><td>as duas fases, o navegador geodésico a 53,0 e o limiar pré-registado de 15</td></tr>
+        <tr><td class="num">A4</td><td>«8× mais caro, a comparação é justa?» · «o SAC está mal configurado»</td><td>97,6 contra 12,8 núcleos-hora, e o α = 0,1 declarado na p. 44</td></tr>
+        <tr><td class="num">A5</td><td>«o que é, ao certo, uma execução que falha?»</td><td>os três mapas de ocupação no Muro em U — o corredor que o SAC nunca encontra</td></tr>
+        <tr><td class="num">A6</td><td>«como sabemos que os números são os dos dados?»</td><td>27 verificadores, 92 mutações e a cobertura medida, com a lista do que falta</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <p class="pe">Escrita contra o PDF de 137 páginas de 6 de setembro de 2026, já na formatação das normas do Iscte; as páginas citadas são as <b>impressas no rodapé</b> da dissertação — soma 22 para chegar à página do leitor de PDF. Companheira dos slides
+    (<code>Defesa/slides_defesa.pptx</code>, 19 de apresentação e 6 de reserva, com notas de orador) e das fontes em
     <code>docs/RESUMO_PARA_DECORAR.md</code> e <code>docs/DEFESA_PERGUNTAS.md</code>.
     Gerada por <code>Defesa/gerar_cabula.py</code> a partir de <code>Defesa/cabula.modelo.html</code>;
     as figuras são as das campanhas canónicas do repositório.</p>

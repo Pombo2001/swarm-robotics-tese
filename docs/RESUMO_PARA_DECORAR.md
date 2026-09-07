@@ -1,10 +1,14 @@
 # A tese em memória — folha de estudo para a defesa
 
-> Escrita a 3 set 2026 contra o PDF de **141 páginas** (`Tese/main.pdf`). Tudo o
+> Escrita contra o PDF de **137 páginas** de 6 set 2026 (`Tese/main.pdf`), já na formatação
+> das normas do Iscte; as páginas citadas são as **impressas no rodapé** — soma 22
+> para chegar à página do leitor de PDF. Tudo o
 > que está aqui está na dissertação; nenhum número foi arredondado de forma
 > diferente da tese. Companheira do [`DEFESA_PERGUNTAS.md`](DEFESA_PERGUNTAS.md)
 > (as perguntas que vêm primeiro) e dos slides em `Defesa/slides_defesa.pptx`
-> (19 slides gerados por `Defesa/gerar_slides.py`, com as notas de orador; o 18.º é a demo ao vivo do Muro em U no painel).
+> (19 de apresentação + 6 de reserva, gerados por `Defesa/gerar_slides.py`, com as
+> notas de orador e o orçamento de tempo; o 18.º é a demo ao vivo do Muro em U no
+> painel). O guião de tempo está na §9, os slides de reserva na §10.
 
 ---
 
@@ -67,11 +71,15 @@ cómputo. Sem vencedor universal — um mapa de escolha.
   ambientes). Núcleos-hora: GNN **97,6** vs PPO/SAC **12,8** (**7,6× ≈ 8×** a
   favor do gradiente — a ordem importa, e escrita sem rótulos já induziu erro).
 - Unidade estatística = **execução**; Mann-Whitney U, **δ de Cliff** (|δ| ≥
-  0,474 grande), α = 0,05. Três **pré-registos**. **18 verificadores**.
+  0,474 grande), α = 0,05. Três **pré-registos**.
+- Verificação: **27 verificadores**, 19 deles no hook de pre-commit (~965 valores
+  no principal, 72 no do mapa composto, 45 no da configuração); ensaio de
+  mutação com **92 mutações**, todas apanhadas; cobertura medida — 1 043 dos
+  2 286 tokens numéricos do `main.tex` (46 %), com a lista do que falta.
 - Simulador: 139 → **420 passos/s** após vetorização (2,58× no passo; LiDAR 19,5×),
   equivalência bit-exata.
 
-**Tabela de avaliação (recolhas/ep · sucesso · execuções a 100 %)**
+**Quadro de avaliação (recolhas/ep · sucesso · execuções a 100 %)**
 
 | Cenário | GNN | PPO | SAC |
 |---|---|---|---|
@@ -98,7 +106,9 @@ nada significativo.
   — o melhor da tese.
 - **Mega-treino n=28**: adaptativo **28/28**, 67,4 ± 13,4; objetivo 15/28, 32,5;
   PPO 14/28, 35,6; SAC 14/28, 10,1 (nenhuma execução > 45,4). Fisher p < 0,0001;
-  GNN objetivo vs PPO p = 0,088 (indistinguíveis).
+  GNN objetivo vs PPO p = 0,088 (indistinguíveis). Na Porta com Alternativa, a
+  n=28 o adaptativo supera o peso fixo **com** significância (80,9 vs 63,0;
+  p = 0,0016, δ = +0,77) — o efeito que a n=7 ficara aquém do limiar.
 - Ablação da temperagem (4 variantes): 7/7 em ambos os cenários — insensível à afinação.
 
 **Escala (QI2)** — GNN, recolhas por agente, N=20 → N=100 e retenção: Sandbox
@@ -137,7 +147,7 @@ PPO e SAC 0/21. 19/21 execuções ainda a subir no último quinto (780 min).
    atribuir a escala à representação. Trabalho futuro n.º 1.
 2. **7 execuções** — replicado a 28 onde a leitura é de contagens.
 3. **Orçamento**: 7/21 células ainda subiam; SAC nos gargalos = limite inferior
-   (α = 0,1 fixo, declarado na p. 68).
+   (α = 0,1 fixo, declarado na p. 44).
 4. **Só simulação.**
 5. **Dimensão vertical** usada mas não observada (ρ = −0,74 com as recolhas).
 6. **Duas costuras na física das paredes** (teto e junções em T): 11 de 343
@@ -160,12 +170,92 @@ PPO e SAC 0/21. 19/21 execuções ainda a subir no último quinto (780 min).
 | O quê | Onde |
 |---|---|
 | QIs | Cap. 1, §Questões de Investigação (p. 4–5) |
-| Simulador, cenários, recompensa | Cap. 4 (p. ~55–66) |
-| RS2C / PPO / SAC / neuroevolução / novidade | Cap. 5 (p. ~67–72) |
-| Protocolo e notas de leitura | §6.1 (p. 73–74) |
-| Tabela de avaliação e significância | §6.2 e §6.12 (tab. res_eval, res_signif) |
-| Novidade e mega-treino | §6.10 (p. ~85–90) |
+| Simulador, cenários, recompensa | Cap. 4 (p. 29–42) |
+| RS2C / PPO / SAC / neuroevolução / novidade | Cap. 5 (p. 43–48) |
+| Protocolo e notas de leitura | §6.1 (p. 49–50) |
+| Quadro de avaliação e significância | §6.2 e §6.12 (tab. res_eval, res_signif) |
+| Novidade e mega-treino | §6.10 (p. 61–65) |
 | Mapa composto | §6.11 |
 | Escala / robustez / custo | §6.12–6.14 |
-| Limitações | §7.3 (p. ~93–96) |
+| Limitações | §7.3 (p. 88–92) |
 | Guião de perguntas | `docs/DEFESA_PERGUNTAS.md` |
+
+## 9. O guião em 15 minutos
+
+O plano vive em `Defesa/gerar_slides.py` (lista `PLANO`) e é escrito nas notas de
+cada slide: cada uma abre com `[começa → sai · duração]`. Soma **14:40** e deixa
+20 s de folga — um plano que usa os quinze minutos todos falha no primeiro
+tropeção. **Dois relógios para decorar: ao entrar na QI6 devem ser 7:25; ao sair
+dela, 8:40.** Se estiveres atrasado aí, corta a §Fiabilidade e a §Contributos —
+são as duas que a conclusão repete.
+
+| # | Slide | dura | sai a | A frase que tem de sair |
+|---|---|---|---|---|
+| 1 | Capa | 25 s | 0:25 | «Quinze minutos: o problema, o método, sete perguntas e as respostas.» |
+| 2 | O problema | 50 s | 1:15 | «Faltam comparações diretas, com estatística, em cenários difíceis.» |
+| 3 | Sete questões | 40 s | 1:55 | «Quatro comparam paradigmas; três descem aos mecanismos.» |
+| 4 | Simulador e cenários | 60 s | 2:55 | «Sete cenários isolam uma dificuldade cada; o oitavo compõe quatro.» |
+| 5 | Os três controladores | 50 s | 3:45 | «Mesmo simulador e mesma observação; a arquitetura é a variável que difere.» |
+| 6 | O protocolo | 50 s | 4:35 | «A unidade estatística é a execução, não o episódio.» |
+| 7 | **QI1** — desempenho | 70 s | 5:45 | «Não há vencedor universal: 15 das 21 células a 100 %.» |
+| 8 | A forma da distribuição | 40 s | 6:25 | «Com n=7 a caixa mente: o Muro em U é bimodal, não “média 24,5”.» |
+| 9 | **QI5** — a fitness | 60 s | 7:25 | «O colapso do evolutivo era o sinal de treino: 28 execuções de 0 % a 100 %.» |
+| 10 | **QI6** — deceção | 75 s | 8:40 | «28/28 contra 15/28: decide a dosagem da exploração, não o paradigma.» |
+| 11 | **QI2** — escala | 50 s | 9:30 | «Zero-shot é propriedade da representação, não do otimizador.» |
+| 12 | **QI3** — falhas | 30 s | 10:00 | «92–106 % nos três: a robustez não discrimina — e isso é uma resposta.» |
+| 13 | **QI7** — composição | 60 s | 11:00 | «A resposta é negativa, e o limiar estava fixado antes dos dados.» |
+| 14 | **QI4** — mapa de escolha | 40 s | 11:40 | «Em vez de um vencedor, os eixos que devem ditar a escolha.» |
+| 15 | Limitações | 40 s | 12:20 | «A assimetria é a primeira limitação — e é o que permite atribuir a escala à representação.» |
+| 16 | Contributos | 30 s | 12:50 | «O principal é metodológico: a fitness era a causa e a cura.» |
+| 17 | Conclusão | 35 s | 13:25 | «A vantagem de escala está na representação, não no otimizador.» |
+| 18 | Demo ao vivo | 60 s | 14:25 | «Qualquer número do painel tem proveniência: dois cliques até ao CSV.» |
+| 19 | Obrigado | 15 s | 14:40 | — |
+
+> O rodapé dos slides numera a partir da 2.ª (a capa e o «Obrigado» não levam
+> número): o slide 10 desta tabela mostra **09** no canto. É por esse rótulo que
+> a demo remete para o plano B.
+
+## 10. Os slides de reserva — que anexo para que pergunta
+
+Vêm depois do «Obrigado», numerados **A1–A6** e com o rodapé a dizer que não
+fazem parte da apresentação. Não se mostram: salta-se para eles quando a pergunta
+vier. Cada um projeta a tabela que, sem ele, terias de citar de memória — e a
+diferença entre dizer «cerca de oito vezes mais caro» e mostrar 97,6 contra 12,8
+é a diferença entre ter estudado e ter medido.
+
+| Anexo | Responde a | O que projeta |
+|---|---|---|
+| **A1** | «e no cenário X?» · «essa diferença é significativa?» | as 21 células — recolhas/ep · sucesso · execuções a 100 % — e a linha de significância |
+| **A2** | «a novidade é robusta?» · «e com mais execuções?» | os quatro braços a n=7 e a n=28, os controlos de orçamento e a ablação |
+| **A3** | «a QI7 deu negativo — vale o quê?» | as duas fases, o navegador geodésico a 53,0 e o limiar pré-registado de 15 |
+| **A4** | «8× mais caro, a comparação é justa?» · «o SAC está mal configurado» | 97,6 vs 12,8 núcleos-hora, e o α = 0,1 declarado na p. 44 |
+| **A5** | «o que é, ao certo, uma execução que falha?» | os três mapas de ocupação no Muro em U — o corredor que o SAC nunca encontra |
+| **A6** | «como sabemos que os números são os dos dados?» | 27 verificadores, 92 mutações, e a cobertura medida com a lista do que falta |
+
+## 11. Vocabulário — a definição em uma linha
+
+Para não hesitar num termo. É o mesmo glossário da cábula
+(`Defesa/cabula.html`, secção 20), que o «Modo teste» tapa e revela ao toque.
+
+| Termo | Uma linha |
+|---|---|
+| **Dec-POMDP** | Processo de decisão de Markov parcialmente observável, descentralizado e cooperativo. Cada agente decide com a sua observação; todos partilham a recompensa. |
+| **Parameter sharing** | Os N agentes partilham um único conjunto de pesos. Multiplica o *batch* efetivo por N e dá a redundância que explica a robustez a falhas. |
+| **PBRS** | *Potential-based reward shaping*, 10·(Φₜ₋₁ − Φₜ). Provado não alterar a política ótima — é o que legitima usar o campo geodésico sem enviesar. |
+| **Distância geodésica** | Caminho mais curto que contorna os obstáculos (Dijkstra 8-conexa, grelha 0,4 m). Elimina o mínimo local de «contornar afasta» que a euclidiana cria. |
+| **Fitness exploitation** | O análogo evolutivo do *reward hacking*: a população maximiza o termo de *shaping* sem cumprir a tarefa, e a aptidão satura num planalto sem pressão seletiva. |
+| **Homing terminal** | clip((Φ₀ − Φ_T)/Φ₀, 0, 1): só depende dos estados extremos do episódio, pelo que vaguear não o aumenta. É a cura da QI5. |
+| **Novelty search** | Troca parte da pressão pelo objetivo por pressão pela diversidade comportamental. Influencia só a **seleção**; o campeão reportado é sempre o melhor pelo objetivo. |
+| **Dosagem adaptativa** | O peso da novidade decai depois de a descoberta se sustentar: paga-se exploração enquanto ela compra descoberta, e deixa de se pagar quando não compra. |
+| **BC** | *Behaviour characterization*: o descritor que resume o comportamento de um genoma. Aqui, o centroide final do enxame, (x, y) ∈ ℝ². |
+| **Zero-shot transfer** | Aplicar a política treinada com N=20 a N ∈ {10, 50, 100} **sem qualquer retreino**. |
+| **Deceptive** | Paisagem em que seguir o gradiente da recompensa afasta da solução. O Muro em U por geometria; a Porta com Alternativa por desenho. |
+| **Bimodal** | A distribuição das execuções tem dois picos e nada no meio — resolve ou fica a zero. A média não descreve nenhuma delas; por isso se reportam pontos. |
+| **δ de Cliff** | Tamanho de efeito não-paramétrico em [−1, 1]: fração de pares em que A supera B, menos a inversa. \|δ\| ≥ 0,474 convenciona-se grande; ±1,00 é separação total. |
+| **Mann-Whitney U** | Teste não-paramétrico para amostras independentes. Havendo sementes comuns e emparelhamento, usa-se antes o Wilcoxon *signed-rank*. |
+| **Retenção per capita** | Recolhas por agente a N=100 a dividir pelas de N=20. Mede diluição do recurso, não perda de coordenação. |
+| **Núcleos-hora** | Núcleos × horas de uma execução: a moeda que torna comparáveis 195 min com 30 genomas e 48 min com 16 ambientes. |
+| **Estigmergia** | Coordenação por sinais deixados no ambiente. Aqui, o bit que ativa quando um vizinho chega ao ninho e repousa — recrutamento sem comunicação explícita. |
+| **Wall-sliding** | Em vez de imobilizar o agente contra um muro, projeta-se o movimento ortogonalmente à normal da face: o agente desliza. |
+| **Deployment gap** | O fosso entre o desempenho em simulação e no robô físico. Antecipado no desenho do simulador, mas **não** validado nesta tese. |
+| **Guilhotina** | Corte precoce do episódio de avaliação evolutiva: se J < −200 aos 150 passos, termina e o genoma leva −1000. Poupa CPU em genomas disfuncionais. |
