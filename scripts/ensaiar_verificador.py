@@ -116,8 +116,8 @@ MUTACOES = [
      "(retenção de 92--106\\%", "(retenção de 92--104\\%", "coerencia"),
     # A secção do Novelty, nas três frases que passaram a ter rede
     ("T1: o limiar dos cinco p (0,21 -> 0,45)",
-     "nenhuma diferença é significativa (todos $p \\geq 0{,}21$)",
-     "nenhuma diferença é significativa (todos $p \\geq 0{,}45$)", "novelty"),
+     "nenhuma diferença é significativa (o menor dos cinco é $p = 0{,}21$)",
+     "nenhuma diferença é significativa (o menor dos cinco é $p = 0{,}45$)", "novelty"),
     ("T1: convergência do Sandbox (6/7 -> 7/7)",
      "descritivamente ($47{,}5 \\pm 28{,}1$, 6/7",
      "descritivamente ($47{,}5 \\pm 28{,}1$, 7/7", "novelty"),
@@ -233,8 +233,8 @@ MUTACOES = [
     # duas mutações reproduzem o defeito e o seu primo — uma questão
     # perguntada que fica sem resposta.
     ("a lista das questões deixa de estar por ordem",
-     "\\item[\\textbf{QI6.}] \\textbf{Deceção e procura por novidade:}",
-     "\\item[\\textbf{QI8.}] \\textbf{Deceção e procura por novidade:}",
+     "\\item[\\textbf{QI6.}] \\textbf{Deceção e procura por novidade}",
+     "\\item[\\textbf{QI8.}] \\textbf{Deceção e procura por novidade}",
      "questoes"),
     ("uma questão perguntada deixa de ter resposta",
      "\\item[QI3 --- Robustez a falhas]",
@@ -285,7 +285,7 @@ MUTACOES = [
      "competitivas (61,6 a 64,7 recolhas/ep)",
      "competitivas (60,0 a 64,7 recolhas/ep)", "sandbox"),
     ("forma do Sandbox: quantas degeneram (dois -> três)",
-     "dois degeneram por completo ($<1$ recolha/ep)",
+     "duas degeneram por completo ($<1$ recolha/ep)",
      "três degeneram por completo ($<1$ recolha/ep)", "sandbox"),
     ("forma do Sandbox: a execução intermédia (15,8 -> 25,8)",
      "regime intermédio (15,8 recolhas/ep",

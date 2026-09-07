@@ -106,10 +106,15 @@
     pdfkeywords={Robótica de Enxame; Aprendizagem por Reforço Multiagente;
                  Otimização Bio-inspirada; Redes Neuronais de Grafos;
                  Neuroevolução; Escalabilidade Zero-Shot},
+    % Todas as ligações a preto (normas do Iscte, §2.1.ii: «o texto deve ser
+    % escrito a preto», só figuras e quadros podem levar cor). Mantém-se o
+    % `colorlinks=true` — o que ele evita são as molduras coloridas do hyperref;
+    % com as três cores a preto, as citações e os URL continuam clicáveis e
+    % ficam indistinguíveis do texto, que é o que a norma pede.
     colorlinks=true,
     linkcolor=black,
-    citecolor=blue,
-    urlcolor=blue
+    citecolor=black,
+    urlcolor=black
 }
 
 \titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{\thesubsubsection}{0.5em}{}
