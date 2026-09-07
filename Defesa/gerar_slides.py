@@ -457,6 +457,37 @@ Enxames»: uma comparação, no mesmo simulador e com o mesmo protocolo, entre d
 paradigmas de controlo descentralizado — aprendizagem por reforço multiagente por
 gradiente (PPO e SAC) e neuroevolução de uma rede de grafos com atenção — em oito
 cenários. Quinze minutos: o problema, o método, sete perguntas e as respostas.
+
+- - - NÃO É PARA DIZER: o Resumo da dissertação, que o júri leu (245 palavras) - - -
+
+Para comparar a Aprendizagem por Reforço Multiagente e a Otimização Bio-inspirada
+no controlo de enxames robóticos, implementou-se num simulador de alta fidelidade
+o framework descentralizado Robust and Scalable Swarm Control (partilha de
+parâmetros; PPO e SAC) e um controlador neuroevolutivo sobre grafos com atenção,
+invariante à dimensão do enxame. Avaliaram-se em sete cenários de dificuldade
+crescente (7 execuções independentes por combinação), sob estatística
+não-paramétrica.
+
+Com homing geodésico na função de fitness, o controlador evolutivo supera os
+métodos de gradiente em três cenários, iguala o melhor deles noutros dois e
+transfere, sozinho, sem retreino para dimensões não vistas (N de 10 a 100, com
+100% de sucesso); os de gradiente mantêm a fiabilidade em espaço aberto e a
+eficiência. O cenário de deceção espacial, bimodal nos três algoritmos base, só
+cedeu à novidade doseada adaptativamente: preserva os 7/7 execuções no Muro em U
+e atinge, na Porta com Alternativa, o melhor resultado de toda a dissertação
+(88,7 recolhas/ep); uma replicação pré-registada com 28 execuções por braço
+confirmou-o (28/28, contra 15/28 do objetivo puro, 14/28 do PPO e 14/28 do SAC).
+Um oitavo cenário, compondo num labirinto de 103 x 62 m as dificuldades dos sete,
+degrada a fiabilidade e não a magnitude: é resolvido em 4 das 21 execuções
+independentes, abaixo do limiar pré-registado.
+
+A hipótese de que a inteligência adaptativa supera a robustez estática confirma-se
+apenas em parte: a escala decide-se na representação e não no otimizador; sob
+gradientes enganadores, no sinal de treino.
+
+É daqui que saem, quase sempre, as primeiras perguntas. Cada afirmação deste
+Resumo tem o seu slide: a fitness no 9, a novidade no 10, a escala no 11, o mapa
+composto no 13, e a frase final é o slide 17.
 """)
 
 # 2. Problema

@@ -322,8 +322,42 @@ ol.lim b{color:var(--tinta); font-weight:600}
     </div>
     <p class="nota">O veredicto, tal como está escrito na tese: com o desenho adequado da <em>fitness</em>, o
       controlador evolutivo deixou de ser o elo fraco — é superior aos métodos de gradiente em três dos sete
-      cenários, indistinguível do melhor deles em mais dois, e é o único que escala. Os gradientes guardam duas
+      cenários, iguala o melhor deles noutros dois, e é o único que escala. Os gradientes guardam duas
       vantagens sólidas: fiabilidade em espaço aberto e eficiência computacional.</p>
+
+    <div class="bloco">
+      <h4>O Resumo, palavra por palavra — é isto que o júri leu</h4>
+      <p class="nota">As normas do Iscte limitam-no a 250 palavras; tem 245, e o <em>Abstract</em> 243.
+        Vale a pena sabê-lo de cor: é a única parte da dissertação que se pode garantir que todos os
+        membros do júri leram, e as primeiras perguntas costumam sair daqui. Os trinta segundos acima
+        são a versão falada disto.</p>
+      <p class="prosa">Para comparar a Aprendizagem por Reforço Multiagente e a Otimização Bio-inspirada
+        no controlo de enxames robóticos, implementou-se num simulador de alta fidelidade o <em>framework</em>
+        descentralizado <em>Robust and Scalable Swarm Control</em> (partilha de parâmetros; PPO e SAC) e um
+        controlador neuroevolutivo sobre grafos com atenção, invariante à dimensão do enxame. Avaliaram-se em
+        sete cenários de dificuldade crescente (7 execuções independentes por combinação), sob estatística
+        não-paramétrica.</p>
+      <p class="prosa">Com <em>homing</em> geodésico na função de <em>fitness</em>, o controlador evolutivo
+        supera os métodos de gradiente em três cenários, iguala o melhor deles noutros dois e transfere,
+        sozinho, sem retreino para dimensões não vistas (<i>N</i> de 10 a 100, com 100% de sucesso); os de
+        gradiente mantêm a fiabilidade em espaço aberto e a eficiência. O cenário de deceção espacial, bimodal
+        nos três algoritmos base, só cedeu à novidade doseada <em>adaptativamente</em>: preserva os 7/7
+        execuções no Muro em U e atinge, na Porta com Alternativa, o melhor resultado de toda a dissertação
+        (88,7 recolhas/ep); uma replicação pré-registada com 28 execuções por braço confirmou-o (28/28, contra
+        15/28 do objetivo puro, 14/28 do PPO e 14/28 do SAC). Um oitavo cenário, compondo num labirinto de
+        103 × 62 m as dificuldades dos sete, degrada a fiabilidade e não a magnitude: é resolvido em 4 das 21
+        execuções independentes, abaixo do limiar pré-registado.</p>
+      <p class="prosa">A hipótese de que a inteligência adaptativa supera a robustez estática confirma-se
+        apenas em parte: a escala decide-se na <mark>representação</mark> e não no otimizador; sob gradientes
+        enganadores, no <mark>sinal de treino</mark>.</p>
+      <p class="nota"><strong>Palavras-chave:</strong> Robótica de Enxame, Aprendizagem por Reforço
+        Multiagente, Otimização Bio-inspirada, Redes Neuronais de Grafos.</p>
+      <p class="nota">O <em>Abstract</em> é a tradução exata deste texto — mesma sequência de valores, na
+        mesma ordem, o que um verificador confere a cada <em>commit</em>. Termos que mudam de forma em
+        inglês, para não hesitar: <em>Muro em U</em> → <em>U-shaped wall</em>; <em>Porta com Alternativa</em>
+        → <em>Alternative-Path Door</em>; <em>recolhas/ep</em> → <em>collections/ep</em>; <em>execuções</em>
+        → <em>runs</em>; <em>novidade doseada adaptativamente</em> → <em>novelty dosed adaptively</em>.</p>
+    </div>
   </section>
 
   <!-- ================= A LACUNA / SLR ================= -->
