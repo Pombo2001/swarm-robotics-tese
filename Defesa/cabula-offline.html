@@ -333,7 +333,8 @@ ol.lim b{color:var(--tinta); font-weight:600}
         são a versão falada disto.</p>
       <p class="prosa">Para comparar a Aprendizagem por Reforço Multiagente e a Otimização Bio-inspirada
         no controlo de enxames robóticos, implementou-se num simulador de alta fidelidade o <em>framework</em>
-        descentralizado <em>Robust and Scalable Swarm Control</em> (partilha de parâmetros; PPO e SAC) e um
+        descentralizado <em>Robust and Scalable Swarm Control</em> (partilha de parâmetros; <em>Proximal Policy Optimization</em> e
+        <em>Soft Actor-Critic</em>) e um
         controlador neuroevolutivo sobre grafos com atenção, invariante à dimensão do enxame. Avaliaram-se em
         sete cenários de dificuldade crescente (7 execuções independentes por combinação), sob estatística
         não-paramétrica.</p>
@@ -343,8 +344,8 @@ ol.lim b{color:var(--tinta); font-weight:600}
         gradiente mantêm a fiabilidade em espaço aberto e a eficiência. O cenário de deceção espacial, bimodal
         nos três algoritmos base, só cedeu à novidade doseada <em>adaptativamente</em>: preserva os 7/7
         execuções no Muro em U e atinge, na Porta com Alternativa, o melhor resultado de toda a dissertação
-        (88,7 recolhas/ep); uma replicação pré-registada com 28 execuções por braço confirmou-o (28/28, contra
-        15/28 do objetivo puro, 14/28 do PPO e 14/28 do SAC). Um oitavo cenário, compondo num labirinto de
+        (88,7 recolhas por episódio); uma replicação pré-registada com 28 execuções por braço confirmou-o
+        (28/28, contra 15/28 do objetivo puro e 14/28 de cada método por gradiente). Um oitavo cenário, compondo num labirinto de
         103 × 62 m as dificuldades dos sete, degrada a fiabilidade e não a magnitude: é resolvido em 4 das 21
         execuções independentes, abaixo do limiar pré-registado.</p>
       <p class="prosa">A hipótese de que a inteligência adaptativa supera a robustez estática confirma-se
@@ -355,7 +356,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <p class="nota">O <em>Abstract</em> é a tradução exata deste texto — mesma sequência de valores, na
         mesma ordem, o que um verificador confere a cada <em>commit</em>. Termos que mudam de forma em
         inglês, para não hesitar: <em>Muro em U</em> → <em>U-shaped wall</em>; <em>Porta com Alternativa</em>
-        → <em>Alternative-Path Door</em>; <em>recolhas/ep</em> → <em>collections/ep</em>; <em>execuções</em>
+        → <em>Alternative-Path Door</em>; <em>recolhas por episódio</em> → <em>collections per episode</em>; <em>execuções</em>
         → <em>runs</em>; <em>novidade doseada adaptativamente</em> → <em>novelty dosed adaptively</em>.</p>
     </div>
   </section>

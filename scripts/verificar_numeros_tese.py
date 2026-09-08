@@ -1966,16 +1966,25 @@ def verificar_megatreino(tolerancia):
                      ("objetivo convergentes", conv_o), ("objetivo n", n_o),
                      ("PPO convergentes", conv_p), ("PPO n", n_p),
                      ("SAC convergentes", conv_s), ("SAC n", n_s))
+    # Desde 8 de setembro o Resumo já não nomeia PPO nem SAC --- o orientador
+    # pediu que não usasse siglas ---, pelo que as duas contagens, que são
+    # iguais, colapsaram numa só: «de cada método por gradiente».
+    # O par lido é por isso conferido DUAS vezes, contra o PPO e contra o SAC:
+    # no dia em que divergirem, a frase agregada passa a ser falsa e é aqui que
+    # isso aparece --- que era o que a redação anterior, com um par por
+    # algoritmo, garantia de graça.
+    lido_por_braco = (0, 1, 2, 3, 4, 5, 4, 5)
     for idioma, padrao in (
             ("resumo",
-             r"\$(\d+)/(\d+)\$, contra \$(\d+)/(\d+)\$ do objetivo puro, "
-             r"\$(\d+)/(\d+)\$ do PPO e \$(\d+)/(\d+)\$ do SAC"),
+             r"\$(\d+)/(\d+)\$, contra \$(\d+)/(\d+)\$ do objetivo puro e "
+             r"\$(\d+)/(\d+)\$ de cada método por gradiente"),
             ("abstract",
-             r"\$(\d+)/(\d+)\$, against \$(\d+)/(\d+)\$ for the pure objective, "
-             r"\$(\d+)/(\d+)\$ for PPO and \$(\d+)/(\d+)\$ for SAC")):
+             r"\$(\d+)/(\d+)\$, against \$(\d+)/(\d+)\$ for the pure objective "
+             r"and \$(\d+)/(\d+)\$ for each gradient-based method")):
         v = procura(padrao)
         for i, (rot, calc) in enumerate(quatro_bracos):
-            confere("%s %s" % (idioma, rot), v[i] if v else None, calc, exato=True)
+            confere("%s %s" % (idioma, rot),
+                    v[lido_por_braco[i]] if v else None, calc, exato=True)
 
     # Células EXPLORATÓRIAS (A5 Sandbox, B7 Perceção, B6 SAC no Gargalo), em
     # cumprimento do compromisso do pré-registo de reportar todas as fases. Como
@@ -2678,11 +2687,14 @@ FACTOS_REPETIDOS = [
          {"re": r"\(Fisher exato, \$p < ([\d{},]+)\$\)"},
          {"re": r"\(Fisher exato, \$p<([\d{},]+)\$\)"},
      ]},
-    {"rot": "Mega-treino — as contagens do PPO e do SAC (três sítios)",
+    {"rot": "Mega-treino — as contagens do PPO e do SAC (dois sítios)",
+     # Eram três sítios: o Resumo dizia-o também. Deixou de o dizer quando
+     # perdeu as siglas (8 de setembro) e passou a «cada método por
+     # gradiente» — a paridade dele com os dados fica a cargo
+     # de verificar_resumo_abstract(), que sabe ler a forma agregada.
      "sitios": [
          {"re": r"PPO \$[^$]+\$ \(\$(\d+)/(\d+)\$;.{0,90}?SAC \$[^$]+\$ "
                 r"\(\$(\d+)/(\d+)\$"},
-         {"re": r"\$(\d+)/(\d+)\$ do PPO e \$(\d+)/(\d+)\$ do SAC\)"},
          {"re": r"\$(\d+)/(\d+)\$ do PPO e \$(\d+)/(\d+)\$ do SAC, sendo a única"},
      ]},
     {"rot": "Mega-treino — M3 (adaptativo vs peso fixo no bypass)",
@@ -3582,15 +3594,20 @@ def verificar_resumo_abstract():
 
     # 4. o melhor resultado da dissertação
     v = le(r"melhor resultado de toda a dissertação \(\$([\d.,{}\\]+)\$ "
-           r"recolhas/ep\)")
+           r"recolhas por episódio\)")
     b3 = _por_run("adapt_B3", "cooperative_door_bypass")
     if b3 is not None:
         confere("Porta c/ Alternativa: recolhas/ep", v[0] if v else None,
                 float(b3.mean()), exato=False)
 
     # 5. a replicação a n=28
-    v = le(r"\$(\d+)/(\d+)\$, contra \$(\d+)/28\$ do objetivo puro, "
-           r"\$(\d+)/28\$ do PPO e \$(\d+)/28\$ do SAC")
+    # O Resumo deixou de nomear PPO e SAC (sem siglas, a pedido do
+    # orientador): as duas contagens, iguais, passaram a um único
+    # «$14/28$ de cada método por gradiente». Esse valor é
+    # conferido contra ambos, para que uma divergência futura entre eles
+    # apareça aqui em vez de passar calada.
+    v = le(r"\$(\d+)/(\d+)\$, contra \$(\d+)/28\$ do objetivo puro e "
+           r"\$(\d+)/28\$ de cada método por gradiente")
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from analise_megatreino import carregar as _carregar_mega
@@ -3605,7 +3622,9 @@ def verificar_resumo_abstract():
             if g is None:
                 problemas.append("mega-treino %s: sem dados" % rot)
                 continue
-            idx = 0 if k == 0 else k + 1        # o segundo valor lido é o n=28
+            # lidos: [0] adaptativo, [1] o n=28, [2] objetivo puro,
+            # [3] o par do gradiente — que serve o PPO e o SAC.
+            idx = (0, 2, 3, 3)[k]
             confere("n=28, %s: execuções a 100%%" % rot,
                     v[idx] if v else None, int((g["suc"] >= 1.0).sum()))
             if k == 0:
