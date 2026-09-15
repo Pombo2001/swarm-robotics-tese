@@ -1,7 +1,7 @@
 """Vista 'Ciência' (F3): o estado científico da tese num só ecrã.
 
 Lê o eval_summary.csv (fonte de verdade) e mostra a matriz algoritmo × cenário com
-Ptask (% sucesso) e recolhas/ep, com semáforos. Avisa quando a avaliação está
+Ptask (% sucesso) e chegadas/ep, com semáforos. Avisa quando a avaliação está
 desfasada dos modelos (armadilha nº3) e mostra a significância estatística.
 """
 from datetime import datetime
@@ -55,7 +55,7 @@ def _echart_axis_label():
 
 
 def _escala_option(tbl: dict) -> dict:
-    """Linhas de eficiência (recolhas/agente) vs N, uma série por algoritmo.
+    """Linhas de eficiência (chegadas/agente) vs N, uma série por algoritmo.
 
     Pontos incompatíveis (MLP do PPO/SAC com N!=20) ficam a None → a linha
     interrompe-se, mostrando que só a GNN transfere para outro N (zero-shot).
@@ -88,7 +88,7 @@ def _escala_option(tbl: dict) -> dict:
                              "color": config.ALGO_META[a]["color"],
                              "fontWeight": "bold", "distance": 8}
         series.append(s)
-    base = theme.echart_chrome(y_nome="Recolhas / agente")
+    base = theme.echart_chrome(y_nome="Chegadas / agente")
     base["xAxis"].update({
         "data": [str(n) for n in all_n],
         "name": "Nº de agentes (N)", "nameLocation": "middle", "nameGap": 30,
@@ -102,7 +102,7 @@ _cell_seq = 0
 
 
 def _comparison_html(metrics_a: dict, metrics_b: dict) -> str:
-    """Tabela HTML A vs B com Ptask% e recolhas/ep e delta colorido (maior=melhor)."""
+    """Tabela HTML A vs B com Ptask% e chegadas/ep e delta colorido (maior=melhor)."""
     # Cores de ESTADO (bom/mau), não de série: são as da paleta de status e ficam
     # deliberadamente distintas das dos algoritmos, para um delta nunca se fazer
     # passar por uma série. O sinal (+/−) leva a informação sozinho — a cor só
@@ -151,7 +151,7 @@ def _comparison_html(metrics_a: dict, metrics_b: dict) -> str:
         f"<th style='{th};text-align:left'>Cenário</th>"
         f"<th style='{th};text-align:left'>Algo</th>"
         f"<th style='{th}' colspan='3'>Ptask (sucesso %)</th>"
-        f"<th style='{th}' colspan='3'>Recolhas / ep</th>"
+        f"<th style='{th}' colspan='3'>Chegadas / ep</th>"
         "</tr><tr>"
         f"<th style='{th}'></th><th style='{th}'></th>"
         f"<th style='{th}'>A</th><th style='{th}'>B</th><th style='{th}'>Δ</th>"
@@ -179,7 +179,7 @@ def _cell(info: dict, algo: str = ""):
         if p < 40:
             ui.html('<span class="text-[11px] leading-tight" title="abaixo de 40% '
                     'de sucesso">▲ crítico</span>')
-        ui.label(f"{theme.num(info['recolhas'])} rec/ep").classes("text-xs opacity-80 leading-tight")
+        ui.label(f"{theme.num(info['recolhas'])} cheg/ep").classes("text-xs opacity-80 leading-tight")
         ui.label(f"n={info['n']}").classes("text-[10px] opacity-50 leading-tight")
     delay = 0.15 + (_cell_seq % 24) * 0.04          # cascata pela grelha
     theme.js_diferido(f"var e=document.getElementById('{el_id}');"
@@ -302,7 +302,7 @@ def build():
             # Matriz Ptask × cenário
             table = data.science_table()
             with ui.card().classes(CARD):
-                _section_title("grid_on", "Desempenho por cenário (Ptask · recolhas/ep)")
+                _section_title("grid_on", "Desempenho por cenário (Ptask · chegadas/ep)")
                 if not table:
                     ui.label("Sem dados de avaliação.").classes("text-gray-500")
                 else:
@@ -335,7 +335,7 @@ def build():
             sig = data.significance()
             if sig is not None and len(sig):
                 with ui.card().classes(CARD):
-                    with ui.expansion("Significância estatística (recolhas)", icon="functions") \
+                    with ui.expansion("Significância estatística (chegadas)", icon="functions") \
                             .classes("w-full"):
                         rows = [{
                             "Cenário": r["Label"], "Par": f"{r['A']} vs {r['B']}",
@@ -355,7 +355,7 @@ def build():
             if len(eval_sessions) >= 1:
                 with ui.card().classes(CARD):
                     _section_title("compare_arrows", "Comparar treinos (métricas de avaliação)")
-                    ui.label("Escolhe dois treinos para comparar Ptask e recolhas por cenário. "
+                    ui.label("Escolhe dois treinos para comparar Ptask e chegadas por cenário. "
                              "Δ verde = B melhor que A.").classes("text-xs text-gray-400")
                     default_a = eval_sessions[0]
                     default_b = eval_sessions[1] if len(eval_sessions) > 1 else eval_sessions[0]

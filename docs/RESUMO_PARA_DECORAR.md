@@ -32,7 +32,7 @@ cómputo. Sem vencedor universal — um mapa de escolha.
 
 1. **Lacuna.** Duas escolas (bio-inspirada offline vs. MARL online) e quase
    nenhuma comparação direta, com estatística, em cenários difíceis.
-2. **Bancada.** Simulador 3D próprio, foraging cooperativo, LiDAR 8 m, 20
+2. **Bancada.** Simulador 3D próprio, navegação cooperativa até ao ninho, LiDAR 8 m, 20
    agentes, 7 cenários que isolam uma dificuldade cada + 1 que as compõe.
 3. **QI1 — não há dominante.** 15/21 células a 100 %. GNN ganha em 3 (Quatro
    Salas, Porta Cooperativa, Perceção), empata PPO nos gargalos; PPO ganha o
@@ -79,7 +79,7 @@ cómputo. Sem vencedor universal — um mapa de escolha.
 - Simulador: 139 → **420 passos/s** após vetorização (2,58× no passo; LiDAR 19,5×),
   equivalência bit-exata.
 
-**Quadro de avaliação (recolhas/ep · sucesso · execuções a 100 %)**
+**Quadro de avaliação (chegadas/ep · sucesso · execuções a 100 %)**
 
 | Cenário | GNN | PPO | SAC |
 |---|---|---|---|
@@ -111,7 +111,7 @@ nada significativo.
   p = 0,0016, δ = +0,77) — o efeito que a n=7 ficara aquém do limiar.
 - Ablação da temperagem (4 variantes): 7/7 em ambos os cenários — insensível à afinação.
 
-**Escala (QI2)** — GNN, recolhas por agente, N=20 → N=100 e retenção: Sandbox
+**Escala (QI2)** — GNN, chegadas por agente, N=20 → N=100 e retenção: Sandbox
 3,29 → 1,27 (39 %); Perceção 45 %; Gargalo 58 % (passagem única de 2,5 m; totais
 138,6 → 403,6); Quatro Salas 66 %; Muro em U 78 %; Porta Coop. 88 %; Porta c/
 Alt. **90 %**. Sandbox totais: 37,4 → 65,8 → 97,5 → 127,3.
@@ -149,7 +149,7 @@ PPO e SAC 0/21. 19/21 execuções ainda a subir no último quinto (780 min).
 3. **Orçamento**: 7/21 células ainda subiam; SAC nos gargalos = limite inferior
    (α = 0,1 fixo, declarado na p. 44).
 4. **Só simulação.**
-5. **Dimensão vertical** usada mas não observada (ρ = −0,74 com as recolhas).
+5. **Dimensão vertical** usada mas não observada (ρ = −0,74 com as chegadas).
 6. **Duas costuras na física das paredes** (teto e junções em T): 11 de 343
    modelos atravessam, todos GNN; na campanha final 3/70 (Quatro Salas, execuções
    1, 4, 6), sem inflacionar (55,7 vs 60,3); a A1 adaptativa nas Quatro Salas
@@ -225,7 +225,7 @@ diferença entre dizer «cerca de oito vezes mais caro» e mostrar 97,6 contra 1
 
 | Anexo | Responde a | O que projeta |
 |---|---|---|
-| **A1** | «e no cenário X?» · «essa diferença é significativa?» | as 21 células — recolhas/ep · sucesso · execuções a 100 % — e a linha de significância |
+| **A1** | «e no cenário X?» · «essa diferença é significativa?» | as 21 células — chegadas/ep · sucesso · execuções a 100 % — e a linha de significância |
 | **A2** | «a novidade é robusta?» · «e com mais execuções?» | os quatro braços a n=7 e a n=28, os controlos de orçamento e a ablação |
 | **A3** | «a QI7 deu negativo — vale o quê?» | as duas fases, o navegador geodésico a 53,0 e o limiar pré-registado de 15 |
 | **A4** | «8× mais caro, a comparação é justa?» · «o SAC está mal configurado» | 97,6 vs 12,8 núcleos-hora, e o α = 0,1 declarado na p. 44 |
@@ -253,7 +253,7 @@ Para não hesitar num termo. É o mesmo glossário da cábula
 | **Bimodal** | A distribuição das execuções tem dois picos e nada no meio — resolve ou fica a zero. A média não descreve nenhuma delas; por isso se reportam pontos. |
 | **δ de Cliff** | Tamanho de efeito não-paramétrico em [−1, 1]: fração de pares em que A supera B, menos a inversa. \|δ\| ≥ 0,474 convenciona-se grande; ±1,00 é separação total. |
 | **Mann-Whitney U** | Teste não-paramétrico para amostras independentes. Havendo sementes comuns e emparelhamento, usa-se antes o Wilcoxon *signed-rank*. |
-| **Retenção per capita** | Recolhas por agente a N=100 a dividir pelas de N=20. Mede diluição do recurso, não perda de coordenação. |
+| **Retenção per capita** | Chegadas por agente a N=100 a dividir pelas de N=20. Mede diluição do recurso, não perda de coordenação. |
 | **Núcleos-hora** | Núcleos × horas de uma execução: a moeda que torna comparáveis 195 min com 30 genomas e 48 min com 16 ambientes. |
 | **Estigmergia** | Coordenação por sinais deixados no ambiente. Aqui, o bit que ativa quando um vizinho chega ao ninho e repousa — recrutamento sem comunicação explícita. |
 | **Wall-sliding** | Em vez de imobilizar o agente contra um muro, projeta-se o movimento ortogonalmente à normal da face: o agente desliza. |

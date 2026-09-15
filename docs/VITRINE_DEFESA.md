@@ -15,7 +15,7 @@ um convite a uma pergunta má na defesa. A regra, escrita antes de escolher:
    contagem `n/N a 100%` visível. Se um algoritmo é mau, vê-se que é mau.
 2. **Quando os três correram, aparecem os três.** Um cenário onde o SAC colapsa
    não perde o SAC da figura — é o colapso que é o resultado.
-3. **Métrica comparável, sempre:** recolhas por episódio em avaliação
+3. **Métrica comparável, sempre:** chegadas por episódio em avaliação
    determinística. A *fitness* evolutiva nunca vai ao lado da recompensa do
    PPO/SAC no mesmo eixo (escalas diferentes, grandezas diferentes).
 4. **Cinco cenários, escolhidos para cobrir os quatro desfechos possíveis** —
@@ -41,7 +41,7 @@ Acompanha: `comparacao_barras_geral.png` (os sete cenários de uma vez) e
 É a campanha que responde ao único cenário sem vencedor, e o quadro está
 completo: quatro braços, 28 execuções cada, 560 episódios por braço.
 
-| braço | campanha | recolhas/ep | execuções a 100% |
+| braço | campanha | chegadas/ep | execuções a 100% |
 |---|---|---|---|
 | GNN, novidade **adaptativa** | `mega_A1` | **67,4** | **28/28** |
 | GNN, objetivo puro | `mega_A2` | 32,5 | 15/28 |
@@ -58,9 +58,9 @@ M1); estes números são a leitura direta dos CSV, não a substituem.
 - **QI6, dosagem adaptativa** — `adaptativo_A1` (Muro em U 68,5, 7/7 a 100%)
   contra `adaptativo_A2` (objetivo puro, 31,5, 4/7). O mesmo mecanismo, à escala
   pequena, antes de o mega-treino existir.
-- **Porta com Alternativa a n=21** — `mega_B5`: 80,9 recolhas/ep, **21/21 a
+- **Porta com Alternativa a n=21** — `mega_B5`: 80,9 chegadas/ep, **21/21 a
   100%**. É o cenário decetivo, e é o reforço do T4.
-- **Mapa grande (QI7)** — o navegador de referência faz 54 recolhas/ep e os três
+- **Mapa grande (QI7)** — o navegador de referência faz 54 chegadas/ep e os três
   algoritmos fazem 0,00. Ver `scripts/sanidade_mapa_grande.py`.
 
 ## O que NÃO mostrar

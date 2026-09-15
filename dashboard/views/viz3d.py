@@ -48,7 +48,7 @@ def _episodios():
         nome = (config.SCENARIO_LABEL_SHORT.get(cen)
                 or m.get("rotulo") or cen or f)
         rot = (f"{m.get('algo','?')} · {nome} "
-               f"— {theme.plural(m.get('recolhas', 0), 'recolha')}")
+               f"— {theme.plural(m.get('recolhas', 0), 'chegada')}")
         out[rot] = f
     return out
 
@@ -116,7 +116,7 @@ def build():
                 f'    viz3d.carregar("viz3d_canvas", "/episodios/{ficheiro}", e => {{'
                 f'      const el = document.getElementById("viz3d_estado");'
                 f'      if (el) el.textContent = "passo " + e.passo + " · quadro " +'
-                f'        (e.quadro+1) + "/" + e.total + " · " + e.recolhas + " recolhas";'
+                f'        (e.quadro+1) + "/" + e.total + " · " + e.recolhas + " chegadas";'
                 f'    }});'
                 f'  }} else if (n > 0) {{ setTimeout(() => esperar(n-1), 100); }}'
                 f'}})(50)'

@@ -7,7 +7,7 @@ saber de cor em que pasta ele estava — e as pastas chamam-se `mega_A1` ou
 `09-07-2026_12h52m`. Quem abre o dashboard tem de adivinhar.
 
 As duas regras que este painel não quebra
-1. Compara-se dentro de um cenário, nunca entre cenários. As 123 recolhas/ep
+1. Compara-se dentro de um cenário, nunca entre cenários. As 123 chegadas/ep
    do Gargalo e as 88 da Porta com Alternativa não são a mesma régua: muda o
    mapa, mudam os itens, muda a dificuldade. Um «melhor treino de todos» somando
    os sete seria um número sem significado, e por isso não existe aqui.
@@ -81,10 +81,10 @@ def painel(campanha_atual=None, titulo="Qual foi o melhor treino, por cenário",
 
     with ui.card().classes(CARD + " w-full"):
         theme.section_title("emoji_events", titulo,
-                            "recolhas por episódio · avaliação determinística")
+                            "chegadas por episódio · avaliação determinística")
         ui.label(
             "Cada cenário é uma corrida à parte: só se comparam treinos DENTRO "
-            "do mesmo cenário, porque as recolhas de mapas diferentes não são a "
+            "do mesmo cenário, porque as chegadas de mapas diferentes não são a "
             "mesma régua. A coluna da direita é quantas execuções resolveram o "
             "cenário por completo. Campanhas sem avaliação determinística — as "
             "exploratórias de maio e junho, que só têm curvas de treino — não "
@@ -107,7 +107,7 @@ def painel(campanha_atual=None, titulo="Qual foi o melhor treino, por cenário",
                             f"background:{_COR_ALGO.get(melhor['algo'], theme.INK_MUTED)}")
                         ui.label("%s · %s" % (melhor["algo"], rotulo)) \
                             .classes("text-xs flex-1 truncate")
-                        ui.label("%s rec/ep" % theme.num(melhor["recolhas"])) \
+                        ui.label("%s cheg/ep" % theme.num(melhor["recolhas"])) \
                             .classes("text-xs mono-num font-bold")
                 # Dentro: o ranking completo do cenário.
                 for d in linhas:

@@ -29,7 +29,7 @@ atingível nesta configuração e neste orçamento*, e não como limite do algor
 
 **O que acrescentar se insistirem:** a forma da falha do SAC é diferente da dos
 outros. No mega-treino a $n=28$, nenhuma das suas $28$ execuções passa de
-$45{,}4$ recolhas/ep — é **uniformemente fraco**, e não bimodal como o PPO e o
+$45{,}4$ chegadas/ep — é **uniformemente fraco**, e não bimodal como o PPO e o
 GNN objetivo (**p. 65**). Sub-treino explicaria magnitude baixa; não explica
 sozinho a ausência de qualquer execução boa.
 
@@ -123,7 +123,7 @@ não um paradigma, e em princípio transponível para qualquer um deles.
 
 - **«O SAC é mau.»** → é fraco *nesta configuração e neste orçamento*, e três das
   suas células estão sub-treinadas por medição própria.
-- **«O mapa composto não é resolúvel.»** → é: um navegador geodésico recolhe
-  $53$ itens por episódio nele. O que falha é aprendê-lo.
+- **«O mapa composto não é resolúvel.»** → é: um navegador geodésico faz
+  $53$ chegadas por episódio nele. O que falha é aprendê-lo.
 - **«A QI7 falhou.»** → a campanha correu e respondeu; a resposta é negativa.
 - **Qualquer número que não esteja no PDF.** Se não está lá, não foi medido.

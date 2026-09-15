@@ -22,11 +22,11 @@ def _url(session: str, filename: str) -> str:
 
 
 def _metric_chip(session: str, algo: str, scenario: str):
-    """Chip com Ptask·recolhas DESTE treino, por baixo do vídeo.
+    """Chip com Ptask·chegadas DESTE treino, por baixo do vídeo.
 
     Recebia a `session` e não a usava: lia a `science_table()`, que é a
     avaliação oficial (a campanha final), e mostrava-a por baixo de qualquer
-    vídeo. No «Comparar treinos» punha o mesmo «86% · 38,3 rec/ep» debaixo dos
+    vídeo. No «Comparar treinos» punha o mesmo «86% · 38,3 cheg/ep» debaixo dos
     dois — dois treinos diferentes com a mesma pontuação, a ler-se como um
     empate que ninguém mediu. Agora o número é o da campanha do vídeo, e quando
     essa campanha não tem avaliação determinística diz-se isso em vez de se
@@ -42,12 +42,12 @@ def _metric_chip(session: str, algo: str, scenario: str):
     icon = "check_circle" if p >= 80 else ("error" if p >= 40 else "cancel")
     with ui.row().classes("items-center gap-1 no-wrap mt-1"):
         ui.icon(icon).style(f"color:{color}").classes("text-sm")
-        ui.label(f"{p:.0f}% · {theme.num(info['recolhas'])} rec/ep").classes("text-xs") \
+        ui.label(f"{p:.0f}% · {theme.num(info['recolhas'])} cheg/ep").classes("text-xs") \
             .style(f"color:{color};font-weight:600")
         if info.get("convergentes") is not None:
             # «a 100%» não é enfeite: aqui contam-se as execuções em que TODOS os
             # episódios têm sucesso; a dissertação conta as que têm pelo menos
-            # uma recolha (4 de 21). Ambas certas — daí qualificar qual é qual.
+            # uma chegada (4 de 21). Ambas certas — daí qualificar qual é qual.
             ui.label("(%d/%d execuções a 100%%)"
                      % (info["convergentes"], info["runs"])) \
                 .classes("text-[10px]").style(f"color:{theme.INK_MUTED}")
@@ -78,7 +78,7 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
     e a comparação que o cenário existe para fazer não se via em lado nenhum.
 
     O rótulo não é decoração: sem ele, três GIFs lado a lado leem-se como a
-    mesma campanha, e as recolhas por baixo passariam a comparar-se como se
+    mesma campanha, e as chegadas por baixo passariam a comparar-se como se
     tivessem corrido no mesmo dia com o mesmo código.
     """
     meta = config.ALGO_META.get(algo.upper(), {"color": "#64748b", "icon": "❓", "label": algo.upper()})

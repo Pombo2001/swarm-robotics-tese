@@ -66,7 +66,7 @@ def _echart_axis_label():
 def _robustez_option(table: dict) -> dict:
     """Barras de retenção (%) por cenário, uma série por algoritmo.
 
-    Retenção = recolhas com 10% de falhas / recolhas sem falhas. 100% = imune.
+    Retenção = chegadas com 10% de falhas / chegadas sem falhas. 100% = imune.
     """
     scen_keys = [k for k in config.SCENARIO_KEYS if k in table]
     labels = [config.SCENARIO_LABEL_SHORT[k] for k in scen_keys]
@@ -198,7 +198,7 @@ def build():
                                   for _, g in compat) / len(compat)
                         ui.label(theme.num(pc, 2)).classes(
                             "text-3xl font-bold mono-num mt-2")
-                        ui.label("recolhas por agente · média de %d cenários"
+                        ui.label("chegadas por agente · média de %d cenários"
                                  % len(compat)).classes("text-xs") \
                             .style(f"color:{theme.INK_MUTED}")
                         ui.label("%.0f%% de sucesso" % (100 * suc)).classes(
@@ -248,7 +248,7 @@ def build():
                         ).classes("text-xs").style(f"color:{theme.INK_MUTED}")
                     else:
                         base = theme.echart_chrome(
-                            y_nome="Recolhas por agente", rotacao_x=18)
+                            y_nome="Chegadas por agente", rotacao_x=18)
                         ui.echart({
                             **base,
                             "xAxis": {**base.get("xAxis", {}), "type": "category",
@@ -276,7 +276,7 @@ def build():
             _section_title("health_and_safety",
                            "Robustez a falhas de agentes (Rrobust)",
                            "sempre com N=20 — não segue o seletor acima")
-            ui.label("Recolhas retidas quando 10% dos agentes falham a meio do "
+            ui.label("Chegadas retidas quando 10% dos agentes falham a meio do "
                      "episódio (avaliação emparelhada, mesmas seeds). 100% = imune.") \
                 .classes("text-xs text-gray-400")
             # O seletor de N governa só a escalabilidade; esta bateria correu
@@ -296,7 +296,7 @@ def build():
                     .classes("text-xs font-mono text-gray-500")
             else:
                 ui.echart(_robustez_option(rob)).classes("w-full").style("height:340px")
-                with ui.expansion("Tabela (recolhas: base → com falhas)",
+                with ui.expansion("Tabela (chegadas: base → com falhas)",
                                   icon="table_view").classes("w-full"):
                     rrows = []
                     for k in config.SCENARIO_KEYS:

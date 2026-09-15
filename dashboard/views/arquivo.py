@@ -70,12 +70,12 @@ CANONICAS = [
      "graficos_tese/mega_*"),
     ("Mapa composto — F1 (fechado)", "mapa_grande",
      "zero-shot de topologia: 4 condições × 21 células × 20 ep = 1680 episódios",
-     "QI7 — 84 de 84 células a 0,00 recolhas/ep; os 3 confundentes EXCLUÍDOS. "
+     "QI7 — 84 de 84 células a 0,00 chegadas/ep; os 3 confundentes EXCLUÍDOS. "
      "Repetido de raiz a 31 jul (o 1.º correu com paredes atravessáveis e está "
      "anulado em f1_zeroshot/; o que vale é f1_zeroshot_v2/)", None),
     # As figuras vêm de `graficos_tese/mapa_grande_f2/`, geradas do
     # `eval_by_run.csv` (21 execuções). As da sessão de 16 ago saíram do
-    # `eval_summary.csv`, que só tem o campeão: mostram 7,6 recolhas/ep onde a
+    # `eval_summary.csv`, que só tem o campeão: mostram 7,6 chegadas/ep onde a
     # campanha dá 1,69, e não servem para projetar.
     ("Mapa composto — F2 (fechado)", "mapa_grande",
      "treino nativo: 3 algoritmos × 21 execuções × 20 ep = 1260 episódios "

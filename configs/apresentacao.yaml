@@ -7,7 +7,7 @@
 # Aqui fica só o que não se calcula: a frase que se diz com o mapa no ecrã.
 #
 # Cada número da frase é conferido contra o CSV do treino vencedor por
-# `scripts/verificar_apresentacao.py`: «NN,N rec/ep» a seguir a um algoritmo
+# `scripts/verificar_apresentacao.py`: «NN,N cheg/ep» a seguir a um algoritmo
 # tem de ser a média por execução desse algoritmo nessa campanha, e «N/N» as
 # execuções a 100 %. Uma frase que fale de outra campanha diz-lo («na campanha
 # final»), e esses números conferem-se contra a `final_7d`.
@@ -26,14 +26,14 @@ excluir:
 cenarios:
   - cenario: none
     frase: >-
-      A arena aberta é do generalista: PPO 71,5 rec/ep, 7/7 execuções.
+      A arena aberta é do generalista: PPO 71,5 cheg/ep, 7/7 execuções.
       O evolutivo fica-se por 38,3 — não se escolheu o favorito.
 
   - cenario: u_wall
     frase: >-
       Deceção espacial: sem procura por novidade, nenhum dos três resolve o beco
       de forma fiável. Com a novidade doseada adaptativamente, o GNN faz
-      77,8 rec/ep e 7/7 execuções.
+      77,8 cheg/ep e 7/7 execuções.
 
   - cenario: bottleneck
     frase: >-
@@ -42,22 +42,22 @@ cenarios:
 
   - cenario: four_rooms
     frase: >-
-      A vitória grande do evolutivo: GNN 59,8 rec/ep, 7/7 execuções, contra
+      A vitória grande do evolutivo: GNN 59,8 cheg/ep, 7/7 execuções, contra
       33,6 do PPO e 31,8 do SAC.
 
   - cenario: cooperative_door
     frase: >-
       Três robôs para abrir a porta, e os três algoritmos aprendem-no:
-      GNN 69,8 rec/ep, 7/7, com o desvio mais pequeno de toda a tese.
+      GNN 69,8 cheg/ep, 7/7, com o desvio mais pequeno de toda a tese.
 
   - cenario: cooperative_perception
     frase: >-
-      O cenário mais difícil dos sete — alvos móveis. GNN 19,0 rec/ep,
+      O cenário mais difícil dos sete — alvos móveis. GNN 19,0 cheg/ep,
       6/7 execuções; PPO 15,3 e SAC 16,1. Ninguém domina.
 
   - cenario: cooperative_door_bypass
     frase: >-
-      Porta ou desvio: o enxame escolhe. GNN adaptativo 88,7 rec/ep,
+      Porta ou desvio: o enxame escolhe. GNN adaptativo 88,7 cheg/ep,
       7/7 execuções.
 
   - cenario: mapa_grande

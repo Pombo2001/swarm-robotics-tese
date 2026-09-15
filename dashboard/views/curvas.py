@@ -15,7 +15,7 @@ _section_title = theme.section_title
 # Ordem = predefinição: a métrica de TAREFA primeiro. O «score» mistura fitness
 # evolutiva (~10^5) com recompensa episódica (~10^2), e por omissão dava a
 # impressão de que o GNN é «gigante» quando o que difere é a unidade.
-_METRICS = {"Tarefa (recolhas) — comparável": "task",
+_METRICS = {"Tarefa (chegadas) — comparável": "task",
             "Score (fitness / recompensa) — escalas diferentes": "score"}
 
 
@@ -27,16 +27,16 @@ def _build_fig(curves: dict, metric: str) -> go.Figure:
                           annotations=[dict(text="Sem CSVs de treino locais ainda.",
                                             showarrow=False, font=dict(color="gray"))])
         return fig
-    titles = [f"{a} — {'fitness' if a == 'GNN' and metric == 'score' else ('recompensa' if metric == 'score' else 'recolhas')}"
+    titles = [f"{a} — {'fitness' if a == 'GNN' and metric == 'score' else ('recompensa' if metric == 'score' else 'chegadas')}"
               for a in algos]
     # Na métrica de TAREFA os três medem o mesmo na mesma unidade e partilham o
-    # eixo Y — com eixos próprios, quem recolhe 5 desenha-se tão alto como quem
-    # recolhe 120. No «score» nunca se partilha: a fitness (~10^5) esmagava o
+    # eixo Y — com eixos próprios, quem faz 5 chegadas desenha-se tão alto como
+    # quem faz 120. No «score» nunca se partilha: a fitness (~10^5) esmagava o
     # PPO/SAC (~10^2), e isso é a unidade, não um resultado.
     partilhar = (metric == "task")
     fig = make_subplots(rows=len(algos), cols=1, subplot_titles=titles,
                         vertical_spacing=0.14, shared_yaxes=partilhar)
-    rotulo_y = "recolhas / episódio" if metric == "task" else "fitness / recompensa"
+    rotulo_y = "chegadas / episódio" if metric == "task" else "fitness / recompensa"
     for i, a in enumerate(algos, start=1):
         c = curves[a]
         y = c.get(metric, [])
@@ -47,13 +47,13 @@ def _build_fig(curves: dict, metric: str) -> go.Figure:
         fig.update_yaxes(title_text=rotulo_y, row=i, col=1)
         # Uma linha colada ao zero e um painel sem dados desenham-se igual, e
         # ambos se leem como "o grafico nao carregou". Dizer qual dos dois e:
-        # "0 recolhas em 20 registos" é um RESULTADO (treino que ainda não come);
+        # "0 chegadas em 20 registos" é um RESULTADO (treino que ainda não chega);
         # "sem coluna no CSV" é uma limitação do log, não do algoritmo.
         if not y:
             nota = ("sem coluna de tarefa neste CSV"
                     if metric == "task" else "sem dados neste CSV")
         elif max(y) == 0:
-            nota = f"{len(y)} registos, todos a zero — ainda não recolhe"
+            nota = f"{len(y)} registos, todos a zero — ainda nenhuma chegada"
         else:
             nota = None
         if nota:

@@ -8,7 +8,7 @@
 #   1. a unidade é a CAMPANHA, nunca a execução — nada de "a melhor execução";
 #   2. quando os três algoritmos correram, aparecem os três (um colapso é um
 #      resultado, não um problema de figura);
-#   3. métrica comparável (recolhas/episódio), nunca a fitness ao lado da
+#   3. métrica comparável (chegadas/episódio), nunca a fitness ao lado da
 #      recompensa no mesmo eixo.
 #
 # `figura` usa os nomes canónicos (scripts/figuras_campanha.py:NOMES).
@@ -38,28 +38,28 @@ blocos:
     itens:
       - campanha: mega_A1
         figura: dotplot_eval_u_wall.png
-        nota: "GNN com novidade ADAPTATIVA — 67,4 rec/ep, 28/28 a 100%"
+        nota: "GNN com novidade ADAPTATIVA — 67,4 cheg/ep, 28/28 a 100%"
       - campanha: mega_A2
         figura: dotplot_eval_u_wall.png
-        nota: "GNN objetivo puro — 32,5 rec/ep, 15/28. O mesmo algoritmo sem o mecanismo"
+        nota: "GNN objetivo puro — 32,5 cheg/ep, 15/28. O mesmo algoritmo sem o mecanismo"
       - campanha: mega_A3
         figura: dotplot_eval_u_wall.png
-        nota: "PPO — 35,6 rec/ep, 14/28"
+        nota: "PPO — 35,6 cheg/ep, 14/28"
       - campanha: mega_A4
         figura: dotplot_eval_u_wall.png
-        nota: "SAC — 10,1 rec/ep, 14/28"
+        nota: "SAC — 10,1 cheg/ep, 14/28"
 
   - titulo: "Se houver tempo"
     itens:
       - campanha: adaptativo_A1
         figura: dotplot_eval_u_wall.png
-        nota: "QI6 à escala pequena: GNN adaptativo a 68,5 rec/ep, 7/7 a 100%"
+        nota: "QI6 à escala pequena: GNN adaptativo a 68,5 cheg/ep, 7/7 a 100%"
       - campanha: adaptativo_A2
         figura: dotplot_eval_u_wall.png
         nota: "O controlo do mesmo desenho: objetivo puro, 31,5 e 4/7"
       - campanha: mega_B5
         figura: dotplot_eval_cooperative_door_bypass.png
-        nota: "Porta com Alternativa a n=21 — GNN a 80,9 rec/ep, 21/21 a 100%"
+        nota: "Porta com Alternativa a n=21 — GNN a 80,9 cheg/ep, 21/21 a 100%"
       - campanha: final_7d
         figura: heatmap_ocupacao_gnn_u_wall.png
         nota: "Onde os agentes passam: o contorno do beco, aprendido"

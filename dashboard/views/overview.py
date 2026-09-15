@@ -161,7 +161,7 @@ _TIMELINE = [
      "Publicado no Raspberry Pi para o orientador; o 3D passa a ser desenhado no browser."),
     ("01–02 ago", "F1 do mapa composto fecha",
      "1680 episódios, 84 de 84 células a 0,00: as três causas alternativas excluídas. "
-     "O zero mede transferência (o navegador geodésico faz 53 rec/ep no mesmo mapa)."),
+     "O zero mede transferência (o navegador geodésico faz 53 cheg/ep no mesmo mapa)."),
     ("02 ago", "megaA concluído; F2 pronto",
      "5 fases arquivadas. O F2 arranca a 3 ago com 21 execuções por algoritmo (emenda 19)."),
     ("03 ago", "Mega-treino fecha — e entra na tese",
@@ -177,19 +177,19 @@ _TIMELINE = [
      "(w₀=0,5). Pior: o lançador verificava «sem novidade» e certificava o erro. "
      "27 h descartadas; relançado a 4 ago às 22:57 com o braço certo, e o script "
      "passa a escrever, reler e abortar se não bater."),
-    ("05 ago", "A primeira recolha que o mapa composto alguma vez deu",
-     "Com o braço adaptativo, 4,75 recolhas à geração 140 (era 0,00 em duas execuções "
+    ("05 ago", "A primeira chegada que o mapa composto alguma vez deu",
+     "Com o braço adaptativo, 4,75 chegadas à geração 140 (era 0,00 em duas execuções "
      "completas do objetivo puro, guardadas como controlo). O GNN fecha ~16 ago; "
      "o braço exploratório arranca sozinho quando os gradientes largarem a máquina."),
     ("06 ago", "O mapa composto resolve-se numa execução e não na seguinte",
-     "A execução que dava 4,75 fechou com 6,00 recolhas; a 2.ª fechou a 0,00. É a "
+     "A execução que dava 4,75 fechou com 6,00 chegadas; a 2.ª fechou a 0,00. É a "
      "bimodalidade do Muro em U outra vez, agora no 8.º cenário — e é por isso "
      "que M1 precisa das 21 execuções: a resposta vai ser uma PROPORÇÃO de execuções "
      "que resolvem, não um «resolve». O estado deixa de ser escrito à mão: "
      "scripts/estado_f2.sh grava um instantâneo datado e as vistas leem-no."),
     ("07–10 ago", "O braço dos gradientes fecha — e fica três dias parado",
      "PPO 21/21 a 7 ago, SAC 21/21 a 10 ago: 840 episódios de avaliação "
-     "determinística, 0,00 recolhas em 42 de 42 execuções, a porta cooperativa "
+     "determinística, 0,00 chegadas em 42 de 42 execuções, a porta cooperativa "
      "nunca aberta. A M3 do pré-registo fica respondida para os gradientes. "
      "Ninguém os trouxe até 13 ago porque o watcher procurava a conclusão no log "
      "do script de shell e não no marcador que o pipeline escreve "

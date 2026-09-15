@@ -262,7 +262,7 @@ def build():
                 .style(f"color:{theme.INK_MUTED}")
 
         def _chip(col):
-            """Pontuação DESTE treino: sucesso · recolhas · execuções a 100 %."""
+            """Pontuação DESTE treino: sucesso · chegadas · execuções a 100 %."""
             d = col["linha"]
             if not d or d.get("ptask") is None:
                 ui.label("sem avaliação determinística").classes("text-[10px]") \
@@ -273,7 +273,7 @@ def build():
             with ui.row().classes("items-center gap-1 no-wrap"):
                 ui.icon("check_circle" if p >= 80 else ("error" if p >= 40 else "cancel")) \
                     .style(f"color:{cor}").classes("text-sm")
-                ui.label("%s%% · %s rec/ep" % (theme.num(p, 0), theme.num(d["recolhas"]))) \
+                ui.label("%s%% · %s cheg/ep" % (theme.num(p, 0), theme.num(d["recolhas"]))) \
                     .classes("text-xs mono-num").style(f"color:{cor};font-weight:600")
                 if d.get("convergentes") is not None:
                     ui.label("(%d/%d a 100%%)" % (d["convergentes"], d["runs"])) \
@@ -331,7 +331,7 @@ def build():
                                 .classes("text-sm font-bold").style(f"color:{cor}")
                         conv = ("%d/%d execuções a 100 %%" % (v["convergentes"], v["runs"])
                                 if v.get("convergentes") is not None else "")
-                        ui.label("%s rec/ep · %s" % (theme.num(v["recolhas"]), conv)) \
+                        ui.label("%s cheg/ep · %s" % (theme.num(v["recolhas"]), conv)) \
                             .classes("text-xs mono-num").style(f"color:{theme.INK_MUTED}")
 
                 # A linha dos modelos: um cartão por algoritmo, o mesmo modo em todos.
@@ -370,7 +370,7 @@ def build():
                     ui.label("· sem frase para este cenário em configs/apresentacao.yaml") \
                         .classes("text-xs mt-4").style(f"color:{theme.INK_MUTED}")
                 exc = [m for (c, _camp), m in exclusoes().items() if c == cen]
-                theme.fonte("%s · ranking por recolhas/ep, avaliação determinística%s"
+                theme.fonte("%s · ranking por chegadas/ep, avaliação determinística%s"
                             % (", ".join(sorted({c["campanha"] for c in cols})),
                                (" · excluído: " + "; ".join(exc)) if exc else ""))
 

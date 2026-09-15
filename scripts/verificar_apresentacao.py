@@ -3,7 +3,7 @@
 
 A vista «Apresentação» mostra, por cenário, o treino vencedor do ranking e uma
 frase escrita à mão em `configs/apresentacao.yaml`. A frase diz números —
-«PPO 71,5 rec/ep, 7/7 execuções» — e nada os ligava ao CSV: bastava
+«PPO 71,5 cheg/ep, 7/7 execuções» — e nada os ligava ao CSV: bastava
 reprocessar uma campanha, ou o ranking mudar de vencedor, para a frase passar
 a dizer um número que a figura ao lado já não mostra.
 
@@ -11,7 +11,7 @@ Verifica:
 
 * os oito cenários do simulador têm frase, e nenhuma frase é de um cenário
   que não existe;
-* cada `ALGO … NN,N rec/ep` da frase bate com a média por execução desse
+* cada `ALGO … NN,N cheg/ep` da frase bate com a média por execução desse
   algoritmo no CSV do treino vencedor (o mesmo que a vista mostra);
 * cada `ALGO … N/N` bate com as execuções a 100 % desse algoritmo;
 * um número qualificado com «na campanha final» confere-se contra a `final_7d`;
@@ -44,6 +44,12 @@ YAML = os.path.join("configs", "apresentacao.yaml")
 DIR_EP = os.path.join("results", "episodios_3d", "apresentacao")
 DIR_FIG = os.path.join("results", "figuras_apresentacao")
 TOL_MEDIA = 0.15
+# A unidade escrita nas frases, num sítio só. Esteve em «rec/ep» até o
+# vocabulário da dissertação passar de «recolhas» a «chegadas» (15 set 2026), e
+# a mudança expôs o modo de falha desta régua: o número só é conferido se o
+# padrão o apanhar, pelo que uma frase com outra unidade saía daqui com «0
+# valores conferidos» e um OK. Daí o `_unidade_desconhecida`, abaixo.
+UNIDADE = "cheg/ep"
 ALGOS = ("GNN", "PPO", "SAC")
 
 erros: list[str] = []
@@ -91,7 +97,8 @@ def _atribuicoes(frase: str):
         saida.append((m.group(2), "media", _num(m.group(1)), m.start()))
     marcados = {s[3] for s in saida}
     ultimo, pos_ultimo = None, -1
-    tokens = list(re.finditer(r"\b(GNN|PPO|SAC)\b|(\d+,\d)\s*rec/ep|(\d+)/(\d+)", frase))
+    tokens = list(re.finditer(r"\b(GNN|PPO|SAC)\b|(\d+,\d)\s*%s|(\d+)/(\d+)"
+                              % re.escape(UNIDADE), frase))
     for m in tokens:
         if m.group(1):
             ultimo, pos_ultimo = m.group(1), m.start()
@@ -108,8 +115,24 @@ def _atribuicoes(frase: str):
     return [(a, t, v, final) for a, t, v, _ in saida]
 
 
+def _unidade_desconhecida(frase: str) -> str | None:
+    """A unidade que a frase usa, se não for a que esta régua sabe ler.
+
+    Sem isto, mudar a unidade no YAML não parte nada: os números deixam apenas
+    de casar com o padrão, e o verificador diz OK depois de não conferir nada.
+    """
+    for m in re.finditer(r"\d+,\d\s*([A-Za-zçãõ]+/ep)", frase):
+        if m.group(1) != UNIDADE:
+            return m.group(1)
+    return None
+
+
 def verificar_frase(cenario: str, frase: str) -> None:
     global vistos
+    outra = _unidade_desconhecida(frase)
+    if outra:
+        X(cenario, "a frase mede em «%s» e esta régua só lê «%s» — os números "
+                   "dessa unidade não seriam conferidos" % (outra, UNIDADE))
     venc = ap.vencedor(cenario)
     if not venc:
         X(cenario, "sem treino vencedor no ranking")
@@ -140,8 +163,8 @@ def verificar_frase(cenario: str, frase: str) -> None:
         vistos += 1
         media, cheias, total = stats[algo]
         if tipo == "media" and abs(media - valor) > TOL_MEDIA:
-            X(cenario, "%s: a frase diz %.1f rec/ep, o CSV de %s dá %.1f"
-              % (algo, valor, origem, media))
+            X(cenario, "%s: a frase diz %.1f %s, o CSV de %s dá %.1f"
+              % (algo, valor, UNIDADE, origem, media))
         if tipo == "cheias" and (cheias, total) != valor:
             X(cenario, "%s: a frase diz %d/%d, o CSV de %s dá %d/%d"
               % (algo, valor[0], valor[1], origem, cheias, total))

@@ -11,7 +11,7 @@ Verifica, por item:
 * a figura existe na campanha indicada;
 * a campanha é das que o dashboard mostra (`data.campanhas_visiveis`) — uma
   vitrine que aponte para uma campanha escondida é uma imagem morta;
-* cada `NN,N rec/ep` da nota bate com a média por execução do CSV;
+* cada `NN,N cheg/ep` da nota bate com a média por execução do CSV;
 * cada `N/N` bate com as execuções que resolvem o cenário por completo;
 * os pares `A vs B` / `A contra B` batem com os dois algoritmos citados.
 
@@ -34,7 +34,12 @@ from dashboard import data  # noqa: E402
 
 RAIZ = os.path.join("results", "graficos_tese")
 YAML = os.path.join("configs", "vitrine.yaml")
-TOL_MEDIA = 0.15          # rec/ep — as notas vêm arredondadas a uma decimal
+TOL_MEDIA = 0.15          # cheg/ep — as notas vêm arredondadas a uma decimal
+# A unidade escrita nas notas, num sítio só — ver o mesmo em
+# `verificar_apresentacao.py`. Uma nota que meça noutra unidade não casa com o
+# padrão, e sem o aviso de `_unidade_desconhecida` sairia daqui conferida a
+# zero, com um OK.
+UNIDADE = "cheg/ep"
 ALGOS = ("GNN", "PPO", "SAC")
 
 erros: list[str] = []
@@ -55,7 +60,7 @@ def _eval_csv(campanha: str) -> pd.DataFrame | None:
 
 
 def _por_algo(df: pd.DataFrame, cenario: str) -> dict:
-    """{algoritmo: (média de recolhas por execução, nº a 100%, nº execuções)}."""
+    """{algoritmo: (média de chegadas por execução, nº a 100%, nº execuções)}."""
     sub = df[df["Scenario"] == cenario]
     out = {}
     for algo, g in sub.groupby("Algorithm"):
@@ -84,6 +89,14 @@ def _algos_citados(nota: str) -> list[str]:
     return [a for a in ALGOS if re.search(r"\b%s\b" % a, nota)]
 
 
+def _unidade_desconhecida(nota: str) -> str | None:
+    """A unidade que a nota usa, se não for a que esta régua sabe ler."""
+    for m in re.finditer(r"\d+,\d\s*([A-Za-zçãõ]+/ep)", nota):
+        if m.group(1) != UNIDADE:
+            return m.group(1)
+    return None
+
+
 def verificar_item(campanha: str, figura: str, nota: str) -> None:
     global vistos
     rot = "%s · %s" % (campanha, figura)
@@ -105,6 +118,10 @@ def verificar_item(campanha: str, figura: str, nota: str) -> None:
     if not stats:
         X(rot, "o CSV não tem o cenário %s" % cenario)
         return
+    outra = _unidade_desconhecida(nota)
+    if outra:
+        X(rot, "a nota mede em «%s» e esta régua só lê «%s» — os números dessa "
+               "unidade não seriam conferidos" % (outra, UNIDADE))
     citados = _algos_citados(nota)
     for a in citados:
         if a not in stats:
@@ -112,19 +129,19 @@ def verificar_item(campanha: str, figura: str, nota: str) -> None:
               % (a, cenario, "/".join(sorted(stats))))
     citados = [a for a in citados if a in stats]
 
-    # «NN,N rec/ep»
-    for m in re.finditer(r"(\d+,\d)\s*(?:rec/ep|±)", nota):
+    # «NN,N cheg/ep»
+    for m in re.finditer(r"(\d+,\d)\s*(?:%s|±)" % re.escape(UNIDADE), nota):
         esperado = _num(m.group(1))
         alvo = citados[0] if citados else None
         if alvo is None or alvo not in stats:
-            X(rot, "a nota diz %s rec/ep mas não nomeia um algoritmo do CSV"
-              % m.group(1))
+            X(rot, "a nota diz %s %s mas não nomeia um algoritmo do CSV"
+              % (m.group(1), UNIDADE))
             continue
         real = stats[alvo][0]
         vistos += 1
         if abs(real - esperado) > TOL_MEDIA:
-            X(rot, "%s: a nota diz %s rec/ep, o CSV dá %.1f"
-              % (alvo, m.group(1), real))
+            X(rot, "%s: a nota diz %s %s, o CSV dá %.1f"
+              % (alvo, m.group(1), UNIDADE, real))
 
     # «N/N a 100%»
     for m in re.finditer(r"(\d+)/(\d+)", nota):

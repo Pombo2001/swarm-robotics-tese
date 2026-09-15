@@ -79,7 +79,7 @@ def _estado_f2_curto():
     em = " em %s" % quando if quando else ""
     if e.get("tmux_vivos"):
         return ("F2 a correr%s: PPO %s/%s execuções, GNN %s de %s execuções "
-                "fechadas com recolha"
+                "fechadas com chegada"
                 % (em, g.get("ppo_runs_concluidos", "?"),
                    g.get("runs_previstos", "?"),
                    n.get("fechados_com_recolha", "?"), n.get("fechados", "?")))
@@ -325,7 +325,7 @@ def _numeros():
         # tinha runs fechados. O estado do F2 lê-se do instantâneo, para esta
         # frase não voltar a envelhecer sozinha (scripts/estado_f2.sh).
         n[7] = ("%d/%d" % (zeros, celulas_f1),
-                "células a zero recolhas no mapa composto, sem retreino "
+                "células a zero chegadas no mapa composto, sem retreino "
                 "(%d episódios, 4 condições) — %s"
                 % (episodios, _estado_f2_curto()))
     return n

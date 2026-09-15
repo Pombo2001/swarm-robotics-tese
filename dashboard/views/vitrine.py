@@ -10,7 +10,7 @@ Esta vista mostra uma seleção declarada em `configs/vitrine.yaml`, com a
 regra escrita ao lado de cada figura. A regra está em `docs/VITRINE_DEFESA.md`
 e resume-se a: a unidade é a campanha e não a execução (nada de «a melhor execução»);
 quando os três algoritmos correram, aparecem os três; e a métrica é sempre
-recolhas/episódio, nunca a fitness ao lado da recompensa.
+chegadas/episódio, nunca a fitness ao lado da recompensa.
 
 Uma figura em falta aparece como falta, com o caminho — nunca em silêncio. A
 alternativa (esconder o que não existe) faria a vitrine parecer completa numa

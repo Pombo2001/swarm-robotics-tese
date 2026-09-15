@@ -27,7 +27,7 @@ CARD = theme.CARD + " p-4"
 _RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 # `f1_zeroshot/` é a corrida ANULADA a 29 jul (paredes de 30 m numa arena de
 # raio 60: os agentes voavam por cima do labirinto, env_hash 267a7b547aed). Esta
-# vista lia-a — mostrava 4,96 recolhas/ep como se fosse o resultado do mapa. O F1
+# vista lia-a — mostrava 4,96 chegadas/ep como se fosse o resultado do mapa. O F1
 # que vale é a repetição de 31 jul, `f1_zeroshot_v2/` (env_hash e930abe4d992).
 DIR_F1 = os.path.join(_RAIZ, "results", "mapa_grande", "f1_zeroshot_v2")
 DIR_F1_ANULADO = os.path.join(_RAIZ, "results", "mapa_grande", "f1_zeroshot")
@@ -215,10 +215,10 @@ def _texto_f2():
     fechados, com = n.get("fechados", 0), n.get("fechados_com_recolha", 0)
     if fechados:
         # O número que interessa e que nenhuma frase dizia: em quantas
-        # execuções o mapa composto é RESOLVIDO. Uma execução com 6 recolhas e
+        # execuções o mapa composto é RESOLVIDO. Uma execução com 6 chegadas e
         # outra com 0 não é «o mapa composto foi resolvido» — é uma proporção, e
         # é ela que M1 mede.
-        partes.append("%d de %d com recolha (%s)"
+        partes.append("%d de %d com chegada (%s)"
                       % (com, fechados,
                          ", ".join(theme.num(r["recolhas"], 2)
                                    for r in n.get("runs_fechados", []))))
@@ -368,7 +368,7 @@ def _painel_f2():
 
         with ui.grid(columns=5).classes("w-full gap-px"):
             for cab in ("algoritmo", "execuções", "convergentes",
-                        "recolhas/ep", "porta aberta"):
+                        "chegadas/ep", "porta aberta"):
                 ui.label(cab).classes("text-[10px] py-1") \
                     .style(f"color:{theme.INK_MUTED}")
             for a in r["algos"]:
@@ -473,7 +473,7 @@ def build():
                     "paredes tinham 30 m de altura numa arena esférica de raio 60: "
                     "sobravam 45 m de céu aberto e os agentes atravessavam o "
                     "labirinto por cima — a 59 m de altura, o episódio quase "
-                    "inteiro. As células que recolheram, recolheram a voar."
+                    "inteiro. As células que chegaram, chegaram a voar."
                     % (", ".join(sorted(dig_csv)) or "—", dig_agora)
                 ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
                 ui.label(
@@ -583,7 +583,7 @@ def build():
                 ).classes("text-xs mt-1").style(f"color:{theme.INK_MUTED}")
                 ui.label(
                     "O zero não é um mapa impossível: um navegador que não aprendeu "
-                    "nada (descida do campo geodésico) faz 53,0 recolhas/ep neste "
+                    "nada (descida do campo geodésico) faz 53,0 chegadas/ep neste "
                     "mesmo mapa, contra 82,0 no Quatro Salas. Há caminho e cabe no "
                     "episódio ⇒ o que o zero mede é transferência, que é o que a "
                     "QI7 pergunta."

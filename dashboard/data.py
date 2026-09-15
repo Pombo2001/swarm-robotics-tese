@@ -208,7 +208,7 @@ def sessions_with_eval():
 
 
 def session_metrics(session: str):
-    """Métricas Ptask/recolhas por (cenário, algo) de um treino, ou None."""
+    """Métricas Ptask/chegadas por (cenário, algo) de um treino, ou None."""
     return _aggregate_eval(_session_eval_path(session))
 
 
@@ -275,7 +275,7 @@ def significance():
 
 # Robustez a falhas (Rrobust)
 def robustness_table():
-    """Por (cenário, algo): recolhas base vs com 10% de falhas + retenção %.
+    """Por (cenário, algo): chegadas base vs com 10% de falhas + retenção %.
 
     Base = `eval_{algo}_{cenário}.csv` — o ficheiro IRMÃO do `_fail10`, da mesma
     corrida e dos mesmos modelos.
@@ -681,7 +681,7 @@ def ranking_por_cenario():
     `09-07-2026_12h52m`, que não ajudam.
 
     O ranking é SEMPRE dentro de um cenário, nunca entre cenários. As 121
-    recolhas/ep do Gargalo e as 67 do Muro em U não são a mesma régua — o mapa,
+    chegadas/ep do Gargalo e as 67 do Muro em U não são a mesma régua — o mapa,
     o número de itens e a dificuldade mudam —, e um «melhor treino overall»
     somando os dois seria um número sem significado. Por isso não existe aqui:
     a pergunta a que isto responde é «neste cenário, qual foi o melhor treino».
@@ -916,7 +916,7 @@ def pontuacao_campanha(campanha: str, cenario: str, algo: str):
     Existe porque o chip por baixo dos vídeos recebia a sessão e não a usava:
     lia a `science_table()`, que é a avaliação OFICIAL, e mostrava-a por baixo
     de qualquer vídeo. No modo «Comparar treinos» isso punha o mesmo «86% ·
-    38,3 rec/ep» debaixo de dois treinos diferentes — a ler-se como um empate
+    38,3 cheg/ep» debaixo de dois treinos diferentes — a ler-se como um empate
     medido, quando era o mesmo número escrito duas vezes.
     """
     alvo = _ALIAS.get(campanha, campanha)
@@ -1115,7 +1115,7 @@ F2_GLOB = os.path.join(config.BASE_DIR, "results", "mapa_grande", "f2*", "**",
 
 
 def f2_resultados():
-    """Por algoritmo: execuções, convergentes, recolhas/ep e uso da porta.
+    """Por algoritmo: execuções, convergentes, chegadas/ep e uso da porta.
 
     A vista do Mapa mostrava o F1 inteiro e, do F2, só uma linha de estado com o
     que o servidor está a correr. Entretanto o braço dos gradientes fechou (7 e
@@ -1128,7 +1128,7 @@ def f2_resultados():
     `analise_mapa_grande.py`: um braço que apareça no disco entra aqui sozinho,
     incluindo o do GNN quando fechar.
 
-    «Convergente» é ≥1 recolha na MÉDIA POR EXECUÇÃO, que é a unidade
+    «Convergente» é ≥1 chegada na MÉDIA POR EXECUÇÃO, que é a unidade
     estatística da tese (M2 do pré-registo) — não por episódio. E o limiar
     ⌈5/7 × n⌉ sai do n do próprio CSV, nunca de um 15 escrito à mão: se uma
     execução faltar, a fasquia desce e tem de descer à vista de todos.
