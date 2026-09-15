@@ -310,7 +310,7 @@ def figura_boxplot(run_means, scen, destino):
                   color="black", size=5, alpha=0.6, jitter=0.12, ax=ax)
     ax.set_title(f"Fiabilidade entre Execuções — {SCENARIO_LABELS.get(scen, scen)}",
                  fontsize=14, fontweight="bold", pad=12)
-    ax.set_ylabel("Recolhas por episódio (média da execução, 20 ep)", fontsize=10)
+    ax.set_ylabel("Chegadas por episódio (média da execução, 20 ep)", fontsize=10)
     ax.set_xlabel("Algoritmo", fontsize=11)
     ax.grid(True, linestyle="--", alpha=0.4, axis="y")
     nr = int(d.groupby("Algorithm")["Run"].nunique().max())
@@ -335,9 +335,9 @@ def figura_barras(ev, destino):
     fig, ax = plt.subplots(figsize=(14, 7))
     sns.barplot(data=dd, x="Cenário", y="food_collected", hue="Algorithm",
                 order=ordem, hue_order=ALGOS, errorbar="sd", palette=ALGO_COLORS, ax=ax)
-    ax.set_title("Resumo Geral — Recolhas por Episódio (avaliação determinística)",
+    ax.set_title("Resumo Geral — Chegadas por Episódio (avaliação determinística)",
                  fontsize=15, fontweight="bold", pad=14)
-    ax.set_ylabel("Recolhas Médias por Episódio (± Desvio Padrão)", fontsize=11)
+    ax.set_ylabel("Chegadas Médias por Episódio (± Desvio Padrão)", fontsize=11)
     ax.set_xlabel("Cenário", fontsize=11)
     ax.legend(title="Algoritmo", loc="upper right", fontsize=11)
     ax.grid(True, linestyle="--", alpha=0.4, axis="y")

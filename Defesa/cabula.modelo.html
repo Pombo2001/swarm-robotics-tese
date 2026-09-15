@@ -319,37 +319,35 @@ ol.lim b{color:var(--tinta); font-weight:600}
 
     <div class="bloco">
       <h4>O Resumo, palavra por palavra — é isto que o júri leu</h4>
-      <p class="nota">As normas do Iscte limitam-no a 250 palavras; tem 245, e o <em>Abstract</em> 243.
+      <p class="nota">As normas do Iscte limitam-no a 250 palavras; tem 235, e o <em>Abstract</em> 234.
         Vale a pena sabê-lo de cor: é a única parte da dissertação que se pode garantir que todos os
         membros do júri leram, e as primeiras perguntas costumam sair daqui. Os trinta segundos acima
         são a versão falada disto.</p>
-      <p class="prosa">Para comparar a Aprendizagem por Reforço Multiagente e a Otimização Bio-inspirada
-        no controlo de enxames robóticos, implementou-se num simulador de alta fidelidade o <em>framework</em>
-        descentralizado <em>Robust and Scalable Swarm Control</em> (partilha de parâmetros; <em>Proximal Policy Optimization</em> e
-        <em>Soft Actor-Critic</em>) e um
-        controlador neuroevolutivo sobre grafos com atenção, invariante à dimensão do enxame. Avaliaram-se em
-        sete cenários de dificuldade crescente (7 execuções independentes por combinação), sob estatística
-        não-paramétrica.</p>
-      <p class="prosa">Com <em>homing</em> geodésico na função de <em>fitness</em>, o controlador evolutivo
-        supera os métodos de gradiente em três cenários, iguala o melhor deles noutros dois e transfere,
-        sozinho, sem retreino para dimensões não vistas (<i>N</i> de 10 a 100, com 100% de sucesso); os de
-        gradiente mantêm a fiabilidade em espaço aberto e a eficiência. O cenário de deceção espacial, bimodal
-        nos três algoritmos base, só cedeu à novidade doseada <em>adaptativamente</em>: preserva os 7/7
-        execuções no Muro em U e atinge, na Porta com Alternativa, o melhor resultado de toda a dissertação
-        (88,7 recolhas por episódio); uma replicação pré-registada com 28 execuções por braço confirmou-o
-        (28/28, contra 15/28 do objetivo puro e 14/28 de cada método por gradiente). Um oitavo cenário, compondo num labirinto de
-        103 × 62 m as dificuldades dos sete, degrada a fiabilidade e não a magnitude: é resolvido em 4 das 21
-        execuções independentes, abaixo do limiar pré-registado.</p>
-      <p class="prosa">A hipótese de que a inteligência adaptativa supera a robustez estática confirma-se
-        apenas em parte: a escala decide-se na <mark>representação</mark> e não no otimizador; sob gradientes
-        enganadores, no <mark>sinal de treino</mark>.</p>
+      <p class="prosa">Esta dissertação compara a aprendizagem por reforço multiagente e a otimização bio-inspirada no controlo
+        descentralizado de enxames de robôs. Num simulador próprio, vinte robôs têm de chegar em conjunto a um
+        ninho. Um controlador evolutivo, uma rede neuronal sobre grafos com atenção, foi comparado com dois
+        algoritmos de aprendizagem por reforço por gradiente (<em>Proximal Policy Optimization</em> e <em>Soft
+        Actor-Critic</em>) em sete cenários de dificuldade crescente, com 7 treinos independentes por algoritmo
+        e cenário.</p>
+      <p class="prosa">Com uma função de aptidão que premeia também a aproximação ao ninho, o controlador evolutivo supera os
+        métodos de gradiente em três cenários, iguala o melhor noutros dois e é o único que funciona sem novo
+        treino com enxames de 10 a 100 robôs; os métodos de gradiente são mais fiáveis em espaço aberto e gastam
+        menos cálculo. O cenário que obriga a afastar-se do ninho para o alcançar só foi resolvido de forma
+        consistente com pressão por comportamentos novos, atenuada após a descoberta: numa replicação com 28
+        treinos por algoritmo, resolveu-o em 28, contra 15 sem essa pressão e 14 de cada método de gradiente. Um
+        oitavo cenário, que junta as dificuldades dos sete num labirinto de 103 × 62 m, é resolvido em apenas 4
+        de 21 treinos.</p>
+      <p class="prosa">A hipótese de que a aprendizagem adaptativa supera a otimização estática confirma-se só em parte:
+        escalar depende da <mark>representação</mark> da política, não do otimizador; nos cenários enganadores,
+        depende do <mark>sinal de treino</mark>.</p>
       <p class="nota"><strong>Palavras-chave:</strong> Robótica de Enxame, Aprendizagem por Reforço
         Multiagente, Otimização Bio-inspirada, Redes Neuronais de Grafos.</p>
       <p class="nota">O <em>Abstract</em> é a tradução exata deste texto — mesma sequência de valores, na
         mesma ordem, o que um verificador confere a cada <em>commit</em>. Termos que mudam de forma em
-        inglês, para não hesitar: <em>Muro em U</em> → <em>U-shaped wall</em>; <em>Porta com Alternativa</em>
-        → <em>Alternative-Path Door</em>; <em>recolhas por episódio</em> → <em>collections per episode</em>; <em>execuções</em>
-        → <em>runs</em>; <em>novidade doseada adaptativamente</em> → <em>novelty dosed adaptively</em>.</p>
+        inglês, para não hesitar: <em>função de aptidão</em> → <em>fitness function</em>; <em>métodos de
+        gradiente</em> → <em>gradient-based methods</em>; <em>treinos</em> → <em>training runs</em>;
+        <em>pressão por comportamentos novos</em> → <em>pressure towards novel behaviours</em>;
+        <em>cenários enganadores</em> → <em>deceptive scenarios</em>.</p>
     </div>
   </section>
 
@@ -417,7 +415,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <p class="nota">A ordem por que os resultados se desbloqueiam uns aos outros — é assim que se conta em voz alta.</p>
     <ol class="passos">
       <li><span class="p">1</span><div><b>Lacuna</b><p>Duas escolas — bio-inspirada offline contra MARL online — e um único estudo em 58 a compará-las, sem escala, sem falhas e sem estatística.</p></div></li>
-      <li><span class="p">2</span><div><b>Bancada</b><p>Simulador 3D próprio, foraging cooperativo, LiDAR de 8 m, 20 agentes, 7 cenários que isolam uma dificuldade cada e 1 que as compõe.</p></div></li>
+      <li><span class="p">2</span><div><b>Bancada</b><p>Simulador 3D próprio, navegação cooperativa até ao ninho, LiDAR de 8 m, 20 agentes, 7 cenários que isolam uma dificuldade cada e 1 que as compõe.</p></div></li>
       <li><span class="p">3</span><div><b>QI1 — não há dominante</b><p>15 das 21 células a 100 %. O GNN ganha em 3, empata com o PPO nos gargalos, o PPO ganha o Sandbox, e o Muro em U não é de ninguém.</p></div></li>
       <li><span class="p">4</span><div><b>QI5 — a fitness era a causa</b><p>O «colapso do evolutivo» era <em>fitness exploitation</em>: o homing terminal geodésico levou 28 execuções de 0 % a 100 %. Necessário, mas não suficiente — o Muro em U continuou bimodal.</p></div></li>
       <li><span class="p">5</span><div><b>QI6 — a novidade compra a descoberta</b><p>Peso fixo: 7/7 no Muro em U, mas com custo na Porta com Alternativa. Doseada adaptativamente: 7/7 sem custo; e a n=28, <strong>28/28 contra 15/28 e 14/28</strong>.</p></div></li>
@@ -542,7 +540,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       focos — explorar o mapa e encontrar o ninho — em que a tarefa domina claramente todo o <em>shaping</em>.</p>
     <div class="formula">ℛ(s, a) = <em>R<sub>tarefa</sub></em> + <em>R<sub>progresso</sub></em> + <em>R<sub>exploração</sub></em> − <em>R<sub>controlo</sub></em></div>
     <div class="pares">
-      <div class="par"><span>Tarefa, por recolha (repetível)</span><b>+300</b></div>
+      <div class="par"><span>Tarefa, por chegada (repetível)</span><b>+300</b></div>
       <div class="par"><span>Bónus único de abertura da porta</span><b>+100</b></div>
       <div class="par"><span>Progresso (PBRS)</span><b>10,0 · (Φ<sub>t−1</sub> − Φ<sub>t</sub>)</b></div>
       <div class="par"><span>Exploração, por célula nova de 2×2 m</span><b>+0,5</b></div>
@@ -638,24 +636,24 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <div class="formula">J(θ<sub>k</sub>) = <em>f̄<sub>k</sub> · λ<sub>task</sub></em> + <em>β · h̄<sub>k</sub></em>&nbsp;&nbsp;&nbsp;λ<sub>task</sub> = 10 000&nbsp;&nbsp;β = 5 000</div>
     <p class="prosa">O <strong>homing</strong> h̄ ∈ [0,1] é a fração média de aproximação ao ninho <em>no fim do
       episódio</em>, medida por agente como clip((Φ₀ − Φ<sub>T</sub>)/Φ₀, 0, 1). Os pesos garantem que
-      <strong>uma única recolha vale o dobro do shaping máximo</strong>: assim que um genoma recolhe, a tarefa
+      <strong>uma única chegada vale o dobro do shaping máximo</strong>: assim que um genoma chega ao ninho, a tarefa
       domina a seleção.</p>
     <p class="prosa">Porquê o homing terminal e não o retorno acumulado — a decisão central. <strong>O retorno
       acumulado é farmável</strong>: os termos de progresso e exploração rendem a cada passo, pelo que genomas que
       vagueiam indefinidamente maximizam-no sem nunca entrar no ninho. Observaram-se
-      <mark>retornos brutos ≈ 88 000 com zero recolhas</mark>. E parar no ninho — a pré-condição da tarefa — corta
+      <mark>retornos brutos ≈ 88 000 com zero chegadas</mark>. E parar no ninho — a pré-condição da tarefa — corta
       precisamente o rendimento por passo. O homing elimina a patologia por construção: depende apenas dos estados
       <em>extremos</em> do episódio, pelo que vaguear não o aumenta; a única forma de o maximizar é
       <strong>terminar</strong> junto ao ninho.</p>
     <p class="prosa">A anatomia do colapso, para contar em voz alta: a neuroevolução otimiza a partir de um único
       escalar por episódio, <em>sem atribuição de crédito temporal</em> — não sabe qual ação, em que instante,
-      contribuiu. Com tarefa esparsa, quase todos os genomas recolhem zero, a fitness reduz-se ao shaping e, saturada
+      contribuiu. Com tarefa esparsa, quase todos os genomas fazem zero chegadas, a fitness reduz-se ao shaping e, saturada
       por uma tanh, converge para um valor comum a toda a população: um <strong>planalto onde a pressão seletiva se
       anula</strong> e a evolução deambula. A cura não foi mais orçamento — foi melhor desenho do sinal.</p>
     <div class="factos">
       <div class="facto"><b>28 / 28</b><span>execuções dos 4 cenários de gargalo, de 0 % a 100 %</span></div>
-      <div class="facto"><b>≈ 88 000</b><span>retorno bruto farmado com zero recolhas</span></div>
-      <div class="facto"><b>2×</b><span>uma recolha vale o dobro do shaping máximo</span></div>
+      <div class="facto"><b>≈ 88 000</b><span>retorno bruto farmado com zero chegadas</span></div>
+      <div class="facto"><b>2×</b><span>uma chegada vale o dobro do shaping máximo</span></div>
     </div>
     <p class="nota">A ressalva que convém dizer antes de a apontarem: esta <em>sensibilidade ao desenho</em> é, em si
       mesma, um custo de engenharia do paradigma evolutivo que os métodos de gradiente, com atribuição de crédito
@@ -665,7 +663,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
   <!-- ================= CENÁRIOS ================= -->
   <section id="cenarios">
     <div class="cab"><span class="n">09</span><h2>Os sete cenários</h2></div>
-    <p class="nota">Recolhas por episódio na avaliação determinística (média de 7 execuções × 20 episódios), taxa de
+    <p class="nota">Chegadas por episódio na avaliação determinística (média de 7 execuções × 20 episódios), taxa de
       sucesso, e quantas execuções chegam a 100 %. <strong>As barras são relativas dentro de cada cenário</strong> —
       comparam os três algoritmos entre si, nunca os cenários uns com os outros.</p>
     <div class="grelha">
@@ -728,7 +726,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
           <div class="lin ppo"><span class="alg">PPO</span><div class="trilho"><div class="barra" style="width:96.1%"></div></div><span class="val">67,1 · 100 % · 7/7</span></div>
           <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:89.0%"></div></div><span class="val">62,1 · 100 % · 7/7</span></div>
         </div>
-        <span class="vered resp"><b>O GNN ganha</b> os dois pares (δ = +0,71 e +1,00). A margem média é pequena, mas consistente entre execuções — e é a consistência que dá o δ. Aqui o evolutivo é quase determinístico: desvios de 1–2 recolhas/ep.</span>
+        <span class="vered resp"><b>O GNN ganha</b> os dois pares (δ = +0,71 e +1,00). A margem média é pequena, mas consistente entre execuções — e é a consistência que dá o δ. Aqui o evolutivo é quase determinístico: desvios de 1–2 chegadas/ep.</span>
       </article>
 
       <article class="cen">
@@ -857,8 +855,8 @@ ol.lim b{color:var(--tinta); font-weight:600}
       chegam a correr: a MLP tem entrada de dimensão fixa. O grafo corre em todas — 100 % de sucesso em 28 de 28
       combinações, nos sete cenários. É a conclusão que a arquitetura assimétrica <em>permite</em> tirar: a escala é
       da representação.</p>
-    <figure><div class="chapa"><img src="__IMG_escala__" alt="Escalabilidade zero-shot no Sandbox: recolhas por agente de N=10 a N=100"></div>
-      <figcaption>Recolhas <em>por agente</em> caem com N — é congestão, não perda de política. O total sobe: no Sandbox, 37,4 → 65,8 → 97,5 → 127,3.</figcaption></figure>
+    <figure><div class="chapa"><img src="__IMG_escala__" alt="Escalabilidade zero-shot no Sandbox: chegadas por agente de N=10 a N=100"></div>
+      <figcaption>Chegadas <em>por agente</em> caem com N — é congestão, não perda de política. O total sobe: no Sandbox, 37,4 → 65,8 → 97,5 → 127,3.</figcaption></figure>
     <div class="rolo"><table>
       <thead><tr><th>Cenário</th><th>Retenção per capita, N=20 → N=100</th></tr></thead>
       <tbody>
@@ -948,7 +946,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div class="facto"><b>103 × 62 m</b><span>o mapa — raio de 60 m, contra 15 dos outros</span></div>
       <div class="facto"><b>128,8 m</b><span>do spawn ao ninho</span></div>
       <div class="facto"><b>106</b><span>obstáculos</span></div>
-      <div class="facto"><b>53,0</b><span>recolhas/ep do navegador geodésico — o mapa É resolúvel</span></div>
+      <div class="facto"><b>53,0</b><span>chegadas/ep do navegador geodésico — o mapa É resolúvel</span></div>
     </div>
     <p class="nota">O desenho foi auditado <em>antes</em> de existirem dados: existe caminho do nascimento ao ninho
       para todos os agentes mesmo com a porta fechada, e um navegador geodésico resolve-o (53,0 aqui, contra 82,0 nas
@@ -962,7 +960,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <p class="prosa"><strong>F1, zero-shot:</strong> 0,00 em 84 das 84 células, 1 680 episódios, com 4 condições que
       excluem que a causa seja a escala da observação, os obstáculos dispersos ou as dimensões associadas à porta.
       <strong>F2, treino nativo:</strong> 21 execuções × 3 algoritmos → o GNN faz <strong>4/21</strong> contra o
-      limiar pré-registado de 15, com 1,7 recolhas/ep; o PPO e o SAC fazem 0/21. Em 19 das 21 execuções o melhor
+      limiar pré-registado de 15, com 1,7 chegadas/ep; o PPO e o SAC fazem 0/21. Em 19 das 21 execuções o melhor
       <em>fitness</em> ainda subia no último quinto dos 780 min, com a geração do máximo a cair, em mediana, a 95 %
       do orçamento.</p>
     <figure><div class="chapa"><img src="__IMG_mg_curv__" alt="Curvas de treino no mapa composto"></div>
@@ -971,7 +969,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <h4>O diagnóstico: três causas, não uma</h4>
       <ol class="lim">
         <li><div><b>O orçamento não chegou ao planalto.</b> Nas quatro execuções que resolvem, a descoberta é um salto de fitness de mais de uma ordem de grandeza na fase final. Alargar os 780 min é a via com mais indicação empírica.</div></li>
-        <li><div><b>O horizonte do episódio aproxima, mas não converte.</b> Duplicar <code>max_steps</code> de 2000 para 4000 <em>sem retreino</em> faz a distância mínima mediana ao ninho cair de 27,6 para 12,4 m e quase duplica a melhor execução (12 → 22 recolhas/ep) — mas leva as execuções com pelo menos uma recolha apenas de 4 para 6 em 21. Mais tempo traduz-se em mais percurso, não em mais tarefas fechadas.</div></li>
+        <li><div><b>O horizonte do episódio aproxima, mas não converte.</b> Duplicar <code>max_steps</code> de 2000 para 4000 <em>sem retreino</em> faz a distância mínima mediana ao ninho cair de 27,6 para 12,4 m e quase duplica a melhor execução (12 → 22 chegadas/ep) — mas leva as execuções com pelo menos uma chegada apenas de 4 para 6 em 21. Mais tempo traduz-se em mais percurso, não em mais tarefas fechadas.</div></li>
         <li><div><b>A aproximação final é o verdadeiro alvo.</b> Há 5 execuções que param a menos de 13 m do ninho — 3 delas a menos de 5 m — e não entram nele nem com o dobro do tempo. O próximo refinamento é do sinal de treino ou da observação, não do orçamento.</div></li>
       </ol>
       <p class="nota">Essas medições são <strong>diagnóstico</strong>, com 3 episódios determinísticos por execução
@@ -1033,7 +1031,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <li><span class="x">✗</span><div><b>«A novidade melhora sempre.»</b> Com peso fixo custa: δ = −1,00 na Porta com Alternativa.</div></li>
       <li><span class="x">✗</span><div><b>«O evolutivo é melhor.»</b> É melhor em navegação estruturada, e é ≈ 8× mais caro.</div></li>
       <li><span class="x">✗</span><div><b>«O SAC é mau.»</b> É fraco <em>nesta configuração e neste orçamento</em>, e três das suas células estão sub-treinadas por medição própria.</div></li>
-      <li><span class="x">✗</span><div><b>«O mapa composto não é resolúvel.»</b> É: um navegador geodésico recolhe 53 itens por episódio. O que falha é aprendê-lo.</div></li>
+      <li><span class="x">✗</span><div><b>«O mapa composto não é resolúvel.»</b> É: um navegador geodésico faz 53 chegadas por episódio. O que falha é aprendê-lo.</div></li>
       <li><span class="x">✗</span><div><b>«A QI7 quase deu» ou «falhou».</b> A campanha correu e respondeu; a resposta é negativa, com o limiar fixado antes dos dados.</div></li>
       <li><span class="x">✗</span><div><b>Comparar valores absolutos das curvas de treino entre paradigmas.</b> O GNN usa fitness evolutiva e o PPO/SAC recompensa episódica — as escalas não são comparáveis.</div></li>
       <li><span class="x">✗</span><div><b>Qualquer número que não esteja no PDF.</b> Se não está lá, não foi medido.</div></li>
@@ -1048,7 +1046,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <li><div><b>Sete execuções por célula</b> — replicado a 28 onde a leitura é de contagens.</div></li>
       <li><div><b>Orçamento</b> — 7 das 21 células ainda subiam; o SAC nos gargalos é um limite inferior (α = 0,1 fixo, declarado na p. 44).</div></li>
       <li><div><b>Só simulação.</b> Nenhum robot físico — o <em>Deployment Gap</em> é antecipado no desenho mas não validado empiricamente.</div></li>
-      <li><div><b>Dimensão vertical</b> usada mas não observada (ρ = −0,74 com as recolhas).</div></li>
+      <li><div><b>Dimensão vertical</b> usada mas não observada (ρ = −0,74 com as chegadas).</div></li>
       <li><div><b>Duas costuras na física das paredes</b> — teto e junções em T: 11 de 343 modelos atravessam, todos GNN; na campanha final são 3 de 70 (Quatro Salas, execuções 1, 4 e 6), sem inflacionar o resultado (55,7 contra 60,3). A A1 adaptativa nas Quatro Salas está contaminada.</div></li>
       <li><div><b>O spawn no Gargalo</b> sobrepõe-se à barreira em 17,9 % dos casos — penaliza, não favorece.</div></li>
       <li><div><b>A QI7 assenta num só mapa composto.</b></div></li>
@@ -1077,7 +1075,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <ol class="lim">
       <li><div><b>Alargar a bateria estatística onde ainda é n=7.</b> Três frentes: os comparadores exploratórios do Sandbox e da Perceção, que ficaram a 7 contra 21 do braço adaptativo (é essa assimetria, não a direção do efeito, que mantém o δ = +0,39 do Sandbox longe do limiar); o SAC no Gargalo, cujas 21 execuções correram com 48 min e não são comparáveis; e as 21 combinações da campanha final, curtas para contrastar <em>taxas de convergência</em>.</div></li>
       <li><div><b>Política de gradiente com atenção.</b> Integrar o mecanismo de atenção sobre grafo numa política treinável por gradiente, isolando o efeito do otimizador do efeito da arquitetura. Remove a assimetria que hoje confunde a comparação.</div></li>
-      <li><div><b>Novos cenários e tarefas.</b> Cobertura e vigilância de área, para além do foraging e do cerco de alvos móveis.</div></li>
+      <li><div><b>Novos cenários e tarefas.</b> Cobertura e vigilância de área, para além da navegação até ao ninho e do cerco de alvos móveis.</div></li>
       <li><div><b>Validação sim-to-real.</b> e-puck, Khepera IV, ou um simulador de maior fidelidade, quantificando empiricamente o <em>Deployment Gap</em>.</div></li>
       <li><div><b>Hibridização de paradigmas.</b> Inicialização evolutiva seguida de afinação por RL, combinando a escalabilidade de um com a eficiência do outro.</div></li>
       <li><div><b>Refinar a dosagem adaptativa.</b> Re-armar w quando a população estagna (a temperagem atual nunca re-arma), BCs mais ricas do que o centroide final, e transpor o princípio de dosagem para os gradientes — por exemplo, coeficiente de entropia do SAC dependente do progresso.</div></li>
@@ -1177,7 +1175,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <div class="rolo"><table>
       <thead><tr><th>Anexo</th><th>Responde a</th><th>O que projeta</th></tr></thead>
       <tbody>
-        <tr><td class="num">A1</td><td>«e no cenário X?» · «essa diferença é significativa?»</td><td>as 21 células — recolhas/ep · sucesso · execuções a 100 % — e a linha de significância</td></tr>
+        <tr><td class="num">A1</td><td>«e no cenário X?» · «essa diferença é significativa?»</td><td>as 21 células — chegadas/ep · sucesso · execuções a 100 % — e a linha de significância</td></tr>
         <tr><td class="num">A2</td><td>«a novidade é robusta?» · «e com mais execuções?»</td><td>os quatro braços a n=7 e a n=28, os controlos de orçamento e a ablação</td></tr>
         <tr><td class="num">A3</td><td>«a QI7 deu negativo — vale o quê?»</td><td>as duas fases, o navegador geodésico a 53,0 e o limiar pré-registado de 15</td></tr>
         <tr><td class="num">A4</td><td>«8× mais caro, a comparação é justa?» · «o SAC está mal configurado»</td><td>97,6 contra 12,8 núcleos-hora, e o α = 0,1 declarado na p. 44</td></tr>

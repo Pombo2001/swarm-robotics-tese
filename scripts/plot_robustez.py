@@ -107,12 +107,12 @@ def main():
         ax.legend(fontsize=11)
         # Com os painéis empilhados, cada um tem o seu eixo à esquerda: o rótulo
         # deixa de ser exclusivo do primeiro.
-        ax.set_ylabel("Recolhas por episódio", fontsize=12)
+        ax.set_ylabel("Chegadas por episódio", fontsize=12)
     fig.suptitle("Robustez a Falhas de Agentes (Rrobust)\n10% dos agentes falham a meio do episódio",
                  fontweight="bold", fontsize=15)
     fig.text(0.5, 0.005,
              "Avaliação determinística emparelhada (20 episódios, mesmas seeds); "
-             "rótulo = % de recolhas retidas face à avaliação sem falhas.",
+             "rótulo = % de chegadas retidas face à avaliação sem falhas.",
              ha="center", fontsize=10, style="italic")
     fig.tight_layout(rect=[0, 0.025, 1, 0.955])
     out = os.path.join(EVAL_DIR, "robustez_falhas.png")

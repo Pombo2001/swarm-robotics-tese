@@ -291,7 +291,7 @@ def verificar_escalabilidade_prosa(tolerancia):
     # 2. o ponto de comparação no tamanho de treino
     m = achar("Sandbox N=20 (três algoritmos)",
               r"Sandbox, \$N=20\$: GNN \$([\d{},]+)\$, PPO \$([\d{},]+)\$, "
-              r"SAC \$([\d{},]+)\$ recolhas/ep")
+              r"SAC \$([\d{},]+)\$ chegadas/ep")
     if m:
         d = dados["none"]
         for k, algo in enumerate(ALGOS):
@@ -720,7 +720,7 @@ def verificar_hiperparametros():
         ("Ambiente", "Temporizador de Fome", [amb["hunger_timer_max"]]),
         # O «(1 nos labirintos)» não está no config: é uma regra do ambiente.
         # Mede-se instanciando um labirinto.
-        ("Ambiente", "Cooperação Mínima",
+        ("Ambiente", "Agentes Exigidos por Chegada",
          [amb["required_to_eat"], _env("u_wall").required_to_eat]),
         ("Ambiente", "Alcance do LiDAR", [amb["lidar_range"]]),
         ("Ambiente", "Fator de Progresso", [amb["progress_reward_factor"]]),
@@ -1124,7 +1124,7 @@ def verificar_discussao_global(tolerancia):
               "como único caso do PPO")
 
     m = achar("desvios de 1--2 recolhas/ep",
-              r"desvios de (\d)--(\d) recolhas/ep na Porta Cooperativa e na "
+              r"desvios de (\d)--(\d) chegadas/ep na Porta Cooperativa e na "
               r"Porta com Alternativa")
     if m:
         conferidos += 2
@@ -1332,7 +1332,7 @@ def verificar_robustez():
         tex = f.read()
 
     # "entre \textbf{92\% e 106\%} em todas as 21 combinações"
-    m = re.search(r"retenção de recolhas situa-se entre\s*(?:\\textbf|\\emph)\{(\d+)\\%\s*"
+    m = re.search(r"retenção de chegadas situa-se entre\s*(?:\\textbf|\\emph)\{(\d+)\\%\s*"
                   r"e\s*(\d+)\\%\}", tex)
     if not m:
         problemas.append("não encontrei a frase do intervalo global no main.tex "
@@ -1356,7 +1356,7 @@ def verificar_robustez():
     # A legenda declara que a base é o campeão e não a média das sete execuções,
     # e cita o par do Muro em U para o mostrar: são dois números de FONTES
     # DIFERENTES na mesma frase, por isso cada um confirma-se contra o seu CSV.
-    m = re.search(r"no Muro em U, \$(\d+)\$ contra \$([\d{},]+)\$ recolhas/ep",
+    m = re.search(r"no Muro em U, \$(\d+)\$ contra \$([\d{},]+)\$ chegadas/ep",
                   tex)
     if m:
         base_uw = pd.read_csv(os.path.join(d_eval, "eval_gnn_u_wall.csv"))
@@ -1422,11 +1422,11 @@ def verificar_legendas_trajetorias():
 
     # (cenário, o que a legenda diz antes do número) — a ordem é a das figuras
     alvos = [
-        ("u_wall", r"contorno do obstáculo em U \(esq\., (\d+) recolhas\)"),
-        ("four_rooms", r"labirinto de Quatro Salas \(dir\., (\d+) recolhas\)"),
+        ("u_wall", r"contorno do obstáculo em U \(esq\., (\d+) chegadas\)"),
+        ("four_rooms", r"labirinto de Quatro Salas \(dir\., (\d+) chegadas\)"),
         ("cooperative_door", r"Porta Cooperativa e a atravessa até ao ninho "
-                             r"\(esq\., (\d+) recolhas\)"),
-        ("cooperative_perception", r"tracejado verde \(dir\., (\d+) recolhas\)"),
+                             r"\(esq\., (\d+) chegadas\)"),
+        ("cooperative_perception", r"tracejado verde \(dir\., (\d+) chegadas\)"),
     ]
 
     problemas = []
@@ -1641,7 +1641,7 @@ def verificar_megatreino_artigo(tolerancia):
     for rot, padrao, alvos in (
             ("M1 médias",
              r"adaptativo faz\s*\$" + N + r"\\pm" + N +
-             r"\$ recolhas/ep contra \$" + N + r"\\pm" + N +
+             r"\$ (?:chegadas|recolhas)/ep contra \$" + N + r"\\pm" + N +
              r"\$ do objetivo puro",
              ((("M1 adaptativo média"), med_a, False),
               (("M1 adaptativo desvio"), dp_a, False),
@@ -1763,7 +1763,7 @@ def verificar_megatreino(tolerancia):
     # FORMA da distribuição, não a média — que pode manter-se enquanto a forma
     # muda por completo.
     v = procura(r"o PPO com \$(\d+)\$ das \$(\d+)\$ acima de \$(\d+)\$ "
-                r"recolhas/ep")
+                r"chegadas/ep")
     if v:
         g_ppo = carregar("mega_A_fase3", "u_wall")
         limiar = v[2]
@@ -1775,7 +1775,7 @@ def verificar_megatreino(tolerancia):
                          "PPO acima do limiar")
 
     v = procura(r"nenhuma das suas \$(\d+)\$ execuções passa de \$" + N +
-                r"\$ recolhas/ep")
+                r"\$ chegadas/ep")
     if v:
         g_sac = carregar("mega_A_fase4", "u_wall")
         confere("legenda: n do SAC", v[0], len(g_sac), exato=True)
@@ -1788,7 +1788,7 @@ def verificar_megatreino(tolerancia):
         problemas.append("legenda do mega-treino: não encontrei o máximo do SAC")
 
     v = procura(r"o adaptativo faz \$" + N + r" \\pm " + N +
-                r"\$ recolhas/ep contra \$" + N + r" \\pm " + N +
+                r"\$ chegadas/ep contra \$" + N + r" \\pm " + N +
                 r"\$ do objetivo puro")
     med_a, dp_a, conv_a, n_a = dados["mega_A_fase1"]
     med_o, dp_o, conv_o, n_o = dados["mega_A_fase2"]
@@ -1818,7 +1818,7 @@ def verificar_megatreino(tolerancia):
     # M3: adaptativo desta campanha vs peso fixo da de julho, na mesma frase
     med_b, dp_b, conv_b, n_b = dados["mega_B_fase5"]
     v = procura(r"o adaptativo faz \$" + N + r" \\pm " + N +
-                r"\$ recolhas/ep em \$(\d+)/(\d+)\$ execuções contra \$" +
+                r"\$ chegadas/ep em \$(\d+)/(\d+)\$ execuções contra \$" +
                 N + r" \\pm " + N + r"\$ do peso fixo")
     if os.path.exists(FIXO_BYPASS):
         df = pd.read_csv(FIXO_BYPASS)
@@ -1973,14 +1973,19 @@ def verificar_megatreino(tolerancia):
     # no dia em que divergirem, a frase agregada passa a ser falsa e é aqui que
     # isso aparece --- que era o que a redação anterior, com um par por
     # algoritmo, garantia de graça.
-    lido_por_braco = (0, 1, 2, 3, 4, 5, 4, 5)
+    # 14 set: o Resumo foi reescrito para quem ainda não leu o trabalho, e as
+    # contagens deixaram de vir como frações: «replicação com 28 treinos por
+    # algoritmo, resolveu-o em 28, contra 15 ... e 14 de cada método de
+    # gradiente». O n é lido uma vez e serve os quatro braços.
+    lido_por_braco = (1, 0, 2, 0, 3, 0, 3, 0)
     for idioma, padrao in (
             ("resumo",
-             r"\$(\d+)/(\d+)\$, contra \$(\d+)/(\d+)\$ do objetivo puro e "
-             r"\$(\d+)/(\d+)\$ de cada método por gradiente"),
+             r"replicação com (\d+) treinos por algoritmo, resolveu-o em (\d+), "
+             r"contra (\d+) sem essa pressão e (\d+) de cada método de gradiente"),
             ("abstract",
-             r"\$(\d+)/(\d+)\$, against \$(\d+)/(\d+)\$ for the pure objective "
-             r"and \$(\d+)/(\d+)\$ for each gradient-based method")):
+             r"replication with (\d+) training runs per algorithm, it solved it "
+             r"in (\d+), against (\d+) without that pressure and (\d+) for each "
+             r"gradient-based method")):
         v = procura(padrao)
         for i, (rot, calc) in enumerate(quatro_bracos):
             confere("%s %s" % (idioma, rot),
@@ -1997,7 +2002,7 @@ def verificar_megatreino(tolerancia):
              r"\$(\d+)/(\d+)\$ \(\$81\\%\$\) e \$" + N + r" \\pm " + N + r"\$ contra"),
             ("mega_B_fase6", "bottleneck", "B6 SAC Gargalo",
              r"converge em \$(\d+)/(\d+)\$ \(\$33\\%\$\), com \$" + N +
-             r" \\pm " + N + r"\$ recolhas/ep")):
+             r" \\pm " + N + r"\$ chegadas/ep")):
         d = do_csv(fase, cen)
         if d is None:
             problemas.append("%s: sem dados para a célula exploratória" % rot)
@@ -2057,7 +2062,7 @@ def verificar_megatreino(tolerancia):
     g = grupos(r"eleva a convergência de \$(\d+)/(\d+)\$ \(\$(\d+)\\%\$\) do "
                r"objetivo puro para \$\\mathbf\{(\d+)/(\d+)\}\$ \(\$(\d+)\\%\$\), "
                r"com \$" + N + r" \\pm " + N + r"\$ contra \$" + N + r" \\pm " +
-               N + r"\$ recolhas/ep \(\$p (<|=) " + N + r"\$, \$\\delta = \+" +
+               N + r"\$ chegadas/ep \(\$p (<|=) " + N + r"\$, \$\\delta = \+" +
                N + r"\$\)")
     ref = serie_final("GNN", "none")
     cel = carregar("mega_A_fase5", "none")
@@ -2174,8 +2179,8 @@ def _runs_a_100(chave, cen):
     r"""Execuções com $100\%$ de sucesso — a «convergência» desta secção.
 
     Não quer dizer o mesmo que no mapa composto: lá conta-se «pelo menos uma
-    recolha», porque quase tudo dá zero; aqui o `[6/7]` do pré-registo são as
-    execuções que resolvem o cenário em TODOS os episódios. Contar recolhas > 0
+    chegada», porque quase tudo dá zero; aqui o `[6/7]` do pré-registo são as
+    execuções que resolvem o cenário em TODOS os episódios. Contar chegadas > 0
     no Sandbox daria 7/7.
     """
     fp = os.path.join(RAIZ_NOV, *FONTES_NOV[chave])
@@ -2212,7 +2217,7 @@ def _delta(a, b):
 AFIRMACOES_NOV = [
     {
         "rot": "Muro em U — novidade fixa vs objetivo",
-        "re": r"com \$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ recolhas/ep contra "
+        "re": r"com \$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ chegadas/ep contra "
               r"\$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$ do objetivo puro "
               r"\(\$p = (?P<p>[\d{},]+)\$, \$\\delta = \+(?P<d>[\d{},]+)\$\)",
         "A": ("fixo_uwall", "u_wall"), "B": ("objetivo", "u_wall"),
@@ -2221,7 +2226,7 @@ AFIRMACOES_NOV = [
     {
         "rot": "Porta c/ Alternativa — objetivo vs novidade fixa",
         "re": r"\$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$ contra "
-              r"\$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ recolhas/ep com novidade "
+              r"\$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ chegadas/ep com novidade "
               r"\(\$p = (?P<p>[\d{},]+)\$, \$\\delta = -(?P<d>[\d{},]+)\$",
         # A frase escreve o objetivo primeiro e a novidade depois, mas o grupo
         # `m` é sempre a série A: aqui A é a NOVIDADE (o segundo par), e o
@@ -2232,7 +2237,7 @@ AFIRMACOES_NOV = [
     },
     {
         "rot": "T2 — adaptativo no Muro em U",
-        "re": r"\$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ recolhas/ep contra "
+        "re": r"\$(?P<m>[\d{},]+) \\pm (?P<s>[\d{},]+)\$ chegadas/ep contra "
               r"\$(?P<mo>[\d{},]+) \\pm (?P<so>[\d{},]+)\$ do objetivo "
               r"\(\$p=(?P<p>[\d{},]+)\$ unilateral, \$\\delta=\+(?P<d>[\d{},]+)\$\)",
         "A": ("adapt_A1", "u_wall"), "B": ("objetivo", "u_wall"),
@@ -2442,7 +2447,7 @@ def verificar_novelty(tolerancia):
     # com eles.
     m = re.search(r"as quatro variantes convergem em \$7/7\$ execuções nos dois "
                   r"cenários, com médias entre \$(?P<u0>[\d{},]+)\$ e "
-                  r"\$(?P<u1>[\d{},]+)\$ recolhas/ep no Muro em U e entre "
+                  r"\$(?P<u1>[\d{},]+)\$ chegadas/ep no Muro em U e entre "
                   r"\$(?P<b0>[\d{},]+)\$ e \$(?P<b1>[\d{},]+)\$", sec)
     if m:
         fases = ["mega_B_fase%d" % i for i in (1, 2, 3, 4)]
@@ -2513,16 +2518,16 @@ FACTOS_REPETIDOS = [
     {"rot": "Muro em U — novidade fixa vs objetivo",
      "sitios": [
          {"re": r"hibridiza[çc][ãa]o elevou a taxa.{0,120}?com \$([\d{},]+) "
-                r"\\pm ([\d{},]+)\$ recolhas/ep contra \$([\d{},]+) \\pm "
+                r"\\pm ([\d{},]+)\$ chegadas/ep contra \$([\d{},]+) \\pm "
                 r"([\d{},]+)\$ do objetivo puro"},
          {"re": r"7/7 (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) a 100\\% de sucesso e \$([\d{},]+) \\pm "
-                r"([\d{},]+)\$ recolhas/ep, contra 3/7 e \$([\d{},]+) \\pm "
+                r"([\d{},]+)\$ chegadas/ep, contra 3/7 e \$([\d{},]+) \\pm "
                 r"([\d{},]+)\$"},
      ]},
     {"rot": "Porta c/ Alternativa — objetivo vs novidade fixa",
      "sitios": [
          {"re": r"\$([\d{},]+) \\pm ([\d{},]+)\$ contra \$([\d{},]+) \\pm "
-                r"([\d{},]+)\$ recolhas/ep com novidade"},
+                r"([\d{},]+)\$ chegadas/ep com novidade"},
          {"re": r"degradou a magnitude \(\$([\d{},]+) \\pm ([\d{},]+)\$ vs\.\\ "
                 r"\$([\d{},]+) \\pm ([\d{},]+)\$", "ordem": (2, 3, 0, 1)},
      ]},
@@ -2541,7 +2546,7 @@ FACTOS_REPETIDOS = [
                 r"Alternativa \(\$([\d{},]+) \\pm ([\d{},]+)\$\)"},
          # e uma terceira vez, no parágrafo de abertura das Conclusões
          {"re": r"melhor resultado da disserta[çc][ãa]o \(\$([\d{},]+) \\pm "
-                r"([\d{},]+)\$ recolhas/ep\)"},
+                r"([\d{},]+)\$ chegadas/ep\)"},
      ]},
     {"rot": "Mega-treino — adaptativo vs objetivo puro no Muro em U",
      "sitios": [
@@ -2641,7 +2646,7 @@ FACTOS_REPETIDOS = [
          # Só a JANELA (92--106) é o mesmo facto nos dois sítios: o Cap. 5
          # acrescenta as 21 combinações e o Cap. 6 a fração de falha, e juntar
          # tudo acusaria uma contradição onde há duas frases complementares.
-         {"re": r"retenção de recolhas situa-se entre (?:\\textbf|\\emph)\{(\d+)\\% e "
+         {"re": r"retenção de chegadas situa-se entre (?:\\textbf|\\emph)\{(\d+)\\% e "
                 r"(\d+)\\%\}"},
          {"re": r"falhas de 10\\% dos agentes.{0,90}?retenção de "
                 r"(\d+)--(\d+)\\%"},
@@ -2658,7 +2663,7 @@ FACTOS_REPETIDOS = [
      ]},
     {"rot": "QI6 — o teste da Porta com Alternativa com peso fixo",
      "sitios": [
-         {"re": r"recolhas/ep com novidade \(\$p = ([\d{},]+)\$, \$\\delta = -"
+         {"re": r"chegadas/ep com novidade \(\$p = ([\d{},]+)\$, \$\\delta = -"
                 r"([\d{},]+)\$"},
          {"re": r"\$p=([\d{},]+)\$, \$\\delta=-([\d{},]+)\$\), desmascarando"},
      ]},
@@ -2699,7 +2704,7 @@ FACTOS_REPETIDOS = [
      ]},
     {"rot": "Mega-treino — M3 (adaptativo vs peso fixo no bypass)",
      "sitios": [
-         {"re": r"o adaptativo faz \$([\d{},]+) \\pm [\d{},]+\$ recolhas/ep em "
+         {"re": r"o adaptativo faz \$([\d{},]+) \\pm [\d{},]+\$ chegadas/ep em "
                 r"\$\d+/\d+\$ execuções contra \$([\d{},]+) \\pm [\d{},]+\$ do "
                 r"peso fixo \(\$p = ([\d{},]+)\$, \$\\delta = \+([\d{},]+)\$\)"},
          {"re": r"com significância \(\$([\d{},]+)\$ vs\.\\ \$([\d{},]+)\$; \$p="
@@ -2713,7 +2718,7 @@ FACTOS_REPETIDOS = [
          {"re": r"o que perfaz\s*\n?\s*\$(\d+)\$ células a zero em \$(\d+)\$ "
                 r"episódios"},
          {"re": r"as \$(\d+)\$ células do estudo de transferência ficam todas a "
-                r"\$0\{,\}00\$ recolhas por episódio, em \$(\d+)\$ episódios"},
+                r"\$0\{,\}00\$ chegadas por episódio, em \$(\d+)\$ episódios"},
      ]},
     {"rot": "Mapa composto — quem resolve o mapa com treino nativo",
      "sitios": [
@@ -2853,7 +2858,7 @@ def verificar_sandbox(tolerancia):
                  100 * g["suc"].mean(), int((g["suc"] >= 1.0).sum()), len(g)))
 
     # a prosa: as duas médias dos gradientes e a do evolutivo
-    m = re.search(r"\(PPO \$([\d{},]+) \\pm ([\d{},]+)\$ recolhas/ep; SAC "
+    m = re.search(r"\(PPO \$([\d{},]+) \\pm ([\d{},]+)\$ chegadas/ep; SAC "
                   r"\$([\d{},]+) \\pm ([\d{},]+)\$\)", tex)
     if m and "PPO" in por_algo and "SAC" in por_algo:
         for i, (rot, algo, campo) in enumerate((
@@ -2876,9 +2881,9 @@ def verificar_sandbox(tolerancia):
                   r"convergem para políticas "
                   # o padrão aceita «dois … um» e «duas … uma» (o género mudou
                   # com «execuções»); o que se confere são os números
-                  r"competitivas \(([\d,]+) a ([\d,]+) recolhas/ep\), (?:dois|duas) "
-                  r"degeneram por completo \(\$<(\d+)\$ recolha/ep\) e (?:um|uma) fica "
-                  r"num regime intermédio \(([\d,]+) recolhas/ep, com sucesso "
+                  r"competitivas \(([\d,]+) a ([\d,]+) chegadas/ep\), (?:dois|duas) "
+                  r"degeneram por completo \(\$<(\d+)\$ chegada/ep\) e (?:um|uma) fica "
+                  r"num regime intermédio \(([\d,]+) chegadas/ep, com sucesso "
                   r"em todos os episódios", tex)
     g = por_algo.get("GNN")
     if m is None:
@@ -2990,7 +2995,7 @@ def verificar_ptask_prosa(tolerancia):
     # o PPO é o mais consistente
     m = re.search(r"100\\% de sucesso em (\w+) dos sete cenários, com a menor "
                   r"variância entre (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) \(desvios padrão de "
-                  r"([\d,]+) a ([\d,]+) recolhas/ep fora do Muro (?:em )?U\)", tex)
+                  r"([\d,]+) a ([\d,]+) chegadas/ep fora do Muro (?:em )?U\)", tex)
     if m is None:
         problemas.append("PPO consistente: não encontrei a frase")
     else:
@@ -3009,7 +3014,7 @@ def verificar_ptask_prosa(tolerancia):
                 numero(m.group(3).replace(",", ".")), max(dps), tol=0.05)
 
     # as três médias do GNN citadas em prosa, e o rácio do Quatro Salas
-    m = re.search(r"igualando o PPO no Gargalo \(([\d,]+) recolhas/ep em média.{0,60}?"
+    m = re.search(r"igualando o PPO no Gargalo \(([\d,]+) chegadas/ep em média.{0,60}?"
                   r"destacando-se no Quatro Salas \(([\d,]+), cerca de "
                   r"\$([\d{},]+)\\times\$ o melhor método de gradiente\).{0,80}?"
                   r"com Alternativa \(([\d,]+)\)", tex, re.DOTALL)
@@ -3362,7 +3367,7 @@ def verificar_fiabilidade_prosa(tolerancia):
     # Gargalo: PPO e GNN fiáveis, SAC de 0 a 88
     v = procura(r"No (?:\\textbf|\\emph)\{Gargalo\}, PPO e GNN são fiáveis \((\d+)/(\d+) "
                 r"execuções\), mas as execuções do SAC espalham-se de (\d+) a "
-                r"(\d+) recolhas/ep")
+                r"(\d+) chegadas/ep")
     if v:
         for algo in ("PPO", "GNN"):
             g = celula("bottleneck", algo)
@@ -3560,8 +3565,8 @@ def verificar_resumo_abstract():
         m = re.search(padrao, texto, re.DOTALL)
         return [numero(g) for g in m.groups()] if m else None
 
-    # 1. sete execuções independentes por combinação
-    v = le(r"\((\d+) execuções independentes por combinação\)")
+    # 1. sete treinos independentes por algoritmo e cenário
+    v = le(r"com (\d+) treinos independentes por algoritmo e cenário")
     if os.path.exists(CSV_7D):
         d = pd.read_csv(CSV_7D)
         por_celula = d.groupby(["Scenario", "Algorithm"])["Run"].nunique()
@@ -3573,7 +3578,12 @@ def verificar_resumo_abstract():
                              % (por_celula.min(), por_celula.max()))
 
     # 2. Zero-Shot: de N=10 a N=100, a 100% de sucesso
-    v = le(r"\$N\$ de \$(\d+)\$ a \$(\d+)\$, com (\d+)\\% de sucesso")
+    # «é o único que funciona sem novo treino com enxames de 10 a 100 robôs»:
+    # funcionar é resolver o cenário em todas as dimensões, e é esse o 100%
+    # conferido.
+    v = le(r"único que funciona sem novo treino com enxames de (\d+) a (\d+) robôs")
+    if v:
+        v = v + [100]
     csv_esc = os.path.join(PROJECT_ROOT, "results", "estatisticas",
                            "escalabilidade_none.csv")
     if os.path.exists(csv_esc):
@@ -3584,21 +3594,10 @@ def verificar_resumo_abstract():
         confere("Zero-Shot: sucesso (%)", v[2] if v else None,
                 int(round(100 * g["success_rate"].min())))
 
-    # 3. os 7/7 do Muro em U com dosagem adaptativa
-    v = le(r"preserva os \$(\d+)/(\d+)\$ execuções no Muro em U")
-    r = _runs_a_100("adapt_B2", "u_wall")
-    n = _por_run("adapt_B2", "u_wall")
-    if r is not None and n is not None:
-        confere("Muro em U: execuções a 100%", v[0] if v else None, int(r))
-        confere("Muro em U: execuções na campanha", v[1] if v else None, len(n))
-
-    # 4. o melhor resultado da dissertação
-    v = le(r"melhor resultado de toda a dissertação \(\$([\d.,{}\\]+)\$ "
-           r"recolhas por episódio\)")
-    b3 = _por_run("adapt_B3", "cooperative_door_bypass")
-    if b3 is not None:
-        confere("Porta c/ Alternativa: recolhas/ep", v[0] if v else None,
-                float(b3.mean()), exato=False)
+    # 3. e 4. (os 7/7 do Muro em U e os 88,7 chegadas/ep da Porta com
+    # Alternativa) saíram do Resumo a 14 set 2026, na reescrita pedida pelo
+    # orientador: continuam no corpo e são conferidos pelas réguas de
+    # §res_novelty, mas o Resumo já não os afirma.
 
     # 5. a replicação a n=28
     # O Resumo deixou de nomear PPO e SAC (sem siglas, a pedido do
@@ -3606,8 +3605,9 @@ def verificar_resumo_abstract():
     # «$14/28$ de cada método por gradiente». Esse valor é
     # conferido contra ambos, para que uma divergência futura entre eles
     # apareça aqui em vez de passar calada.
-    v = le(r"\$(\d+)/(\d+)\$, contra \$(\d+)/28\$ do objetivo puro e "
-           r"\$(\d+)/28\$ de cada método por gradiente")
+    # lidos: [0] o n, [1] adaptativo, [2] objetivo puro, [3] o par do gradiente.
+    v = le(r"replicação com (\d+) treinos por algoritmo, resolveu-o em (\d+), "
+           r"contra (\d+) sem essa pressão e (\d+) de cada método de gradiente")
     try:
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         from analise_megatreino import carregar as _carregar_mega
@@ -3624,14 +3624,14 @@ def verificar_resumo_abstract():
                 continue
             # lidos: [0] adaptativo, [1] o n=28, [2] objetivo puro,
             # [3] o par do gradiente — que serve o PPO e o SAC.
-            idx = (0, 2, 3, 3)[k]
+            idx = (1, 2, 3, 3)[k]
             confere("n=28, %s: execuções a 100%%" % rot,
                     v[idx] if v else None, int((g["suc"] >= 1.0).sum()))
             if k == 0:
-                confere("n=28: execuções por braço", v[1] if v else None, len(g))
+                confere("n=28: execuções por braço", v[0] if v else None, len(g))
 
     # 6. o oitavo cenário
-    v = le(r"resolvido em (\d+) das\s+\$(\d+)\$ execuções independentes")
+    v = le(r"resolvido em apenas (\d+) de (\d+) treinos")
     try:
         from analise_mapa_grande import medir_f2
         m = medir_f2()

@@ -142,7 +142,7 @@ def desenhar(ep: dict, destino: str, *, titulo_extra: str = "") -> str:
     rotulo = SCENARIO_LABELS.get(meta.get("cenario"), meta.get("rotulo", "?"))
     ax.set_title(f"{rotulo} — {meta['algo']}\n"
                  f"{n_agentes} agentes, {meta['passos']} passos, "
-                 f"{meta['recolhas']} recolhas{titulo_extra}",
+                 f"{meta['recolhas']} chegadas{titulo_extra}",
                  fontsize=12, fontweight="bold", pad=12)
 
     barra = fig.colorbar(plt.cm.ScalarMappable(norm=plt.Normalize(0, 100),
@@ -155,7 +155,7 @@ def desenhar(ep: dict, destino: str, *, titulo_extra: str = "") -> str:
     # figura é quadrada e estreita para o comprimento do texto).
     fig.text(0.5, 0.012,
              f"Rasto dos {n_agentes} agentes ao longo do episódio; a cor indica o instante.\n"
-             "Os saltos de reaparecimento após entrega no ninho não são desenhados.",
+             "Os saltos de reaparecimento após cada chegada ao ninho não são desenhados.",
              ha="center", va="bottom", fontsize=8, color="#555555", style="italic",
              linespacing=1.4)
     fig.tight_layout(rect=[0, 0.06, 1, 1])

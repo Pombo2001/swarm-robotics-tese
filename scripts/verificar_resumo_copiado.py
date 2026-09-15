@@ -51,7 +51,7 @@ CABULA = os.path.join(RAIZ, "Defesa", "cabula.html")
 SLIDES = os.path.join(RAIZ, "Defesa", "slides_defesa.pptx")
 
 LIMITE_NORMA = 250        # §1.v e §1.vi das normas gráficas do Iscte
-ABRE_COPIA = "Para comparar a Aprendizagem"   # a primeira frase do Resumo
+ABRE_COPIA = "Esta dissertação compara a aprendizagem"   # a primeira frase do Resumo
 
 erros: list[str] = []
 

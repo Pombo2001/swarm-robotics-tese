@@ -94,7 +94,7 @@ def main():
                     color="#166534", weight="bold", zorder=7)
 
         rec = d["meta"]["recolhas"]
-        ax.set_title("%s  —  %d recolhas no episódio" % (rotulo, rec),
+        ax.set_title("%s  —  %d chegadas no episódio" % (rotulo, rec),
                      fontsize=12, weight="bold", color=cor, loc="left")
         r = d["meta"]["raio_arena"]
         ax.set_xlim(-r * 0.92, r * 0.92)

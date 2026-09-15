@@ -158,8 +158,8 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
     # Numa figura estreita, o rótulo longo do eixo e o título de uma linha
     # saem pelas bordas: encurta-se um e quebra-se o outro.
     estreita = largura < 7.0
-    ax.set_xlabel("Recolhas/ep (média da execução, 20 ep)" if estreita
-                  else "Recolhas por episódio (média da execução, 20 episódios)",
+    ax.set_xlabel("Chegadas/ep (média da execução, 20 ep)" if estreita
+                  else "Chegadas por episódio (média da execução, 20 episódios)",
                   fontsize=10 * esc)
     ax.tick_params(axis="x", labelsize=10 * esc)
     titulo_desenhado = "\n".join(textwrap.wrap(titulo, 34)) if estreita else titulo
@@ -351,7 +351,7 @@ def main():
                       color='black', size=5, alpha=0.6, jitter=0.12, ax=ax)
         ax.set_title(f'Fiabilidade entre Execuções — {SCENARIO_LABELS.get(scen, scen)}',
                      fontsize=14, fontweight='bold', pad=12)
-        ax.set_ylabel('Recolhas por episódio (média do run, 20 ep)', fontsize=10)
+        ax.set_ylabel('Chegadas por episódio (média do run, 20 ep)', fontsize=10)
         ax.set_xlabel('Algoritmo', fontsize=11)
         ax.grid(True, linestyle='--', alpha=0.4, axis='y')
         nr = int(d.groupby('Algorithm')['Run'].nunique().max())
@@ -382,15 +382,15 @@ def main():
     sns.barplot(data=dd, x='Cenário', y='food_collected', hue='Algorithm',
                 order=scen_lab_order, hue_order=ALGOS, errorbar='sd',
                 palette=ALGO_COLORS, ax=ax)
-    ax.set_title('Resumo Geral — Recolhas por Episódio (Avaliação, 7 execuções × 20 ep)',
+    ax.set_title('Resumo Geral — Chegadas por Episódio (Avaliação, 7 execuções × 20 ep)',
                  fontsize=15, fontweight='bold', pad=14)
-    ax.set_ylabel('Recolhas Médias por Episódio (± Desvio Padrão)', fontsize=11)
+    ax.set_ylabel('Chegadas Médias por Episódio (± Desvio Padrão)', fontsize=11)
     ax.set_xlabel('Cenário', fontsize=11)
     ax.legend(title="Algoritmo", loc='upper right', fontsize=11)
     ax.grid(True, linestyle='--', alpha=0.4, axis='y')
     plt.xticks(rotation=18, ha='right', fontsize=10)
     fig.text(0.5, 0.01,
-             "Métrica de TAREFA (recolhas/episódio em avaliação determinística, 140 episódios por barra): "
+             "Métrica de TAREFA (chegadas/episódio em avaliação determinística, 140 episódios por barra): "
              "mesma unidade para os três algoritmos, diretamente comparável.",
              ha='center', va='bottom', fontsize=9, color='#555555', style='italic')
     fig.subplots_adjust(bottom=0.14)

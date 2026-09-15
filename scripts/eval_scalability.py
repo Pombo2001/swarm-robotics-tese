@@ -113,7 +113,7 @@ def plot_scalability(df, scenario, label, sizes, figsize=(8, 5),
     ax.set_title(f"Escalabilidade Zero-Shot — {label}\n(treino com N=20, sem retreino)",
                  fontsize=15 * e, fontweight="bold")
     ax.set_xlabel("Número de agentes (N)", fontsize=13 * e)
-    ax.set_ylabel("Recolhas por agente (eficiência normalizada)", fontsize=13 * e)
+    ax.set_ylabel("Chegadas por agente (eficiência normalizada)", fontsize=13 * e)
     ax.set_xticks(sizes)
     ax.tick_params(labelsize=12 * e)
     ax.grid(True, linestyle="--", alpha=0.5)

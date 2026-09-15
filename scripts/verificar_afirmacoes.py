@@ -191,14 +191,14 @@ def mega_treino():
     d = pd.concat([pd.read_csv(f).assign(fonte=f) for f in fs], ignore_index=True)
     u = d[d.Scenario == "u_wall"]
 
-    v = do_tex(r"o PPO com \$(\d+)\$ das \$(\d+)\$ acima de \$(\d+)\$ recolhas/ep",
+    v = do_tex(r"o PPO com \$(\d+)\$ das \$(\d+)\$ acima de \$(\d+)\$ chegadas/ep",
                "PPO acima do limiar", 3)
     if v:
         s = u[u.Algorithm == "PPO"].groupby(["fonte", "Run"]).food_collected.mean()
         confere("PPO: execuções acima de %s rec/ep" % v[2], v[0], (s > num(v[2])).sum(), 0)
         confere("PPO: execuções no braço", v[1], len(s), 0)
 
-    v = do_tex(r"nenhuma das suas \$(\d+)\$ execuções passa de \$([\d{},]+)\$ recolhas/ep",
+    v = do_tex(r"nenhuma das suas \$(\d+)\$ execuções passa de \$([\d{},]+)\$ chegadas/ep",
                "tecto do SAC", 2)
     if v:
         s = u[u.Algorithm == "SAC"].groupby(["fonte", "Run"]).food_collected.mean()
@@ -241,7 +241,7 @@ def escalabilidade():
         if not tudo_100:
             falhas.append("«100% em todas as células» da escalabilidade não se verifica")
 
-    v = do_tex(r"sobrepostos porque distam \$([\d{},]+)\$ recolhas por agente", "PPO vs SAC")
+    v = do_tex(r"sobrepostos porque distam \$([\d{},]+)\$ chegadas por agente", "PPO vs SAC")
     if v:
         d = pd.read_csv(ESCALA % "none").set_index(["Algorithm", "N"])
         dist = abs(d.loc[("PPO", 20), "food_per_agent"] - d.loc[("SAC", 20), "food_per_agent"])
@@ -256,7 +256,7 @@ def robustez():
     if not ha_dados(os.path.join(EVAL, "*_fail10.csv"), "Robustez"):
         return
     cabecalho("Robustez à perda súbita de 10% dos agentes")
-    v = do_tex(r"retenção de recolhas situa-se entre (?:\\textbf|\\emph)\{(\d+)\\% e (\d+)\\%\} "
+    v = do_tex(r"retenção de chegadas situa-se entre (?:\\textbf|\\emph)\{(\d+)\\% e (\d+)\\%\} "
                r"em todas as (\d+) combinações", "faixa de retenção", 3)
     if not v:
         return
@@ -305,8 +305,8 @@ def diagnostico_qi7():
     v = do_tex(r"de \$(\d+)\$ para \$(\d+)\$ \\emph\{sem qualquer retreino\} faz a "
                r"distância mínima mediana ao ninho cair de \$([\d{},]+)\$ para "
                r"\$([\d{},]+)\$\\,m e quase duplica a magnitude da melhor execução "
-               r"\(de \$(\d+)\$ para \$(\d+)\$ recolhas por episódio\), mas leva o número "
-               r"de execuções com pelo menos uma recolha apenas de \$(\d+)\$ para \$(\d+)\$ "
+               r"\(de \$(\d+)\$ para \$(\d+)\$ chegadas por episódio\), mas leva o número "
+               r"de execuções com pelo menos uma chegada apenas de \$(\d+)\$ para \$(\d+)\$ "
                r"em \$(\d+)\$", "horizonte do episódio", 9)
     if v:
         h = pd.read_csv(HORIZONTE)

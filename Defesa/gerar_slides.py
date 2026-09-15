@@ -458,34 +458,30 @@ paradigmas de controlo descentralizado — aprendizagem por reforço multiagente
 gradiente (PPO e SAC) e neuroevolução de uma rede de grafos com atenção — em oito
 cenários. Quinze minutos: o problema, o método, sete perguntas e as respostas.
 
-- - - NÃO É PARA DIZER: o Resumo da dissertação, que o júri leu (249 palavras) - - -
+- - - NÃO É PARA DIZER: o Resumo da dissertação, que o júri leu (235 palavras) - - -
 
-Para comparar a Aprendizagem por Reforço Multiagente e a Otimização Bio-inspirada
-no controlo de enxames robóticos, implementou-se num simulador de alta fidelidade
-o framework descentralizado Robust and Scalable Swarm Control (partilha de
-parâmetros; Proximal Policy Optimization e Soft Actor-Critic) e um controlador
-neuroevolutivo sobre grafos com atenção,
-invariante à dimensão do enxame. Avaliaram-se em sete cenários de dificuldade
-crescente (7 execuções independentes por combinação), sob estatística
-não-paramétrica.
+Esta dissertação compara a aprendizagem por reforço multiagente e a otimização
+bio-inspirada no controlo descentralizado de enxames de robôs. Num simulador
+próprio, vinte robôs têm de chegar em conjunto a um ninho. Um controlador
+evolutivo, uma rede neuronal sobre grafos com atenção, foi comparado com dois
+algoritmos de aprendizagem por reforço por gradiente (Proximal Policy
+Optimization e Soft Actor-Critic) em sete cenários de dificuldade crescente, com
+7 treinos independentes por algoritmo e cenário.
 
-Com homing geodésico na função de fitness, o controlador evolutivo supera os
-métodos de gradiente em três cenários, iguala o melhor deles noutros dois e
-transfere, sozinho, sem retreino para dimensões não vistas (N de 10 a 100, com
-100% de sucesso); os de gradiente mantêm a fiabilidade em espaço aberto e a
-eficiência. O cenário de deceção espacial, bimodal nos três algoritmos base, só
-cedeu à novidade doseada adaptativamente: preserva os 7/7 execuções no Muro em U
-e atinge, na Porta com Alternativa, o melhor resultado de toda a dissertação
-(88,7 recolhas por episódio); uma replicação pré-registada com 28 execuções por
-braço confirmou-o (28/28, contra 15/28 do objetivo puro e 14/28 de cada método
-por gradiente).
-Um oitavo cenário, compondo num labirinto de 103 x 62 m as dificuldades dos sete,
-degrada a fiabilidade e não a magnitude: é resolvido em 4 das 21 execuções
-independentes, abaixo do limiar pré-registado.
+Com uma função de aptidão que premeia também a aproximação ao ninho, o
+controlador evolutivo supera os métodos de gradiente em três cenários, iguala o
+melhor noutros dois e é o único que funciona sem novo treino com enxames de 10 a
+100 robôs; os métodos de gradiente são mais fiáveis em espaço aberto e gastam
+menos cálculo. O cenário que obriga a afastar-se do ninho para o alcançar só foi
+resolvido de forma consistente com pressão por comportamentos novos, atenuada
+após a descoberta: numa replicação com 28 treinos por algoritmo, resolveu-o em
+28, contra 15 sem essa pressão e 14 de cada método de gradiente. Um oitavo
+cenário, que junta as dificuldades dos sete num labirinto de 103 x 62 m, é
+resolvido em apenas 4 de 21 treinos.
 
-A hipótese de que a inteligência adaptativa supera a robustez estática confirma-se
-apenas em parte: a escala decide-se na representação e não no otimizador; sob
-gradientes enganadores, no sinal de treino.
+A hipótese de que a aprendizagem adaptativa supera a otimização estática
+confirma-se só em parte: escalar depende da representação da política, não do
+otimizador; nos cenários enganadores, depende do sinal de treino.
 
 É daqui que saem, quase sempre, as primeiras perguntas. Cada afirmação deste
 Resumo tem o seu slide: a fitness no 9, a novidade no 10, a escala no 11, o mapa
@@ -543,9 +539,9 @@ todas, pela ordem em que os resultados as desbloqueiam.
 # 4. Simulador e cenários
 s = _novo_slide()
 _titulo(s, "O simulador e os oito cenários",
-        "forrageamento cooperativo em 3D, 20 agentes, observação local (LiDAR 8 m)")
+        "navegação cooperativa até ao ninho em 3D, 20 agentes, observação local (LiDAR 8 m)")
 _texto(s, MARGEM, Inches(1.75), Inches(5.2), Inches(4.8), [
-    "• Tarefa: recolher itens e entregá-los no ninho; perceção cooperativa com alvo móvel",
+    "• Tarefa: chegar ao ninho em conjunto, sem objetos para apanhar; perceção cooperativa com alvo móvel",
     "• Observação local e parcial: LiDAR, bússola ao ninho, vizinhos",
     "• Sete cenários de dificuldade isolada:",
     ("Sandbox · Muro em U (deceção espacial) · Gargalo · Quatro Salas", {"nivel": 1, "tamanho": 14}),
@@ -565,7 +561,8 @@ _rodape(s)
 _notas(s, """
 O simulador foi construído de raiz em Python: tridimensional, com física de
 colisões e deslizamento nos muros, LiDAR horizontal de 8 metros e observação
-egocêntrica. A tarefa é o forrageamento cooperativo. Sete cenários isolam uma
+egocêntrica. A tarefa é chegar ao ninho em conjunto: não há objetos para apanhar, e
+conta uma chegada quando os agentes exigidos estão no ninho ao mesmo tempo. Sete cenários isolam uma
 dificuldade cada — um beco enganador, um gargalo, quatro salas, uma porta que só
 abre com três robôs — e o oitavo compõe quatro delas num labirinto quatro vezes
 maior. Tudo é reproduzível: sementes fixas, avaliação determinística.
@@ -578,7 +575,7 @@ slide_tabela(
     [
         ["Paradigma", "MARL por gradiente (on-policy / off-policy)", "Otimização bio-inspirada, sem gradientes"],
         ["Política", "MLP sobre observação de vizinhança densa (entrada fixa, ℝ¹¹¹)", "Rede de grafos com atenção sobre os vizinhos (invariante a N)"],
-        ["Sinal de treino", "Recompensa por passo com shaping geodésico", "Fitness: recolhas + homing terminal no potencial geodésico"],
+        ["Sinal de treino", "Recompensa por passo com shaping geodésico", "Fitness: chegadas + homing terminal no potencial geodésico"],
         ["Orçamento por execução", "48 min, 16 ambientes vetorizados", "195 min, população de 30 genomas em paralelo"],
         ["Custo em núcleos-hora", "12,8", "97,6  (≈ 8×)"],
     ],
@@ -604,7 +601,7 @@ slide_texto_figura(
         "2 940 episódios na campanha principal",
         "• A unidade estatística é a execução, não o episódio: Mann-Whitney U sobre as médias "
         "por execução (n = 7), δ de Cliff como tamanho de efeito",
-        "• Métrica de tarefa pura: recolhas por episódio e taxa de sucesso — comparável entre paradigmas",
+        "• Métrica de tarefa pura: chegadas por episódio e taxa de sucesso — comparável entre paradigmas",
         "• Três campanhas pré-registadas (hipótese, testes e regra de decisão fixados antes dos dados)",
         "• 27 verificadores automáticos, 19 no hook de pre-commit: cada número da tese é recalculado "
         "a partir dos CSV, e o commit é recusado se algum deixar de bater",
@@ -661,7 +658,7 @@ slide_texto_figura(
     notas="""
 Um ponto de método que muda a leitura. Com sete execuções, um boxplot esconde a
 forma. No Muro em U, o GNN tem quatro execuções a zero e três a resolver o
-cenário por completo: a média de vinte e quatro recolhas não descreve nenhuma
+cenário por completo: a média de vinte e quatro chegadas não descreve nenhuma
 delas. No Sandbox, o cenário mais simples, o evolutivo é o menos fiável: sem
 paredes não há gradiente geodésico que o guie, e duas execuções degeneram. Este
 padrão tudo-ou-nada é o fio condutor das duas questões seguintes.
@@ -671,7 +668,7 @@ padrão tudo-ou-nada é o fio condutor das duas questões seguintes.
 slide_texto_figura(
     "QI5 — O desenho da fitness decide", "o «colapso do evolutivo» era um artefacto do sinal de treino",
     [
-        "• Fitness inicial: recolhas + retorno acumulado do episódio — farmável por deambulação; a população "
+        "• Fitness inicial: chegadas + retorno acumulado do episódio — farmável por deambulação; a população "
         "satura num planalto sem pressão seletiva (fitness exploitation)",
         "• Cura: substituir o retorno pelo homing terminal — proximidade ao ninho no fim do episódio, medida "
         "no potencial geodésico (contorna paredes; o euclidiano atrai para dentro do beco)",
@@ -734,7 +731,7 @@ slide_tabela(
     ],
     larguras=[3.2, 1.6, 1.6, 1.6, 1.6, 2.5],
     bullets=[
-        "• 100 % de sucesso nas 28 combinações cenário × dimensão (recolhas por agente na tabela)",
+        "• 100 % de sucesso nas 28 combinações cenário × dimensão (chegadas por agente na tabela)",
         "• PPO/SAC: a MLP de entrada fixa (ℝ¹¹¹) é estruturalmente incompatível com N ≠ 20 — não é um "
         "resultado fraco, é o resultado",
         ("• A retenção é maior nos cenários com paredes: a estrutura atenua a diluição do recurso, "
@@ -754,7 +751,7 @@ avaliados fora de N igual a vinte. A vantagem de escala está na representação
 slide_texto_figura(
     "QI3 — Robustez a falhas", "10 % dos agentes ficam inertes a meio do episódio",
     [
-        "• Retenção de recolhas entre 92 % e 106 % nas 21 combinações algoritmo–cenário",
+        "• Retenção de chegadas entre 92 % e 106 % nas 21 combinações algoritmo–cenário",
         "• Inclui a Porta Cooperativa, que exige três agentes simultâneos: o enxame redistribui-se",
         "• Transversal aos paradigmas: a redundância vem do parameter sharing e da observação local — "
         "nenhum agente é insubstituível",
@@ -764,7 +761,7 @@ slide_texto_figura(
     notas="""
 Robustez: dez por cento dos agentes falham a meio do episódio e ficam inertes.
 Os três paradigmas retêm entre noventa e dois e cento e seis por cento das
-recolhas, em todas as vinte e uma combinações — mesmo na porta que precisa de
+chegadas, em todas as vinte e uma combinações — mesmo na porta que precisa de
 três robôs. A redundância vem da partilha de parâmetros e da observação local.
 Sendo transversal, a robustez não discrimina entre paradigmas — e isso é uma
 resposta, não uma ausência de resposta.
@@ -774,7 +771,7 @@ resposta, não uma ausência de resposta.
 slide_texto_figura(
     "QI7 — Composição de dificuldades", "um labirinto de 103 × 62 m que junta quatro dificuldades em série",
     [
-        "• Transferência sem retreino: zero recolhas em 84 de 84 células (1 680 episódios, 4 condições "
+        "• Transferência sem retreino: zero chegadas em 84 de 84 células (1 680 episódios, 4 condições "
         "de controlo) — mas o mapa é resolúvel: um navegador geodésico sem aprendizagem faz 53,0 rec/ep",
         "• Treino nativo, 21 execuções por algoritmo: só o evolutivo passa — em 4 de 21, abaixo do "
         "limiar de 15 fixado antes dos dados",
@@ -786,10 +783,10 @@ slide_texto_figura(
     figuras=["mapa_grande_planta.png", "mapa_grande_rastos.png"], fig_w=6.0, fig_h=5.0, tamanho=15,
     notas="""
 A última pergunta testa a objeção mais natural a um benchmark por cenários
-isolados. Sem retreino, nenhum controlador faz uma única recolha no mapa
+isolados. Sem retreino, nenhum controlador faz uma única chegada no mapa
 composto — em oitenta e quatro células, com controlos que excluem a escala da
 observação e os obstáculos como causa. E o mapa é resolúvel: um navegador
-geodésico sem aprendizagem faz cinquenta e três recolhas. Com treino nativo, só
+geodésico sem aprendizagem faz cinquenta e três chegadas. Com treino nativo, só
 o evolutivo o resolve, em quatro de vinte e uma execuções — abaixo do limiar
 pré-registado. A resposta é negativa e está reportada como negativa. O que a
 composição degrada é a fiabilidade: é a bimodalidade do Muro em U em ponto
@@ -923,7 +920,7 @@ Antes das perguntas, um minuto ao vivo. Abro o painel na Apresentação, mapa do
 o Muro em U. Três colunas com os modelos da campanha final — repare-se que cada
 execução ou aprende o desvio ou fica a zero: três em sete, quatro em sete, duas
 em sete. A quarta coluna é o GNN com novidade doseada adaptativamente: sete em
-sete, setenta e oito recolhas. Carrego em Episódio 3D e os quatro enxames
+sete, setenta e oito chegadas. Carrego em Episódio 3D e os quatro enxames
 correm ao mesmo tempo. Em baixo, o dot plot com a linha do adaptativo e as
 curvas de treino. Qualquer número do painel tem proveniência: dois cliques até
 ao CSV. Plano B, se a rede ou o portátil falharem: a captura que está neste
@@ -965,7 +962,7 @@ _ANEXO = True
 # A1 — a tabela que a QI1 resume em três marcadores
 slide_tabela(
     "Reserva · A tabela de avaliação, na íntegra",
-    "recolhas/ep · taxa de sucesso · execuções a 100 %  —  7 execuções por célula, 20 episódios determinísticos cada",
+    "chegadas/ep · taxa de sucesso · execuções a 100 %  —  7 execuções por célula, 20 episódios determinísticos cada",
     ["Cenário", "GNN evolutivo", "PPO", "SAC"],
     [
         ["Sandbox", "38,3 · 86 % · 5/7", "71,5 · 100 % · 7/7", "69,2 · 100 % · 7/7"],
@@ -984,7 +981,7 @@ slide_tabela(
     tamanho=12,
     notas="""
 A tabela inteira, para quando a pergunta for por uma célula concreta. Quinze das
-vinte e uma estão a cem por cento. As três parcelas de cada célula são recolhas
+vinte e uma estão a cem por cento. As três parcelas de cada célula são chegadas
 por episódio, taxa de sucesso e quantas das sete execuções chegaram aos cem por
 cento — é a terceira que conta a história, porque é nela que a bimodalidade
 aparece.
@@ -1026,7 +1023,7 @@ slide_tabela(
     ["Fase", "O que se mediu", "Resultado"],
     [
         ["Fase 1 — zero-shot", "transferência sem retreino, com 4 condições de controlo",
-         "zero recolhas em 84/84 células · 1 680 episódios"],
+         "zero chegadas em 84/84 células · 1 680 episódios"],
         ["Controlo", "o mapa é sequer resolúvel?",
          "navegador geodésico, sem aprendizagem: 53,0 rec/ep (82,0 nas Quatro Salas)"],
         ["Fase 2 — treino nativo", "21 execuções por algoritmo, 780 min cada",
@@ -1044,7 +1041,7 @@ slide_tabela(
     notas="""
 O negativo, com os números que o sustentam. A ordem importa: primeiro o zero em
 oitenta e quatro células, depois a prova de que o mapa é resolúvel — cinquenta e
-três recolhas de um navegador que não aprende nada —, e só então o limiar
+três chegadas de um navegador que não aprende nada —, e só então o limiar
 pré-registado que não foi atingido. Sem o controlo do meio, o zero seria ambíguo.
 """)
 
@@ -1091,14 +1088,14 @@ for _k, (_nome, _cor, _fich) in enumerate(_lbl):
     _fig(s, _fich, _x, Inches(2.05), _cw, Inches(3.75))
 _texto(s, MARGEM, H - Inches(1.2), W - 2 * MARGEM, Inches(0.6),
        "O corredor que contorna o muro é o que separa quem resolve de quem não resolve: o GNN e o PPO "
-       "desenham-no (473 e 412 recolhas em 6 episódios); o SAC nunca o encontra e faz zero.",
+       "desenham-no (476 e 419 chegadas em 6 episódios); o SAC nunca o encontra e faz zero.",
        tamanho=13, cor=MUTED, alinhar=PP_ALIGN.CENTER)
 _rodape(s)
 _notas(s, """
 Se perguntarem o que é, ao certo, resolver o Muro em U: é isto. O mapa de calor
 mostra onde o enxame passa o episódio, no modelo campeão de cada algoritmo. O GNN
 e o PPO desenham um corredor que sai do beco, contorna o muro e chega ao ninho —
-quatrocentas e setenta e três e quatrocentas e doze recolhas em seis episódios. O
+quatrocentas e setenta e seis e quatrocentas e dezanove chegadas em seis episódios. O
 SAC nunca encontra esse corredor: a ocupação espalha-se pela arena toda e o total
 é zero. Não é uma diferença de magnitude, é outro comportamento — e é esta a
 forma da falha que uma média esconde.

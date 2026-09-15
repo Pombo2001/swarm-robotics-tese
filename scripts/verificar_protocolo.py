@@ -198,7 +198,7 @@ def verificar(texto=None):
             depois = texto[m.end():m.end() + 40].lower()
             if grupo in ("execuções", "n") and re.match(
                     r"\s*(convergentes|que resolvem|que param|a 100|degeneradas|"
-                    r"falhadas|com recolha|sem recolha)", depois):
+                    r"falhadas|com chegada|sem chegada)", depois):
                 isentos += 1
                 continue
             ok = valor in medido[grupo]

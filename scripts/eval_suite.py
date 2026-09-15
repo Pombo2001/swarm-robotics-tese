@@ -203,7 +203,7 @@ def plot_evaluation(summary=None, out_dir=None):
     ax.legend(title="Algoritmo", loc="upper left", bbox_to_anchor=(1.01, 1.0),
               borderaxespad=0)
     plt.xticks(rotation=20, ha="right", fontsize=10.5)
-    fig.text(0.5, 0.005, "Sucesso = pelo menos 1 recolha no episódio. Métrica de tarefa, "
+    fig.text(0.5, 0.005, "Sucesso = pelo menos 1 chegada ao ninho no episódio. Métrica de tarefa, "
              "comparável entre algoritmos (ao contrário do reward de treino).",
              ha="center", fontsize=8.5, color="#555555", style="italic")
     plt.tight_layout(rect=[0, 0.04, 0.88, 1])
@@ -218,15 +218,15 @@ def plot_evaluation(summary=None, out_dir=None):
     sns.barplot(data=summary, x="ScenarioLabel", y="food_collected", hue="Algorithm",
                 order=scen_order, hue_order=algo_order, palette=palette,
                 errorbar="sd", ax=ax)
-    ax.set_title("Recolhas por Episódio por Cenário — avaliação determinística",
+    ax.set_title("Chegadas por Episódio por Cenário — avaliação determinística",
                  fontsize=14, fontweight="bold", pad=12)
-    ax.set_ylabel("Recolhas por episódio (média ± desvio)", fontsize=12)
+    ax.set_ylabel("Chegadas por episódio (média ± desvio)", fontsize=12)
     ax.set_xlabel("Cenário", fontsize=12)
     ax.tick_params(labelsize=10.5)
     ax.set_ylim(bottom=0)  # recolhas nunca são negativas — corta os bigodes de sd abaixo de 0
     ax.legend(title="Algoritmo", loc="upper right")
     plt.xticks(rotation=20, ha="right", fontsize=10.5)
-    fig.text(0.5, 0.005, "Média de recolhas (food_collected) por episódio; barras de erro = "
+    fig.text(0.5, 0.005, "Média de chegadas ao ninho (food_collected) por episódio; barras de erro = "
              "desvio padrão entre episódios. Mede magnitude do desempenho, não só sucesso/falha.",
              ha="center", fontsize=8.5, color="#555555", style="italic")
     plt.tight_layout(rect=[0, 0.04, 1, 1])

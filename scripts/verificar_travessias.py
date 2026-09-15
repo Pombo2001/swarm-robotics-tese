@@ -148,7 +148,7 @@ def main() -> int:
     if not okr:
         FALHAS.append("execuções afetadas")
     compara("recolhas/ep das execuções afetadas", r["rec_afetadas"],
-            _do_tex(r"em média \$([\d{,}]+)\$ recolhas/ep", par), tol=0.06)
+            _do_tex(r"em média \$([\d{,}]+)\$ chegadas/ep", par), tol=0.06)
     compara("recolhas/ep das execuções limpas", r["rec_limpas"],
             _do_tex(r"contra \$([\d{,}]+)\$ das", par), tol=0.06)
     compara("número de execuções limpas", r["n_limpas"], _do_tex(r"das (\w+) execuções limpas", par.replace("quatro", "4")))

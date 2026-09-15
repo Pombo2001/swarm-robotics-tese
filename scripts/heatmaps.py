@@ -153,12 +153,12 @@ def run_occupancy(algo, scenario, episodes, bins, config_path, out_dir=None,
     if e > 1.4:
         # Em trio, o cenário e o número de episódios já estão na legenda da
         # figura: o título repetia-os e, ampliado, não cabia em duas linhas.
-        ax.set_title(f"{ALGO_LABELS.get(algo, algo)} — {food_total} recolhas",
+        ax.set_title(f"{ALGO_LABELS.get(algo, algo)} — {food_total} chegadas",
                      fontsize=12 * e)
     else:
         ax.set_title(f"Ocupação dos robôs — {ALGO_LABELS.get(algo, algo)}\n"
                      f"{SCENARIO_LABELS.get(scenario, scenario)}  "
-                     f"({episodes} ep, {food_total} recolhas totais)",
+                     f"({episodes} ep, {food_total} chegadas totais)",
                      fontsize=10 * e)
     ax.legend(loc="upper right", framealpha=0.9, fontsize=9 * e)
 

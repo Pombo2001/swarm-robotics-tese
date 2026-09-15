@@ -62,6 +62,10 @@ SEM_REGISTO = {
                         "n.º 2, 2025): Walaa Mahmood Hassen e Saman H. Amin",
     "bonabeau1999swarm": "livro da Oxford University Press (1999); o OpenAlex "
                          "devolve para este título uma recensão de 2002",
+    "duarte2014jbotevolver": "confirmada a 14 set 2026 no Ciência_Iscte e no "
+                             "sítio do IT: Miguel Duarte, Fernando Silva, Tiago "
+                             "Rodrigues, Sancho Moura Oliveira, Anders Lyhne "
+                             "Christensen — ALIFE 14 (MIT Press, 2014)",
 }
 
 

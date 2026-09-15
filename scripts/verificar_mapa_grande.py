@@ -443,21 +443,21 @@ def trabalho_futuro():
         if 2000 in por and 4000 in por:
             compara("execuções com recolha a 2000 passos",
                     float((por[2000] > 0).sum()),
-                    le(r"execuções com pelo menos uma recolha apenas de "
+                    le(r"execuções com pelo menos uma chegada apenas de "
                        r"\$(\d+)\$ para \$\d+\$", item, "recolhas a 2000"),
                     tol=0.0)
             compara("execuções com recolha a 4000 passos",
                     float((por[4000] > 0).sum()),
-                    le(r"execuções com pelo menos uma recolha apenas de "
+                    le(r"execuções com pelo menos uma chegada apenas de "
                        r"\$\d+\$ para \$(\d+)\$", item, "recolhas a 4000"),
                     tol=0.0)
             compara("melhor execução a 2000 passos (recolhas)",
                     float(por[2000].max()),
-                    le(r"\(de \$(\d+)\$ para \$\d+\$ recolhas por episódio\)",
+                    le(r"\(de \$(\d+)\$ para \$\d+\$ chegadas por episódio\)",
                        item, "melhor a 2000"), tol=0.0)
             compara("melhor execução a 4000 passos (recolhas)",
                     float(por[4000].max()),
-                    le(r"\(de \$\d+\$ para \$(\d+)\$ recolhas por episódio\)",
+                    le(r"\(de \$\d+\$ para \$(\d+)\$ chegadas por episódio\)",
                        item, "melhor a 4000"), tol=0.0)
             # A distância mediana ao ninho, nos dois horizontes. É o par que
             # sustenta a distinção do item («mais percurso feito, não mais
@@ -619,7 +619,7 @@ def _f2_contra_texto(texto):
     campeao = m["algo_campeao"]
     v = m["por_algo"][campeao]
     mm = re.search(r"fiável: (\d+) das \$21\$ execuções atingem pelo menos uma "
-                   r"recolha e\s+(\d+) chegam aos \$100", texto)
+                   r"chegada e\s+(\d+) chegam aos \$100", texto)
     if mm:
         confere("Discussão: k (convergentes)", _n(mm.group(1)),
                 v["convergentes"], 0.0)

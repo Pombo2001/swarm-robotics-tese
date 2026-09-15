@@ -175,8 +175,8 @@ Em execução, o orçamento de $780$ minutos traduziu-se em $165{,}3$ gerações
 
 O resultado do F1 dispensa quadro: das $21$ células da condição natural --- sete
 cenários de origem $\times$ três algoritmos, $20$ episódios cada, $420$ episódios
---- \emph{todas} as $21$ registam $0{,}00$ recolhas por episódio e $0\%$ de
-sucesso. Nenhum dos $21$ campeões entrega um único item no mapa composto sem
+--- \emph{todas} as $21$ registam $0{,}00$ chegadas por episódio e $0\%$ de
+sucesso. Nenhum dos $21$ campeões faz uma única chegada ao ninho no mapa composto sem
 retreino, e o mesmo se verifica nas três condições de controlo, o que perfaz
 $84$ células a zero em $1680$ episódios.
 
@@ -197,7 +197,7 @@ controlo repete as mesmas $21$ células com \emph{uma} alteração e o resto
 bit-a-bit igual --- normalizar as distâncias pelo raio da arena de treino em vez
 do raio deste mapa, remover os obstáculos dispersos, e zerar as quatro dimensões
 da observação associadas à porta --- e as três devolvem, célula a célula,
-exatamente o mesmo: $0{,}00$ recolhas por episódio, sem uma única célula
+exatamente o mesmo: $0{,}00$ chegadas por episódio, sem uma única célula
 ``ressuscitada''. Com as $21$ células a zero nas duas condições de cada
 comparação emparelhada, nem o teste de Wilcoxon nem o $\delta$ de Cliff têm
 conteúdo (não há sequer um par discordante); o que sustenta a exclusão é o
@@ -218,15 +218,15 @@ $\pm 2$\,m imposta neste mapa altera a dinâmica em que essas políticas foram
 otimizadas. Repetindo a avaliação com o limite vertical removido (isto é, com a
 casca esférica da arena como único limite), quatro campeões evolutivos --- os do
 Muro em U, Gargalo, Quatro Salas e Sandbox --- sobre três sementes cada mantêm
-$0{,}00$ recolhas por episódio, exatamente como na condição com limite. O limite
+$0{,}00$ chegadas por episódio, exatamente como na condição com limite. O limite
 vertical não é, portanto, o que explica o zero. A segunda é a
-\emph{impossibilidade geométrica de entregar} discutida nas limitações: também
+\emph{impossibilidade geométrica de chegar ao ninho} discutida nas limitações: também
 essa fica excluída, porque a distância mínima ao ninho \emph{na horizontal},
 tomada sobre os vinte agentes e todos os passos do episódio, fica entre $37$ e
 $79$\,m num percurso mínimo de $154$\,m --- os agentes não chegam sequer à
 vizinhança do ninho, quanto mais a precisar de descer para lá entrar. Os mesmos
 modelos, nos seus cenários de origem, aproximam-se até $1{,}4$\,m do ninho e
-recolhem entre $67$ e $137$ itens por episódio. O que falha na transferência é a
+fazem entre $67$ e $137$ chegadas por episódio. O que falha na transferência é a
 navegação, e falha cedo.
 
 \subsection{Treino nativo (F2)}
@@ -237,7 +237,7 @@ navegação, e falha cedo.
 \label{tab:f2_mapa_grande}
 \begin{tabular}{lcccc}
 \hline
-\textbf{Algoritmo} & \textbf{Recolhas/ep} & \textbf{Desvio-padrão} & \textbf{Sucesso} & \textbf{Convergentes} \\
+\textbf{Algoritmo} & \textbf{Chegadas/ep} & \textbf{Desvio-padrão} & \textbf{Sucesso} & \textbf{Convergentes} \\
 \hline
 GNN & $1{,}7$ & $3{,}6$ & $17\%$ & 4/21 \\
 PPO & $0{,}0$ & $0{,}0$ & $0\%$ & 0/21 \\
@@ -251,11 +251,11 @@ $21$ execuções de cada controlador; os parágrafos seguintes leem-nas uma a um
 
 \emph{M1 (magnitude).} Mann-Whitney $U$ bilateral sobre as médias por execução ($n = 21$): GNN \emph{vs.}\ PPO: $p = 0{,}3058$, $\delta = +0{,}19$; GNN \emph{vs.}\ SAC: $p = 0{,}3058$, $\delta = +0{,}19$; PPO \emph{vs.}\ SAC: $p = 1{,}0000$, $\delta = +0{,}00$. O peso da evidência está no tamanho de efeito, como a limitação desta campanha declara.
 
-\emph{M2 (convergência, descritivo).} Execuções que atingem pelo menos uma recolha na avaliação determinística: GNN em 4/21, das quais 2 a $100\%$ de sucesso; PPO em 0/21, das quais 0 a $100\%$ de sucesso; SAC em 0/21, das quais 0 a $100\%$ de sucesso. Pelo compromisso pré-registado (emenda 19), não se infere sobre proporções: a contagem é reportada como descritivo.
+\emph{M2 (convergência, descritivo).} Execuções que atingem pelo menos uma chegada na avaliação determinística: GNN em 4/21, das quais 2 a $100\%$ de sucesso; PPO em 0/21, das quais 0 a $100\%$ de sucesso; SAC em 0/21, das quais 0 a $100\%$ de sucesso. Pelo compromisso pré-registado (emenda 19), não se infere sobre proporções: a contagem é reportada como descritivo.
 
 \emph{M3 (porta cooperativa).} Fração de episódios em que a porta é aberta: GNN $43\%$, PPO $0\%$, SAC $0\%$.
 
-Um zero em recolhas é um número pobre: não distingue ``os agentes não se
+Um zero em chegadas é um número pobre: não distingue ``os agentes não se
 movem'' de ``os agentes percorrem quase todo o mapa e ficam-se a dez metros do
 fim''. A Figura~\ref{fig:mapa_grande_rastos} desfaz essa ambiguidade
 mostrando, para um episódio de cada controlador, o percurso de todos os agentes
@@ -272,7 +272,7 @@ uma execução particularmente má.
       cada um dos $20$ agentes ao longo de um episódio completo ($2000$ passos),
       sobre a planta do mapa. Pontos brancos: posições iniciais; pontos cheios:
       posições finais. O controlador de grafo atravessa as cinco zonas e
-      regressa ao ninho --- os segmentos retos são reposições após cada entrega
+      regressa ao ninho --- os segmentos retos são reposições após cada chegada
       ---, ao passo que o PPO se concentra na zona das quatro salas e o SAC não
       transpõe consistentemente o gargalo da zona A. Os episódios são os mesmos
       que a instrumentação por distância geodésica quantifica: sobre $21$
@@ -299,7 +299,7 @@ uma execução particularmente má.
 % ── LEITURA A: pelo menos um algoritmo converge ──────────────────────────────
 % A composição de dificuldades \PORPREENCHER{não impede / degrada mas não impede}
 % a resolução da tarefa: \PORPREENCHER{algoritmo} atinge \PORPREENCHER{valor}
-% recolhas por episódio em \PORPREENCHER{n}/$7$ execuções. O contraste com o F1 é
+% chegadas por episódio em \PORPREENCHER{n}/$7$ execuções. O contraste com o F1 é
 % o resultado central desta secção: \PORPREENCHER{relação entre o que transfere
 % sem retreino e o que se aprende de raiz}. Note-se que este mapa não altera a
 % conclusão sobre a representação --- \PORPREENCHER{ler contra a Secção
@@ -314,19 +314,19 @@ uma execução particularmente má.
 % escala, e reforça a limitação já declarada na Secção~\ref{sec:res_discussao}. Três
 % verificações independentes excluem que a causa seja o desenho do mapa: existe
 % caminho do \textit{spawn} ao ninho para todos os agentes, mesmo com a porta
-% fechada; um oráculo que desça o gradiente geodésico recolhe
-% $53$ itens por episódio (média de três sementes: $56$, $52$ e $51$, com a
-% primeira recolha ao passo $\approx 600$ de $2000$); e a folga do orçamento é de
+% fechada; um oráculo que desça o gradiente geodésico faz
+% $53$ chegadas por episódio (média de três sementes: $56$, $52$ e $51$, com a
+% primeira chegada ao passo $\approx 600$ de $2000$); e a folga do orçamento é de
 % $2{,}9\times$ a partir do pior \textit{spawn}. O mapa é resolúvel; o que estes
 % algoritmos não fazem, com este sinal de treino e este orçamento, é aprendê-lo.
 
 O mapa composto é resolúvel por GNN, mas não de forma
-fiável: 4 das $21$ execuções atingem pelo menos uma recolha e
+fiável: 4 das $21$ execuções atingem pelo menos uma chegada e
 2 chegam aos $100\%$ de sucesso, abaixo do limiar de $15$ que
 o pré-registo fixou. Pela regra de decisão pré-comprometida, \emph{a QI7 não
 sobe a resultado afirmativo}, e o número de execuções convergentes é declarado
 aqui para que quem prefira outro critério o tenha à frente. A distribuição
-entre execuções é o resultado, e não a média: média de $8{,}9$ recolhas por episódio entre as que recolhem (amplitude de $7{,}6$ a $10{,}6$), contra $0{,}00$ nas restantes --- a distribuição é de tudo-ou-nada: as execuções que resolvem o mapa resolvem-no com magnitude comparável entre si.
+entre execuções é o resultado, e não a média: média de $8{,}9$ chegadas por episódio entre as que chegam ao ninho (amplitude de $7{,}6$ a $10{,}6$), contra $0{,}00$ nas restantes --- a distribuição é de tudo-ou-nada: as execuções que resolvem o mapa resolvem-no com magnitude comparável entre si.
 
 Esta é a assinatura que a dissertação já documentou no Muro em U
 (Secção~\ref{sec:res_boxplots}), onde a mesma configuração ora resolve o
@@ -423,13 +423,13 @@ compensava emergir'', e a segunda leitura é a mais parcimoniosa. A alternativa
 existe de facto: com o painel da porta a contar como parede, o potencial no
 \textit{spawn} continua finito --- não abrir a porta atrasa, não impede.
 
-Sexto, a entrega no ninho é avaliada em \emph{três} dimensões, enquanto tudo o
-resto do que este mapa mede é planar. A condição de recolha compara a distância
+Sexto, a chegada ao ninho é avaliada em \emph{três} dimensões, enquanto tudo o
+resto do que este mapa mede é planar. A condição de chegada compara a distância
 euclidiana tridimensional do agente ao centro do ninho, que está no plano
-$z = 0$, com o raio do ninho: um agente acima de $1{,}6$\,m não entrega, esteja
+$z = 0$, com o raio do ninho: um agente acima de $1{,}6$\,m não conta como chegada, esteja
 onde estiver na horizontal, nem que esteja exatamente por cima do alvo. Como o
 movimento vertical está limitado a $\pm 2$\,m neste cenário, sobram $0{,}4$\,m de
-altitude em que a navegação é possível e a entrega não. A restrição é pequena, e
+altitude em que a navegação é possível e a chegada não. A restrição é pequena, e
 é muito menor do que a dos sete cenários --- onde, sem limite vertical, a mesma
 faixa improdutiva se estende até ao raio da arena, $13{,}4$\,m ---, mas fica
 declarada porque a assimetria entre uma tarefa planar e um critério de sucesso
