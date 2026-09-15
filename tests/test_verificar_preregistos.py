@@ -49,8 +49,8 @@ def test_sem_mutacao_nao_ha_falhas(originais):
 def test_comentar_a_M2_e_apanhado(originais):
     """A armadilha da QI7: escrita, mas dentro de um comentário LaTeX."""
     sec, main, pre = originais
-    mutado = sec.replace(r"\textbf{M2 (convergência, descritivo)",
-                         r"% \textbf{M2 (convergência, descritivo)")
+    mutado = sec.replace(r"\emph{M2 (convergência, descritivo)",
+                         r"% \emph{M2 (convergência, descritivo)")
     assert mutado != sec
     # o verificador lê texto já sem comentários; simula-se o que ele veria
     mutado = vp.sem_comentarios_de_texto(mutado)
