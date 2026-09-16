@@ -19,6 +19,22 @@
 > correr no `pre-commit` quando o `artigo.tex` muda — porque o artigo é um
 > documento à parte e já divergiu da dissertação duas vezes.
 >
+> **16 set 2026 --- o artigo deixou de dizer «recolhas».** A segunda revisão do
+> orientador (14 set) dizia que «foraging implica recolha» e que o nome estava
+> errado: não há objetos para apanhar, uma «recolha» é $k_{\min}$ agentes a entrarem
+> juntos no ninho. A tese foi alinhada a 15 set; o artigo ficou para trás e vai
+> agora atrás dela --- **«chegada(s)»** e **«navegação cooperativa até ao ninho»**,
+> com a definição de «chegada» escrita por extenso na Secção 3 (não existia). Os
+> «foraging» que sobram são os trabalhos dos outros, que têm mesmo objetos a
+> recolher. As figuras já diziam «Chegadas» desde 15 set: o texto é que não.
+>
+> A definição nova custou linhas e a bibliografia derramou para uma **nona
+> página**. Resolveu-se com 17 `\looseness=-1` no corpo (cada um compõe um
+> parágrafo com menos uma linha), **sem cortar uma palavra**: está de volta a **8
+> páginas**, 0 erros, 0 caixas a transbordar. O preâmbulo do `artigo.tex` explica
+> porquê. Se voltar a faltar espaço, são a primeira coisa a retirar --- e só
+> depois a Robustez, o candidato nº 1 da lista lá em baixo.
+>
 > Este guia diz: (1) o que o **professor** pretende; (2) o que **mudou** face
 > ao draft de junho e porquê; (3) o que ainda depende de ti.
 
