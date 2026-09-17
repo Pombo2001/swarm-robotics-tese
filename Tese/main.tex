@@ -579,7 +579,7 @@ As três questões seguintes decorrem das anteriores e só se tornam formulávei
 
 \section{Estrutura do Documento}
 \label{sec:estrutura_documento}
-Além desta Introdução, o documento organiza-se em seis capítulos e quatro anexos:
+Além desta Introdução, o documento organiza-se em seis capítulos e cinco anexos:
 \begin{itemize}
     \item O \textbf{Capítulo~\ref{ch:fundamentos}} apresenta os fundamentos teóricos dos dois paradigmas comparados --- os algoritmos evolutivos, os processos de decisão de Markov e os algoritmos PPO e SAC --- e das redes de grafos com atenção em que assenta o controlador neuroevolutivo.
     \item O \textbf{Capítulo~\ref{ch:sota}} reporta a revisão sistemática da literatura: o protocolo seguido, a caracterização dos estudos incluídos, o problema da transferência da simulação para robôs reais e as lacunas a que esta dissertação responde.
@@ -588,7 +588,7 @@ Além desta Introdução, o documento organiza-se em seis capítulos e quatro an
     \item O \textbf{Capítulo~\ref{ch:results}} apresenta e discute os resultados: desempenho por cenário, fiabilidade entre execuções, deceção e procura por novidade, o oitavo cenário composto, escalabilidade, robustez a falhas e custo computacional.
     \item O \textbf{Capítulo~\ref{ch:conclusoes}} responde às questões de investigação e declara as limitações, os contributos e os trabalhos futuros.
 \end{itemize}
-Os anexos reúnem as configurações e hiperparâmetros (Anexo~\ref{apx:hyperparameters}), os estudos incluídos na revisão sistemática (Anexo~\ref{apx:slr}), o diagrama de classes e os excertos de código mais relevantes (Anexo~\ref{apx:code}) e a localização do repositório com o código e os dados (Anexo~\ref{apx:resources}).
+Os anexos reúnem as configurações e hiperparâmetros (Anexo~\ref{apx:hyperparameters}), os estudos incluídos na revisão sistemática (Anexo~\ref{apx:slr}), o diagrama de classes e os excertos de código mais relevantes (Anexo~\ref{apx:code}), a localização do repositório com o código e os dados (Anexo~\ref{apx:resources}) e a declaração de utilização de ferramentas de inteligência artificial (Anexo~\ref{apx:ia}).
 
 % --- CAPÍTULO 2 ---
 \chapter{Fundamentos Teóricos e Tecnologias}
@@ -2238,5 +2238,16 @@ A totalidade do código-fonte --- simulador, implementações dos três algoritm
 \end{center}
 
 \noindent O repositório inclui o ficheiro \texttt{configs/foraging.yaml} com a configuração reproduzida no Anexo~\ref{apx:hyperparameters}, um \texttt{README.md} com o procedimento de instalação e de reprodução dos resultados (treino, avaliação determinística, testes estatísticos e geração de gráficos), e os modelos treinados por cenário. As demonstrações qualitativas do comportamento emergente são reproduzíveis localmente através do visualizador 3D (motor Ursina), executado a partir do \textit{dashboard} de controlo.
+
+
+\chapter{Declaração de Utilização de Ferramentas de Inteligência Artificial}
+\label{apx:ia}
+Declara-se, para efeitos de transparência académica, que foram utilizadas ferramentas de inteligência artificial generativa --- assistentes conversacionais assentes em modelos de linguagem de grande dimensão --- durante a realização deste trabalho, em dois domínios distintos e com graus de intervenção diferentes.
+
+No \textbf{desenvolvimento do software}, essas ferramentas serviram de apoio à programação: geração e reescrita de excertos de código, depuração, escrita de testes automáticos e produção dos \textit{scripts} auxiliares de avaliação e de geração de figuras. As decisões de conceção mantiveram-se do autor --- a arquitetura do simulador, o modelo físico, a definição dos sete cenários, a formulação da função de recompensa e da função de aptidão, o desenho do plano experimental e a escolha dos testes estatísticos. Todo o código incorporado no repositório foi lido, executado e validado pelo autor, com as garantias de não-regressão descritas na Secção~\ref{sec:extensibilidade}; os resultados reportados no Capítulo~\ref{ch:results} provêm da execução desse código, não de qualquer saída de um assistente.
+
+Na \textbf{redação do documento}, as ferramentas foram usadas para revisão linguística e estilística, sugestão de reformulações, verificação da coerência terminológica entre secções e apoio à formatação em \LaTeX. Não foram usadas para produzir conteúdo científico: a formulação das questões de investigação, a revisão sistemática da literatura e a triagem dos estudos, a leitura e interpretação dos resultados experimentais, a discussão e as conclusões são trabalho do autor. Nenhuma referência bibliográfica foi incluída sem verificação direta na fonte original.
+
+O autor assume a inteira responsabilidade pelo conteúdo desta dissertação, incluindo pelas partes em que houve apoio das ferramentas aqui declaradas.
 
 \end{document}
