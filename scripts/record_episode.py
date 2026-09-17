@@ -145,7 +145,7 @@ def record(algo, scenario, config_path, seed=2024, seconds=15, fps=20,
         ax.set_xticks([]); ax.set_yticks([])
         ax.set_title(f"{ALGO_LABELS.get(algo, algo.upper())} — "
                      f"{SCENARIO_LABELS.get(scenario, scenario)}\n"
-                     f"passo {f['step']}   |   recolhas: {f['food']}", fontsize=11)
+                     f"passo {f['step']}   |   chegadas: {f['food']}", fontsize=11)
         return []
 
     anim = FuncAnimation(fig, draw, frames=len(frames), interval=1000 / fps, blit=False)

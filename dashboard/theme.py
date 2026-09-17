@@ -594,3 +594,63 @@ def clicavel(elemento, acao, rotulo: str = ""):
     if rotulo:
         elemento.props(f'aria-label="{rotulo}"')
     return elemento
+
+
+# --- A faixa do título das imagens gravadas --------------------------------
+#
+# Os GIFs dos episódios e os heatmaps de ocupação trazem o título desenhado nos
+# próprios píxeis, e esse título ficou com o vocabulário anterior a 14 set 2026
+# («recolhas», onde a dissertação diz «chegadas»). Regenerá-los não resolvia:
+# reproduzir o episódio do `gnn_none` da campanha final com a mesma semente
+# (2024) e com os modelos arquivados em `results/models_7d/` dá 64 chegadas
+# onde o GIF diz 58 — o ambiente mudou desde julho, e refazer as imagens
+# mudaria o RESULTADO em vez do rótulo, pondo no ecrã números que a tese não
+# tem. Corta-se a faixa, que de resto é redundante: o painel já escreve o
+# algoritmo por cima e a pontuação por baixo, e o cenário está no título do
+# ecrã.
+#
+# As frações são medidas, não estimadas, e as imagens são uniformes (151 GIFs
+# a 600×600, 266 heatmaps a 1200×1050): nos GIFs as duas linhas do título
+# ocupam as linhas 34-67 e a cena começa na 73 (71/600 = 0,118); nos heatmaps o
+# título vai até à linha ~52 e a área do gráfico começa na 87 (89/1050 =
+# 0,085).
+CORTE_GIF = 0.118
+CORTE_HEATMAP = 0.085
+
+
+def media_sem_titulo(url: str, altura: str, corte: float, classes: str = "",
+                     props: str = ""):
+    """A imagem dentro de uma janela de `altura` fixa, sem a faixa do topo.
+
+    A imagem recebe uma caixa `corte` mais alta do que a janela e sobe o que
+    sobra, de modo que o que fica visível tem exatamente `altura`. O
+    `position="50% 0%"` é o que torna isto seguro nas duas situações: quando a
+    imagem é limitada pela ALTURA (três colunas) o corte é exato; quando é
+    limitada pela LARGURA (quatro colunas, painéis mais estreitos) encosta ao
+    topo da caixa e corta-se um pouco mais do que a faixa — alguns píxeis de
+    margem branca, nunca desenho.
+
+    O `fit`/`position` vão como PROPS do Quasar, não como CSS: o `ui.image` é um
+    `<q-img>`, e um `object-fit` escrito no `.style()` cai na `div` de fora, onde
+    não faz nada — a imagem interior fica no `cover` que o Quasar traz por
+    omissão. Era o que já acontecia aqui antes deste corte existir: os heatmaps
+    perdiam as etiquetas do eixo x e a legenda da barra de cor, e ninguém deu por
+    isso porque a figura cortada continua a parecer uma figura.
+
+    NÃO serve dentro de uma caixa que encolha até ao conteúdo — a `ui.card` de
+    um diálogo, por exemplo: o `w-full` da janela não tem contra o que medir e o
+    conjunto abre a zero. Por isso as janelas de ampliar continuam a mostrar a
+    imagem inteira, com a faixa.
+
+    Devolve o `ui.image` para quem quiser torná-lo clicável.
+    """
+    fora = 1.0 - corte
+    with ui.element("div").classes("w-full overflow-hidden " + classes) \
+            .style(f"height:{altura}"):
+        img = ui.image(url).classes("w-full block")
+        img.style("height:calc(%s / %.4f);margin-top:calc(%s * -%.4f)"
+                  % (altura, fora, altura, corte / fora))
+        img.props('fit=contain position="50% 0%"')
+        if props:
+            img.props(props)
+    return img

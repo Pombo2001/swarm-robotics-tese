@@ -62,6 +62,8 @@ def _zoom(session: str, filename: str):
                 .classes("text-base font-semibold")
             ui.button(icon="close", on_click=dlg.close) \
                 .props('flat round dense aria-label="Fechar"')
+        # Sem corte, pela mesma razão do `_ampliar` da Apresentação: dentro de
+        # uma `ui.card` de diálogo a janela de altura fixa não tem largura.
         ui.image(_url(session, filename)).classes("max-h-[78vh] rounded-lg object-contain")
         ui.label(filename).classes("text-xs font-mono text-gray-500 self-center")
     dlg.open()
@@ -100,10 +102,10 @@ def _video_card(session: str, algo: str, scenario: str, show_metric=True, height
             ui.label(meta["label"]).classes("text-sm font-bold").style(f"color:{meta['color']}")
         if fn:
             theme.clicavel(
-                ui.image(_url(fonte, fn))
-                  .classes("w-full rounded-lg cursor-pointer bg-black/30")
-                  .style(f"height:{height};object-fit:contain")
-                  .props("loading=lazy decoding=async"),
+                theme.media_sem_titulo(
+                    _url(fonte, fn), height, theme.CORTE_GIF,
+                    classes="rounded-lg cursor-pointer bg-black/30",
+                    props="loading=lazy decoding=async"),
                 lambda _, f=fn, s=fonte: _zoom(s, f),
                 "Ampliar o vídeo %s" % meta["label"])
             if fonte != session:
@@ -297,11 +299,11 @@ def _render_gallery(st):
                         ui.label(config.SCENARIO_LABEL_BY_KEY.get(s, s)) \
                             .classes("text-xs text-gray-400 truncate")
                     theme.clicavel(
-                        ui.image(_url(session, f))
-                          .classes("w-full rounded-lg cursor-pointer bg-black/30")
-                          .style("height:clamp(160px,22vh,300px);"
-                                 "object-fit:contain")
-                          .props("loading=lazy decoding=async"),
+                        theme.media_sem_titulo(
+                            _url(session, f), "clamp(160px,22vh,300px)",
+                            theme.CORTE_GIF,
+                            classes="rounded-lg cursor-pointer bg-black/30",
+                            props="loading=lazy decoding=async"),
                         lambda _, fn=f: _zoom(session, fn),
                         "Ampliar %s" % config.SCENARIO_LABEL_BY_KEY.get(s, s))
 

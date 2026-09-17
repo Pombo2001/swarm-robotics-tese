@@ -235,7 +235,7 @@
         const el = document.getElementById(idEstado);
         if (el) {
           el.textContent = "passo " + e.passo + " · quadro " + (e.quadro + 1) +
-                           "/" + e.total + " · " + e.recolhas + " recolhas";
+                           "/" + e.total + " · " + e.recolhas + " chegadas";
         }
       });
     });

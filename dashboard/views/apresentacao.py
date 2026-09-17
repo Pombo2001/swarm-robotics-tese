@@ -226,8 +226,9 @@ def build():
                 if not url:
                     _vazio("videocam_off", "este treino não gravou vídeo")
                     return
-                ui.image(url).classes("w-full rounded-xl bg-white") \
-                    .style(f"height:{_ALTURA_MEDIA};object-fit:contain").props("decoding=async")
+                theme.media_sem_titulo(url, _ALTURA_MEDIA, theme.CORTE_GIF,
+                                       classes="rounded-xl bg-white",
+                                       props="decoding=async")
                 if origem != campanha:
                     ui.label("gravado no stream %s" % data.rotulo_campanha(origem)[0]) \
                         .classes("text-[10px]").style(f"color:{theme.INK_MUTED}")
@@ -238,9 +239,10 @@ def build():
                     _vazio("grid_off", "sem heatmap de ocupação para este treino")
                     return
                 theme.clicavel(
-                    ui.image(url).classes("w-full rounded-xl bg-white cursor-pointer")
-                      .style(f"height:{_ALTURA_MEDIA};object-fit:contain")
-                      .props("loading=lazy decoding=async"),
+                    theme.media_sem_titulo(
+                        url, _ALTURA_MEDIA, theme.CORTE_HEATMAP,
+                        classes="rounded-xl bg-white cursor-pointer",
+                        props="loading=lazy decoding=async"),
                     lambda _, u=url, t="Ocupação — %s" % col["serie"]: _ampliar(u, t),
                     "Ampliar o heatmap %s" % col["serie"])
                 return
@@ -393,6 +395,11 @@ def build():
                         ui.label("python scripts/figuras_apresentacao.py") \
                             .classes("text-[10px] mono-num").style(f"color:{theme.INK_MUTED}")
 
+        # A janela de ampliar NÃO corta a faixa do título: a `ui.card` de um
+        # diálogo encolhe até ao conteúdo, e uma janela de altura fixa lá dentro
+        # não tem largura contra que medir — abre a zero. (O mesmo diálogo já
+        # abria pequeno demais antes deste corte existir, com a imagem simples:
+        # é defeito à parte, e à parte se resolve.)
         def _ampliar(url, titulo):
             with ui.dialog() as dlg, ui.card().classes("max-w-[92vw]"):
                 ui.label(titulo).classes("text-sm").style(f"color:{theme.INK_MUTED}")
