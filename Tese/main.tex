@@ -8,6 +8,7 @@
 \usepackage[onehalfspacing]{setspace}
 \usepackage{chngcntr}
 \usepackage{graphicx}
+\usepackage{pdfpages} % formulário de uso de IA, no Anexo A
 \usepackage[a4paper, margin=2.5cm]{geometry}
 \usepackage[portuguese]{babel} % Língua Portuguesa
 \usepackage{fancyhdr}
@@ -357,7 +358,7 @@ Mestrado em Inteligência Artificial\\
 ~\\
 Orientador:\\
 Doutor Luís Nunes, Professor do Departamento de Ciências e Tecnologias da Informação,\\
-Iscte -- Instituto Universitário de Lisboa\\
+Iscte-Instituto Universitário de Lisboa\\
 ~\\
 ~\\
 ~\\
@@ -368,7 +369,7 @@ Iscte -- Instituto Universitário de Lisboa\\
 ~\\
 ~\\
 ~\\
-2026
+setembro, 2026
 \end{flushleft}
 \thispagestyle{empty}
 
@@ -381,7 +382,7 @@ Iscte -- Instituto Universitário de Lisboa\\
 ~\\
 ~\\
 ~\\
-Departamento de Ciências e Tecnologias da Informação\\
+Departamento de Ciências e Tecnologia da Informação\\
 ~\\
 ~\\
 \textbf{Aprendizagem por Reforço para Controlo de Enxames}\\
@@ -399,7 +400,7 @@ Mestrado em Inteligência Artificial\\
 ~\\
 Orientador:\\
 Doutor Luís Nunes, Professor do Departamento de Ciências e Tecnologias da Informação,\\
-Iscte -- Instituto Universitário de Lisboa\\
+Iscte-Instituto Universitário de Lisboa\\
 ~\\
 ~\\
 ~\\
@@ -410,7 +411,7 @@ Iscte -- Instituto Universitário de Lisboa\\
 ~\\
 ~\\
 ~\\
-2026
+setembro, 2026
   \end{flushleft}
   \thispagestyle{empty}
 \rmfamily
@@ -588,7 +589,7 @@ Além desta Introdução, o documento organiza-se em seis capítulos e cinco ane
     \item O \textbf{Capítulo~\ref{ch:results}} apresenta e discute os resultados: desempenho por cenário, fiabilidade entre execuções, deceção e procura por novidade, o oitavo cenário composto, escalabilidade, robustez a falhas e custo computacional.
     \item O \textbf{Capítulo~\ref{ch:conclusoes}} responde às questões de investigação e declara as limitações, os contributos e os trabalhos futuros.
 \end{itemize}
-Os anexos reúnem as configurações e hiperparâmetros (Anexo~\ref{apx:hyperparameters}), os estudos incluídos na revisão sistemática (Anexo~\ref{apx:slr}), o diagrama de classes e os excertos de código mais relevantes (Anexo~\ref{apx:code}), a localização do repositório com o código e os dados (Anexo~\ref{apx:resources}) e a declaração de utilização de ferramentas de inteligência artificial (Anexo~\ref{apx:ia}).
+Os anexos reúnem a declaração de utilização de ferramentas de inteligência artificial (Anexo~\ref{apx:ia}), as configurações e hiperparâmetros (Anexo~\ref{apx:hyperparameters}), os estudos incluídos na revisão sistemática (Anexo~\ref{apx:slr}), o diagrama de classes e os excertos de código mais relevantes (Anexo~\ref{apx:code}) e a localização do repositório com o código e os dados (Anexo~\ref{apx:resources}).
 
 % --- CAPÍTULO 2 ---
 \chapter{Fundamentos Teóricos e Tecnologias}
@@ -2014,6 +2015,20 @@ A partir das limitações identificadas (Secção~\ref{sec:limitacoes}) e do est
 % --- APÊNDICES ---
 \appendix
 
+\chapter{Declaração de Utilização de Ferramentas de Inteligência Artificial}
+\label{apx:ia}
+Declara-se, para efeitos de transparência académica, que foram utilizadas ferramentas de inteligência artificial generativa --- assistentes conversacionais assentes em modelos de linguagem de grande dimensão --- durante a realização deste trabalho, em dois domínios distintos e com graus de intervenção diferentes. Na fase inicial, de arranque e estruturação do código, foi usado o Gemini Pro (Google); a partir daí, foram usados exclusivamente o Claude Opus e o Claude Fable (Anthropic), nas versões Claude Opus~5 e Claude Fable~5.1 na fase final do trabalho.
+
+No \textbf{desenvolvimento do software}, essas ferramentas serviram de apoio à programação: geração e reescrita de excertos de código, depuração, escrita de testes automáticos e produção dos \textit{scripts} auxiliares de avaliação e de geração de figuras. As decisões de conceção mantiveram-se do autor --- a arquitetura do simulador, o modelo físico, a definição dos sete cenários, a formulação da função de recompensa e da função de aptidão, o desenho do plano experimental e a escolha dos testes estatísticos. Todo o código incorporado no repositório foi lido, executado e validado pelo autor, com as garantias de não-regressão descritas na Secção~\ref{sec:extensibilidade}; os resultados reportados no Capítulo~\ref{ch:results} provêm da execução desse código, não de qualquer saída de um assistente.
+
+Na \textbf{redação do documento}, as ferramentas foram usadas para revisão linguística e estilística, sugestão de reformulações, verificação da coerência terminológica entre secções e apoio à formatação em \LaTeX. Não foram usadas para produzir conteúdo científico: a formulação das questões de investigação, a revisão sistemática da literatura e a triagem dos estudos, a leitura e interpretação dos resultados experimentais, a discussão e as conclusões são trabalho do autor. Nenhuma referência bibliográfica foi incluída sem verificação direta na fonte original.
+
+Estas ferramentas têm limitações conhecidas: podem produzir código com erros subtis, afirmações factualmente incorretas ou referências inexistentes, e reproduzir enviesamentos dos dados com que foram treinadas. Por isso, nenhuma sugestão foi aceite sem verificação --- o código pelos testes e pela execução, o texto por leitura crítica do autor e as referências por consulta da fonte original.
+
+O autor assume a inteira responsabilidade pelo conteúdo desta dissertação, incluindo pelas partes em que houve apoio das ferramentas aqui declaradas. Nas páginas seguintes reproduz-se o formulário do Iscte sobre o uso de ferramentas de inteligência artificial, preenchido pelo autor.
+
+\includepdf[pages=-,pagecommand={}]{anexos/formulario_uso_ia.pdf}
+
 \chapter{Configurações e Hiperparâmetros}
 \label{apx:hyperparameters}
 Para garantir a reprodutibilidade integral das experiências, este anexo reúne a configuração completa do sistema, tal como definida no ficheiro \texttt{configs/foraging.yaml} do repositório (Anexo~\ref{apx:resources}). Os valores não resultaram de uma pesquisa automática de hiperparâmetros (\textit{grid}/\textit{Optuna}), mas sim de \emph{calibração manual} informada por testes de fumo (\textit{smoke tests}) curtos e pelas escolhas de referência da literatura e das implementações da \textit{Stable-Baselines3}; documentam-se aqui os valores efetivamente utilizados nos treinos reportados no Capítulo~\ref{ch:results}. O Quadro~\ref{tab:apx_env} reúne os parâmetros do ambiente e da física, comuns aos três controladores; o Quadro~\ref{tab:apx_train} reúne os hiperparâmetros de treino, específicos de cada um.
@@ -2239,15 +2254,5 @@ A totalidade do código-fonte --- simulador, implementações dos três algoritm
 
 \noindent O repositório inclui o ficheiro \texttt{configs/foraging.yaml} com a configuração reproduzida no Anexo~\ref{apx:hyperparameters}, um \texttt{README.md} com o procedimento de instalação e de reprodução dos resultados (treino, avaliação determinística, testes estatísticos e geração de gráficos), e os modelos treinados por cenário. As demonstrações qualitativas do comportamento emergente são reproduzíveis localmente através do visualizador 3D (motor Ursina), executado a partir do \textit{dashboard} de controlo.
 
-
-\chapter{Declaração de Utilização de Ferramentas de Inteligência Artificial}
-\label{apx:ia}
-Declara-se, para efeitos de transparência académica, que foram utilizadas ferramentas de inteligência artificial generativa --- assistentes conversacionais assentes em modelos de linguagem de grande dimensão --- durante a realização deste trabalho, em dois domínios distintos e com graus de intervenção diferentes. Na fase inicial, de arranque e estruturação do código, foi usado o Gemini Pro (Google); a partir daí, foram usados exclusivamente o Claude Opus e o Claude Fable (Anthropic), nas versões Claude Opus~5 e Claude Fable~5.1 na fase final do trabalho.
-
-No \textbf{desenvolvimento do software}, essas ferramentas serviram de apoio à programação: geração e reescrita de excertos de código, depuração, escrita de testes automáticos e produção dos \textit{scripts} auxiliares de avaliação e de geração de figuras. As decisões de conceção mantiveram-se do autor --- a arquitetura do simulador, o modelo físico, a definição dos sete cenários, a formulação da função de recompensa e da função de aptidão, o desenho do plano experimental e a escolha dos testes estatísticos. Todo o código incorporado no repositório foi lido, executado e validado pelo autor, com as garantias de não-regressão descritas na Secção~\ref{sec:extensibilidade}; os resultados reportados no Capítulo~\ref{ch:results} provêm da execução desse código, não de qualquer saída de um assistente.
-
-Na \textbf{redação do documento}, as ferramentas foram usadas para revisão linguística e estilística, sugestão de reformulações, verificação da coerência terminológica entre secções e apoio à formatação em \LaTeX. Não foram usadas para produzir conteúdo científico: a formulação das questões de investigação, a revisão sistemática da literatura e a triagem dos estudos, a leitura e interpretação dos resultados experimentais, a discussão e as conclusões são trabalho do autor. Nenhuma referência bibliográfica foi incluída sem verificação direta na fonte original.
-
-O autor assume a inteira responsabilidade pelo conteúdo desta dissertação, incluindo pelas partes em que houve apoio das ferramentas aqui declaradas.
 
 \end{document}
