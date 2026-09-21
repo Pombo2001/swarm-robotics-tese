@@ -6,7 +6,7 @@
 > que está aqui está na dissertação; nenhum número foi arredondado de forma
 > diferente da tese. Companheira do [`DEFESA_PERGUNTAS.md`](DEFESA_PERGUNTAS.md)
 > (as perguntas que vêm primeiro) e dos slides em `Defesa/slides_defesa.pptx`
-> (19 de apresentação + 6 de reserva, gerados por `Defesa/gerar_slides.py`, com as
+> (20 de apresentação + 6 de reserva, gerados por `Defesa/gerar_slides.py`, com as
 > notas de orador e o orçamento de tempo; o 18.º é a demo ao vivo do Muro em U no
 > painel). O guião de tempo está na §9, os slides de reserva na §10.
 
@@ -191,28 +191,29 @@ são as duas que a conclusão repete.
 
 | # | Slide | dura | sai a | A frase que tem de sair |
 |---|---|---|---|---|
-| 1 | Capa | 25 s | 0:25 | «Quinze minutos: o problema, o método, sete perguntas e as respostas.» |
-| 2 | O problema | 50 s | 1:15 | «Faltam comparações diretas, com estatística, em cenários difíceis.» |
-| 3 | Sete questões | 40 s | 1:55 | «Quatro comparam paradigmas; três descem aos mecanismos.» |
-| 4 | Simulador e cenários | 60 s | 2:55 | «Sete cenários isolam uma dificuldade cada; o oitavo compõe quatro.» |
-| 5 | Os três controladores | 50 s | 3:45 | «Mesmo simulador e mesma observação; a arquitetura é a variável que difere.» |
-| 6 | O protocolo | 50 s | 4:35 | «A unidade estatística é a execução, não o episódio.» |
-| 7 | **QI1** — desempenho | 70 s | 5:45 | «Não há vencedor universal: 15 das 21 células a 100 %.» |
-| 8 | A forma da distribuição | 40 s | 6:25 | «Com n=7 a caixa mente: o Muro em U é bimodal, não “média 24,5”.» |
-| 9 | **QI5** — a fitness | 60 s | 7:25 | «O colapso do evolutivo era o sinal de treino: 28 execuções de 0 % a 100 %.» |
-| 10 | **QI6** — deceção | 75 s | 8:40 | «28/28 contra 15/28: decide a dosagem da exploração, não o paradigma.» |
-| 11 | **QI2** — escala | 50 s | 9:30 | «Zero-shot é propriedade da representação, não do otimizador.» |
-| 12 | **QI3** — falhas | 30 s | 10:00 | «92–106 % nos três: a robustez não discrimina — e isso é uma resposta.» |
-| 13 | **QI7** — composição | 60 s | 11:00 | «A resposta é negativa, e o limiar estava fixado antes dos dados.» |
-| 14 | **QI4** — mapa de escolha | 40 s | 11:40 | «Em vez de um vencedor, os eixos que devem ditar a escolha.» |
-| 15 | Limitações | 40 s | 12:20 | «A assimetria é a primeira limitação — e é o que permite atribuir a escala à representação.» |
-| 16 | Contributos | 30 s | 12:50 | «O principal é metodológico: a fitness era a causa e a cura.» |
-| 17 | Conclusão | 35 s | 13:25 | «A vantagem de escala está na representação, não no otimizador.» |
-| 18 | Demo ao vivo | 60 s | 14:25 | «Qualquer número do painel tem proveniência: dois cliques até ao CSV.» |
-| 19 | Obrigado | 15 s | 14:40 | — |
+| 1 | Capa | 20 s | 0:20 | «Quinze minutos: o problema, o método, sete perguntas e as respostas.» |
+| 2 | Roteiro | 20 s | 0:40 | «Cinco partes: contexto, método, resultados, balanço e demo.» |
+| 3 | O problema | 45 s | 1:25 | «Faltam comparações diretas, com estatística, em cenários difíceis.» |
+| 4 | Sete questões | 40 s | 2:05 | «Quatro comparam paradigmas; três descem aos mecanismos.» |
+| 5 | Simulador e cenários | 60 s | 3:05 | «Sete cenários isolam uma dificuldade cada; o oitavo compõe quatro.» |
+| 6 | Os três controladores | 50 s | 3:55 | «Mesmo simulador e mesma observação; a arquitetura é a variável que difere.» |
+| 7 | O protocolo | 45 s | 4:40 | «A unidade estatística é a execução, não o episódio.» |
+| 8 | **QI1** — desempenho | 65 s | 5:45 | «Não há vencedor universal: 15 das 21 células a 100 %.» |
+| 9 | A forma da distribuição | 40 s | 6:25 | «Com n=7 a caixa mente: o Muro em U é bimodal, não “média 24,5”.» |
+| 10 | **QI5** — a fitness | 60 s | 7:25 | «O colapso do evolutivo era o sinal de treino: 28 execuções de 0 % a 100 %.» |
+| 11 | **QI6** — deceção | 75 s | 8:40 | «28/28 contra 15/28: decide a dosagem da exploração, não o paradigma.» |
+| 12 | **QI2** — escala | 50 s | 9:30 | «Zero-shot é propriedade da representação, não do otimizador.» |
+| 13 | **QI3** — falhas | 30 s | 10:00 | «92–106 % nos três: a robustez não discrimina — e isso é uma resposta.» |
+| 14 | **QI7** — composição | 60 s | 11:00 | «A resposta é negativa, e o limiar estava fixado antes dos dados.» |
+| 15 | **QI4** — mapa de escolha | 40 s | 11:40 | «Em vez de um vencedor, os eixos que devem ditar a escolha.» |
+| 16 | Limitações | 40 s | 12:20 | «A assimetria é a primeira limitação — e é o que permite atribuir a escala à representação.» |
+| 17 | Contributos | 30 s | 12:50 | «O principal é metodológico: a fitness era a causa e a cura.» |
+| 18 | Conclusão | 35 s | 13:25 | «A vantagem de escala está na representação, não no otimizador.» |
+| 19 | Demo ao vivo | 60 s | 14:25 | «Qualquer número do painel tem proveniência: dois cliques até ao CSV.» |
+| 20 | Obrigado | 15 s | 14:40 | — |
 
 > O rodapé dos slides numera a partir da 2.ª (a capa e o «Obrigado» não levam
-> número): o slide 10 desta tabela mostra **09** no canto. É por esse rótulo que
+> número): o slide 11 desta tabela mostra **10** no canto. É por esse rótulo que
 > a demo remete para o plano B.
 
 ## 10. Os slides de reserva — que anexo para que pergunta

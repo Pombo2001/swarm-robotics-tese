@@ -76,7 +76,7 @@ BRANCO = prs.slide_layouts[6]
 _n = 0
 
 # Os slides de reserva (ver o fim do ficheiro) numeram-se A1, A2, … e não entram
-# na conta dos 19: quem folheia tem de perceber, pelo rodapé, que saiu do fio da
+# na conta dos 20: quem folheia tem de perceber, pelo rodapé, que saiu do fio da
 # apresentação. `_ANEXO` liga-se uma vez, antes de os construir.
 _ANEXO = False
 _na = 0
@@ -88,7 +88,10 @@ _na = 0
 # sair, que é a única forma de ensaiar sem cronómetro na mão e de saber, a meio,
 # se se está adiantado ou atrasado. Se um slide for cortado ou acrescentado, esta
 # lista tem de acompanhar — o `assert` no fim do ficheiro trava se deixar de bater.
-PLANO = [25, 50, 40, 60, 50, 50, 70, 40, 60, 75, 50, 30, 60, 40, 40, 30, 35, 60, 15]
+# O roteiro (slide 2) entrou a 21 set com 20 s, pagos por cinco segundos à capa,
+# ao problema, ao protocolo e à QI1 — todos ANTES da QI6, para que os dois
+# relógios que a cábula manda decorar (7:25 ao entrar nela, 8:40 ao sair) não mudem.
+PLANO = [20, 20, 45, 40, 60, 50, 45, 65, 40, 60, 75, 50, 30, 60, 40, 40, 30, 35, 60, 15]
 
 
 def _mmss(seg):
@@ -284,8 +287,11 @@ def _fig(slide, nome, x, y, w=None, h=None, pasta=FIG, chapa=True, folga=0.09):
     return slide.shapes.add_picture(p, px, py, width=pw, height=ph)
 
 
-def _notas(slide, texto):
-    """O guião do orador, com a marca de tempo à cabeça.
+def _notas(slide, texto, termos=()):
+    """O guião do orador, com a marca de tempo à cabeça e, no fim, a CÁBULA dos
+    termos que o slide usa — uma linha por termo, para o que se sabe mas não se
+    consegue dizer de repente. Fica depois do guião, e separada, porque não é
+    para dizer: é para consultar se a pergunta for «o que quer dizer X?».
 
     A marca vem do PLANO, não é escrita à mão: um slide que mude de sítio leva o
     seu tempo consigo, e dezanove horas copiadas para dentro de dezanove blocos
@@ -299,11 +305,15 @@ def _notas(slide, texto):
         i = len(prs.slides) - 1
         ini = sum(PLANO[:i])
         marca = "[%s → %s · %d s]" % (_mmss(ini), _mmss(ini + PLANO[i]), PLANO[i])
-    slide.notes_slide.notes_text_frame.text = marca + chr(10) * 2 + texto.strip()
+    corpo = marca + chr(10) * 2 + texto.strip()
+    if termos:
+        corpo += (chr(10) * 2 + "- - - CÁBULA: os termos deste slide (não é para dizer) - - -" + chr(10) * 2
+                  + chr(10).join("• %s — %s" % t for t in termos))
+    slide.notes_slide.notes_text_frame.text = corpo
 
 
 def slide_texto_figura(titulo, sub, bullets, figura=None, notas="", fig_w=6.2, fig_h=4.9,
-                       largura_texto=None, figuras=None, tamanho=17):
+                       largura_texto=None, figuras=None, tamanho=17, termos=()):
     """Texto à esquerda, uma figura (ou várias empilhadas) à direita."""
     s = _novo_slide()
     _titulo(s, titulo, sub)
@@ -320,11 +330,11 @@ def slide_texto_figura(titulo, sub, bullets, figura=None, notas="", fig_w=6.2, f
             _fig(s, f, W - MARGEM - Inches(fig_w), y, Inches(fig_w), alt)
             y += alt + Inches(0.2)
     _rodape(s)
-    _notas(s, notas)
+    _notas(s, notas, termos)
     return s
 
 
-def slide_figura(titulo, sub, figura, legenda="", notas="", pasta=FIG):
+def slide_figura(titulo, sub, figura, legenda="", notas="", pasta=FIG, termos=()):
     s = _novo_slide()
     _titulo(s, titulo, sub)
     _fig(s, figura, MARGEM, Inches(1.7), W - 2 * MARGEM, H - Inches(2.9), pasta=pasta)
@@ -332,12 +342,12 @@ def slide_figura(titulo, sub, figura, legenda="", notas="", pasta=FIG):
         _texto(s, MARGEM, H - Inches(1.15), W - 2 * MARGEM, Inches(0.5), legenda,
                tamanho=13, cor=MUTED, alinhar=PP_ALIGN.CENTER)
     _rodape(s)
-    _notas(s, notas)
+    _notas(s, notas, termos)
     return s
 
 
 def slide_tabela(titulo, sub, cabecalho, linhas, notas="", larguras=None, bullets=None,
-                 tamanho=13):
+                 tamanho=13, termos=()):
     s = _novo_slide()
     _titulo(s, titulo, sub)
     y = Inches(1.75)
@@ -395,7 +405,7 @@ def slide_tabela(titulo, sub, cabecalho, linhas, notas="", larguras=None, bullet
             cel.fill.fore_color.rgb = SUPERFICIE2 if i % 2 else SUPERFICIE
             _borda_celula(cel)
     _rodape(s)
-    _notas(s, notas)
+    _notas(s, notas, termos)
     return s
 
 
@@ -420,6 +430,135 @@ def _logo_branco(nome):
     branco.save(dest)
     return dest
 
+
+# ── Cábula de termos, slide a slide ───────────────────────────────────────────
+# Vai para o fim das notas de cada slide (ver `_notas`). As definições são as do
+# vocabulário do docs/RESUMO_PARA_DECORAR.md (secção 11) e da tese, encurtadas a
+# uma linha: o que se consegue ler de relance no ecrã do orador.
+TERMOS = {
+    "problema": [
+        ("Robótica de enxame", "muitos robôs simples, sem líder; o comportamento coletivo nasce das interações locais"),
+        ("Controlo descentralizado", "cada robô decide só com o que ele próprio observa — não há computador central"),
+        ("MARL", "aprendizagem por reforço multiagente: vários agentes aprendem por tentativa e erro a maximizar uma recompensa"),
+        ("Otimização bio-inspirada", "aqui, neuroevolução: evoluem-se os pesos da rede por seleção e mutação, sem gradientes"),
+        ("Não-estacionaridade", "para cada agente o ambiente muda enquanto aprende, porque os outros agentes também estão a aprender"),
+        ("Recompensa esparsa", "o sinal útil chega raramente (só ao chegar ao ninho): difícil saber que ação o causou"),
+        ("Benchmark", "comparação sistemática, com o mesmo simulador, cenários e protocolo para todos"),
+    ],
+    "questoes": [
+        ("Zero-shot", "aplicar a política treinada com N = 20 a outro N sem qualquer retreino"),
+        ("Fitness", "a nota que a evolução dá a cada genoma; é o que decide quem se reproduz"),
+        ("Shaping", "termos extra na recompensa/fitness que guiam a aprendizagem antes de haver sucesso"),
+        ("Homing", "o termo que premeia terminar perto do ninho"),
+        ("Deceção (deceptive)", "cenário em que seguir o gradiente da recompensa afasta da solução"),
+        ("Procura por novidade", "premiar comportamentos diferentes dos já vistos, e não só o objetivo"),
+    ],
+    "simulador": [
+        ("Ninho", "a zona-alvo; conta uma chegada quando os agentes exigidos estão lá ao mesmo tempo"),
+        ("LiDAR", "sensor de distância por raios: diz a que distância está a parede em cada direção (alcance 8 m)"),
+        ("Observação local e parcial", "cada robô só vê à sua volta e em relação a si (egocêntrica), nunca o mapa inteiro"),
+        ("Muro em U", "beco virado para o ninho: ir a direito prende o enxame; é preciso afastar-se para contornar"),
+        ("Porta Cooperativa", "a porta só abre com três robôs em simultâneo junto dela"),
+        ("Perceção Cooperativa", "não tem ninho: conta uma chegada quando três agentes cercam um alvo móvel"),
+        ("Porta com Alternativa", "a porta parece o caminho mais curto mas está fechada; há um corredor alternativo"),
+        ("Wall-sliding", "contra um muro o robô não para — desliza ao longo da parede"),
+    ],
+    "controladores": [
+        ("PPO", "Proximal Policy Optimization: gradiente de política on-policy, com passos cortados para não mudar demais"),
+        ("SAC", "Soft Actor-Critic: off-policy, reutiliza experiência guardada e premeia a entropia (temperatura α)"),
+        ("On-policy / off-policy", "treina só com dados da política atual / reaproveita dados antigos (replay buffer)"),
+        ("RS2C", "Robust and Scalable Swarm Control: o framework da tese para PPO/SAC — execução descentralizada com partilha de parâmetros"),
+        ("Parameter sharing", "os 20 agentes usam a mesma rede (os mesmos pesos)"),
+        ("MLP", "rede neuronal densa clássica; entrada de tamanho fixo (aqui um vetor de 111 números, ℝ¹¹¹)"),
+        ("GNN com atenção", "rede sobre o grafo dos vizinhos que pesa cada vizinho pela relevância; funciona com qualquer nº de vizinhos"),
+        ("Invariante a N", "a mesma rede serve para 10, 20 ou 100 agentes sem mudar nada"),
+        ("Shaping geodésico", "recompensa por aproximar-se do ninho, medida pelo caminho que contorna paredes"),
+        ("Genoma / população", "genoma = um conjunto de pesos da rede; população = os 30 genomas avaliados por geração"),
+        ("Ambientes vetorizados", "16 cópias do simulador a correr em paralelo para recolher experiência mais depressa"),
+        ("Núcleos-hora", "núcleos × horas: a moeda que torna comparável o custo dos dois paradigmas"),
+    ],
+    "protocolo": [
+        ("Execução (run)", "um treino completo, com a sua semente; é a unidade estatística (n = 7 por célula)"),
+        ("Episódio", "uma tentativa do enxame, do início ao fim (2000 passos)"),
+        ("Avaliação determinística", "o modelo já treinado joga sem aleatoriedade na ação, com sementes fixas"),
+        ("Emparelhados / sementes comuns", "os três algoritmos enfrentam exatamente os mesmos 20 episódios"),
+        ("Mann-Whitney U", "teste não-paramétrico: diz se um grupo tende a ter valores maiores que o outro, sem assumir normalidade"),
+        ("δ de Cliff", "tamanho de efeito em [−1, 1]: P(A > B) − P(B > A); |δ| ≥ 0,474 é grande, ±1 é separação total"),
+        ("Taxa de sucesso (P_task)", "fração de episódios com pelo menos uma chegada"),
+        ("Pré-registo", "hipótese, testes e regra de decisão escritos ANTES de haver dados"),
+        ("Hook de pre-commit", "script que corre sozinho antes de cada commit e o recusa se um número deixar de bater"),
+    ],
+    "qi1": [
+        ("Célula", "uma combinação algoritmo × cenário (3 × 7 = 21 células)"),
+        ("δ ≥ +0,71", "em ≥ 85 % dos pares de execuções o GNN supera o outro — efeito grande"),
+        ("Bimodal", "as execuções dividem-se em dois grupos, resolve ou fica a zero, sem nada no meio"),
+        ("3/7, 4/7, 2/7", "quantas das 7 execuções chegam a 100 % de sucesso"),
+    ],
+    "distribuicao": [
+        ("Boxplot", "caixa com mediana e quartis; com 7 pontos, os quartis dependem de 1 ou 2 execuções"),
+        ("Dot plot", "um ponto por execução: mostra a forma real da distribuição"),
+        ("Gradiente geodésico", "a descida da distância-ao-ninho medida contornando paredes; em campo aberto não canaliza nada"),
+        ("Degenerar", "a execução converge para um comportamento inútil (< 1 chegada/ep)"),
+    ],
+    "qi5": [
+        ("Fitness exploitation", "a população maximiza o termo de shaping sem cumprir a tarefa — o reward hacking da evolução"),
+        ("Farmável", "um termo que se acumula só por andar às voltas, sem nunca chegar ao ninho"),
+        ("Planalto / pressão seletiva", "todos os genomas têm fitness parecida, e a seleção deixa de distinguir bons de maus"),
+        ("Homing terminal", "clip((Φ₀ − Φ_T)/Φ₀, 0, 1): quanto se aproximou do ninho entre o INÍCIO e o FIM — vaguear não o aumenta"),
+        ("Potencial geodésico Φ", "distância ao ninho pelo caminho mais curto que contorna paredes (Dijkstra numa grelha de 0,4 m)"),
+        ("Euclidiano", "distância em linha reta: atravessa as paredes, por isso puxa o enxame para dentro do beco"),
+        ("Atribuição de crédito", "saber que comportamento mereceu a nota; o homing resolve-o, não resolve descobrir o desvio"),
+    ],
+    "qi6": [
+        ("Novelty search", "parte da seleção passa a premiar comportamento diferente; o campeão reportado é sempre o melhor no objetivo"),
+        ("w", "o peso da novidade na seleção (w = 0,5: metade objetivo, metade novidade)"),
+        ("Dosagem adaptativa", "w decai depois de a descoberta se sustentar: paga-se exploração só enquanto compra descoberta"),
+        ("Orçamento igualado", "todos os braços com o mesmo tempo de treino (195 min), para a diferença não ser tempo"),
+        ("Braço", "uma das condições comparadas (ex.: GNN adaptativo, GNN objetivo, PPO, SAC)"),
+        ("Fisher exato", "teste para contagens (28/28 vs 15/28): quão improvável seria a diferença por acaso"),
+        ("p = 0,088", "acima de 0,05: não há evidência de diferença — «indistinguíveis»"),
+    ],
+    "qi2": [
+        ("Zero-shot", "treinada com N = 20, testada com 10, 50 e 100 sem retreino"),
+        ("Chegadas por agente", "chegadas por episódio a dividir por N — permite comparar enxames de tamanhos diferentes"),
+        ("Retenção per capita", "chegadas por agente a N = 100 ÷ as de N = 20; mede diluição do recurso, não perda de coordenação"),
+        ("ℝ¹¹¹", "a MLP recebe um vetor de exatamente 111 números; com outro N o vetor muda de tamanho e a rede não o aceita"),
+    ],
+    "qi3": [
+        ("Agente inerte", "10 % dos robôs param de repente a meio do episódio e ficam como obstáculos"),
+        ("Retenção de chegadas", "chegadas com falhas ÷ chegadas sem falhas (92–106 % nos três)"),
+        ("Parameter sharing", "todos têm a mesma política: qualquer robô substitui o que falhou"),
+    ],
+    "qi7": [
+        ("Mapa composto", "labirinto de 103 × 62 m com quatro dificuldades em série: gargalo+U, quatro salas, porta cooperativa, ninho"),
+        ("Transferência sem retreino", "levar os modelos treinados nos cenários pequenos para o mapa grande tal como estão"),
+        ("Condições de controlo", "variações que excluem causas triviais do zero (escala da observação, obstáculos, features da porta)"),
+        ("Navegador geodésico", "controlador escrito à mão que segue o caminho mais curto; não aprende — prova que o mapa é resolúvel"),
+        ("Treino nativo", "treinar de raiz no próprio mapa composto (21 execuções, 780 min cada)"),
+        ("Limiar pré-registado", "15 execuções convergentes em 21, fixado antes dos dados; ficou em 4"),
+    ],
+    "qi4": [
+        ("Mapa de escolha", "em vez de um vencedor: que método usar consoante a missão"),
+        ("Dimensão fixa / variável", "sabe-se ou não quantos robôs vai ter o enxame na missão"),
+        ("Núcleos-hora", "12,8 (PPO/SAC) contra 97,6 (evolutivo) por execução — ≈ 8×"),
+    ],
+    "limitacoes": [
+        ("Arquitetura assimétrica", "o evolutivo usa GNN com atenção e o PPO/SAC uma MLP: não se separa otimizador de representação"),
+        ("Limite inferior", "o SAC podia fazer melhor com mais treino/afinação; o valor medido é um mínimo"),
+        ("Temperatura α", "no SAC, o peso da entropia (exploração); aqui fixa em 0,1, sem o ajuste automático («dual»)"),
+        ("Deployment gap", "o fosso entre simulação e robô físico — não validado nesta tese"),
+        ("Costuras da física", "dois sítios onde um robô consegue atravessar a parede (no teto e nas junções em T)"),
+        ("Célula contaminada", "resultado afetado pelas costuras: declarado, e não usado como evidência"),
+    ],
+    "contributos": [
+        ("Contributo metodológico", "sobre como fazer (o desenho da fitness), não sobre qual algoritmo é melhor"),
+        ("Verificador", "script que recalcula um número da tese a partir dos CSV e falha se não bater"),
+    ],
+    "demo": [
+        ("Proveniência", "no painel, de onde vem cada número: o ficheiro CSV e a linha que o produziu"),
+        ("Episódio 3D", "a vista do painel que desenha os enxames em 3D, a correr ao mesmo tempo"),
+    ],
+}
 
 # 1. Capa
 s = _novo_slide()
@@ -484,11 +623,49 @@ confirma-se só em parte: escalar depende da representação da política, não 
 otimizador; nos cenários enganadores, depende do sinal de treino.
 
 É daqui que saem, quase sempre, as primeiras perguntas. Cada afirmação deste
-Resumo tem o seu slide: a fitness no 9, a novidade no 10, a escala no 11, o mapa
-composto no 13, e a frase final é o slide 17.
+Resumo tem o seu slide: a fitness no 10, a novidade no 11, a escala no 12, o mapa
+composto no 14, e a frase final é o slide 18.
 """)
 
-# 2. Problema
+# 2. Roteiro — o índice da apresentação
+# Cinco partes, cada uma com os rótulos de rodapé que ocupa. Com o roteiro a
+# levar o 01, o rótulo de cada slide passa a ser a sua posição menos um — a capa
+# continua sem número —, e é por esses rótulos que o júri pode pedir «volte ao 10».
+s = _novo_slide()
+_titulo(s, "Roteiro", "cinco partes, quinze minutos")
+_PARTES = [
+    ("01", "Contexto", "o problema, a lacuna na literatura e as sete questões de investigação", "02–03"),
+    ("02", "Método", "o simulador e os oito cenários, os três controladores, o protocolo experimental", "04–06"),
+    ("03", "Resultados", "as sete questões, pela ordem em que se desbloqueiam: QI1, 5, 6, 2, 3, 7 e 4",
+     "07–14"),
+    ("04", "Balanço", "as limitações, os contributos e a conclusão", "15–17"),
+    ("05", "Demo ao vivo", "o Muro em U no painel, com a proveniência de cada número", "18"),
+]
+_ry, _rh = Inches(1.8), Inches(0.9)
+for _k, (_num, _nome, _desc, _rot) in enumerate(_PARTES):
+    _y = _ry + _k * _rh
+    _texto(s, MARGEM, _y + Inches(0.08), Inches(1.0), Inches(0.6), _num,
+           tamanho=28, cor=MUTED, fonte=MONO_FT)
+    _texto(s, MARGEM + Inches(1.1), _y + Inches(0.05), Inches(8.9), Inches(0.4), _nome,
+           tamanho=21, negrito=True, cor=INK_FORTE, fonte=TITULO_FT)
+    _texto(s, MARGEM + Inches(1.1), _y + Inches(0.45), Inches(8.9), Inches(0.4), _desc,
+           tamanho=15, cor=MUTED)
+    _texto(s, W - MARGEM - Inches(2.0), _y + Inches(0.18), Inches(2.0), Inches(0.4),
+           ("slides " if "–" in _rot else "slide ") + _rot, tamanho=14, cor=MUTED, fonte=MONO_FT, alinhar=PP_ALIGN.RIGHT)
+    if _k < len(_PARTES) - 1:
+        _linha(s, MARGEM, _y + _rh - Inches(0.03), W - MARGEM)
+_rodape(s)
+_notas(s, """
+Em cinco partes. Primeiro o contexto: o problema e as sete questões. Depois o
+método — simulador, controladores e protocolo. O grosso é o dos resultados, que
+respondo pela ordem em que se desbloqueiam, e não pela ordem de numeração. Fecho
+com as limitações, os contributos e a conclusão, e um minuto de demo ao vivo.
+
+(Os números à direita são os rótulos do rodapé: se o júri pedir «volte à QI5»,
+é o 09.)
+""")
+
+# 3. Problema
 slide_texto_figura(
     "O problema", "duas escolas, e nenhuma comparação direta em cenários difíceis",
     [
@@ -504,6 +681,7 @@ slide_texto_figura(
         ("A resposta curta: só em parte — e não onde a hipótese a punha.", {"negrito": True, "cor": ACENTO}),
     ],
     figura="viz_u_wall.png", fig_w=5.6, fig_h=4.6,
+    termos=TERMOS["problema"],
     notas="""
 O campo organiza-se em duas escolas. A bio-inspirada trata o controlador como um
 problema de otimização offline — robusto, mas estático. O MARL aprende online,
@@ -528,6 +706,7 @@ slide_texto_figura(
         "• QI6  Deceção: a procura por novidade ajuda onde o gradiente engana?",
         "• QI7  Composição: as conclusões transferem-se para um mapa que junta as dificuldades?",
     ],
+    termos=TERMOS["questoes"],
     notas="""
 Sete questões em dois níveis. As quatro primeiras comparam paradigmas:
 desempenho, escalabilidade, robustez e critério de escolha. As três seguintes
@@ -566,7 +745,7 @@ conta uma chegada quando os agentes exigidos estão no ninho ao mesmo tempo. Set
 dificuldade cada — um beco enganador, um gargalo, quatro salas, uma porta que só
 abre com três robôs — e o oitavo compõe quatro delas num labirinto quatro vezes
 maior. Tudo é reproduzível: sementes fixas, avaliação determinística.
-""")
+""", TERMOS["simulador"])
 
 # 5. Controladores
 slide_tabela(
@@ -582,6 +761,7 @@ slide_tabela(
     larguras=[2.4, 4.9, 4.9],
     bullets=[("A arquitetura difere entre paradigmas — é uma limitação declarada, e é o que permite atribuir "
               "a escalabilidade à representação e não ao otimizador.", {"cor": MUTED, "tamanho": 15})],
+    termos=TERMOS["controladores"],
     notas="""
 Os dois lados partilham o simulador, a observação e o protocolo de avaliação.
 O PPO e o SAC usam as implementações de referência da Stable-Baselines3 — uma
@@ -607,6 +787,7 @@ slide_texto_figura(
         "a partir dos CSV, e o commit é recusado se algum deixar de bater",
     ],
     figura="comparacao_barras_geral.png", fig_w=5.8, fig_h=4.4,
+    termos=TERMOS["protocolo"],
     notas="""
 Cento e quarenta e sete treinos, cada modelo avaliado em vinte episódios
 determinísticos com as mesmas sementes para os três algoritmos. A unidade
@@ -633,6 +814,7 @@ slide_texto_figura(
          {"negrito": True}),
     ],
     figuras=["taxa_sucesso_por_cenario.png", "recolhas_por_cenario.png"], fig_w=5.6, fig_h=5.0, tamanho=15,
+    termos=TERMOS["qi1"],
     notas="""
 Primeira resposta: não há vencedor universal. Quinze das vinte e uma células
 estão a cem por cento. O evolutivo, com a fitness de homing, é o especialista em
@@ -655,6 +837,7 @@ slide_texto_figura(
         "• A convergência tudo-ou-nada é o padrão em 6 das 21 células — e é o que as QI5 e QI6 explicam",
     ],
     figuras=["dotplot_eval_u_wall.png", "dotplot_eval_none.png"], fig_w=5.4, fig_h=5.0,
+    termos=TERMOS["distribuicao"],
     notas="""
 Um ponto de método que muda a leitura. Com sete execuções, um boxplot esconde a
 forma. No Muro em U, o GNN tem quatro execuções a zero e três a resolver o
@@ -665,7 +848,7 @@ padrão tudo-ou-nada é o fio condutor das duas questões seguintes.
 """)
 
 # 9. QI5
-slide_texto_figura(
+s = slide_texto_figura(
     "QI5 — O desenho da fitness decide", "o «colapso do evolutivo» era um artefacto do sinal de treino",
     [
         "• Fitness inicial: chegadas + retorno acumulado do episódio — farmável por deambulação; a população "
@@ -677,7 +860,8 @@ slide_texto_figura(
         "• Necessário, não suficiente: resolve a atribuição de crédito, não a descoberta do desvio comprido "
         "— o Muro em U continua bimodal (3/7), como nos métodos de gradiente",
     ],
-    figura="heatmap_geodesico_u_wall.png", fig_w=6.0, fig_h=4.6,
+    largura_texto=6.1, tamanho=16,
+    termos=TERMOS["qi5"],
     notas="""
 A primeira das questões de mecanismo. Nas campanhas exploratórias o evolutivo
 colapsava nos labirintos, e a leitura fácil era «limitação do paradigma». Não
@@ -687,6 +871,45 @@ ninho no fim, medido num potencial geodésico que contorna as paredes. Vinte e
 oito execuções de zero para cem por cento. Mas é condição necessária, não
 suficiente: o Muro em U continuou bimodal. Faltava a descoberta.
 """)
+
+# O quadro «antes → depois». Até 21 set este slide mostrava o mapa do potencial
+# euclidiano contra o geodésico (heatmap_geodesico_u_wall.png): explica o
+# mecanismo, mas com duas barras de cor, eixos em metros e um subtítulo em inglês
+# não se lê projetado, e o que o slide afirma é o salto de 0 % para 100 %. Esse
+# salto desenha-se aqui, cenário a cenário; o mecanismo fica para as notas.
+_qx, _qy, _qw, _qh = W - MARGEM - Inches(5.6), Inches(1.75), Inches(5.6), Inches(4.85)
+_q = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, _qx, _qy, _qw, _qh)
+_q.fill.solid()
+_q.fill.fore_color.rgb = SUPERFICIE
+_q.line.color.rgb = BORDA
+_q.line.width = Pt(0.75)
+_q.shadow.inherit = False
+_q.adjustments[0] = 0.04
+_px = _qx + Inches(0.35)
+_texto(s, _px, _qy + Inches(0.25), _qw - Inches(0.7), Inches(0.4),
+       "TAXA DE SUCESSO DO GNN EVOLUTIVO", tamanho=12, cor=MUTED, fonte=MONO_FT)
+_c1, _c2 = _px + Inches(2.45), _px + Inches(3.75)
+_texto(s, _c1, _qy + Inches(0.7), Inches(1.15), Inches(0.5), ["fitness", "inicial"], tamanho=11,
+       cor=MUTED, fonte=MONO_FT, alinhar=PP_ALIGN.CENTER, espaco=0)
+_texto(s, _c2, _qy + Inches(0.7), Inches(1.15), Inches(0.5), ["homing", "terminal"], tamanho=11,
+       cor=GNN, fonte=MONO_FT, alinhar=PP_ALIGN.CENTER, espaco=0)
+_ly = _qy + Inches(1.3)
+for _k, _cen in enumerate(["Gargalo", "Quatro Salas", "Porta Cooperativa", "Porta com Alternativa"]):
+    _y = _ly + _k * Inches(0.62)
+    _linha(s, _px, _y, _qx + _qw - Inches(0.35))
+    _texto(s, _px, _y + Inches(0.12), Inches(2.4), Inches(0.45), _cen, tamanho=15, cor=INK_FORTE,
+           ancora=MSO_ANCHOR.MIDDLE)
+    _texto(s, _c1, _y + Inches(0.08), Inches(1.15), Inches(0.5), "0 %", tamanho=22, cor=MUTED,
+           fonte=MONO_FT, alinhar=PP_ALIGN.CENTER)
+    _texto(s, _c1 + Inches(1.1), _y + Inches(0.1), Inches(0.3), Inches(0.5), "→", tamanho=18,
+           cor=MUTED, alinhar=PP_ALIGN.CENTER)
+    _texto(s, _c2, _y + Inches(0.08), Inches(1.15), Inches(0.5), "100 %", tamanho=22, negrito=True,
+           cor=GNN, fonte=MONO_FT, alinhar=PP_ALIGN.CENTER)
+_linha(s, _px, _ly + 4 * Inches(0.62), _qx + _qw - Inches(0.35))
+_texto(s, _px, _ly + 4 * Inches(0.62) + Inches(0.2), _qw - Inches(0.7), Inches(0.9), [
+    ("28 execuções, 7 por cenário: todas a 100 %", {"tamanho": 16, "negrito": True, "cor": INK_FORTE}),
+    ("Muro em U, com o mesmo homing: 3/7 — bimodal", {"tamanho": 14, "cor": MUTED}),
+], espaco=4)
 
 # 10. QI6
 slide_texto_figura(
@@ -704,6 +927,7 @@ slide_texto_figura(
         "não o paradigma",
     ],
     figura="megatreino_u_wall_4bracos.png", fig_w=5.6, fig_h=5.0, tamanho=15,
+    termos=TERMOS["qi6"],
     notas="""
 A hibridização com procura por novidade, com orçamento igualado, resolve o
 Muro em U em sete de sete execuções — a única configuração que o faz. Mas com
@@ -737,6 +961,7 @@ slide_tabela(
         ("• A retenção é maior nos cenários com paredes: a estrutura atenua a diluição do recurso, "
          "não a agrava. Zero-shot é uma propriedade da representação, não do otimizador.", {"negrito": True}),
     ],
+    termos=TERMOS["qi2"],
     notas="""
 Escalabilidade. A política do controlador de grafo, treinada com vinte agentes,
 transfere para dez, cinquenta e cem — cem por cento de sucesso nas vinte e oito
@@ -758,6 +983,7 @@ slide_texto_figura(
         "• Consequência para a QI4: a robustez não é critério de escolha entre paradigmas",
     ],
     figura="robustez_falhas.png", fig_w=6.6, fig_h=4.6,
+    termos=TERMOS["qi3"],
     notas="""
 Robustez: dez por cento dos agentes falham a meio do episódio e ficam inertes.
 Os três paradigmas retêm entre noventa e dois e cento e seis por cento das
@@ -768,30 +994,76 @@ resposta, não uma ausência de resposta.
 """)
 
 # 13. QI7
-slide_texto_figura(
-    "QI7 — Composição de dificuldades", "um labirinto de 103 × 62 m que junta quatro dificuldades em série",
-    [
-        "• Transferência sem retreino: zero chegadas em 84 de 84 células (1 680 episódios, 4 condições "
-        "de controlo) — mas o mapa é resolúvel: um navegador geodésico sem aprendizagem faz 53,0 rec/ep",
-        "• Treino nativo, 21 execuções por algoritmo: só o evolutivo passa — em 4 de 21, abaixo do "
-        "limiar de 15 fixado antes dos dados",
-        ("A resposta à QI7 é negativa, e reporta-se como tal.", {"negrito": True, "cor": ACENTO}),
-        "• O que a composição degrada é a fiabilidade, não a magnitude: a assinatura bimodal do Muro em U, "
-        "à escala de um mapa quatro vezes maior",
-        "• Condicionada ao orçamento: em 19 das 21 execuções o fitness ainda subia no último quinto",
-    ],
-    figuras=["mapa_grande_planta.png", "mapa_grande_rastos.png"], fig_w=6.0, fig_h=5.0, tamanho=15,
-    notas="""
+# Até 21 set: a planta e os rastos empilhados numa coluna de 6" — a figura dos
+# rastos é alta (três mapas, um por baixo do outro) e, encolhida a metade da
+# altura do slide, os percursos deixavam de se ver. A planta já está no slide 4.
+# Agora os três mapas dos rastos vão lado a lado, cada um recortado da figura da
+# tese (`_paineis_rastos`), e o texto passa para baixo, mais curto.
+def _paineis_rastos(nome="mapa_grande_rastos.png"):
+    """Recorta os três mapas da figura dos rastos (GNN, PPO, SAC, de cima para
+    baixo) para `Defesa/.assets/`. Os cortes medem-se na imagem — as faixas de
+    linhas com conteúdo com mais de 300 px de altura são os mapas; os títulos e a
+    legenda são faixas finas —, para sobreviverem a uma figura regenerada."""
+    import numpy as np
+    orig = os.path.join(FIG, nome)
+    im = Image.open(orig).convert("RGB")
+    a = np.asarray(im).astype(int).sum(axis=2) < 740
+    linhas = a.any(axis=1)
+    faixas, ini = [], None
+    for y, v in enumerate(list(linhas) + [False]):
+        if v and ini is None:
+            ini = y
+        elif not v and ini is not None:
+            if y - ini > 300:
+                faixas.append((ini, y))
+            ini = None
+    assert len(faixas) == 3, "esperava 3 mapas em %s, encontrei %d" % (nome, len(faixas))
+    pasta = os.path.join(RAIZ, "Defesa", ".assets")
+    os.makedirs(pasta, exist_ok=True)
+    saida = []
+    for k, (y0, y1) in enumerate(faixas):
+        xs = np.where(a[y0:y1].any(axis=0))[0]
+        dest = os.path.join(pasta, "rastos_%d.png" % k)
+        im.crop((max(xs.min() - 10, 0), max(y0 - 10, 0), xs.max() + 10, y1 + 10)).save(dest)
+        saida.append(dest)
+    return saida
+
+
+s = _novo_slide()
+_titulo(s, "QI7 — Composição de dificuldades",
+        "um labirinto de 103 × 62 m que junta quatro dificuldades em série")
+_cw, _gap = (W - 2 * MARGEM - 2 * Inches(0.15)) / 3, Inches(0.15)
+for _k, ((_nome, _cor), _f) in enumerate(zip(
+        [("GNN evolutivo · 8 chegadas", GNN), ("PPO · 0 chegadas", PPO), ("SAC · 0 chegadas", SAC)],
+        _paineis_rastos())):
+    _x = MARGEM + _k * (_cw + _gap)
+    _texto(s, _x, Inches(1.62), _cw, Inches(0.32), _nome, tamanho=14, negrito=True, cor=_cor,
+           alinhar=PP_ALIGN.CENTER)
+    _fig(s, os.path.basename(_f), _x, Inches(1.95), _cw, Inches(2.5), pasta=os.path.dirname(_f))
+_texto(s, MARGEM, Inches(4.47), W - 2 * MARGEM, Inches(0.3),
+       "um episódio de cada, mesmas sementes · o ninho à direita · pontos brancos: partida; cheios: onde acabaram",
+       tamanho=11, cor=MUTED, alinhar=PP_ALIGN.CENTER)
+_texto(s, MARGEM, Inches(4.85), W - 2 * MARGEM, Inches(2.0), [
+    "• Sem retreino: zero chegadas em 84 de 84 células (1 680 episódios) — e o mapa é resolúvel: "
+    "um navegador geodésico sem aprendizagem faz 53,0 chegadas/ep",
+    "• Treino nativo, 21 execuções por algoritmo: só o evolutivo passa — em 4 de 21, abaixo do "
+    "limiar de 15 fixado antes dos dados; em 19 das 21 a fitness ainda subia no fim",
+    ("A resposta à QI7 é negativa: a composição degrada a fiabilidade, não a magnitude — "
+     "a bimodalidade do Muro em U em ponto grande.", {"negrito": True, "cor": ACENTO}),
+], tamanho=15, espaco=6)
+_rodape(s)
+_notas(s, """
 A última pergunta testa a objeção mais natural a um benchmark por cenários
 isolados. Sem retreino, nenhum controlador faz uma única chegada no mapa
 composto — em oitenta e quatro células, com controlos que excluem a escala da
 observação e os obstáculos como causa. E o mapa é resolúvel: um navegador
 geodésico sem aprendizagem faz cinquenta e três chegadas. Com treino nativo, só
 o evolutivo o resolve, em quatro de vinte e uma execuções — abaixo do limiar
-pré-registado. A resposta é negativa e está reportada como negativa. O que a
-composição degrada é a fiabilidade: é a bimodalidade do Muro em U em ponto
-grande.
-""")
+pré-registado. Os três mapas mostram um episódio de cada: o evolutivo atravessa
+o labirinto até ao ninho; o PPO e o SAC ficam pelo caminho. A resposta é
+negativa e está reportada como negativa. O que a composição degrada é a
+fiabilidade: é a bimodalidade do Muro em U em ponto grande.
+""", TERMOS["qi7"])
 
 # 14. QI4 — mapa de escolha
 slide_tabela(
@@ -809,6 +1081,7 @@ slide_tabela(
         ["exige tolerância a falhas de agentes", "qualquer dos três", "92–106 % de retenção — não discrimina"],
     ],
     larguras=[4.4, 3.6, 4.2],
+    termos=TERMOS["qi4"],
     notas="""
 A síntese prática. Dimensão fixa e cómputo barato: PPO. Dimensão variável ou
 escala sem retreino: a arquitetura de grafo é a única opção entre as
@@ -829,11 +1102,12 @@ slide_texto_figura(
         "• Só simulação: o fosso de implantação fica por validar",
         "• Dimensão vertical usada mas não observada; duas costuras na física das paredes — 11 de 343 "
         "modelos arquivados atravessam-nas, todos do evolutivo; na campanha final são 3 de 70 (Quatro "
-        "Salas), e não as tornam melhores (55,7 vs 60,3 rec/ep). Onde a costura pesa é numa célula da "
+        "Salas), e não as tornam melhores (55,7 vs 60,3 chegadas/ep). Onde a costura pesa é numa célula da "
         "campanha adaptativa — Quatro Salas —, declarada como contaminada",
         "• QI7 sobre um único mapa composto",
     ],
     figura="dotplot_eval_bottleneck.png", fig_w=5.2, fig_h=4.6, tamanho=15,
+    termos=TERMOS["limitacoes"],
     notas="""
 As limitações vêm antes das perguntas. A arquitetura difere entre paradigmas —
 é a primeira, e é deliberadamente lida como o que permite isolar a
@@ -862,6 +1136,7 @@ slide_texto_figura(
         "  simulador, oito cenários, RS2C e neuroevolução; 27 verificadores ligam cada número aos dados",
     ],
     figura="escalabilidade_zeroshot_none.png", fig_w=5.4, fig_h=4.4,
+    termos=TERMOS["contributos"],
     notas="""
 Quatro contributos. O primeiro é metodológico: o colapso do evolutivo era o
 sinal de treino, não o paradigma. O segundo é a caracterização da novidade como
@@ -904,7 +1179,7 @@ _texto(s, MARGEM + Inches(8.6), Inches(1.7), W - 2 * MARGEM - Inches(8.6), Inche
     ("O que mostrar, por esta ordem", {"negrito": True, "cor": ACENTO, "tamanho": 15}),
     ("1. Os três da campanha final: 3/7, 4/7 e 2/7 — cada execução ou aprende o desvio ou fica a zero",
      {"tamanho": 13}),
-    ("2. A 4.ª coluna: o GNN com novidade adaptativa — 7/7, 77,8 rec/ep (o «melhor»)", {"tamanho": 13}),
+    ("2. A 4.ª coluna: o GNN com novidade adaptativa — 7/7, 77,8 chegadas/ep (o «melhor»)", {"tamanho": 13}),
     ("3. Toggle «Episódio 3D»: os quatro enxames em 3D ao mesmo tempo; arrastar para rodar", {"tamanho": 13}),
     ("4. Em baixo: o dot plot com a linha do adaptativo, e as curvas de treino", {"tamanho": 13}),
     ("5. Se perguntarem «de onde vem este número?»: Proveniência — dois cliques até ao CSV",
@@ -912,7 +1187,7 @@ _texto(s, MARGEM + Inches(8.6), Inches(1.7), W - 2 * MARGEM - Inches(8.6), Inche
     ("", {"tamanho": 8}),
     ("Painel: localhost:8080 (portátil) · swarmroboticsgs.duckdns.org (Pi)", {"tamanho": 12, "cor": MUTED}),
     ("Setas do teclado mudam de mapa · plano B: a captura aqui ao lado, e a figura dos quatro braços "
-     "do rodapé 09", {"tamanho": 12, "cor": MUTED}),
+     "do rodapé 10", {"tamanho": 12, "cor": MUTED}),
 ], tamanho=13, espaco=6)
 _rodape(s)
 _notas(s, """
@@ -924,8 +1199,8 @@ sete, setenta e oito chegadas. Carrego em Episódio 3D e os quatro enxames
 correm ao mesmo tempo. Em baixo, o dot plot com a linha do adaptativo e as
 curvas de treino. Qualquer número do painel tem proveniência: dois cliques até
 ao CSV. Plano B, se a rede ou o portátil falharem: a captura que está neste
-slide, e a figura dos quatro braços — o slide com o rótulo 09 no rodapé.
-""")
+slide, e a figura dos quatro braços — o slide com o rótulo 10 no rodapé.
+""", TERMOS["demo"])
 
 # 19. Fim
 s = _novo_slide()
@@ -1002,7 +1277,7 @@ slide_tabela(
     larguras=[3.5, 2.9, 2.95, 2.75],
     bullets=[
         "• A n = 28: Fisher exato, adaptativo vs. objetivo, p < 0,0001. GNN objetivo vs. PPO, p = 0,088 — "
-        "indistinguíveis. Nenhuma das 28 execuções do SAC passa de 45,4 rec/ep: é uniformemente fraco, e "
+        "indistinguíveis. Nenhuma das 28 execuções do SAC passa de 45,4 chegadas/ep: é uniformemente fraco, e "
         "não bimodal.",
         "• Não se compra com orçamento: o objetivo puro com 390 min continua bimodal (4/7, 31,5 ± 35,0); "
         "o adaptativo com 390 min faz 88,7 ± 0,6 na Porta com Alternativa — o melhor resultado da tese.",
@@ -1025,9 +1300,9 @@ slide_tabela(
         ["Fase 1 — zero-shot", "transferência sem retreino, com 4 condições de controlo",
          "zero chegadas em 84/84 células · 1 680 episódios"],
         ["Controlo", "o mapa é sequer resolúvel?",
-         "navegador geodésico, sem aprendizagem: 53,0 rec/ep (82,0 nas Quatro Salas)"],
+         "navegador geodésico, sem aprendizagem: 53,0 chegadas/ep (82,0 nas Quatro Salas)"],
         ["Fase 2 — treino nativo", "21 execuções por algoritmo, 780 min cada",
-         "GNN 4/21 · 1,7 rec/ep  ·  PPO 0/21  ·  SAC 0/21"],
+         "GNN 4/21 · 1,7 chegadas/ep  ·  PPO 0/21  ·  SAC 0/21"],
         ["Regra de decisão", "limiar fixado antes de haver dados",
          "15 execuções convergentes em 21 — o resultado ficou em 4"],
         ["Orçamento", "o treino tinha acabado de convergir?",
