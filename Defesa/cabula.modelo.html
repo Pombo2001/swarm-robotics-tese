@@ -254,7 +254,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
 
 <header class="topo">
   <div class="topo-in">
-    <div class="marca">Cábula da Defesa <span>· 137 pp · 6 set 2026</span></div>
+    <div class="marca">Cábula da Defesa <span>· 143 pp · 22 set 2026</span></div>
     <button class="interruptor" id="btn-teste" aria-pressed="false">
       <span class="pastilha" aria-hidden="true"></span> Modo teste
     </button>
@@ -551,8 +551,8 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <mark>distância geodésica</mark> — caminho mais curto que contorna os obstáculos, por pesquisa de custo
       uniforme (Dijkstra, 8-conexa) sobre uma grelha de 0,4 m com as paredes dilatadas pelo raio do robô — e não a
       euclidiana. Isto elimina na raiz um mínimo local clássico: com a euclidiana, contornar uma parede <em>afasta</em>
-      o agente do ninho e é penalizado, prendendo o enxame contra os obstáculos. Sendo PBRS, não altera a política
-      ótima. E é <strong>sinal de treino, não observação</strong>: em execução o agente só tem a bússola euclidiana e
+      o agente do ninho e é penalizado, prendendo o enxame contra os obstáculos. Tem a forma do PBRS, mas sem o fator γ,
+      pelo que só preserva a política ótima de forma aproximada. E é <strong>sinal de treino, não observação</strong>: em execução o agente só tem a bússola euclidiana e
       o LiDAR local.</p>
     <figure><div class="chapa"><img src="__IMG_geo_uwall__" alt="Campo de distância geodésica ao ninho no cenário Muro em U"></div>
       <figcaption>O campo geodésico do Muro em U. É este gradiente que aponta corretamente para o contorno — e é por
@@ -614,7 +614,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
         <div class="par"><span>Sigma</span><b>0,1 · ×0,999/ger · mín 0,03</b></div>
         <div class="par"><span>Episódios por genoma (E)</span><b>4, com seeds fixas</b></div>
         <div class="par"><span>Dimensão oculta (h)</span><b>32 ≈ 8k pesos</b></div>
-        <div class="par"><span>Guilhotina</span><b>J &lt; −200 aos 150 passos → −1000</b></div>
+        <div class="par"><span>Guilhotina</span><b>recompensa &lt; −200 aos 150 passos → −1000</b></div>
         <div class="par"><span>Critério de paragem</span><b>195 min por execução</b></div>
       </div>
       <p class="prosa">É <strong>aqui</strong>, e só aqui, que vive o grafo. A atenção é produto interno escalado:
@@ -682,7 +682,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
 
       <article class="cen">
         <div class="cen-topo"><img src="__IMG_m_uwall__" alt="Vista de topo do cenário Muro em U">
-          <div class="cen-nome"><h3>Muro em U</h3><code>u_wall</code><em>Beco sem saída: o gradiente para a comida engana.</em></div></div>
+          <div class="cen-nome"><h3>Muro em U</h3><code>u_wall</code><em>Beco sem saída: o gradiente para o ninho engana.</em></div></div>
         <p class="cen-geo">topo 14 m · pernas 10 m · aberturas 7 m · k<sub>min</sub>=1 · geodésico</p>
         <div class="linhas">
           <div class="lin gnn"><span class="alg">GNN</span><div class="trilho"><div class="barra" style="width:31.5%"></div></div><span class="val">24,5 · 43 % · 3/7</span></div>
@@ -690,7 +690,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
           <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:11.6%"></div></div><span class="val">&nbsp;9,0 · 34 % · 2/7</span></div>
           <div class="lin ada"><span class="alg">ADA</span><div class="trilho"><div class="barra" style="width:100%"></div></div><span class="val">77,8 · 100 % · 7/7</span></div>
         </div>
-        <span class="vered resp"><b>Ninguém, no protocolo base</b> — nada é significativo, e os três são bimodais. O potencial geodésico aponta bem; o que falta é a <em>descoberta</em>. Só a <b>novidade adaptativa</b> (ADA, 390 min) o resolve.</span>
+        <span class="vered resp"><b>Ninguém, no protocolo base</b> — nada é significativo, e os três são bimodais. O potencial geodésico aponta bem; o que falta é a <em>descoberta</em>. Só a <b>novidade</b> o resolve de forma fiável (7/7 com peso fixo e com dosagem adaptativa); a barra ADA é o adaptativo com 390 min.</span>
       </article>
 
       <article class="cen">
@@ -990,7 +990,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       «Não medi isso» é sempre melhor do que uma estimativa dita em voz alta e registada em ata.</p>
     <div class="qa">
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 44</span><span>«O SAC está mal configurado — a temperatura é fixa.»</span></div>
-        <div class="qa-r resp">É uma escolha declarada: α = 0,1 constante, sem o ajuste dual da formulação de referência. Remove ao SAC o mecanismo com que regula a exploração, e é consistente com o sub-treino já documentado em três células. Os valores lêem-se como <em>desempenho atingível nesta configuração e neste orçamento</em>. Se insistirem: a forma da falha é diferente — no mega-treino nenhuma das 28 execuções passa de 45,4; é uniformemente fraco, e não bimodal. Sub-treino explica magnitude baixa, não a ausência de qualquer execução boa.</div></div>
+        <div class="qa-r resp">É uma escolha declarada: α = 0,1 constante, sem o ajuste dual da formulação de referência. Remove ao SAC o mecanismo com que regula a exploração, e é consistente com o sub-treino já documentado em quatro células do SAC. Os valores lêem-se como <em>desempenho atingível nesta configuração e neste orçamento</em>. Se insistirem: a forma da falha é diferente — no mega-treino nenhuma das 28 execuções passa de 45,4; é uniformemente fraco, e não bimodal. Sub-treino explica magnitude baixa, não a ausência de qualquer execução boa.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 50</span><span>«Sete execuções por célula são poucas.»</span></div>
         <div class="qa-r resp">Sim — e a unidade estatística está fixada nas notas de leitura (§6.1, p. 50): a execução, n = 7 por grupo; alargar essa bateria é o trabalho futuro n.º 1 (§7.5, p. 93). Por isso o único cenário cuja leitura depende de contagens, o Muro em U, foi replicado com 28 execuções por braço: 28/28 contra 15/28, Fisher exato p &lt; 0,0001. Onde o alargamento não chegou, o que se reporta são tamanhos de efeito, e a tese di-lo em vez de fingir poder que não tem.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 89</span><span>«A comparação é injusta: o evolutivo tem atenção sobre grafo, o PPO e o SAC têm um MLP.»</span></div>
@@ -1002,7 +1002,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 65</span><span>«Seis comparações por par, sem correção de multiplicidade.»</span></div>
         <div class="qa-r resp">Está assinalado no próprio parágrafo: os p dos seis pares de M2 são brutos, por compromisso pré-registado — declarar a multiplicidade e ancorar a leitura no tamanho de efeito, em vez de corrigir os valores. O efeito principal (M1) não depende disso: δ = +0,61 com p &lt; 0,0001 unilateral, e a convergência separada por Fisher exato.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">método</span><span>«O campo geodésico não é dar o mapa ao agente?»</span></div>
-        <div class="qa-r resp">Não. O campo geodésico é <strong>sinal de treino</strong>, calculado pelo simulador que conhece a geometria — não entra na observação. Em execução o agente tem apenas a bússola de homing euclidiana e o LiDAR de 8 m. Distingue-se, portanto, de fornecer um mapa dos obstáculos ou waypoints de um planeador A*. E sendo PBRS, não altera a política ótima do cenário.</div></div>
+        <div class="qa-r resp">Não. O campo geodésico é <strong>sinal de treino</strong>, calculado pelo simulador que conhece a geometria — não entra na observação. Em execução o agente tem apenas a bússola de homing euclidiana e o LiDAR de 8 m. Distingue-se, portanto, de fornecer um mapa dos obstáculos ou waypoints de um planeador A*. E tem a forma do PBRS: sem o fator γ, preserva a política ótima só de forma aproximada — a tese declara-o.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">método</span><span>«Como sabemos que os números da tese são os dos dados?»</span></div>
         <div class="qa-r resp">Porque não são escritos à mão: um conjunto de verificadores lê o .tex, recalcula cada valor a partir dos CSV canónicos e recusa o commit se algum deixar de bater. E os verificadores são eles próprios postos à prova — o ensaio estraga a tese de propósito, 92 mutações, uma de cada vez, e exige que cada uma seja apanhada.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">final</span><span>«Qual é, então, a contribuição em uma frase?»</span></div>
@@ -1031,7 +1031,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <li><span class="x">✗</span><div><b>«O PPO também escalaria com atenção.»</b> Não foi medido.</div></li>
       <li><span class="x">✗</span><div><b>«A novidade melhora sempre.»</b> Com peso fixo custa: δ = −1,00 na Porta com Alternativa.</div></li>
       <li><span class="x">✗</span><div><b>«O evolutivo é melhor.»</b> É melhor em navegação estruturada, e é ≈ 8× mais caro.</div></li>
-      <li><span class="x">✗</span><div><b>«O SAC é mau.»</b> É fraco <em>nesta configuração e neste orçamento</em>, e três das suas células estão sub-treinadas por medição própria.</div></li>
+      <li><span class="x">✗</span><div><b>«O SAC é mau.»</b> É fraco <em>nesta configuração e neste orçamento</em>, e quatro das suas células estão sub-treinadas por medição própria.</div></li>
       <li><span class="x">✗</span><div><b>«O mapa composto não é resolúvel.»</b> É: um navegador geodésico faz 53 chegadas por episódio. O que falha é aprendê-lo.</div></li>
       <li><span class="x">✗</span><div><b>«A QI7 quase deu» ou «falhou».</b> A campanha correu e respondeu; a resposta é negativa, com o limiar fixado antes dos dados.</div></li>
       <li><span class="x">✗</span><div><b>Comparar valores absolutos das curvas de treino entre paradigmas.</b> O GNN usa fitness evolutiva e o PPO/SAC recompensa episódica — as escalas não são comparáveis.</div></li>
@@ -1091,7 +1091,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <dl class="glos">
       <div><dt>Dec-POMDP</dt><dd>Processo de decisão de Markov parcialmente observável, descentralizado e cooperativo. É a formulação do RS2C: cada agente decide com a sua observação, todos partilham a recompensa.</dd></div>
       <div><dt>Parameter sharing</dt><dd>Os N agentes partilham um único conjunto de pesos. Multiplica o batch efetivo por N e confere a redundância que explica a robustez a falhas.</dd></div>
-      <div><dt>PBRS <em>potential-based reward shaping</em></dt><dd>Shaping da forma 10·(Φ<sub>t−1</sub> − Φ<sub>t</sub>). Provado não alterar a política ótima — é o que legitima usar o campo geodésico sem enviesar o resultado.</dd></div>
+      <div><dt>PBRS <em>potential-based reward shaping</em></dt><dd>Shaping da forma 10·(Φ<sub>t−1</sub> − Φ<sub>t</sub>). Na forma exata de Ng et al., γΦ(s′) − Φ(s), não altera a política ótima. Aqui falta o γ (= 0,99), pelo que a preserva só de forma aproximada: a diferença é uma penalização proporcional à distância ao ninho, alinhada com a tarefa.</dd></div>
       <div><dt>Distância geodésica</dt><dd>Caminho mais curto que contorna os obstáculos (Dijkstra 8-conexa, grelha 0,4 m), por oposição à euclidiana. Elimina o mínimo local de «contornar afasta».</dd></div>
       <div><dt>Fitness exploitation</dt><dd>O análogo evolutivo do <em>reward hacking</em>: a população maximiza o termo de shaping sem cumprir a tarefa, e a fitness satura num planalto onde a pressão seletiva se anula.</dd></div>
       <div><dt>Homing terminal</dt><dd>clip((Φ₀ − Φ<sub>T</sub>)/Φ₀, 0, 1) — só depende dos estados extremos do episódio, pelo que vaguear não o aumenta.</dd></div>
@@ -1103,8 +1103,8 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div><dt>Mann-Whitney U</dt><dd>Teste não-paramétrico para amostras independentes — o de todas as comparações entre algoritmos, sobre as médias por execução. O Wilcoxon signed-rank só aparece no teste preliminar da novidade, feito por episódio.</dd></div>
       <div><dt>Estigmergia</dt><dd>Coordenação indireta por modificações deixadas no ambiente (os trilhos de feromonas das formigas, na origem da ACO). O bit de comunicação desta tese <em>não</em> é estigmergia: é um sinal direto entre vizinhos, de recrutamento.</dd></div>
       <div><dt>Wall-sliding</dt><dd>Em vez de imobilizar o agente contra um muro, projeta-se o movimento ortogonalmente à normal da face — o agente desliza.</dd></div>
-      <div><dt>Deployment gap</dt><dd>O fosso entre o desempenho em simulação e no robot físico. Antecipado no desenho do simulador (física, ruído sensorial, perturbações), mas não validado nesta tese.</dd></div>
-      <div><dt>Guilhotina</dt><dd>Corte precoce do episódio de avaliação evolutiva: se J &lt; −200 aos 150 passos, termina e o genoma leva −1000. Poupa CPU em genomas disfuncionais.</dd></div>
+      <div><dt>Deployment gap</dt><dd>Termo de Kegeleirs e Birattari (2025): um controlador desenvolvido em simulação, ou numa plataforma, não tem eficácia garantida noutra — mais largo do que o <em>reality gap</em>. Antecipado no desenho do simulador (observação local, perturbações, falhas), mas não validado nesta tese.</dd></div>
+      <div><dt>Guilhotina</dt><dd>Corte precoce do episódio de avaliação evolutiva: se a recompensa acumulada for inferior a −200 aos 150 passos, termina e o genoma leva −1000. Poupa CPU em genomas disfuncionais.</dd></div>
     </dl>
   </section>
 
@@ -1187,7 +1187,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     </table></div>
   </section>
 
-  <p class="pe">Escrita contra o PDF de 137 páginas de 6 de setembro de 2026, já na formatação das normas do Iscte; as páginas citadas são as <b>impressas no rodapé</b> da dissertação — soma 22 para chegar à página do leitor de PDF. Companheira dos slides
+  <p class="pe">Escrita contra o PDF de 143 páginas de 22 de setembro de 2026, já na formatação das normas do Iscte; as páginas citadas são as <b>impressas no rodapé</b> da dissertação — soma 22 para chegar à página do leitor de PDF. Companheira dos slides
     (<code>Defesa/slides_defesa.pptx</code>, 20 de apresentação e 6 de reserva, com notas de orador) e das fontes em
     <code>docs/RESUMO_PARA_DECORAR.md</code> e <code>docs/DEFESA_PERGUNTAS.md</code>.
     Gerada por <code>Defesa/gerar_cabula.py</code> a partir de <code>Defesa/cabula.modelo.html</code>;

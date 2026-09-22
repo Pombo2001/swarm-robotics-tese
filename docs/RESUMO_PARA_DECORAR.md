@@ -242,7 +242,7 @@ Para não hesitar num termo. É o mesmo glossário da cábula
 |---|---|
 | **Dec-POMDP** | Processo de decisão de Markov parcialmente observável, descentralizado e cooperativo. Cada agente decide com a sua observação; todos partilham a recompensa. |
 | **Parameter sharing** | Os N agentes partilham um único conjunto de pesos. Multiplica o *batch* efetivo por N e dá a redundância que explica a robustez a falhas. |
-| **PBRS** | *Potential-based reward shaping*, 10·(Φₜ₋₁ − Φₜ). Provado não alterar a política ótima — é o que legitima usar o campo geodésico sem enviesar. |
+| **PBRS** | *Potential-based reward shaping*, 10·(Φₜ₋₁ − Φₜ). Na forma exata de Ng et al., γΦ(s′) − Φ(s), não altera a política ótima; aqui falta o γ (= 0,99), pelo que a preserva só de forma aproximada — a tese declara-o. |
 | **Distância geodésica** | Caminho mais curto que contorna os obstáculos (Dijkstra 8-conexa, grelha 0,4 m). Elimina o mínimo local de «contornar afasta» que a euclidiana cria. |
 | **Fitness exploitation** | O análogo evolutivo do *reward hacking*: a população maximiza o termo de *shaping* sem cumprir a tarefa, e a aptidão satura num planalto sem pressão seletiva. |
 | **Homing terminal** | clip((Φ₀ − Φ_T)/Φ₀, 0, 1): só depende dos estados extremos do episódio, pelo que vaguear não o aumenta. É a cura da QI5. |
@@ -259,4 +259,4 @@ Para não hesitar num termo. É o mesmo glossário da cábula
 | **Estigmergia** | Coordenação por sinais deixados no ambiente. Aqui, o bit que ativa quando um vizinho chega ao ninho e repousa — recrutamento sem comunicação explícita. |
 | **Wall-sliding** | Em vez de imobilizar o agente contra um muro, projeta-se o movimento ortogonalmente à normal da face: o agente desliza. |
 | **Deployment gap** | O fosso entre o desempenho em simulação e no robô físico. Antecipado no desenho do simulador, mas **não** validado nesta tese. |
-| **Guilhotina** | Corte precoce do episódio de avaliação evolutiva: se J < −200 aos 150 passos, termina e o genoma leva −1000. Poupa CPU em genomas disfuncionais. |
+| **Guilhotina** | Corte precoce do episódio de avaliação evolutiva: se a recompensa acumulada for inferior a −200 aos 150 passos, termina e o genoma leva −1000. Poupa CPU em genomas disfuncionais. |
