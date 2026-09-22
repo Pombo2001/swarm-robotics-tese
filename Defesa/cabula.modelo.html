@@ -417,7 +417,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <li><span class="p">1</span><div><b>Lacuna</b><p>Duas escolas — bio-inspirada offline contra MARL online — e um único estudo em 58 a compará-las, sem escala, sem falhas e sem estatística.</p></div></li>
       <li><span class="p">2</span><div><b>Bancada</b><p>Simulador 3D próprio, navegação cooperativa até ao ninho, LiDAR de 8 m, 20 agentes, 7 cenários que isolam uma dificuldade cada e 1 que as compõe.</p></div></li>
       <li><span class="p">3</span><div><b>QI1 — não há dominante</b><p>15 das 21 células a 100 %. O GNN ganha em 3, empata com o PPO nos gargalos, o PPO ganha o Sandbox, e o Muro em U não é de ninguém.</p></div></li>
-      <li><span class="p">4</span><div><b>QI5 — a fitness era a causa</b><p>O «colapso do evolutivo» era <em>fitness exploitation</em>: o homing terminal geodésico levou 28 execuções de 0 % a 100 %. Necessário, mas não suficiente — o Muro em U continuou bimodal.</p></div></li>
+      <li><span class="p">4</span><div><b>QI5 — a fitness era a causa</b><p>O «colapso do evolutivo» era <em>fitness exploitation</em>: o homing terminal geodésico levou os quatro gargalos de 3/12 execuções com chegadas a 28/28 a 100 %. Necessário, mas não suficiente — o Muro em U continuou bimodal.</p></div></li>
       <li><span class="p">5</span><div><b>QI6 — a novidade compra a descoberta</b><p>Peso fixo: 7/7 no Muro em U, mas com custo na Porta com Alternativa. Doseada adaptativamente: 7/7 sem custo; e a n=28, <strong>28/28 contra 15/28 e 14/28</strong>.</p></div></li>
       <li><span class="p">6</span><div><b>QI2 e QI3 — escala e falhas</b><p>Só o grafo transfere: 100 % em 28 de 28 combinações. Com 10 % de falhas, 92–106 % de retenção nos três — não discrimina.</p></div></li>
       <li><span class="p">7</span><div><b>QI7 — a composição degrada a fiabilidade</b><p>Zero-shot: 0 em 84 das 84 células. Treino nativo: só o GNN, e 4/21 contra um limiar de 15 fixado antes dos dados. <strong>Negativo, reportado.</strong></p></div></li>
@@ -441,11 +441,11 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div class="qa-item"><div class="qa-p"><span class="cod">QI4</span><span>Em que condições preferir um ao outro?</span></div>
         <div class="qa-r resp">Três eixos: <strong>estrutura do cenário</strong>, <strong>variabilidade de N</strong> e <strong>orçamento de cómputo</strong>. N fixo e cómputo escasso → PPO. N variável ou escala → o grafo. Navegação estruturada → evolutivo com homing. Deceção espacial → novidade adaptativa.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">QI5</span><span>Quanto é que o evolutivo depende do desenho da fitness?</span></div>
-        <div class="qa-r resp">Decisivamente. Com a fitness baseada no retorno acumulado, a população satura num <em>planalto</em> onde a pressão seletiva se anula. A substituição pelo <strong>homing terminal</strong> restaurou o gradiente de seleção e levou as 28 execuções dos quatro cenários de gargalo de 0 % a 100 %. Resolve a atribuição de crédito, não a descoberta.</div></div>
+        <div class="qa-r resp">Decisivamente. Com a fitness baseada no retorno acumulado, a população satura num <em>planalto</em> onde a pressão seletiva se anula. A substituição pelo <strong>homing terminal</strong> restaurou o gradiente de seleção e, nos quatro cenários de gargalo, passou-se de 3 em 12 execuções que chegavam ao ninho (treino, fitness antiga) para 28 em 28 a 100 %. É uma comparação entre campanhas, não uma ablação. Resolve a atribuição de crédito, não a descoberta.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">QI6</span><span>Em cenários enganadores, a novelty search melhora?</span></div>
         <div class="qa-r resp">Sim onde a deceção morde (7/7 contra 3/7, p = 0,026), e com custo onde não morde (δ = −1,00 na Porta c/ Alternativa). Doseada adaptativamente, deixa de haver custo; a n=28, <strong>28/28</strong>. É um instrumento direcionado, não um melhoramento universal.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">QI7</span><span>As conclusões transferem-se para um mapa que compõe as dificuldades?</span></div>
-        <div class="qa-r resp">Não dentro deste orçamento: 4/21 contra um limiar de 15 fixado antes dos dados. Composta a dificuldade, a diferença entre paradigmas (p = 0,3058, δ = +0,19) torna-se <em>menor</em> do que a diferença entre execuções do mesmo paradigma. Degrada a <strong>fiabilidade</strong>, não a magnitude.</div></div>
+        <div class="qa-r resp">Não dentro deste orçamento: 4/21 contra um limiar de 15 fixado antes dos dados. Composta a dificuldade, a diferença entre paradigmas (p = 0,3058, δ = +0,19) torna-se <em>menor</em> do que a diferença entre execuções do mesmo paradigma. Degrada sobretudo a <strong>fiabilidade</strong>: as execuções que resolvem têm magnitudes parecidas entre si, e as outras ficam a zero.</div></div>
     </div>
   </section>
 
@@ -651,7 +651,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       por uma tanh, converge para um valor comum a toda a população: um <strong>planalto onde a pressão seletiva se
       anula</strong> e a evolução deambula. A cura não foi mais orçamento — foi melhor desenho do sinal.</p>
     <div class="factos">
-      <div class="facto"><b>28 / 28</b><span>execuções dos 4 cenários de gargalo, de 0 % a 100 %</span></div>
+      <div class="facto"><b>3/12 → 28/28</b><span>execuções dos 4 gargalos que chegam ao ninho, antes e depois (entre campanhas)</span></div>
       <div class="facto"><b>≈ 88 000</b><span>retorno bruto farmado com zero chegadas</span></div>
       <div class="facto"><b>2×</b><span>uma chegada vale o dobro do shaping máximo</span></div>
     </div>
@@ -977,8 +977,8 @@ ol.lim b{color:var(--tinta); font-weight:600}
         contra os 20 da avaliação oficial — não substituem o protocolo. Ainda assim, ao horizonte pré-registado
         reproduzem exatamente as 4 execuções convergentes que ele reporta.</p>
     </div>
-    <p class="nota">A frase a ter na ponta da língua: <strong>o que a composição degrada é a fiabilidade do treino,
-      não a magnitude de quem aprende.</strong> É a assinatura bimodal do Muro em U, à escala de um mapa com quatro
+    <p class="nota">A frase a ter na ponta da língua: <strong>o que a composição degrada é sobretudo a fiabilidade do treino</strong>
+      — as execuções que resolvem têm magnitudes parecidas entre si, as outras ficam a zero. É a assinatura bimodal do Muro em U, à escala de um mapa com quatro
       dificuldades encadeadas. E composta a dificuldade, a diferença entre paradigmas (p = 0,3058, δ = +0,19) torna-se
       menor do que a diferença entre execuções do <em>mesmo</em> paradigma.</p>
   </section>
@@ -992,11 +992,11 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 44</span><span>«O SAC está mal configurado — a temperatura é fixa.»</span></div>
         <div class="qa-r resp">É uma escolha declarada: α = 0,1 constante, sem o ajuste dual da formulação de referência. Remove ao SAC o mecanismo com que regula a exploração, e é consistente com o sub-treino já documentado em quatro células do SAC. Os valores lêem-se como <em>desempenho atingível nesta configuração e neste orçamento</em>. Se insistirem: a forma da falha é diferente — no mega-treino nenhuma das 28 execuções passa de 45,4; é uniformemente fraco, e não bimodal. Sub-treino explica magnitude baixa, não a ausência de qualquer execução boa.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 50</span><span>«Sete execuções por célula são poucas.»</span></div>
-        <div class="qa-r resp">Sim — e a unidade estatística está fixada nas notas de leitura (§6.1, p. 50): a execução, n = 7 por grupo; alargar essa bateria é o trabalho futuro n.º 1 (§7.5, p. 93). Por isso o único cenário cuja leitura depende de contagens, o Muro em U, foi replicado com 28 execuções por braço: 28/28 contra 15/28, Fisher exato p &lt; 0,0001. Onde o alargamento não chegou, o que se reporta são tamanhos de efeito, e a tese di-lo em vez de fingir poder que não tem.</div></div>
+        <div class="qa-r resp">Sim — e a unidade estatística está fixada nas notas de leitura (§6.1, p. 50): a execução, n = 7 por grupo; alargar essa bateria é o trabalho futuro n.º 1 (§7.5, p. 94). Por isso o único cenário cuja leitura depende de contagens, o Muro em U, foi replicado com 28 execuções por braço: 28/28 contra 15/28, Fisher exato p &lt; 0,0001. Onde o alargamento não chegou, o que se reporta são tamanhos de efeito, e a tese di-lo em vez de fingir poder que não tem.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 89</span><span>«A comparação é injusta: o evolutivo tem atenção sobre grafo, o PPO e o SAC têm um MLP.»</span></div>
-        <div class="qa-r resp">É a <em>primeira</em> limitação declarada, e é deliberada na leitura: exatamente por a arquitetura ser a variável que difere, a conclusão sobre escalabilidade é atribuída à representação e não ao otimizador. O trabalho futuro n.º 1 é integrar a mesma atenção numa política treinável por gradiente (extrator de features personalizado na Stable-Baselines3), que separaria os dois efeitos.</div></div>
+        <div class="qa-r resp">É a <em>primeira</em> limitação declarada. A conclusão sobre a escala assenta no que é estrutural: uma MLP de entrada fixa não aceita N≠20, seja qual for o otimizador. Que a GNN escalaria igual se fosse treinada por gradiente é inferência, e não medição: a tese diz que os dois fatores não ficam isolados. A extensão prioritária é integrar a mesma atenção numa política treinável por gradiente (extrator de features personalizado na Stable-Baselines3; trabalho futuro n.º 2), que separaria os dois efeitos.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 71</span><span>«A QI7 deu negativo. O que é que isso vale?»</span></div>
-        <div class="qa-r resp">Vale como resultado, porque a regra estava fixada antes dos dados: limiar de 15 execuções convergentes em 21, pré-registado, e o resultado ficou em 4. Não se mudou de critério depois de ver a amostra — é isso que separa um pré-registo de uma racionalização. A segunda metade da resposta é a que interessa: degrada a fiabilidade, não a magnitude; e a leitura é condicionada ao orçamento, com 19 das 21 execuções ainda a subir no último quinto.</div></div>
+        <div class="qa-r resp">Vale como resultado, porque a regra estava fixada antes dos dados: limiar de 15 execuções convergentes em 21, pré-registado, e o resultado ficou em 4. Não se mudou de critério depois de ver a amostra — é isso que separa um pré-registo de uma racionalização. A segunda metade da resposta é a que interessa: degrada sobretudo a fiabilidade, porque as execuções que resolvem têm magnitudes parecidas entre si e as outras ficam a zero; e a leitura é condicionada ao orçamento, com 19 das 21 execuções ainda a subir no último quinto.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 80</span><span>«O evolutivo usa 8× mais cómputo. A comparação é justa?»</span></div>
         <div class="qa-r resp">A assimetria está medida e declarada: 195 min com ≈30 núcleos contra 48 min com 16 — ≈8× em núcleos-hora e ≈37× em passos de simulação. E a conclusão que daí se tira é a <em>inversa</em> da que favoreceria o evolutivo: mesmo com 8× menos núcleos-hora, os métodos de gradiente igualam ou superam-no em quatro dos sete cenários. A vantagem de eficiência é deles, e a tese escreve-o.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">p. 65</span><span>«Seis comparações por par, sem correção de multiplicidade.»</span></div>
@@ -1005,6 +1005,26 @@ ol.lim b{color:var(--tinta); font-weight:600}
         <div class="qa-r resp">Não. O campo geodésico é <strong>sinal de treino</strong>, calculado pelo simulador que conhece a geometria — não entra na observação. Em execução o agente tem apenas a bússola de homing euclidiana e o LiDAR de 8 m. Distingue-se, portanto, de fornecer um mapa dos obstáculos ou waypoints de um planeador A*. E tem a forma do PBRS: sem o fator γ, preserva a política ótima só de forma aproximada — a tese declara-o.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">método</span><span>«Como sabemos que os números da tese são os dos dados?»</span></div>
         <div class="qa-r resp">Porque não são escritos à mão: um conjunto de verificadores lê o .tex, recalcula cada valor a partir dos CSV canónicos e recusa o commit se algum deixar de bater. E os verificadores são eles próprios postos à prova — o ensaio estraga a tese de propósito, 92 mutações, uma de cada vez, e exige que cada uma seja apanhada.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§4.2.2 · §7.3</span><span>«A observação é mesmo local?»</span></div>
+        <div class="qa-r resp">Não inteiramente, e a tese di-lo (§4.2.2, p. 31, e §7.3, p. 89). <strong>Local é a perceção do ambiente</strong>: os obstáculos só se veem pelo LiDAR de 8 m, sem mapa. <strong>A do enxame é global</strong>: cada robô recebe a direção, a distância e o sinal de comunicação de <em>todos</em> os outros, sem limite de alcance nem oclusão pelas paredes. É igual para os três controladores, pelo que não favorece nenhum na comparação. A consequência honesta: a escalabilidade foi medida sem as restrições de comunicação de um enxame real. Se insistirem: a atenção já aprende a pesar cada vizinho, e um corte por raio seria a extensão natural. Não foi medido.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§3 · §7.3</span><span>«Como sabe que a escala é da representação e não do otimizador?» / «Porque não truncaram aos 19 vizinhos mais próximos?»</span></div>
+        <div class="qa-r resp">Há uma parte estrutural e outra de inferência. <strong>A estrutural</strong>: uma MLP de entrada fixa (ℝ¹¹¹) não pode receber N≠20, seja qual for o otimizador. Por isso o PPO e o SAC nem entram no teste. <strong>A inferência</strong>: que a GNN escalaria igual se fosse treinada por gradiente. Apoia-se no mecanismo (o número de parâmetros não depende de N; Chen et al.) e não numa experiência minha. A tese diz que os dois fatores não ficam isolados experimentalmente. Truncar ou completar a observação daria uma MLP escalável, e seria uma <em>baseline</em> legítima. Não a fiz. A extensão prioritária é a atenção numa política de gradiente (trabalho futuro n.º 2, §7.5).</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">Quadro 6.8</span><span>«São 21 testes sem correção para comparações múltiplas.»</span></div>
+        <div class="qa-r resp">Os p do Quadro 6.8 (p. 81) são brutos e vêm acompanhados do δ de Cliff. Fiz as contas sobre o próprio quadro. <strong>Com Benjamini-Hochberg</strong> (taxa de falsas descobertas a 5 %), <strong>os 14 resultados significativos mantêm-se todos</strong>. <strong>Com Holm</strong> (erro de família), mantêm-se 9 e caem 5: PPO&gt;SAC no Sandbox, GNN&gt;PPO e PPO&gt;SAC na Porta Cooperativa, e GNN&gt;PPO e GNN&gt;SAC na Perceção. Portanto, «o evolutivo supera ambos em três cenários» vale com controlo da taxa de falsas descobertas. Com o critério mais estrito, o resultado robusto é o <strong>Quatro Salas</strong>: p = 0,0006 e δ = +1,00 contra os dois, que é o mínimo possível com 7 contra 7, ou seja, separação total. Na Porta Cooperativa a diferença para o PPO é também pequena na prática (69,8 contra 67,1).</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§7.2 · QI5</span><span>«Onde está o controlo da QI5? O que mudou além da fitness?»</span></div>
+        <div class="qa-r resp">É uma <strong>comparação entre campanhas, e não uma ablação</strong>, e a tese diz isso na resposta à QI5. Na última campanha com a fitness inicial, <strong>3 de 12</strong> execuções dos quatro cenários de gargalo chegaram ao ninho no treino. Com o homing, <strong>28 de 28</strong> convergem a 100 %. Entre as duas mudou também o decaimento de σ, e a anterior não teve avaliação determinística. O que sustenta a causa é o mecanismo, que se observa diretamente. Com a tanh, a aptidão convergia para um valor comum a toda a população, e a seleção ficava sem sinal. Na versão desaturada, os genomas farmavam retorno (≈ 88 000) com zero chegadas. O homing remove esse farm por construção. O que falta, e digo-o: uma ablação só da fitness, com tudo o resto igual.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§6.12 · §6.13</span><span>«A escala e a robustez foram medidas só no modelo campeão?»</span></div>
+        <div class="qa-r resp">Sim: um modelo por cenário, 20 episódios por célula, e as legendas dizem-no. Na robustez, a retenção é um rácio entre duas avaliações da mesma fonte, por isso escolher o campeão não a enviesa. Mas os «100 % em 28/28» da escala são do campeão, e não das 7 execuções. Não medi se as outras transferem. Se perguntarem pelo Sandbox: as duas execuções degeneradas do GNN já não resolvem com N=20.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§6.13</span><span>«10 % de falhas é pouco.»</span></div>
+        <div class="qa-r resp">São 2 robôs em 20, a meio do episódio. Uma retenção de 92 a 106 % está perto do que a simples perda de agentes daria. Por isso a conclusão é modesta, e é a que a tese tira: nenhum paradigma colapsa e o teste <strong>não discrimina</strong> entre eles (QI4). Frações maiores, de 30 a 50 %, seriam o teste que discrimina. Não o fiz.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§4.5</span><span>«Os resultados são reproduzíveis?»</span></div>
+        <div class="qa-r resp">A <strong>avaliação</strong> é exata: reavaliar os modelos arquivados com as mesmas sementes dá os mesmos números, e os verificadores fazem-no a cada commit. O <strong>treino</strong> reproduz o protocolo, mas não bit a bit, porque o orçamento é em minutos e o número de passos depende da máquina. A tese corrigiu esta frase (§4.5).</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§1.2</span><span>«O que é que o PPO tem de adaptativo depois de treinado?»</span></div>
+        <div class="qa-r resp">Nada. Nos dois paradigmas a política fica fixa depois do treino, e a tese di-lo logo na definição do problema: mede-se tolerância, e não adaptação em execução. A hipótese herdou o vocabulário da literatura (<em>online</em> contra <em>offline</em>). A resposta da tese é precisamente que a «adaptabilidade» que aqui importa, que é aceitar outro N, está na representação e não no algoritmo.</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§7.3</span><span>«São drones ou robôs terrestres?»</span></div>
+        <div class="qa-r resp">O simulador é 3D (a ação tem Δz e a arena é esférica), mas as tarefas são planares. É uma limitação declarada: a altitude não é observada, e voar alto custa chegadas (ρ = −0,74, indicativo). No mapa composto o movimento vertical foi limitado a ±2 m. A comparação com o e-puck e o Khepera é sobre sensores e o <em>deployment gap</em>, e não sobre a dinâmica. Não dizer «são drones».</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§7.3 · p. 90</span><span>«3 das 7 execuções do GNN nas Quatro Salas atravessam paredes, e é aí que o GNN mais ganha.»</span></div>
+        <div class="qa-r resp">Está medido e declarado. As três que atravessam fazem 55,7 chegadas/ep e as quatro limpas fazem 60,3. A distância aos métodos de gradiente (33,6 e 31,8) é muito maior do que isso, por isso a superioridade não depende das travessias. Onde a costura pesa é no campeão adaptativo das Quatro Salas, e essa célula está declarada como contaminada.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">final</span><span>«Qual é, então, a contribuição em uma frase?»</span></div>
         <div class="qa-r resp">Que <strong>o desenho do sinal de treino e a representação decidem mais do que o paradigma de otimização</strong>: o colapso do evolutivo era um artefacto da aptidão e curou-se com homing terminal; a escalabilidade é da atenção sobre grafo, não do otimizador; e a deceção espacial só cede a exploração doseada — um mecanismo, não um paradigma, e em princípio transponível para qualquer um deles.</div></div>
     </div>
@@ -1019,7 +1039,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <li>«O colapso do evolutivo era um artefacto do sinal de treino — <em>fitness exploitation</em> — e não uma limitação do paradigma.»</li>
       <li>«A exploração tem preço; doseada adaptativamente, deixa de ter.»</li>
       <li>«O que separa os braços no Muro em U não é o paradigma, é a dosagem da exploração: o GNN objetivo e o PPO são indistinguíveis.»</li>
-      <li>«O que a composição degrada é a fiabilidade, não a magnitude.»</li>
+      <li>«O que a composição degrada é sobretudo a fiabilidade.»</li>
       <li>«A unidade estatística é a execução, não o episódio.»</li>
       <li>«O campo geodésico é sinal de treino, não observação.»</li>
       <li>«Cada número da tese é conferido contra os CSV a cada commit.»</li>
@@ -1029,6 +1049,9 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <h3 style="margin-top:.7rem">E o que não dizer</h3>
     <ul class="evitar">
       <li><span class="x">✗</span><div><b>«O PPO também escalaria com atenção.»</b> Não foi medido.</div></li>
+      <li><span class="x">✗</span><div><b>«Os robôs só veem à sua volta.»</b> Só os obstáculos. Os outros robôs, veem-nos todos.</div></li>
+      <li><span class="x">✗</span><div><b>«De 0 % para 100 %.»</b> Na última campanha com a fitness antiga foram 3 em 12 execuções. É uma comparação entre campanhas.</div></li>
+      <li><span class="x">✗</span><div><b>«A composição não degrada a magnitude.»</b> Não há termo de comparação. O que se mostra é que quem resolve tem magnitudes parecidas.</div></li>
       <li><span class="x">✗</span><div><b>«A novidade melhora sempre.»</b> Com peso fixo custa: δ = −1,00 na Porta com Alternativa.</div></li>
       <li><span class="x">✗</span><div><b>«O evolutivo é melhor.»</b> É melhor em navegação estruturada, e é ≈ 8× mais caro.</div></li>
       <li><span class="x">✗</span><div><b>«O SAC é mau.»</b> É fraco <em>nesta configuração e neste orçamento</em>, e quatro das suas células estão sub-treinadas por medição própria.</div></li>
@@ -1043,7 +1066,8 @@ ol.lim b{color:var(--tinta); font-weight:600}
   <section id="limites">
     <div class="cab"><span class="n">17</span><h2>As limitações que admito antes de me perguntarem</h2></div>
     <ol class="lim">
-      <li><div><b>Arquitetura assimétrica</b> — o grafo só existe no evolutivo. E é precisamente isso que permite atribuir a escala à representação. Trabalho futuro n.º 1.</div></li>
+      <li><div><b>Arquitetura assimétrica</b> — o grafo só existe no evolutivo, pelo que representação e otimizador não ficam isolados. Trabalho futuro n.º 2.</div></li>
+      <li><div><b>Perceção global do enxame</b> — cada robô vê todos os outros, sem limite de alcance nem paredes; local é só a perceção dos obstáculos. Comum aos três.</div></li>
       <li><div><b>Sete execuções por célula</b> — replicado a 28 onde a leitura é de contagens.</div></li>
       <li><div><b>Orçamento</b> — 7 das 21 células ainda subiam; o SAC nos gargalos é um limite inferior (α = 0,1 fixo, declarado na p. 44).</div></li>
       <li><div><b>Só simulação.</b> Nenhum robot físico — o <em>Deployment Gap</em> é antecipado no desenho mas não validado empiricamente.</div></li>
@@ -1126,7 +1150,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
         <tr><td>Mapa composto</td><td class="num">§6.11</td></tr>
         <tr><td>Escala, robustez e custo</td><td class="num">§6.12–6.14</td></tr>
         <tr><td>Discussão e validação da hipótese</td><td class="num">§6.15</td></tr>
-        <tr><td>Limitações</td><td class="num">§7.3 — p. 88–92</td></tr>
+        <tr><td>Limitações</td><td class="num">§7.3 — p. 89–92</td></tr>
         <tr><td>Contributos e trabalhos futuros</td><td class="num">§7.4–7.5</td></tr>
         <tr><td>Atenção QKV, wall-sliding, campo geodésico</td><td class="num">Anexo de código</td></tr>
       </tbody>
@@ -1153,7 +1177,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
         <tr><td class="num">7</td><td>O protocolo</td><td class="num">4:40</td><td>«A unidade estatística é a execução, não o episódio.»</td></tr>
         <tr><td class="num">8</td><td><b>QI1</b> — desempenho</td><td class="num">5:45</td><td>«Não há vencedor universal: 15 das 21 células a 100 %.»</td></tr>
         <tr><td class="num">9</td><td>A forma da distribuição</td><td class="num">6:25</td><td>«Com n=7 a caixa mente: o Muro em U é bimodal, não “média 24,5”.»</td></tr>
-        <tr><td class="num">10</td><td><b>QI5</b> — a fitness</td><td class="num">7:25</td><td>«O colapso do evolutivo era o sinal de treino: 28 execuções de 0 % a 100 %.»</td></tr>
+        <tr><td class="num">10</td><td><b>QI5</b> — a fitness</td><td class="num">7:25</td><td>«O colapso do evolutivo era o sinal de treino: de 3 em 12 execuções com chegadas para 28 em 28.»</td></tr>
         <tr><td class="num">11</td><td><b>QI6</b> — deceção</td><td class="num">8:40</td><td>«28/28 contra 15/28: decide a dosagem da exploração, não o paradigma.»</td></tr>
         <tr><td class="num">12</td><td><b>QI2</b> — escala</td><td class="num">9:30</td><td>«Zero-shot é propriedade da representação, não do otimizador.»</td></tr>
         <tr><td class="num">13</td><td><b>QI3</b> — falhas</td><td class="num">10:00</td><td>«92–106 % nos três: a robustez não discrimina — e isso é uma resposta.»</td></tr>

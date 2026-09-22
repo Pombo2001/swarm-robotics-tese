@@ -143,6 +143,11 @@ EXCECOES = {
                        "avaliação de política",
     ("minutos", 5): "quadro de tempos do pipeline: a avaliação determinística "
                     "demora 5 min, não é orçamento de treino",
+    ("execuções", 12): "resposta à QI5 e contributos: as 12 execuções (4 cenários "
+                       "de gargalo × 3) da última campanha exploratória com a "
+                       "fitness inicial, 28 jun — results/graficos_tese/"
+                       "28-06-2026_08h04m/dados_melhores_scores.csv; a tese "
+                       "declara-a comparação entre campanhas, não ablação",
     ("minutos", 600): "braço Novelty preliminar de 2 jul — campanha real cujos "
                       "artefactos foram sobrescritos no servidor; a tese "
                       "despromove-a a «indício» e declara a perda",

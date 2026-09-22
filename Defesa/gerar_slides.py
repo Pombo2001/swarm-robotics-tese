@@ -456,7 +456,7 @@ TERMOS = {
     "simulador": [
         ("Ninho", "a zona-alvo; conta uma chegada quando os agentes exigidos estão lá ao mesmo tempo"),
         ("LiDAR", "sensor de distância por raios: diz a que distância está a parede em cada direção (alcance 8 m)"),
-        ("Observação local e parcial", "cada robô só vê à sua volta e em relação a si (egocêntrica), nunca o mapa inteiro"),
+        ("Observação parcial", "as paredes só pelo LiDAR (8 m), nunca o mapa inteiro; os outros robôs, todos, sem limite de alcance"),
         ("Muro em U", "beco virado para o ninho: ir a direito prende o enxame; é preciso afastar-se para contornar"),
         ("Porta Cooperativa", "a porta só abre com três robôs em simultâneo junto dela"),
         ("Perceção Cooperativa", "não tem ninho: conta uma chegada quando três agentes cercam um alvo móvel"),
@@ -717,10 +717,10 @@ todas, pela ordem em que os resultados as desbloqueiam.
 # 4. Simulador e cenários
 s = _novo_slide()
 _titulo(s, "O simulador e os oito cenários",
-        "navegação cooperativa até ao ninho em 3D, 20 agentes, observação local (LiDAR 8 m)")
+        "navegação cooperativa até ao ninho em 3D, 20 agentes, obstáculos só pelo LiDAR (8 m)")
 _texto(s, MARGEM, Inches(1.75), Inches(5.2), Inches(4.8), [
     "• Tarefa: chegar ao ninho em conjunto, sem objetos para apanhar; perceção cooperativa com alvo móvel",
-    "• Observação local e parcial: LiDAR, bússola ao ninho, vizinhos",
+    "• Observação: LiDAR local (8 m), bússola ao ninho e a posição de todos os outros robôs",
     "• Sete cenários de dificuldade isolada:",
     ("Sandbox · Muro em U (deceção espacial) · Gargalo · Quatro Salas", {"nivel": 1, "tamanho": 14}),
     ("Porta Cooperativa (3 robôs) · Perceção Cooperativa · Porta com Alternativa", {"nivel": 1, "tamanho": 14}),
@@ -854,7 +854,7 @@ s = slide_texto_figura(
         "satura num planalto sem pressão seletiva (fitness exploitation)",
         "• Cura: substituir o retorno pelo homing terminal — proximidade ao ninho no fim do episódio, medida "
         "no potencial geodésico (contorna paredes; o euclidiano atrai para dentro do beco)",
-        ("Resultado: de 0 % para 100 % de sucesso nas 28 execuções dos quatro cenários de gargalo.",
+        ("Resultado: de 3 em 12 execuções que chegavam ao ninho para 28 em 28 a 100 % de sucesso.",
          {"negrito": True, "cor": GNN}),
         "• Necessário, não suficiente: resolve a atribuição de crédito, não a descoberta do desvio comprido "
         "— o Muro em U continua bimodal (3/7), como nos métodos de gradiente",
@@ -866,15 +866,17 @@ A primeira das questões de mecanismo. Nas campanhas exploratórias o evolutivo
 colapsava nos labirintos, e a leitura fácil era «limitação do paradigma». Não
 era. A fitness inicial somava o retorno acumulado, que se farma a deambular; a
 população saturava. Substituí esse termo pelo homing terminal — estar perto do
-ninho no fim, medido num potencial geodésico que contorna as paredes. Vinte e
-oito execuções de zero para cem por cento. Mas é condição necessária, não
+ninho no fim, medido num potencial geodésico que contorna as paredes. Na última
+campanha com a fitness antiga, só três de doze execuções destes cenários chegavam
+ao ninho; com o homing, as vinte e oito convergem. É uma comparação entre
+campanhas, não uma ablação — mudou também o decaimento do sigma. Mas é condição necessária, não
 suficiente: o Muro em U continuou bimodal. Faltava a descoberta.
 """)
 
 # O quadro «antes → depois». Até 21 set este slide mostrava o mapa do potencial
 # euclidiano contra o geodésico (heatmap_geodesico_u_wall.png): explica o
 # mecanismo, mas com duas barras de cor, eixos em metros e um subtítulo em inglês
-# não se lê projetado, e o que o slide afirma é o salto de 0 % para 100 %. Esse
+# não se lê projetado, e o que o slide afirma é o salto de 3/12 para 7/7. Esse
 # salto desenha-se aqui, cenário a cenário; o mecanismo fica para as notas.
 _qx, _qy, _qw, _qh = W - MARGEM - Inches(5.6), Inches(1.75), Inches(5.6), Inches(4.85)
 _q = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, _qx, _qy, _qw, _qh)
@@ -886,28 +888,33 @@ _q.shadow.inherit = False
 _q.adjustments[0] = 0.04
 _px = _qx + Inches(0.35)
 _texto(s, _px, _qy + Inches(0.25), _qw - Inches(0.7), Inches(0.4),
-       "TAXA DE SUCESSO DO GNN EVOLUTIVO", tamanho=12, cor=MUTED, fonte=MONO_FT)
+       "EXECUÇÕES DO GNN QUE CHEGAM AO NINHO", tamanho=12, cor=MUTED, fonte=MONO_FT)
 _c1, _c2 = _px + Inches(2.45), _px + Inches(3.75)
 _texto(s, _c1, _qy + Inches(0.7), Inches(1.15), Inches(0.5), ["fitness", "inicial"], tamanho=11,
        cor=MUTED, fonte=MONO_FT, alinhar=PP_ALIGN.CENTER, espaco=0)
 _texto(s, _c2, _qy + Inches(0.7), Inches(1.15), Inches(0.5), ["homing", "terminal"], tamanho=11,
        cor=GNN, fonte=MONO_FT, alinhar=PP_ALIGN.CENTER, espaco=0)
 _ly = _qy + Inches(1.3)
-for _k, _cen in enumerate(["Gargalo", "Quatro Salas", "Porta Cooperativa", "Porta com Alternativa"]):
+# A coluna da esquerda é a última campanha com a fitness inicial (28 jun, 3 execuções por
+# cenário, chegadas no treino — não houve avaliação determinística): Gargalo 1/3, Quatro Salas
+# 0/3, Porta Cooperativa 1/3, Porta com Alternativa 1/3 (results/graficos_tese/28-06-2026_08h04m/
+# dados_melhores_scores.csv, fitness = 10000 × chegadas + 5000 no planalto).
+for _k, (_cen, _antes) in enumerate([("Gargalo", "1/3"), ("Quatro Salas", "0/3"),
+                                     ("Porta Cooperativa", "1/3"), ("Porta com Alternativa", "1/3")]):
     _y = _ly + _k * Inches(0.62)
     _linha(s, _px, _y, _qx + _qw - Inches(0.35))
     _texto(s, _px, _y + Inches(0.12), Inches(2.4), Inches(0.45), _cen, tamanho=15, cor=INK_FORTE,
            ancora=MSO_ANCHOR.MIDDLE)
-    _texto(s, _c1, _y + Inches(0.08), Inches(1.15), Inches(0.5), "0 %", tamanho=22, cor=MUTED,
+    _texto(s, _c1, _y + Inches(0.08), Inches(1.15), Inches(0.5), _antes, tamanho=22, cor=MUTED,
            fonte=MONO_FT, alinhar=PP_ALIGN.CENTER)
     _texto(s, _c1 + Inches(1.1), _y + Inches(0.1), Inches(0.3), Inches(0.5), "→", tamanho=18,
            cor=MUTED, alinhar=PP_ALIGN.CENTER)
-    _texto(s, _c2, _y + Inches(0.08), Inches(1.15), Inches(0.5), "100 %", tamanho=22, negrito=True,
+    _texto(s, _c2, _y + Inches(0.08), Inches(1.15), Inches(0.5), "7/7", tamanho=22, negrito=True,
            cor=GNN, fonte=MONO_FT, alinhar=PP_ALIGN.CENTER)
 _linha(s, _px, _ly + 4 * Inches(0.62), _qx + _qw - Inches(0.35))
 _texto(s, _px, _ly + 4 * Inches(0.62) + Inches(0.2), _qw - Inches(0.7), Inches(0.9), [
     ("28 execuções, 7 por cenário: todas a 100 %", {"tamanho": 16, "negrito": True, "cor": INK_FORTE}),
-    ("Muro em U, com o mesmo homing: 3/7 — bimodal", {"tamanho": 14, "cor": MUTED}),
+    ("antes: treino de 28 jun, sem avaliação determinística · Muro em U com homing: 3/7", {"tamanho": 13, "cor": MUTED}),
 ], espaco=4)
 
 # 10. QI6
@@ -1047,7 +1054,7 @@ _texto(s, MARGEM, Inches(4.85), W - 2 * MARGEM, Inches(2.0), [
     "um navegador geodésico sem aprendizagem faz 53,0 chegadas/ep",
     "• Treino nativo, 21 execuções por algoritmo: só o evolutivo passa — em 4 de 21, abaixo do "
     "limiar de 15 fixado antes dos dados; em 19 das 21 a fitness ainda subia no fim",
-    ("A resposta à QI7 é negativa: a composição degrada a fiabilidade, não a magnitude — "
+    ("A resposta à QI7 é negativa: a composição degrada sobretudo a fiabilidade — "
      "a bimodalidade do Muro em U em ponto grande.", {"negrito": True, "cor": ACENTO}),
 ], tamanho=15, espaco=6)
 _rodape(s)
@@ -1094,7 +1101,7 @@ slide_texto_figura(
     "Limitações — as que admito primeiro", "declaradas na dissertação, com os números",
     [
         "• Arquitetura assimétrica: atenção sobre grafo só no evolutivo; PPO/SAC com MLP — a comparação "
-        "combina otimizador e representação (trabalho futuro n.º 1: a mesma arquitetura por gradiente)",
+        "combina otimizador e representação (trabalho futuro n.º 2: a mesma arquitetura por gradiente)",
         "• Sete execuções por célula: onde a leitura depende de contagens, replicou-se a n = 28",
         "• Orçamento: 7 das 21 células ainda subiam no fim — o SAC nos gargalos lê-se como limite inferior "
         "(temperatura fixa, α = 0,1)",
@@ -1126,7 +1133,7 @@ slide_texto_figura(
     "Contributos", "",
     [
         ("1. O desenho da fitness como causa e cura do colapso evolutivo", {"negrito": True}),
-        "  o homing terminal no potencial geodésico levou 28 execuções de 0 % a 100 % — o principal contributo metodológico",
+        "  com o homing terminal no potencial geodésico, os quatro cenários de gargalo passam de 3/12 execuções com chegadas a 28/28 a 100 %",
         ("2. Caracterização condicional da procura por novidade", {"negrito": True}),
         "  resolve a deceção espacial (28/28) e, doseada adaptativamente, deixa de custar onde o gradiente basta",
         ("3. Um mapa de escolha para engenharia de enxames", {"negrito": True}),
@@ -1155,7 +1162,7 @@ _texto(s, MARGEM, Inches(1.9), W - 2 * MARGEM, Inches(4.5), [
      "doseada adaptativamente — não o paradigma.", {"tamanho": 22, "negrito": True, "cor": ACENTO}),
     ("Os métodos de gradiente ficam com a fiabilidade em espaço aberto e com ≈ 8× menos cómputo.",
      {"tamanho": 20}),
-    ("A composição de dificuldades degrada a fiabilidade antes da magnitude — e isso está reportado "
+    ("A composição de dificuldades degrada sobretudo a fiabilidade — e isso está reportado "
      "como resultado negativo, com o número à vista.", {"tamanho": 20}),
 ], espaco=16)
 _rodape(s)
@@ -1165,7 +1172,7 @@ confirma-se só em parte. A vantagem de escala existe — mas está na
 representação, não no otimizador. Nos cenários enganadores, o que decide é o
 sinal de treino e a exploração doseada. Os métodos de gradiente ficam com a
 fiabilidade em espaço aberto e o cómputo barato. E a composição degrada a
-fiabilidade antes da magnitude — um resultado negativo, reportado como tal.
+fiabilidade, sobretudo — um resultado negativo, reportado como tal.
 """)
 
 # 18. Demo ao vivo — o painel, no Muro em U

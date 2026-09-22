@@ -38,7 +38,8 @@ cómputo. Sem vencedor universal — um mapa de escolha.
    Salas, Porta Cooperativa, Perceção), empata PPO nos gargalos; PPO ganha o
    Sandbox; Muro em U ninguém (bimodal nos três).
 4. **QI5 — a fitness era a causa.** O «colapso do evolutivo» era *fitness
-   exploitation*: o homing terminal geodésico levou 28 execuções de 0 % a 100 %.
+   exploitation*: com o homing terminal geodésico, os quatro gargalos passaram de 3/12
+   execuções com chegadas (fitness antiga, treino) a 28/28 a 100 %.
    Necessário, não suficiente: o Muro em U continuou bimodal.
 5. **QI6 — a novidade compra a descoberta.** Peso fixo: 7/7 no Muro em U mas
    custo na Porta com Alternativa. Dosagem adaptativa (pré-registada): 7/7 sem
@@ -58,9 +59,9 @@ cómputo. Sem vencedor universal — um mapa de escolha.
 | **2** | Transfere-se para N≠20? | Só o grafo: 100 % em 28 combinações (N=10…100); MLP de entrada fixa (ℝ¹¹¹) é incompatível. Propriedade da **representação**. |
 | **3** | E com 10 % de falhas? | Retenção 92–106 % nas 21 células, nos três: parameter sharing + observação local. Não é critério. |
 | **4** | Quando preferir? | N fixo + cómputo → PPO; N variável/escala → grafo; navegação estruturada → evolutivo c/ homing; deceção → novidade adaptativa. |
-| **5** | A fitness importa? | Decisivamente: homing terminal geodésico, 0 % → 100 % em 28 execuções. Resolve o crédito, não a descoberta. |
+| **5** | A fitness importa? | Decisivamente: homing terminal geodésico, 3/12 → 28/28 (entre campanhas, não ablação). Resolve o crédito, não a descoberta. |
 | **6** | A novidade ajuda? | Sim onde a deceção morde (7/7 vs 3/7, p=0,026), com custo onde não (δ=−1,00); doseada adaptativamente, sem custo; **28/28** a n=28. |
-| **7** | Compõe-se? | Não dentro deste orçamento: 4/21 < 15. Degrada a fiabilidade, não a magnitude. |
+| **7** | Compõe-se? | Não dentro deste orçamento: 4/21 < 15. Degrada sobretudo a fiabilidade. |
 
 ## 4. Os números para decorar
 
@@ -137,14 +138,16 @@ PPO e SAC 0/21. 19/21 execuções ainda a subir no último quinto (780 min).
 - «A exploração tem preço; doseada adaptativamente, deixa de ter.»
 - «O que separa os braços no Muro em U não é o paradigma, é a dosagem da
   exploração: o GNN objetivo e o PPO são indistinguíveis.»
-- «O que a composição degrada é a fiabilidade, não a magnitude.»
+- «O que a composição degrada é sobretudo a fiabilidade.»
 - «A unidade estatística é a execução, não o episódio.»
 - «Cada número da tese é conferido contra os CSV a cada commit.»
 
 ## 6. As limitações que admito antes de me perguntarem
 
-1. **Arquitetura assimétrica** (grafo só no evolutivo) — e é isso que permite
-   atribuir a escala à representação. Trabalho futuro n.º 1.
+1. **Arquitetura assimétrica** (grafo só no evolutivo) — representação e
+   otimizador não ficam isolados. Trabalho futuro n.º 2.
+1. **Perceção global do enxame** — cada robô vê todos os outros, sem limite de
+   alcance; local é só a perceção dos obstáculos. Comum aos três.
 2. **7 execuções** — replicado a 28 onde a leitura é de contagens.
 3. **Orçamento**: 7/21 células ainda subiam; SAC nos gargalos = limite inferior
    (α = 0,1 fixo, declarado na p. 44).
@@ -177,7 +180,7 @@ PPO e SAC 0/21. 19/21 execuções ainda a subir no último quinto (780 min).
 | Novidade e mega-treino | §6.10 (p. 61–65) |
 | Mapa composto | §6.11 |
 | Escala / robustez / custo | §6.12–6.14 |
-| Limitações | §7.3 (p. 88–92) |
+| Limitações | §7.3 (p. 89–92) |
 | Guião de perguntas | `docs/DEFESA_PERGUNTAS.md` |
 
 ## 9. O guião em 15 minutos
@@ -200,7 +203,7 @@ são as duas que a conclusão repete.
 | 7 | O protocolo | 45 s | 4:40 | «A unidade estatística é a execução, não o episódio.» |
 | 8 | **QI1** — desempenho | 65 s | 5:45 | «Não há vencedor universal: 15 das 21 células a 100 %.» |
 | 9 | A forma da distribuição | 40 s | 6:25 | «Com n=7 a caixa mente: o Muro em U é bimodal, não “média 24,5”.» |
-| 10 | **QI5** — a fitness | 60 s | 7:25 | «O colapso do evolutivo era o sinal de treino: 28 execuções de 0 % a 100 %.» |
+| 10 | **QI5** — a fitness | 60 s | 7:25 | «O colapso do evolutivo era o sinal de treino: de 3 em 12 execuções com chegadas para 28 em 28.» |
 | 11 | **QI6** — deceção | 75 s | 8:40 | «28/28 contra 15/28: decide a dosagem da exploração, não o paradigma.» |
 | 12 | **QI2** — escala | 50 s | 9:30 | «Zero-shot é propriedade da representação, não do otimizador.» |
 | 13 | **QI3** — falhas | 30 s | 10:00 | «92–106 % nos três: a robustez não discrimina — e isso é uma resposta.» |
