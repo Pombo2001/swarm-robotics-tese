@@ -72,7 +72,7 @@ def index(v: str = ""):
         with ui.column().classes("gap-0"):
             ui.label("Swarm Observatory").classes(
                 "text-base font-bold mono-title leading-tight tracking-tight")
-            ui.label("Aprendizagem por Reforço para Controlo de Enxames · ISCTE") \
+            ui.label("Aprendizagem por Reforço Multiagente e Neuroevolução · ISCTE") \
                 .classes("text-[11px] leading-tight").style(f"color:{theme.INK_MUTED}")
         ui.space()
         # Modo Defesa: o mesmo dashboard, com os parâmetros de uma sala (texto

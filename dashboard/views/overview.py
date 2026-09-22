@@ -256,7 +256,7 @@ def build(queue: JobQueue, goto=None):
                     "position:relative; z-index:1; padding:44px 40px; pointer-events:none;"):
                 ui.label("DISSERTAÇÃO DE MESTRADO · INTELIGÊNCIA ARTIFICIAL · ISCTE 2026") \
                     .classes("text-[11px] tracking-[.25em]").style(f"color:{theme.INK_MUTED}")
-                ui.label("Aprendizagem por Reforço para Controlo de Enxames") \
+                ui.label("Aprendizagem por Reforço Multiagente e Neuroevolução no Controlo de Enxames de Robôs") \
                     .classes("mono-title").style(
                         f"font-size:clamp(1.6rem,3.4vw,2.6rem); font-weight:700; "
                         f"line-height:1.15; color:{theme.INK}; max-width:720px;")

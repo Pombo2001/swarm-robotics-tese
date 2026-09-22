@@ -1,6 +1,6 @@
-# Aprendizagem por Reforço para Controlo de Enxames
+# Aprendizagem por Reforço Multiagente e Neuroevolução no Controlo de Enxames de Robôs: Desempenho, Escalabilidade e Robustez
 
-Simulador 3D de *swarm robotics* (forrageamento cooperativo) e bancada de comparação
+Simulador 3D de *swarm robotics* (navegação cooperativa até ao ninho) e bancada de comparação
 entre **três controladores descentralizados** — neuroevolução com rede de grafos, PPO e
 SAC — em oito cenários de dificuldade crescente.
 
@@ -239,7 +239,7 @@ tua máquina — o ficheiro real não é versionado.
 
 ```bibtex
 @mastersthesis{pombo2026enxames,
-  title  = {Aprendizagem por Reforço para Controlo de Enxames},
+  title  = {Aprendizagem por Reforço Multiagente e Neuroevolução no Controlo de Enxames de Robôs: Desempenho, Escalabilidade e Robustez},
   author = {Pombo, Gonçalo},
   school = {ISCTE --- Instituto Universitário de Lisboa},
   year   = {2026},

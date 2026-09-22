@@ -208,7 +208,7 @@ def _rodape(slide):
         _n += 1
         # O número em Consolas, com zero à esquerda: alinha à direita sem dançar
         # entre o 9 e o 10, que numa numeração proporcional se nota ao folhear.
-        etiqueta, legenda = "%02d" % _n, "Aprendizagem por Reforço para Controlo de Enxames · ISCTE-IUL 2026"
+        etiqueta, legenda = "%02d" % _n, "Aprendizagem por Reforço Multiagente e Neuroevolução · ISCTE-IUL 2026"
     _linha(slide, MARGEM, H - Inches(0.55), W - MARGEM)
     _texto(slide, MARGEM, H - Inches(0.5), Inches(9), Inches(0.4), legenda,
            tamanho=10, cor=MUTED)
@@ -573,8 +573,8 @@ _CAPA_X = MARGEM + Inches(0.32)
 _texto(s, _CAPA_X, Inches(1.55), W - _CAPA_X - MARGEM, Inches(0.4),
        "DISSERTAÇÃO DE MESTRADO · DEFESA", tamanho=12, cor=MUTED, fonte=MONO_FT)
 _texto(s, _CAPA_X, Inches(2.05), W - _CAPA_X - MARGEM - Inches(1.0), Inches(1.6),
-       "Aprendizagem por Reforço para Controlo de Enxames",
-       tamanho=40, negrito=True, cor=INK_FORTE, fonte=TITULO_FT)
+       "Aprendizagem por Reforço Multiagente e Neuroevolução no Controlo de Enxames de Robôs",
+       tamanho=28, negrito=True, cor=INK_FORTE, fonte=TITULO_FT)
 _texto(s, _CAPA_X, Inches(3.45), Inches(9.4), Inches(1.0),
        "Aprendizagem por reforço multiagente por gradiente vs. neuroevolução com atenção "
        "sobre grafo, em oito cenários de dificuldade crescente", tamanho=19, cor=MUTED)
