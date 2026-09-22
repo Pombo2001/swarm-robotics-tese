@@ -497,14 +497,24 @@ def prisma():
                 r'>{\raggedright\arraybackslash}p{5.4cm}'
                 r'>{\raggedright\arraybackslash}p{3.0cm}p{1.4cm}@{}}'
                 + '\n')
-        f.write(r'\caption{Estudos incluídos na revisão sistemática ($n = '
+        # A coluna Par. é a classificação por regras (regex), não a leitura
+        # manual que dá as contagens do Cap. 3 (21/23/30). As duas diferem em
+        # alguns estudos, e quem contar a coluna encontra 24 e 31: a legenda
+        # di-lo, em vez de deixar o júri descobrir a diferença sozinho.
+        f.write(r'\caption[Estudos incluídos na revisão sistemática]'
+                r'{Estudos incluídos na revisão sistemática ($n = '
                 + str(c['incluidos']) + r'$), resultantes do fluxo PRISMA '
                 r'(Figura~\ref{fig:prisma}). A coluna \emph{Par.} indica o '
                 r'paradigma dominante e, com \emph{E}, se o estudo aborda '
                 r'escalabilidade ou generalização a dimensões não vistas; é '
                 r'derivada dos resumos por regras explícitas, registadas estudo '
                 r'a estudo em \texttt{docs/slr/screening.csv} com os termos que '
-                r'a determinaram.}\label{tab:slr_incluidos}\\' + '\n')
+                r'a determinaram. Por ser automática, é uma aproximação: difere '
+                r'da leitura manual do Capítulo~\ref{ch:sota} em alguns estudos '
+                r'(classifica, por exemplo, como MARL a aprendizagem social de '
+                r'Bredeche e Fontbonne), e por isso as suas contagens (24 estudos '
+                r'bio-inspirados, 31 com escalabilidade) diferem numa unidade das '
+                r'do texto (23 e 30).}\label{tab:slr_incluidos}\\' + '\n')
         f.write(r'\hline' + '\n')
         f.write(cab + '\n')
         f.write(r'\endfirsthead' + '\n')

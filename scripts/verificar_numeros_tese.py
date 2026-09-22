@@ -2304,7 +2304,7 @@ AFIRMACOES_NOV = [
         # citado a meio de uma frase sobre outra campanha — o tipo de valor que
         # ninguém regenera e que sobrevive a qualquer recálculo.
         "rot": "Perceção Cooperativa — o 5/7 de 19 de julho",
-        "re": r"se o \$(?P<conv>\d+)/7\$ observado a 19 de julho",
+        "re": r"se o \$(?P<conv>\d+)/7\$ do adaptativo na condição primária",
         "A": ("adapt_B1", "cooperative_perception"), "B": None,
         "unilateral": False, "conv_a_100": True,
     },
@@ -2700,7 +2700,7 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"PPO \$[^$]+\$ \(\$(\d+)/(\d+)\$;.{0,90}?SAC \$[^$]+\$ "
                 r"\(\$(\d+)/(\d+)\$"},
-         {"re": r"\$(\d+)/(\d+)\$ do PPO e \$(\d+)/(\d+)\$ do SAC, sendo a única"},
+         {"re": r"\$(\d+)/(\d+)\$ do PPO e \$(\d+)/(\d+)\$ do SAC, sem uma única"},
      ]},
     {"rot": "Mega-treino — M3 (adaptativo vs peso fixo no bypass)",
      "sitios": [
