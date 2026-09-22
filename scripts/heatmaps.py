@@ -74,7 +74,14 @@ def _load_model(algo, scenario, config_path, models_root=None):
     """Reutiliza o carregador do run_eval (mesma convenção de sufixos).
 
     `models_root` permite desenhar os heatmaps de OUTRA campanha sem tocar nos
-    modelos ativos (que são os campeões 7d da tese). Ver run_eval.load_model.
+    modelos ativos. Ver run_eval.load_model.
+
+    ATENÇÃO: os modelos ativos NÃO são todos os da campanha 7d. No Muro em U, o
+    GNN de `results/models/` é o de `results/models_7d/`, mas o SAC e o PPO de
+    `results/models_sac|ppo/` são de 25 jun, anteriores à campanha: o SAC faz 347
+    chegadas em 6 ep, mais do que qualquer das 7 execuções da tese. Os painéis
+    da tese (fig:res_heatmap_ocup) desenham-se com `models_root=results/models_7d`,
+    onde o SAC é a execução 7 (0 chegadas, como no eval_by_run_7d.csv).
     """
     from scripts.run_eval import load_model
     return load_model(algo, scenario, config_path, models_root=models_root)

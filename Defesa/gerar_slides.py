@@ -1350,7 +1350,7 @@ inferior e não um veredicto sobre o algoritmo.
 # A5 — a prova visual da bimodalidade do Muro em U
 s = _novo_slide()
 _titulo(s, "Reserva · O Muro em U por dentro",
-        "ocupação média do enxame ao longo do episódio — modelos campeões, 6 episódios cada")
+        "ocupação média do enxame ao longo do episódio — um modelo da campanha por algoritmo, 6 episódios cada")
 _lbl = [("GNN evolutivo", GNN, "heatmap_ocupacao_gnn_u_wall.png"),
         ("PPO", PPO, "heatmap_ocupacao_ppo_u_wall.png"),
         ("SAC", SAC, "heatmap_ocupacao_sac_u_wall.png")]
@@ -1362,16 +1362,16 @@ for _k, (_nome, _cor, _fich) in enumerate(_lbl):
     _fig(s, _fich, _x, Inches(2.05), _cw, Inches(3.75))
 _texto(s, MARGEM, H - Inches(1.2), W - 2 * MARGEM, Inches(0.6),
        "O corredor que contorna o muro é o que separa quem resolve de quem não resolve: o GNN e o PPO "
-       "desenham-no (476 e 419 chegadas em 6 episódios); o SAC nunca o encontra e faz zero.",
+       "desenham-no (476 e 419 chegadas em 6 episódios); este SAC, como 5 das suas 7 execuções, nunca o encontra e faz zero.",
        tamanho=13, cor=MUTED, alinhar=PP_ALIGN.CENTER)
 _rodape(s)
 _notas(s, """
 Se perguntarem o que é, ao certo, resolver o Muro em U: é isto. O mapa de calor
-mostra onde o enxame passa o episódio, no modelo campeão de cada algoritmo. O GNN
+mostra onde o enxame passa o episódio, num modelo da campanha de cada algoritmo. O GNN
 e o PPO desenham um corredor que sai do beco, contorna o muro e chega ao ninho —
 quatrocentas e setenta e seis e quatrocentas e dezanove chegadas em seis episódios. O
 SAC nunca encontra esse corredor: a ocupação espalha-se pela arena toda e o total
-é zero. Não é uma diferença de magnitude, é outro comportamento — e é esta a
+é zero — como em cinco das sete execuções do SAC. Não é uma diferença de magnitude, é outro comportamento — e é esta a
 forma da falha que uma média esconde.
 """)
 
