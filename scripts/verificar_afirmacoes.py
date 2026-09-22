@@ -294,13 +294,25 @@ def diagnostico_qi7():
         confere("mediana da geração do máximo (%% do orçamento)", v[3],
                 100 * pd.Series(fracs).median(), 0.5)
 
-    v = do_tex(r"traduziu-se em \$([\d{},]+)\$ gerações por execução em média "
-               r"\(amplitude de \$(\d+)\$ a \$(\d+)\$", "gerações por execução", 3)
+    v = do_tex(r"fecharam com \$([\d{},]+)\$ gerações em média\s+\(amplitude\s+"
+               r"de \$(\d+)\$ a \$(\d+)\$", "gerações por execução", 3)
     if v and logs:
         tamanhos = [len(pd.read_csv(f)) for f in logs]
         confere("gerações por execução (média)", v[0], sum(tamanhos) / len(tamanhos), 0.05)
         confere("gerações por execução (mínimo)", v[1], min(tamanhos), 0)
         confere("gerações por execução (máximo)", v[2], max(tamanhos), 0)
+
+    # O termo de comparação: as gerações que o mesmo controlador fez com 195 min
+    # nos sete cenários. Lê-se dos dois braços GNN do mega-treino (Muro em U);
+    # as fases 3 e 4 têm cópias destes CSV e não entram (ver verificar_tempos).
+    v = do_tex(r"contra cerca de \$(\d+)\$ por execução, com o mesmo orçamento",
+               "gerações nos sete cenários", 1)
+    sete = [f for fase in ("mega_A_fase1", "mega_A_fase2") for f in glob.glob(
+        os.path.join(RAIZ, "results", "mega_1mes", fase, "logs",
+                     "gnn_3d_training_u_wall_run*.csv"))]
+    if v and sete:
+        confere("gerações por execução nos sete cenários (mediana)", v[0],
+                pd.Series([len(pd.read_csv(f)) for f in sete]).median(), 10)
 
     v = do_tex(r"de \$(\d+)\$ para \$(\d+)\$ \\emph\{sem qualquer retreino\} faz a "
                r"distância mínima mediana ao ninho cair de \$([\d{},]+)\$ para "

@@ -152,9 +152,8 @@ qualquer dado de avaliação (emenda~19 do pré-registo). A razão é de recurso
 não de resultado: o desenho original ocupava menos de um quarto da janela de
 servidor disponível até ao limite de integração. O acréscimo foi todo para
 \emph{execuções} e nenhum para minutos por execução --- os $780$ minutos do
-controlador evolutivo existem para igualar \emph{gerações} às campanhas
-fechadas dos sete cenários, e mexer neles quebraria a única comparabilidade que o
-F2 tem. As métricas M1--M3, a regra de decisão e os compromissos de reporte
+controlador evolutivo foram calculados para igualar \emph{gerações} às campanhas
+fechadas dos sete cenários (o que, como se mostra adiante, não se verificou). As métricas M1--M3, a regra de decisão e os compromissos de reporte
 ficaram como estavam; em particular, \emph{M2 permanece descritiva}. Com
 $n = 21$ um teste exato sobre proporções de convergência passaria a ter poder, e
 é precisamente por isso que se declara que não se acrescenta: converter um
@@ -166,10 +165,16 @@ $\text{pop\_size} \times \text{eval\_episodes} \times \text{max\_steps}$ passos
 de simulação; com episódios quatro vezes mais longos, igualar o número de
 minutos daria ao controlador evolutivo um quarto da otimização e chamar-lhe-ia
 comparação justa. O orçamento foi, por isso, fixado em $780$ minutos por execução
-do controlador evolutivo --- o que iguala às campanhas dos sete cenários as
-$13{,}7$ gerações que cada execução perfaz --- e $192$ minutos por execução de
-cada método de gradiente, ambos registados antes de qualquer análise.
-Em execução, o orçamento de $780$ minutos traduziu-se em $165{,}3$ gerações por execução em média (amplitude de $132$ a $191$, sobre as 21 execuções fechadas), contra as $13{,}7$ gerações que as campanhas dos sete cenários perfazem.
+do controlador evolutivo e $192$ minutos por execução de cada método de
+gradiente, ambos registados antes de qualquer análise. O cálculo que o fixou
+partia, porém, de uma estimativa do custo por passo de simulação que as medições
+posteriores desmentiram, e a igualdade de gerações que pretendia garantir não se
+verificou: as $21$ execuções fecharam com $165{,}3$ gerações em média (amplitude
+de $132$ a $191$), contra cerca de $550$ por execução, com o mesmo orçamento de
+$195$ minutos, nas execuções do controlador evolutivo no Muro em U. Neste mapa, o
+controlador evolutivo dispôs, portanto, de menos de um terço das gerações que teve
+nos sete cenários --- o que reforça a leitura de que o orçamento não chegou ao
+planalto (Secção~\ref{sec:limitacoes_trabalho_futuro}).
 
 \subsection{Transferência sem retreino (F1)}
 
@@ -189,8 +194,7 @@ comprimidas $4\times$; (ii) os \emph{obstáculos} --- dos oito cenários, apenas
 o Sandbox e este têm obstáculos dispersos, pelo que um campeão de labirinto nunca
 encontrou um em toda a sua otimização; e (iii) as quatro dimensões da observação
 associadas à porta, identicamente nulas no treino de quem nunca teve porta e
-ativas neste mapa. Cada uma destas causas foi isolada numa condição de controlo
-que altera \emph{uma} coisa e deixa o resto bit-a-bit igual:
+ativas neste mapa.
 
 Nenhuma das três causas alternativas explica o resultado. Cada condição de
 controlo repete as mesmas $21$ células com \emph{uma} alteração e o resto
@@ -201,8 +205,8 @@ exatamente o mesmo: $0{,}00$ chegadas por episódio, sem uma única célula
 ``ressuscitada''. Com as $21$ células a zero nas duas condições de cada
 comparação emparelhada, nem o teste de Wilcoxon nem o $\delta$ de Cliff têm
 conteúdo (não há sequer um par discordante); o que sustenta a exclusão é o
-\emph{número de células ressuscitadas}, que é zero nas três. As três condições
-ficam, por isso, remetidas para anexo e a leitura reporta-se sobre a condição
+\emph{número de células ressuscitadas}, que é zero nas três. As três condições não se
+detalham, por isso, célula a célula, e a leitura reporta-se sobre a condição
 natural, como o pré-registo fixou antes de haver dados.
 
 O que resta é a causa que a QI7 pergunta: a topologia composta à escala do mapa.
@@ -335,7 +339,7 @@ descreve nenhuma execução real. O que o mapa composto acrescenta é que a
 bimodalidade \emph{sobrevive à escala}: multiplicar por quatro o raio da arena
 e compor quatro dificuldades não a substitui por um colapso uniforme --- o que
 seria a hipótese natural --- mas amplia a fração de execuções que ficam do lado
-errado. A leitura honesta da QI7 é, portanto, intermédia: as conclusões dos
+errado. A leitura da QI7 é, portanto, intermédia: as conclusões dos
 cenários isolados transferem-se \emph{parcialmente} e ao preço da fiabilidade,
 e é a variabilidade entre execuções --- não a magnitude média --- que a
 composição degrada.
@@ -375,8 +379,7 @@ $20\%$ das gerações, o que indica que o orçamento não chegou ao planalto
 
 Seis limitações ficam declaradas. As quatro primeiras foram fixadas antes dos
 dados; as duas últimas resultaram de medições feitas ao mapa construído, e
-declaram-se aqui porque condicionam a leitura de resultados que ainda não estão
-produzidos.
+declaram-se aqui porque condicionam a leitura dos resultados acima.
 
 Primeiro, as duas condições de normalização da observação estão \emph{ambas}
 fora da distribuição de treino, de maneiras opostas: na condição natural as
@@ -437,7 +440,7 @@ tridimensional não é evidente a partir da descrição do cenário. Uma versão
 deste mapa deve alinhar o limite vertical com o raio do ninho, e não com uma
 folga de manobra escolhida à parte.
 
-\paragraph{Nota metodológica sobre o desenho do mapa.} Três correções feitas
+\paragraph{Nota metodológica sobre o desenho do mapa.} Quatro correções feitas
 antes de existir qualquer resultado válido neste cenário merecem registo, porque
 ilustram um cuidado que se aplica a qualquer ambiente composto.
 A primeira: um bolso em U só funciona como armadilha se a bússola de

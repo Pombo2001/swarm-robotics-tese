@@ -237,7 +237,7 @@ def orcamento(texto):
     estado = os.path.join(RAIZ, "results", "estado_f2.json")
     minutos_gnn = le(r"fixado em \$(\d+)\$ minutos por execução", texto,
                      "minutos do GNN")
-    minutos_grad = le(r"e \$(\d+)\$ minutos por execução de\ncada método",
+    minutos_grad = le(r"e \$(\d+)\$ minutos por execução de cada método de\s+gradiente",
                       texto, "minutos dos gradientes")
     runs = le(r"\$(\d+)\$ execuções independentes com sementes", texto,
               "nº de execuções")
