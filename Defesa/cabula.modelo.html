@@ -364,7 +364,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
         <div class="fase"><div class="fase-l"><span>Registos devolvidos <em>(456 Scopus + 427 IEEE)</em></span><b>883</b></div><div class="fase-b" style="width:100%"></div></div>
         <div class="corte"><i>−</i><span>duplicados, por DOI e título normalizado (≈ 23 %)</span><b>203</b></div>
         <div class="fase"><div class="fase-l"><span>Registos únicos</span><b>680</b></div><div class="fase-b" style="width:77%"></div></div>
-        <div class="corte"><i>−</i><span>triagem por título e resumo: 75 robô único (E1), 75 método fora do âmbito (E6), 42 revisões (E2), 4 integridade (E4), 4 duplicados por apanhar</span><b>201</b></div>
+        <div class="corte"><i>−</i><span>triagem por título e resumo: 75 robô único (E1), 75 método fora do âmbito (E6), 42 revisões (E2), 4 integridade (E4), 4 duplicados por apanhar (E5), 1 sem dados quantitativos (E3)</span><b>201</b></div>
         <div class="fase"><div class="fase-l"><span>Passam a elegibilidade</span><b>479</b></div><div class="fase-b" style="width:54%"></div></div>
         <div class="corte"><i>−</i><span>tarefa fora do âmbito: alocação, SLAM, comunicações, manipulação (E7)</span><b>79</b></div>
         <div class="corte"><i>−</i><span>fora do núcleo ou fora de venues de referência (E8)</span><b>342</b></div>
@@ -510,9 +510,9 @@ ol.lim b{color:var(--tinta); font-weight:600}
         formigas, o GPS dos drones), mas <em>nunca</em> um mapa prévio dos obstáculos: a parcialidade mantém-se ao
         nível dos obstáculos. <strong>A porta é um sub-objetivo do cenário</strong>, tal como o ninho — indicá-la
         não é revelar o trajeto, ao contrário de dar <em>waypoints</em> das passagens. E <strong>não há corte por
-        raio de comunicação</strong>: vão os N−1 vizinhos todos, e a seleção dos relevantes é delegada na atenção,
-        que aprende os pesos α<sub>ij</sub>. O sinal binário do vizinho ativa quando ele chega ao ninho e repousa —
-        recrutamento estigmérgico.</p>
+        raio de comunicação</strong>: vão os N−1 vizinhos todos: no PPO e no SAC é a MLP que aprende a ponderá-los; no evolutivo é a atenção,
+        com os pesos α<sub>ij</sub>. O sinal binário do vizinho ativa quando ele chega ao ninho e repousa —
+        um sinal de recrutamento.</p>
     </div>
 
     <div class="bloco">
@@ -822,7 +822,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
         <tr><td>Orçamento PPO e SAC</td><td class="num">48 min por execução, 16 ambientes vetorizados</td></tr>
         <tr><td>Núcleos-hora</td><td class="num">97,6 (GNN) contra 12,8 (PPO e SAC) = 7,6× ≈ 8× · ≈37× em passos de simulação</td></tr>
         <tr><td>Unidade estatística</td><td class="num">a execução — nunca o episódio</td></tr>
-        <tr><td>Testes</td><td class="num">Wilcoxon signed-rank quando emparelhado, Mann-Whitney U quando não; δ de Cliff (|δ| ≥ 0,474 = grande); Welch a título complementar; α = 0,05</td></tr>
+        <tr><td>Testes</td><td class="num">Mann-Whitney U sobre as médias por execução (n = 7 por grupo); δ de Cliff (|δ| ≥ 0,474 = grande); α = 0,05. O Wilcoxon só aparece no teste preliminar da novidade, feito por episódio</td></tr>
         <tr><td>Porquê não-paramétrico</td><td class="num">as distribuições violam sistematicamente a normalidade — massas em zero e bimodalidade</td></tr>
         <tr><td>Garantias</td><td class="num">3 pré-registos · 28 verificadores (21 no hook de pre-commit) · 92 mutações injetadas, todas apanhadas</td></tr>
         <tr><td>Simulador</td><td class="num">139 → 420 passos/s (2,58× no passo, LiDAR 19,5×), com equivalência bit-exata</td></tr>
@@ -962,7 +962,8 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <strong>F2, treino nativo:</strong> 21 execuções × 3 algoritmos → o GNN faz <strong>4/21</strong> contra o
       limiar pré-registado de 15, com 1,7 chegadas/ep; o PPO e o SAC fazem 0/21. Em 19 das 21 execuções o melhor
       <em>fitness</em> ainda subia no último quinto dos 780 min, com a geração do máximo a cair, em mediana, a 95 %
-      do orçamento.</p>
+      do orçamento. E os 780 min, pensados para igualar gerações aos sete cenários, deram <strong>165 gerações</strong>
+      contra ~550 nos sete cenários: o pré-registo previa 13,7 com uma estimativa de custo errada.</p>
     <figure><div class="chapa"><img src="__IMG_mg_curv__" alt="Curvas de treino no mapa composto"></div>
       <figcaption>As curvas ainda a subir no fim do orçamento — é isto que condiciona a leitura do negativo.</figcaption></figure>
     <div class="bloco">
@@ -1099,8 +1100,8 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div><dt>Zero-shot transfer</dt><dd>Aplicar a política treinada com N=20 a N ∈ {10, 50, 100} <em>sem qualquer retreino</em>.</dd></div>
       <div><dt>Deceptive</dt><dd>Paisagem em que seguir o gradiente da recompensa conduz para longe da solução. O Muro em U (por geometria) e a Porta com Alternativa (por desenho).</dd></div>
       <div><dt>δ de Cliff</dt><dd>Tamanho de efeito não-paramétrico em [−1, 1]: a fração de pares em que A supera B menos a inversa. |δ| ≥ 0,474 convenciona-se grande; ±1,00 é separação total.</dd></div>
-      <div><dt>Mann-Whitney U</dt><dd>Teste não-paramétrico para amostras independentes. Usa-se quando o emparelhamento não é possível; havendo seeds comuns, usa-se Wilcoxon signed-rank.</dd></div>
-      <div><dt>Estigmergia</dt><dd>Coordenação por sinais deixados no ambiente. Aqui, o bit de comunicação que ativa quando um vizinho chega ao ninho e repousa — recrutamento sem comunicação explícita.</dd></div>
+      <div><dt>Mann-Whitney U</dt><dd>Teste não-paramétrico para amostras independentes — o de todas as comparações entre algoritmos, sobre as médias por execução. O Wilcoxon signed-rank só aparece no teste preliminar da novidade, feito por episódio.</dd></div>
+      <div><dt>Estigmergia</dt><dd>Coordenação indireta por modificações deixadas no ambiente (os trilhos de feromonas das formigas, na origem da ACO). O bit de comunicação desta tese <em>não</em> é estigmergia: é um sinal direto entre vizinhos, de recrutamento.</dd></div>
       <div><dt>Wall-sliding</dt><dd>Em vez de imobilizar o agente contra um muro, projeta-se o movimento ortogonalmente à normal da face — o agente desliza.</dd></div>
       <div><dt>Deployment gap</dt><dd>O fosso entre o desempenho em simulação e no robot físico. Antecipado no desenho do simulador (física, ruído sensorial, perturbações), mas não validado nesta tese.</dd></div>
       <div><dt>Guilhotina</dt><dd>Corte precoce do episódio de avaliação evolutiva: se J &lt; −200 aos 150 passos, termina e o genoma leva −1000. Poupa CPU em genomas disfuncionais.</dd></div>

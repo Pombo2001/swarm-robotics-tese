@@ -253,7 +253,7 @@ Para não hesitar num termo. É o mesmo glossário da cábula
 | **Deceptive** | Paisagem em que seguir o gradiente da recompensa afasta da solução. O Muro em U por geometria; a Porta com Alternativa por desenho. |
 | **Bimodal** | A distribuição das execuções tem dois picos e nada no meio — resolve ou fica a zero. A média não descreve nenhuma delas; por isso se reportam pontos. |
 | **δ de Cliff** | Tamanho de efeito não-paramétrico em [−1, 1]: fração de pares em que A supera B, menos a inversa. \|δ\| ≥ 0,474 convenciona-se grande; ±1,00 é separação total. |
-| **Mann-Whitney U** | Teste não-paramétrico para amostras independentes. Havendo sementes comuns e emparelhamento, usa-se antes o Wilcoxon *signed-rank*. |
+| **Mann-Whitney U** | Teste não-paramétrico para amostras independentes — o de todas as comparações entre algoritmos, sobre as médias por execução. O Wilcoxon *signed-rank* só aparece no teste preliminar da novidade, feito por episódio. |
 | **Retenção per capita** | Chegadas por agente a N=100 a dividir pelas de N=20. Mede diluição do recurso, não perda de coordenação. |
 | **Núcleos-hora** | Núcleos × horas de uma execução: a moeda que torna comparáveis 195 min com 30 genomas e 48 min com 16 ambientes. |
 | **Estigmergia** | Coordenação por sinais deixados no ambiente. Aqui, o bit que ativa quando um vizinho chega ao ninho e repousa — recrutamento sem comunicação explícita. |

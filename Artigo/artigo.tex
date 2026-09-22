@@ -119,8 +119,8 @@ questão que daí decorre é se a \emph{inteligência adaptativa} supera a
 referencial em que ambos sejam avaliados nas mesmas condições, com as mesmas
 métricas e a mesma análise estatística.
 
-É o que aqui se faz. Implementámos um simulador tridimensional de alta
-fidelidade de navegação cooperativa até ao ninho e avaliámos três controladores --- uma rede de grafo
+É o que aqui se faz. Implementámos um simulador tridimensional próprio
+de navegação cooperativa até ao ninho e avaliámos três controladores --- uma rede de grafo
 neuroevoluída com auto-atenção sobre os vizinhos, PPO e SAC --- em sete cenários e
 ao longo de três eixos: desempenho na tarefa ($P_{\text{task}}$), robustez a
 falhas ($R_{\text{robust}}$) e escalabilidade \emph{zero-shot}
@@ -221,8 +221,8 @@ um \emph{Sandbox} aberto; três labirintos de navegação (\emph{Beco Sem Saída
 Cooperativa}, que exige $\geq 3$ agentes para abrir uma passagem, e \emph{Perceção
 Cooperativa}, com um alvo móvel); e um cenário \emph{deceptive}, a \emph{Porta
 Cooperativa com Alternativa}, em que a porta bloqueada atrai o gradiente de
-navegação enquanto o único caminho viável é um corredor lateral que obriga a
-afastar-se temporariamente do ninho. A Figura~\ref{fig:mapas} ilustra os sete
+navegação enquanto o caminho que dispensa a cooperação é um corredor lateral que
+obriga a afastar-se temporariamente do ninho. A Figura~\ref{fig:mapas} ilustra os sete
 cenários. Cada agente observa uma bússola de \emph{homing} egocêntrica para o
 ninho, oito raios LiDAR para deteção local de obstáculos e o estado relativo dos
 vizinhos --- um cenário parcialmente observável, formalizável como um Dec-POMDP
@@ -301,8 +301,8 @@ deambulava a colher exploração em vez de chegar ao ninho.
 O \emph{controlador evolutivo} (GNN) é uma rede compacta que codifica as
 características egocêntricas e aplica auto-atenção de produto escalar normalizado
 sobre o conjunto de vizinhos \citep{vaswani2017attention}, produzindo uma ação
-invariante ao número de vizinhos. Os seus pesos são otimizados por uma estratégia
-de evolução com truncatura e elitismo (população $K=30$, $e=6$ elites preservados,
+invariante ao número de vizinhos. Os seus pesos são otimizados por um algoritmo
+genético com truncatura e elitismo \citep{such2017deep} (população $K=30$, $e=6$ elites preservados,
 mutação gaussiana esparsa com $\sigma$ inicial $0{,}1$, decaimento $0{,}999$ e piso
 $\sigma_{\min}=0{,}03$), guiada por uma aptidão em que a tarefa domina a seleção:
 \begin{equation}
@@ -426,7 +426,7 @@ e a sua análise ilustra por que razão a unidade estatística importa. O desemp
 $100\%$ de sucesso, ou não o aprende de todo (GNN $3/7$, PPO $4/7$, SAC $2/7$) ---
 uma distribuição que a Figura~\ref{fig:megatreino} torna visível, já com
 $n=28$ por braço. Nenhuma diferença entre algoritmos atinge significância, e a
-conclusão honesta é que sete execuções não bastam para distinguir taxas de
+conclusão é que sete execuções não bastam para distinguir taxas de
 convergência de $2/7$ a $4/7$ --- limitação que a replicação da
 Secção~\ref{sec:mega} vem levantar, para o braço que ali se compara.
 
@@ -447,8 +447,8 @@ motivação da procura por novidade, avaliada de seguida.
 % pelo que a história fecha sem ele — e os artefactos brutos dessa execução nem
 % sequer foram retidos. A dissertação continua a reportá-lo por inteiro.
 A Porta Cooperativa com Alternativa é uma armadilha \emph{deceptive}: o gradiente
-de \emph{homing} aponta para a porta bloqueada e o caminho viável exige
-afastamento temporário do ninho. Para medir o efeito da procura por novidade
+de \emph{homing} aponta para a porta bloqueada e o caminho que dispensa a
+cooperação exige afastamento temporário do ninho. Para medir o efeito da procura por novidade
 \citep{lehman2011abandoning} nesse regime, corremos duas campanhas com
 \textbf{orçamento igualado} ao da campanha final (sete execuções de $195$ minutos
 por braço, mesmo protocolo e \emph{seeds}), nos dois cenários vulneráveis à
@@ -506,8 +506,8 @@ O resultado principal confirma-se e reforça-se. O adaptativo faz
 $67{,}4\pm13{,}4$ chegadas/ep contra $32{,}5\pm32{,}5$ do objetivo puro
 ($p<0{,}0001$ unilateral, $\delta=+0{,}61$) e, sobretudo, a convergência ---
 agora reportável --- separa os braços sem ambiguidade: \textbf{$28/28$ execuções
-a $100\%$ de sucesso contra $15/28$} (Fisher exato, $p<0{,}0001$). É a única
-condição de todo o estudo em que \emph{todas} as execuções resolvem o Muro em U.
+a $100\%$ de sucesso contra $15/28$} (Fisher exato, $p<0{,}0001$), o que confirma
+com quatro vezes mais execuções o $7/7$ da campanha pré-registada.
 Ao mesmo $n$, o adaptativo fica acima de ambos os métodos de gradiente --- PPO
 $35{,}6\pm36{,}0$ ($14/28$; $p=0{,}0010$, $\delta=+0{,}51$) e SAC
 $10{,}1\pm14{,}2$ ($14/28$; $p<0{,}0001$, $\delta=+0{,}99$) --- ao passo que o GNN
@@ -526,9 +526,9 @@ multiplicidade e ancorar a leitura no tamanho de efeito, não corrigir os valore
 \caption{As $28$ execuções independentes de cada braço no Muro em U. Cada ponto
 é uma execução (média de $20$ episódios determinísticos); a barra vertical é a
 média. A leitura decisiva não é a diferença de médias, mas a \emph{forma} das
-distribuições: os três braços sem temperagem da novidade repartem-se entre
-execuções que resolvem o cenário e execuções que ficam a zero, praticamente sem
-nada pelo meio, enquanto a dosagem adaptativa não deixa uma única execução por
+distribuições: o GNN objetivo e o PPO repartem-se entre execuções que resolvem o
+cenário e execuções que ficam a zero, praticamente sem nada pelo meio, o SAC é
+uniformemente fraco, e a dosagem adaptativa não deixa uma única execução por
 resolver.}
 \label{fig:megatreino}
 \end{figure}
@@ -665,8 +665,8 @@ trajetórias longas e coordenadas que atravessam passagens estreitas.
 
 Daqui decorre que o valor não está em eleger um vencedor, mas em mapear os eixos
 de escolha: estrutura do cenário, variabilidade da dimensão do enxame e orçamento
-de cómputo. Em enxames de dimensão fixa e conhecida, com prioridade na eficiência
-da tarefa, o MARL por gradiente é preferível; quando a dimensão é variável ou a
+de cómputo. Em enxames de dimensão fixa e conhecida, o MARL por gradiente é
+preferível em espaço aberto e com pouco orçamento de treino; quando a dimensão é variável ou a
 missão exige escalar sem retreino, a arquitetura de grafo com atenção é a única
 opção viável entre as estudadas.
 
