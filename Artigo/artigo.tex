@@ -91,9 +91,10 @@ controladores robustos e estáticos \citep{kennedy1995pso}. A \emph{aprendizagem
 por reforço multiagente} (MARL) aprende, em alternativa, políticas adaptativas
 \emph{em linha} através da interação \citep{huh2023marl}.
 
-Que as comparações diretas entre os dois paradigmas sejam escassas é afirmação
-recorrente \citep{majid2023deep, bettini2024benchmarl}; é também, tanto quanto
-sabemos, uma afirmação que nunca foi medida. Conduzimos por isso uma revisão
+O levantamento comparativo de referência confronta os dois paradigmas apenas no
+plano conceptual \citep{majid2023deep}, e a \textit{suite} de referência do MARL
+não inclui qualquer \emph{baseline} evolutiva \citep{bettini2024benchmarl}; que
+as comparações diretas sejam escassas nunca foi, tanto quanto sabemos, medido. Conduzimos por isso uma revisão
 sistemática (PRISMA~2020; Scopus e IEEE~Xplore, 2020--2026; $883$ registos,
 $680$ únicos), cujo corpo final de $58$ estudos primários sobre controlo de
 enxames revela um equilíbrio notável: $21$ assentam exclusivamente em MARL e $23$
@@ -170,8 +171,8 @@ global, o que ancora a comparação num regime descentralizado comum aos três
 controladores.
 
 Do lado bio-inspirado, a neuroevolução otimiza os pesos sem gradientes
-\citep{salimans2017es}, oferecendo controladores estáveis mas com adaptabilidade
-\emph{em linha} limitada \citep{kegeleirs2025towards}. Otimiza a partir de um
+\citep{salimans2017es, such2017deep}, oferecendo controladores estáveis mas que,
+uma vez otimizados, ficam fixos durante a execução. Otimiza a partir de um
 único escalar de aptidão por episódio, sem atribuição de crédito temporal --- uma
 distinção que se revelará decisiva: quando a recompensa de tarefa é esparsa, a
 aptidão fica refém do termo de modelação, e a escolha desse termo determina se a
@@ -194,9 +195,8 @@ reportamos --- divergência que atribuímos à ausência, nas suas arenas, de
 estrangulamentos decetivos onde o termo de modelação satura
 (Secção~\ref{sec:discussion}).
 
-Quanto ao confronto entre paradigmas, os estudos existentes salientam a ausência
-de uma referência de desempenho comum entre as duas famílias
-\citep{majid2023deep}, enquanto os referenciais padronizados de MARL permanecem
+Quanto ao confronto entre paradigmas, não existe uma referência de desempenho
+comum entre as duas famílias: os referenciais padronizados de MARL permanecem
 focados dentro da comunidade de aprendizagem, sem qualquer \emph{baseline}
 evolutiva \citep{bettini2024benchmarl}. A única comparação empírica que a nossa
 revisão recuperou \citep{iskandar2024comparative} --- conduzida pelo grupo que
@@ -256,7 +256,8 @@ corta o domínio de lado a lado.}
 \looseness=-1 Para evitar mínimos locais nos cenários de labirinto, a recompensa de progresso
 usa um potencial \emph{geodésico} calculado pelo algoritmo de Dijkstra sobre uma
 grelha de ocupação dilatada, atuando como modelação de recompensa baseada em
-potencial \citep{ng1999policy} que não altera a política ótima e é usada apenas
+potencial \citep{ng1999policy} --- sem o fator $\gamma$, pelo que a política
+ótima só se preserva de forma aproximada --- e é usada apenas
 como sinal de treino, nunca como observação. A Figura~\ref{fig:geodesico}
 contrasta o potencial euclidiano ingénuo --- que ``atravessa'' a parede e cria um
 mínimo local que cola os agentes ao obstáculo --- com o campo geodésico, cujo
