@@ -573,11 +573,10 @@ _CAPA_X = MARGEM + Inches(0.32)
 _texto(s, _CAPA_X, Inches(1.55), W - _CAPA_X - MARGEM, Inches(0.4),
        "DISSERTAÇÃO DE MESTRADO · DEFESA", tamanho=12, cor=MUTED, fonte=MONO_FT)
 _texto(s, _CAPA_X, Inches(2.05), W - _CAPA_X - MARGEM - Inches(1.0), Inches(1.6),
-       "Aprendizagem por Reforço Multiagente e Neuroevolução no Controlo de Enxames de Robôs",
+       "Aprendizagem por Reforço Multiagente e Neuroevolução no Controlo de Enxames de Robôs:",
        tamanho=28, negrito=True, cor=INK_FORTE, fonte=TITULO_FT)
 _texto(s, _CAPA_X, Inches(3.45), Inches(9.4), Inches(1.0),
-       "Aprendizagem por reforço multiagente por gradiente vs. neuroevolução com atenção "
-       "sobre grafo, em oito cenários de dificuldade crescente", tamanho=19, cor=MUTED)
+       "Desempenho, Escalabilidade e Robustez", tamanho=22, cor=MUTED)
 _linha(s, MARGEM, Inches(4.75), W - MARGEM)
 _texto(s, MARGEM, Inches(5.0), W - 2 * MARGEM, Inches(1.2), [
     ("Gonçalo Pombo", {"tamanho": 20, "negrito": True, "cor": INK_FORTE}),
@@ -591,8 +590,8 @@ if _logo:
     s.shapes.add_picture(_logo, W - MARGEM - _lw, Inches(0.55),
                          width=_lw, height=int(_lw * _ih / _iw))
 _notas(s, """
-Bom dia. Vou apresentar a dissertação «Aprendizagem por Reforço para Controlo de
-Enxames»: uma comparação, no mesmo simulador e com o mesmo protocolo, entre dois
+Bom dia. Vou apresentar a dissertação «Aprendizagem por Reforço Multiagente e Neuroevolução no Controlo de Enxames de Robôs: Desempenho,
+Escalabilidade e Robustez»: uma comparação, no mesmo simulador e com o mesmo protocolo, entre dois
 paradigmas de controlo descentralizado — aprendizagem por reforço multiagente por
 gradiente (PPO e SAC) e neuroevolução de uma rede de grafos com atenção — em oito
 cenários. Quinze minutos: o problema, o método, sete perguntas e as respostas.
@@ -778,7 +777,7 @@ slide_texto_figura(
     [
         "• 3 algoritmos × 7 cenários × 7 execuções independentes = 147 treinos",
         "• Avaliação determinística: 20 episódios emparelhados por modelo (sementes comuns) — "
-        "2 940 episódios na campanha principal",
+        "2 940 episódios na campanha principal",
         "• A unidade estatística é a execução, não o episódio: Mann-Whitney U sobre as médias "
         "por execução (n = 7), δ de Cliff como tamanho de efeito",
         "• Métrica de tarefa pura: chegadas por episódio e taxa de sucesso — comparável entre paradigmas",
@@ -1044,7 +1043,7 @@ _texto(s, MARGEM, Inches(4.47), W - 2 * MARGEM, Inches(0.3),
        "um episódio de cada, mesmas sementes · o ninho à direita · pontos brancos: partida; cheios: onde acabaram",
        tamanho=11, cor=MUTED, alinhar=PP_ALIGN.CENTER)
 _texto(s, MARGEM, Inches(4.85), W - 2 * MARGEM, Inches(2.0), [
-    "• Sem retreino: zero chegadas em 84 de 84 células (1 680 episódios) — e o mapa é resolúvel: "
+    "• Sem retreino: zero chegadas em 84 de 84 células (1 680 episódios) — e o mapa é resolúvel: "
     "um navegador geodésico sem aprendizagem faz 53,0 chegadas/ep",
     "• Treino nativo, 21 execuções por algoritmo: só o evolutivo passa — em 4 de 21, abaixo do "
     "limiar de 15 fixado antes dos dados; em 19 das 21 a fitness ainda subia no fim",
@@ -1298,7 +1297,7 @@ slide_tabela(
     ["Fase", "O que se mediu", "Resultado"],
     [
         ["Fase 1 — zero-shot", "transferência sem retreino, com 4 condições de controlo",
-         "zero chegadas em 84/84 células · 1 680 episódios"],
+         "zero chegadas em 84/84 células · 1 680 episódios"],
         ["Controlo", "o mapa é sequer resolúvel?",
          "navegador geodésico, sem aprendizagem: 53,0 chegadas/ep (82,0 nas Quatro Salas)"],
         ["Fase 2 — treino nativo", "21 execuções por algoritmo, 780 min cada",
@@ -1306,7 +1305,7 @@ slide_tabela(
         ["Regra de decisão", "limiar fixado antes de haver dados",
          "15 execuções convergentes em 21 — o resultado ficou em 4"],
         ["Orçamento", "o treino tinha acabado de convergir?",
-         "em 19 das 21 execuções o fitness ainda subia no último quinto"],
+         "em 19 das 21 execuções a fitness ainda subia no último quinto"],
     ],
     larguras=[2.3, 4.5, 5.3],
     bullets=[("As 4 condições de controlo excluem a escala da observação, os obstáculos e as features da "
@@ -1335,8 +1334,8 @@ slide_tabela(
     bullets=[
         "• A leitura é a inversa da que favoreceria o evolutivo: com ≈ 8× menos núcleos-hora, os métodos "
         "de gradiente igualam ou superam o GNN em 4 dos 7 cenários.",
-        "• Campanha principal: 147 treinos e 2 940 episódios de avaliação. Projeto inteiro: 28 sessões e "
-        "2 078 h de treino, das quais 341 h do mega-treino de um mês.",
+        "• Campanha principal: 147 treinos e 2 940 episódios de avaliação. Projeto inteiro: 28 sessões e "
+        "2 078 h de treino, das quais 341 h do mega-treino de um mês.",
         "• Sub-treino declarado, não escondido: 7 das 21 células ainda subiam no fim do orçamento, e o SAC "
         "nos gargalos lê-se como limite inferior (temperatura fixa, α = 0,1, sem o ajuste dual — p. 44).",
     ],
@@ -1386,7 +1385,7 @@ slide_texto_figura(
         "física, recompensa e hiperparâmetros dos três algoritmos, lidos do foraging.yaml",
         "• Ensaio de mutação: a tese é estragada de propósito, 92 mutações, uma de cada vez, e o ensaio "
         "exige que todas sejam acusadas. Um verificador que nunca falhou não está provado — está por testar",
-        "• Cobertura medida, não alegada: 1 043 dos 2 286 tokens numéricos do corpo do main.tex são lidos "
+        "• Cobertura medida, não alegada: 1 043 dos 2 286 tokens numéricos do corpo do main.tex são lidos "
         "por algum verificador (46 %), e os 193 automatizáveis que faltam estão listados, um a um, em "
         "docs/COBERTURA_VERIFICADOR.md",
         "• Três pré-registos: hipótese, testes e regra de decisão escritos antes de haver dados",
