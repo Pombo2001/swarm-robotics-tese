@@ -160,7 +160,9 @@ def run_occupancy(algo, scenario, episodes, bins, config_path, out_dir=None,
     if e > 1.4:
         # Em trio, o cenário e o número de episódios já estão na legenda da
         # figura: o título repetia-os e, ampliado, não cabia em duas linhas.
-        ax.set_title(f"{ALGO_LABELS.get(algo, algo)} — {food_total} chegadas",
+        # O nome curto (GNN, e não «GNN (Evolutivo)»): com o longo, o título do
+        # painel do GNN saía cortado à esquerda e empurrava o «(log)» da barra.
+        ax.set_title(f"{algo.upper()} — {food_total} chegadas",
                      fontsize=12 * e)
     else:
         ax.set_title(f"Ocupação dos robôs — {ALGO_LABELS.get(algo, algo)}\n"

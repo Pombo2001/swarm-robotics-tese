@@ -31,6 +31,9 @@ RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 FIG = os.path.join(RAIZ, "Tese", "images", "resultados")
 IMG = os.path.join(RAIZ, "Tese", "images")
 SAIDA = os.path.join(RAIZ, "Defesa", "slides_defesa.pptx")
+# Figuras redesenhadas para projeção (letra grande, barras horizontais), das
+# mesmas contas e CSV das da tese: Defesa/figuras_slides.py, antes deste script.
+PROJ = os.path.join(RAIZ, "Defesa", ".assets")
 
 # ── Paleta ────────────────────────────────────────────────────────────────────
 # É a do painel (dashboard/theme.py): monocromática noturna, com a COR reservada
@@ -320,7 +323,7 @@ def _notas(slide, texto, termos=()):
 
 
 def slide_texto_figura(titulo, sub, bullets, figura=None, notas="", fig_w=6.2, fig_h=4.9,
-                       largura_texto=None, figuras=None, tamanho=17, termos=()):
+                       largura_texto=None, figuras=None, tamanho=17, termos=(), pasta=FIG):
     """Texto à esquerda, uma figura (ou várias empilhadas) à direita."""
     s = _novo_slide()
     _titulo(s, titulo, sub)
@@ -328,7 +331,8 @@ def slide_texto_figura(titulo, sub, bullets, figura=None, notas="", fig_w=6.2, f
                                                        if (figura or figuras) else W - 2 * MARGEM)
     _texto(s, MARGEM, Inches(1.75), lt, H - Inches(2.6), bullets, tamanho=tamanho, espaco=8)
     if figura:
-        _fig(s, figura, W - MARGEM - Inches(fig_w), Inches(1.75), Inches(fig_w), Inches(fig_h))
+        _fig(s, figura, W - MARGEM - Inches(fig_w), Inches(1.75), Inches(fig_w), Inches(fig_h),
+             pasta=pasta)
     if figuras:
         n = len(figuras)
         alt = (Inches(fig_h) - Inches(0.2) * (n - 1)) / n
@@ -818,7 +822,7 @@ slide_texto_figura(
         ("Muro em U: ninguém o resolve de forma fiável — bimodal nos três (3/7, 4/7, 2/7).",
          {"negrito": True}),
     ],
-    figuras=["taxa_sucesso_por_cenario.png", "recolhas_por_cenario.png"], fig_w=5.6, fig_h=5.0, tamanho=15,
+    figura="slide_qi1_chegadas.png", pasta=PROJ, fig_w=6.6, fig_h=5.0, tamanho=15,
     termos=TERMOS["qi1"],
     notas="""
 Primeira resposta: não há vencedor universal. Quinze das vinte e uma células
@@ -841,7 +845,7 @@ slide_texto_figura(
         "(sem paredes, não há gradiente geodésico que canalize o homing)",
         "• A convergência tudo-ou-nada é o padrão em 6 das 21 células — e é o que as QI5 e QI6 explicam",
     ],
-    figuras=["dotplot_eval_u_wall.png", "dotplot_eval_none.png"], fig_w=5.4, fig_h=5.0,
+    figura="slide_bimodal.png", pasta=PROJ, fig_w=6.4, fig_h=5.0,
     termos=TERMOS["distribuicao"],
     notas="""
 Um ponto de método que muda a leitura. Com sete execuções, um boxplot esconde a
@@ -994,7 +998,7 @@ slide_texto_figura(
         "nenhum agente é insubstituível",
         "• Consequência para a QI4: a robustez não é critério de escolha entre paradigmas",
     ],
-    figura="robustez_falhas.png", fig_w=6.6, fig_h=4.6,
+    figura="slide_robustez.png", pasta=PROJ, fig_w=6.6, fig_h=5.0,
     termos=TERMOS["qi3"],
     notas="""
 Robustez: dez por cento dos agentes falham a meio do episódio e ficam inertes.
