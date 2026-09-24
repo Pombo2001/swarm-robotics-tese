@@ -140,8 +140,15 @@ def _texto(slide, x, y, w, h, linhas, tamanho=18, cor=INK, negrito=False,
         tam = opc.get("tamanho", tamanho)
         ft = opc.get("fonte", fonte) or CORPO_FT
         if txt.startswith("• "):
+            # Recuo pendente: sem ele, a segunda linha de um ponto voltava à margem
+            # e ficava por baixo do «▸», e cada bloco parecia desalinhado. O
+            # marcador é seguido de uma tabulação, que salta exatamente para marL.
+            recuo = int(Pt(tam * 1.25))
+            pPr = p._p.get_or_add_pPr()
+            pPr.set("marL", str(recuo))
+            pPr.set("indent", str(-recuo))
             marca = p.add_run()
-            marca.text = "▸  "
+            marca.text = "▸\t"
             marca.font.size = Pt(tam)
             marca.font.color.rgb = MUTED
             marca.font.name = ft
@@ -781,9 +788,8 @@ slide_texto_figura(
         "• A unidade estatística é a execução, não o episódio: Mann-Whitney U sobre as médias "
         "por execução (n = 7), δ de Cliff como tamanho de efeito",
         "• Métrica de tarefa pura: chegadas por episódio e taxa de sucesso — comparável entre paradigmas",
-        "• Três campanhas pré-registadas (hipótese, testes e regra de decisão fixados antes dos dados)",
-        "• 27 verificadores automáticos, 19 no hook de pre-commit: cada número da tese é recalculado "
-        "a partir dos CSV, e o commit é recusado se algum deixar de bater",
+        "• Três campanhas pré-registadas: hipótese, testes e regra de decisão antes dos dados",
+        "• 29 verificadores, 22 no hook de pre-commit: cada número da tese é recalculado dos CSV",
     ],
     figura="comparacao_barras_geral.png", fig_w=5.8, fig_h=4.4,
     termos=TERMOS["protocolo"],
@@ -1105,11 +1111,11 @@ slide_texto_figura(
         "• Sete execuções por célula: onde a leitura depende de contagens, replicou-se a n = 28",
         "• Orçamento: 7 das 21 células ainda subiam no fim — o SAC nos gargalos lê-se como limite inferior "
         "(temperatura fixa, α = 0,1)",
+        "• Perceção do enxame global: cada robô vê todos os outros, sem alcance nem oclusão "
+        "(igual nos três; local é só o LiDAR)",
         "• Só simulação: o fosso de implantação fica por validar",
-        "• Dimensão vertical usada mas não observada; duas costuras na física das paredes — 11 de 343 "
-        "modelos arquivados atravessam-nas, todos do evolutivo; na campanha final são 3 de 70 (Quatro "
-        "Salas), e não as tornam melhores (55,7 vs 60,3 chegadas/ep). Onde a costura pesa é numa célula da "
-        "campanha adaptativa — Quatro Salas —, declarada como contaminada",
+        "• Física: altitude usada mas não observada; costuras nas paredes — 3 de 70 modelos da "
+        "campanha final, sem ficarem melhores (55,7 vs 60,3)",
         "• QI7 sobre um único mapa composto",
     ],
     figura="dotplot_eval_bottleneck.png", fig_w=5.2, fig_h=4.6, tamanho=15,
@@ -1119,7 +1125,9 @@ As limitações vêm antes das perguntas. A arquitetura difere entre paradigmas 
 é a primeira, e é deliberadamente lida como o que permite isolar a
 representação. Sete execuções são poucas onde a leitura é de contagens; por
 isso o Muro em U foi replicado com vinte e oito. Sete células ainda subiam no
-fim do orçamento; o SAC nos gargalos é limite inferior. Tudo é simulação. E a
+fim do orçamento; o SAC nos gargalos é limite inferior. A observação do enxame
+é global: cada robô recebe todos os outros, sem alcance nem paredes — igual para
+os três, mas não é o que um enxame real teria. Tudo é simulação. E a
 física tem duas costuras nas paredes que uma minoria de modelos explora. Medi
 todos os modelos arquivados, um a um: onze atravessam, todos do evolutivo, e na
 campanha final são três, nas Quatro Salas — que não ficam melhores por isso, e
@@ -1139,7 +1147,7 @@ slide_texto_figura(
         ("3. Um mapa de escolha para engenharia de enxames", {"negrito": True}),
         "  estrutura do cenário, variabilidade de N e cómputo, em vez de um vencedor universal",
         ("4. Uma implementação de referência aberta e verificável", {"negrito": True}),
-        "  simulador, oito cenários, RS2C e neuroevolução; 27 verificadores ligam cada número aos dados",
+        "  simulador, oito cenários, RS2C e neuroevolução; 29 verificadores ligam cada número aos dados",
     ],
     figura="escalabilidade_zeroshot_none.png", fig_w=5.4, fig_h=4.4,
     termos=TERMOS["contributos"],
@@ -1386,7 +1394,7 @@ forma da falha que uma média esconde.
 slide_texto_figura(
     "Reserva · Como sei que os números são os dos dados", "a verificação, medida e ensaiada — não alegada",
     [
-        "• 27 verificadores automáticos; 19 correm no hook de pre-commit e recusam o commit se um número "
+        "• 29 verificadores automáticos; 22 correm no hook de pre-commit e recusam o commit se um número "
         "da tese deixar de bater com o CSV que o produziu",
         "• O principal confere ~965 valores do main.tex; o do mapa composto, 72; o da configuração, 45 — "
         "física, recompensa e hiperparâmetros dos três algoritmos, lidos do foraging.yaml",

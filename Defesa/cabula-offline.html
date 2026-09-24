@@ -445,7 +445,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div class="qa-item"><div class="qa-p"><span class="cod">QI2</span><span>Transfere-se para N diferente de 20, sem retreino?</span></div>
         <div class="qa-r resp">Só o grafo: 100 % de sucesso em 28 combinações (7 cenários × N ∈ {10, 50, 100} mais o N=20), de N=10 a N=100. A MLP de entrada fixa (ℝ¹¹¹) é incompatível por construção — mudar N muda a dimensão da observação. É uma propriedade da <strong>representação</strong>, não do otimizador.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">QI3</span><span>Como degrada com a falha súbita de 10 % dos agentes?</span></div>
-        <div class="qa-r resp">Retenção de 92–106 % nas 21 células, nos três algoritmos — o <em>parameter sharing</em> confere redundância funcional transversal, e a observação é puramente local. Não serve de critério de escolha.</div></div>
+        <div class="qa-r resp">Retenção de 92–106 % nas 21 células, nos três algoritmos — o <em>parameter sharing</em> confere redundância funcional transversal. Não serve de critério de escolha.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">QI4</span><span>Em que condições preferir um ao outro?</span></div>
         <div class="qa-r resp">Três eixos: <strong>estrutura do cenário</strong>, <strong>variabilidade de N</strong> e <strong>orçamento de cómputo</strong>. N fixo e cómputo escasso → PPO. N variável ou escala → o grafo. Navegação estruturada → evolutivo com homing. Deceção espacial → novidade adaptativa.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">QI5</span><span>Quanto é que o evolutivo depende do desenho da fitness?</span></div>
@@ -495,8 +495,9 @@ ol.lim b{color:var(--tinta); font-weight:600}
   <!-- ================= OBSERVAÇÃO E AÇÃO ================= -->
   <section id="obs">
     <div class="cab"><span class="n">05</span><h2>O que o agente vê, e o que faz</h2></div>
-    <p class="prosa">A observação é estritamente <strong>local, parcial e egocêntrica</strong> — relativa à
-      orientação atual do próprio robô. A dimensão é <strong>d = 16 + (N−1)×5 = 111</strong> para N=20; é esta
+    <p class="prosa">A observação é <strong>egocêntrica</strong> — relativa à orientação atual do próprio robô —
+      e <strong>local e parcial quanto ao ambiente</strong> (os obstáculos só pelo LiDAR), mas
+      <strong>global quanto ao enxame</strong>: cada robô recebe todos os outros (§4.2.2, p. 31). A dimensão é <strong>d = 16 + (N−1)×5 = 111</strong> para N=20; é esta
       fórmula que torna a MLP incompatível com N≠20.</p>
 
     <div class="bloco">
@@ -710,7 +711,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
           <div class="lin ppo"><span class="alg">PPO</span><div class="trilho"><div class="barra" style="width:100%"></div></div><span class="val">123,2 · 100 % · 7/7</span></div>
           <div class="lin sac"><span class="alg">SAC</span><div class="trilho"><div class="barra" style="width:33.6%"></div></div><span class="val">&nbsp;41,4 · &nbsp;72 % · 5/7</span></div>
         </div>
-        <span class="vered resp"><b>Empate GNN–PPO</b> (p = 0,21); ambos acima do SAC (δ = +1,00). Maior rendimento absoluto da tese. O SAC é aqui uma lotaria: 41,4 ± 36,8.</span>
+        <span class="vered resp"><b>Empate GNN–PPO</b> (p = 0,21); ambos acima do SAC (δ = +1,00). Maior rendimento absoluto da tese. O SAC é tudo-ou-nada (41,4 ± 36,8) e é sub-treino, não sorte: a curva ainda subia +112 % no fim, e na réplica as execuções com mais passos convergem em 5/6.</span>
       </article>
 
       <article class="cen">
@@ -832,7 +833,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
         <tr><td>Unidade estatística</td><td class="num">a execução — nunca o episódio</td></tr>
         <tr><td>Testes</td><td class="num">Mann-Whitney U sobre as médias por execução (n = 7 por grupo); δ de Cliff (|δ| ≥ 0,474 = grande); α = 0,05. O Wilcoxon só aparece no teste preliminar da novidade, feito por episódio</td></tr>
         <tr><td>Porquê não-paramétrico</td><td class="num">as distribuições violam sistematicamente a normalidade — massas em zero e bimodalidade</td></tr>
-        <tr><td>Garantias</td><td class="num">3 pré-registos · 28 verificadores (21 no hook de pre-commit) · 92 mutações injetadas, todas apanhadas</td></tr>
+        <tr><td>Garantias</td><td class="num">3 pré-registos · 29 verificadores (22 no hook de pre-commit) · 92 mutações injetadas, todas apanhadas</td></tr>
         <tr><td>Simulador</td><td class="num">139 → 420 passos/s (2,58× no passo, LiDAR 19,5×), com equivalência bit-exata</td></tr>
         <tr><td>Custo total</td><td class="num">28 sessões · 2 078 h de treino</td></tr>
       </tbody>
@@ -883,7 +884,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <p class="prosa"><strong>QI3, com 10 % de falhas:</strong> retenção de 92–106 % nas 21 células, nos três
       algoritmos, sem o colapso que a hipótese poderia antecipar para o controlador estático. Os 106 % do SAC na
       Perceção são menos congestão, e ficam dentro do desvio. A razão é estrutural: <em>parameter sharing</em> confere
-      redundância funcional transversal, e a observação é local.</p>
+      redundância funcional transversal.</p>
   </section>
 
   <!-- ================= NOVIDADE ================= -->
@@ -1026,11 +1027,13 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div class="qa-item"><div class="qa-p"><span class="cod">§6.13</span><span>«10 % de falhas é pouco.»</span></div>
         <div class="qa-r resp">São 2 robôs em 20, a meio do episódio. Uma retenção de 92 a 106 % está perto do que a simples perda de agentes daria. Por isso a conclusão é modesta, e é a que a tese tira: nenhum paradigma colapsa e o teste <strong>não discrimina</strong> entre eles (QI4). Frações maiores, de 30 a 50 %, seriam o teste que discrimina. Não o fiz.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">§4.5</span><span>«Os resultados são reproduzíveis?»</span></div>
-        <div class="qa-r resp">A <strong>avaliação</strong> é exata: reavaliar os modelos arquivados com as mesmas sementes dá os mesmos números, e os verificadores fazem-no a cada commit. O <strong>treino</strong> reproduz o protocolo, mas não bit a bit, porque o orçamento é em minutos e o número de passos depende da máquina. A tese corrigiu esta frase (§4.5).</div></div>
+        <div class="qa-r resp">A <strong>avaliação</strong> é exata <em>na mesma máquina</em>: reavaliar os modelos arquivados com as mesmas sementes dá os mesmos números. Reavaliei os 147 modelos noutra máquina: a vírgula flutuante desloca-os em cerca de 1 chegada por episódio (mediana), nenhuma contagem de convergência muda e todas as comparações do GNN com os gradientes mantêm-se; só dois testes PPO–SAC que já estavam no limiar trocam de lado (Sandbox 0,03 → 0,10; Perceção 0,055 → 0,040), e nenhuma conclusão depende deles (§4.5.4, p. 42). O <strong>treino</strong> reproduz o protocolo, mas não bit a bit, porque o orçamento é em minutos e o número de passos depende da máquina.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">§1.2</span><span>«O que é que o PPO tem de adaptativo depois de treinado?»</span></div>
         <div class="qa-r resp">Nada. Nos dois paradigmas a política fica fixa depois do treino, e a tese di-lo logo na definição do problema: mede-se tolerância, e não adaptação em execução. A hipótese herdou o vocabulário da literatura (<em>online</em> contra <em>offline</em>). A resposta da tese é precisamente que a «adaptabilidade» que aqui importa, que é aceitar outro N, está na representação e não no algoritmo.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">§7.3</span><span>«São drones ou robôs terrestres?»</span></div>
         <div class="qa-r resp">O simulador é 3D (a ação tem Δz e a arena é esférica), mas as tarefas são planares. É uma limitação declarada: a altitude não é observada, e voar alto custa chegadas (ρ = −0,74, indicativo). No mapa composto o movimento vertical foi limitado a ±2 m. A comparação com o e-puck e o Khepera é sobre sensores e o <em>deployment gap</em>, e não sobre a dinâmica. Não dizer «são drones».</div></div>
+      <div class="qa-item"><div class="qa-p"><span class="cod">§6.10 · p. 67</span><span>«A réplica do SAC no Gargalo deu 7/21. O 5/7 da campanha final foi sorte?»</span></div>
+        <div class="qa-r resp">Não, e a tese explica porquê. As duas campanhas tiveram os mesmos 48 minutos, mas não os mesmos passos de treino. As execuções 1–6 da réplica fizeram 8,3–9,4 milhões de passos e convergem em 5/6 (68,1 chegadas/ep); as 15 seguintes, com o servidor partilhado, fizeram só 2,2–4,0 milhões e convergem em 2/15. A campanha final fizera 5,8–6,4 milhões. Com passos suficientes a réplica reproduz o resultado; com um terço deles falha quase sempre. Reforça a leitura de sub-treino (a curva ainda subia +112 % no fim), e o trabalho futuro é fixar o orçamento em passos, não em minutos.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">§7.3 · p. 90</span><span>«3 das 7 execuções do GNN nas Quatro Salas atravessam paredes, e é aí que o GNN mais ganha.»</span></div>
         <div class="qa-r resp">Está medido e declarado. As três que atravessam fazem 55,7 chegadas/ep e as quatro limpas fazem 60,3. A distância aos métodos de gradiente (33,6 e 31,8) é muito maior do que isso, por isso a superioridade não depende das travessias. Onde a costura pesa é no campeão adaptativo das Quatro Salas, e essa célula está declarada como contaminada.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">final</span><span>«Qual é, então, a contribuição em uma frase?»</span></div>
@@ -1106,7 +1109,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <p class="nota">Vale a pena saber a ordem: o júri pergunta quase sempre «e agora?», e a resposta certa é a n.º 2,
       porque é a que remove a limitação n.º 1.</p>
     <ol class="lim">
-      <li><div><b>Alargar a bateria estatística onde ainda é n=7.</b> Três frentes: os comparadores exploratórios do Sandbox e da Perceção, que ficaram a 7 contra 21 do braço adaptativo (é essa assimetria, não a direção do efeito, que mantém o δ = +0,39 do Sandbox longe do limiar); o SAC no Gargalo, cujas 21 execuções correram com 48 min e não são comparáveis; e as 21 combinações da campanha final, curtas para contrastar <em>taxas de convergência</em>.</div></li>
+      <li><div><b>Alargar a bateria estatística onde ainda é n=7.</b> Três frentes: os comparadores exploratórios do Sandbox e da Perceção, que ficaram a 7 contra 21 do braço adaptativo (é essa assimetria, não a direção do efeito, que mantém o δ = +0,39 do Sandbox longe do limiar); o SAC no Gargalo, cujas 21 execuções tiveram os mesmos 48 min mas 15 delas só um terço dos passos — fixar o orçamento em passos; e as 21 combinações da campanha final, curtas para contrastar <em>taxas de convergência</em>.</div></li>
       <li><div><b>Política de gradiente com atenção.</b> Integrar o mecanismo de atenção sobre grafo numa política treinável por gradiente, isolando o efeito do otimizador do efeito da arquitetura. Remove a assimetria que hoje confunde a comparação.</div></li>
       <li><div><b>Novos cenários e tarefas.</b> Cobertura e vigilância de área, para além da navegação até ao ninho e do cerco de alvos móveis.</div></li>
       <li><div><b>Validação sim-to-real.</b> e-puck, Khepera IV, ou um simulador de maior fidelidade, quantificando empiricamente o <em>Deployment Gap</em>.</div></li>
@@ -1135,7 +1138,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div><dt>Mann-Whitney U</dt><dd>Teste não-paramétrico para amostras independentes — o de todas as comparações entre algoritmos, sobre as médias por execução. O Wilcoxon signed-rank só aparece no teste preliminar da novidade, feito por episódio.</dd></div>
       <div><dt>Estigmergia</dt><dd>Coordenação indireta por modificações deixadas no ambiente (os trilhos de feromonas das formigas, na origem da ACO). O bit de comunicação desta tese <em>não</em> é estigmergia: é um sinal direto entre vizinhos, de recrutamento.</dd></div>
       <div><dt>Wall-sliding</dt><dd>Em vez de imobilizar o agente contra um muro, projeta-se o movimento ortogonalmente à normal da face — o agente desliza.</dd></div>
-      <div><dt>Deployment gap</dt><dd>Termo de Kegeleirs e Birattari (2025): um controlador desenvolvido em simulação, ou numa plataforma, não tem eficácia garantida noutra — mais largo do que o <em>reality gap</em>. Antecipado no desenho do simulador (observação local, perturbações, falhas), mas não validado nesta tese.</dd></div>
+      <div><dt>Deployment gap</dt><dd>Termo de Kegeleirs e Birattari (2025): um controlador desenvolvido em simulação, ou numa plataforma, não tem eficácia garantida noutra — mais largo do que o <em>reality gap</em>. Antecipado no desenho do simulador (perceção local dos obstáculos, perturbações, falhas), mas não validado nesta tese.</dd></div>
       <div><dt>Guilhotina</dt><dd>Corte precoce do episódio de avaliação evolutiva: se a recompensa acumulada for inferior a −200 aos 150 passos, termina e o genoma leva −1000. Poupa CPU em genomas disfuncionais.</dd></div>
     </dl>
   </section>
@@ -1214,12 +1217,12 @@ ol.lim b{color:var(--tinta); font-weight:600}
         <tr><td class="num">A3</td><td>«a QI7 deu negativo — vale o quê?»</td><td>as duas fases, o navegador geodésico a 53,0 e o limiar pré-registado de 15</td></tr>
         <tr><td class="num">A4</td><td>«8× mais caro, a comparação é justa?» · «o SAC está mal configurado»</td><td>97,6 contra 12,8 núcleos-hora, e o α = 0,1 declarado na p. 44</td></tr>
         <tr><td class="num">A5</td><td>«o que é, ao certo, uma execução que falha?»</td><td>os três mapas de ocupação no Muro em U — o corredor que o SAC nunca encontra</td></tr>
-        <tr><td class="num">A6</td><td>«como sabemos que os números são os dos dados?»</td><td>28 verificadores, 92 mutações e a cobertura medida, com a lista do que falta</td></tr>
+        <tr><td class="num">A6</td><td>«como sabemos que os números são os dos dados?»</td><td>29 verificadores, 92 mutações e a cobertura medida, com a lista do que falta</td></tr>
       </tbody>
     </table></div>
   </section>
 
-  <p class="pe">Escrita contra o PDF de 143 páginas de 22 de setembro de 2026, já na formatação das normas do Iscte; as páginas citadas são as <b>impressas no rodapé</b> da dissertação — soma 22 para chegar à página do leitor de PDF. Companheira dos slides
+  <p class="pe">Escrita contra o PDF de 143 páginas de 24 de setembro de 2026, já na formatação das normas do Iscte; as páginas citadas são as <b>impressas no rodapé</b> da dissertação — soma 22 para chegar à página do leitor de PDF. Companheira dos slides
     (<code>Defesa/slides_defesa.pptx</code>, 20 de apresentação e 6 de reserva, com notas de orador) e das fontes em
     <code>docs/RESUMO_PARA_DECORAR.md</code> e <code>docs/DEFESA_PERGUNTAS.md</code>.
     Gerada por <code>Defesa/gerar_cabula.py</code> a partir de <code>Defesa/cabula.modelo.html</code>;

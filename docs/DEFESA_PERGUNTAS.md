@@ -161,7 +161,7 @@ São 2 robôs em 20, a meio do episódio. Uma retenção de 92 a 106 % está per
 
 **«Os resultados são reproduzíveis?»** (§4.5)
 
-A **avaliação** é exata: reavaliar os modelos arquivados com as mesmas sementes dá os mesmos números, e os verificadores fazem-no a cada commit. O **treino** reproduz o protocolo, mas não bit a bit, porque o orçamento é em minutos e o número de passos depende da máquina. A tese corrigiu esta frase (§4.5).
+A **avaliação** é exata *na mesma máquina*: reavaliar os modelos arquivados com as mesmas sementes dá os mesmos números. Noutra máquina (147 modelos reavaliados a 23 set) a vírgula flutuante desloca-os ~1 chegada/ep; nenhuma contagem de convergência muda, as comparações do GNN mantêm-se, e só dois PPO–SAC no limiar trocam de lado (Sandbox 0,03 → 0,10; Perceção 0,055 → 0,040). O **treino** reproduz o protocolo, mas não bit a bit, porque o orçamento é em minutos e o número de passos depende da máquina. A tese corrigiu esta frase (§4.5).
 
 ---
 

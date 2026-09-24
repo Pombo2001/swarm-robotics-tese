@@ -73,7 +73,7 @@ cómputo. Sem vencedor universal — um mapa de escolha.
   favor do gradiente — a ordem importa, e escrita sem rótulos já induziu erro).
 - Unidade estatística = **execução**; Mann-Whitney U, **δ de Cliff** (|δ| ≥
   0,474 grande), α = 0,05. Três **pré-registos**.
-- Verificação: **28 verificadores**, 21 deles no hook de pre-commit (~965 valores
+- Verificação: **29 verificadores**, 22 deles no hook de pre-commit (~965 valores
   no principal, 72 no do mapa composto, 45 no da configuração); ensaio de
   mutação com **92 mutações**, todas apanhadas; cobertura medida — 1 043 dos
   2 286 tokens numéricos do `main.tex` (46 %), com a lista do que falta.
@@ -234,7 +234,7 @@ diferença entre dizer «cerca de oito vezes mais caro» e mostrar 97,6 contra 1
 | **A3** | «a QI7 deu negativo — vale o quê?» | as duas fases, o navegador geodésico a 53,0 e o limiar pré-registado de 15 |
 | **A4** | «8× mais caro, a comparação é justa?» · «o SAC está mal configurado» | 97,6 vs 12,8 núcleos-hora, e o α = 0,1 declarado na p. 44 |
 | **A5** | «o que é, ao certo, uma execução que falha?» | os três mapas de ocupação no Muro em U — o corredor que o SAC nunca encontra |
-| **A6** | «como sabemos que os números são os dos dados?» | 28 verificadores, 92 mutações, e a cobertura medida com a lista do que falta |
+| **A6** | «como sabemos que os números são os dos dados?» | 29 verificadores, 92 mutações, e a cobertura medida com a lista do que falta |
 
 ## 11. Vocabulário — a definição em uma linha
 
