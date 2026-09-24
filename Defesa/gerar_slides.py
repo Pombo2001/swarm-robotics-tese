@@ -984,7 +984,7 @@ slide_texto_figura(
     [
         "• Retenção de chegadas entre 92 % e 106 % nas 21 combinações algoritmo–cenário",
         "• Inclui a Porta Cooperativa, que exige três agentes simultâneos: o enxame redistribui-se",
-        "• Transversal aos paradigmas: a redundância vem do parameter sharing e da observação local — "
+        "• Transversal aos paradigmas: a redundância vem do parameter sharing — "
         "nenhum agente é insubstituível",
         "• Consequência para a QI4: a robustez não é critério de escolha entre paradigmas",
     ],
@@ -994,7 +994,7 @@ slide_texto_figura(
 Robustez: dez por cento dos agentes falham a meio do episódio e ficam inertes.
 Os três paradigmas retêm entre noventa e dois e cento e seis por cento das
 chegadas, em todas as vinte e uma combinações — mesmo na porta que precisa de
-três robôs. A redundância vem da partilha de parâmetros e da observação local.
+três robôs. A redundância vem da partilha de parâmetros.
 Sendo transversal, a robustez não discrimina entre paradigmas — e isso é uma
 resposta, não uma ausência de resposta.
 """)

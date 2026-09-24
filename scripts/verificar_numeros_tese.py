@@ -2105,9 +2105,9 @@ def verificar_megatreino(tolerancia):
         confere_p("B7 Perceção p", g[10] if g else None, g[11] if g else None, p)
         confere_delta("B7 Perceção δ", g[12] if g else None, d)
 
-    # B6 SAC no Gargalo — aqui a tese diz explicitamente que os dois valores
-    # NÃO são comparáveis (orçamentos diferentes); o que se verifica é que
-    # ambos são o que o texto diz que são.
+    # B6 SAC no Gargalo — os dois braços tiveram os mesmos 48 min, mas não os
+    # mesmos passos (a tese explica a diferença pelos passos); o que se verifica
+    # é que ambos são o que o texto diz que são.
     ref = serie_final("SAC", "bottleneck")
     cel = carregar("mega_B_fase6", "bottleneck")
     if ref is None:
@@ -2117,8 +2117,8 @@ def verificar_megatreino(tolerancia):
         g = grupos(r"resolvera em apenas \$(\d+)/(\d+)\$")
         confere("B6 ref SAC convergentes", num(g, 0), conv_r, exato=True)
         confere("B6 ref SAC n", num(g, 1), n_r, exato=True)
-        g = grupos(r"comparável com os \$" + N + r" \\pm " + N +
-                   r"\$ da campanha final")
+        g = grupos(r"contra \$\d+/\d+\$ e \$" + N + r" \\pm " + N +
+                   r"\$ na campanha final")
         confere("B6 ref SAC média", num(g, 0), med_r)
         confere("B6 ref SAC desvio", num(g, 1), dp_r)
         if cel is not None:
@@ -3017,7 +3017,7 @@ def verificar_ptask_prosa(tolerancia):
     m = re.search(r"igualando o PPO no Gargalo \(([\d,]+) chegadas/ep em média.{0,60}?"
                   r"destacando-se no Quatro Salas \(([\d,]+), cerca de "
                   r"\$([\d{},]+)\\times\$ o melhor método de gradiente\).{0,80}?"
-                  r"com Alternativa \(([\d,]+)\)", tex, re.DOTALL)
+                  r"Porta Cooperativa \(([\d,]+), acima de ambos\)", tex, re.DOTALL)
     if m is None:
         problemas.append("médias do GNN em prosa: não encontrei a frase")
     else:
@@ -3030,9 +3030,9 @@ def verificar_ptask_prosa(tolerancia):
         confere("Quatro Salas: rácio face ao melhor gradiente",
                 numero(m.group(3)), media("four_rooms", "GNN") / melhor_grad,
                 tol=0.05)
-        confere("GNN na Porta c/ Alternativa (prosa)",
+        confere("GNN na Porta Cooperativa (prosa)",
                 numero(m.group(4).replace(",", ".")),
-                media("cooperative_door_bypass", "GNN"), tol=0.05)
+                media("cooperative_door", "GNN"), tol=0.05)
 
     # o SAC: onde mantém 100% e onde é frágil
     m = re.search(r"O (?:\\textbf|\\emph)\{SAC\} mantém 100\\% nos cenários cooperativos e "

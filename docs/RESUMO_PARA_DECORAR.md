@@ -57,7 +57,7 @@ cómputo. Sem vencedor universal — um mapa de escolha.
 |---|---|---|
 | **1** | Qual paradigma é mais eficaz? | Nenhum domina: GNN (homing) superior em 3/7, empate no Gargalo e Porta c/ Alt.; PPO generalista fiável e ganha o Sandbox; SAC frágil nos gargalos; Muro em U por resolver. |
 | **2** | Transfere-se para N≠20? | Só o grafo: 100 % em 28 combinações (N=10…100); MLP de entrada fixa (ℝ¹¹¹) é incompatível. Propriedade da **representação**. |
-| **3** | E com 10 % de falhas? | Retenção 92–106 % nas 21 células, nos três: parameter sharing + observação local. Não é critério. |
+| **3** | E com 10 % de falhas? | Retenção 92–106 % nas 21 células, nos três: parameter sharing. Não é critério. |
 | **4** | Quando preferir? | N fixo + cómputo → PPO; N variável/escala → grafo; navegação estruturada → evolutivo c/ homing; deceção → novidade adaptativa. |
 | **5** | A fitness importa? | Decisivamente: homing terminal geodésico, 3/12 → 28/28 (entre campanhas, não ablação). Resolve o crédito, não a descoberta. |
 | **6** | A novidade ajuda? | Sim onde a deceção morde (7/7 vs 3/7, p=0,026), com custo onde não (δ=−1,00); doseada adaptativamente, sem custo; **28/28** a n=28. |
