@@ -111,10 +111,11 @@ def main():
     fig.suptitle("Robustez a Falhas de Agentes (Rrobust)\n10% dos agentes falham a meio do episódio",
                  fontweight="bold", fontsize=15)
     fig.text(0.5, 0.005,
-             "Avaliação determinística emparelhada (20 episódios, mesmas seeds); "
+             "Avaliação determinística emparelhada (20 episódios, mesmas seeds);\n"
              "rótulo = % de chegadas retidas face à avaliação sem falhas.",
              ha="center", fontsize=10, style="italic")
-    fig.tight_layout(rect=[0, 0.025, 1, 0.955])
+    # Duas linhas na nota (numa só saía cortada pelos lados), daí a margem maior.
+    fig.tight_layout(rect=[0, 0.04, 1, 0.955])
     out = os.path.join(EVAL_DIR, "robustez_falhas.png")
     fig.savefig(out, dpi=300)
     print(f"[OK] {out}")

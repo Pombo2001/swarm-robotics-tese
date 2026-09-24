@@ -175,8 +175,10 @@ def dotplot_por_run(d, titulo, caminho, *, col_valor="recolhas", col_algo="Algor
         d.groupby(col_algo)[col_valor].size().max())
     nota = (f"Cada ponto = 1 {unidade} ({n} por algoritmo). A barra vertical é a "
             f"média reportada na tese.{nota_extra}")
-    # Quebrar a nota: numa linha só, saía pelos dois lados da figura.
-    largura_nota = max(28, int(118 * (largura / 9.0) / esc))
+    # Quebrar a nota: numa linha só, saía pelos dois lados da figura. Cabem
+    # ~100 caracteres em itálico de 11 pt por 9 polegadas (com 118, a nota do
+    # mega-treino saía cortada nos dois lados).
+    largura_nota = max(28, int(100 * (largura / 9.0) / esc))
     linhas_nota = textwrap.wrap(nota, largura_nota)
     fig.text(0.5, 0.015, "\n".join(linhas_nota), ha="center", va="bottom",
              fontsize=11 * esc, color="#555555", style="italic")
@@ -355,12 +357,13 @@ def main():
         ax.set_xlabel('Algoritmo', fontsize=11)
         ax.grid(True, linestyle='--', alpha=0.4, axis='y')
         nr = int(d.groupby('Algorithm')['Run'].nunique().max())
+        # Em duas linhas: numa só, a nota saía cortada pelos dois lados.
         fig.text(0.5, 0.01,
                  f"Cada ponto = 1 execução independente ({nr} por algoritmo; média de 20 episódios "
-                 "determinísticos). Métrica de tarefa: mesma unidade para os três algoritmos.",
+                 "determinísticos).\nMétrica de tarefa: mesma unidade para os três algoritmos.",
                  ha='center', va='bottom', fontsize=8.5, color='#555555', style='italic')
         fig.subplots_adjust(bottom=0.12)
-        plt.tight_layout(rect=[0, 0.07, 1, 1])
+        plt.tight_layout(rect=[0, 0.09, 1, 1])
         fig.savefig(os.path.join(OUT, f'boxplot_eval_{scen}.png'), dpi=300)
         plt.close(fig)
         print(f"[OK] boxplot_eval_{scen}.png")
