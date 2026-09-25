@@ -137,7 +137,7 @@ Há uma parte estrutural e outra de inferência. **A estrutural**: uma MLP de en
 
 **«São 21 testes sem correção para comparações múltiplas.»** (Quadro 6.8)
 
-Os p do Quadro 6.8 (p. 81) são brutos e vêm acompanhados do δ de Cliff. Fiz as contas sobre o próprio quadro. **Com Benjamini-Hochberg** (taxa de falsas descobertas a 5 %), **os 14 resultados significativos mantêm-se todos**. **Com Holm** (erro de família), mantêm-se 9 e caem 5: PPO>SAC no Sandbox, GNN>PPO e PPO>SAC na Porta Cooperativa, e GNN>PPO e GNN>SAC na Perceção. Portanto, «o evolutivo supera ambos em três cenários» vale com controlo da taxa de falsas descobertas. Com o critério mais estrito, o resultado robusto é o **Quatro Salas**: p = 0,0006 e δ = +1,00 contra os dois, que é o mínimo possível com 7 contra 7, ou seja, separação total. Na Porta Cooperativa a diferença para o PPO é também pequena na prática (69,8 contra 67,1).
+Os p do Quadro 6.8 (p. 82) são brutos e vêm acompanhados do δ de Cliff. Fiz as contas sobre o próprio quadro. **Com Benjamini-Hochberg** (taxa de falsas descobertas a 5 %), **os 14 resultados significativos mantêm-se todos**. **Com Holm** (erro de família), mantêm-se 9 e caem 5: PPO>SAC no Sandbox, GNN>PPO e PPO>SAC na Porta Cooperativa, e GNN>PPO e GNN>SAC na Perceção. Portanto, «o evolutivo supera ambos em três cenários» vale com controlo da taxa de falsas descobertas. Com o critério mais estrito, o resultado robusto é o **Quatro Salas**: p = 0,0006 e δ = +1,00 contra os dois, que é o mínimo possível com 7 contra 7, ou seja, separação total. Na Porta Cooperativa a diferença para o PPO é também pequena na prática (69,8 contra 67,1).
 
 ---
 
