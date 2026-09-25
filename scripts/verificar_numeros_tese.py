@@ -3523,7 +3523,7 @@ def verificar_resumo_abstract():
         j = tex.find(fim, i)
         return tex[i + len(inicio):j if j > 0 else len(tex)]
 
-    pt = bloco(r"\chapter*{Resumo}", r"\textsc{Palavras Chave:}")
+    pt = bloco(r"\chapter*{Resumo}", r"\textsc{Palavras-chave:}")
     en = bloco(r"\chapter*{Abstract}", r"\textsc{Keywords:}")
     if pt is None or en is None:
         problemas.append("não encontrei o Resumo ou o Abstract (mudaram de "

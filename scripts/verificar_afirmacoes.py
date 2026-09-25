@@ -470,10 +470,10 @@ def resumo_e_abstract():
             return None
         fim = min(x for x in (texto.find("\\chapter", i + 12), len(texto)) if x > 0)
         bloco = texto[i:fim]
-        # Corta-se em «Palavras Chave»/«Keywords»: o que vem depois é a lista de
+        # Corta-se em «Palavras-chave»/«Keywords»: o que vem depois é a lista de
         # palavras-chave e os comandos de índice, onde os `2` do `tocdepth` não
         # são números da tese.
-        for corte in ("\\textsc{Palavras Chave", "\\textsc{Keywords"):
+        for corte in ("\\textsc{Palavras-chave","\\textsc{Keywords"):
             j = bloco.find(corte)
             if j > 0:
                 bloco = bloco[:j]
