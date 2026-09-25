@@ -166,7 +166,7 @@ igualmente a manutenção de formações sob variação da escala do enxame
 No paradigma de aprendizagem, o treino centralizado com execução descentralizada
 (CTDE) tornou-se padrão para domar a não-estacionariedade \citep{lowe2017maddpg,
 oliehoek2016concise}. Aqui, contudo, os \emph{baselines} de gradiente partilham
-uma única política e executam a partir da observação puramente local, sem crítico
+uma única política e executam a partir da observação de cada agente, sem crítico
 global, o que ancora a comparação num regime descentralizado comum aos três
 controladores.
 
@@ -224,8 +224,8 @@ Cooperativa com Alternativa}, em que a porta bloqueada atrai o gradiente de
 navegação enquanto o caminho que dispensa a cooperação é um corredor lateral que
 obriga a afastar-se temporariamente do ninho. A Figura~\ref{fig:mapas} ilustra os sete
 cenários. Cada agente observa uma bússola de \emph{homing} egocêntrica para o
-ninho, oito raios LiDAR para deteção local de obstáculos e o estado relativo dos
-vizinhos --- um cenário parcialmente observável, formalizável como um Dec-POMDP
+ninho, oito raios LiDAR para deteção local de obstáculos e o estado relativo de
+todos os outros agentes, sem limite de alcance --- um cenário parcialmente observável, formalizável como um Dec-POMDP
 \citep{oliehoek2016concise}. A bússola fornece a direção e a distância euclidiana
 ao ninho de forma sempre disponível (à imagem do \emph{homing} global em formigas
 ou da navegação por GPS), ao passo que os obstáculos só são percecionados
@@ -670,7 +670,7 @@ preferível em espaço aberto e com pouco orçamento de treino; quando a dimens�
 missão exige escalar sem retreino, a arquitetura de grafo com atenção é a única
 opção viável entre as estudadas.
 
-\section{Limitações do estudo}
+\section{Limitações do Estudo}
 \label{sec:limitacoes}
 \looseness=-1 Quatro limitações enquadram o alcance das conclusões. Primeira, e mais importante, a
 comparação é \emph{assimétrica}: o controlador evolutivo usa uma arquitetura de
