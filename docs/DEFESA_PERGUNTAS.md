@@ -1,6 +1,6 @@
 # Guião de defesa — as perguntas que vêm primeiro
 
-> Escrito a 18 ago 2026 e revisto a 7 set 2026, contra o PDF de **137 páginas**
+> Escrito a 18 ago 2026 e revisto a 25 set 2026, contra o PDF de **141 páginas**
 > já na formatação das normas do Iscte. Cada
 > pergunta tem: o que está mesmo a ser perguntado, a resposta curta, e a
 > **página** onde está a prova. As páginas são as **impressas no rodapé** da

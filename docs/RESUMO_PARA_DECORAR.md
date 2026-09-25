@@ -1,13 +1,13 @@
 # A tese em memória — folha de estudo para a defesa
 
-> Escrita contra o PDF de **137 páginas** de 6 set 2026 (`Tese/main.pdf`), já na formatação
+> Escrita contra o PDF de **141 páginas** de 25 set 2026 (`Tese/main.pdf`), já na formatação
 > das normas do Iscte; as páginas citadas são as **impressas no rodapé** — soma 22
 > para chegar à página do leitor de PDF. Tudo o
 > que está aqui está na dissertação; nenhum número foi arredondado de forma
 > diferente da tese. Companheira do [`DEFESA_PERGUNTAS.md`](DEFESA_PERGUNTAS.md)
 > (as perguntas que vêm primeiro) e dos slides em `Defesa/slides_defesa.pptx`
 > (20 de apresentação + 6 de reserva, gerados por `Defesa/gerar_slides.py`, com as
-> notas de orador e o orçamento de tempo; o 18.º é a demo ao vivo do Muro em U no
+> notas de orador e o orçamento de tempo; o 19.º é a demo ao vivo do Muro em U no
 > painel). O guião de tempo está na §9, os slides de reserva na §10.
 
 ---
@@ -48,7 +48,7 @@ cómputo. Sem vencedor universal — um mapa de escolha.
    combinações; PPO/SAC incompatíveis por construção). Falhas de 10 %:
    92–106 % de retenção nos três — não discrimina.
 7. **QI7 — a composição degrada a fiabilidade.** Zero-shot: 0 em 84/84 células
-   (mapa resolúvel: navegador geodésico 53,0 rec/ep). Treino nativo: só o GNN,
+   (mapa resolúvel: navegador geodésico 53,0 cheg/ep). Treino nativo: só o GNN,
    4/21 < limiar 15 pré-registado. **Negativo, reportado.**
 
 ## 3. As sete questões — resposta de uma linha
@@ -73,10 +73,10 @@ cómputo. Sem vencedor universal — um mapa de escolha.
   favor do gradiente — a ordem importa, e escrita sem rótulos já induziu erro).
 - Unidade estatística = **execução**; Mann-Whitney U, **δ de Cliff** (|δ| ≥
   0,474 grande), α = 0,05. Três **pré-registos**.
-- Verificação: **29 verificadores**, 22 deles no hook de pre-commit (~965 valores
-  no principal, 72 no do mapa composto, 45 no da configuração); ensaio de
-  mutação com **92 mutações**, todas apanhadas; cobertura medida — 1 043 dos
-  2 286 tokens numéricos do `main.tex` (46 %), com a lista do que falta.
+- Verificação: **29 verificadores**, 22 deles no hook de pre-commit (73 valores
+  no do mapa composto, 45 no da configuração); ensaio de mutação com **92
+  mutações**, todas apanhadas; cobertura medida — 1 057 dos 2 465 tokens
+  numéricos do `main.tex` (43 %), com a lista do que falta.
 - Simulador: 139 → **420 passos/s** após vetorização (2,58× no passo; LiDAR 19,5×),
   equivalência bit-exata.
 
@@ -123,8 +123,8 @@ do SAC na Perceção é menos congestão, dentro do desvio).
 **Mapa composto (QI7)** — 103 × 62 m, raio 60 m (vs 15), 128,8 m do spawn ao
 ninho, 106 obstáculos. F1 zero-shot: **0,00 em 84/84 células, 1 680 episódios**,
 4 condições (escala da observação, sem obstáculos, sem features da porta
-excluídas). Navegador geodésico: **53,0** rec/ep (82,0 no Quatro Salas). F2 nativo,
-21 execuções × 3 algoritmos: GNN **4/21** (limiar pré-registado 15), 1,7 rec/ep;
+excluídas). Navegador geodésico: **53,0** cheg/ep (82,0 no Quatro Salas). F2 nativo,
+21 execuções × 3 algoritmos: GNN **4/21** (limiar pré-registado 15), 1,7 cheg/ep;
 PPO e SAC 0/21. 19/21 execuções ainda a subir no último quinto (780 min).
 
 **Custo** — 28 sessões, **2 078 h** de treino; mega-treino de 1 mês (stream B 341 h).
@@ -259,7 +259,7 @@ Para não hesitar num termo. É o mesmo glossário da cábula
 | **Mann-Whitney U** | Teste não-paramétrico para amostras independentes — o de todas as comparações entre algoritmos, sobre as médias por execução. O Wilcoxon *signed-rank* só aparece no teste preliminar da novidade, feito por episódio. |
 | **Retenção per capita** | Chegadas por agente a N=100 a dividir pelas de N=20. Mede diluição do recurso, não perda de coordenação. |
 | **Núcleos-hora** | Núcleos × horas de uma execução: a moeda que torna comparáveis 195 min com 30 genomas e 48 min com 16 ambientes. |
-| **Estigmergia** | Coordenação por sinais deixados no ambiente. Aqui, o bit que ativa quando um vizinho chega ao ninho e repousa — recrutamento sem comunicação explícita. |
+| **Estigmergia** | Coordenação indireta por modificações deixadas no ambiente (os trilhos de feromonas das formigas, na origem da ACO). O bit de comunicação desta tese **não** é estigmergia: é um sinal direto entre vizinhos, de recrutamento. |
 | **Wall-sliding** | Em vez de imobilizar o agente contra um muro, projeta-se o movimento ortogonalmente à normal da face: o agente desliza. |
-| **Deployment gap** | O fosso entre o desempenho em simulação e no robô físico. Antecipado no desenho do simulador, mas **não** validado nesta tese. |
+| **Deployment gap** | Termo de Kegeleirs e Birattari (2025): um controlador desenvolvido em simulação, ou numa plataforma, não tem eficácia garantida noutra — mais largo do que o *reality gap*. Antecipado no desenho do simulador, mas **não** validado nesta tese. |
 | **Guilhotina** | Corte precoce do episódio de avaliação evolutiva: se a recompensa acumulada for inferior a −200 aos 150 passos, termina e o genoma leva −1000. Poupa CPU em genomas disfuncionais. |
