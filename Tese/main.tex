@@ -149,6 +149,14 @@
       \z@{.5\linespacing\@plus.7\linespacing}{.25\linespacing}%
       {\normalfont\bfseries\flushleft}}
 \makeatother
+% O \paragraph do amsbook é \normalfont: o título («Função de aptidão:», «Nível 1
+% --- ...») saía com a letra do texto e confundia-se com ele. Mesmo espaçamento,
+% mas a negrito, como as secções.
+\makeatletter
+\def\paragraph{\@startsection{paragraph}{4}%
+  \z@\z@{-\fontdimen2\font}%
+  {\normalfont\bfseries}}
+\makeatother
 \setcounter{MaxMatrixCols}{10}
 
 \theoremstyle{plain}
@@ -696,7 +704,7 @@ onde $g$ indexa a geração, $\rho$ é o \emph{fator de decaimento} e $\sigma_{\
 \paragraph{Seleção e elitismo:}
 A seleção por \emph{truncatura} (\textit{truncation selection}) ordena a população por aptidão e descarta a cauda inferior; o \emph{elitismo} (\textit{elitism}) copia intactos os melhores genomas para a geração seguinte, garantindo que o melhor comportamento descoberto nunca se perde por uma mutação desfavorável --- propriedade que torna a melhor aptidão monótona não-decrescente ao longo das gerações. Em robótica de enxame estas escolhas convivem com uma dificuldade adicional: a aptidão é estimada por simulação estocástica, pelo que um genoma pode ser selecionado por ter tido sorte na avaliação e não por ser efetivamente melhor --- razão pela qual se avalia cada genoma em vários episódios e se fixam as \textit{seeds} de avaliação \cite{bredeche2022social, fontbonne2020online}.
 
-\paragraph{Otimização por Enxame de Partículas (PSO):} O PSO modela cada controlador candidato como uma ``partícula'' que navega num espaço de busca multidimensional. A inovação crucial deste método reside na partilha de informação social: cada partícula ajusta a sua velocidade e posição baseada na sua melhor experiência pessoal ($pBest$) e na melhor experiência coletiva descoberta por todo o enxame ($gBest$). Hassen e Amin (2025) empregam o PSO para a otimização global do percurso, delegando a reação a obstáculos imprevistos num controlador reativo separado (\textit{Dynamic Window Approach}) --- arranjo que ilustra a característica estrutural do paradigma: a convergência do enxame produz um controlador \emph{estático}, de elevada qualidade para o problema otimizado, mas cuja adaptação ao imprevisto tem de ser acrescentada por fora \cite{hassen2025hybrid}.
+\paragraph{Otimização por Enxame de Partículas:} O PSO modela cada controlador candidato como uma ``partícula'' que navega num espaço de busca multidimensional. A inovação crucial deste método reside na partilha de informação social: cada partícula ajusta a sua velocidade e posição baseada na sua melhor experiência pessoal ($pBest$) e na melhor experiência coletiva descoberta por todo o enxame ($gBest$). Hassen e Amin (2025) empregam o PSO para a otimização global do percurso, delegando a reação a obstáculos imprevistos num controlador reativo separado (\textit{Dynamic Window Approach}) --- arranjo que ilustra a característica estrutural do paradigma: a convergência do enxame produz um controlador \emph{estático}, de elevada qualidade para o problema otimizado, mas cuja adaptação ao imprevisto tem de ser acrescentada por fora \cite{hassen2025hybrid}.
 
 A instanciação concreta destes elementos no controlador desta dissertação --- a função de aptidão adotada, a forma da mutação, os valores de $\sigma$ e a dimensão da elite --- é matéria do Capítulo~\ref{ch:algorithms} (Secção~\ref{sec:algo_evolutivo}), e não deste.
 
@@ -705,7 +713,7 @@ O MARL aplica a aprendizagem por reforço a sistemas com vários agentes, que ap
 
 \subsection{Processos de Decisão de Markov (MDPs) e Dec-POMDP}
 \label{sec:fund_mdp}
-\paragraph{Fundamentos do Processo de Decisão de Markov (MDP):}
+\paragraph{O Processo de Decisão de Markov:}
 A base matemática da aprendizagem por reforço é o \emph{Processo de Decisão de Markov (MDP)}, definido pela tupla $\langle \mathcal{S}, \mathcal{A}, \mathcal{P}, \mathcal{R}, \gamma \rangle$:
 \begin{itemize}
     \item $\mathcal{S}$: espaço de estados do ambiente (contínuo em robótica);
@@ -1097,7 +1105,7 @@ A Figura \ref{fig:sim_arch} ilustra o fluxo de dados em ciclo fechado do simulad
     \draw [arrow] (physics.north) -- (env.east)     node[lab, midway, above right=-2pt] {Atualização de posições \\ e penalizações};
 
     \end{tikzpicture}
-    \caption{Diagrama da arquitetura do simulador e fluxo de interação agente-ambiente.}
+    \caption[Arquitetura do simulador e fluxo agente--ambiente]{Diagrama da arquitetura do simulador e fluxo de interação agente-ambiente.}
     \label{fig:sim_arch}
 \end{figure}
 
@@ -1110,7 +1118,7 @@ A arena de simulação consiste numa área circular de raio $r_{arena} = 15$\,m,
 \begin{table}[!htbp]
 \centering
 \footnotesize
-\caption{Hiperparâmetros utilizados na simulação e no treino dos modelos.}
+\caption[Hiperparâmetros da simulação e do treino]{Hiperparâmetros utilizados na simulação e no treino dos modelos.}
 \label{tab:hyperparameters}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{|l|l|c|}
@@ -1550,42 +1558,42 @@ Nos cenários de navegação por gargalos (\emph{Gargalo}, Figura~\ref{fig:res_c
 \begin{figure}[!htbp]
     \centering
     \figresultado{0.98}{images/resultados/comparacao_mapa_u_wall.png}{Curva de aprendizagem --- Beco Sem Saída (Muro em U)}
-    \caption{Curvas de aprendizagem no cenário Beco Sem Saída (Muro em U).}
+    \caption[Curvas de aprendizagem no cenário Muro em U]{Curvas de aprendizagem no cenário Beco Sem Saída (Muro em U).}
     \label{fig:res_curva_uwall}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
     \figresultado{0.98}{images/resultados/comparacao_mapa_bottleneck.png}{Curva de aprendizagem --- Gargalo (Porta Estreita)}
-    \caption{Curvas de aprendizagem no cenário Gargalo.}
+    \caption[Curvas de aprendizagem no cenário Gargalo]{Curvas de aprendizagem no cenário Gargalo.}
     \label{fig:res_curva_bottleneck}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
     \figresultado{0.98}{images/resultados/comparacao_mapa_four_rooms.png}{Curva de aprendizagem --- Quatro Salas (Labirinto)}
-    \caption{Curvas de aprendizagem no cenário Quatro Salas (Labirinto).}
+    \caption[Curvas de aprendizagem no cenário Quatro Salas]{Curvas de aprendizagem no cenário Quatro Salas (Labirinto).}
     \label{fig:res_curva_fourrooms}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
     \figresultado{0.98}{images/resultados/comparacao_mapa_cooperative_door.png}{Curva de aprendizagem --- Porta Cooperativa}
-    \caption{Curvas de aprendizagem no cenário Porta Cooperativa.}
+    \caption[Curvas de aprendizagem no cenário Porta Cooperativa]{Curvas de aprendizagem no cenário Porta Cooperativa.}
     \label{fig:res_curva_door}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
     \figresultado{0.98}{images/resultados/comparacao_mapa_cooperative_perception.png}{Curva de aprendizagem --- Perceção Cooperativa (Alvo Móvel)}
-    \caption{Curvas de aprendizagem no cenário Perceção Cooperativa (Alvo Móvel).}
+    \caption[Curvas de aprendizagem no cenário Perceção Cooperativa]{Curvas de aprendizagem no cenário Perceção Cooperativa (Alvo Móvel).}
     \label{fig:res_curva_perception}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
     \figresultado{0.98}{images/resultados/comparacao_mapa_cooperative_door_bypass.png}{Curva de aprendizagem --- Porta Cooperativa com Alternativa (deceptive)}
-    \caption{Curvas de aprendizagem no cenário Porta Cooperativa com Alternativa (\textit{deceptive}).}
+    \caption[Curvas de aprendizagem no cenário Porta com Alternativa]{Curvas de aprendizagem no cenário Porta Cooperativa com Alternativa (\textit{deceptive}).}
     \label{fig:res_curva_bypass}
 \end{figure}
 
@@ -1600,7 +1608,7 @@ A leitura por cenário quantifica o que as secções anteriores anteciparam. Nos
     \figresultado{0.49}{images/resultados/dotplot_eval_none.png}{Fiabilidade entre execuções --- Sandbox}
     \hfill
     \figresultado{0.49}{images/resultados/dotplot_eval_u_wall.png}{Fiabilidade entre execuções --- Muro em U}
-    \caption{Chegadas/ep por execução (7 execuções, 20 ep cada): Sandbox (esq.) e Muro em U (dir.). Cada ponto é uma execução independente e a barra vertical é a média reportada na tese; note-se que os dois painéis têm escalas horizontais diferentes.}
+    \caption[Chegadas por execução: Sandbox e Muro em U]{Chegadas/ep por execução (7 execuções, 20 ep cada): Sandbox (esq.) e Muro em U (dir.). Cada ponto é uma execução independente e a barra vertical é a média reportada na tese; note-se que os dois painéis têm escalas horizontais diferentes.}
     \label{fig:res_box_1}
 \end{figure}
 
@@ -1609,7 +1617,7 @@ A leitura por cenário quantifica o que as secções anteriores anteciparam. Nos
     \figresultado{0.49}{images/resultados/dotplot_eval_bottleneck.png}{Fiabilidade entre execuções --- Gargalo}
     \hfill
     \figresultado{0.49}{images/resultados/dotplot_eval_four_rooms.png}{Fiabilidade entre execuções --- Quatro Salas}
-    \caption{Chegadas/ep por execução: Gargalo (esq.) e Quatro Salas (dir.).}
+    \caption[Chegadas por execução: Gargalo e Quatro Salas]{Chegadas/ep por execução: Gargalo (esq.) e Quatro Salas (dir.).}
     \label{fig:res_box_2}
 \end{figure}
 
@@ -1618,14 +1626,14 @@ A leitura por cenário quantifica o que as secções anteriores anteciparam. Nos
     \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_door.png}{Fiabilidade entre execuções --- Porta Cooperativa}
     \hfill
     \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_perception.png}{Fiabilidade entre execuções --- Perceção Cooperativa}
-    \caption{Chegadas/ep por execução: Porta Cooperativa (esq.) e Perceção Cooperativa (dir.).}
+    \caption[Chegadas por execução: Porta Cooperativa e Perceção Cooperativa]{Chegadas/ep por execução: Porta Cooperativa (esq.) e Perceção Cooperativa (dir.).}
     \label{fig:res_box_3}
 \end{figure}
 
 \begin{figure}[!htbp]
     \centering
     \figresultado{0.49}{images/resultados/dotplot_eval_cooperative_door_bypass.png}{Fiabilidade entre execuções --- Porta Cooperativa com Alternativa}
-    \caption{Chegadas/ep por execução: Porta Cooperativa com Alternativa (\textit{deceptive}).}
+    \caption[Chegadas por execução: Porta com Alternativa]{Chegadas/ep por execução: Porta Cooperativa com Alternativa (\textit{deceptive}).}
     \label{fig:res_box_4}
 \end{figure}
 
@@ -1860,7 +1868,7 @@ A hipótese central desta investigação postula que a \emph{inteligência adapt
 \begin{table}[!htbp]
 \centering
 \footnotesize
-\caption{Significância das diferenças em chegadas por episódio (Mann-Whitney U sobre as médias por execução, $n=7$ por algoritmo; $\delta$ de Cliff; $\alpha = 0{,}05$).}
+\caption[Significância das diferenças entre algoritmos]{Significância das diferenças em chegadas por episódio (Mann-Whitney U sobre as médias por execução, $n=7$ por algoritmo; $\delta$ de Cliff; $\alpha = 0{,}05$).}
 \label{tab:res_signif}
 \renewcommand{\arraystretch}{1.2}
 \begin{tabular}{|l|l|r|r|r|r|c|}
@@ -2064,7 +2072,7 @@ Para garantir a reprodutibilidade integral das experiências, este anexo reúne 
 \centering
 \footnotesize
 \renewcommand{\arraystretch}{1.15}
-\caption{Configuração do ambiente de simulação e da física.}
+\caption[Configuração do ambiente de simulação e da física]{Configuração do ambiente de simulação e da física.}
 \label{tab:apx_env}
 \begin{tabular}{|l|c|p{6.6cm}|}
 \hline
@@ -2101,7 +2109,7 @@ Para garantir a reprodutibilidade integral das experiências, este anexo reúne 
 \centering
 \footnotesize
 \renewcommand{\arraystretch}{1.15}
-\caption{Hiperparâmetros de treino dos três algoritmos.}
+\caption[Hiperparâmetros de treino dos três algoritmos]{Hiperparâmetros de treino dos três algoritmos.}
 \label{tab:apx_train}
 \begin{tabular}{|l|l|c|}
 \hline
@@ -2153,7 +2161,7 @@ A Figura~\ref{fig:diagrama_classes} mostra as classes do sistema e as relações
     \centering
     \begin{tikzpicture}[
         cls/.style={rectangle split, rectangle split parts=2, draw=blue!70!black, fill=blue!4, thick,
-                    text width=3.55cm, align=left, font=\scriptsize, inner sep=3pt, anchor=north},
+                    text width=3.65cm, align=left, font=\scriptsize, inner sep=3pt, anchor=north},
         ext/.style={cls, draw=gray!70!black, fill=gray!8, dashed},
         uso/.style={->, >=Stealth, thick, color=gray!70!black},
         heranca/.style={-{Latex[open,length=2.4mm]}, thick, color=blue!60!black},
@@ -2227,7 +2235,7 @@ action = self.actor(combined)                 # Tanh -> [-1, 1]^3
 
 \section{Física de Deslizamento em Muros (\textit{Wall-Sliding})}
 Em vez de imobilizar o agente, o motor projeta o movimento ortogonalmente à normal da face atingida, deixando o agente deslizar ao longo da parede.
-\begin{lstlisting}[style=python, caption={Proje\c{c}\~ao ortogonal do movimento contra a normal do muro.}]
+\begin{lstlisting}[style=python, float=!htbp, caption={Proje\c{c}\~ao ortogonal do movimento contra a normal do muro.}]
 for wall in self.walls:
     next_pos = self.agent_positions[idx] + move_global
     delta = next_pos - wall['pos']
@@ -2243,7 +2251,7 @@ for wall in self.walls:
 
 \section{Campo Geodésico para o \textit{Reward Shaping}}
 Potencial de navegação $\Phi$ usado no termo de progresso nos cenários com paredes. Uma pesquisa de custo uniforme (Dijkstra, 8-conexa) a partir da célula do ninho calcula o comprimento do caminho mais curto que contorna os obstáculos, eliminando o mínimo local da distância euclidiana. O campo é constante por cenário (paredes e ninho fixos), pelo que é calculado uma única vez e reutilizado.
-\begin{lstlisting}[style=python, caption={Campo de dist\^ancia geod\'esica ao ninho (Dijkstra sobre grelha).}]
+\begin{lstlisting}[style=python, float=!htbp, caption={Campo de dist\^ancia geod\'esica ao ninho (Dijkstra sobre grelha).}]
 # paredes dilatadas por r_robot -> caminho fisicamente percorrivel
 dist = np.full((n, n), np.inf); dist[ni, nj] = 0.0
 heap = [(0.0, ni, nj)]
@@ -2263,7 +2271,7 @@ while heap:
 
 \section{Recompensa de Exploração \textit{Count-Based}}
 Bónus atribuído na primeira visita a cada célula de uma grelha de discretização, complementando o termo de progresso geodésico ao premiar a cobertura de zonas novas onde o gradiente do potencial é pouco informativo.
-\begin{lstlisting}[style=python, caption={B\'onus de explora\c{c}\~ao por cobertura de c\'elulas novas.}]
+\begin{lstlisting}[style=python, float=!htbp, caption={B\'onus de explora\c{c}\~ao por cobertura de c\'elulas novas.}]
 cell = (int(pos[0] // self.exploration_cell_size),
         int(pos[1] // self.exploration_cell_size))
 if cell not in self.visited_cells[idx]:
