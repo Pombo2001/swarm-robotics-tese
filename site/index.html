@@ -138,9 +138,9 @@
 <div class="env">
 
 <header>
-  <h1>Aprendizagem por Reforço<br>para Controlo de Enxames</h1>
+  <h1>Aprendizagem por Reforço Multiagente e Neuroevolução<br>no Controlo de Enxames de Robôs</h1>
   <p class="sub">Neuroevolução com rede de grafos, PPO e SAC comparados em oito cenários de
-  forrageamento cooperativo — num simulador 3D construído para os medir lado a lado.</p>
+  navegação cooperativa até ao ninho — num simulador 3D construído para os medir lado a lado.</p>
   <p class="meta">Dissertação de Mestrado em Inteligência Artificial · ISCTE-IUL, 2026 ·
   Gonçalo Pombo · Orientação: Prof. Luís Nunes</p>
   <div class="tags">
@@ -152,7 +152,7 @@
     <span class="tag">7 questões de investigação</span>
   </div>
   <div class="botoes">
-    <a class="botao forte" href="https://github.com/Pombo2001/swarm-robotics-tese/raw/main/Tese/main.pdf">Ler a dissertação (PDF, 137 págs)</a>
+    <a class="botao forte" href="https://github.com/Pombo2001/swarm-robotics-tese/raw/main/Tese/main.pdf">Ler a dissertação (PDF, 141 págs)</a>
     <a class="botao" href="https://github.com/Pombo2001/swarm-robotics-tese">Código e dados</a>
   </div>
 </header>
@@ -171,8 +171,8 @@
 cada um tem 8 raios de LiDAR, a direção do ninho e o estado dos vizinhos.</p>
 <figure>
   <img src="img/viz_u_wall.png" loading="lazy" alt="Rasto dos 20 agentes a contornar o Muro em U">
-  <figcaption><b>Um episódio completo, 78 recolhas.</b> A cor indica o instante do episódio.
-  Os saltos de reaparecimento após entrega no ninho não são desenhados — desenhá-los daria
+  <figcaption><b>Um episódio completo, 78 chegadas.</b> A cor indica o instante do episódio.
+  Os saltos de reaparecimento após cada chegada ao ninho não são desenhados — desenhá-los daria
   segmentos retos a atravessar as paredes, que é exatamente a leitura que a figura desmente.</figcaption>
 </figure>
 </section>
@@ -206,7 +206,7 @@ quatro vezes maior. Vistos de cima, com as paredes a cinzento-escuro e o ninho a
     lateral. Cenário <i>deceptive</i>: cooperar ou contornar?</span></div></div>
   <div class="cen"><img src="img/mapa_grande_planta.png" loading="lazy" alt="Mapa Composto">
     <div class="txt"><b>Mapa Composto</b><span>103 × 62 m, cinco zonas, 106 obstáculos. Compõe
-    quatro dificuldades num percurso de ~155 m.</span></div></div>
+    quatro dificuldades num percurso de ~120–140 m.</span></div></div>
 </div>
 </section>
 
@@ -220,13 +220,13 @@ com a mesma régua — mesma física, mesmo orçamento de tempo, mesmas sementes
     <h4>O que o agente vê</h4>
     <p class="num">111<small> valores</small></p>
     <p>Para N=20: direção e distância ao ninho, <b>8 raios de LiDAR</b> (alcance 8 m) e, por
-    cada vizinho, direção, distância e estado de sinalização. Observação puramente local —
-    nenhum agente vê o mapa.</p>
+    cada um dos outros agentes, direção, distância e estado de sinalização. Local quanto aos
+    obstáculos, que só o LiDAR vê; global quanto ao enxame. Nenhum agente vê o mapa.</p>
   </div>
   <div class="carta">
     <h4>O que o agente ganha</h4>
-    <p class="num">+300<small> por entrega</small></p>
-    <p>Recompensa de tarefa por recolha, mais <i>shaping</i> de progresso geodésico e um bónus
+    <p class="num">+300<small> por chegada</small></p>
+    <p>Recompensa de tarefa por chegada, mais <i>shaping</i> de progresso geodésico e um bónus
     pequeno por explorar células novas; menos um custo de energia por passo. Sem curiosidade
     intrínseca.</p>
   </div>
@@ -279,11 +279,11 @@ execução e sementes emparelhadas entre algoritmos. Os números saem de CSV ver
 </div>
 
 <h3>Desempenho por cenário</h3>
-<p class="lead">Taxa de sucesso e recolhas por episódio, na avaliação determinística
+<p class="lead">Taxa de sucesso e chegadas por episódio, na avaliação determinística
 (7 execuções × 20 episódios por célula).</p>
 <table>
   <thead><tr><th>Cenário</th>
-    <th>GNN</th><th>rec/ep</th><th>PPO</th><th>rec/ep</th><th>SAC</th><th>rec/ep</th></tr></thead>
+    <th>GNN</th><th>cheg/ep</th><th>PPO</th><th>cheg/ep</th><th>SAC</th><th>cheg/ep</th></tr></thead>
   <tbody>
     <tr><td>Sandbox</td><td class="g">86 %</td><td class="g">38,3</td><td class="p">100 %</td><td class="p">71,5</td><td class="s">100 %</td><td class="s">69,2</td></tr>
     <tr><td>Muro em U</td><td class="g">43 %</td><td class="g">24,5</td><td class="p">71 %</td><td class="p">39,6</td><td class="s">34 %</td><td class="s">9,0</td></tr>
@@ -294,7 +294,7 @@ execução e sementes emparelhadas entre algoritmos. Os números saem de CSV ver
     <tr><td>Porta com Alternativa</td><td class="g">100 %</td><td class="g">86,7</td><td class="p">100 %</td><td class="p">85,3</td><td class="s">100 %</td><td class="s">68,6</td></tr>
   </tbody>
 </table>
-<p class="tnota">Cada cenário é uma corrida à parte: recolhas de mapas diferentes não são a mesma
+<p class="tnota">Cada cenário é uma corrida à parte: chegadas de mapas diferentes não são a mesma
 régua. A unidade estatística é a média por execução, nunca o episódio — juntar episódios de
 execuções diferentes inflaciona o <i>n</i>.</p>
 
@@ -302,8 +302,9 @@ execuções diferentes inflaciona o <i>n</i>.</p>
   <figure>
     <img src="img/megatreino_u_wall_4bracos.png" loading="lazy" alt="Muro em U: os quatro braços do mega-treino, n=28">
     <figcaption><b>28 execuções por braço.</b> Cada ponto é uma execução independente. O que
-    decide não é a média — é a <i>forma</i>: os três braços sem anilamento repartem-se entre
-    execuções que resolvem o cenário e execuções que ficam a zero, quase sem nada pelo meio.</figcaption>
+    decide não é a média — é a <i>forma</i>: o GNN objetivo e o PPO repartem-se entre
+    execuções que resolvem o cenário e execuções que ficam a zero, quase sem nada pelo meio; o
+    SAC é uniformemente fraco; e a dosagem adaptativa não deixa nenhuma por resolver.</figcaption>
   </figure>
   <figure>
     <img src="img/escalabilidade_zeroshot_none.png" loading="lazy" alt="Eficiência por agente com o aumento do enxame">
@@ -318,10 +319,10 @@ execuções diferentes inflaciona o <i>n</i>.</p>
     simultâneos para abrir a passagem.</figcaption>
   </figure>
   <figure>
-    <img src="img/recolhas_por_cenario.png" loading="lazy" alt="Recolhas por cenário e algoritmo">
-    <figcaption><b>Os sete cenários de uma vez.</b> A barra de erro é o desvio entre execuções:
-    onde ela é grande, a média não descreve execução nenhuma — é o caso do Muro em U nos três
-    algoritmos.</figcaption>
+    <img src="img/recolhas_por_cenario.png" loading="lazy" alt="Chegadas por cenário e algoritmo">
+    <figcaption><b>Os sete cenários de uma vez.</b> A barra de erro é o desvio entre episódios:
+    nos cenários bimodais (o Muro em U nos três algoritmos, o Sandbox no GNN, o Gargalo no SAC)
+    chega a exceder a própria média, e a média não descreve execução nenhuma.</figcaption>
   </figure>
 </div>
 </section>
@@ -334,7 +335,7 @@ acima melhor do que qualquer média.</p>
 <div class="grelha tres">
   <figure style="margin-top:0"><img src="img/heatmap_ocupacao_gnn_u_wall.png" loading="lazy" alt="Ocupação do GNN no Muro em U">
     <figcaption><b>GNN</b> — contorna o muro pelo exterior e mantém um corredor de tráfego
-    estável entre a zona de recolha e o ninho.</figcaption></figure>
+    estável entre a zona de partida e o ninho.</figcaption></figure>
   <figure style="margin-top:0"><img src="img/heatmap_ocupacao_ppo_u_wall.png" loading="lazy" alt="Ocupação do PPO no Muro em U">
     <figcaption><b>PPO</b> — o mais consistente dos três neste cenário, com o mesmo desvio
     aprendido na maioria das execuções.</figcaption></figure>
@@ -354,12 +355,12 @@ cooperativa <i>separadamente</i>, resolve-os todos seguidos, num mapa quatro vez
     <img src="img/mapa_grande_rastos.png" loading="lazy" alt="Percursos dos agentes no mapa composto">
     <figcaption><b>Os percursos de um episódio, por controlador.</b> O controlador de grafo
     atravessa as cinco zonas e regressa ao ninho; o PPO fica pela zona das quatro salas; o SAC
-    não sai da partida.</figcaption>
+    não transpõe de forma consistente o gargalo da primeira zona.</figcaption>
   </figure>
   <figure style="margin-top:0">
     <img src="img/gnn_mapa_grande.gif" loading="lazy" alt="Episódio animado do controlador evolutivo no mapa composto">
     <figcaption><b>Um episódio, animado.</b> Treino nativo no mapa composto — o único
-    controlador que alguma vez recolhe aqui.</figcaption>
+    controlador que alguma vez chega ao ninho aqui.</figcaption>
   </figure>
 </div>
 
@@ -370,9 +371,9 @@ cooperativa <i>separadamente</i>, resolve-os todos seguidos, num mapa quatro vez
   dados. A regra de decisão foi cumprida: a questão não sobe a resposta afirmativa, e o número
   de execuções convergentes fica à vista para quem prefira outro critério.
   <br><br>
-  O que a composição degrada é a <b>fiabilidade</b>, não a magnitude: as execuções que resolvem
-  o mapa fazem-no com 8,9 recolhas por episódio em média, e as restantes ficam exatamente a
-  zero. É a mesma bimodalidade do Muro em U — e ela <i>sobrevive à escala</i>.
+  O que a composição degrada é sobretudo a <b>fiabilidade</b>: as execuções que resolvem
+  o mapa fazem-no com 8,9 chegadas por episódio em média (de 7,6 a 10,6), e as restantes ficam
+  exatamente a zero. É a mesma bimodalidade do Muro em U — e ela <i>sobrevive à escala</i>.
 </div>
 </section>
 
@@ -407,9 +408,10 @@ que a hipótese esperava.</p>
 <div class="qi"><h4>Questão 5 · o colapso do evolutivo</h4>
   <p class="perg">Porque é que a neuroevolução falha nos cenários de navegação complexa?</p>
   <p class="resp"><b>Não falha — falhava o sinal de treino.</b> Com <i>fitness</i> de retorno
-  acumulado, a população satura num planalto sem pressão seletiva. Substituí-la pelo
-  <i>homing</i> terminal levou o controlador de 0 % a 100 % de sucesso nos quatro cenários de
-  gargalo. É o principal contributo metodológico do trabalho.</p></div>
+  acumulado, a população satura num planalto sem pressão seletiva. Na última campanha
+  com essa <i>fitness</i>, só 3 de 12 execuções dos quatro cenários de gargalo chegaram ao ninho;
+  com o <i>homing</i> terminal, convergem as 28 da campanha final, todas a 100 %. É uma
+  comparação entre campanhas, não uma ablação — e o principal contributo metodológico do trabalho.</p></div>
 
 <div class="qi"><h4>Questão 6 · deceção e procura por novidade</h4>
   <p class="perg">A pressão por novidade resolve os cenários de gradiente enganador?</p>
@@ -450,8 +452,8 @@ no browser, a proveniência de cada número célula a célula — corre num pain
 <p class="lead">Um número escrito à mão não tem como se defender de uma campanha repetida.
 Por isso a proveniência é automática, e falha em voz alta quando alguém a contradiz.</p>
 <ul class="limpa">
-  <li><b>24 verificadores</b> leem o LaTeX e os CSV e falham se discordarem — 849 valores só no
-  principal, mais as tabelas de configuração contra o ficheiro do simulador, as figuras do PDF
+  <li><b>29 verificadores</b> leem o LaTeX e os CSV e falham se discordarem — os quadros e a
+  prosa contra os dados, mais as tabelas de configuração contra o ficheiro do simulador, as figuras do PDF
   contra os dados que as produzem (pixel a pixel), as referências contra o CrossRef e o arXiv, e
   as frases onde o número está na palavra («o único», «nenhuma passa de»).</li>
   <li><b>183 testes</b>, incluindo equivalência bit-a-bit do LiDAR vetorizado e a física da porta
@@ -461,7 +463,7 @@ Por isso a proveniência é automática, e falha em voz alta quando alguém a co
   dados — incluindo as emendas datadas e um braço pré-registado que acabou por não correr.</li>
   <li>A <b>revisão sistemática</b> foi conduzida de facto: 883 registos identificados, 680 após
   desduplicação, <b>58 estudos incluídos</b>, com o registo de triagem completo e cada exclusão
-  justificada. Dos 58, apenas dois comparam os dois paradigmas entre si — que é a lacuna que
+  justificada. Dos 58, apenas um compara empiricamente os dois paradigmas — que é a lacuna que
   esta dissertação ocupa.</li>
 </ul>
 </section>
@@ -474,7 +476,7 @@ determinaram o que a dissertação pode afirmar.</p>
   <div class="item"><div class="quando">08 jun</div><div class="que">Acesso aos servidores de cálculo</div>
     <p class="desc">Os treinos longos passam para máquinas de 64 núcleos.</p></div>
   <div class="item forte"><div class="quando">28 jun</div><div class="que"><i>Fitness</i> de <i>homing</i></div>
-    <p class="desc">O controlador evolutivo come em labirintos pela primeira vez. O «colapso»
+    <p class="desc">O controlador evolutivo chega ao ninho nos labirintos pela primeira vez. O «colapso»
     era do sinal de treino, não do paradigma.</p></div>
   <div class="item"><div class="quando">02–09 jul</div><div class="que">Campanha final de 7 dias</div>
     <p class="desc">3 algoritmos × 7 cenários × 7 execuções — a base de tudo o que se reporta.</p></div>
@@ -483,7 +485,7 @@ determinaram o que a dissertação pode afirmar.</p>
     registo, não desenhado à mão.</p></div>
   <div class="item forte"><div class="quando">29–30 jul</div><div class="que">Os robôs voavam por cima das paredes</div>
     <p class="desc">Arena esférica de raio 60 com paredes de 30 m: 45 m de céu aberto. Quem
-    recolhia, recolhia a voar. A campanha foi anulada e repetida de raiz.</p></div>
+    chegava ao ninho, chegava a voar. A campanha foi anulada e repetida de raiz.</p></div>
   <div class="item"><div class="quando">03 ago</div><div class="que">Mega-treino de um mês fecha</div>
     <p class="desc">28 execuções por braço no Muro em U: a dosagem adaptativa resolve-o em
     todas, o objetivo puro em 15.</p></div>
@@ -501,7 +503,7 @@ determinaram o que a dissertação pode afirmar.</p>
 </section>
 
 <div class="botoes" style="margin-top:48px">
-  <a class="botao forte" href="https://github.com/Pombo2001/swarm-robotics-tese/raw/main/Tese/main.pdf">Ler a dissertação (137 páginas)</a>
+  <a class="botao forte" href="https://github.com/Pombo2001/swarm-robotics-tese/raw/main/Tese/main.pdf">Ler a dissertação (141 páginas)</a>
   <a class="botao" href="https://github.com/Pombo2001/swarm-robotics-tese">Código, dados e verificadores</a>
   <a class="botao" href="https://github.com/Pombo2001/swarm-robotics-tese/tree/main/docs">Protocolo e pré-registos</a>
 </div>
