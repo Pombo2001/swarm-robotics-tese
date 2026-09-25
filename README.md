@@ -16,10 +16,10 @@ a parte que se confirma não está onde a hipótese a punha.
        alt="Rasto dos 20 agentes a contornar o Muro em U ao longo de um episódio">
   <br>
   <sub>Vinte agentes a contornar o Muro em U num episódio. A cor é o instante do
-  episódio; os saltos de reaparecimento após entrega no ninho não são desenhados.</sub>
+  episódio; os saltos de reaparecimento após cada chegada ao ninho não são desenhados.</sub>
 </p>
 
-📄 **[Ler a dissertação (PDF, 137 páginas)](Tese/main.pdf)** ·
+📄 **[Ler a dissertação (PDF, 141 páginas)](Tese/main.pdf)** ·
 🌍 **[Página de resultados](https://pombo2001.github.io/swarm-robotics-tese/)** ·
 📊 **[Painel ao vivo](http://swarmroboticsgs.duckdns.org)**
 
@@ -52,9 +52,9 @@ versionados e são conferidos automaticamente (ver [Rigor](#rigor-o-que-impede-e
 <td width="50%" valign="top">
 <img src="Tese/images/resultados/megatreino_u_wall_4bracos.png" alt="Muro em U: os quatro braços do mega-treino a n=28">
 <sub><b>Deceção espacial, 28 execuções por braço.</b> Cada ponto é uma execução
-independente. O que decide não é a média — é a <i>forma</i>: os três braços sem
-anilamento repartem-se entre execuções que resolvem o cenário e execuções que ficam a
-zero, praticamente sem nada pelo meio. A dosagem adaptativa da novidade não deixa uma
+independente. O que decide não é a média — é a <i>forma</i>: o GNN objetivo e o PPO
+repartem-se entre execuções que resolvem o cenário e execuções que ficam a zero,
+praticamente sem nada pelo meio, e o SAC é uniformemente fraco. A dosagem adaptativa da novidade não deixa uma
 única por resolver.</sub>
 </td>
 <td width="50%" valign="top">
@@ -71,16 +71,17 @@ resultado.</sub>
 <sub><b>O oitavo cenário, lido da geometria do próprio simulador.</b> Cinco zonas de
 oeste para este — sala de partida, gargalo com beco em U, quatro salas, porta
 cooperativa com alternativa, câmara do ninho —, 106 obstáculos e um percurso mínimo de
-~155 m. Nenhum controlador treinado nos sete cenários isolados recolhe aqui um único
-item sem retreino.</sub>
+~120–140 m. Nenhum controlador treinado nos sete cenários isolados faz aqui uma única
+chegada sem retreino.</sub>
 </td>
 </tr>
 </table>
 
 O contributo metodológico principal é outro, e é uma correção: o «colapso do
 evolutivo» que a literatura reporta era, neste sistema, um **artefacto do sinal de
-treino**. Substituir o retorno acumulado por *homing* terminal levou o controlador de
-0 % a 100 % de sucesso nos quatro cenários de gargalo.
+treino**. Na última campanha com o retorno acumulado como *fitness*, só 3 de 12 execuções
+dos quatro cenários de gargalo chegaram ao ninho; com o *homing* terminal, convergem as
+28 da campanha final, todas a 100 % (comparação entre campanhas, não uma ablação).
 
 ---
 
@@ -89,8 +90,8 @@ treino**. Substituir o retorno acumulado por *homing* terminal levou o controlad
 Um número escrito à mão numa tese não tem como se defender de uma campanha que foi
 repetida. Por isso a proveniência é automática:
 
-- **24 verificadores** (`scripts/verificar_*.py`) que leem o `.tex` e os CSV e falham
-  se discordarem — **849 valores** conferidos só no principal, mais as tabelas de
+- **29 verificadores** (`scripts/verificar_*.py`) que leem o `.tex` e os CSV e falham
+  se discordarem — os quadros e a prosa contra os dados, mais as tabelas de
   configuração contra o `foraging.yaml`, as figuras do PDF contra os dados que as
   produzem (pixel a pixel), as referências contra o CrossRef/arXiv/OpenAlex, e as
   frases onde o número está na palavra («o único», «nenhuma passa de»);
@@ -119,7 +120,7 @@ triagem completo em `docs/slr/screening.csv` — cada exclusão com o seu motivo
 | `cooperative_door` | Porta Cooperativa | Porta que só abre com 3 robôs em simultâneo. |
 | `cooperative_perception` | Perceção Cooperativa | Alvo móvel, capturado quando rodeado por 3+ robôs. |
 | `cooperative_door_bypass` | Porta com Alternativa | Como a anterior, mas com desvio lateral — cenário *deceptive*. |
-| `mapa_grande` | Mapa Composto | 103 × 62 m: partida → gargalo + beco em U → quatro salas → porta com alternativa → câmara do ninho. Percurso mínimo de ~155 m. |
+| `mapa_grande` | Mapa Composto | 103 × 62 m: partida → gargalo + beco em U → quatro salas → porta com alternativa → câmara do ninho. Percurso mínimo de ~120–140 m. |
 
 > Fonte única dos cenários e das etiquetas: **`src/scenarios.py`**. A lista esteve
 > espalhada por oito ficheiros e o sétimo cenário chegou a ser treinado e nunca
@@ -135,8 +136,9 @@ triagem completo em `docs/slr/screening.csv` — cada exclusão com o seu motivo
 
 Os três partilham uma única política entre os agentes (*parameter sharing*). A
 observação de cada agente tem `16 + (N−1) × 5 = 111` valores para N=20: direção e
-distância ao ninho, 8 raios de LiDAR (alcance 8 m) e, por vizinho, direção, distância e
-estado de sinalização. A exploração é incentivada **só por *reward shaping*** — não há
+distância ao ninho, 8 raios de LiDAR (alcance 8 m) e, por cada um dos outros agentes,
+direção, distância e estado de sinalização — local quanto aos obstáculos, global quanto
+ao enxame (sem limite de alcance). A exploração é incentivada **só por *reward shaping*** — não há
 curiosidade intrínseca.
 
 ---
@@ -212,12 +214,12 @@ src/
   agents/                  Rede de grafos com atenção (política do controlador evolutivo)
   training/                evo_trainer_3d · train_ppo_3d · train_sac_3d
   scenarios.py             Fonte única dos oito cenários e das suas etiquetas
-scripts/                   90 guiões: campanhas, avaliação, estatística, figuras e as réguas
+scripts/                   100 guiões: campanhas, avaliação, estatística, figuras e as réguas
   README.md                Índice de todos eles, um a um
 dashboard/                 Dashboard NiceGUI (python -m dashboard.app)
 visualization/             Visualizadores 3D (Ursina)
 tests/                     183 testes
-Tese/                      Dissertação LaTeX — 137 páginas
+Tese/                      Dissertação LaTeX — 141 páginas
 Artigo/                    Artigo destilado da dissertação
 docs/                      Protocolo, pré-registos, reprodução, revisão sistemática
 results/                   Dados, modelos e figuras (não versionado — ver REPRODUZIR.md)
