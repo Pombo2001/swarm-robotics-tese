@@ -1506,7 +1506,7 @@ Para fundamentar a opção pelo potencial geodésico no termo de progresso e dia
     \hfill
     \figresultado{0.46}{images/resultados/heatmap_ocupacao_ppo_u_wall.png}{Ocupacao PPO no Muro em U}\\[0.6em]
     \figresultado{0.46}{images/resultados/heatmap_ocupacao_sac_u_wall.png}{Ocupacao SAC no Muro em U}
-    \caption[Densidade de ocupação dos robôs no Muro em U (GNN, PPO e SAC)]{Densidade de ocupação dos robôs no Muro em U (GNN e PPO em cima, SAC em baixo; 6 episódios por painel, escala logarítmica). O GNN contorna a barra do U pela esquerda e o PPO pela direita --- em ambos, um fluxo contínuo até ao ninho, com 476 e 419 chegadas. O SAC não resolve o cenário: a ocupação concentra-se \emph{colada} às faces interiores das paredes verticais, o padrão de agentes presos, e o episódio termina com \emph{0 chegadas}. A escala de cor é normalizada por painel, pelo que as cores comparam a distribuição \emph{dentro} de cada algoritmo, não a magnitude entre eles.}
+    \caption[Densidade de ocupação dos robôs no Muro em U (GNN, PPO e SAC)]{Densidade de ocupação dos robôs no Muro em U (GNN e PPO em cima, SAC em baixo; 6 episódios por painel, escala logarítmica). O GNN contorna a barra do U pela esquerda e o PPO pela direita --- em ambos, um fluxo contínuo até ao ninho, com 476 e 419 chegadas. O SAC não resolve o cenário: a ocupação concentra-se \emph{colada} às faces interiores das paredes verticais, o padrão de agentes presos, e nenhum dos seis episódios tem uma chegada. A escala de cor é normalizada por painel, pelo que as cores comparam a distribuição \emph{dentro} de cada algoritmo, não a magnitude entre eles.}
     \label{fig:res_heatmap_ocup}
 \end{figure}
 
@@ -1791,7 +1791,7 @@ SAC & N/A$^{\dagger}$ & $100\%$ / $71{,}3$ & N/A$^{\dagger}$ & N/A$^{\dagger}$ \
 \label{sec:res_robustez}
 A métrica $R_{robust}$ avalia a resiliência do enxame perante a perda súbita de 10\% dos agentes a meio do episódio (os agentes afetados ficam inertes, deixando de agir e de contar para os requisitos cooperativos). A Figura~\ref{fig:res_robustez} compara as chegadas com e sem falha, em avaliação emparelhada (20 episódios por célula, 3 algoritmos $\times$ 7 cenários) sobre os modelos da campanha final.
 
-O resultado evidencia uma resiliência elevada e \emph{transversal aos paradigmas}: a retenção de chegadas situa-se entre \emph{92\% e 106\%} em todas as 21 combinações algoritmo--cenário com desempenho de base, incluindo a Porta Cooperativa --- notável por exigir três agentes simultâneos para abrir a passagem: o enxame redistribui-se e mantém a função apesar da baixa. O controlador evolutivo retém 92--97\%. (Os valores pontualmente acima de 100\% correspondem a episódios em que a perda de agentes reduziu o congestionamento nas passagens estreitas.) A ausência de degradação catastrófica sugere que o \textit{parameter sharing} e a observação local conferem ao enxame uma redundância funcional implícita: nenhum agente é insubstituível, pelo que a falha parcial é absorvida pela reorganização do coletivo.
+O resultado evidencia uma resiliência elevada e \emph{transversal aos paradigmas}: a retenção de chegadas situa-se entre \emph{92\% e 106\%} em todas as 21 combinações algoritmo--cenário com desempenho de base, incluindo a Porta Cooperativa --- notável por exigir três agentes simultâneos para abrir a passagem: o enxame redistribui-se e mantém a função apesar da baixa. O controlador evolutivo retém 92--97\%. (Os valores pontualmente acima de 100\% correspondem a episódios em que a perda de agentes reduziu o congestionamento nas passagens estreitas.) A ausência de degradação catastrófica sugere que o \textit{parameter sharing} confere ao enxame uma redundância funcional implícita: nenhum agente é insubstituível, pelo que a falha parcial é absorvida pela reorganização do coletivo.
 
 \begin{figure}[!htbp]
     \centering
@@ -2123,7 +2123,7 @@ Para garantir a reprodutibilidade integral das experiências, este anexo reúne 
  & \texttt{sigma} ($\sigma$) & $0{,}1$ ($\times 0{,}999$/geração; $\sigma_{\min}=0{,}03$) \\
  & \texttt{eval\_episodes} ($E$) & $4$ (seeds fixas) \\
  & \texttt{hidden\_dim} ($h$) & $32$ ($\approx 8$k pesos) \\
- & Elitismo & $20\%$ ($e = 6$ genomas) \\
+ & Elitismo & $20\%$ ($n_e = 6$ genomas) \\
  & \texttt{fitness\_food\_weight} & $10\,000$ (peso da chegada em $J$, Eq.~\ref{eq:fitness}) \\
  & \texttt{fitness\_shaping\_amplitude} & $5\,000$ (peso do \textit{homing} terminal em $J$) \\
  & \texttt{novelty\_weight} ($w$) & $0$ (base) / $0{,}5$ (campanhas de \textit{Novelty Search}) \\
