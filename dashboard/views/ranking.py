@@ -25,7 +25,21 @@ CARD = theme.CARD + " p-4"
 _COR_ALGO = {a: config.ALGO_META[a]["color"] for a in config.ALGO_META}
 
 
-def _linha(d, melhor, destacar, ao_escolher=None):
+def _exclusoes():
+    """{(cenário, campanha): motivo} — os mesmos treinos que a Apresentação salta.
+
+    Sem isto, a Overview anunciava como «melhor» nas Quatro Salas o campeão A1 da
+    dosagem adaptativa, que atravessa as paredes pelo teto e que a tese declara
+    contaminado (§7.3). A regra vive num sítio só: `configs/apresentacao.yaml`.
+    """
+    from . import apresentacao  # importado aqui para não criar um ciclo
+    try:
+        return apresentacao.exclusoes()
+    except Exception:
+        return {}
+
+
+def _linha(d, melhor, destacar, ao_escolher=None, motivo_exclusao=None):
     """Uma linha do ranking de um cenário.
 
     Clicar leva a vista a mostrar ESTE treino — que era o ponto da tabela:
@@ -56,6 +70,10 @@ def _linha(d, melhor, destacar, ao_escolher=None):
                     ui.label("na tese").classes("text-[9px] px-1") \
                         .style("border:1px solid #4ade80; border-radius:4px; "
                                "color:#4ade80")
+                if motivo_exclusao:
+                    ui.label("excluído").classes("text-[9px] px-1") \
+                        .style("border:1px solid #f59e0b; border-radius:4px; "
+                               "color:#f59e0b").tooltip(motivo_exclusao)
             desc = data.descricao_sessao(d["campanha"])
             ui.label("%s%s" % (d["campanha"], " · " + desc if desc else "")) \
                 .classes("text-[10px] truncate").style(f"color:{theme.INK_MUTED}")
@@ -91,11 +109,15 @@ def painel(campanha_atual=None, titulo="Qual foi o melhor treino, por cenário",
             "entram."
         ).classes("text-xs mb-3").style(f"color:{theme.INK_MUTED}")
 
+        exc = _exclusoes()
         for cen in config.MAIN_SCENARIO_KEYS:
             linhas = rank.get(cen, [])
             if not linhas:
                 continue
-            melhor = linhas[0]
+            # O melhor é o primeiro que NÃO está excluído; o excluído continua
+            # na lista, marcado, para não parecer que se escondeu um resultado.
+            melhor = next((d for d in linhas if (cen, d["campanha"]) not in exc),
+                          linhas[0])
             rot_cen = config.SCENARIO_LABEL_SHORT.get(cen, cen)
             with ui.expansion().classes("w-full").props("dense") as exp:
                 with exp.add_slot("header"):
@@ -115,4 +137,5 @@ def painel(campanha_atual=None, titulo="Qual foi o melhor treino, por cenário",
                                                 or d["campanha"] in escolhiveis)
                                 else None)
                     _linha(d, melhor, destacar=(d["campanha"] == campanha_atual),
-                           ao_escolher=clicavel)
+                           ao_escolher=clicavel,
+                           motivo_exclusao=exc.get((cen, d["campanha"])))

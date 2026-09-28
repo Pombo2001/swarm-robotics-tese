@@ -1075,7 +1075,8 @@ composto — em oitenta e quatro células, com controlos que excluem a escala da
 observação e os obstáculos como causa. E o mapa é resolúvel: um navegador
 geodésico sem aprendizagem faz cinquenta e três chegadas. Com treino nativo, só
 o evolutivo o resolve, em quatro de vinte e uma execuções — abaixo do limiar
-pré-registado. Os três mapas mostram um episódio de cada: o evolutivo atravessa
+pré-registado. E note-se: o evolutivo já treinou aqui com a novidade doseada
+adaptativamente, o mecanismo que deu vinte e oito em vinte e oito no Muro em U. Os três mapas mostram um episódio de cada: o evolutivo atravessa
 o labirinto até ao ninho; o PPO e o SAC ficam pelo caminho. A resposta é
 negativa e está reportada como negativa. O que a composição degrada é a
 fiabilidade: é a bimodalidade do Muro em U em ponto grande.

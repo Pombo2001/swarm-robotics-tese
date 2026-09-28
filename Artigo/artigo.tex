@@ -543,7 +543,8 @@ sete cenários faz uma única chegada, e três condições de controlo (normaliz
 das distâncias, obstáculos dispersos e dimensões da observação associadas à
 porta) devolvem, célula a célula, o mesmo: $84$ células a zero em $1680$
 episódios. Com treino nativo ($21$ execuções por controlador, $780$ minutos para
-o evolutivo e $192$ para os métodos de gradiente), só o evolutivo resolve o mapa
+o evolutivo e $192$ para os métodos de gradiente), só o evolutivo, já com a
+novidade doseada adaptativamente, resolve o mapa
 --- em $4$ das $21$ execuções, contra $0$ de $21$ do PPO e $0$ de $21$ do SAC
 ---, abaixo do limiar de $15$ execuções convergentes fixado antes dos dados: a
 resposta é \textbf{negativa} e reporta-se com a contagem à vista. A leitura está
