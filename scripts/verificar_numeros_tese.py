@@ -2535,7 +2535,7 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"\(T2\).{0,80}?\$7/7\$ (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) a 100\\% e "
                 r"\$([\d{},]+) \\pm ([\d{},]+)\$"},
-         {"re": r"manteve os \$7/7\$ (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) no Muro em U "
+         {"re": r"manteve (?:os|as) \$7/7\$ (?:\\\\textit\\{runs?\\}|execuç(?:ão|ões)) no Muro em U "
                 r"\(\$([\d{},]+) \\pm ([\d{},]+)\$"},
      ]},
     {"rot": "Melhor bypass da dissertação (adaptativo, 390 min)",
