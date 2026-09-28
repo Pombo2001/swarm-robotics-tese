@@ -264,5 +264,18 @@
   "fonte": "OpenAlex",
   "ambiguo": true
  },
- "duarte2014jbotevolver": {}
+ "duarte2014jbotevolver": {},
+ "such2017deep": {
+  "titulo": "Deep Neuroevolution: Genetic Algorithms Are a Competitive Alternative for Training Deep Neural Networks for Reinforcement Learning",
+  "autores": [
+   "Felipe Petroski Such",
+   "Vashisht Madhavan",
+   "Edoardo Conti",
+   "Joel Lehman",
+   "Kenneth O. Stanley",
+   "Jeff Clune"
+  ],
+  "ano": "2017",
+  "fonte": "arXiv"
+ }
 }
