@@ -341,6 +341,15 @@
 % permite um alongamento de emergência dos espaços antes de transbordar a margem.
 \setlength{\emergencystretch}{1.5em}
 
+% Marcadores do PDF da Lista de Figuras e da Lista de Quadros: a amsbook escreve a
+% entrada do índice sem criar âncora, e o hyperref apontava-as para a última âncora
+% que havia (a página do Abstract). O \phantomsection entra já depois da mudança
+% de página feita pelo \chapter, pelo que não mexe na paginação.
+\makeatletter
+\patchcmd{\@starttoc}{\ifx\contentsname#2}{\phantomsection\ifx\contentsname#2}{}%
+  {\typeout{[marcadores] AVISO: patch ao \string\@starttoc\space falhou}}
+\makeatother
+
 % Traço das capas na cor do modelo oficial (Template Capa ISTA.docx: RGB 65,80,160
 % com 65% de opacidade sobre branco).
 \definecolor{iscteLinha}{RGB}{131,141,193}
@@ -2062,7 +2071,8 @@ A partir das limitações identificadas (Secção~\ref{sec:limitacoes}) e do est
     \item \textbf{Aprendizagem por currículo como via alternativa de descoberta:} O grupo responsável pelo único estudo da revisão sistemática que compara os dois paradigmas mitiga o sobreajuste do RL a condições não vistas com aprendizagem por currículo \cite{iskandar2025phd}. Aplicá-la aos cenários decetivos desta bateria --- arenas progressivamente mais fechadas, culminando no Muro em U e na Porta com Alternativa --- permitiria confrontar currículo e pressão por novidade, dois mecanismos distintos para o mesmo problema (a \emph{descoberta}), sob o protocolo estatístico e o orçamento igualado aqui estabelecidos.
 \end{enumerate}
 
-\printbibliography[title={Referências}]
+% «Referências Bibliográficas», com o nome que as normas do Iscte lhe dão (§1.xi).
+\printbibliography[title={Referências Bibliográficas}]
 
 % --- APÊNDICES ---
 \appendix
