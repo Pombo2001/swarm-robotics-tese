@@ -125,7 +125,7 @@ não um paradigma, e em princípio transponível para qualquer um deles.
 
 **«A observação é mesmo local?»** (§4.2.2 · §7.3)
 
-Não inteiramente, e a tese di-lo (§4.2.2, p. 31, e §7.3, p. 89). **Local é a perceção do ambiente**: os obstáculos só se veem pelo LiDAR de 8 m, sem mapa. **A do enxame é global**: cada robô recebe a direção, a distância e o sinal de comunicação de *todos* os outros, sem limite de alcance nem oclusão pelas paredes. É igual para os três controladores, pelo que não favorece nenhum na comparação. A consequência honesta: a escalabilidade foi medida sem as restrições de comunicação de um enxame real. Se insistirem: a atenção já aprende a pesar cada vizinho, e um corte por raio seria a extensão natural. Não foi medido.
+Não inteiramente, e a tese di-lo (§4.2.2, p. 32, e §7.3, p. 89). **Local é a perceção do ambiente**: os obstáculos só se veem pelo LiDAR de 8 m, sem mapa. **A do enxame é global**: cada robô recebe a direção, a distância e o sinal de comunicação de *todos* os outros, sem limite de alcance nem oclusão pelas paredes. É igual para os três controladores, pelo que não favorece nenhum na comparação. A consequência honesta: a escalabilidade foi medida sem as restrições de comunicação de um enxame real. Se insistirem: a atenção já aprende a pesar cada vizinho, e um corte por raio seria a extensão natural. Não foi medido.
 
 ---
 

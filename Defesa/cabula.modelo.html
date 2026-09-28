@@ -254,7 +254,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
 
 <header class="topo">
   <div class="topo-in">
-    <div class="marca">Cábula da Defesa <span>· 141 pp · 25 set 2026</span></div>
+    <div class="marca">Cábula da Defesa <span>· 141 pp · 28 set 2026</span></div>
     <button class="interruptor" id="btn-teste" aria-pressed="false">
       <span class="pastilha" aria-hidden="true"></span> Modo teste
     </button>
@@ -489,7 +489,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     <div class="cab"><span class="n">05</span><h2>O que o agente vê, e o que faz</h2></div>
     <p class="prosa">A observação é <strong>egocêntrica</strong> — relativa à orientação atual do próprio robô —
       e <strong>local e parcial quanto ao ambiente</strong> (os obstáculos só pelo LiDAR), mas
-      <strong>global quanto ao enxame</strong>: cada robô recebe todos os outros (§4.2.2, p. 31). A dimensão é <strong>d = 16 + (N−1)×5 = 111</strong> para N=20; é esta
+      <strong>global quanto ao enxame</strong>: cada robô recebe todos os outros (§4.2.2, p. 32). A dimensão é <strong>d = 16 + (N−1)×5 = 111</strong> para N=20; é esta
       fórmula que torna a MLP incompatível com N≠20.</p>
 
     <div class="bloco">
@@ -964,7 +964,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       limiar pré-registado de 15, com 1,7 chegadas/ep; o PPO e o SAC fazem 0/21. Em 19 das 21 execuções o melhor
       <em>fitness</em> ainda subia no último quinto dos 780 min, com a geração do máximo a cair, em mediana, a 95 %
       do orçamento. E os 780 min, pensados para igualar gerações aos sete cenários, deram <strong>165 gerações</strong>
-      contra ~550 nos sete cenários: o pré-registo previa 13,7 com uma estimativa de custo errada.</p>
+      contra ~550 nos sete cenários: o pré-registo, com uma estimativa de custo errada, contava com 13,7 gerações aqui e ~14 nos sete cenários.</p>
     <figure><div class="chapa"><img src="__IMG_mg_curv__" alt="Curvas de treino no mapa composto"></div>
       <figcaption>As curvas ainda a subir no fim do orçamento — é isto que condiciona a leitura do negativo.</figcaption></figure>
     <div class="bloco">
@@ -1007,7 +1007,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
       <div class="qa-item"><div class="qa-p"><span class="cod">método</span><span>«Como sabemos que os números da tese são os dos dados?»</span></div>
         <div class="qa-r resp">Porque não são escritos à mão: um conjunto de verificadores lê o .tex, recalcula cada valor a partir dos CSV canónicos e recusa o commit se algum deixar de bater. E os verificadores são eles próprios postos à prova — o ensaio estraga a tese de propósito, 92 mutações, uma de cada vez, e exige que cada uma seja apanhada.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">§4.2.2 · §7.3</span><span>«A observação é mesmo local?»</span></div>
-        <div class="qa-r resp">Não inteiramente, e a tese di-lo (§4.2.2, p. 31, e §7.3, p. 89). <strong>Local é a perceção do ambiente</strong>: os obstáculos só se veem pelo LiDAR de 8 m, sem mapa. <strong>A do enxame é global</strong>: cada robô recebe a direção, a distância e o sinal de comunicação de <em>todos</em> os outros, sem limite de alcance nem oclusão pelas paredes. É igual para os três controladores, pelo que não favorece nenhum na comparação. A consequência honesta: a escalabilidade foi medida sem as restrições de comunicação de um enxame real. Se insistirem: a atenção já aprende a pesar cada vizinho, e um corte por raio seria a extensão natural. Não foi medido.</div></div>
+        <div class="qa-r resp">Não inteiramente, e a tese di-lo (§4.2.2, p. 32, e §7.3, p. 89). <strong>Local é a perceção do ambiente</strong>: os obstáculos só se veem pelo LiDAR de 8 m, sem mapa. <strong>A do enxame é global</strong>: cada robô recebe a direção, a distância e o sinal de comunicação de <em>todos</em> os outros, sem limite de alcance nem oclusão pelas paredes. É igual para os três controladores, pelo que não favorece nenhum na comparação. A consequência honesta: a escalabilidade foi medida sem as restrições de comunicação de um enxame real. Se insistirem: a atenção já aprende a pesar cada vizinho, e um corte por raio seria a extensão natural. Não foi medido.</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">§3 · §7.3</span><span>«Como sabe que a escala é da representação e não do otimizador?» / «Porque não truncaram aos 19 vizinhos mais próximos?»</span></div>
         <div class="qa-r resp">Há uma parte estrutural e outra de inferência. <strong>A estrutural</strong>: uma MLP de entrada fixa (ℝ¹¹¹) não pode receber N≠20, seja qual for o otimizador. Por isso o PPO e o SAC nem entram no teste. <strong>A inferência</strong>: que a GNN escalaria igual se fosse treinada por gradiente. Apoia-se no mecanismo (o número de parâmetros não depende de N; Chen et al.) e não numa experiência minha. A tese diz que os dois fatores não ficam isolados experimentalmente. Truncar ou completar a observação daria uma MLP escalável, e seria uma <em>baseline</em> legítima. Não a fiz. A extensão prioritária é a atenção numa política de gradiente (trabalho futuro n.º 2, §7.5).</div></div>
       <div class="qa-item"><div class="qa-p"><span class="cod">Quadro 6.8</span><span>«São 21 testes sem correção para comparações múltiplas.»</span></div>
@@ -1214,7 +1214,7 @@ ol.lim b{color:var(--tinta); font-weight:600}
     </table></div>
   </section>
 
-  <p class="pe">Escrita contra o PDF de 141 páginas de 25 de setembro de 2026, já na formatação das normas do Iscte; as páginas citadas são as <b>impressas no rodapé</b> da dissertação — soma 22 para chegar à página do leitor de PDF. Companheira dos slides
+  <p class="pe">Escrita contra o PDF de 141 páginas de 28 de setembro de 2026, já na formatação das normas do Iscte; as páginas citadas são as <b>impressas no rodapé</b> da dissertação — soma 22 para chegar à página do leitor de PDF. Companheira dos slides
     (<code>Defesa/slides_defesa.pptx</code>, 20 de apresentação e 6 de reserva, com notas de orador) e das fontes em
     <code>docs/RESUMO_PARA_DECORAR.md</code> e <code>docs/DEFESA_PERGUNTAS.md</code>.
     Gerada por <code>Defesa/gerar_cabula.py</code> a partir de <code>Defesa/cabula.modelo.html</code>;
