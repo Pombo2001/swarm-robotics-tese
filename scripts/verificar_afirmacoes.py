@@ -139,7 +139,7 @@ def campanha_final():
         confere("células a 100%% em todos os episódios", v[0], (cel == 1.0).sum(), 0)
         confere("total de células", v[1], len(cel), 0)
 
-    v = do_tex(r"não o aprende de todo \(GNN (\d)/7 execuções, PPO (\d)/7, SAC (\d)/7\)",
+    v = do_tex(r"não o aprende de todo[;(] ?GNN (\d)/7 execuções, PPO (\d)/7, SAC (\d)/7\)",
                "Muro em U por algoritmo", 3)
     if v:
         u = d[d.Scenario == "u_wall"]
@@ -343,7 +343,7 @@ def diagnostico_qi7():
     # final, não o orçamento) ficavam de fora do intervalo citado. Passa a
     # contar-se quantas param abaixo de cada limiar, que é o que se afirma.
     v = do_tex(r"há \$(\d+)\$ execuções que param a menos de \$(\d+)\$\\,m do ninho "
-               r"--- \$(\d+)\$ delas a menos de \$(\d+)\$\\,m --- e não entram nele "
+               r"\(\$(\d+)\$ delas a menos de \$(\d+)\$\\,m\) e não entram nele "
                r"mesmo com o dobro do tempo", "as que param à porta", 4)
     if v:
         h = pd.read_csv(HORIZONTE)

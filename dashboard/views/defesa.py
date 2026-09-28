@@ -219,7 +219,7 @@ def _respostas():
     i = tex.find("\\label{sec:resposta_qi}")
     bloco = tex[i:tex.find("\\section{Limitações", i)] if i >= 0 else ""
     saida = {}
-    padrao = (r"\\item\[QI(\d) --- ([^\]]*)\]\s*(.+?)"
+    padrao = (r"\\item\[QI(\d)(?: ---|:) ([^\]]*)\]\s*(.+?)"
               r"(?=\\item\[QI|\\end\{description\}|\\end\{itemize\}|\Z)")
     for m in re.finditer(padrao, bloco, re.DOTALL):
         saida[int(m.group(1))] = _limpar(m.group(3))

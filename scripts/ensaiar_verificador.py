@@ -97,8 +97,8 @@ MUTACOES = [
      "195 minutos com $\\approx 30$ núcleos",
      "195 minutos com $\\approx 24$ núcleos", "discussao"),
     ("intervalo de retenção com paredes (58--90 -> 58--95)",
-     "reter $58$--$90\\%$ nos cenários com paredes",
-     "reter $58$--$95\\%$ nos cenários com paredes", "discussao"),
+     "a eficiência per capita retém $58$--$90\\%$ nos cenários com paredes",
+     "a eficiência per capita retém $58$--$95\\%$ nos cenários com paredes", "discussao"),
     ("o Sandbox do GNN (5/7 -> 6/7)",
      "cenários abertos (Sandbox 5/7)", "cenários abertos (Sandbox 6/7)",
      "discussao"),
@@ -189,8 +189,8 @@ MUTACOES = [
     # nenhum verificador que compare com os CSV o veria — o número do sítio
     # onde o resultado é produzido continua certo.
     ("eco da QI6: o p do Muro em U com peso fixo (0,026 -> 0,036)",
-     "(Mann--Whitney $p=0{,}026$, $\\delta=+0{,}71$)",
-     "(Mann--Whitney $p=0{,}036$, $\\delta=+0{,}71$)", "coerencia"),
+     "; Mann--Whitney $p=0{,}026$, $\\delta=+0{,}71$)",
+     "; Mann--Whitney $p=0{,}036$, $\\delta=+0{,}71$)", "coerencia"),
     ("eco da QI6: o δ da Porta com Alternativa (-1,00 -> -0,90)",
      "$p=0{,}0006$, $\\delta=-1{,}00$), desmascarando",
      "$p=0{,}0006$, $\\delta=-0{,}90$), desmascarando", "coerencia"),
@@ -237,8 +237,8 @@ MUTACOES = [
      "\\item[\\textbf{QI8.}] \\textbf{Deceção e procura por novidade}",
      "questoes"),
     ("uma questão perguntada deixa de ter resposta",
-     "\\item[QI3 --- Robustez a falhas]",
-     "\\item[QI9 --- Robustez a falhas]", "questoes"),
+     "\\item[QI3: Robustez a falhas]",
+     "\\item[QI9: Robustez a falhas]", "questoes"),
     # Os ecos do parágrafo de abertura das Conclusões
     # O parágrafo reconta oito resultados de uma vez e é dos mais lidos da
     # dissertação. Cada mutação estraga só o eco, nunca o sítio de origem.

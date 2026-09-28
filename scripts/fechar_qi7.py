@@ -129,8 +129,8 @@ def texto_m1(m):
     if tudo_zero:
         return ("\\textbf{M1 (magnitude).} Com as %d execuções de cada "
                 "algoritmo a $0{,}00$ recolhas por episódio, o teste de "
-                "Mann-Whitney sobre médias por execução não tem conteúdo --- "
-                "não há um único par discordante ---, e o $\\delta$ de Cliff é "
+                "Mann-Whitney sobre médias por execução não tem conteúdo "
+                "(não há um único par discordante), e o $\\delta$ de Cliff é "
                 "identicamente nulo. O que sustenta a leitura é a contagem de "
                 "execuções convergentes (M2), não a comparação de magnitudes."
                 % m["n_runs"])

@@ -200,7 +200,7 @@ def f1(texto):
             le(r"das \$?(\d+)\$? células da condição natural", texto,
                "células naturais"), tol=0.01)
     compara("episódios da condição natural", float(len(natural)),
-            le(r"\$(\d+)\$ episódios\n---", texto, "episódios naturais"),
+            le(r"\$(\d+)\$ episódios\),\n", texto, "episódios naturais"),
             tol=0.01)
 
     total_cel = sum(d.groupby([col_cen, col_alg]).ngroups for d in dfs.values())
@@ -486,8 +486,8 @@ def trabalho_futuro():
             # a 2,3, 4,1 e 4,9 m, que são as que mais sustentam o argumento — o
             # que falta é a aproximação final, não o orçamento.
             m_int = re.search(r"há \$(\d+)\$ execuções que param a menos de "
-                              r"\$(\d+)\$\\,m do ninho --- \$(\d+)\$ delas a menos "
-                              r"de \$(\d+)\$\\,m --- e não entram", item)
+                              r"\$(\d+)\$\\,m do ninho \(\$(\d+)\$ delas a menos "
+                              r"de \$(\d+)\$\\,m\) e não entram", item)
             if m_int is None:
                 falhas.append("Trabalhos Futuros: não encontrei a frase das "
                               "execuções presas perto do ninho")

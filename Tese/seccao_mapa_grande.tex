@@ -42,7 +42,7 @@
 \subsection{Motivação e Questão}
 
 Os sete cenários analisados até aqui têm uma propriedade comum: cada um isola
-\emph{uma} dificuldade --- um gargalo, um beco decetivo, quatro salas, uma
+\emph{uma} dificuldade: um gargalo, um beco decetivo, quatro salas, uma
 porta que exige cooperação. Essa escolha é o que torna a comparação
 interpretável, porque atribui cada diferença de desempenho a uma causa
 identificável. Mas levanta a objeção mais natural a qualquer \textit{benchmark}
@@ -64,34 +64,34 @@ o controlador de grafo transferir, o argumento da representação passa de
 \subsection{O Ambiente}
 
 O oitavo cenário (\texttt{mapa\_grande}) é um labirinto composto de
-$103 \times 62$\,m inscrito numa arena de raio $60$\,m --- contra os $15$\,m de
+$103 \times 62$\,m inscrito numa arena de raio $60$\,m, contra os $15$\,m de
 raio dos sete cenários anteriores. Está organizado em cinco zonas, de oeste para
 este, que o enxame tem de atravessar por ordem:
 
 \begin{enumerate}
-    \item \textbf{S --- sala de partida:} espaço aberto com obstáculos dispersos,
+    \item \textbf{S (sala de partida):} espaço aberto com obstáculos dispersos,
           onde os agentes nascem. É a única zona com analogia direta ao Sandbox.
-    \item \textbf{A --- gargalo e beco em U:} uma passagem estreita seguida de um
+    \item \textbf{A (gargalo e beco em U):} uma passagem estreita seguida de um
           bolso em U com a boca virada a \emph{oeste}, isto é, para o lado de
           onde o enxame chega. A orientação é deliberada: como a bússola de
           \textit{homing} é euclidiana, um bolso só constitui armadilha quando a
           linha reta entre agente e ninho lhe entra pela boca (ver a nota
           metodológica no fim desta secção).
-    \item \textbf{B --- quatro salas:} uma cruz completa (eixos horizontal e
+    \item \textbf{B (quatro salas):} uma cruz completa (eixos horizontal e
           vertical) com quatro aberturas que ligam os quadrantes em ciclo, sem
           atalho pelo centro, replicando a topologia do cenário
           \textit{Quatro Salas} à escala do mapa.
-    \item \textbf{C --- porta cooperativa com alternativa:} o painel que só abre
+    \item \textbf{C (porta cooperativa com alternativa):} o painel que só abre
           com três agentes em simultâneo na zona de empurrão, e um corredor
           alternativo mais longo. Com o painel fechado, o percurso dos agentes ao
           ninho encarece $20\%$ ($1{,}205\times$, medido sobre as posições de
           partida): cooperar é vantajoso, não obrigatório.
-    \item \textbf{D --- câmara do ninho:} o objetivo.
+    \item \textbf{D (câmara do ninho):} o objetivo.
 \end{enumerate}
 
-Do centro da zona de partida ao ninho vão $128{,}8$\,m --- os agentes nascem
+Do centro da zona de partida ao ninho vão $128{,}8$\,m (os agentes nascem
 espalhados por uma caixa, pelo que o percurso varia entre $\approx 121$\,m para o
-mais próximo e $\approx 139$\,m para o mais afastado --- e o ponto mais distante
+mais próximo e $\approx 139$\,m para o mais afastado), e o ponto mais distante
 do ninho em todo o mapa fica a $155{,}4$\,m, contra $34$\,m do
 \textit{Quatro Salas}. A
 Figura~\ref{fig:mapa_grande_planta} mostra a planta, gerada a partir da
@@ -127,7 +127,7 @@ um consta do pré-registo da campanha:
           isolar a navegação.
 \end{itemize}
 
-Tudo o resto --- recompensas, física, LiDAR, população, $\sigma$ --- é idêntico
+Tudo o resto (recompensas, física, LiDAR, população, $\sigma$) é idêntico
 ao das campanhas anteriores; o GNN treina com a dosagem adaptativa da
 novidade (Secção~\ref{sec:res_novelty}).
 
@@ -138,11 +138,11 @@ leitura da primeira não depende da segunda e o contraste entre ambas é, em si,
 um resultado:
 
 \begin{description}
-    \item[F1 --- Zero-Shot de topologia] Os campeões dos sete cenários
+    \item[F1: Zero-Shot de topologia] Os campeões dos sete cenários
           (Secção~\ref{sec:res_ptask}) são avaliados neste mapa \emph{sem
           qualquer retreino}, $20$ episódios por célula, com sementes
           emparelhadas. Responde a ``o que já sabíamos transfere?''.
-    \item[F2 --- Treino nativo] Os três algoritmos treinam de raiz no mapa,
+    \item[F2: Treino nativo] Os três algoritmos treinam de raiz no mapa,
           $21$ execuções independentes com sementes $1$--$21$, e são avaliados no
           mesmo protocolo determinístico das restantes campanhas.
 \end{description}
@@ -151,12 +151,12 @@ O número de execuções do F2 foi elevado de $7$ para $21$ antes de existir
 qualquer dado de avaliação (emenda~19 do pré-registo). A razão é de recursos e
 não de resultado: o desenho original ocupava menos de um quarto da janela de
 servidor disponível até ao limite de integração. O acréscimo foi todo para
-\emph{execuções} e nenhum para minutos por execução --- os $780$ minutos do
+\emph{execuções} e nenhum para minutos por execução: os $780$ minutos do
 controlador evolutivo foram calculados para igualar \emph{gerações} às campanhas
 fechadas dos sete cenários (o que, como se mostra adiante, não se verificou). As métricas M1--M3, a regra de decisão e os compromissos de reporte
 ficaram como estavam; em particular, \emph{M2 permanece descritiva}. Com
 $n = 21$ um teste exato sobre proporções de convergência passaria a ter poder, e
-é precisamente por isso que se declara que não se acrescenta: converter um
+é por isso mesmo que se declara que não se acrescenta: converter um
 descritivo em teste depois de subir o $n$ é escolher o teste com o $n$ na mão.
 
 O orçamento de F2 não iguala minutos, mas \emph{gerações de evolução}, que é a
@@ -173,14 +173,14 @@ verificou: as $21$ execuções fecharam com $165{,}3$ gerações em média (ampl
 de $132$ a $191$), contra cerca de $550$ por execução, com o mesmo orçamento de
 $195$ minutos, nas execuções do controlador evolutivo no Muro em U. Neste mapa, o
 controlador evolutivo dispôs, portanto, de menos de um terço das gerações que teve
-nos sete cenários --- o que reforça a leitura de que o orçamento não chegou ao
+nos sete cenários, o que reforça a leitura de que o orçamento não chegou ao
 planalto (Secção~\ref{sec:limitacoes_trabalho_futuro}).
 
 \subsection{Transferência sem Retreino (F1)}
 
-O resultado do F1 dispensa quadro: das $21$ células da condição natural --- sete
-cenários de origem $\times$ três algoritmos, $20$ episódios cada, $420$ episódios
---- \emph{todas} as $21$ registam $0{,}00$ chegadas por episódio e $0\%$ de
+O resultado do F1 dispensa quadro: das $21$ células da condição natural (sete
+cenários de origem $\times$ três algoritmos, $20$ episódios cada, $420$ episódios),
+\emph{todas} as $21$ registam $0{,}00$ chegadas por episódio e $0\%$ de
 sucesso. Nenhum dos $21$ campeões faz uma única chegada ao ninho no mapa composto sem
 retreino, e o mesmo se verifica nas três condições de controlo, o que perfaz
 $84$ células a zero em $1680$ episódios.
@@ -188,9 +188,9 @@ $84$ células a zero em $1680$ episódios.
 A leitura desta grelha exige cuidado, e o pré-registo fixa-a antes dos dados: um
 zero no F1 admite \emph{quatro} causas e apenas uma é a pergunta da QI7. Além
 da topologia composta, a mesma célula a zero pode resultar de (i) a escala da
-observação --- as distâncias são normalizadas pelo raio da arena, que aqui é
+observação: as distâncias são normalizadas pelo raio da arena, que aqui é
 quatro vezes maior, pelo que o mesmo modelo recebe todas as distâncias
-comprimidas $4\times$; (ii) os \emph{obstáculos} --- dos oito cenários, apenas
+comprimidas $4\times$; (ii) os \emph{obstáculos}: dos oito cenários, apenas
 o Sandbox e este têm obstáculos dispersos, pelo que um campeão de labirinto nunca
 encontrou um em toda a sua otimização; e (iii) as quatro dimensões da observação
 associadas à porta, identicamente nulas no treino de quem nunca teve porta e
@@ -198,9 +198,9 @@ ativas neste mapa.
 
 Nenhuma das três causas alternativas explica o resultado. Cada condição de
 controlo repete as mesmas $21$ células com \emph{uma} alteração e o resto
-bit-a-bit igual --- normalizar as distâncias pelo raio da arena de treino em vez
+bit-a-bit igual (normalizar as distâncias pelo raio da arena de treino em vez
 do raio deste mapa, remover os obstáculos dispersos, e zerar as quatro dimensões
-da observação associadas à porta --- e as três devolvem, célula a célula,
+da observação associadas à porta), e as três devolvem, célula a célula,
 exatamente o mesmo: $0{,}00$ chegadas por episódio, sem uma única célula
 ``ressuscitada''. Com as $21$ células a zero nas duas condições de cada
 comparação emparelhada, nem o teste de Wilcoxon nem o $\delta$ de Cliff têm
@@ -215,19 +215,19 @@ Duas causas adicionais, que a geometria tridimensional do simulador torna
 plausíveis, foram excluídas por medição direta e não figuram entre as quatro do
 pré-registo por não terem sido antecipadas. A primeira é o \emph{limite
 vertical}: os sete cenários de origem não o têm, e os controladores usam a
-dimensão vertical de forma substancial durante o treino --- nos episódios
+dimensão vertical de forma substancial durante o treino (nos episódios
 registados para inspeção, a altitude média dos agentes vai de $0{,}13$ a
-$5{,}67$\,m e chega a máximos de $14{,}6$\,m ---, pelo que a restrição a
+$5{,}67$\,m e chega a máximos de $14{,}6$\,m), pelo que a restrição a
 $\pm 2$\,m imposta neste mapa altera a dinâmica em que essas políticas foram
 otimizadas. Repetindo a avaliação com o limite vertical removido (isto é, com a
-casca esférica da arena como único limite), quatro campeões evolutivos --- os do
-Muro em U, Gargalo, Quatro Salas e Sandbox --- sobre três sementes cada mantêm
+casca esférica da arena como único limite), quatro campeões evolutivos (os do
+Muro em U, Gargalo, Quatro Salas e Sandbox), sobre três sementes cada mantêm
 $0{,}00$ chegadas por episódio, exatamente como na condição com limite. O limite
 vertical não é, portanto, o que explica o zero. A segunda é a
 \emph{impossibilidade geométrica de chegar ao ninho} discutida nas limitações: também
 essa fica excluída, porque a distância mínima ao ninho \emph{na horizontal},
 tomada sobre os vinte agentes e todos os passos do episódio, fica entre $37$ e
-$79$\,m num percurso mínimo de $\approx 121$--$139$\,m --- os agentes não chegam sequer à
+$79$\,m num percurso mínimo de $\approx 121$--$139$\,m: os agentes não chegam sequer à
 vizinhança do ninho, quanto mais a precisar de descer para lá entrar. Os mesmos
 modelos, nos seus cenários de origem, aproximam-se até $1{,}4$\,m do ninho e
 fazem entre $67$ e $137$ chegadas por episódio. O que falha na transferência é a
@@ -265,7 +265,7 @@ fim''. A Figura~\ref{fig:mapa_grande_rastos} desfaz essa ambiguidade
 mostrando, para um episódio de cada controlador, o percurso de todos os agentes
 sobre a planta. Os três episódios partilham as sementes e o horizonte; para o
 PPO e o SAC escolheu-se deliberadamente a \emph{melhor} das $21$ execuções
---- a que mais se aproxima do ninho ---, para que a comparação não dependa de
+(a que mais se aproxima do ninho), para que a comparação não dependa de
 uma execução particularmente má.
 
 \begin{figure}[!htbp]
@@ -276,8 +276,8 @@ uma execução particularmente má.
       cada um dos $20$ agentes ao longo de um episódio completo ($2000$ passos),
       sobre a planta do mapa. Pontos brancos: posições iniciais; pontos cheios:
       posições finais. O controlador de grafo atravessa as cinco zonas e
-      regressa ao ninho --- os segmentos retos são reposições após cada chegada
-      ---, ao passo que o PPO se concentra na zona das quatro salas e o SAC não
+      regressa ao ninho (os segmentos retos são reposições após cada chegada),
+      ao passo que o PPO se concentra na zona das quatro salas e o SAC não
       transpõe consistentemente o gargalo da zona A. Os episódios são os mesmos
       que a instrumentação por distância geodésica quantifica: sobre $21$
       execuções $\times$ $3$ episódios, a fração que alcança a passagem para a
@@ -330,15 +330,15 @@ fiável: 4 das $21$ execuções atingem pelo menos uma chegada e
 o pré-registo fixou. Pela regra de decisão pré-comprometida, \emph{a QI7 não
 sobe a resultado afirmativo}, e o número de execuções convergentes é declarado
 aqui para que quem prefira outro critério o tenha à frente. A distribuição
-entre execuções é o resultado, e não a média: média de $8{,}9$ chegadas por episódio entre as que chegam ao ninho (amplitude de $7{,}6$ a $10{,}6$), contra $0{,}00$ nas restantes --- a distribuição é de tudo-ou-nada: as execuções que resolvem o mapa resolvem-no com magnitude comparável entre si.
+entre execuções é o resultado, e não a média: média de $8{,}9$ chegadas por episódio entre as que chegam ao ninho (amplitude de $7{,}6$ a $10{,}6$), contra $0{,}00$ nas restantes. A distribuição é de tudo-ou-nada: as execuções que resolvem o mapa resolvem-no com magnitude comparável entre si.
 
 Esta é a assinatura que a dissertação já documentou no Muro em U
 (Secção~\ref{sec:res_boxplots}), onde a mesma configuração ora resolve o
 cenário por completo ora fica a zero, e onde a média entre execuções não
 descreve nenhuma execução real. O que o mapa composto acrescenta é que a
 bimodalidade \emph{sobrevive à escala}: multiplicar por quatro o raio da arena
-e compor quatro dificuldades não a substitui por um colapso uniforme --- o que
-seria a hipótese natural --- mas amplia a fração de execuções que ficam do lado
+e compor quatro dificuldades não a substitui por um colapso uniforme, o que
+seria a hipótese natural, mas amplia a fração de execuções que ficam do lado
 errado. A leitura da QI7 é, portanto, intermédia: as conclusões dos
 cenários isolados transferem-se \emph{parcialmente} e ao preço da fiabilidade,
 e é sobretudo a fiabilidade entre execuções que a composição degrada.
@@ -347,11 +347,11 @@ Resta responder à pergunta nos termos em que ela foi posta na abertura desta
 secção, porque é aí que o resultado negativo pode ser lido a mais do que vale:
 ele \emph{não retira} ao argumento da representação o que a
 Secção~\ref{sec:res_scale} lhe deu. A invariância à \emph{cardinalidade} do
-enxame continua medida e continua total --- $100\%$ de sucesso nas $28$
-combinações cenário $\times$ dimensão, sem retreino ---, e nada neste mapa a
+enxame continua medida e continua total ($100\%$ de sucesso nas $28$
+combinações cenário $\times$ dimensão, sem retreino), e nada neste mapa a
 contradiz: o que aqui falha não é transferir para mais agentes, é aprender uma
 topologia composta. O que este cenário mostra é que a invariância a $N$
-\emph{não se estende} à composição topológica --- uma arquitetura invariante ao
+\emph{não se estende} à composição topológica: uma arquitetura invariante ao
 número de agentes não é, por isso, invariante à estrutura do ambiente. São duas
 invariâncias diferentes, e a distinção entre a QI2 e a QI7 passa a ser a forma de
 as medir em separado.
@@ -359,17 +359,17 @@ as medir em separado.
 Sob esta leitura, a resposta à QI7 que transita para as Conclusões é uma
 condição, e não um veredicto: um enxame treinado de raiz resolve o mapa composto em
 4/$21$ tentativas de treino independentes, pelo que qualquer
-aplicação teria de treinar várias vezes e selecionar --- que é exatamente a
+aplicação teria de treinar várias vezes e selecionar, que é exatamente a
 prática que a Secção~\ref{sec:res_novelty} mostra ser dispensável nos dois
 cenários de deceção quando a exploração é doseada adaptativamente; aqui, com
 o GNN já a treinar com essa dosagem, a fiabilidade não se recuperou.
-A objeção vizinha --- a de que \emph{faltou treino} --- é uma
+A objeção vizinha, a de que \emph{faltou treino}, é uma
 pergunta diferente desta, e o braço exploratório de orçamento longo que o
 pré-registo previa para lhe responder \emph{não chegou a ser lançado}
 (emenda~24, 13 de agosto): com o limiar de decisão já fora de alcance, três
 execuções adicionais não alterariam o veredicto e competiriam pelo tempo de
 máquina que faltava ao braço principal. Ela responde-se, por isso, por medição
-sobre as $21$ execuções que existem --- e a medição \emph{sustenta} a objeção em
+sobre as $21$ execuções que existem, e a medição \emph{sustenta} a objeção em
 vez de a afastar: em $19$ das $21$ o melhor \textit{fitness} surge nos últimos
 $20\%$ das gerações, o que indica que o orçamento não chegou ao planalto
 (Secção~\ref{sec:limitacoes_trabalho_futuro}).
@@ -384,7 +384,7 @@ Primeiro, as duas condições de normalização da observação estão \emph{amb
 fora da distribuição de treino, de maneiras opostas: na condição natural as
 distâncias chegam comprimidas $4\times$; na condição de controlo passam a valer
 mais de $1$ (até $\approx 2{,}5$), valor que nenhum modelo viu em treino. Não há
-terceira hipótese sem retreinar --- e retreinar é, precisamente, a fase F2.
+terceira hipótese sem retreinar, e retreinar é, precisamente, a fase F2.
 
 Segundo, o peso da evidência está no tamanho de efeito ($\delta$ de Cliff) e não
 em cruzar o limiar de $0{,}05$. Com $n = 21$ o teste sobre médias por execução
@@ -397,7 +397,7 @@ Terceiro, o simulador é tridimensional e este mapa é, por construção, planar
 labirinto vive num plano, o \textit{LiDAR} varre na horizontal, e tanto o bónus de
 exploração como o campo geodésico que suporta a recompensa de progresso são
 calculados na projeção horizontal. A dimensão vertical não contribui, portanto,
-para nada do que a QI7 mede --- e por isso o movimento dos agentes é limitado a
+para nada do que a QI7 mede, e por isso o movimento dos agentes é limitado a
 $\pm 2$\,m em $z$ neste cenário, uma folga de treze raios de robô que permite
 manobra local e não permite abandonar o plano do labirinto. A nota metodológica
 adiante explica porque é que essa restrição foi necessária e não apenas
@@ -411,19 +411,19 @@ o código mantém a lista dos sete cenários da dissertação separada da lista 
 cenários ativos do simulador.
 
 Quinto, o \emph{incentivo a cooperar na zona C é modesto, e tem de ser
-reportado ao lado da métrica que o mede}. A métrica M3 --- fração de episódios em
-que a porta é aberta --- foi pré-registada para testar se a cooperação emerge
+reportado ao lado da métrica que o mede}. A métrica M3 (fração de episódios em
+que a porta é aberta) foi pré-registada para testar se a cooperação emerge
 \emph{quando é vantajosa}. O quanto ela é vantajosa está medido desde 28 de julho
 (emenda~15 do pré-registo) e vale a pena trazê-lo para junto da métrica: sobre os
 \textit{spawns} reais e com o mesmo campo geodésico que alimenta a recompensa de
 progresso, fechar a porta faz o percurso do agente médio passar de $130$--$132$\,m para
 $157$--$159$\,m, uma razão de $1{,}205$. Não cooperar custa, portanto, cerca de
-$20\%$ a mais, o que equivale a poupar $17\%$ cooperando --- e cooperar exige que
+$20\%$ a mais, o que equivale a poupar $17\%$ cooperando, e cooperar exige que
 três agentes ocupem a zona de empurrão \emph{ao mesmo tempo}. Com esta razão de
 custos, uma M3 baixa não distingue ``a cooperação não emergiu'' de ``não
 compensava emergir'', e a segunda leitura é a mais parcimoniosa. A alternativa
 existe de facto: com o painel da porta a contar como parede, o potencial no
-\textit{spawn} continua finito --- não abrir a porta atrasa, não impede.
+\textit{spawn} continua finito: não abrir a porta atrasa, não impede.
 
 Sexto, a chegada ao ninho é avaliada em \emph{três} dimensões, enquanto tudo o
 resto do que este mapa mede é planar. A condição de chegada compara a distância
@@ -432,8 +432,8 @@ $z = 0$, com o raio do ninho: um agente acima de $1{,}6$\,m não conta como cheg
 onde estiver na horizontal, nem que esteja exatamente por cima do alvo. Como o
 movimento vertical está limitado a $\pm 2$\,m neste cenário, sobram $0{,}4$\,m de
 altitude em que a navegação é possível e a chegada não. A restrição é pequena, e
-é muito menor do que a dos sete cenários --- onde, sem limite vertical, a mesma
-faixa improdutiva se estende até ao raio da arena, $13{,}4$\,m ---, mas fica
+é muito menor do que a dos sete cenários (onde, sem limite vertical, a mesma
+faixa improdutiva se estende até ao raio da arena, $13{,}4$\,m), mas fica
 declarada porque a assimetria entre uma tarefa planar e um critério de sucesso
 tridimensional não é evidente a partir da descrição do cenário. Uma versão futura
 deste mapa deve alinhar o limite vertical com o raio do ninho, e não com uma
@@ -443,7 +443,7 @@ folga de manobra escolhida à parte.
 antes de existir qualquer resultado válido neste cenário merecem registo, porque
 ilustram um cuidado que se aplica a qualquer ambiente composto.
 A primeira: um bolso em U só funciona como armadilha se a bússola de
-\textit{homing} apontar para dentro dele --- com a boca virada para o lado
+\textit{homing} apontar para dentro dele: com a boca virada para o lado
 oposto ao da chegada do enxame, medindo sobre sessenta pontos de entrada na zona,
 \emph{nenhum} agente era atraído para o interior, e o bolso era espaço morto.
 A segunda: uma zona anunciada como ``quatro salas'' que tenha apenas uma parede e
@@ -455,14 +455,14 @@ esfera, pelo que uma parede só veda o que a sua altura cobre. A altura das
 paredes era uma constante herdada dos sete cenários, onde coincide exatamente com
 o diâmetro da arena; neste mapa, cuja arena tem quatro vezes o raio, sobravam
 quarenta e cinco metros de espaço livre acima de todas elas. Um agente que subisse
---- o que custa setenta e cinco dos dois mil passos do episódio --- percorria o
+(o que custa setenta e cinco dos dois mil passos do episódio) percorria o
 mapa inteiro em linha reta, sem gargalo, sem salas e sem porta. Verificou-se, ao
 medir a altitude dos agentes, que os controladores o faziam de facto, e que a
 primeira avaliação conduzida neste cenário media isso e não a topologia; foi
 descartada. A altura das paredes passou a derivar do raio da arena.
 
 A quarta é a consequência da terceira, e a mais subtil. Vedar as paredes em toda
-a altura impede o atalho, mas não retira ao agente a possibilidade de subir --- e
+a altura impede o atalho, mas não retira ao agente a possibilidade de subir, e
 subir era \emph{lucrativo}. Um agente encostado ao limite superior da arena
 esférica passa a ser tratado pelo simulador como estando fora dos limites e é
 reposicionado para dentro; nesse passo não lhe é cobrado o custo energético, e a
@@ -477,7 +477,7 @@ do labirinto, como descrito nas limitações.
 
 A lição é comum às quatro, e as duas últimas são o seu caso extremo: um mapa
 composto não herda as dificuldades dos cenários que diz compor, e cada uma tem de
-ser verificada no ambiente construído --- incluindo as que parecem garantidas pela
+ser verificada no ambiente construído, incluindo as que parecem garantidas pela
 geometria. A conectividade do labirinto tinha sido validada por decomposição do
 espaço livre, mas num plano, e o espaço em que os agentes se moviam não era
 planar. Vale a pena registar que ambas as falhas foram encontradas porque o

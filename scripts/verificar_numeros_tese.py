@@ -1102,7 +1102,7 @@ def verificar_discussao_global(tolerancia):
             ("Sandbox bimodal (GNN)", r"cenários abertos \(Sandbox (\d)/7\)",
              "none", "GNN"),
             ("Gargalo, lotaria do SAC",
-             r"\(Gargalo \$41\{,\}4 \\pm 36\{,\}8\$, (\d)/7\)", "bottleneck",
+             r"gargalos físicos: Gargalo \$41\{,\}4 \\pm 36\{,\}8\$, (\d)/7\)", "bottleneck",
              "SAC"),
             ("PPO: único cenário bimodal",
              r"um único cenário bimodal \(Muro (?:em )?U, (\d)/7\)", "u_wall", "PPO")):
@@ -1170,8 +1170,8 @@ def verificar_discussao_global(tolerancia):
 
     # os intervalos de retenção que a secção repete
     m = achar("retenção 58--90 vs 39--45",
-              r"reter \$(\d+)\$--\$(\d+)\\%\$ nos cenários com paredes \(contra "
-              r"\$(\d+)\$--\$(\d+)\\%\$ nos abertos\)")
+              r"retém \$(\d+)\$--\$(\d+)\\%\$ nos cenários com paredes,.{0,90}?, "
+              r"contra \$(\d+)\$--\$(\d+)\\%\$ nos abertos")
     if m:
         dados = _escala_por_cenario()
         ret = {}
@@ -1807,7 +1807,7 @@ def verificar_megatreino(tolerancia):
 
     for algo, fase in (("PPO", "mega_A_fase3"), ("SAC", "mega_A_fase4")):
         med, dp, conv, n = dados[fase]
-        v = procura(algo + r" \$" + N + r" \\pm " + N + r"\$ \(\$(\d+)/(\d+)\$")
+        v = procura(algo + r" (?:faz )?\$" + N + r" \\pm " + N + r"\$ \(\$(\d+)/(\d+)\$")
         for i, (rot, calc, ex) in enumerate(
                 ((("M2 %s média" % algo), med, False),
                  (("M2 %s desvio" % algo), dp, False),
@@ -1934,7 +1934,7 @@ def verificar_megatreino(tolerancia):
     # M2 — os três pares que a tese cita dos seis que corre (p BRUTOS: o
     # pré-registo manda assinalar a multiplicidade, não corrigi-la)
     for algo, padrao in (
-            ("PPO", r"PPO \$[^$]+\$ \(\$\d+/\d+\$; \$p (<|=) " + N +
+            ("PPO", r"PPO (?:faz )?\$[^$]+\$ \(\$\d+/\d+\$; \$p (<|=) " + N +
                     r"\$, \$\\delta = \+" + N + r"\$\)"),
             ("SAC", r"SAC \$[^$]+\$ \(\$\d+/\d+\$; \$p (<|=) " + N +
                     r"\$, \$\\delta = \+" + N + r"\$\)")):
@@ -2586,7 +2586,7 @@ FACTOS_REPETIDOS = [
      # mesma contagem é conferido contra o CSV pelo `verificar_megatreino`, e
      # aqui só se garante que o número recontado não ficou para trás.
      "sitios": [
-         {"re": r"PPO \$[^$]+\$ \(\$(\d+)/(\d+)\$;"},
+         {"re": r"PPO (?:faz )?\$[^$]+\$ \(\$(\d+)/(\d+)\$;"},
          {"re": r"\$(\d+)/(\d+)\$ de cada método de gradiente"},
      ]},
     {"rot": "Escalabilidade — as 28 combinações a 100%",
@@ -2595,7 +2595,7 @@ FACTOS_REPETIDOS = [
                 r"combina[çc][õo]es"},
          # `\.?` — o rótulo pode não ter ponto final (a classe `amsbook`
          # já lhe acrescenta dois pontos, e saía «Escalabilidade.:»).
-         {"re": r"QI2 --- Escalabilidade\.?\].{0,260}?100\\% de sucesso nas "
+         {"re": r"QI2: Escalabilidade\.?\].{0,260}?100\\% de sucesso nas "
                 r"(\d+) combina[çc][õo]es"},
          # e uma terceira vez na Discussão do mapa composto, onde o
          # número serve para dizer o que o resultado negativo NÃO derruba
@@ -2615,8 +2615,8 @@ FACTOS_REPETIDOS = [
     {"rot": "QI2 — retenção per capita em N=100 (paredes e abertos)",
      "sitios": [
          # Contributos: «a reter 58--90% … (contra 39--45% nos abertos)»
-         {"re": r"per capita em \$N=100\$ a reter \$(\d+)\$--\$(\d+)\\%\$ nos "
-                r"cenários com paredes \(contra \$(\d+)\$--\$(\d+)\\%\$"},
+         {"re": r"Em \$N=100\$, a eficiência per capita retém \$(\d+)\$--\$(\d+)\\%\$ "
+                r"nos cenários com paredes,.{0,90}?, contra \$(\d+)\$--\$(\d+)\\%\$"},
          # QI2: a mesma janela, com os dois cenários abertos nomeados um a um.
          {"re": r"per capita em \$N=100\$ retém \$(\d+)\$--\$(\d+)\\%\$ nos "
                 r"cenários com paredes.{0,180}?\$(\d+)\\%\$ no Sandbox, "
@@ -2630,7 +2630,7 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"retendo entre \$(\d+)\\%\$ e \$(\d+)\\%\$ da eficiência per "
                 r"capita"},
-         {"re": r"per capita em \$N=100\$ a reter \$(\d+)\$--\$(\d+)\\%\$"},
+         {"re": r"Em \$N=100\$, a eficiência per capita retém \$(\d+)\$--\$(\d+)\\%\$"},
          {"re": r"per capita em \$N=100\$ retém \$(\d+)\$--\$(\d+)\\%\$"},
      ]},
     # O δ do Sandbox exploratório é dito nos Resultados e outra vez nos Trabalhos
@@ -2659,7 +2659,7 @@ FACTOS_REPETIDOS = [
      "sitios": [
          {"re": r"do objetivo puro \(\$p = ([\d{},]+)\$, \$\\delta = \+"
                 r"([\d{},]+)\$\)\. A pressão"},
-         {"re": r"\(Mann--Whitney \$p=([\d{},]+)\$, \$\\delta=\+([\d{},]+)\$\)"},
+         {"re": r"(?:\(|; )Mann--Whitney \$p=([\d{},]+)\$, \$\\delta=\+([\d{},]+)\$\)"},
      ]},
     {"rot": "QI6 — o teste da Porta com Alternativa com peso fixo",
      "sitios": [
@@ -2683,7 +2683,7 @@ FACTOS_REPETIDOS = [
      ]},
     {"rot": "QI6 — o controlo de orçamento continua bimodal",
      "sitios": [
-         {"re": r"\(390 min/(?:\\\\textit\\{runs?\\}|execuç(?:ão|ões))\) continua bimodal --- \$(\d+)/(\d+)\$"},
+         {"re": r"\(390 min/(?:\\\\textit\\{runs?\\}|execuç(?:ão|ões))\) continua bimodal \(\$(\d+)/(\d+)\$"},
          {"re": r"continua bimodal no Muro em U \(\$(\d+)/(\d+)\$\)"},
          {"re": r"continuou bimodal no Muro (?:em )?U \((\d+)/(\d+)\)"},
      ]},
@@ -2698,7 +2698,7 @@ FACTOS_REPETIDOS = [
      # gradiente» — a paridade dele com os dados fica a cargo
      # de verificar_resumo_abstract(), que sabe ler a forma agregada.
      "sitios": [
-         {"re": r"PPO \$[^$]+\$ \(\$(\d+)/(\d+)\$;.{0,90}?SAC \$[^$]+\$ "
+         {"re": r"PPO (?:faz )?\$[^$]+\$ \(\$(\d+)/(\d+)\$;.{0,90}?SAC \$[^$]+\$ "
                 r"\(\$(\d+)/(\d+)\$"},
          {"re": r"\$(\d+)/(\d+)\$ do PPO e \$(\d+)/(\d+)\$ do SAC, sem uma única"},
      ]},
@@ -2753,22 +2753,22 @@ FACTOS_REPETIDOS = [
     # todas: são os que ficam para trás quando uma camada é recalculada.
     {"rot": "QI6 — o +26% da comparação preliminar (três sítios)",
      "sitios": [
-         {"re": r"do objetivo puro --- \$\+(\d+)\\%\$, Wilcoxon"},
+         {"re": r"do objetivo puro \(\$\+(\d+)\\%\$, Wilcoxon"},
          {"re": r"O ganho de \$\+(\d+)\\%\$ da comparação preliminar"},
          {"re": r"desmascarando o \$\+(\d+)\\%\$ da comparação preliminar"},
      ]},
     {"rot": "QI6 — o objetivo puro na Porta com Alternativa (três sítios)",
      "sitios": [
-         {"re": r"em magnitude --- \$([\d{},]+) \\pm ([\d{},]+)\$ contra"},
+         {"re": r"em magnitude: \$([\d{},]+) \\pm ([\d{},]+)\$ contra"},
          {"re": r"vs\.\\ \$([\d{},]+) \\pm ([\d{},]+)\$ \(\$p=0\{,\}32\$"},
          {"re": r"superando o próprio objetivo puro \(\$([\d{},]+) \\pm "
                 r"([\d{},]+)\$\)"},
      ]},
     {"rot": "QI6 — o δ de T4 no bypass (quatro sítios)",
      "sitios": [
-         {"re": r"\$\\delta=\+([\d{},]+)\$ --- com \$n=7\$"},
+         {"re": r"\$\\delta=\+([\d{},]+)\$; com \$n=7\$"},
          {"re": r"o \$\\delta = \+([\d{},]+)\$ de \(T4\) ficou à espera"},
-         {"re": r"pelo que o \$\\delta = \+([\d{},]+)\$ de \(T4\) --- que a \$n=7\$"},
+         {"re": r"pelo que o \$\\delta = \+([\d{},]+)\$ de \(T4\), que a \$n=7\$"},
          {"re": r"n[ao] (?:bypass|Porta com Alternativa) \(\$77\{,\}2\$ vs\.\\ "
                 r"\$63\{,\}0\$; \$\\delta=\+([\d{},]+)\$\)"},
      ]},
@@ -3103,7 +3103,7 @@ def verificar_computacional():
         r"agente por segundo; \$\\approx\$(?P<s_antes>[\d,]+)\\,s por episódio "
         r"de (?P<passos_ep>\d+) passos\).{0,120}?(?:\\textbf|\\emph)\{(?P<depois>[\d\\,]+) "
         r"passos/s\} \(\$\\approx\$(?P<ag_depois>[\d\\,]+) agente-passos/s; "
-        r"\$\\approx\$(?P<s_depois>[\d,]+)\\,s por episódio\) --- um ganho de "
+        r"\$\\approx\$(?P<s_depois>[\d,]+)\\,s por episódio\), um ganho de "
         r"\$\\approx (?P<ganho>[\d{},]+)\\times\$", tex, re.DOTALL)
 
     def n_(s):
@@ -3186,7 +3186,7 @@ def verificar_questoes_investigacao():
     listas = (("perguntas (Secção das Questões de Investigação)",
                r"\\item\[(?:\\textbf|\\emph)\{QI(\d)\.\}\]"),
               ("respostas (Secção da Resposta às Questões)",
-               r"\\item\[QI(\d) ---"))
+               r"\\item\[QI(\d):"))
     conjuntos = {}
     for rot, padrao in listas:
         nums = [int(m.group(1)) for m in re.finditer(padrao, tex)]
@@ -3354,7 +3354,7 @@ def verificar_fiabilidade_prosa(tolerancia):
         return [numero(g) for g in m.groups()] if m else None
 
     # o protocolo que a secção enuncia
-    v = procura(r"média dos (\d+) episódios de avaliação; (\d+) pontos por "
+    v = procura(r"médias? (?:dos|sobre os) (\d+) episódios de avaliação; (\d+) pontos por "
                 r"algoritmo")
     if v:
         n_ep = int(d.groupby(["Scenario", "Algorithm", "Run"]).size().min())

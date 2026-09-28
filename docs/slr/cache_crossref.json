@@ -51,6 +51,19 @@
   "titulo": "Distributed On-line Learning in Swarm Robotics with Limited Communication Bandwidth",
   "venue": "2020 IEEE Congress on Evolutionary Computation (CEC)"
  },
+ "10.1109/ICCC57093.2023.10178888": {
+  "ano": 2023,
+  "anos": [
+   2023
+  ],
+  "autores": [
+   "Iskandar",
+   "Rostum",
+   "Kovács"
+  ],
+  "titulo": "Using Deep Reinforcement Learning to Solve a Navigation Problem for a Swarm Robotics System",
+  "venue": "2023 24th International Carpathian Control Conference (ICCC)"
+ },
  "10.1109/ICHORA69329.2026.11537199": {
   "ano": 2026,
   "anos": [
@@ -81,6 +94,16 @@
   "titulo": "Training Robot Swarms for Adaptive Foraging in Environments with Obstacles",
   "venue": "2025 IEEE International Conference on Mechatronics and Automation (ICMA)"
  },
+ "10.1109/ICNN.1995.488968": {
+  "ano": null,
+  "anos": [],
+  "autores": [
+   "Kennedy",
+   "Eberhart"
+  ],
+  "titulo": "Particle swarm optimization",
+  "venue": "Proceedings of ICNN'95 - International Conference on Neural Networks"
+ },
  "10.1109/IRCE66030.2025.11203043": {
   "ano": 2025,
   "anos": [
@@ -93,6 +116,22 @@
   ],
   "titulo": "Evolving Adaptive Foraging Robot Swarms with NEAT in Environments with Obstacles",
   "venue": "2025 8th International Conference on Intelligent Robotics and Control Engineering (IRCE)"
+ },
+ "10.1109/IROS.2017.8202133": {
+  "ano": 2017,
+  "anos": [
+   2017
+  ],
+  "autores": [
+   "Tobin",
+   "Fong",
+   "Ray",
+   "Schneider",
+   "Zaremba",
+   "Abbeel"
+  ],
+  "titulo": "Domain randomization for transferring deep neural networks from simulation to the real world",
+  "venue": "2017 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)"
  },
  "10.1109/IROS55552.2023.10341749": {
   "ano": 2023,
@@ -181,6 +220,22 @@
   "titulo": "Adaptive Shape Formation Against Swarm-Scale Variants in Robot Swarms",
   "venue": "IEEE Robotics and Automation Letters"
  },
+ "10.1109/TCDS.2026.3658125": {
+  "ano": 2026,
+  "anos": [
+   2026
+  ],
+  "autores": [
+   "Xiao",
+   "Yuan",
+   "Ran",
+   "He",
+   "Zhang",
+   "Cui"
+  ],
+  "titulo": "CSPER: Curiosity-Driven Safety-Prioritized Experience Replay for Mapless Navigation Using Deep Reinforcement Learning",
+  "venue": "IEEE Transactions on Cognitive and Developmental Systems"
+ },
  "10.1109/TNNLS.2023.3264540": {
   "ano": 2024,
   "anos": [
@@ -220,6 +275,20 @@
   "titulo": "Deep reinforcement learning for swarm robotic systems",
   "venue": "Miskolci Egyetem"
  },
+ "10.1609/aaai.v39i22.34501": {
+  "ano": 2025,
+  "anos": [
+   2025
+  ],
+  "autores": [
+   "Wang",
+   "Duhan",
+   "Li",
+   "Sartoretti"
+  ],
+  "titulo": "LNS2+RL: Combining Multi-agent Reinforcement Learning with Large Neighborhood Search in Multi-agent Path Finding",
+  "venue": "Proceedings of the AAAI Conference on Artificial Intelligence"
+ },
  "10.17587/mau.25.471-478": {
   "ano": 2024,
   "anos": [
@@ -245,6 +314,20 @@
   "titulo": "Towards applied swarm robotics: current limitations and enablers",
   "venue": "Frontiers in Robotics and AI"
  },
+ "10.3390/drones9070484": {
+  "ano": 2025,
+  "anos": [
+   2025
+  ],
+  "autores": [
+   "Ekechi",
+   "Elfouly",
+   "Alouani",
+   "Khattab"
+  ],
+  "titulo": "A Survey on UAV Control with Multi-Agent Reinforcement Learning",
+  "venue": "Drones"
+ },
  "10.5220/0012462800003654": {
   "ano": 2024,
   "anos": [
@@ -257,6 +340,21 @@
   ],
   "titulo": "Towards Self-Adaptive Resilient Swarms Using Multi-Agent Reinforcement Learning",
   "venue": "Proceedings of the 13th International Conference on Pattern Recognition Applications and Methods"
+ },
+ "10.7551/978-0-262-32621-6-ch035": {
+  "ano": 2014,
+  "anos": [
+   2014
+  ],
+  "autores": [
+   "Duarte",
+   "Silva",
+   "Rodrigues",
+   "Moura Oliveira",
+   "Christensen"
+  ],
+  "titulo": "JBotEvolver: A Versatile Simulation Program for Evolutionary Robotics",
+  "venue": "Artificial Life 14: Proceedings of the Fourteenth International Conference on the Synthesis and Simulation of Living Systems"
  },
  "titulo:a concise introduction to decentralized pomdps": {
   "ano": 2016,
