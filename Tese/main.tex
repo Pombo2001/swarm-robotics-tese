@@ -336,6 +336,14 @@
 \makeatother
 \AtBeginEnvironment{table}{\iscteLegendaDeQuadro}
 \AtBeginEnvironment{longtable}{\iscteLegendaDeQuadro}
+% O longtable (Quadro C.1, Anexo C) compõe a legenda à sua maneira: numa caixa
+% de 4 polegadas, centrada, e com «Quadro C.1:» em vez do «QUADRO C.1.» dos
+% outros quadros. Passa a usar a mesma \@makecaption, à largura do texto.
+\makeatletter
+\def\LT@makecaption#1#2#3{%
+  \LT@mcol\LT@cols c{\hbox to\z@{\hss\parbox[t]\textwidth{%
+    \@makecaption{#1{#2}}{#3}\endgraf\vskip\baselineskip}\hss}}}
+\makeatother
 
 % Última rede contra overfulls em parágrafos justificados (texto e bibliografia):
 % permite um alongamento de emergência dos espaços antes de transbordar a margem.
