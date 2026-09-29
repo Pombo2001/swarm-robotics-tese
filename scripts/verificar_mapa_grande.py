@@ -361,7 +361,7 @@ def artigo():
     if m and m.get("por_algo"):
         conv = {a: int(v["convergentes"]) for a, v in m["por_algo"].items()}
         n_exec = {a: int(v["n"]) for a, v in m["por_algo"].items()}
-        g = re.search(r"em \$(\d+)\$ das \$(\d+)\$ execuções,\s+contra \$(\d+)\$"
+        g = re.search(r"em \$(\d+)\$ das \$(\d+)\$ execuções(?:,|\s+\()\s*contra \$(\d+)\$"
                       r"\s+de \$(\d+)\$ do PPO e \$(\d+)\$ de \$(\d+)\$ do SAC",
                       sec)
         if g is None:
